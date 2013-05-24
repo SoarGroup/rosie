@@ -1,0 +1,109 @@
+# Finds a category for a given word (built-in)
+# Expected format of the operator
+#   (<s> ^operator <o> + =)
+#   (<o> ^name lookup-smem
+#        ^lookup-type category
+#        ^query <q>
+#        ^desired.category true)
+#   (<q> ^type word2cat ^word <word> ^category c67)
+# Only word is specified
+#
+# Optional paramerter (<o> ^ask-user true) will cause the agent
+#   to ask the user if the category of a word is unknown
+
+sp {lookup-category*return*existing
+   (state <s> ^operator <o>
+              ^topstate.interaction.stack.segment.info <info>)
+   (<o> ^name lookup-smem
+        ^lookup-type category
+        ^query.word <word>)
+   (<info> ^nounjective <nj>)
+   (<nj> ^word <word> ^category <cat>)
+-->
+   (<o> ^result <cat>)
+}
+
+# If this is a new word with an unknown category ask the user
+sp {apply*lookup-smem*category*failure*new-interaction
+   (state <s> ^operator <o>
+              ^topstate.status <status>)
+   (<o> ^name lookup-smem
+        ^ask-user true
+        ^lookup-type category
+        ^query.word <word>
+        ^result failure)
+-->
+  (<status> ^type category-of-word
+         ^state-name topstate
+         ^purpose <p>)
+   (<p> ^type category-of-word
+        ^context <context>
+        ^parameters <params>
+        # AM: Changed the satisfaction structure
+        ^satisfaction.dialog-event.type object-message)
+   # Segment context - the word being asked about
+   (<context> ^cause category-of-word-query
+              ^word <word>)
+   # Segment parameters - A message to send 
+   (<params> ^message <msg>)
+   (<msg> ^type category-of-word
+          ^originator agent
+          ^fields.word <word>)
+}
+
+#sp {lookup-category*ask-user*true*return-all
+#   (state <s> ^operator <o> +)
+#   (<o> ^ask-user true)
+#-->
+#   (<o> ^return-all true)
+#}
+
+
+# Successful retrieval - multiple
+sp {this-object-message*apply*lookup-smem*category*multiple*matches
+   (state <s> ^operator <o>)
+   (<o> ^name lookup-smem
+        ^lookup-type category
+        ^query.word <word>
+        ^multiple-results true)
+-->
+   (<s> ^context <context>)
+   (<context> ^cause ambiguous-category
+              ^word <word>)
+}
+
+sp {this-object-message*apply*lookup-smem*category*multiple*copy*result
+   (state <s> ^context <context>
+              ^operator <o>)
+   (<o> ^name lookup-smem
+        ^lookup-type category
+        ^result <result>)
+-->
+   (<context> ^result <result>)
+   (<s> ^copied-results true)
+}
+
+sp {this-object-message*apply*lookup-smem*cateogry*multiple*ask-user
+   (state <s> ^context <context>
+              ^operator <o>
+              ^topstate.status <status>
+              ^copied-results true)
+   (<o> ^name lookup-smem
+        ^lookup-type category)
+-->
+   (<status> ^type ambiguous-category
+         ^state-name topstate
+         ^purpose <p>)
+   (<p> ^type ambiguous-category
+        ^context <context>
+        ^parameters <params>
+        # AM: Changed the satisfaction structure
+        ^satisfaction.dialog-event.type single-word-response)
+   # Segment parameters - A message to send 
+   (<params> ^message <msg>)
+   (<msg> ^type ambiguous-category
+          ^originator agent
+          ^fields <context>)
+   (<s> ^context <context> -)
+}
+   

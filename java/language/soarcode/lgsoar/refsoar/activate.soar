@@ -1,0 +1,162 @@
+# File: Activate.soar
+# Author: William Taysom
+# Version 2.0: July 24, 2001
+# Created: July 6, 2001
+#
+# Desc: Builds tree/ref/model structures from link grammer parses.
+#
+#   LGparse	--interpret-> refs --realize-> model
+#
+# Preference: clauses (300 - 251) > anaphor (250-201) > interpret (200 - 100)
+#			  > promote (100 - 50 ) > realize (50 - 1)
+# Operator Types: (op priorities are in parentheses)
+#	global: start-next-sentence (0), processing-complete (0), find-root (170),
+#			return to nil
+#	interpret: give-root-ref (160), add-arg (150, 220)
+#	realize: new-idea (20), coref (30)
+#	promote: basic (70-60), feature (70)
+#	anaphor: resolve (201, 51), unblock-center (210), unblocking-finished (209),
+#			 add-center (203, 201), merge (201), rip (204), cascade (203, 202),
+#			 add-elliptical-verb-syntax (205), expand-contraction (205)
+#			 remove-non-elliptically-included-semantics (210, 205),
+#			 clean-up-merge (200), remove-center (150)
+#	clause:	 recognize-introductory-phrase (230), recognize-main-verb (230),
+#			 recognize-introductory-verb (235, 230), hide-main-verb (230),
+#			 handle-that-clause (10)
+#
+# Bugs/Issues/'special' features:
+# P only interpreted as passive
+# MV only interpreted as prepositional
+# Fails to realize sentences with empty subjects i.e. "Go to the store."
+# All adverbs are interpreted as modes.
+# clause.soar is a fix for a problem that the productions in death.xxxxsoar created,
+#		namely automatic system failure.  The cause of the problem is suspected to relate
+#		to exponential matching in those productions.  clause.soar solves the problem by
+#		implementing the guilty productions with several operators.  Also, clause.soar
+#		contains other clause related productions.
+# Neuter nouns are marked as such in the test case.
+#
+# TO DO:
+#
+
+
+# Initialize problem space
+
+
+sp {activate*create-space*in-substate
+   (state <s> ^name interpret-sentences)
+#              ^top-state.language.model <m>)
+# TODO: share the model across lgsoar runs, as above
+# This almost works, but it generates all predicates from all previous
+# sentences. Waiting to turn it on when there is an actual need.
+-->
+   (<s> ^problem-space lgsoar ^refsets <refsets> ^model <m> ^root 0 ^anaphor <a>
+        ^clauses <clauses> ^next-unidentified-individual 1 ^final-predicates <fp>)
+   (<a> ^acount 1 ^centers <centers> ^unblock? no ^merge <merge> ^cascades <cascs>)
+   (<cascs> ^records <records> ^ante-off-set nil ^ana-off-set nil)
+   (<merge> ^temp nil ^replace nil)
+   (<centers> ^center <null-center> +)
+   (<null-center> ^ccount 0 ^ref nil ^blocked? no
+                  ^kind first +, second +, third +, verb +)
+}
+
+sp {activate*create-space*in-subgoal*any-sentence
+   (state <s> ^name interpret-sentences
+              ^superstate.operator.sentence <sent>)
+-->
+   (<s> ^any-sentence <copy>)
+   (<copy> ^source-sentence <sent>)
+}
+
+# current/next sentences are set up here, and later advanced by
+# start-next-sentence in global.soar
+#
+# these init rules keep matching, but their results might be overwritten by
+# start-next-sentence
+sp {activate*create-space*in-subgoal*current-sentence
+   (state <s> ^name interpret-sentences
+              ^refsets <rs>
+              ^any-sentence <sent>
+             -^any-sentence.sentence-count < <count>)
+   (<sent> ^sentence-count <count>)
+-->
+   (<s> ^current-sentence <sent> ^current-refset <r>)
+   (<rs> ^refs <r>)
+   (<r> ^count <count>)
+}
+
+sp {activate*create-space*in-subgoal*other-sentence
+   (state <s> ^name interpret-sentences
+              ^any-sentence <sent>
+              ^any-sentence.sentence-count <count>)
+   (<sent> ^sentence-count > <count>)
+-->
+   (<s> ^other-sentence <sent>)
+}
+
+
+# deep copies for sentence parses
+# this is because LGSoar will add ref structures to the words,
+# and doing that in a subgoal to a topstate structure will invoke the GDS
+
+sp {activate*elaborate*sentence-copy*init
+   (state <s> ^name interpret-sentences
+              ^any-sentence <sent>)
+   (<sent> ^source-sentence.sentence-count <count>)
+-->
+   (<sent> ^words <wd>
+           ^links <lks>
+           ^sentence-count <count>)
+  # don't need a parse-count, nothing here should care
+}
+
+sp {activate*elaborate*sentence-copy*word
+   (state <s> ^name interpret-sentences
+              ^any-sentence <sent>)
+   (<sent> ^source-sentence.words.word <wd>
+           ^words <cwd>)
+   (<wd> ^wcount <wc>
+         ^wvalue <wv>)
+-->
+   (<cwd> ^word <word>)
+   (<word> ^wcount <wc>
+           ^wvalue <wv>)
+}
+
+sp {activate*elaborate*sentence-copy*link
+   (state <s> ^name interpret-sentences
+              ^any-sentence <sent>)
+   (<sent> ^source-sentence.links.link <lk>
+           ^links <clk>)
+   (<lk> ^lvalue <lv>
+         ^lwleft <lwl>
+         ^lwright <lwr>
+         ^ltype <lt>)
+-->
+   (<clk> ^link <link>)
+   (<link> ^lvalue <lv>
+           ^lwleft <lwl>
+           ^lwright <lwr>
+           ^ltype <lt>)
+}
+
+sp {activate*elaborate*sentence-copy*link*typesub
+   (state <s> ^name interpret-sentences
+              ^any-sentence <sent>)
+   (<sent> ^source-sentence.links.link <lk>
+           ^links <clk>)
+   (<lk> ^lvalue <lv>
+         ^lwleft <lwl>
+         ^lwright <lwr>
+         ^ltype <lt>
+         ^ltypesub <lts>)
+   (<clk> ^link <clnk>)
+   (<clnk> ^lvalue <lv>
+           ^lwleft <lwl>
+           ^lwright <lwr>
+           ^ltype <lt>)
+-->
+   (<clnk> ^ltypesub <lts>)
+}
+
+

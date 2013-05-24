@@ -1,0 +1,155 @@
+# lookup-label
+#   Given a label, returns information about it
+# (<s> ^operator <o> +)
+# (<o> ^name lookup-label
+#      ^label <label>    <- required)  
+#
+# Returns the property structure on the superstate in the form
+# (<ss> ^lookup-label-result <res>)
+# (<res> ^wme-type sense ^property @P3 ^label <label> ^word @w4)
+# (@W4 ^wme-type word ^word <word> ^sense <res> ...)
+# (@P3 ...)
+  
+# (That is, the word and property structures are fully expanded)
+
+# Or ^lookup-label-result failure
+# Note: The ^lookup-label-result <res> is the long term identifier, same with each word and property
+
+# Parameters:
+sp {lookup-label*copy*parameters
+   (state <s> ^name lookup-label
+              ^superstate.operator.{<param> << label >>} <val>)
+-->
+   (<s> ^<param> <val>)
+}
+
+# smem-query: lookup the label
+sp {lookup-label*propose*smem-query*label
+   (state <s> ^name lookup-label
+              ^label <label>
+             -^sense)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name smem-query
+        ^category smem
+        ^query <q>
+        ^return-all false)
+   (<q> ^wme-type sense ^label <label>)
+}
+
+sp {lookup-label*apply*smem-query*copy-result*failure
+   (state <s> ^name lookup-label
+              ^operator.name smem-query
+              ^superstate <ss>
+              ^smem-query-result failure)
+-->
+   (<ss> ^lookup-label-result failure)
+}
+
+sp {lookup-label*apply*smem-query*copy-result*success
+   (state <s> ^name lookup-label
+              ^operator.name smem-query
+              ^smem-query-result {<res> <> failure})
+-->
+   (<s> ^sense <res>
+        ^smem-query-result <res> -)
+}
+
+# Retrieve the parent word
+sp {lookup-label*propose*smem-retrieve*word
+   (state <s> ^name lookup-label
+              ^sense.word <word>)
+   (<word> -^retrieved)	
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name smem-retrieve
+        ^category smem
+        ^type word
+        ^identifier <word>)
+}
+
+sp {lookup-label*apply*smem-retrieve*word
+   (state <s> ^name lookup-label
+              ^operator <o>
+              ^smem-retrieve-result <res>)
+   (<o> ^name smem-retrieve
+        ^type word
+        ^identifier <word>)
+-->
+   (<word> ^retrieved true)
+   (<s> ^smem-retrieve-result <res> -)
+}
+
+# Retrieve the property
+sp {lookup-label*propose*smem-retrieve*property
+   (state <s> ^name lookup-label
+              ^sense.property <prop>)
+   (<prop> -^retrieved) 	
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name smem-retrieve
+        ^category smem
+        ^type property
+        ^identifier <prop>)
+}
+
+sp {lookup-label*apply*smem-retrieve*property
+   (state <s> ^name lookup-label
+              ^operator <o>
+              ^smem-retrieve-result <res>)
+   (<o> ^name smem-retrieve
+        ^type property
+        ^identifier <prop>)
+-->
+   (<prop> ^retrieved true)
+   (<s> ^smem-retrieve-result <res> -)
+}
+
+# Finish the lookup
+sp {lookup-label*propose*complete-lookup-label
+   (state <s> ^name lookup-label
+              ^sense <sense>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name complete-lookup-label
+        ^category smem)
+}
+
+# Do complete-lookup-label last
+sp {lookup-label*prefer*all*over*complete-lookup-label
+   (state <s> ^name lookup-label
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name <> complete-lookup-label
+         ^category smem)
+   (<o2> ^name complete-lookup-label)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {lookup-label*apply*complete-lookup-label
+   (state <s> ^name lookup-label
+              ^operator.name complete-lookup-label
+              ^superstate <ss>
+              ^sense <sense>)
+-->
+   (<ss> ^lookup-label-result <sense>)
+}
+
+# Updates any objects with the word, for convenience
+sp {lookup-label*apply*complete-lookup-label*annotate*object
+   (state <s> ^name lookup-label
+              ^operator.name complete-lookup-label
+              ^sense <sense>
+              ^topstate.object.property <prop>)
+   (<sense> ^label <label>
+            ^property.name <prop-name>
+            ^word.word <word>)
+   (<prop> ^name <prop-name>
+           ^value <val>)
+   (<val> ^label <label>
+         -^word <word>)
+-->
+   (<val> ^word <word>)
+}
+

@@ -1,0 +1,1262 @@
+# File: Activate.soar
+# Author: William Taysom
+# Version 2.0: July 24, 2001
+# Created: July 6, 2001
+#
+# Desc: Builds tree/ref/model structures from link grammer parses.
+#
+#   LGparse	--interpret-> refs --realize-> model
+#
+# Preference: clauses (300 - 251) > anaphor (250-201) > interpret (200 - 100)
+#			  > promote (100 - 50 ) > realize (50 - 1)
+# Operator Types: (op priorities are in parentheses)
+#	global: start-next-sentence (0), processing-complete (0), find-root (170),
+#			return to nil
+#	interpret: give-root-ref (160), add-arg (150, 220)
+#	realize: new-idea (20), coref (30)
+#	promote: basic (70-60), feature (70)
+#	anaphor: resolve (201, 51), unblock-center (210), unblocking-finished (209),
+#			 add-center (203, 201), merge (201), rip (204), cascade (203, 202),
+#			 add-elliptical-verb-syntax (205), expand-contraction (205)
+#			 remove-non-elliptically-included-semantics (210, 205),
+#			 clean-up-merge (200), remove-center (150)
+#	clause:	 recognize-introductory-phrase (230), recognize-main-verb (230),
+#			 recognize-introductory-verb (235, 230), hide-main-verb (230),
+#			 handle-that-clause (10)
+#
+# Bugs/Issues/'special' features:
+# P only interpreted as passive
+# MV only interpreted as prepositional
+# Fails to realize sentences with empty subjects i.e. "Go to the store."
+# All adverbs are interpreted as modes.
+# clause.soar is a fix for a problem that the productions in death.xxxxsoar created,
+#		namely automatic system failure.  The cause of the problem is suspected to relate
+#		to exponential matching in those productions.  clause.soar solves the problem by
+#		implementing the guilty productions with several operators.  Also, clause.soar
+#		contains other clause related productions.
+# Neuter nouns are marked as such in the test case.
+#
+# TO DO:
+#
+
+#excise --all
+#learn --off
+
+# Initialize problem space
+
+#sp	{Activate*create*space-old
+#	(state <s> ^superstate nil)
+#-->
+#	(<s> ^problem-space <p> ^refsets <refsets> ^model <m> ^count 0 ^root 0 ^anaphor <a>
+#		 ^clauses <clauses> ^next-unidentified-individual 1)
+#	(<refsets> ^refs <refs> +)
+#	(<refs> ^count 0)
+#	(<a> ^acount 1 ^centers <centers> ^unblock? no ^merge <merge> ^cascades <cascs>)
+#	(<cascs> ^records <records> ^ante-off-set nil ^ana-off-set nil)
+#	(<merge> ^temp nil ^replace nil)
+#	(<centers> ^center <null-center> +)
+#	(<null-center> ^ccount 0 ^ref nil ^blocked? no
+#				   ^kind first +, second +, third +, verb +)
+#	(<p> ^name When-Harry-sings-I-always-conceal-my-belief-that-he-should-not*When-he-gambles-I-cant-conceal-it)}
+
+sp	{Activate*create*space
+	(state <s> ^superstate nil ^io <io>)
+-->
+	(<s> ^problem-space <p> ^refsets <refsets> ^model <m> ^count 0 ^root 0 ^anaphor <a>
+		 ^clauses <clauses> ^next-unidentified-individual 1)
+	(<io> ^total-sentences 2)
+	(<refsets> ^refs <refs> +)
+	(<refs> ^count 0)
+	(<a> ^acount 1 ^centers <centers> ^unblock? no ^merge <merge> ^cascades <cascs>)
+	(<cascs> ^records <records> ^ante-off-set nil ^ana-off-set nil)
+	(<merge> ^temp nil ^replace nil)
+	(<centers> ^center <null-center> +)
+	(<null-center> ^ccount 0 ^ref nil ^blocked? no
+				   ^kind first +, second +, third +, verb +)
+	(<p> ^name lgsoar-input)}
+
+# test cases
+
+# (57) This-appliance-is-supplied-with-a-plug*An-amp-fuse-is-fitted-in-the-plug
+# (39) A-farmer-walks*He-laughed
+# (43) Tom-walks*John-does-to
+# (72) Tom-loves-his-cat*John-does-too
+# (66) Smith-spent-his-paycheck*Jones-saved-it
+# (155) When-Harry-sings-I-always-conceal-my-belief-that-he-should-not*When-he-gambles-I-cant-conceal-it
+
+# other files
+# source Rozinante:Users:hogwood:Data:RefSoar:tests.soar
+# source Rozinante:Users:hogwood:Data:RefSoar:testcases.soar
+# source Rozinante:Users:hogwood:Data:RefSoar:global.soar
+# source Rozinante:Users:hogwood:Data:RefSoar:interpret.soar 
+# source Rozinante:Users:hogwood:Data:RefSoar:realize.soar
+# source Rozinante:Users:hogwood:Data:RefSoar:promote.soar
+# source Rozinante:Users:hogwood:Data:RefSoar:anaphor.soar
+# source Rozinante:Users:hogwood:Data:RefSoar:clause.soar
+
+# File: tests.soar
+# Author: William Taysom
+# Created: July 6, 2001
+#
+# Desc: Link grammer parses of test sentences.
+#
+# Passages:	This-appliance-is-supplied-with-a-plug*An-amp-fuse-is-fitted-in-the-plug
+#
+# TO DO:
+# 
+
+sp	{tests*create*lgparse*This-appliance-is-supplied-with-a-plug*An-amp-fuse-is-fitted-in-the-plug
+	(state <s> ^problem-space.name This-appliance-is-supplied-with-a-plug*An-amp-fuse-is-fitted-in-the-plug)
+	(<s> ^io <io>)
+-->
+	(<io> ^lgsentence <cs-1> +, <cs-2> + ^total-sentences 2)
+	(<cs-1> ^count 0 ^links <links-1> ^words <words-1>)
+	(<links-1> ^link <Dsu-0-2> +, <Ss-2-3> +, <Pv-3-4> +, <MVp-4-5> +, <Js-5-7> +, <Ds-6-7> +)
+	(<Dsu-0-2> ^ltype D ^lwleft 0 ^lwright 2)
+	(<Ss-2-3> ^ltype S ^lwleft 2 ^lwright 3)
+	(<Pv-3-4> ^ltype P ^lwleft 3 ^lwright 4)
+	(<MVp-4-5> ^ltype MV ^lwleft 4 ^lwright 5)
+	(<Js-5-7> ^ltype J ^lwleft 5 ^lwright 7)
+	(<Ds-6-7> ^ltype D ^lwleft 6 ^lwright 7)
+	(<words-1> ^word <this-0> +, <appliance-2> +, <is-3> +, <supplied-4> +, <with-5> +, <a-6> +, <plug-7> +)
+	(<this-0> ^wvalue this ^wcount 0)
+	(<appliance-2> ^wvalue appliance ^wcount 2)
+	(<is-3> ^wvalue is ^wcount 3)
+	(<supplied-4> ^wvalue supplied ^wcount 4)
+	(<with-5> ^wvalue with ^wcount 5)
+	(<a-6> ^wvalue a ^wcount 6)
+	(<plug-7> ^wvalue plug ^wcount 7)
+	
+	(<cs-2> ^count 1 ^links <links-2> ^words <words-2>)
+	(<links-2> ^link <Ds-0-3> +, <AN-2-3> +, <Ss-3-4> +, <Pv-4-5> +, <MVp-5-6> +, <Js-6-8> +, <Ds-7-8> +)
+	(<Ds-0-3> ^ltype D ^lwleft 0 ^lwright 3)
+	(<AN-2-3> ^ltype AN ^lwleft 2 ^lwright 3)
+	(<Ss-3-4> ^ltype S ^lwleft 3 ^lwright 4)
+	(<Pv-4-5> ^ltype P ^lwleft 4 ^lwright 5)
+	(<MVp-5-6> ^ltype MV ^lwleft 5 ^lwright 6)
+	(<Js-6-8> ^ltype J ^lwleft 6 ^lwright 8)
+	(<Ds-7-8> ^ltype D ^lwleft 7 ^lwright 8)
+	(<words-2> ^word <an-0> +, <amp-2> +, <fuse-3> +, <is-4> +, <fitted-5> +, <in-6> +, <the-7> +, <plug-8> +)
+	(<an-0> ^wvalue an ^wcount 0)
+	(<amp-2> ^wvalue amp ^wcount 2)
+	(<fuse-3> ^wvalue fuse ^wcount 3)
+	(<is-4> ^wvalue is ^wcount 4)
+	(<fitted-5> ^wvalue fitted ^wcount 5)
+	(<in-6> ^wvalue in ^wcount 6)
+	(<the-7> ^wvalue the ^wcount 7)
+	(<plug-8> ^wvalue plug ^wcount 8)}
+
+# C&P stuff:
+# (<links> ^link <aaa-nn-nn> +,
+# (vvv ^ltype aa ^lwleft nn ^lwright nn)
+# (<words> ^word <aaa-nn> +,
+# (<aaa-nn> ^wvalue aaa ^wcount nn)
+
+### A farmer walks.  He laughed.
+
+sp {tests*create*lgparse*A-farmer-walks*He-laughed
+(state <s> ^problem-space.name A-farmer-walks*He-laughed)
+(<s> ^io <io>)
+-->
+(<io> ^total-sentences 2)
+(<io> ^lgsentence <L1> +)
+(<L1> ^count 0 ^links <L2> ^words <W1>)
+(<io> ^lgsentence <L8> +)
+(<L8> ^count 1 ^links <L9> ^words <W8>)
+(<W8> ^word <W9> +)
+(<W9> ^wvalue LEFT-WALL ^wcount 0)
+(<L9> ^link <L11> +)
+(<L11> ^ltype W ^lwleft 0 ^lwright 1 ^ltypesub d)
+(<L9> ^link <L10> +)
+(<L10> ^ltype X ^lwleft 0 ^lwright 3 ^ltypesub p)
+(<W8> ^word <W10> +)
+(<W10> ^wvalue he ^wcount 1)
+(<L9> ^link <L12> +)
+(<L12> ^ltype S ^lwleft 1 ^lwright 2 ^ltypesub s)
+(<W8> ^word <W11> +)
+(<W11> ^wvalue laughed ^wcount 2)
+(<W8> ^word <W12> +)
+(<W12> ^wvalue |.| ^wcount 3)
+(<L9> ^link <L13> +)
+(<L13> ^ltype RW ^lwleft 3 ^lwright 4 ^ltypesub nil)
+(<W8> ^word <W13> +)
+(<W13> ^wvalue RIGHT-WALL ^wcount 4)
+(<W1> ^word <W2> +)
+(<W2> ^wvalue LEFT-WALL ^wcount 0)
+(<L2> ^link <L4> +)
+(<L4> ^ltype W ^lwleft 0 ^lwright 2 ^ltypesub d)
+(<L2> ^link <L3> +)
+(<L3> ^ltype X ^lwleft 0 ^lwright 4 ^ltypesub p)
+(<W1> ^word <W3> +)
+(<W3> ^wvalue a ^wcount 1)
+(<L2> ^link <L5> +)
+(<L5> ^ltype D ^lwleft 1 ^lwright 2 ^ltypesub s)
+(<W1> ^word <W4> +)
+(<W4> ^wvalue farmer ^wcount 2)
+(<L2> ^link <L6> +)
+(<L6> ^ltype S ^lwleft 2 ^lwright 3 ^ltypesub s)
+(<W1> ^word <W5> +)
+(<W5> ^wvalue walked ^wcount 3)
+(<W1> ^word <W6> +)
+(<W6> ^wvalue |.| ^wcount 4)
+(<L2> ^link <L7> +)
+(<L7> ^ltype RW ^lwleft 4 ^lwright 5 ^ltypesub nil)
+(<W1> ^word <W7> +)
+(<W7> ^wvalue RIGHT-WALL ^wcount 5)
+}
+
+### Tom walks.  John does too.
+
+sp {tests*create*lgparse*Tom-walks*John-does-to
+(state <s> ^problem-space.name Tom-walks*John-does-to)
+(<s> ^io <io>)
+-->
+(<io> ^total-sentences 2)
+(<io> ^lgsentence <L1> +)
+(<L1> ^count 0 ^links <L2> ^words <W1>)
+(<io> ^lgsentence <L7> +)
+(<L7> ^count 1 ^links <L8> ^words <W7>)
+(<W7> ^word <W8> +)
+(<W8> ^wvalue LEFT-WALL ^wcount 0)
+(<L8> ^link <L10> +)
+(<L10> ^ltype W ^lwleft 0 ^lwright 1 ^ltypesub d)
+(<L8> ^link <L9> +)
+(<L9> ^ltype X ^lwleft 0 ^lwright 4 ^ltypesub p)
+(<W7> ^word <W9> +)
+(<W9> ^wvalue John ^wcount 1)
+(<L8> ^link <L11> +)
+(<L11> ^ltype S ^lwleft 1 ^lwright 2 ^ltypesub s)
+(<W7> ^word <W10> +)
+(<W10> ^wvalue does ^wcount 2)
+(<L8> ^link <L12> +)
+(<L12> ^ltype MV ^lwleft 2 ^lwright 3 ^ltypesub a)
+(<W7> ^word <W11> +)
+(<W11> ^wvalue too ^wcount 3)
+(<W7> ^word <W12> +)
+(<W12> ^wvalue |.| ^wcount 4)
+(<L8> ^link <L13> +)
+(<L13> ^ltype RW ^lwleft 4 ^lwright 5 ^ltypesub nil)
+(<W7> ^word <W13> +)
+(<W13> ^wvalue RIGHT-WALL ^wcount 5)
+(<W1> ^word <W2> +)
+(<W2> ^wvalue LEFT-WALL ^wcount 0)
+(<L2> ^link <L4> +)
+(<L4> ^ltype W ^lwleft 0 ^lwright 1 ^ltypesub d)
+(<L2> ^link <L3> +)
+(<L3> ^ltype X ^lwleft 0 ^lwright 3 ^ltypesub p)
+(<W1> ^word <W3> +)
+(<W3> ^wvalue Tom ^wcount 1)
+(<L2> ^link <L5> +)
+(<L5> ^ltype S ^lwleft 1 ^lwright 2 ^ltypesub s)
+(<W1> ^word <W4> +)
+(<W4> ^wvalue walks ^wcount 2)
+(<W1> ^word <W5> +)
+(<W5> ^wvalue |.| ^wcount 3)
+(<L2> ^link <L6> +)
+(<L6> ^ltype RW ^lwleft 3 ^lwright 4 ^ltypesub nil)
+(<W1> ^word <W6> +)
+(<W6> ^wvalue RIGHT-WALL ^wcount 4)
+}
+
+### Tom loves his cat. John does too.
+
+sp {tests*create*lgparse*Tom-loves-his-cat*John-does-too
+(state <s> ^problem-space.name Tom-loves-his-cat*John-does-too)
+(<s> ^io <io>)
+-->
+(<io> ^total-sentences 2)
+(<io> ^lgsentence <L1> +)
+(<L1> ^count 0 ^links <L2> ^words <W1>)
+(<io> ^lgsentence <L9> +)
+(<L9> ^count 1 ^links <L10> ^words <W9>)
+(<W9> ^word <W10> +)
+(<W10> ^wvalue LEFT-WALL ^wcount 0)
+(<L10> ^link <L12> +)
+(<L12> ^ltype W ^lwleft 0 ^lwright 1 ^ltypesub d)
+(<L10> ^link <L11> +)
+(<L11> ^ltype X ^lwleft 0 ^lwright 4 ^ltypesub p)
+(<W9> ^word <W11> +)
+(<W11> ^wvalue John ^wcount 1)
+(<L10> ^link <L13> +)
+(<L13> ^ltype S ^lwleft 1 ^lwright 2 ^ltypesub s)
+(<W9> ^word <W12> +)
+(<W12> ^wvalue does ^wcount 2)
+(<L10> ^link <L14> +)
+(<L14> ^ltype MV ^lwleft 2 ^lwright 3 ^ltypesub a)
+(<W9> ^word <W13> +)
+(<W13> ^wvalue too ^wcount 3)
+(<W9> ^word <W14> +)
+(<W14> ^wvalue |.| ^wcount 4)
+(<L10> ^link <L15> +)
+(<L15> ^ltype RW ^lwleft 4 ^lwright 5 ^ltypesub nil)
+(<W9> ^word <W15> +)
+(<W15> ^wvalue RIGHT-WALL ^wcount 5)
+(<W1> ^word <W2> +)
+(<W2> ^wvalue LEFT-WALL ^wcount 0)
+(<L2> ^link <L4> +)
+(<L4> ^ltype W ^lwleft 0 ^lwright 1 ^ltypesub d)
+(<L2> ^link <L3> +)
+(<L3> ^ltype X ^lwleft 0 ^lwright 5 ^ltypesub p)
+(<W1> ^word <W3> +)
+(<W3> ^wvalue Tom ^wcount 1)
+(<L2> ^link <L5> +)
+(<L5> ^ltype S ^lwleft 1 ^lwright 2 ^ltypesub s)
+(<W1> ^word <W4> +)
+(<W4> ^wvalue loves ^wcount 2)
+(<L2> ^link <L6> +)
+(<L6> ^ltype O ^lwleft 2 ^lwright 4 ^ltypesub s)
+(<W1> ^word <W5> +)
+(<W5> ^wvalue his ^wcount 3)
+(<L2> ^link <L7> +)
+(<L7> ^ltype D ^lwleft 3 ^lwright 4 ^ltypesub s)
+(<W1> ^word <W6> +)
+(<W6> ^wvalue cat ^wcount 4)
+(<W1> ^word <W7> +)
+(<W7> ^wvalue |.| ^wcount 5)
+(<L2> ^link <L8> +)
+(<L8> ^ltype RW ^lwleft 5 ^lwright 6 ^ltypesub nil)
+(<W1> ^word <W8> +)
+(<W8> ^wvalue RIGHT-WALL ^wcount 6)
+}
+
+### Smith spent his paycheck. Jones saved it.
+
+sp {tests*create*lgparse*Smith-spent-his-paycheck*Jones-saved-it
+(state <s> ^problem-space.name Smith-spent-his-paycheck*Jones-saved-it)
+(<s> ^io <io>)
+-->
+(<io> ^total-sentences 2)
+(<io> ^lgsentence <L1> +)
+(<L1> ^count 0 ^links <L2> ^words <W1>)
+(<io> ^lgsentence <L9> +)
+(<L9> ^count 1 ^links <L10> ^words <W9>)
+(<W9> ^word <W10> +)
+(<W10> ^wvalue LEFT-WALL ^wcount 0)
+(<L10> ^link <L12> +)
+(<L12> ^ltype W ^lwleft 0 ^lwright 1 ^ltypesub d)
+(<L10> ^link <L11> +)
+(<L11> ^ltype X ^lwleft 0 ^lwright 4 ^ltypesub p)
+(<W9> ^word <W11> +)
+(<W11> ^wvalue Jones ^wcount 1)
+(<L10> ^link <L13> +)
+(<L13> ^ltype S ^lwleft 1 ^lwright 2 ^ltypesub nil)
+(<W9> ^word <W12> +)
+(<W12> ^wvalue saved ^wcount 2)
+(<L10> ^link <L14> +)
+(<L14> ^ltype O ^lwleft 2 ^lwright 3 ^ltypesub x)
+(<W9> ^word <W13> +)
+(<W13> ^wvalue it ^wcount 3)
+(<W9> ^word <W14> +)
+(<W14> ^wvalue |.| ^wcount 4)
+(<L10> ^link <L15> +)
+(<L15> ^ltype RW ^lwleft 4 ^lwright 5 ^ltypesub nil)
+(<W9> ^word <W15> +)
+(<W15> ^wvalue RIGHT-WALL ^wcount 5)
+(<W1> ^word <W2> +)
+(<W2> ^wvalue LEFT-WALL ^wcount 0)
+(<L2> ^link <L4> +)
+(<L4> ^ltype W ^lwleft 0 ^lwright 1 ^ltypesub d)
+(<L2> ^link <L3> +)
+(<L3> ^ltype X ^lwleft 0 ^lwright 5 ^ltypesub p)
+(<W1> ^word <W3> +)
+(<W3> ^wvalue Smith ^wcount 1)
+(<L2> ^link <L5> +)
+(<L5> ^ltype S ^lwleft 1 ^lwright 2 ^ltypesub s)
+(<W1> ^word <W4> +)
+(<W4> ^wvalue spent ^wcount 2)
+(<L2> ^link <L6> +)
+(<L6> ^ltype O ^lwleft 2 ^lwright 4 ^ltypesub s)
+(<W1> ^word <W5> +)
+(<W5> ^wvalue his ^wcount 3)
+(<L2> ^link <L7> +)
+(<L7> ^ltype D ^lwleft 3 ^lwright 4 ^ltypesub nil)
+(<W1> ^word <W6> +)
+(<W6> ^wvalue paycheck ^wcount 4 ^gender neuter)
+(<W1> ^word <W7> +)
+(<W7> ^wvalue |.| ^wcount 5)
+(<L2> ^link <L8> +)
+(<L8> ^ltype RW ^lwleft 5 ^lwright 6 ^ltypesub nil)
+(<W1> ^word <W8> +)
+(<W8> ^wvalue RIGHT-WALL ^wcount 6)
+}
+
+### When Harry sings,  I always conceal my belief that he should not.  When he gambles, I can't conceal it.
+
+sp {tests*create*lgparse*When-Harry-sings-I-always-conceal-my-belief-that-he-should-not*When-he-gambles-I-cant-conceal-it
+(state <s> ^problem-space.name When-Harry-sings-I-always-conceal-my-belief-that-he-should-not*When-he-gambles-I-cant-conceal-it)
+(<s> ^io <io>)
+-->
+(<io> ^total-sentences 2)
+(<io> ^lgsentence <L1> +)
+(<L1> ^count 0 ^links <L2> ^words <W1>)
+(<io> ^lgsentence <L18> +)
+(<L18> ^count 1 ^links <L19> ^words <W18>)
+(<W18> ^word <W19> +)
+(<W19> ^wvalue LEFT-WALL ^wcount 0)
+(<L19> ^link <L21> +)
+(<L21> ^ltype W ^lwleft 0 ^lwright 5 ^ltypesub d)
+(<L19> ^link <L20> +)
+(<L20> ^ltype X ^lwleft 0 ^lwright 9 ^ltypesub p)
+(<W18> ^word <W20> +)
+(<W20> ^wvalue when ^wcount 1)
+(<L19> ^link <L24> +)
+(<L24> ^ltype C ^lwleft 1 ^lwright 2 ^ltypesub s)
+(<L19> ^link <L23> +)
+(<L23> ^ltype X ^lwleft 1 ^lwright 4 ^ltypesub c)
+(<L19> ^link <L22> +)
+(<L22> ^ltype CO ^lwleft 1 ^lwright 5 ^ltypesub nil)
+(<W18> ^word <W21> +)
+(<W21> ^wvalue he ^wcount 2)
+(<L19> ^link <L25> +)
+(<L25> ^ltype S ^lwleft 2 ^lwright 3 ^ltypesub s)
+(<W18> ^word <W22> +)
+(<W22> ^wvalue gambles ^wcount 3)
+(<W18> ^word <W23> +)
+(<W23> ^wvalue |,| ^wcount 4)
+(<W18> ^word <W24> +)
+(<W24> ^wvalue I ^wcount 5)
+(<L19> ^link <L26> +)
+(<L26> ^ltype S ^lwleft 5 ^lwright 6 ^ltypesub p)
+(<W18> ^word <W25> +)
+(<W25> ^wvalue |can't| ^wcount 6)
+(<L19> ^link <L27> +)
+(<L27> ^ltype I ^lwleft 6 ^lwright 7 ^ltypesub nil)
+(<W18> ^word <W26> +)
+(<W26> ^wvalue conceal ^wcount 7)
+(<L19> ^link <L28> +)
+(<L28> ^ltype O ^lwleft 7 ^lwright 8 ^ltypesub x)
+(<W18> ^word <W27> +)
+(<W27> ^wvalue it ^wcount 8)
+(<W18> ^word <W28> +)
+(<W28> ^wvalue |.| ^wcount 9)
+(<L19> ^link <L29> +)
+(<L29> ^ltype RW ^lwleft 9 ^lwright 10 ^ltypesub nil)
+(<W18> ^word <W29> +)
+(<W29> ^wvalue RIGHT-WALL ^wcount 10)
+(<W1> ^word <W2> +)
+(<W2> ^wvalue LEFT-WALL ^wcount 0)
+(<L2> ^link <L4> +)
+(<L4> ^ltype W ^lwleft 0 ^lwright 5 ^ltypesub d)
+(<L2> ^link <L3> +)
+(<L3> ^ltype X ^lwleft 0 ^lwright 14 ^ltypesub p)
+(<W1> ^word <W3> +)
+(<W3> ^wvalue when ^wcount 1)
+(<L2> ^link <L7> +)
+(<L7> ^ltype C ^lwleft 1 ^lwright 2 ^ltypesub s)
+(<L2> ^link <L6> +)
+(<L6> ^ltype X ^lwleft 1 ^lwright 4 ^ltypesub c)
+(<L2> ^link <L5> +)
+(<L5> ^ltype CO ^lwleft 1 ^lwright 5 ^ltypesub nil)
+(<W1> ^word <W4> +)
+(<W4> ^wvalue Harry ^wcount 2)
+(<L2> ^link <L8> +)
+(<L8> ^ltype S ^lwleft 2 ^lwright 3 ^ltypesub s)
+(<W1> ^word <W5> +)
+(<W5> ^wvalue sings ^wcount 3)
+(<W1> ^word <W6> +)
+(<W6> ^wvalue |,| ^wcount 4)
+(<W1> ^word <W7> +)
+(<W7> ^wvalue I ^wcount 5)
+(<L2> ^link <L9> +)
+(<L9> ^ltype S ^lwleft 5 ^lwright 7 ^ltypesub p)
+(<W1> ^word <W8> +)
+(<W8> ^wvalue always ^wcount 6)
+(<L2> ^link <L10> +)
+(<L10> ^ltype E ^lwleft 6 ^lwright 7 ^ltypesub nil)
+(<W1> ^word <W9> +)
+(<W9> ^wvalue conceal ^wcount 7)
+(<L2> ^link <L11> +)
+(<L11> ^ltype O ^lwleft 7 ^lwright 9 ^ltypesub s)
+(<W1> ^word <W10> +)
+(<W10> ^wvalue my ^wcount 8)
+(<L2> ^link <L12> +)
+(<L12> ^ltype D ^lwleft 8 ^lwright 9 ^ltypesub nil)
+(<W1> ^word <W11> +)
+(<W11> ^wvalue belief ^wcount 9 ^gender neuter)
+(<L2> ^link <L13> +)
+(<L13> ^ltype TH ^lwleft 9 ^lwright 10 ^ltypesub nil)
+(<W1> ^word <W12> +)
+(<W12> ^wvalue that ^wcount 10)
+(<L2> ^link <L14> +)
+(<L14> ^ltype C ^lwleft 10 ^lwright 11 ^ltypesub et)
+(<W1> ^word <W13> +)
+(<W13> ^wvalue he ^wcount 11)
+(<L2> ^link <L15> +)
+(<L15> ^ltype S ^lwleft 11 ^lwright 12 ^ltypesub s)
+(<W1> ^word <W14> +)
+(<W14> ^wvalue should ^wcount 12)
+(<L2> ^link <L16> +)
+(<L16> ^ltype N ^lwleft 12 ^lwright 13 ^ltypesub nil)
+(<W1> ^word <W15> +)
+(<W15> ^wvalue not ^wcount 13)
+(<W1> ^word <W16> +)
+(<W16> ^wvalue |.| ^wcount 14)
+(<L2> ^link <L17> +)
+(<L17> ^ltype RW ^lwleft 14 ^lwright 15 ^ltypesub nil)
+(<W1> ^word <W17> +)
+(<W17> ^wvalue RIGHT-WALL ^wcount 15)
+}
+
+# File: global.soar
+# Author: William Taysom
+# Version 2.0: July 24, 2001
+# Created: July 6, 2001
+#
+# Operators:	start-next-sentence (0), processing-complete (0), find-root (205),
+#				return-to-nil
+# Preference:	prefer*operator-with-highest-priority, prefer*operator-with-lowest-order
+# Other:		terminate*operator, halt
+#
+# TO DO:
+#
+
+## start-next-sentence
+
+sp {global*propose*start-next-sentence
+	(state <s> ^impasse no-change ^superstate <ss>)
+	(<ss> ^superstate <sss>)
+	(<sss> ^superstate nil -^io.total-sentences <count> ^count <count>)
+-->
+	(<sss> ^operator <o> + >)
+	(<o> ^name start-next-sentence ^priority 0 ^count <count> ^complete? no)}
+
+sp	{global*apply*start-next-sentence
+	:o-support
+	(state <s> ^operator <o> ^refsets <refsets> ^root <root> ^anaphor <a>)
+	(<o> ^name start-next-sentence ^count <count> ^complete? no)
+-->
+	(<a> ^unblock? no - general +)
+	(<s> ^root <root> - 0 +)
+	(<s> ^count <count> - (+ 1 <count>))
+	(<refsets> ^refs <refs> +)
+	(<refs> ^count (+ 1 <count>))
+	(<o> ^complete?x yes +)}
+
+## processing-complete
+
+sp	{global*propose*processing-complete
+	(state <s> ^io.total-sentences <total> ^count <total>)
+-->
+	(<s> ^operator <o> + >)
+	(<o> ^name processing-complete ^priority 0 ^complete? no)}
+
+sp	{global*apply*processing-complete
+	(state <s> ^operator <o> ^count <count> ^refsets <refsets>)
+	(<refsets> ^refs <refs>)
+	(<refs> ^count <count>)
+	(<o> ^name processing-complete)
+-->
+	(<o> ^complete?x yes +)
+	(<refsets> ^refs <refs> -)
+	(<s> ^halt immediately)}
+
+## find-root
+
+sp	{global*propose*find-root
+	(state <s> ^count <count> ^io.lgsentence <cs> ^root <old>)
+	(<cs> ^count <count> ^links.link <link> ^words.word <child> <parent>)
+	(<child> ^wcount <old>)
+	(<parent> ^wcount <new>)
+	(<link> ^lwleft <old> ^lwright <new>)
+	(<link> ^ltype << AN D A AA AF AM AN BW D DD DG DP DT E EA EC EE EI EN EZ G GN H I MF ND NF NN
+					  NR NS NT NW P S SX TD TH TI TM TO W WR Y YP YS >>)
+-->
+	(<s> ^operator <o> + >)
+	(<o> ^name find-root ^priority 170 ^new <new> ^complete? no)}
+
+sp	{global*apply*find-root
+    :o-support
+	(state <s> ^operator <o> ^root <old>)
+	(<o> ^name find-root ^new <new> -^complete?x)
+-->
+	(<s> ^root <old> - <new> +)
+	(<o> ^complete?x yes +)}
+	
+	
+## return-to-nil
+
+sp	{global*propose*return-to-nil
+	(state <s> ^superstate <ss>)
+	(<ss> ^count <count> ^refsets.refs <refs>)
+	(<refs> ^count <count> ^ref <ref>)
+	(<ref> ^return-to-nil ^head.wcount <wcount>)
+-->
+	(<ss> ^operator <o> +)
+	(<o> ^name return-to-nil ^order <wcount> ^ref <ref> ^complete? no)}
+
+sp	{global*apply*return-to-nil*if-refs-not-marked-complete
+	(state <s> ^operator <o> ^io.lgsentence.words.word <word> ^count <count> ^refsets.refs <refs>)
+	(<refs> ^count <count> -^complete?)
+	(<o> ^name return-to-nil ^ref <ref> ^complete? no)
+	(<ref> ^return-to-nil <rcount> ^head <head>)
+	(<head> ^wcount <wcount>)
+	(<word> ^return <wcount>)
+-->
+	(<head> ^wcount <wcount> - <rcount> +)
+	(<word> ^return <wcount> -)
+	(<word> ^wcount <wcount>)
+	(<refs> ^complete?x yes)
+	(<ref> ^return-to-nil <rcount> -)
+	(<ref> ^special empty +)
+	(<o> ^complete?x yes +)}
+
+sp	{global*apply*return-to-nil*if-refs-marked-complete
+	(state <s> ^operator <o> ^io.lgsentence.words.word <word> ^count <count> ^refsets.refs <refs>)
+	(<refs> ^count <count> ^complete?)
+	(<o> ^name return-to-nil ^ref <ref> ^complete? no)
+	(<ref> ^return-to-nil <rcount> ^head <head>)
+	(<head> ^wcount <wcount>)
+	(<word> ^return <wcount>)
+-->
+	(<head> ^wcount <wcount> - <rcount> +)
+	(<word> ^return <wcount> -)
+	(<word> ^wcount <wcount>)
+	(<ref> ^return-to-nil <rcount> -)
+	(<ref> ^special empty +)
+	(<o> ^complete?x yes +)}
+
+
+## Preference Rules
+# Prefer operator with highest priority
+
+sp	{global*prefer*operator-with-highest-priority
+	(state <s> ^operator <deferred> + <preferred> +)
+	(<deferred> ^priority <def-priority>)
+	(<preferred> ^priority <pref-priority> > <def-priority>)
+-->
+	(<s> ^operator <preferred> > <deferred>)}
+
+# Prefer operator with lowest linear order if priority is equal
+
+sp	{global*prefer*operator-with-lowest-order*if-priority-is-equal
+	(state <s> ^operator <deferred> + <preferred> +)
+	(<deferred> ^priority <priority> ^order <last>)
+	(<preferred> ^priority <priority> ^order <first> < <last>)
+-->
+	(<s> ^operator <preferred> > <deferred>)}
+
+# Prefer operator with lowest lexical (level 2) order if (level 1) order is equal
+
+sp	{global*prefer*operator-with-lowest-order*if-order-is-equal
+	(state <s> ^operator <deferred> + <preferred> +)
+	(<deferred> ^priority <priority> ^order <order> ^level-two-order <last>)
+	(<preferred> ^priority <priority> ^order <order> ^level-two-order <first> < <last>)
+-->
+	(<s> ^operator <preferred> > <deferred>)}
+
+	
+## Terminate operators
+
+sp	{global*terminate*operator
+	(state <s> ^operator <o>)
+	(<o> ^complete?x yes)
+-->
+	(<o> ^annotationDWL terminate-me +)
+	}
+
+## Halt
+
+sp	{global*halt
+	(state <s> ^halt immediately)
+-->
+	(halt)
+}
+
+
+# File: anaphor.soar
+# Author: William Taysom
+# Version 2.0: July 24, 2001
+# Created: July 7, 2001
+#
+# Desc: Provides semantic interpretation of lgtree syntax.
+#
+# Operators: unblock-center, unblocking-finished, add-center, rip, cascade, merge, remove-center,
+#			 remove-non-elliptically-included-semantics, expand-contraction
+#	Resolve: propose: he-she-him*as*third, ellipsis*as*verb, I-me*as*first
+#			 		  his-her-its*as*third*when-coref-with-blocked-pos,
+#					  I-me*as*unidentified-speaker,
+#					  my*as*third*when-coref-with-blocked-pos,
+#					  special-empty*as*special-fill
+#			 apply: pronoun, ellipsis, pos, unidentified, special-fill
+#	add-elliptical-verb-syntax: I - did does do will should shall must might could can
+#	expand-contraction: can't, cannot - can not
+#
+# TO DO:
+#
+
+## expand-contraction
+
+sp	{anaphor*propose*expand-contraction*to*can-not
+	(state <s> ^count <count> ^io.lgsentence <cs>)
+	(<cs> ^count <count> ^links <links> ^words.word <cont>)
+	(<cont> ^wcount <wcount> ^wvalue << |can't| cannot >>)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name expand-contraction ^priority 205 ^word <cont> ^order <wcount> ^new-wvalue-left can
+		 ^new-wvalue-right not ^ltype N ^complete? no)}
+
+sp	{anaphor*apply*expand-contraction
+	(state <s> ^operator <o> ^count <count> ^io.lgsentence <cs>)
+	(<o> ^name expand-contraction ^word <cont> ^order <wcount> ^complete? no
+		 ^new-wvalue-left <new-wvalue-left> ^new-wvalue-right <new-wvalue-right> ^ltype <ltype>)
+	(<cs> ^count <count> ^links <links> ^words <words>)
+	(<words> ^word <cont>)
+	(<cont> ^wvalue <old-wvalue>)
+-->
+	(<cont> ^wvalue <old-wvalue> - <new-wvalue-left> +)
+	(<links> ^link <link> +)
+	(<words> ^word <new-word> +)
+	(<link> ^ltype <ltype> ^lwleft <wcount> ^lwright (+ <wcount> .2))
+	(<new-word> ^wvalue <new-wvalue-right> ^wcount (+ <wcount> .2))
+	(<o> ^complete?x yes +)}
+
+## add-elliptical-verb-syntax
+
+sp	{anaphor*propose*add-elliptical-verb-syntax*for-expected-I-link
+	(state <s> ^count <count> ^io.lgsentence <cs>)
+	(<cs> ^count <count> ^links <links> ^words.word <infl>)
+	(<infl> ^wcount <wcount> ^wvalue << did does do will should shall must might could can >>)
+  -{(<links> ^link <link>)
+  	(<link> ^ltype I ^lwleft <wcount>)}
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name add-elliptical-verb-syntax ^priority 205 ^word <infl> ^ltype I
+		 ^order <wcount> ^complete? no)}
+
+sp	{anaphor*apply*add-elliptical-verb-syntax
+  :o-support
+	(state <s> ^operator <o> ^count <count> ^io.lgsentence <cs>)
+	(<o> ^name add-elliptical-verb-syntax ^word <word> ^ltype <ltype> ^order <wcount>)
+	(<cs> ^count <count> ^links <links> ^words <words>)
+-->
+	(<links> ^link <link> +)
+	(<words> ^word <empty> +)
+	(<empty> ^wcount (+ <wcount> .5) ^wvalue nil)
+	(<link> ^ltype <ltype> ^ltypesub soar-generated ^lwleft <wcount> ^lwright (+ <wcount> .5))
+	(<o> ^complete?x yes +)}
+
+## unblock-center
+
+sp	{anaphor*propose*unblock-center*general
+	(state <s> ^anaphor <a>)
+	(<a> ^centers <centers> ^unblock? general)
+	(<centers> ^center <center>)
+	(<center> ^blocked? yes ^ccount <ccount>)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name unblock-center ^priority 210 ^center <center> ^order <ccount> ^complete? no)}
+
+sp	{anaphor*apply*unblock-center
+	:o-support
+	(state <s> ^operator <o>)
+	(<o> ^name unblock-center ^center <center>)
+-->
+	(<center> ^blocked? yes - no +)
+	(<o> ^complete?x yes +)}
+
+## unblocking-finished
+
+sp	{anaphor*propose*unblocking-finished
+	(state <s> ^anaphor <a>)
+	(<a> -^unblock? no)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name unblocking-finished ^priority 209 ^complete? no)}
+
+sp	{anaphor*apply*unblocking-finished
+	:o-support
+	(state <s> ^operator <o> ^anaphor <a>)
+	(<o> ^name unblocking-finished)
+	(<a> ^unblock? {<> no <not-no>})
+-->
+	(<a> ^unblock? <not-no> - no +)
+	(<o> ^complete?x yes +)}
+
+## add-center
+
+sp	{anaphor*propose*add-verb-center
+	(state <s> ^refsets.refs.ref <ref> ^anaphor.acount <acount>)
+	(<ref> ^rooted-in <something> -^center)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name add-center ^priority 203 ^kind verb ^ref <ref> ^new-acount (+ <acount> 1)
+		 ^complete? no)}
+
+sp	{anaphor*propose*add-first-center
+	(state <s> ^refsets.refs.ref <ref> ^anaphor.acount <acount>)
+	(<ref> ^head.wvalue << I me mine >> -^center)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name add-center ^priority 203 ^kind first ^ref <ref> ^new-acount (+ <acount> 1)
+		 ^complete? no)}
+
+
+sp	{anaphor*propose*add-second-center
+	(state <s> ^refsets.refs.ref <ref> ^anaphor.acount <acount>)
+	(<ref> ^head.wvalue << you yours >> -^center)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name add-center ^priority 203 ^kind second ^ref <ref> ^new-acount (+ <acount> 1)
+		 ^complete? no)}
+
+sp	{anaphor*propose*add-third-center
+	(state <s> ^refsets.refs.ref <ref> ^anaphor.acount <acount>)
+	(<ref> -^rooted-in -^head.wvalue << I me my mine you your yours its his her >> -^center)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name add-center ^priority 203 ^kind third ^ref <ref> ^new-acount (+ <acount> 1)
+		 ^complete? no)}
+
+sp	{anaphor*apply*add-center
+    :o-support
+	(state <s> ^operator <o> ^anaphor <a>)
+	(<o> ^name add-center ^kind <kind> ^ref <ref> ^new-acount <new-acount> ^complete? no)
+	(<a> ^acount <acount> ^centers <centers>)
+-->
+	(<a> ^acount <acount> - <new-acount> +)
+	(<centers> ^center <center> +)
+	(<center> ^blocked? yes ^kind <kind> ^ref <ref> ^ccount <acount>)
+	(<ref> ^center <center> +)
+	(<o> ^complete?x yes +)}
+
+sp	{anaphor*propose*add-third-center*out-of-order
+	(state <s> ^refsets.refs.ref <ref> ^anaphor.acount <acount>)
+	(<ref> -^rooted-in ^head.wvalue << its his her >> -^center)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name add-center-out-of-order ^priority 203 ^kind third ^ref <ref>
+		 ^out-acount (- <acount> 1.5) ^complete? no)}
+		 
+sp	{anaphor*propose*add-first-center*out-of-order
+	(state <s> ^refsets.refs.ref <ref> ^anaphor.acount <acount>)
+	(<ref> -^rooted-in ^head.wvalue my -^center)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name add-center-out-of-order ^priority 203 ^kind first ^ref <ref>
+		 ^out-acount (- <acount> 1.5) ^complete? no)}
+
+sp	{anaphor*apply*add-center*out-of-order
+  :o-support
+	(state <s> ^operator <o> ^anaphor <a>)
+	(<o> ^name add-center-out-of-order ^kind <kind> ^ref <ref> ^out-acount <out-acount>
+		 ^complete? no)
+	(<a> ^centers <centers>)
+-->
+	(<centers> ^center <center> +)
+	(<center> ^blocked? yes ^kind <kind> ^ref <ref> ^ccount <out-acount>)
+	(<ref> ^center <center> +)
+	(<o> ^complete?x yes +)}
+
+## resolve
+# proposal
+
+sp	{anaphor*propose*resolve*I-me*as*first
+	(state <s> ^refsets.refs.ref <ana-ref> ^anaphor.centers.center <ante-center>)
+	(<ana-ref> ^center <ana-center> -^strong-binding -^pointer
+			   ^head.wvalue << I me >>)
+	(<ante-center> ^blocked? no ^kind first ^ccount <ccount> ^ref <ante-ref>)
+	(<ante-ref> ^pointer <idea>)
+	(<ante-ref> -^head.gender neuter)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name resolve ^kind pronoun ^priority 201 ^ana-ref <ana-ref> ^ante-ref <ante-ref>
+		 ^order (- <ccount>) ^complete? no)}
+
+sp	{anaphor*propose*resolve*I-me*as*unidentified-speaker
+	(state <s> ^refsets.refs.ref <ana-ref> ^anaphor.centers.center <ante-center>)
+	(<ana-ref> ^center <ana-center> -^strong-binding -^pointer
+			   ^head.wvalue << I me >>)
+	(<ante-center> ^blocked? no ^kind first ^ccount <ccount> ^ref nil)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name resolve ^kind unidentified ^priority 201 ^ana-ref <ana-ref>
+		 ^order (- <ccount>) ^complete? no)}
+
+sp	{anaphor*propose*resolve*he-she-him-her*as*third
+	(state <s> ^refsets.refs.ref <ana-ref> ^anaphor.centers.center <ante-center>)
+	(<ana-ref> ^center <ana-center> -^strong-binding -^pointer
+			   ^head.wvalue << he him she her >>)
+	(<ante-center> ^blocked? no ^kind third ^ccount <ccount> ^ref <ante-ref>)
+	(<ante-ref> ^pointer <idea>)
+	(<ante-ref> -^head.gender neuter)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name resolve ^kind pronoun ^priority 201 ^ana-ref <ana-ref> ^ante-ref <ante-ref>
+		 ^order (- <ccount>) ^complete? no)}
+
+sp	{anaphor*propose*resolve*ellipsis*as*verb
+	(state <s> ^refsets.refs.ref <ana-ref> ^anaphor.centers.center <ante-center>)
+	(<ana-ref> ^center <ana-center> ^head.wvalue nil -^pointer)
+	(<ante-center> ^blocked? no ^kind verb ^ccount <ccount> ^ref <ante-ref>)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name resolve ^kind verb-ellipsis ^priority 201 ^ana-ref <ana-ref> ^ante-ref <ante-ref>
+		 ^order (- <ccount>) ^complete? no)}
+
+sp	{anaphor*propose*resolve*it*as*phrase
+	(state <s> ^refsets.refs.ref <ana-ref> ^anaphor.centers.center <ante-center>)
+	(<ana-ref> ^center <ana-center> ^head.wvalue it -^pointer)
+	(<ante-center> ^blocked? no ^kind third ^ccount <ccount> ^ref <ante-ref>)
+	(<ante-ref> ^head.gender neuter)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name resolve ^kind phrase-ellipsis ^priority 201 ^ana-ref <ana-ref> ^ante-ref <ante-ref>
+		 ^order (- <ccount>) ^complete? no)}
+
+sp	{anaphor*propose*resolve*his-her-its*as*third*when-coref-with-blocked-pos
+	(state <s> ^refsets.refs.ref <ana-ref> {<> <ante-ref> <pos-ref>}
+			   ^anaphor.centers.center <ante-center>)
+	(<ana-ref> ^center <ana-center> ^head.wvalue << her his its >> -^sloppy-binding -^pointer)
+	(<ante-center> ^blocked? yes ^kind third ^ccount <ccount> ^ref {<> <ana-ref> <ante-ref>})
+	(<pos-ref> ^pos <ana-ref>)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name resolve ^kind pos ^priority 201 ^ana-ref <ana-ref> ^ante-ref <ante-ref>
+		 ^pos-ref <pos-ref> ^order (- <ccount>) ^complete? no)}
+
+sp	{anaphor*propose*resolve*my*as*third*when-coref-with-blocked-pos
+	(state <s> ^refsets.refs.ref <ana-ref> {<> <ante-ref> <pos-ref>}
+			   ^anaphor.centers.center <ante-center>)
+	(<ana-ref> ^center <ana-center> ^head.wvalue my -^sloppy-binding -^pointer)
+	(<ante-center> ^blocked? yes ^kind first ^ccount <ccount> ^ref {<> <ana-ref> <ante-ref>})
+	(<pos-ref> ^pos <ana-ref>)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name resolve ^kind pos ^priority 201 ^ana-ref <ana-ref> ^ante-ref <ante-ref>
+		 ^pos-ref <pos-ref> ^order (- <ccount>) ^complete? no)}
+
+sp	{anaphor*propose*resolve*special-empty*as*special-fill
+	(state <s> ^refsets.refs.ref <ana-ref> ^anaphor.centers.center <ante-center>)
+	(<ana-ref> ^center <ana-center> ^special empty)
+	(<ante-center> ^blocked? no ^kind verb ^ccount <ccount> ^ref <ante-ref>)
+	(<s> ^refsets.refs.ref <ref>)
+	(<ref> ^aug <ana-ref> -^pointer)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name resolve ^kind special-fill ^priority 51 ^ana-ref <ana-ref> ^ante-ref <ante-ref>
+		 ^order (- <ccount>) ^complete? no)}
+
+# application
+
+sp	{anaphor*apply*resolve*special-fill
+	(state <s> ^operator <o>)
+	(<o> ^name resolve ^kind special-fill ^ana-ref <ana-ref> ^ante-ref <ante-ref> ^complete? no)
+	(<ante-ref> ^head.wvalue <new-wvalue>)
+	(<ana-ref> ^head <head>)
+	(<head> ^wvalue <old-wvalue>)
+-->
+	(<head> ^wvalue <old-wvalue> - <new-wvalue> +)
+	(<ana-ref> ^special empty -)
+	(<o> ^complete?x yes +)}
+
+sp	{anaphor*apply*unidentified
+	(state <s> ^operator <o> ^next-unidentified-individual <number>)
+	(<o> ^name resolve ^kind unidentified ^ana-ref <ana-ref> ^complete? no)
+	(<ana-ref> ^head <head>)
+	(<head> ^wvalue <wvalue>)
+-->
+	(<head> ^wvalue <wvalue> - <number> +)
+	(<s> ^next-unidentified-individual <number> - (+ <number> 1) +)
+	(<o> ^complete?x yes +)}
+
+sp	{anaphor*apply*pos-resolve
+	(state <s> ^operator <o> ^refsets.refs <refs>)
+	(<refs> ^ref <ana-ref>)
+	(<o> ^name resolve ^kind pos ^ana-ref <ana-ref> ^ante-ref <ante-ref> ^pos-ref <pos-ref>)
+-->
+	(<ana-ref> ^sloppy-binding <to>)
+	(<to> ^to <ante-ref>)
+	(<o> ^complete?x yes +)}
+
+sp	{anaphor*apply*pronoun-resolve*if-wcounts-unequal
+	(state <s> ^operator <o> ^refsets.refs <refs> <ante-refs> ^anaphor <anaphor>)
+	(<anaphor> ^merge <merge> ^cascades <cascs>)
+	(<o> ^name resolve ^kind pronoun ^ana-ref <ana-ref> ^ante-ref <ante-ref>)
+	(<refs> ^ref <ana-ref>)
+	(<ana-ref> ^center <center> ^head <ana-head>)
+	(<ana-head> ^wcount <ana-wcount>)
+	(<ante-ref> ^pointer <idea> ^head <ante-head>)
+	(<ante-refs> ^ref <ante-ref>)
+	(<ante-head> ^wcount { <> <ana-wcount> <ante-wcount>})
+	(<merge> ^temp <old-temp> ^replace <old-replace>)
+	(<cascs> ^ante-off-set <old-ante-off-set> ^ana-off-set <old-ana-off-set>)
+-->
+	(<refs> ^ref <ana-ref> - <ante-ref> +)
+	(<ana-head> ^ref <ana-ref> - <ante-ref> +)
+	(<ante-head> ^wcount <ante-wcount> - <ana-wcount> +)
+	(<center> ^ref <ana-ref> - <ante-ref> +)
+	(<merge> ^temp <old-temp> - <ana-ref> +)
+	(<merge> ^replace <old-replace> - <ante-ref> +)
+	(<cascs> ^cascading <ante-ref> +)
+	(<ante-ref> ^binding <idea>)
+	(<cascs> ^ante-off-set <old-ante-off-set> - <ante-wcount> +)
+	(<cascs> ^ana-off-set <old-ana-off-set> - <ana-wcount> +)
+	(<o> ^complete?x yes +)}
+
+sp	{anaphor*apply*pronoun-resolve*if-wcounts-equal
+	(state <s> ^operator <o> ^refsets.refs <refs> <ante-refs> ^anaphor <anaphor>)
+	(<anaphor> ^merge <merge> ^cascades <cascs>)
+	(<o> ^name resolve ^kind pronoun ^ana-ref <ana-ref> ^ante-ref <ante-ref>)
+	(<refs> ^ref <ana-ref>)
+	(<ana-ref> ^center <center> ^head <ana-head>)
+	(<ana-head> ^wcount <ana-wcount>)
+	(<ante-ref> ^pointer <idea> ^head <ante-head>)
+	(<ante-refs> ^ref <ante-ref>)
+	(<ante-head> ^wcount <ana-wcount>)
+	(<merge> ^temp <old-temp> ^replace <old-replace>)
+	(<cascs> ^ante-off-set <old-ante-off-set> ^ana-off-set <old-ana-off-set>)
+-->
+	(<refs> ^ref <ana-ref> - <ante-ref> +)
+	(<ana-head> ^ref <ana-ref> - <ante-ref> +)
+	(<center> ^ref <ana-ref> - <ante-ref> +)
+	(<merge> ^temp <old-temp> - <ana-ref> +)
+	(<merge> ^replace <old-replace> - <ante-ref> +)
+	(<cascs> ^cascading <ante-ref> +)
+	(<ante-ref> ^binding <idea>)
+	(<cascs> ^ante-off-set <old-ante-off-set> - <ana-wcount> +)
+	(<cascs> ^ana-off-set <old-ana-off-set> - <ana-wcount> +)
+	(<o> ^complete?x yes +)}
+
+sp	{anaphor*apply*verb-ellipsis-resolve*if-refs-does-not-have-ante-ref
+	(state <s> ^count <count> ^operator <o> ^refsets.refs <refs> <ante-refs> ^anaphor <anaphor>)
+	(<anaphor> ^merge <merge> ^cascades <cascs>)
+	(<o> ^name resolve ^kind verb-ellipsis ^ana-ref <ana-ref> ^ante-ref <ante-ref>)
+	(<refs> ^ref <ana-ref> -^ref <ante-ref>)
+	(<ana-ref> ^center <center> ^head <ana-head>)
+	(<ana-head> ^wcount <ana-wcount>)
+	(<ante-ref> ^pointer <idea> ^head <ante-head> ^rooted-in <old-count>)
+	(<ante-refs> ^ref <ante-ref>)
+	(<ante-head> ^wcount <ante-wcount>)
+	(<merge> ^temp <old-temp> ^replace <old-replace>)
+	(<cascs> ^ante-off-set <old-ante-off-set> ^ana-off-set <old-ana-off-set>)
+-->
+	(<refs> ^ref <ana-ref> - <ante-ref> +)
+	(<ana-head> ^ref <ana-ref> - <ante-ref> +)
+	(<ana-head> ^wcount <ana-wcount> -)
+	(<ana-head> ^return <ana-wcount> +)
+	(<ante-head> ^wcount <ante-wcount> - <ana-wcount> +)
+	(<center> ^ref <ana-ref> - <ante-ref> +)
+	(<merge> ^temp <old-temp> - <ana-ref> +)
+	(<merge> ^replace <old-replace> - <ante-ref> +)
+	(<cascs> ^cascading <ante-ref> +)
+	(<ante-refs> ^ref <ante-ref> -)
+	(<ante-ref> ^rooted-in <old-count> - <count> +)
+	(<ante-ref> ^return-to-nil <ante-wcount>)
+	(<cascs> ^ante-off-set <old-ante-off-set> - <ante-wcount> +)
+	(<cascs> ^ana-off-set <old-ana-off-set> - <ana-wcount> +)
+	(<o> ^complete?x yes +)}
+
+sp	{anaphor*apply*verb-ellipsis-resolve*if-refs-has-ante-ref
+	(state <s> ^count <count> ^operator <o> ^refsets.refs <refs> ^anaphor <anaphor>)
+	(<anaphor> ^merge <merge> ^cascades <cascs>)
+	(<o> ^name resolve ^kind verb-ellipsis ^ana-ref <ana-ref> ^ante-ref <ante-ref>)
+	(<refs> ^ref <ana-ref> <ante-ref>)
+	(<ana-ref> ^center <center> ^head <ana-head>)
+	(<ana-head> ^wcount <ana-wcount>)
+	(<ante-ref> ^pointer <idea> ^head <ante-head> ^rooted-in <old-count>)
+	(<ante-head> ^wcount <ante-wcount>)
+	(<merge> ^temp <old-temp> ^replace <old-replace>)
+	(<cascs> ^ante-off-set <old-ante-off-set> ^ana-off-set <old-ana-off-set>)
+-->
+	(<refs> ^ref <ana-ref> -)
+	(<ana-head> ^ref <ana-ref> - <ante-ref> +)
+	(<ana-head> ^wcount <ana-wcount> -)
+	(<ana-head> ^return <ana-wcount> +)
+	(<ante-head> ^wcount <ante-wcount> - <ana-wcount> +)
+	(<center> ^ref <ana-ref> - <ante-ref> +)
+	(<merge> ^temp <old-temp> - <ana-ref> +)
+	(<merge> ^replace <old-replace> - <ante-ref> +)
+	(<cascs> ^cascading <ante-ref> +)
+	(<ante-ref> ^rooted-in <old-count> - <count> +)
+	(<ante-ref> ^return-to-nil <ante-wcount>)
+	(<cascs> ^ante-off-set <old-ante-off-set> - <ante-wcount> +)
+	(<cascs> ^ana-off-set <old-ana-off-set> - <ana-wcount> +)
+	(<o> ^complete?x yes +)}
+
+sp	{anaphor*apply*phrase-ellipsis-resolve
+	(state <s> ^count <count> ^operator <o> ^refsets.refs <refs> <ante-refs> ^anaphor <anaphor>)
+	(<anaphor> ^merge <merge> ^cascades <cascs>)
+	(<o> ^name resolve ^kind phrase-ellipsis ^ana-ref <ana-ref> ^ante-ref <ante-ref>)
+	(<refs> ^ref <ana-ref>)
+	(<ana-ref> ^center <center> ^head <ana-head>)
+	(<ana-head> ^wcount <ana-wcount>)
+	(<ante-ref> ^pointer <idea> ^head <ante-head>)
+	(<ante-refs> ^ref <ante-ref>)
+	(<ante-head> ^wcount <ante-wcount>)
+	(<merge> ^temp <old-temp> ^replace <old-replace>)
+	(<cascs> ^ante-off-set <old-ante-off-set> ^ana-off-set <old-ana-off-set>)
+-->
+	(<refs> ^ref <ana-ref> - <ante-ref> +)
+	(<ana-head> ^ref <ana-ref> - <ante-ref> +)
+	(<ante-head> ^wcount <ante-wcount> - <ana-wcount> +)
+	(<center> ^ref <ana-ref> - <ante-ref> +)
+	(<merge> ^temp <old-temp> - <ana-ref> +)
+	(<merge> ^replace <old-replace> - <ante-ref> +)
+	(<cascs> ^cascading <ante-ref> +)
+	(<ante-refs> ^ref <ante-ref> -)
+	(<cascs> ^ante-off-set <old-ante-off-set> - <ante-wcount> +)
+	(<cascs> ^ana-off-set <old-ana-off-set> - <ana-wcount> +)
+	(<o> ^complete?x yes +)}
+
+## rip
+
+sp	{anaphor*propose*rip
+	(state <s> ^refsets.refs <refs> ^anaphor <anaphor>)
+	(<anaphor> ^acount <acount> ^merge <merge> ^cascades.records <records>)
+	(<merge> ^temp <temp> ^replace <replace>)
+	(<refs> ^count <count> ^ref <ref>)
+	(<ref> ^{<> pos <aug>} <replace> ^head.wcount <wcount> -^special)
+  -{(<records> ^record <record>)
+	(<record> ^ref <replace> ^cascaded-at <acount>)}
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name rip ^priority 204 ^ref <ref> ^aug <aug> ^replace <replace>
+		 ^order <count> ^level-two-order <wcount> ^complete? no)}
+	
+sp	{anaphor*apply*rip
+  :o-support
+	(state <s> ^operator <o>)
+	(<o> ^name rip ^ref <ref> ^aug <aug> ^replace <replace>)
+-->
+	(<ref> ^<aug> <replace> -)
+	(<o> ^complete?x yes +)}
+
+## cascade
+
+sp	{anaphor*propose*cascade*into-river
+	(state <s> ^refsets.refs <refs> ^anaphor.cascades <cascs>)
+	(<refs> ^ref <arg> ^count <count>)
+	(<cascs> ^cascading <casc>)
+	(<casc> ^{<> ext <aug>} <arg>)
+	(<arg> ^pointer <pointer> ^head.wcount <wcount>)
+	(<cascs> -^cascading <arg>)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name cascade ^priority 203 ^kind into-river ^river <arg>
+		 ^order <count> ^level-two-order <wcount> ^complete? no)}
+
+sp	{anaphor*apply*cascade*into-river
+	(state <s> ^count <count> ^operator <o> ^anaphor.cascades <cascs>
+			   ^refsets.refs <old-refs> {<> <old-refs> <new-refs>})
+	(<new-refs> ^count <count>)
+	(<old-refs> ^ref <arg>)
+	(<o> ^name cascade ^kind into-river ^river <arg>)
+	(<arg> ^head <head> ^center <center>)
+	(<head> ^wcount <wcount>)
+	(<cascs> ^ante-off-set <ante-off-set> ^ana-off-set <ana-off-set>)
+-->
+	(<cascs> ^cascading <arg> +)
+	(<head> ^wcount <wcount> - (+ (+ (- <wcount> <ante-off-set>) .2) <ana-off-set>))
+	(<arg> ^remove center)
+	(<old-refs> ^ref <arg> -)
+	(<new-refs> ^ref <arg> +)
+	(<o> ^complete?x yes +)}
+
+sp	{anaphor*propose*cascage*dried-up
+	(state <s> ^anaphor.cascades <cascs>)
+	(<cascs> ^cascading <casc>)
+	(<casc> ^head.wcount <wcount>)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name cascade ^priority 202 ^kind dried-up ^river <casc>
+		 ^order <wcount> ^complete? no)}
+
+sp	{anaphor*apply*cascage*dried-up
+	(state <s> ^operator <o> ^anaphor <anaphor>)
+	(<anaphor> ^acount <acount> ^cascades <cascs>)
+	(<o> ^name cascade ^kind dried-up ^river <casc>)
+	(<cascs> ^records <records>)
+	(<casc> ^pointer <pointer>)
+-->
+	(<cascs> ^cascading <casc> -)
+	(<casc> ^pointer <pointer> -)
+	(<records> ^record <record> +)
+	(<record> ^ref <casc> ^cascaded-at <acount>)
+	(<o> ^complete?x yes +)}
+
+## merge
+
+sp	{anaphor*propose*merge
+	(state <s> ^refsets.refs <refs> ^anaphor.merge <merge>)
+	(<refs> ^ref <ref> ^count <count>)
+	(<merge> ^temp <temp> ^replace <replace>)
+	(<ref> ^<aug> <temp> ^head.wcount <wcount>)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name merge ^priority 201 ^ref <ref> ^aug <aug> ^temp <temp> ^replace <replace>
+		 ^order <count> ^level-two-order <wcount> ^complete? no)}
+
+sp	{anaphor*apply*merge
+	(state <s> ^operator <o>)
+	(<o> ^name merge ^ref <ref> ^aug <aug> ^temp <temp> ^replace <replace>)
+-->
+	(<ref> ^<aug> <temp> - <replace> +)
+	(<o> ^complete?x yes +)}
+	
+## clean-up-merge
+
+sp	{anaphor*propose*clean-up-merge
+	(state <s> ^anaphor.merge <merge>)
+	(<merge> -^replace nil)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name clean-up-merge ^priority 200 ^complete? no)}
+
+sp	{anaphor*apply*clean-up-merge
+	(state <s> ^operator <o> ^anaphor <anaphor>)
+	(<anaphor> ^merge <old-merge>)
+	(<o> ^name clean-up-merge ^complete? no)
+-->
+	(<anaphor> ^merge <old-merge> - <merge> +)
+	(<merge> ^temp nil ^replace nil)
+	(<o> ^complete?x yes +)}
+	
+## remove-non-elliptically-included-semantics
+
+sp	{anaphor*propose*remove-non-elliptically-included-semantics*ext
+	(state <s> ^anaphor.merge <merge>)
+	(<merge> ^replace <replace>)
+	(<replace> ^ext <ext>)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name remove-non-elliptically-included-semantics ^priority 210 ^replace <replace>
+		 ^aug ext ^arg <ext> ^merge <merge> ^complete? no)}
+
+sp	{anaphor*propose*remove-non-elliptically-included-semantics*int-with-no-ext
+	(state <s> ^anaphor.merge <merge>)
+	(<merge> ^replace <replace> -^flag block-int-removal)
+	(<replace> ^int <int>)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name remove-non-elliptically-included-semantics ^priority 205 ^replace <replace>
+		 ^aug int ^arg <int> ^merge <merge> ^complete? no)}
+
+sp	{anaphor*apply*remove-non-elliptically-included-semantics
+	(state <s> ^operator <o>)
+	(<o> ^name remove-non-elliptically-included-semantics ^replace <replace>
+		 ^aug <aug> ^arg <arg> ^merge <merge>)
+-->
+	(<replace> ^<aug> <arg> -)
+	(<merge> ^flag block-int-removal)
+	(<o> ^complete?x yes +)}
+
+## remove-center
+
+sp	{anaphor*propose*remove-center
+	(state <s> ^refsets.refs.ref <ref>)
+	(<ref> ^head.wcount <wcount> ^remove center)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name remove-center ^priority 150 ^ref <ref> ^order <wcount> ^complete? no)}
+
+sp	{anaphor*apply*remove-center
+	(state <s> ^operator <o>)
+	(<o> ^name remove-center ^ref <ref>)
+	(<ref> ^center <center>)
+-->
+	(<ref> ^remove center -)
+	(<ref> ^center <center> -)
+	(<o> ^complete?x yes +)}
+	
+# File: clause.soar
+# migrated back to the file

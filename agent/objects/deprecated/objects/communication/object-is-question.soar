@@ -1,0 +1,172 @@
+# First index the object the question is being asked about
+
+sp {object-is-question*propose*index-object
+   (state <s> ^topstate <s>
+             -^instructor-message <msg>
+              ^interaction.stack.segment <seg>)
+   (<seg> ^purpose.type object-is-question
+          ^originator instructor
+         -^info.object-match <m>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name index-object
+        ^return-all false
+        ^use-interaction true
+        ^allow-ties true
+        ^infer-match false
+        ^category indexing)
+}
+
+sp {object-is-question*index-object*elaborate*single-object
+   (state <s> ^operator <o> +
+              ^interaction.stack.segment.purpose <p>)
+   (<p> ^type object-is-question
+        ^parameters.object <obj>
+       -^parameters.relation)
+   (<o> ^name index-object)
+-->
+   (<o> ^object <obj>)
+}
+
+sp {object-is-question*index-object*elaborate*relation
+   (state <s> ^operator <o> +
+              ^interaction.stack.segment.purpose <p>)
+   (<o> ^name index-object)
+   (<p> ^type object-is-question
+        ^parameters.relation <rel>)
+   (<rel> ^object1 <obj1>
+          ^object2 <obj2>)
+-->
+   (<o> ^object <obj1>
+        ^object <obj2>
+        ^relation <rel>)
+}
+
+sp {object-is-question*apply*index-object
+   (state <s> ^operator <o>
+              ^interaction.stack.segment <seg>)
+   (<o> ^name index-object
+        ^finished true
+        ^match <match>)
+   (<seg> ^info <info>
+          ^purpose.type object-is-question)
+-->
+   (<info> ^object-match <match>)
+}
+
+sp {object-is-question*apply*index-object*success*store*referent
+   (state <s> ^operator <o>
+              ^interaction.stack.segment <seg>
+              ^smem.command <cmd>)
+   (<o> ^name index-object
+        ^finished true
+        ^match {<obj> <> failure})
+   (<seg> ^info <info>
+          ^purpose.type object-is-question)
+-->
+   (<info> ^referent-object <obj>)
+   (<cmd> ^store <obj>)
+}
+
+
+# Lookup the category of the questioned word
+sp {object-is-question*propose*lookup-category
+   (state <s> ^topstate <s>
+              ^interaction.stack.segment <seg>)
+   (<seg> ^purpose <p>
+          ^originator instructor
+          ^info.object-match <m>)
+   (<p> ^type object-is-question
+        ^parameters.questioned <q>
+       -^parameters.category)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name lookup-smem
+        ^category smem
+        ^lookup-type category
+        ^ask-user true
+        ^query <query>
+        ^desired.category true)
+   (<query> ^type word2cat ^word <q> ^category <cat>)
+}
+
+sp {object-is-question*apply*lookup-category
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^interaction.stack.segment <seg>)
+   (<seg> ^purpose <p>)
+   (<p> ^type object-is-question
+        ^parameters <params>)
+   (<o> ^name lookup-smem
+        ^lookup-type category
+        ^result {<cat> <> failure})
+-->
+   (<params> ^category <cat>)
+}
+
+# Lookup the label
+sp {object-is-question*propose*lookup-label
+   (state <s> ^topstate <s>
+              ^interaction.stack.segment <seg>)
+   (<seg> ^purpose <p>
+          ^originator instructor
+          ^info.object-match <m>)
+   (<p> ^type object-is-question
+        ^parameters.questioned <quest>
+        ^parameters.category <cat>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name lookup-smem
+        ^category smem
+        ^lookup-type label
+        ^query <q>
+        ^desired.label true)
+   (<q> ^type label-map ^word <quest> ^category <cat> ^label <label>)
+}
+
+# Object has the label
+sp {object-is-question*apply*lookup-label*mark*performed
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^interaction.stack.segment.purpose.type object-is-question
+              ^status <status>)
+   (<o> ^name lookup-smem
+        ^lookup-type label
+        ^result {<label> <> failure})
+-->
+	(<status> ^performed.dialog-event.type single-word-response)
+}
+
+sp {object-is-question*apply*lookup-label*match
+   (state <s> ^topstate <s>
+              ^io.output-link <out>
+              ^operator <o>
+              ^interaction.stack.segment <seg>)
+   (<seg> ^purpose.type object-is-question
+          ^info.object-match <m>)
+   (<o> ^name lookup-smem
+        ^lookup-type label
+        ^result {<label> <> failure})
+   (<m> ^property.label <label>)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type single-word-response
+          ^fields.word Yes)
+}
+
+sp {object-is-question*apply*lookup-label*no-match
+   (state <s> ^topstate <s>
+              ^io.output-link <out>
+              ^operator <o>
+              ^interaction.stack.segment <seg>)
+   (<seg> ^purpose.type object-is-question
+          ^info.object-match <m>)
+   (<o> ^name lookup-smem
+        ^lookup-type label
+        ^result {<label> <> failure})
+   (<m> -^property.label <label>)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type single-word-response
+          ^fields.word No)
+}

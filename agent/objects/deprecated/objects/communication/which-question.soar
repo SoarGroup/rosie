@@ -1,0 +1,144 @@
+# Adds a segment to the interaction stack to deal with the which question
+
+
+
+sp {apply*push-relation-question*which-question
+   (state <s> ^operator.name push-relation-question
+              ^instructor-message <msg>)
+   (<msg> ^type relation-question
+          ^information.question-word which 
+          ^information.relation <rel>)
+   (<rel> ^p1.object <obja> ^p2.object <objb> ^word <prep>)
+   (<obja> ^empty false)
+   (<objb> ^empty false)
+-->
+   (<msg> ^purpose <p>)
+   (<p> ^type which-question
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<params> ^relation <rel2>)
+   (<rel2> ^object1 <obja>
+          ^object2 <objb>
+          ^word <prep>)
+        # AM: Changed the satisfaction structure
+   (<sat> ^action-event.type point)
+}
+
+# Returns points to the described object
+
+sp {which-question*propose*index-object
+   (state <s> ^topstate <s>
+             -^instructor-message <msg>
+              ^interaction.stack.segment <seg>)
+   (<seg> ^purpose <p>
+          ^originator instructor)
+   (<p> ^type which-question)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name index-object
+        ^return-all false
+        ^use-interaction true
+        ^allow-ties true
+        ^infer-match true
+        ^category object-processing)
+}
+
+sp {which-question*index-object*elaborate*single-object
+   (state <s> ^operator <o> +
+              ^interaction.stack.segment.purpose <p>)
+   (<p> ^type which-question
+        ^parameters.description <desc>
+       -^parameters.relation)
+   (<o> ^name index-object)
+-->
+   (<o> ^object <desc>)
+}
+
+sp {which-question*index-object*elaborate*relation
+   (state <s> ^operator <o> +
+              ^interaction.stack.segment.purpose <p>)
+   (<o> ^name index-object)
+   (<p> ^type which-question
+        ^parameters.relation <rel>)
+   (<rel> ^object1 <obj1>
+          ^object2 <obj2>)
+-->
+   (<o> ^object <obj1>
+        ^object <obj2>
+        ^relation <rel>)
+}
+
+sp {which-question*apply*index-object
+   (state <s> ^operator <o>
+              ^interaction.stack.segment.purpose.type which-question
+              ^status <status>)
+   (<o> ^name index-object
+        ^finished true)
+-->
+  #(<status> ^performed.action-event point)
+   # AM: Changed performed structure
+   (<status> ^performed.action-event <e>)
+   (<e> ^type point)
+}
+
+sp {recogition-question*apply*failure*send-message
+   (state <s> ^operator <o>
+              ^io.output-link <out>
+              ^interaction.stack.segment.purpose.type which-question)
+   (<o> ^name index-object
+        ^match failure)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type no-object
+          ^fields <f>)
+}
+
+sp {recogition-question*apply*index-object*point
+   (state <s> ^operator <o>
+              ^io.output-link <out>
+              ^topstate.object <obj>
+              ^interaction.stack.segment.purpose.type which-question)
+   (<o> ^name index-object
+        ^match.id <id>)
+   (<obj> ^id <id>
+          ^pose <pose>)
+-->
+   (<out> ^point <point>)
+   (<point> ^id <id>
+            ^pose <pose>)
+}
+
+sp {recognition-question*apply*index-object*success*store*referent
+   (state <s> ^operator <o>
+              ^interaction.stack.segment <seg>
+              ^smem.command <cmd>)
+   (<o> ^name index-object
+        ^finished true
+        ^match {<obj> <> failure})
+   (<seg> ^info <info>
+          ^purpose.type which-question)
+-->
+   (<info> ^referent-object <obj>)
+   (<cmd> ^store <obj>)
+}
+
+sp {finish*index-object*test*print*match*failure
+   (state <s> ^topstate <s>
+              ^interaction.stack.segment.purpose.type which-question
+              ^operator <op>)
+   (<op> ^name index-object
+         ^match failure)
+-->
+   (write (concat |No Match| (crlf)))
+}
+
+sp {finish*index-object*test*print*match*success
+   (state <s> ^topstate <s>
+              ^interaction.stack.segment.purpose.type which-question
+              ^operator <op>)
+   (<op> ^name index-object
+         ^match {<m> <> failure})
+   (<m> ^id <id>)
+-->
+   (write (concat |Object Match: | <id> (crlf)))
+}

@@ -1,0 +1,119 @@
+# ACTIVATION-BASED CANDIDATES
+# Retrieves the object from smem with the highest activation
+
+
+sp {index-object*elaborate*object-to-index*retrieved-objects
+   :o-support
+   (state <s> ^name index-object
+              ^object-to-index <obj>)
+   (<obj> -^retrieved-objects)
+-->
+   (<obj> ^retrieved-objects 0)
+}
+
+sp {index-object*propose*add-candidates*activation
+   (state <s> ^name index-object
+              ^object-to-index <obj>)
+   (<obj> ^use-activation true
+          ^retrieved-objects < 5)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name add-candidates
+        ^category indexing
+        ^object-to-index <obj>
+        ^candidate-type activation)
+}
+
+# Use full cue structure
+#sp {index-object*apply*add-candidates*activation*add*cue
+#   (state <s> ^name index-object
+#              ^operator <o>
+#              ^smem.command <cmd>)
+#   (<o> ^name add-candidates
+#        ^candidate-type activation
+#        ^object-to-index.smem-cue <cue>)
+#-->
+#   (<cmd> ^query <cue>)
+#}
+
+sp {index-object*apply*add-candidates*activation*add-cue
+   (state <s> ^name index-object
+              ^operator <o>
+              ^smem.command <cmd>)
+   (<o> ^name add-candidates
+        ^candidate-type activation)
+-->
+   (<cmd> ^query.wme-type object)
+}
+              
+sp {index-object*apply*add-candidates*add*prohibit
+   (state <s> ^name index-object
+              ^operator <o>
+              ^smem.command <cmd>)
+   (<o> ^name add-candidates
+        ^candidate-type activation
+        ^object-to-index.candidates.candidate <cand>)
+   (<cand> ^object <obj>
+           ^pref > 0)
+-->
+   (<cmd> ^prohibit <obj>)
+}
+
+sp {index-object*apply*add-candidates*activation*failure*stop
+   (state <s> ^name index-object
+              ^operator <o>
+              ^smem <smem>)
+   (<o> ^name add-candidates
+        ^candidate-type activation
+        ^object-to-index <obj>)
+   (<obj> ^retrieved-objects <num>)
+   (<smem> ^result.failure <cue>
+           ^command <cmd>)
+   (<cmd> ^query <cue>)
+-->
+   (<cmd> ^query <cue> -)
+   (<obj> ^retrieved-objects <num> -
+          ^retrieved-objects 5)
+}
+ 
+sp {index-object*apply*add-candidates*activation*success*increment*number
+   (state <s> ^name index-object
+              ^operator <o>
+              ^smem <smem>)
+   (<o> ^name add-candidates
+        ^candidate-type activation
+        ^object-to-index <obj>)
+   (<obj> ^retrieved-objects <num>)
+   (<smem> ^result.success <cue>
+           ^command <cmd>)
+   (<cmd> ^query <cue>)
+-->
+   (<cmd> ^query <cue> -)
+   (<obj> ^retrieved-objects <num> -
+          ^retrieved-objects (+ <num> 1))
+}
+
+sp {index-object*apply*add-candidates*activation*success
+   (state <s> ^name index-object
+              ^operator <o>
+              ^smem <smem>
+              ^topstate.object <obj>)
+   (<o> ^name add-candidates
+        ^candidate-type activation
+        ^object-to-index <obj-ti>)
+   (<obj-ti> ^candidates <c>
+             ^retrieved-objects <num>)
+   (<smem> ^result <res>
+           ^command.query <cue>)
+   (<res> ^success <cue>
+          ^retrieved.id <id>)
+   (<obj> ^id <id>)
+   (<c> -^candidate.object <obj>)
+-->
+   (<c> ^candidate <candidate>)
+   (<candidate> ^object <obj>
+                ^pref (+ <num> 1))
+}
+
+
+

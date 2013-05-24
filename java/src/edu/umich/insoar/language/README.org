@@ -1,0 +1,53 @@
+This code accepts a natural language sentence from the
+instructor/mentor and converts it into a Soar readable parse
+(described in the MIISI document). The grammar (in MIISI) is only
+partially implemented. 
+
+* Dictionary 
+Following words can be recognized. The dictionary can be extended by
+simply adding to the list in the [[https://github.com/shiwalimohan/sbolt/blob/master/src/edu/umich/sbolt/language/dictionary.txt][file]].  
+
+NOUN: block table ball pantry cylinder
+ADJECTIVE: red green blue gray large medium small round square
+VERB: put get 
+DETERMINER: a the
+PREPOSITION: on in from
+ATTRIBUTE: color size shape
+
+* Tags
+Following linguistic tags have been used for POS tagging and grammar.
+| noun            		| =NN=  	| block table ball pantry cylinder                        				|
+| adjective       		| =JJ=  	| red green blue gray large medium small round square       			|
+| attribute				| =AT=		| color size shape														|
+| verb            		| =VB=  	| put                                                                 	|
+| preposition     		| =PP=  	| on                                                                  	|
+| determiner      		| =DT=  	| the, a                                                              	|
+| object          		| =OBJ= 	| a red large block, the table                                        	|
+| verb-command    		| =VBC= 	| put a red block on the table                                        	|
+| object-relation 		| =REL= 	| a large block is on the table                                       	|
+| goal-info       		| =GS=  	| goal of put a red block on the table is a red block is on the table 	|
+| proposal-info   		| =PS=  	| put if a red block is on the table                                  	|
+| object-identification	| =OBJID= 	| this is a round red cylinder										  	|
+| sentence        		| =SEN= 	|                                                                     	|
+  
+
+* Grammar
+Following grammar is supported by this package. Typical regex
+operators apply.
+
+Note: extending the tags and grammar can be done by editing the grammar.xml document at:
+[[https://github.com/shiwalimohan/sbolt/blob/master/src/edu/umich/sbolt/language/grammar.xml][file]].  
+
+How to extend the grammar
+1. Create a new LinguisticEntity. Make sure it has a 'public static String TYPE = "NAME";' property
+2. Add a Pattern to the grammar.xml file with the regular expression and tag and use NAME for the EntityType
+3. Edit EntityFactory.java so that it can create the LinguisticEntity using the TYPE string
+4. implement the methods for the LinguisticEntity interface
+
+: SEN => VBC | GS | REL | PS
+: GS => goal of VBC is (REL)*
+: PS => VBC if (REL)*
+: VBC => (VB) | (VB OBJ) | (VB OBJ PP OBJ)
+: REL => OBJ is PP OBJ
+: OBJ => DT? JJ* NN
+

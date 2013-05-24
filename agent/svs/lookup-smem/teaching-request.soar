@@ -1,0 +1,97 @@
+# teaching-request
+# 	If use-interaction=true and no matches were found for the preposition, 
+#   ask the user for more information
+# The teaching interaction is finished with the single word 'cancel' or 'finished'
+
+sp {lookup-preposition*propose*teaching-request
+   (state <s> ^name lookup-preposition
+              ^found-preposition.stat default
+              ^prep <prep>
+              ^interaction true
+             -^topstate.interaction.stack.segment.info.status.no-teaching true)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name teaching-request
+        ^category svs
+        ^prep <prep>)
+}
+
+# Creates a teaching-request query 
+sp {lookup-preposition*apply*teaching-request*create*query
+   (state <s> ^name lookup-preposition
+              ^operator <o>
+              ^topstate.interaction.stack.segment <seg>)
+   (<seg> ^info <i>)
+   (<o> ^name teaching-request
+        ^prep <prep>)
+-->
+#   (<s> ^query <q>)
+#   (<i> ^status <stat>)
+#   (<q> ^type teaching-request
+#        ^segment <seg>
+#        ^status <stat>
+#        ^description <desc>
+#        ^prep <prep>)
+#   (<desc> ^determiner preposition)
+   (<s> ^context <context>)
+   (<i> ^status <stat>)
+   (<context> ^cause teaching-request
+        ^segment <seg>
+        ^status <stat>
+        ^description <desc>
+        ^prep <prep>)
+   (<desc> ^determiner preposition)
+}
+
+
+
+# Copies the name of the preposition to the description
+sp {lookup-preposition*apply*teaching-request*copy*name
+   (state <s> ^name lookup-preposition
+              ^operator <o>
+              ^context.description <desc>)
+   (<o> ^name teaching-request
+        ^prep <prep>)
+-->
+   (<desc> ^word <prep>)
+}
+
+
+# Copies the query to the topstate
+sp {lookup-preposition*apply*teaching-request*copy*query
+   (state <s> ^name lookup-preposition
+              ^operator.name teaching-request
+              ^topstate.queries <qs>
+              ^query <q>)
+   (<q> ^description.word)
+-->
+   (<qs> ^query <q>)
+}
+
+
+
+
+# Creates a status on the topstate
+sp {lookup-preposition*apply*teaching-request*create*status
+   (state <s> ^name lookup-preposition
+              ^operator.name teaching-request
+              ^topstate.status <status>
+              ^context <context>)
+   (<context> ^description <desc>)
+   (<desc> ^word)
+-->
+   (<status> ^type teaching-request
+         	^state-name topstate
+         	^purpose <p>)
+   (<p> ^type teaching-request
+        ^context <context>
+        ^parameters <params>
+        #^satisfaction.dialog-event single-word-response)
+   		# AM: Changed satisfaction structure
+   		^satisfaction.dialog-event.type single-word-response)
+   # Segment parameters - A message to send 
+   (<params> ^message <msg>)
+   (<msg> ^type teaching-request
+          ^originator agent
+          ^fields.description <desc>)
+}

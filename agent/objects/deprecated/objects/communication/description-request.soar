@@ -1,0 +1,118 @@
+# First find the object referred to by 'this'
+sp {topstate*propose*description-request
+   (state <s> ^topstate <s>
+              ^interaction.stack.segment.purpose <p>)
+   (<p> ^type description-request)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name description-request
+        ^category object-processing)
+}
+
+# index-object - look up using this
+
+sp {description-request*propose*index-object*this
+   (state <s> ^name description-request
+             -^this-object)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name index-object
+        ^category object-processing
+        ^object.specifier this
+        ^return-all false
+        ^use-interaction true
+        ^allow-ties true)
+}
+
+sp {description-request*apply*index-object*success
+   (state <s> ^name description-request
+              ^operator <o>)
+   (<o> ^name index-object
+        ^finished true
+        ^match {<obj> <> failure})
+-->
+   (<s> ^this-object <obj>)
+}
+
+sp {description-request*apply*index-object*success*store*referent
+   (state <s> ^name description-request
+              ^operator <o>
+              ^topstate.interaction.stack.segment.info <info>
+              ^smem.command <cmd>)
+   (<o> ^name index-object
+        ^finished true
+        ^match {<obj> <> failure})
+-->
+   (<info> ^referent-object <obj>)
+   (<cmd> ^store <obj>)
+}
+
+sp {description-request*apply*index-object*failure
+   (state <s> ^name description-request
+              ^operator <o>
+              ^io.output-link <out>
+              ^topstate.interaction.stack.segment.purpose.type description-request
+              ^topstate.status <status>)
+   (<o> ^name index-object
+        ^finished true
+        ^match failure)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type no-object
+          ^fields <f>)
+   (<status> ^performed.action-event <e>)
+   (<e> ^type describe)
+}
+
+
+# Propose describe-object
+
+sp {description-request*propose*describe-object
+   (state <s> ^name description-request
+              ^this-object <obj>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name describe-object
+        ^category object-processing
+        ^object <obj>)
+}
+
+sp {description-request*apply*describe-object*mark-performed
+   (state <s> ^name description-request
+              ^operator <o>
+              ^topstate.interaction.stack.segment.purpose.type description-request
+              ^topstate.status <status>)
+   (<o> ^name describe-object
+        ^description <desc>)
+-->
+   #(<status> ^performed.action-event describe)
+   # AM: Changed performed structure
+   (<status> ^performed.action-event <e>)
+   (<e> ^type describe)
+}
+
+sp {description-request*apply*describe-object*send-message
+   (state <s> ^name description-request
+              ^operator <o>
+              ^topstate.interaction.stack.segment.purpose.type description-request
+              ^io.output-link <out>)
+   (<o> ^name describe-object
+        ^description {<desc> <> failure})
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type describe-object
+          ^fields.object <desc>)
+}
+
+sp {descriptoin-request*apply*describe-object*no-object
+   (state <s> ^name description-request
+              ^operator <o>
+              ^topstate.interaction.stack.segment.purpose.type description-request
+              ^io.output-link <out>)
+   (<o> ^name describe-object
+        ^description failure)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type no-object
+          ^fields <f>)
+}

@@ -1,0 +1,347 @@
+
+# File: global.soar
+# Author: William Taysom
+# Version 2.0: July 24, 2001
+# Created: July 6, 2001
+#
+# Operators:	start-next-sentence (0), generate-predicates (0), find-root (205),
+#				return-to-nil
+# Preference:	prefer*operator-with-highest-priority, prefer*operator-with-lowest-order
+# Other:		terminate*operator, halt
+#
+# TO DO:
+#
+
+## start-next-sentence
+
+# SBW 3/19/2012
+# - changed to act with a single snc, not two levels (that doesn't happen with
+# the wait operator)
+# - changed to only propose when another, unhandled, sentence exists
+# - split to another operator, wrap-up, for when another sentence doesn't exist
+
+
+sp {global*propose*start-next-sentence
+   (state <s> ^impasse no-change ^superstate <ss>)
+   (<ss> ^problem-space lgsoar 
+         ^current-sentence.sentence-count <count>
+         ^other-sentence <os>)
+   (<os> ^sentence-count { <next-count> > <count> })
+  -{(<ss> ^other-sentence.sentence-count {< <next-count> > <count>})}
+-->
+   (<ss> ^operator <o> + >)
+   (<o> ^name start-next-sentence ^priority -1
+        ^sentence <os>)
+}
+
+sp	{global*apply*start-next-sentence
+   (state <s> ^operator <o> ^refsets <refsets> ^root <root> ^anaphor <a>
+              ^current-sentence <cs>
+              ^current-refset <cr>
+              ^other-sentence <next-sentence>)
+   (<next-sentence> ^sentence-count <next-count>)
+   (<o> ^name start-next-sentence ^sentence <next-sentence> )
+-->
+   (<a> ^unblock? no - general +)
+   (<s> ^root <root> - 0
+        ^current-sentence <cs> - <next-sentence>
+        ^other-sentence <next-sentence> - <cs>
+        ^current-refset <cr> - <newrs>)
+   (<refsets> ^refs <newrs>)
+   (<newrs> ^count <next-count>)
+}
+
+sp {global*propose*generate-predicates
+   (state <s> ^impasse no-change ^attribute state ^superstate <ss>)
+   (<ss> ^problem-space lgsoar 
+        -^predicates-generated 
+         ^anaphor.unblock? no
+         ^problem-space lgsoar
+         -^other-sentence.sentence-count { <next-count> > <count> } 
+         ^current-sentence.sentence-count <count>)
+-->
+   (<ss> ^operator <o> + >)
+   (<o> ^name generate-predicates ^priority -1)
+}
+
+# don't choke completely if some preds can't be generated
+sp {global*elaborate*generate-predicates*failed
+   (state <s> ^impasse no-change ^attribute operator ^superstate <ss>)
+   (<ss> ^operator.name generate-predicates
+         ^model.idea <id>)
+   (<id> ^nuc <nuc>
+        -^annotation pred-dumped)
+-->
+   (write (crlf) |WARNING: generate-predicates failed to find a predicate representation for idea | <id> |, nucleus | <nuc>)
+  (<id> ^annotation pred-dumped)
+}
+
+sp {global*propose*find-root
+	(state <s> ^current-sentence <cs> ^root <old>)
+	(<cs> ^links.link <link> ^words.word <child> <parent> -^inhibited-link <link>)
+	(<child> ^wcount <old> ^wvalue <oldVal>)
+	(<parent> ^wcount <new> ^wvalue <newVal>)
+	(<link> ^lwleft <old> ^lwright <new>)
+	(<link> ^ltype {<< AN D A AA AF AM AN BW D DD DG DP DT E EA EC EE EI EN EZ G GN H I MF
+					           NR NS NT NW Q S SX TD TH TI TM TO W WR Y YP YS  >> <type>})
+-->
+	(<s> ^operator <o> + >)
+	(<o> ^name find-root ^priority 170 ^new <new> ^link <link> 
+       ^debug-info (concat |finding root verb: traversed | <type> | link from "| <oldVal> |" to "| <newVal> |"|))
+}
+
+# use find-root ties to identify sentence-level conjunctions and split off a new sentence
+# e.g.,        "pick up the block and put it over there" -> "pick up the block" "put it over there"
+# LEFT-WALL-Wi-
+#          ---------------Wi---------- <- find root tries to follow both Wi links
+# tie should split off another sentence with the leftmost link inhibited, and
+# inhibit the rightmost in the current sentence
+sp {global*propose*split-sentence
+	(state <s> ^current-sentence <cs> ^root <old>)
+	(<cs> ^links.link <link> <link2>
+      -^inhibited-link <link>
+      -^inhibited-link <link2>)
+	(<link> ^lwleft <old> ^lwright <min>)
+	(<link> ^ltype << AN D A AA AF AM AN BW D DD DG DP DT E EA EC EE EI EN EZ G GN H I MF
+					           NR NS NT NW Q S SX TD TH TI TM TO W WR Y YP YS  >> )
+	(<link2> ^lwleft <old> ^lwright > <min>)
+	(<link2> ^ltype << AN D A AA AF AM AN BW D DD DG DP DT E EA EC EE EI EN EZ G GN H I MF
+					           NR NS NT NW Q S SX TD TH TI TM TO W WR Y YP YS  >> )
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name split-sentence ^priority 175 ^leftmost-link <link> ^rightmost-link <link2>)
+}
+
+sp {global*apply*split-sentence
+   (state <s> ^problem-space lgsoar
+              ^operator <o> 
+              ^current-sentence <cs>)
+   (<o> ^name split-sentence
+        ^leftmost-link <left>
+        ^rightmost-link <rightmost>)
+   (<cs> ^sentence-count <sc>
+         ^words <words>
+         ^links <links>)
+  (<rightmost> ^lwright <right-wc>)
+   (<words> ^word <right>)
+   (<right> ^wcount <right-wc>)
+-->
+   (<s> ^any-sentence <split>)
+   (<split> ^words <words>
+            ^links <links>
+            ^sentence-count (+ <sc> .5) # note this means we can't resplit
+            ^inhibited-link <left>) 
+   (<cs> ^inhibited-link <rightmost>)
+   (<right> ^potential-imperative true) # flag that is copied to the idea so output code can see this word as potentially a command verb
+}
+
+sp	{global*apply*find-root
+   (state <s> ^operator <o> ^root <old>)
+   (<o> ^name find-root ^new <new>)
+-->
+   (<s> ^root <old> - <new> +)}
+
+
+## return-to-nil
+
+sp	{global*propose*return-to-nil
+   (state <s> ^superstate <ss>
+             -^impasse tie)
+   (<ss> ^current-refset <refs>)
+   (<refs> ^ref <ref>)
+   (<ref> ^return-to-nil ^head.wcount <wcount>)
+-->
+   (<ss> ^operator <o> +)
+   (<o> ^name return-to-nil ^order <wcount> ^ref <ref> )
+}
+
+sp	{global*apply*return-to-nil*if-refs-not-marked-complete
+   (state <s> ^operator <o> ^current-sentence.words.word <word> ^current-refset <refs>)
+   (<o> ^name return-to-nil ^ref <ref> )
+   (<ref> ^return-to-nil <rcount> ^head <head>)
+   (<head> ^wcount <wcount>)
+   (<word> ^return <wcount>)
+-->
+   (<head> ^wcount <wcount> - <rcount> +)
+   (<word> ^return <wcount> -)
+   (<word> ^wcount <wcount>)
+   (<ref> ^return-to-nil <rcount> -)
+   (<ref> ^special empty +)
+}
+
+# sp	{global*apply*return-to-nil*if-refs-marked-complete
+#    (state <s> ^operator <o> ^io.lgsentence.words.word <word> ^count <count> ^refsets.refs <refs>)
+#    (<refs> ^count <count> ^complete?)
+#    (<o> ^name return-to-nil ^ref <ref> )
+#    (<ref> ^return-to-nil <rcount> ^head <head>)
+#    (<head> ^wcount <wcount>)
+#    (<word> ^return <wcount>)
+# -->
+#    (<head> ^wcount <wcount> - <rcount> +)
+#    (<word> ^return <wcount> -)
+#    (<word> ^wcount <wcount>)
+#    (<ref> ^return-to-nil <rcount> -)
+#    (<ref> ^special empty +)
+# }
+
+
+## Preference Rules
+# Prefer operator with highest priority
+
+sp	{global*prefer*operator-with-highest-priority
+   (state <s> ^operator <deferred> + <preferred> +)
+   (<deferred> ^priority <def-priority>)
+   (<preferred> ^priority <pref-priority> > <def-priority>)
+-->
+   (<s> ^operator <preferred> > <deferred>)}
+
+# Prefer operator with lowest linear order if priority is equal
+
+sp	{global*prefer*operator-with-lowest-order*if-priority-is-equal
+   (state <s> ^operator <deferred> + <preferred> +)
+   (<deferred> ^priority <priority> ^order <last>)
+   (<preferred> ^priority <priority> ^order <first> < <last>)
+-->
+   (<s> ^operator <preferred> > <deferred>)}
+
+# Prefer operator with lowest lexical (level 2) order if (level 1) order is equal
+
+sp	{global*prefer*operator-with-lowest-order*if-order-is-equal
+   (state <s> ^operator <deferred> + <preferred> +)
+   (<deferred> ^priority <priority> ^order <order> ^level-two-order <last>)
+   (<preferred> ^priority <priority> ^order <order> ^level-two-order <first> < <last>)
+-->
+   (<s> ^operator <preferred> > <deferred>)}
+
+sp {global*prefer*operator-with-earliest-word*if-priority-and-order-are-equal*use-arg
+    (state <s> ^operator <deferred> + ^operator <preferred> +)
+    (<deferred> ^arg <a*2> ^main <mainval> ^order <ord> ^priority <priority>)
+    (<preferred> ^main <mainval> ^order <ord> ^priority <priority> ^arg <a*1>)
+    (<a*2> ^wcount <wc2>)
+    (<a*1> ^wcount { < <wc2> <wc1> })
+    -->
+    (<s> ^operator <preferred> > <deferred>)
+}
+
+# SBW added some indifferent rules to handle identical priorities
+# these cases probably represent bugs!
+
+sp {global*apply*generate-predicates*note-any-annotation-anywhere
+   (state <s> ^operator.name generate-predicates ^model <mod>)
+   (<mod> ^idea <idea>)
+   (<idea> ^annotation <any>)
+-->
+   (<mod> ^did-idea-annotation yes +)
+}
+
+sp {global*apply*generate-predicates*generated
+  (state <s> ^operator.name generate-predicates)
+   -{(<s> ^model.idea <id>)
+     (<id> -^annotation pred-dumped)}
+-->
+  (<s> ^predicates-generated true)
+}
+
+sp {global*propose*processing-complete
+   (state <s> ^problem-space lgsoar
+              ^predicates-generated true)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name processing-complete
+        ^priority 900)
+}
+
+# most LGSoar state is removed since it is below structures elaborated
+# from activate*create*space, which retracts when the sentence is flagged done
+
+# clean up any remaining state here
+sp {global*apply*processing-complete*cleanup
+   (state <s> ^operator.name processing-complete
+              ^root <rt>)
+-->
+   (<s> ^root <rt> -)
+}
+
+# excise this and add something project-specific
+sp {global*apply*processing-complete
+   (state <s> ^operator.name processing-complete)
+-->
+   (halt)
+}
+
+sp {global*halt-on-deep-snc
+   (state <s> ^impasse no-change
+              ^attribute state
+              ^superstate <ss>)
+   (<ss> ^impasse no-change
+         ^attribute state)
+-->
+   (write (crlf) |Halting due to multiple state no-change.|)
+   (halt)
+}
+
+sp {lg*resolve-ties-indifferently
+   (state <s> ^impasse tie
+              ^item-count < 10 # don't explode with matches
+              ^attribute operator
+              ^item <o1>
+              ^item {<> <o1> <o2>}
+              ^superstate <ss>)
+   (<ss> ^problem-space lgsoar
+        ^operator <o1> +
+        ^operator <o2> +)
+-->
+  (<ss> ^operator <o1> = <o2>)
+   (write (crlf) |WARNING: LGSoar tie encountered, resolving indifferently in order to make progress.|)
+}
+
+# handle idioms..
+
+
+sp {global*elaborate*unexpanded-idiom
+   (state <s> ^problem-space lgsoar
+              ^current-sentence <sent>)
+   (<sent> ^links.link <ln>
+           ^words.word <rightword>)
+   (<rightword> ^wcount <rightc>)
+   (<ln> ^ltype ID
+         ^lwright <rightc>)
+-->
+   (<rightword> ^unexpanded-idiom true)
+}
+
+sp {global*propose*expand-idiom
+   (state <s> ^problem-space lgsoar
+              ^current-sentence <sent>)
+   (<sent> ^words.word <wd>)
+   (<wd> ^unexpanded-idiom true
+         ^wcount <idx>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name expand-idiom
+        ^priority 1000
+        ^order <idx>)
+}
+
+sp {global*apply*expand-idiom
+   (state <s> ^problem-space lgsoar
+              ^operator <o>
+              ^current-sentence <sent>)
+   (<sent> ^links.link <ln>
+            ^words.word <wdl>
+            ^words.word <wdr>)
+   (<o> ^name expand-idiom
+        ^order <idx>)
+   (<ln> ^ltype ID
+         ^lwleft <leftc>
+         ^lwright <idx>)
+   (<wdl> ^wcount <leftc>
+          ^wvalue <lval>)
+   (<wdr> ^wcount <idx>
+          ^wvalue <rval>
+          ^unexpanded-idiom true)
+-->
+   (<wdr> ^unexpanded-idiom true -
+          ^wvalue <rval> -
+          ^wvalue (concat <lval> |-| <rval>))
+}

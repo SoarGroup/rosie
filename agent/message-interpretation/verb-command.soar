@@ -1,0 +1,96 @@
+# Rules that handle when an object-message is sent by the user
+
+# Proposal
+sp {propose*push-verb-command
+   (state <s> ^topstate <s>
+              ^instructor-message <msg>)
+   (<msg> ^type verb-command
+         -^information.verb.word describe # JK: Don't do describe the scene
+         -^processed)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name push-verb-command
+        ^category communication
+        ^message <msg>)
+}
+
+# Elaborate useful information from the message to the operator
+sp {elaborate*push-verb-command*verb
+   (state <s> ^operator <o> +)
+   (<o> ^name push-verb-command
+        ^message <msg>)
+   (<msg> ^information.verb.word <verb>)
+-->
+   (<o> ^verb <verb>)
+}
+
+# Result when the user gives a verb command
+sp {apply*push-verb-command*normal-command
+   (state <s> ^operator <o>)
+   (<o> ^name push-verb-command
+        ^message <msg>
+        ^verb <> done <> count)
+   (<msg> ^information <info>)
+-->
+   (<msg> ^purpose <p>)
+    (<p> ^type external-action
+    	 ^satisfaction <sat>)
+    # AM: Changed the satisfaction structure
+    (<sat> ^action-event.type <info>
+    	   ^learning-event.type explanation)
+}
+
+# Result when the user says 'you are done'
+sp {apply*push-verb-command*done
+   (state <s> ^operator <o>)
+   (<o> ^name push-verb-command
+        ^message <msg>
+        ^verb done)
+   (<msg> ^information <info>)
+-->
+   (<msg> ^purpose <p>)
+   (<p> ^type explanation
+        ^satisfaction <sat>)
+   (<sat> ^learning-event.type explanation)
+}
+
+# Result when the user issues a count command
+sp {apply*push-verb-command*count*no*relation
+   (state <s> ^operator <o>)
+   (<o> ^name push-verb-command
+        ^message <msg>
+        ^verb count)
+   (<msg> ^information.verb.direct-object <do>)
+   (<do> ^object <obj>
+        -^relation)
+-->
+   (<msg> ^purpose <p>)
+   (<p> ^type how-many-question
+        ^parameters.object <obj>
+        ^satisfaction.dialog-event.type count-response)
+}
+
+#sp {apply*push-verb-command*count*with*relation
+#   (state <s> ^operator <o>)
+#   (<o> ^name push-verb-command
+#        ^verb count
+#        ^message <msg>)
+#   (<msg> ^information.verb.direct-object.relation <rel>)
+#   (<rel> ^p1.object <obja> ^p2.object <objb> ^word <prep>)
+#-->
+#   (<msg> ^purpose <p>)
+#   (<p> ^type how-many-question
+#        ^parameters.relation <rel2>
+#        ^satisfaction.dialog-event.type count-response)
+#   (<rel2> ^object1 <obja> ^object2 <objb> ^word <prep>)
+#}
+
+# Result when the user says 'describe the scene'
+
+sp {apply*push-verb-command*mark*processed
+   (state <s> ^operator <o>)
+   (<o> ^name push-verb-command
+        ^message <msg>)
+-->
+   (<msg> ^processed true)
+}

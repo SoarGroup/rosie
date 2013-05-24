@@ -1,0 +1,199 @@
+# Proposes learn-word2cat when the top segment on the interaction stack has the purpose of learning a category
+# segment.purpose <p>
+# (<p> ^type learn-word2cat
+#	   ^parameters.category <category>
+#      ^parameters.word <word>)
+  
+# lookup-category
+#   First, we see if the given category is one we know
+#	Yes - We skip to directly learning the mapping
+#	No - We ask the user what kind of property the given category is
+  
+sp {learn-word2cat*propose*lookup-category
+   (state <s> ^topstate <s>
+              ^interaction.stack.segment.purpose <p>)
+   (<p> ^type learn-word2cat
+	   	^parameters <params>)
+   (<params> ^category <word>
+            -^cat-type)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name lookup-smem
+        ^category smem
+        ^ask-user false
+        ^lookup-type category
+        ^query <q>
+        ^desired.category true)
+   (<q> ^type word2cat ^word <word> ^category <cat>)
+}
+
+# Copy the result
+sp {learn-word2cat*apply*lookup-category*success
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^interaction.stack.segment.purpose.parameters <params>)
+   (<o> ^name lookup-smem
+        ^lookup-type category
+        ^result {<result> <> failure})
+-->
+   (<params> ^cat-type <result>)
+}
+
+# Failure - ask the user
+sp {learn-word2cat*apply*lookup-category*failure
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^interaction.stack.segment.purpose.parameters <params>
+              ^status <status>)
+   (<params> ^category <word>)
+   (<o> ^name lookup-smem
+        ^lookup-type category
+        ^result failure)
+-->
+  (<status> ^type category-of-word
+         ^state-name topstate
+         ^purpose <p>)
+   (<p> ^type category-of-word
+        ^context <context>
+        ^parameters <params>
+        # AM: Changed the satisfaction structure
+        ^satisfaction.dialog-event.type object-message)
+   # Segment context - the word being asked about
+   (<context> ^cause category-of-word-query
+              ^word <word>)
+   # Segment parameters - A message to send 
+   (<params> ^message <msg>)
+   (<msg> ^type category-of-property
+          ^originator agent
+          ^fields.word <word>)
+}
+
+# lookup-measure
+# If the category is a measurable property, we have to see if we know how to measure it
+sp {learn-word2cat*propose*lookup-measure
+   (state <s> ^topstate <s>
+              ^interaction.stack.segment.purpose <p>)
+   (<p> ^type learn-word2cat
+	   	^parameters <params>)
+   (<params> ^category << measurable >>
+      		^word <word>
+        	^cat-type
+        -^can-measure)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name lookup-smem
+        ^category smem
+        ^ask-user false
+        ^lookup-type measure
+        ^query <q>
+        ^desired.verb true)
+   (<q> ^type measure ^property <word> ^verb <verb>)
+}
+
+# Success - Mark it measurable
+sp {learn-word2cat*apply*lookup-measure*success
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^interaction.stack.segment.purpose.parameters <params>)
+   (<o> ^name lookup-smem
+        ^lookup-type measure
+        ^result {<result> <> failure})
+-->
+   (<params> ^can-measure true)
+}
+
+# Failure - ask the user
+sp {learn-word2cat*apply*lookup-measure*failure
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^interaction.stack.segment.purpose.parameters <params>
+              ^status <status>)
+   (<params> ^word <property>)
+   (<o> ^name lookup-smem
+        ^lookup-type measure
+        ^result failure)
+-->
+  (<status> ^type how-to-measure
+         ^state-name topstate
+         ^purpose <p>)
+   (<p> ^type how-to-measure
+        ^context <context>
+        ^parameters <params>
+        # AM: Changed the satisfaction structure
+        ^satisfaction.dialog-event.type verb-command)
+   # Segment context - the word being asked about
+   (<context> ^cause how-to-measure-query
+              ^property <property>)
+   # Segment parameters - A message to send 
+   (<params> ^message <msg>)
+   (<msg> ^type how-to-measure
+          ^originator agent
+          ^fields.property <property>)
+}
+
+sp {learn-word2cat*prefer*lookup-measure*over*learn-word2cat
+   (state <s> ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name lookup-smem)
+   (<o2> ^name learn-word2cat)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {apply*push-segment*how-to-measure*learn*verb
+   (state <s> ^operator.name push-segment
+              ^instructor-message <msg>
+              ^smem.command <smem-cmd>)
+   (<msg> ^type verb-command
+          ^information.verb.word <verb>
+          ^context <context>)
+   (<context> ^cause how-to-measure-query
+              ^property <prop>)
+-->
+   (<smem-cmd> ^store <val>)
+   (<val> ^type measure ^property <prop> ^verb <verb>)
+}
+
+# Proposes learn-word2cat when the top segment on the interaction stack has the purpose of learning a value
+sp {propose*learn-word2cat
+   (state <s> ^topstate <s>
+              ^interaction.stack.segment.purpose <p>)
+   (<p> ^type learn-word2cat
+	   	^parameters <params>)
+   (<params> ^category <cat>
+      		^word <word>
+        	^cat-type)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name learn-word2cat
+        ^category smem
+        ^word-cat <cat>
+        ^word <word>)
+}
+
+# Stores the learned value in semantic memory
+sp {apply*learn-word2cat*update*smem
+   (state <s> ^operator <o>
+              ^smem.command <smem-cmd>)
+   (<o> ^name learn-word2cat
+        ^word-cat <cat>
+        ^word <word>)
+-->
+   (<smem-cmd> ^store <val>)
+   (<val> ^type word2cat ^word <word> ^category <cat>)
+}
+
+sp {apply*learn-word2cat*mark*satisfied
+   (state <s> ^operator <o>
+              ^status <status>)
+   (<o> ^name learn-word2cat
+        ^word <word>)
+-->
+  # (<status> ^performed.learning-event word2cat)
+   # AM: Changed performed structure
+   (<status> ^performed.learning-event <e>)
+   (<e> ^type word2cat
+        ^word <word>)
+}
+
+              

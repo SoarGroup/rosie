@@ -1,0 +1,86 @@
+# the only difference with interpret-object is that this makes the overall
+# message type object-question-message, except.. 
+
+sp {interpret-object-is-question*propose*collect-predicates
+   (state <s> ^name interpret-object-is-question
+             -^predicates-collected)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name collect-predicates)
+}
+
+sp {interpret-object-is-question*apply*collect-predicates*root
+   (state <s> ^name interpret-object-is-question
+              ^operator.name collect-predicates)
+-->
+   (<s> ^object-predicates <op>)
+}
+
+sp {interpret-object-is-question*apply*collect-predicates
+   (state <s> ^name interpret-object-is-question
+              ^operator.name collect-predicates
+              ^object-predicates <op>
+              ^predicates.predicate <p>)
+-->
+   (<op> ^predicate <p>)
+}
+
+sp {interpret-object-is-question*apply*collect-predicates*done
+   (state <s> ^name interpret-object-is-question
+              ^operator.name collect-predicates
+              ^object-predicates <op>)
+-->
+   (<s> ^predicates-collected true)
+}
+
+sp {interpret-object-is-question*propose*interpret-object
+   (state <s> ^name interpret-object-is-question
+              ^object-predicates <p>
+              ^predicates-collected
+             -^object-interpretation)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name interpret-object
+        ^predicates <p>)
+}
+
+sp {interpret-object-is-question*elaborate*return-interpretation*property
+   (state <s> ^name interpret-object-is-question
+              ^predicates <p>
+              ^predicates.predicate <pq>
+              ^predicates.predicate <pp>
+              ^objects.object <object-with-property>
+              ^object-predicates.interpretation <oi>) # comes from interpret-object
+   (<pp> ^outer QUESTIONED
+         ^inner1 <prop>)
+   (<pq> ^outer <prop>
+         ^inner1 <object-with-property>
+        -^inner2) # not a relation
+   (<object-with-property> ^predicates.interpretation <owpi>)
+-->
+   (<p> ^interpretation.object-is-question <oi>)
+   (<owpi> ^questioned <prop>) # part of the interpretation of one of the objects
+}
+
+# If a relation is being questioned, require it to be the root relation and we don't
+# have to look up what the predicate actually refers to. This saves the trouble
+# of handling chaining for "to the right of", where the predicates show
+# QUESTIONED(to) and not QUESTIONED(right-of). This means we won't support 
+# "is the red object on the table near the book?", though.
+
+sp {interpret-object-is-question*elaborate*return-interpretation*relation
+   (state <s> ^name interpret-object-is-question
+              ^predicates <p>
+              ^predicates.predicate <pq>
+              ^predicates.predicate <pp>
+              ^object-predicates.interpretation <oi>) # comes from interpret-object
+   (<pp> ^outer QUESTIONED
+         ^inner1 <prop>)
+   (<pq> ^outer <prop>
+         ^inner2) # a relation
+   (<oi> ^relation <rel>)
+-->
+   (<p> ^interpretation.object-is-question <oi>)
+   (<rel> ^questioned true)
+}
+

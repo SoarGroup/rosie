@@ -1,0 +1,512 @@
+# replace productions in refsoar/activate.soar to put lgsoar in a substate
+excise global*apply*processing-complete
+
+# all language data structures should be linked under top-state.language
+# (rather than regular top-state or io)
+sp {top-state*elaborate*language
+   (state <s> ^superstate nil)
+-->
+   (<s> ^language <ln>)
+   (<ln> ^model <md>) # linked into each lgsoar subgoal as ^model
+}
+
+sp {top-state*elaborate*language*original-sentence
+   (state <s> ^superstate nil
+              ^language <l>
+              ^io.input-link.lg.original-sentence <sent>)
+-->
+   (<l> ^original-sentence <sent>)
+}
+
+sp {top-state*elaborate*language*parsed-sentence
+   (state <s> ^superstate nil
+              ^language <l>
+              ^io.input-link.lg.parsed-sentence <ps>)
+-->
+   (<l> ^parsed-sentence <ps>)
+}
+
+sp {top-state*propose*preprocess-sentence
+  (state <s> ^superstate nil
+             ^language.original-sentence <sent>)
+  (<sent> -^preprocessed)
+-->
+  (<s> ^operator <o> +)
+  (<o> ^name preprocess-sentence
+       ^kind interpretation
+       ^original-sentence <sent>)
+}
+
+# only matches for the 0th parse, but subgoal looks at all of them
+# one parse should get marked valid to get to interpret-sentences
+sp {top-state*propose*select-parse
+  (state <s> ^superstate nil
+             ^language.parsed-sentence <sent>)
+   (<sent> ^parse-count 0
+           ^sentence-count <ct>)
+  -{(<s> ^language.parsed-sentence <sent2>)
+    (<sent2> ^sentence-count <ct>
+             ^parse-valid true)}
+  -{(<s> ^language.parsed-sentence <sent3>)
+    (<sent3> ^sentence-count <ct>
+             ^words <wds>
+             ^parse-count 0)
+    (<wds> ^word <w>)
+    (<w> ^guessed true)}
+-->
+  (<s> ^operator <o> +)
+  (<o> ^name select-parse
+       ^sentence-count <ct>
+       ^kind interpretation)
+}
+
+# if the chosen parse contains a skipped word ask
+# for clarification
+sp {global*propose*handle-skipped-word
+   (state <s> ^superstate nil
+             ^language.parsed-sentence <sent>)
+   (<sent> -^final-predicates
+            ^parse-valid true
+            ^words <wds>)
+   (<wds> ^word <w>)
+   (<w> ^skipped true
+       -^handled true)
+-->
+  (<s> ^operator <o> + >)
+  (<o> ^name handle-skipped-word
+       ^word <w>
+       ^sent <sent>
+       ^added-word-num 0)
+}
+
+sp {global*apply*handle-skipped-word*mark-original-sentence-invalid
+   (state <s> ^operator <o>
+              ^io.input-link.lg.original-sentence <os>)
+   (<o> ^name handle-skipped-word
+        ^sent.sentence-count <sc>)
+   (<os> ^sentence-count <sc>)
+-->
+   (<os> ^invalid true)
+}
+   
+
+sp {top-state*propose*interpret-sentences
+  (state <s> ^superstate nil
+             ^language.parsed-sentence <sent>)
+   (<sent> -^final-predicates
+           -^parse-skipped-word true
+            ^parse-valid true)
+-->
+  (<s> ^operator <o> + =)
+  (<o> ^name interpret-sentences
+       ^kind interpretation)
+}
+
+sp {elaborate*interpret-sentences*sentences
+   (state <s> ^superstate nil
+              ^language.parsed-sentence <sent>
+              ^operator <o1> +)
+   (<sent> ^parse-valid true
+          -^final-predicates <fp>)
+   (<o1> ^name interpret-sentences)
+-->
+   (<o1> ^sentence <sent>)
+}
+
+
+sp {global*apply*processing-complete*save-predicates
+  (state <s> ^operator.name processing-complete
+             ^superstate.operator.sentence <lgs>
+             ^final-predicates <fp>)
+-->
+   (<lgs> ^final-predicates <fp>)
+}
+
+sp {top-state*lgsoar-predicate-set*to-state
+   (state <s> ^superstate nil
+              ^language <l>
+              ^language.parsed-sentence <lgs>)
+   (<lgs> ^final-predicates {<> not-applicable <fp>}
+          ^sentence-count <sc>)
+-->
+   (<l> ^lgsoar-predicate-set <fp>)
+   (<fp> ^sentence-count <sc>)
+}
+
+# divide up lgsoar-predicate-set by their originating sentence into
+# message-predicate-sets
+
+# there will be one message structure created for each "sentence"
+# (these may not directly correspond with external sentences, since some
+# actual sentences are split in two)
+
+# To clean up, finish-interpretation checks if there are any
+# lgsoar-predicate-sets around that aren't the originating-lgsoar-set set for
+# the message-predicate-set being interpreted. Those are all removed, which
+# should then cause the observed-sentence-count to retract, and then the
+# message-predicate-set(s).
+
+# (lgsoar-predicate-set for current sentence being finished can't be removed,
+# since it may have other uninterpreted sentences in it)
+
+sp {top-state*elaborate*observed-sentence-count
+   (state <s> ^superstate nil
+              ^language <l>
+              ^language.lgsoar-predicate-set <lp>)
+   (<lp> ^predicate.originating-sentence <os>
+         ^postprocessed true)
+-->
+   (<l> ^observed-sentence-count <os>)
+}
+
+sp {top-state*elaborate*lgsoar-predicate-sets
+   (state <s> ^superstate nil
+              ^language <l>)
+   (<l> ^observed-sentence-count <sc>)
+-->
+   (<l> ^message-predicate-set <lps>)
+   (<lps> ^sentence-count <sc>)
+}
+
+sp {top-state*elaborate*lgsoar-predicate-sets*link-predicate
+   (state <s> ^language <l>)
+   (<l> ^lgsoar-predicate-set <lps>
+        ^message-predicate-set <mps>)
+   (<lps> ^predicate <p>)
+   (<p> ^originating-sentence <sc>)
+   (<mps> ^sentence-count <sc>)
+-->
+   (<mps> ^predicate <p>
+          ^originating-lgsoar-set <lps>)
+}
+
+sp {global*propose*handle-single-word
+  (state <s> ^superstate nil
+             ^language.parsed-sentence <sent>)
+   (<sent> -^final-predicates
+           ^words <wds>
+           ^sentence-count <ct>
+           ^parse-count 0)
+   (<wds> ^word.wvalue <w1>
+          -^word.wvalue {<> <w1> <> LEFT-WALL <> RIGHT-WALL <> |.|})
+ -{(<s> ^language.parsed-sentence <sent3>)
+   (<sent3> ^sentence-count <ct>
+            ^words <wds>
+            ^parse-count 0)
+   (<wds> ^word <w>)
+   (<w> ^guessed true)}
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name handle-single-word
+        ^kind interpretation
+        ^word <w1>
+        ^sentence <sent>
+        ^sentence-count <ct>)
+}
+
+sp {global*apply*handle-single-word
+   (state <s> ^operator <o>)
+   (<o> ^name handle-single-word
+        ^word <wd>
+        ^sentence <sent>
+        ^sentence-count <ct>)
+-->
+   (<sent> ^final-predicates <fp>
+           ^parse-valid true)
+   (<fp> ^predicate <pred>)
+   (<pred> ^outer single-word
+           ^inner1 <wd>
+           ^originating-sentence <ct>
+           ^accounted-for true)
+}
+
+sp {global*propose*handle-guessed-word
+   (state <s> ^superstate nil
+              ^io.output-link <ol>
+              ^language.parsed-sentence <sent>)
+   (<sent> ^words <wds>
+           ^parse-count 0)
+   (<wds> ^word <w>)
+   (<w> ^guessed true
+        -^handled)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name handle-guessed-word
+        ^kind interpretation
+        ^sentence <sent>
+        ^word <w>)
+}
+
+sp {global*apply*handle-guessed-word
+   (state <s> ^operator <o>
+              ^io.output-link <ol>)
+   (<o> ^name handle-guessed-word
+        ^sentence <sent>
+        ^word <w>)
+   (<w> ^wvalue <wval>)
+-->
+   (<ol> ^message <g>)
+   (<g> ^first <w1>
+        ^word <w1>
+        ^word <w1>
+        ^word <w2>
+        ^word <w3>
+        ^word <w4>
+        ^word <w5>)
+   (<w1> ^value I
+         ^next <w2>)
+   (<w2> ^value did
+         ^next <w3>)
+   (<w3> ^value not
+         ^next <w4>)
+   (<w4> ^value understand
+         ^next <w5>)
+   (<w5> ^value <wval>)
+   (<w> ^handled true)
+}
+
+sp {global*apply*handle-guessed-word*mark-original-sentence-invalid
+   (state <s> ^operator <o>
+              ^io.input-link.lg.original-sentence <os>)
+   (<o> ^name handle-guessed-word
+        ^sentence.sentence-count <sc>
+        ^word <w>)
+   (<os> ^sentence-count <sc>)
+-->
+   (<os> ^invalid true)
+}
+
+sp {elaborate*lgsoar-message-count
+   (state <s> ^superstate nil
+              ^language <l>)
+-->
+   (<l> ^next-message-id 0)
+}
+
+
+sp {top-state*propose*postprocess-sentence
+   (state <s> ^superstate nil
+              ^language.lgsoar-predicate-set <pred>)
+   (<pred> -^postprocessed)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name postprocess-sentence
+        ^predicates <pred>
+        ^kind interpretation)
+}
+
+sp {top-state*propose*interpret-message
+   (state <s> ^superstate nil
+              ^language.message-predicate-set <pred>)
+   (<pred> -^interpretation)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name interpret-message
+        ^predicate-set <pred>
+        ^kind interpretation)
+}
+
+sp {propose*finish-interpretation
+   (state <s> ^superstate nil
+              ^language.message-predicate-set <pred>)
+   (<pred> ^interpretation <int>
+          -^finished)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name finish-interpretation
+        ^kind interpretation
+        ^message-predicate-set <pred>)
+}
+
+sp {apply*finish-interpretation
+   (state <s> ^superstate nil
+              ^nl.input-link <nli>
+              ^language <l>
+              ^operator <o>)
+   (<o> ^name finish-interpretation
+        ^message-predicate-set <mps>)
+   (<l> ^next-message-id <id>)
+   (<mps> ^interpretation <int>)
+-->
+   (<nli> ^message <int>)
+   (<int> ^id <id>)
+   (<mps> ^finished true)
+   (<l>  ^next-message-id <id> -
+         ^next-message-id (+ <id> 1))
+}
+
+sp {apply*finish-interpretation*clean-predicates
+   (state <s> ^operator <o>
+              ^language <l>)
+   (<l> ^lgsoar-predicate-set <lps>)
+   (<o> ^name finish-interpretation
+        ^message-predicate-set.originating-lgsoar-set <> <lps>)
+-->
+   (<l> ^lgsoar-predicate-set <lps> -)
+}
+
+# remove the original-sentence and parsed-sentences for the 
+# sp {apply*finish-interpretation*clean-io
+#    (state <s> ^superstate nil
+#               ^io.output-link <ol>
+#               ^operator <o>)
+#    (<o> ^name finish-interpretation
+#         ^message-predicate-set.sentence-count <sc>)
+# -->
+#    (<ol> ^sentence-done <sd>)
+#    (<sd> ^sentence-count <sc>)
+# }
+
+# sp {finish-interpretation*report-unaccounted-for
+#    (state <s> ^language.lgsoar-predicate-set.predicate <p>
+#               ^operator.name finish-interpretation)
+#    (<p> -^accounted-for true
+#         -^ignored true)
+# -->
+#    (write (crlf) |Predicate unaccounted for: | (crlf) (cmd print --depth 1 --tree <p>))
+# }
+
+
+# preference rules:
+
+sp {top-state*prefer*preprocess-lower
+   (state <s> ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name preprocess-sentence
+         ^original-sentence.sentence-count <sc>)
+   (<o2> ^name preprocess-sentence
+         ^original-sentence.sentence-count > <sc>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+
+sp {elaborate*select-parse*prefer-older-sentences
+   (state <s> ^superstate nil
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name select-parse
+         ^sentence-count <ct1>)
+   (<o2> ^name select-parse
+         ^sentence-count > <ct1>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+# ordering: select should always happen after preprocess (in case later
+# preprocessing needs to commit to learned parse-classes from earlier
+# select-parse)
+# ALL sentences should have preprocess and select done before
+# interpret-sentences (LGSoar)
+sp {elaborate*prefer*select*over*preprocess
+   (state <s> ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name preprocess-sentence)
+   (<o2> ^name select-parse)
+-->
+   (<s> ^operator <o2> > <o1>)
+}
+
+sp {elaborate*prefer*evaluate-over-interpret
+   (state <s> ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name select-parse)
+   (<o2> ^name interpret-sentences)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {elaborate*prefer*preprocess-over-interpret
+   (state <s> ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name preprocess-sentence)
+   (<o2> ^name interpret-sentences)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+# prefer any operator without a priority (non-LGSoar) to one with a priority
+sp {prefer*non-LG
+   (state <s> ^operator <o> +
+              ^operator <o2> +)
+   (<o> ^priority <any>)
+   (<o2> -^priority)
+-->
+   (<s> ^operator <o2> > <o>)
+}
+
+sp {elaborate*process-over-interpret
+   (state <s> ^superstate nil
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name interpret-sentences)
+   (<o2> ^name process-message)
+-->
+   (<s> ^operator <o2> > <o1>)
+}
+
+sp {elaborate*handle-single-word*over*select-parse
+   (state <s> ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name handle-single-word)
+   (<o2> ^name select-parse)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {elaborate*handle-guessed-word*over*select-parse
+   (state <s> ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name handle-guessed-word)
+   (<o2> ^name select-parse)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {elaborate*handle-guessed-word*over*handle-single-word
+   (state <s> ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name handle-guessed-word)
+   (<o2> ^name handle-single-word)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {elaborate*handle-guessed-word*prefer-lower-word
+   (state <s> ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name handle-guessed-word
+         ^word.wcount <c1>)
+   (<o2> ^name handle-guessed-word
+         ^word.wcount <c2> < <c1>)
+-->
+   (<s> ^operator <o1> < <o2>)
+}
+
+sp {elaborate*interpret-earlier
+   (state <s> ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name interpret-message
+         ^predicate-set.sentence-count <lower>)
+   (<o2> ^name interpret-message
+         ^predicate-set.sentence-count > <lower>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {elaborate*finish-before-starting
+   (state <s> ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name interpret-message)
+   (<o2> ^name finish-interpretation)
+-->
+   (<s> ^operator <o2> > <o1>)
+}
+
+sp {prefer*handle-skipped-word*indifferent-to-self
+   (state <s> ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name handle-skipped-word)
+   (<o2> ^name handle-skipped-word)
+-->
+   (<s> ^operator <o1> = <o2>)
+}

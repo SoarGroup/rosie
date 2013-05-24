@@ -1,0 +1,62 @@
+# Given a new word that the instructor used, learn about it
+#   so that it can be used by the agent in the future
+sp {propose*learn-word
+   (state <s> ^interaction.stack.segment.purpose <p>)
+   (<p> ^type learn-word
+        ^parameters.word <word>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name learn-word
+        ^category smem)
+}
+
+sp {learn-word*elaborate*operator
+   (state <s> ^interaction.stack.segment.purpose <p>
+              ^operator <o> +)
+   (<p> ^type learn-word
+        ^parameters.{<att> << property-name word-type word comparator property >>} <val>)
+   (<o> ^name learn-word)
+-->
+   (<o> ^<att> <val>)
+}
+
+# Copies the word onto the segment.info
+sp {learn-word*copy*parameters*info
+   (state <s> ^name learn-word
+              ^topstate.interaction.stack.segment.info <info>
+              ^superstate.operator <o>)
+   (<o> ^name learn-word
+        ^{<att> << property-name word-type word comparator property >>} <val>)
+-->
+   (<info> ^<att> <val>)
+}
+
+# Default type of the word is an adjective
+sp {learn-word*parameter*word-type*default*adjective
+   (state <s> ^name learn-word
+             -^topstate.interaction.stack.segment.info.word-type)
+-->
+   (<s> ^word-type adjective)
+}
+
+# Copies information about the word being learned from the segment.info
+sp {learn-word*copy*parameters
+   (state <s> ^name learn-word
+              ^topstate.interaction.stack.segment.info <info>)
+   (<info> ^{<param> << word property-name property word-type comparator >>} <val>)
+-->
+   (<s> ^<param> <val>)
+}
+
+# Once the word is learned, perform a learning-event
+sp {apply*learn-word*perform*learning-event
+   (state <s> ^status <status>
+              ^operator <o>)
+   (<o> ^name learn-word
+        ^word <word>
+        ^learned true)
+-->
+   (<status> ^performed.learning-event <e>)
+   (<e> ^type word
+        ^word <word>)
+}

@@ -1,0 +1,117 @@
+# elaborations.soar
+# Elaborations used to construct the index-object substate including:
+#   Creating a label-query for each object.property
+# 	Copying parameter values (or creating default values if missing)
+#	Modifying the final-matches structure with the result of the index-object
+
+# If the object is the desired object from a relation, mark it desired
+sp {index-object*elaborate*object*desired*relation
+   (state <s> ^name index-object
+              ^index-object-context <context>)
+   (<context> ^object <obj>
+              ^relation.object1 <obj>)
+-->
+   (<obj> ^desired true)
+}
+
+sp {index-object*elaborate*object*desired*no-relation
+   (state <s> ^name index-object
+              ^index-object-context <context>)
+   (<context> ^object <obj>
+             -^relation)
+-->
+   (<obj> ^desired true)
+}
+
+sp {index-object*elaborate*object-to-index
+   (state <s> ^name index-object
+              ^index-object-context.object <obj>)
+-->
+   (<s> ^object-to-index <oti>)
+   (<oti> ^description <obj>
+          ^candidates <c>
+          ^matches <m>
+          ^smem-cue <cue>)
+   (<cue> ^wme-type object)
+}
+
+sp {index-object*elaborate*object-to-index*smem-cue*label
+   (state <s> ^name index-object
+              ^object-to-index <obj>)
+   (<obj> ^description.property <prop>
+          ^smem-cue <cue>)
+   (<prop> ^category <cat>
+           ^label <label>)
+-->
+   (<cue> ^<cat> <label>)
+}
+
+# It's a match if it is a visual match and also
+# Matches all the relations
+sp {index-object*elaborate*match*satisfies*all
+   (state <s> ^name index-object
+              ^object-to-index.matches <matches>)
+   (<matches> ^matched-visual.match <match>)
+   -{(<matches> ^matched-relation <m-rel>)
+     (<m-rel> -^match <match>)}
+-->
+   (<matches> ^match <match>)
+}
+
+
+## If an exact match is given, then copy it right away
+#sp {index-object*elaborate*object-matches*exact*match
+#   (state <s> ^name index-object
+#              ^topstate.object <obj>
+#              ^index-object-context.object <i-obj>)
+#   (<i-obj> ^match-id <id>)
+#   (<obj> ^id <id>)
+#-->
+#   (<s> ^object-matches <matches>)
+#   (<matches> ^object <i-obj>
+#              ^match <obj>)
+#}
+#
+## Add the desired object to the final-matches
+#sp {index-object*elaborate*final-matches*desired
+#   (state <s> ^name index-object
+#              ^final-matches <fm>
+#              ^index-object-context.object <obj>)
+#   (<obj> ^desired)
+#-->
+#   (<fm> ^object <obj>)
+#}
+#
+## Object only - Copy the match from the identify-object 
+#sp {index-object*elaborate*final-match*no-relation
+#   (state <s> ^name index-object
+#              ^final-matches <fm>
+#              ^object-matches.match {<m> <> failure}
+#             -^index-object-context.relation)
+#-->
+#   (<fm> ^match <m>)
+#}
+#
+## If one of the identify-object queries resulted in failure, and
+##   use-interaction is false, then the result is a failure
+#sp {index-object*elaborate*match*failure*use-interaction*false
+#   (state <s> ^name index-object
+#              ^final-matches <fm>
+#              ^index-object-context.use-interaction false
+#              ^object-matches <matches>)
+#   (<matches> -^match <> failure)
+#-->
+#   (<fm> ^match failure)
+#}
+#
+## If one of the identify-object queries resulted in failure, and
+##	no-teaching has been set on that object, then the result is failure
+#sp {index-object*elaborate*match*failure*no-teaching
+#   (state <s> ^name index-object
+#              ^final-matches <fm>
+#              ^object-matches <matches>)
+#   (<matches> -^match <> failure
+#               ^object.no-teaching)
+#-->
+#   (<fm> ^match failure)
+#}

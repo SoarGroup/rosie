@@ -1,0 +1,139 @@
+# Operator: smem-query
+# Performs an smem query using the given query structure on the operator
+#   and returns the first or all the results 
+
+#(<s> ^operator <o> +)
+#(<o> ^name smem-query
+#     ^query <q>            <- query structure (Required)
+#	  ^return-all << true false >>)
+
+# Will create a ^smem-query-result WME on the superstate with the retrieved LTI(s)
+#   If nothing is returned it creates a ^smem-query-result failure WME
+
+# Parameters:
+
+sp {smem-query*elaborate*copy*parameters
+   (state <s> ^name smem-query
+              ^superstate.operator.{<param> << return-all >>} <val>)
+-->
+   (<s> ^<param> <val>)
+}
+
+# Parameter: return-all << true false >>
+#   If false, returns the first result based on the bias
+#   If true, returns all found structures matching the given query
+#   Default: false
+sp {smem-query*elaborate*return-all*default*false
+   (state <s> ^name smem-query
+             -^superstate.operator.return-all)
+-->
+   (<s> ^return-all false)
+}
+
+# Elaborations: Creates the initial retrieval-count at 0
+
+sp {smem-query*elaborate*default*count
+   (state <s> ^name smem-query
+             -^retrieval-count > 0)
+-->
+   (<s> ^retrieval-count 0)
+}
+
+# perform-query: puts the query on the smem command link
+sp {smem-query*propose*perform-query
+   (state <s> ^name smem-query
+              ^retrieval-count <c>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name perform-query
+        ^category smem)
+}
+
+sp {smem-query*apply*perform-query
+   (state <s> ^name smem-query
+              ^operator.name perform-query
+              ^superstate.operator.query <q>
+              ^smem.command <cmd>)
+-->
+   (<cmd> ^query <q>)
+}
+
+# If return-all is true, need to prohibit previous results
+sp {smem-query*elaborate*perform-query*add*prohibit
+   (state <s> ^name smem-query
+              ^operator.name perform-query
+              ^smem.command <cmd>
+              ^result <ret>)
+   (<cmd> ^query <q>)
+-->
+   (<cmd> ^prohibit <ret>)
+}
+              
+# Remove the query from the smem.command link
+sp {smem-query*apply*perform-query*remove*query
+   (state <s> ^name smem-query
+              ^operator.name perform-query
+              ^smem <smem>)
+   (<smem> ^command <cmd>
+           ^result.{<< success failure >>} <query>)
+   (<cmd> ^query <query>)
+-->
+   (<cmd> ^query <query> -)
+}
+
+# With a successful result, copy and increment the retrieval-count
+sp {smem-query*apply*perform-query*copy*result
+   (state <s> ^name smem-query
+              ^operator.name perform-query
+              ^smem.result <smem-result>
+             -^result <ret>
+              ^retrieval-count <c>)
+   (<smem-result> ^success
+                  ^retrieved <ret>)
+-->
+   (<s> ^result <ret>
+        ^retrieval-count <c> -
+        ^retrieval-count (+ <c> 1))
+}
+
+# If there were no successful queries return failure
+sp {smem-query*apply*perform-query*no-results
+   (state <s> ^name smem-query
+              ^operator.name perform-query
+              ^superstate <ss>
+              ^smem.result.failure
+              ^retrieval-count 0)
+-->
+   (<ss> ^smem-query-result failure)
+}
+
+# If the query is exhausted and there were results, copy them
+sp {smem-query*apply*perform-query*failure*multiple-matches
+   (state <s> ^name smem-query
+              ^operator.name perform-query
+              ^smem.result.failure
+              ^superstate <ss>
+              ^result <res>)
+-->
+   (<ss> ^smem-query-result <res>)
+}
+
+# If you only need one (return-all false) then immediately finish
+sp {smem-query*propose*complete-smem-query*return-one
+   (state <s> ^name smem-query
+              ^return-all false
+              ^result <res>)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name complete-smem-query
+        ^category smem)
+}
+
+sp {smem-query*apply*complete-smem-query*copy*result
+   (state <s> ^name smem-query
+              ^operator.name complete-smem-query
+              ^superstate <ss>
+              ^result <res>)
+-->
+   (<ss> ^smem-query-result <res>)
+}

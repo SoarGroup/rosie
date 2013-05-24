@@ -1,0 +1,86 @@
+sp {smem-lookup*propose*init-state
+   (state <s> ^superstate.operator <o>)
+   (<o> ^name smem-lookup
+        ^query <query>
+        ^results <result>)
+-->
+   (<s> ^problem-space message-interpretation
+        ^name smem-lookup
+        ^query <query>
+        ^results <result>)
+}
+
+# start looping through all smem entries that match ^query
+
+sp {smem-lookup*propose*lookup-query
+   (state <s> ^name smem-lookup
+              ^query <q>
+              ^smem.command <sc>
+             -^looked-up <id>)
+-->
+   (<sc> ^query <q>)
+   (<s> ^operator <o> +)
+   (<o> ^name lookup-query)
+}
+
+sp {smem-lookup*apply*lookup-query
+   (state <s> ^name smem-lookup
+              ^operator.name lookup-query
+              ^smem.result.retrieved <id>
+              ^results <results>)
+-->
+   (<results> ^result <id>)
+   (<s> ^looked-up <id>)
+}
+
+sp {smem-lookup*propose*prohibit-query
+   (state <s> ^name smem-lookup
+              ^smem.command <sc>
+              ^looked-up <id>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name prohibit-query)
+}
+
+sp {smem-lookup*apply*prohibit-query
+   (state <s> ^name smem-lookup
+              ^smem.command <sc>
+              ^looked-up <id>
+              ^operator <o>)
+   (<o> ^name prohibit-query)
+-->
+   (<sc> ^prohibit <id>)
+   (<s> ^looked-up <id> -)
+}
+
+# go back to start of loop
+
+# prefer ending the state to doing another query
+sp {smem-lookup*prefer*end-state
+   (state <s> ^name smem-lookup
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name end-state)
+   (<o2> ^name lookup-query)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+# propose ending the state if the last smem lookup resulted in failure
+sp {smem-lookup*propose*end-state
+   (state <s> ^name smem-lookup
+              ^smem.result.failure <f>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name end-state)
+}
+
+sp {smem-lookup*apply*end-state
+   (state <s> ^name smem-lookup
+              ^operator <o>
+              ^superstate <s2>
+              ^results <r>)
+   (<o> ^name end-state)
+-->
+   (<r> ^finished true)
+}

@@ -1,0 +1,98 @@
+### works with Aaron's find-object code. Expects nounjectives attribute on the state.
+### 
+
+sp {find-object*create-cue*no-match
+   (state <s> ^name find-object)
+-->
+   (<s> ^description <cue>)
+}
+
+sp {populate*cue*
+   (state <s> ^name find-object
+	      ^description <cue>
+	      ^nounjective <n>) 
+   (<n> ^category <arg>
+   	^label <val>)
+-->
+   (<cue> ^<arg> <val>)
+}
+
+sp {propose*find-object-smem
+   (state <s> ^name find-object
+   	      ^description <desc>
+	      -^smem-match <ret>)
+-->
+   (<s> ^operator <op> +)
+   (<op> ^name find-object-smem
+   	 ^description <desc>
+	 ^category indexing)
+}
+
+sp {write*match
+   (state <s> ^name find-object
+   	      ^smem-match <ret>
+	      ^superstate.operator <sso>)
+-->
+   (<sso> ^match <ret>)
+}
+### lookup semantic memory for objects
+### the cue is a subset of the descriptors of the object
+
+sp {elaborate*look*up*semantic*memory
+   (state <s> ^name find-object-smem
+   	      ^superstate.operator <sop>)
+   (<sop> ^name find-object-smem
+   	  ^description <cue>)
+-->
+   (<s> ^description <cue>)
+}
+
+sp {query*smem*objects
+   (state <s> ^name find-object-smem
+   	      ^description <cue>
+	      ^smem.command <scomm>)
+-->
+   (<scomm> ^query <cue>)
+}
+
+sp {write*to*superstate*objects
+   (state <s> ^name find-object-smem
+   	      ^smem.result <res>
+	      ^superstate <ss>)
+   (<res> ^retrieved <ret>)
+-->
+   (<ss> ^smem-match <ret>)
+}
+
+sp {write*to*superstate*objects*failure
+   (state <s> ^name find-object-smem
+   	      ^smem.result <res>
+	      ^superstate <ss>)
+   (<res> ^failure <any>)
+-->
+   (<ss> ^smem-match failure)
+}
+
+sp {write*to*topstate*hypothetical*object
+   (state <s> ^name find-object-smem
+   	      ^smem.result <res>
+	      ^topstate <ts>)
+   (<res> ^retrieved <ret>)
+   (<ret> ^o_type <arg>)
+-->
+   (<ts> ^<arg> <ret>)
+   (<ret> ^hypothetical true)
+}
+	  
+
+sp {cleanup*hypothetical*objects
+   (state <s> ^topstate <s>
+   	      ^<any> <val>
+	      ^operator <op>)
+   (<val> ^hypothetical true)
+   (<op> ^category << interaction-stack communication >>)
+-->
+   (<s> ^<any> <val> -)
+}
+
+	  

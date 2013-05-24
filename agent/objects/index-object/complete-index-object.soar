@@ -1,0 +1,209 @@
+##############################################
+# index-object-failure
+# 		Occurs when there are no matches
+##############################################
+
+sp {index-object*propose*index-object-failure
+   (state <s> ^name index-object
+              ^object-to-index <obj>)
+   (<obj> ^description.desired true
+         -^matches.match)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name index-object-failure
+        ^category indexing)
+}
+
+sp {index-object*apply*index-object-failure
+   (state <s> ^name index-object
+              ^operator.name index-object-failure
+              ^superstate.operator <ss-op>)
+-->
+   (<ss-op> ^finished true
+            ^match failure)
+}
+
+##############################################
+# complete-index-object 
+# 		This operator returns the result of the index-object onto the superstate operator
+##############################################
+
+sp {index-object*propose*complete-index-object
+   (state <s> ^name index-object
+              ^object-to-index <obj>)
+   (<obj> ^description.desired true
+          ^candidates.candidate <cand>
+          ^matches.match <match>)
+   (<cand> ^object <match>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name complete-index-object
+        ^category indexing
+        ^candidate <cand>)
+}
+
+# Will return an object that got a higher preference
+sp {index-object*prefer*higher*preference
+   (state <s> ^name index-object
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name complete-index-object
+         ^candidate.pref <pref1>)
+   (<o2> ^name complete-index-object
+         ^candidate.pref > <pref1>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+         
+
+sp {index-object*apply*complete-index-object
+   (state <s> ^name index-object
+              ^operator <o>
+              ^superstate.operator <ss-op>)
+   (<o> ^name complete-index-object
+        ^candidate <cand>)
+   (<cand> ^object <match>)
+-->
+   (<ss-op> ^match <match>
+            ^candidate <cand>
+            ^finished true)
+}
+
+################################################
+# return-all
+
+# If true, then all potential matches will be returned
+sp {index-object*apply*complete-index-object*return-all
+   (state <s> ^name index-object
+              ^operator <o>
+              ^parameters.return-all true
+              ^object-to-index <obj>
+              ^superstate.operator <ss-op>)
+   (<obj> ^description.desired true
+          ^candidates.candidate <cand>
+          ^matches.match <match>)
+   (<cand> ^object <match>)
+   (<o> ^name complete-index-object
+        ^candidate <> <cand>)
+-->
+   (<ss-op> ^match <match>
+            ^candidate <cand>)
+}
+
+################################################
+# allow-ties
+
+#   If false, then a random match will be returned
+sp {index-object*complete-index-object*allow-ties*false*indifferent
+   (state <s> ^name index-object
+              ^operator <o> +
+              ^parameters.allow-ties false)
+   (<o> ^name complete-index-object)
+-->
+   (<s> ^operator <o> =)
+}
+
+# If true, then a tie-impasse will occur and the agent will ask the user
+sp {complete-index-object*elaborate*name
+   (state <s> ^superstate.name index-object
+              ^impasse tie
+              ^item.name complete-index-object)
+-->
+   (<s> ^name complete-index-object)
+}
+
+sp {complete-index-object*reject*indicate-unresolved-tie
+   (state <s> ^name complete-index-object
+              ^operator <o> +)
+   (<o> ^name indicate-unresolved-tie)
+-->
+   (<s> ^operator <o> -)
+}
+
+sp {complete-index-object*propose*which-question
+   (state <s> ^name complete-index-object
+              ^superstate.index-object-context <context>
+              ^superstate.object-to-index.description <desc>)
+   (<desc> ^desired true)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name which-question
+        ^index-object-context <context>
+        ^object <desc>)
+}
+
+sp {complete-index-object*apply*which-question*create-context
+   (state <s> ^name complete-index-object
+              ^operator <o>)
+   (<o> ^name which-question
+        ^index-object-context <io-context>
+        ^object <obj>)
+-->
+   (<s> ^context <context>)
+   (<context> ^cause which-question
+        		^description <desc>
+           ^index-object-context <io-context>
+           ^object <obj>)
+}
+
+sp {complete-index-object*apply*which-question*copy*word
+   (state <s> ^name complete-index-object
+              ^operator <o>
+              ^context.description <desc>)
+   (<o> ^name which-question
+        ^object.property <prop>)
+   (<prop> ^category <> name <> shape
+           ^word <word>)
+-->
+   (<desc> ^adjective <word>)
+}
+
+sp {complete-index-object*apply*which-question*copy*name
+   (state <s> ^name complete-index-object
+              ^operator <o>
+              ^context.description <desc>)
+   (<o> ^name which-question
+        ^object.property <prop>)
+   (<prop> ^category << name shape >>
+           ^word <word>)
+-->
+   (<desc> ^word <word>)
+}
+
+sp {complete-index-object*apply*which-question*copy*name*object
+   (state <s> ^name complete-index-object
+              ^operator <o>
+              ^context.description <desc>)
+   (<o> ^name which-question
+        -^object.property.category << name shape >>)
+-->
+   (<desc> ^word object)
+}
+
+# Creates a status on the topstate to cause a new interaction
+sp {complete-index-object*apply*which-question*create*status
+   (state <s> ^name complete-index-object
+              ^operator.name which-question
+              ^topstate.status <status>
+              ^context <context>
+              ^quiescence t)
+   (<context> ^description <desc>)
+   (<desc> ^word)
+-->
+  (<status> ^type which-question
+         ^state-name topstate
+         ^purpose <p>)
+   (<p> ^type which-question
+        ^context <context>
+        ^parameters <params>
+        # AM: Changed the satisfaction structure
+        ^satisfaction.dialog-event.type object-message)
+   # Segment parameters - A message to send 
+   (<params> ^message <msg>)
+   (<msg> ^type which-question
+          ^originator agent
+          ^fields.description <desc>)
+}
+
+
+

@@ -1,0 +1,56 @@
+# learn-property
+#   Given the name of a property, learns what it can about that property
+#   in order to recognize instances of that property later on
+
+sp {propose*learn-property
+   (state <s> ^interaction.stack.segment.purpose <p>)
+   (<p> ^type learn-property
+        ^parameters.property <prop-name>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name learn-property
+        ^category smem
+        ^property-name <prop-name>)
+}
+
+sp {learn-property*copy*name
+   (state <s> ^operator <o>
+              ^topstate.interaction.stack.segment.info <info>)
+   (<o> ^name learn-property
+        ^property-name <prop-name>)
+-->
+   (<info> ^property-name <prop-name>)
+}
+
+# Copies property-name and property-type from the segment.info
+sp {learn-property*copy*parameters
+   (state <s> ^name learn-property
+              ^topstate.interaction.stack.segment.info <info>)
+   (<info> ^{<param> << property-name property-type measure-verb il-name >>} <val>)
+-->
+   (<s> ^<param> <val>)
+}
+
+# Somehow we didn't get the right information about how to measure, so ask again
+sp {apply*learn-property*remove*verb*if*no*il-prop-name
+   (state <s> ^operator.name learn-property
+              ^topstate.interaction.stack.segment.info <info>)
+   (<info> ^measure-verb <v>
+          -^il-name)
+-->
+   (<info> ^measure-verb <v> -)
+}
+
+# Once the property is marked learned, mark the property learning-event as performed
+sp {apply*learn-property*perform*learning-event
+   (state <s> ^status <status>
+              ^operator <o>)
+   (<o> ^name learn-property
+        ^property-name <prop-name>
+        ^learned true)
+-->
+   (<status> ^performed.learning-event <e>)
+   (<e> ^type property
+        ^property <prop-name>)
+}
+

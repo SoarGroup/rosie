@@ -1,0 +1,192 @@
+
+
+sp {index-object*propose*create-context
+   (state <s> ^name index-object
+             -^index-object-context)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name create-context
+        ^category indexing)
+}
+
+# index-object-context: If there is an existing one on the topstate then copy it
+sp {index-object*apply*create-context*copy*existing
+   (state <s> ^name index-object
+              ^operator.name create-context
+              ^parameters.context-id <id>
+              ^topstate <top>)
+   (<top> ^interaction.stack.segment.info <info>)
+   (<info> ^index-object-context <context>)
+   (<context> ^context-id <id>)
+-->
+   (<s> ^index-object-context <context>)
+}
+
+sp {index-object*apply*create-context*modify*new*word
+   (state <s> ^name index-object
+              ^operator.name create-context
+              ^parameters.context-id <id>
+              ^topstate <top>)
+   (<top> ^interaction.stack.segment.info <info>)
+   (<info> ^index-object-context <context>)
+   (<context> ^context-id <id>
+              ^object <obj>)
+   (<obj> ^word <word>
+         -^property.word <word>)
+-->
+   (<obj> ^property.word <word>
+          ^word <word> -)
+}
+
+
+
+#--------- Create new context ----------#
+
+sp {index-object*apply*create-context*new*context
+   (state <s> ^name index-object
+              ^operator.name create-context
+              ^parameters.context-id <id>
+              ^topstate <top>)
+   (<top> ^interaction.stack.segment.info <info>)
+   (<info> -^index-object-context.context-id <id>)
+-->
+   (<s> ^copy-context <cc>)
+   (<cc> ^context <context>)
+}
+
+#----------- Copy Parameters ----------------#
+
+sp {index-object*apply*create-context*mark*parameters*copied
+   (state <s> ^name index-object
+              ^operator.name create-context
+              ^copy-context <cc>)
+   (<cc> -^copied-parameters)
+-->
+   (<cc> ^copied-parameters true)
+}
+
+sp {index-object*apply*create-context*copy*parameters
+   (state <s> ^name index-object
+              ^operator.name create-context
+              ^copy-context <cc>
+              ^parameters <p>)
+   (<cc> ^context <context>
+        -^copied-parameters)
+   (<p> ^{<arg> << use-interaction allow-ties return-all context-id infer-match >>} <val>)
+-->
+   (<context> ^<arg> <val>)
+}
+
+#------- Copy Objects/Relations Depth1 ----------#
+
+sp {index-object*apply*create-context*mark*depth1*copied
+   (state <s> ^name index-object
+              ^operator.name create-context
+              ^copy-context <cc>)
+   (<cc> -^copied-depth1)
+-->
+   (<cc> ^copied-depth1 true)
+}
+
+sp {index-object*apply*create-context*copy*objects*relations*depth1
+   (state <s> ^name index-object
+              ^operator.name create-context
+              ^superstate.operator <o>
+              ^copy-context <cc>)
+   (<cc> ^context <context>
+        -^copied-depth1)
+   (<o> ^{<type> << object relation >>} <val>)
+-->
+   (<context> ^<type> <val-copy>)
+   (<cc> ^map <map>)
+   (<map> ^original <val>
+          ^copy <val-copy>)
+}
+
+#------- Copy Objects/Relations Depth2 ----------#
+
+sp {index-object*apply*create-context*mark*depth2*copied
+   (state <s> ^name index-object
+              ^operator.name create-context
+              ^copy-context <cc>)
+   (<cc> ^copied-depth1 true
+        -^copied-depth2)
+-->
+   (<cc> ^copied-depth2 true)
+}
+
+sp {index-object*apply*create-context*copy*words*depth2*specifier
+   (state <s> ^name index-object
+              ^operator.name create-context
+              ^copy-context <cc>)
+   (<cc> ^context <context>
+         ^copied-depth1 true
+        -^copied-depth2
+         ^map <map>)
+   (<map> ^original <val>
+          ^copy <val-copy>)
+   (<val> ^specifier <specifier>)
+-->
+   (<val-copy> ^specifier <specifier>)
+}
+
+
+sp {index-object*apply*create-context*copy*words*depth2
+   (state <s> ^name index-object
+              ^operator.name create-context
+              ^copy-context <cc>)
+   (<cc> ^context <context>
+         ^copied-depth1 true
+        -^copied-depth2
+         ^map <map>)
+   (<map> ^original <val>
+          ^copy <val-copy>)
+   (<val> ^word {<word> <> UNKNOWN}
+         -^questioned <word>)
+-->
+   (<val-copy> ^property.word <word>)
+}
+
+sp {index-object*apply*create-context*copy*objects*relations*depth2*resolve*references
+   (state <s> ^name index-object
+              ^operator.name create-context
+              ^copy-context <cc>)
+   (<cc> ^context <context>
+         ^copied-depth1 true
+        -^copied-depth2
+         ^map <map>
+         ^map <map2>)
+   (<map> ^original <val>
+          ^copy <val-copy>)
+   (<val> ^<arg> <arg-val>)
+   (<map2> ^original <arg-val>
+           ^copy <arg-val-copy>)
+-->
+   (<val-copy> ^<arg> <arg-val-copy>)
+}
+              
+#------ Finished -----#
+sp {index-object*apply*create-context*copy*created*context
+   (state <s> ^name index-object
+              ^operator.name create-context
+              ^copy-context <cc>)
+   (<cc> ^copied-depth2 true
+         ^context <context>)
+-->
+   (<s> ^index-object-context <context>)
+}
+
+sp {index-object*apply*create-context*copy*created*context*topstate
+   (state <s> ^name index-object
+              ^parameters.use-interaction true
+              ^operator.name create-context
+              ^copy-context <cc>
+              ^topstate <top>)
+   (<top> ^interaction.stack.segment.info <info>)
+   (<cc> ^copied-depth2 true
+         ^context <context>)
+-->
+   (<info> ^index-object-context <context>)
+}
+     
+              

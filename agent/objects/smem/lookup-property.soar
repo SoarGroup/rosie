@@ -1,0 +1,72 @@
+# lookup-property
+#   Given the name of a property, returns information about it
+# (<s> ^operator <o> +)
+# (<o> ^name lookup-property
+#      ^property-name <name>    <- required
+#      ^use-interaction true)  
+#
+# Returns the property structure on the superstate in the form
+# (<ss> ^lookup-property-result <p>)
+# (<p> ^wme-type property ^name <prop-name> ^type <prop-type> ^il-name <il-name>)
+# Or ^lookup-property-result failure
+# Note: The ^lookup-property-result <p> is the long term identifier
+
+# Parameters:
+sp {lookup-property*copy*parameters
+   (state <s> ^name lookup-property
+              ^superstate.operator.{<param> << use-interaction property-name >>} <val>)
+-->
+   (<s> ^<param> <val>)
+}
+
+# Parameter: use-interaction << true false >>
+#   If the lookup fails, whether the user should be asked more information about the property
+#   Default: true
+sp {lookup-property*parameter*use-interaction*default*true
+   (state <s> ^name lookup-property
+             -^superstate.operator.use-interaction)
+-->
+   (<s> ^use-interaction true)
+}
+
+# smem-query: Lookup the property based on the name
+
+sp {lookup-property*propose*smem-query
+   (state <s> ^name lookup-property
+              ^property-name <name>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name smem-query
+        ^category smem
+        ^query <q>
+        ^return-all false)
+   (<q> ^wme-type property ^name <name>)
+}
+
+sp {lookup-property*apply*smem-query*failure*use-interaction
+   (state <s> ^name lookup-property
+              ^operator.name smem-query
+              ^smem-query-result failure
+              ^property-name <prop-name>
+              ^use-interaction true
+              ^topstate.status <status>)
+-->
+  (<status> ^type learn-property
+         ^state-name topstate
+         ^purpose <p>)
+   (<p> ^type learn-property
+        ^parameters.property <prop-name>
+        ^satisfaction.learning-event <e>)
+   (<e> ^type property
+        ^property <prop-name>)
+}
+
+
+sp {lookup-property*apply*smem-query*copy-result
+   (state <s> ^name lookup-property
+              ^operator.name smem-query
+              ^smem-query-result <res>
+              ^superstate <ss>)
+-->
+   (<ss> ^lookup-property-result <res>)
+}

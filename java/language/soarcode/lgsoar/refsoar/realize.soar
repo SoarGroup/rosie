@@ -1,0 +1,122 @@
+# File: realize.soar
+# Author: William Taysom
+# Version 2.0: July 24, 2001
+# Created: July 7, 2001
+#
+# Desc: Realizes referents as objects based on pragmatic cues.
+#
+# Realizations:
+#		new-idea (20)
+#
+# 7 June 2011: soar9 conversion: DWL removed attr prefs, added o-support
+#
+
+## realize as new-idea
+
+sp {realize*propose*ref*as*new-idea
+   (state <s> ^current-refset <refs>)
+   (<refs> ^ref <ref>)
+   (<ref> ^head.wcount <wcount> -^pointer -^sloppy-binding ^head.wvalue <val>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name new-idea ^priority 20 ^ref <ref>
+   	 ^order <wcount> 
+     ^debug-info (concat |realizing reference of "| <val> |" as new idea|))
+}
+
+sp {realize*apply*ref*as*new-idea*no-potential-imperative
+	(state <s> ^operator <o> ^model <m> ^current-sentence.sentence-count <sc>)
+	(<o> ^name new-idea ^ref <ref>)
+	(<ref> ^head <head>)
+	(<head> ^wvalue <nuc> ^wcount <wcount> -^potential-imperative)
+-->
+	(<m> ^idea <new>)
+	(<new> ^nuc <nuc> ^wcount <wcount> ^sentence-count <sc>)
+	(<ref> ^pointer <new>)
+}
+
+sp {realize*apply*ref*as*new-idea*potential-imperative
+	(state <s> ^operator <o> ^model <m> ^current-sentence.sentence-count <sc>)
+	(<o> ^name new-idea ^ref <ref>)
+	(<ref> ^head <head>)
+	(<head> ^wvalue <nuc> ^wcount <wcount> ^potential-imperative true)
+-->
+	(<m> ^idea <new>)
+	(<new> ^nuc <nuc> ^wcount <wcount> ^sentence-count <sc> ^potential-imperative true)
+	(<ref> ^pointer <new>)
+}
+
+## realize as coref
+# def-desc
+
+# SBW 4/30/2012
+# removing these:
+# The proposal checks for "def", not "DEF", so it was never matching. If
+# fixed, it only appears to break things like: "The little block is on the big
+# block".
+#
+# I think the intention here is that if there is a definite noun late in the
+# sentence, and there was an idea for the same word earlier, they must refer to
+# the same thing ("If you see a block, get the block", but that doesn't
+# actually work)
+#
+
+# sp {realize*propose*def-desc-ref*as*coref
+#    (state <s> ^count <count> ^refsets.refs <refs> ^model.idea <idea>)
+#    (<refs> ^count <count> ^ref <ref>)
+#    (<ref> ^head <word> ^desc.feature DEF -^pointer)
+#    (<word> ^wvalue <wvalue> ^wcount <wcount>)
+#    (<idea> ^nuc <wvalue>)
+# -->
+#    (<s> ^operator <o> +)
+#    (<o> ^name coref ^priority 30 ^ref <ref> ^idea <idea> ^kind general
+#    	 ^order <wcount> )}
+
+sp {realize*apply*general-coref
+   (state <s> ^operator <o>)
+   (<o> ^name coref ^ref <ref> ^idea <idea> ^kind general)
+-->
+   (<ref> ^pointer <idea>)
+}
+
+# binding
+
+sp {realize*propose*binding*as*coref
+   (state <s> ^current-refset <refs> ^model.idea <idea>)
+   (<refs> ^ref <ref>)
+   (<ref> ^head.wcount <wcount> ^binding <idea> -^pointer)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name coref ^priority 30 ^ref <ref> ^idea <idea> ^kind remove-binding
+   	 ^order <wcount> )}
+
+sp {realize*apply*remove-binding
+   (state <s> ^operator <o>)
+   (<o> ^name coref ^ref <ref> ^idea <idea> ^kind remove-binding)
+-->
+   (<ref> ^pointer <idea>)
+   (<ref> ^binding <idea> -)
+}
+
+# sloppy-binding
+
+sp {realize*propose*sloppy-binding*as*coref
+   (state <s> ^current-refset <refs>)
+   (<refs> ^ref <ana-ref> <pos-ref>)
+   (<ana-ref> ^head.wcount <wcount> ^sloppy-binding.to <ante-ref> -^pointer)
+   (<ante-ref> ^pointer <ante-idea>)
+   (<pos-ref> ^pos <ana-ref> ^pointer <pos-idea>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name coref ^priority 30 ^ref <ana-ref> ^idea <ante-idea> ^kind remove-sloppy-binding
+   	 ^order <wcount> )
+}
+
+sp {realive*apply*remove-sloppy-binding
+   (state <s> ^operator <o>)
+   (<o> ^name coref ^ref <ref> ^idea <idea> ^kind remove-sloppy-binding)
+   (<ref> ^sloppy-binding <to>)
+-->
+   (<ref> ^pointer <idea>)
+   (<ref> ^sloppy-binding <to> -)
+}

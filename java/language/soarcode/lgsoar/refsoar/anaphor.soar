@@ -1,0 +1,658 @@
+# File: anaphor.soar
+# Author: William Taysom
+# Version 2.0: July 24, 2001
+# Created: July 7, 2001
+#
+# Desc: Provides semantic interpretation of lgtree syntax.
+#
+# Operators: unblock-center, unblocking-finished, add-center, rip, cascade, merge, remove-center,
+#			 remove-non-elliptically-included-semantics, expand-contraction
+#	Resolve: propose: he-she-him*as*third, ellipsis*as*verb, I-me*as*first
+#			 		  his-her-its*as*third*when-coref-with-blocked-pos,
+#					  I-me*as*unidentified-speaker,
+#					  my*as*third*when-coref-with-blocked-pos,
+#					  special-empty*as*special-fill
+#			 apply: pronoun, ellipsis, pos, unidentified, special-fill
+#	add-elliptical-verb-syntax: I - did does do will should shall must might could can
+#	expand-contraction: can't, cannot - can not
+#
+# TO DO:
+#
+
+## expand-contraction
+
+# SBW 3/21/2012:
+# removed expand-contraction, doesn't work in Soar 9:
+# the lgsentence is made of input WMES which can't be removed by rules
+
+# sp	{anaphor*propose*expand-contraction*to*can-not
+#   (state <s> ^count <count> ^io.lgsentence <cs>)
+#   (<cs> ^count <count> ^links <links> ^words.word <cont>)
+#   (<cont> ^wcount <wcount> ^wvalue << |can't| cannot >>)
+# -->
+#   (<s> ^operator <o> +)
+#   (<o> ^name expand-contraction ^priority 205 ^word <cont> ^order <wcount> ^new-wvalue-left can
+#         ^new-wvalue-right not ^ltype N )}
+
+# sp	{anaphor*apply*expand-contraction
+#   (state <s> ^operator <o> ^count <count> ^io.lgsentence <cs>)
+#   (<o> ^name expand-contraction ^word <cont> ^order <wcount> 
+#         ^new-wvalue-left <new-wvalue-left> ^new-wvalue-right <new-wvalue-right> ^ltype <ltype>)
+#   (<cs> ^count <count> ^links <links> ^words <words>)
+#   (<words> ^word <cont>)
+#   (<cont> ^wvalue <old-wvalue>)
+# -->
+#   (<cont> ^wvalue <old-wvalue> - <new-wvalue-left> +)
+#   (<links> ^link <link> +)
+#   (<words> ^word <new-word> +)
+#   (<link> ^ltype <ltype> ^lwleft <wcount> ^lwright (+ <wcount> .2))
+#   (<new-word> ^wvalue <new-wvalue-right> ^wcount (+ <wcount> .2))
+# }
+
+## add-elliptical-verb-syntax
+
+sp	{anaphor*propose*add-elliptical-verb-syntax*for-expected-I-link
+   (state <s> ^current-sentence <cs>)
+   (<cs> ^links <links> ^words.word <infl>)
+   (<infl> ^wcount <wcount> ^wvalue << did does do will should shall must might could can >>)
+  -{(<links> ^link <link>)
+    (<link> ^ltype I ^lwleft <wcount>)}
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name add-elliptical-verb-syntax ^priority 205 ^word <infl> ^ltype I
+        ^order <wcount> )}
+
+sp	{anaphor*apply*add-elliptical-verb-syntax
+ # :o-support
+   (state <s> ^operator <o> ^current-sentence <cs>)
+   (<o> ^name add-elliptical-verb-syntax ^word <word> ^ltype <ltype> ^order <wcount>)
+   (<cs> ^links <links> ^words <words>)
+-->
+   (<links> ^link <link> +)
+   (<words> ^word <empty> +)
+   (<empty> ^wcount (+ <wcount> .5) ^wvalue nil)
+   (<link> ^ltype <ltype> ^ltypesub soar-generated ^lwleft <wcount> ^lwright (+ <wcount> .5))
+}
+
+## unblock-center
+
+sp	{anaphor*propose*unblock-center*general
+   (state <s> ^anaphor <a>)
+   (<a> ^centers <centers> ^unblock? general)
+   (<centers> ^center <center>)
+   (<center> ^blocked? yes ^ccount <ccount> ^ref.head.wvalue <word>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name unblock-center ^priority 210 ^center <center> ^order <ccount>
+        ^debug-info (concat |unblocking center for word "| <word> |"|))
+}
+
+sp	{anaphor*apply*unblock-center
+ # :o-support
+   (state <s> ^operator <o>)
+   (<o> ^name unblock-center ^center <center>)
+-->
+   (<center> ^blocked? yes - no +)
+}
+
+## unblocking-finished
+
+sp	{anaphor*propose*unblocking-finished
+   (state <s> ^anaphor <a>)
+   (<a> -^unblock? no)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name unblocking-finished ^priority 209 )}
+
+sp	{anaphor*apply*unblocking-finished
+ # :o-support
+   (state <s> ^operator <o> ^anaphor <a>)
+   (<o> ^name unblocking-finished)
+   (<a> ^unblock? {<> no <not-no>})
+-->
+   (<a> ^unblock? <not-no> - no +)
+}
+
+## add-center
+
+sp	{anaphor*propose*add-verb-center
+   (state <s> ^refsets.refs.ref <ref> ^anaphor.acount <acount>)
+   (<ref> ^rooted-in <something> -^center ^head.wvalue <wval>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name add-center ^priority 203 ^kind verb ^ref <ref> ^new-acount (+ <acount> 1)
+        ^debug-info (concat |adding verb center for reference for "| <wval> |"|))
+}
+
+sp	{anaphor*propose*add-first-center
+   (state <s> ^refsets.refs.ref <ref> ^anaphor.acount <acount>)
+   (<ref> ^head.wvalue {<< I me mine >> <wval>} -^center)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name add-center ^priority 203 ^kind first ^ref <ref> ^new-acount (+ <acount> 1)
+        ^debug-info (concat |adding first-person center for reference for "| <wval> |"|))
+}
+
+
+sp	{anaphor*propose*add-second-center
+   (state <s> ^refsets.refs.ref <ref> ^anaphor.acount <acount>)
+   (<ref> ^head.wvalue {<< you yours >> <wval>} -^center)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name add-center ^priority 203 ^kind second ^ref <ref> ^new-acount (+ <acount> 1)
+        ^debug-info (concat |adding second-person center for reference for "| <wval> |"|))
+}
+
+sp	{anaphor*propose*add-third-center
+   (state <s> ^refsets.refs.ref <ref> ^anaphor.acount <acount>)
+   (<ref> -^rooted-in -^head.wvalue << I me my mine you your yours its his her >> -^center
+           ^head.wvalue <wval>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name add-center ^priority 203 ^kind third ^ref <ref> ^new-acount (+ <acount> 1)
+        ^debug-info (concat |adding third-person center for reference for "| <wval> |"|))
+}
+
+sp	{anaphor*propose*add-third-center*out-of-order
+   (state <s> ^refsets.refs.ref <ref> ^anaphor.acount <acount>)
+   (<ref> -^rooted-in ^head.wvalue << its his her >> -^center)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name add-center-out-of-order ^priority 203 ^kind third ^ref <ref>
+        ^out-acount (- <acount> 1.5) )}
+
+sp	{anaphor*propose*add-first-center*out-of-order
+   (state <s> ^refsets.refs.ref <ref> ^anaphor.acount <acount>)
+   (<ref> -^rooted-in ^head.wvalue my -^center)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name add-center-out-of-order ^priority 203 ^kind first ^ref <ref>
+        ^out-acount (- <acount> 1.5) )}
+
+# if the ref has an order, copy it on the operator
+# (prevents ties for double-object prepositions like "between")
+sp	{anaphor*propose*add-center*order 
+   (state <s> ^operator <o> +)
+   (<o> ^name add-center ^ref <ref>)
+   (<ref> ^order <ord>)
+-->
+   (<o> ^order <ord>)
+}
+
+sp	{anaphor*apply*add-center
+  #  :o-support
+   (state <s> ^operator <o> ^anaphor <a>)
+   (<o> ^name add-center ^kind <kind> ^ref <ref> ^new-acount <new-acount> )
+   (<a> ^acount <acount> ^centers <centers>)
+-->
+   (<a> ^acount <acount> - <new-acount> +)
+   (<centers> ^center <center> +)
+   (<center> ^blocked? yes ^kind <kind> ^ref <ref> ^ccount <acount>)
+   (<ref> ^center <center> +)
+}
+
+
+sp	{anaphor*apply*add-center*out-of-order
+#  :o-support
+   (state <s> ^operator <o> ^anaphor <a>)
+   (<o> ^name add-center-out-of-order ^kind <kind> ^ref <ref> ^out-acount <out-acount>
+        )
+   (<a> ^centers <centers>)
+-->
+   (<centers> ^center <center> +)
+   (<center> ^blocked? yes ^kind <kind> ^ref <ref> ^ccount <out-acount>)
+   (<ref> ^center <center> +)
+}
+
+## resolve
+# proposal
+
+sp	{anaphor*propose*resolve*I-me*as*first
+   (state <s> ^refsets.refs.ref <ana-ref> ^anaphor.centers.center <ante-center>)
+   (<ana-ref> ^center <ana-center> -^strong-binding -^pointer
+              ^head.wvalue << I me >>)
+   (<ante-center> ^blocked? no ^kind first ^ccount <ccount> ^ref <ante-ref>)
+   (<ante-ref> ^pointer <idea>)
+ #  (<ante-ref> -^head.gender neuter)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name resolve ^kind pronoun ^priority 201 ^ana-ref <ana-ref> ^ante-ref <ante-ref>
+        ^order (- <ccount>) )}
+
+sp	{anaphor*propose*resolve*I-me*as*unidentified-speaker
+   (state <s> ^refsets.refs.ref <ana-ref> ^anaphor.centers.center <ante-center>)
+   (<ana-ref> ^center <ana-center> -^strong-binding -^pointer
+              ^head.wvalue << I me >>
+             -^head.individual-identified)
+   (<ante-center> ^blocked? no ^kind first ^ccount <ccount> ^ref nil)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name resolve ^kind unidentified ^priority 201 ^ana-ref <ana-ref>
+        ^order (- <ccount>) )}
+
+sp	{anaphor*propose*resolve*he-she-him-her*as*third
+   (state <s> ^refsets.refs.ref <ana-ref> ^anaphor.centers.center <ante-center>)
+   (<ana-ref> ^center <ana-center> -^strong-binding -^pointer
+              ^head.wvalue << he him she her >>)
+   (<ante-center> ^blocked? no ^kind third ^ccount <ccount> ^ref <ante-ref>)
+   (<ante-ref> ^pointer <idea>)
+ #  (<ante-ref> -^head.gender neuter)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name resolve ^kind pronoun ^priority 201 ^ana-ref <ana-ref> ^ante-ref <ante-ref>
+        ^order (- <ccount>) )}
+
+sp	{anaphor*propose*resolve*ellipsis*as*verb
+   (state <s> ^refsets.refs.ref <ana-ref> ^anaphor.centers.center <ante-center>)
+   (<ana-ref> ^center <ana-center> ^head.wvalue nil -^pointer)
+   (<ante-center> ^blocked? no ^kind verb ^ccount <ccount> ^ref <ante-ref>)
+   (<ante-ref> ^pointer <any>) # SBW
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name resolve ^kind verb-ellipsis ^priority 201 ^ana-ref <ana-ref> ^ante-ref <ante-ref>
+        ^order (- <ccount>) )}
+
+sp	{anaphor*propose*resolve*it*as*phrase
+   (state <s> ^refsets.refs.ref <ana-ref> ^anaphor.centers.center <ante-center>)
+   (<ana-ref> ^center <ana-center> ^head.wvalue it -^pointer)
+   (<ante-center> ^blocked? no ^kind third ^ccount <ccount> ^ref <ante-ref>)
+ #  (<ante-ref> ^head.gender neuter) # SBW genders aren't created anywehere.
+ #  This still doesn't work, but closer?
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name resolve ^kind phrase-ellipsis ^priority 201 ^ana-ref <ana-ref> ^ante-ref <ante-ref>
+        ^order (- <ccount>) )}
+
+sp	{anaphor*propose*resolve*his-her-its*as*third*when-coref-with-blocked-pos
+   (state <s> ^refsets.refs.ref <ana-ref> {<> <ante-ref> <pos-ref>}
+              ^anaphor.centers.center <ante-center>)
+   (<ana-ref> ^center <ana-center> ^head.wvalue << her his its >> -^sloppy-binding -^pointer)
+   (<ante-center> ^blocked? yes ^kind third ^ccount <ccount> ^ref {<> <ana-ref> <ante-ref>})
+   (<pos-ref> ^pos <ana-ref>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name resolve ^kind pos ^priority 201 ^ana-ref <ana-ref> ^ante-ref <ante-ref>
+        ^pos-ref <pos-ref> ^order (- <ccount>) )}
+
+sp	{anaphor*propose*resolve*my*as*third*when-coref-with-blocked-pos
+   (state <s> ^refsets.refs.ref <ana-ref> {<> <ante-ref> <pos-ref>}
+              ^anaphor.centers.center <ante-center>)
+   (<ana-ref> ^center <ana-center> ^head.wvalue my -^sloppy-binding -^pointer)
+   (<ante-center> ^blocked? yes ^kind first ^ccount <ccount> ^ref {<> <ana-ref> <ante-ref>})
+   (<pos-ref> ^pos <ana-ref>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name resolve ^kind pos ^priority 201 ^ana-ref <ana-ref> ^ante-ref <ante-ref>
+        ^pos-ref <pos-ref> ^order (- <ccount>) )}
+
+sp	{anaphor*propose*resolve*special-empty*as*special-fill
+   (state <s> ^refsets.refs.ref <ana-ref> ^anaphor.centers.center <ante-center>)
+   (<ana-ref> ^center <ana-center> ^special empty)
+   (<ante-center> ^blocked? no ^kind verb ^ccount <ccount> ^ref <ante-ref>)
+   (<s> ^refsets.refs.ref <ref>)
+   (<ref> ^aug <ana-ref> -^pointer)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name resolve ^kind special-fill ^priority 51 ^ana-ref <ana-ref> ^ante-ref <ante-ref>
+        ^order (- <ccount>) )}
+
+# application
+
+sp	{anaphor*apply*resolve*special-fill
+   (state <s> ^operator <o>)
+   (<o> ^name resolve ^kind special-fill ^ana-ref <ana-ref> ^ante-ref <ante-ref> )
+   (<ante-ref> ^head.wvalue <new-wvalue>)
+   (<ana-ref> ^head <head>)
+   (<head> ^wvalue <old-wvalue>)
+-->
+   (<head> ^wvalue <old-wvalue> - <new-wvalue> +)
+   (<ana-ref> ^special empty -)
+}
+
+sp	{anaphor*apply*unidentified*oppart
+   (state <s> ^operator <o> ^next-unidentified-individual <number>)
+   (<o> ^name resolve ^kind unidentified ^ana-ref <ana-ref> )
+   (<ana-ref> ^head <head>)
+   (<head> ^wvalue <wvalue>)
+-->
+}
+
+  #SBW 
+
+sp	{anaphor*apply*unidentified*statepart
+   (state <s> ^operator <o> ^next-unidentified-individual <number>)
+   (<o> ^name resolve ^kind unidentified ^ana-ref <ana-ref> )
+   (<ana-ref> ^head <head>)
+   (<head> ^wvalue <wvalue>)
+-->
+   (<head> ^individual-identified true)
+#   (<head> ^wvalue <wvalue> -)
+#   (<head> ^wvalue <number>)
+   (<s> ^next-unidentified-individual <number> -)
+   (<s> ^unlatched-next-unidentified-individual (+ <number> 1))
+}
+
+sp {anaphor*propose*mark-individual-identified
+   (state <s> ^unlatched-next-unidentified-individual <uli>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name mark-individual-identified)
+}
+
+sp {anaphor*apply*mark-individual-identified
+   (state <s> ^operator.name mark-individual-identified
+              ^unlatched-next-unidentified-individual <uli>)
+-->
+   (<s> ^next-unidentified-individual <uli>
+        ^unlatched-next-unidentified-individual <uli> -)
+}
+
+sp {anaphor*prefer*mark-individual-identified
+   (state <s> ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name mark-individual-identified)
+   (<o2> ^name << resolve add-arg >>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp	{anaphor*apply*pos-resolve
+   (state <s> ^operator <o> ^refsets.refs <refs>)
+   (<refs> ^ref <ana-ref>)
+   (<o> ^name resolve ^kind pos ^ana-ref <ana-ref> ^ante-ref <ante-ref> ^pos-ref <pos-ref>)
+-->
+   (<ana-ref> ^sloppy-binding <to>)
+   (<to> ^to <ante-ref>)
+}
+
+sp	{anaphor*apply*pronoun-resolve*if-wcounts-unequal
+   (state <s> ^operator <o> ^refsets.refs <refs> <ante-refs> ^anaphor <anaphor>)
+   (<anaphor> ^merge <merge> ^cascades <cascs>)
+   (<o> ^name resolve ^kind pronoun ^ana-ref <ana-ref> ^ante-ref <ante-ref>)
+   (<refs> ^ref <ana-ref>)
+   (<ana-ref> ^center <center> ^head <ana-head>)
+   (<ana-head> ^wcount <ana-wcount>)
+   (<ante-ref> ^pointer <idea> ^head <ante-head>)
+   (<ante-refs> ^ref <ante-ref>)
+   (<ante-head> ^wcount { <> <ana-wcount> <ante-wcount>})
+   (<merge> ^temp <old-temp> ^replace <old-replace>)
+   (<cascs> ^ante-off-set <old-ante-off-set> ^ana-off-set <old-ana-off-set>)
+-->
+   (<refs> ^ref <ana-ref> - <ante-ref> +)
+   (<ana-head> ^ref <ana-ref> - <ante-ref> +)
+   (<ante-head> ^wcount <ante-wcount> - <ana-wcount> +)
+   (<center> ^ref <ana-ref> - <ante-ref> +)
+   (<merge> ^temp <old-temp> - <ana-ref> +)
+   (<merge> ^replace <old-replace> - <ante-ref> +)
+   (<cascs> ^cascading <ante-ref> +)
+   (<ante-ref> ^binding <idea>)
+   (<cascs> ^ante-off-set <old-ante-off-set> - <ante-wcount> +)
+   (<cascs> ^ana-off-set <old-ana-off-set> - <ana-wcount> +)
+}
+
+sp	{anaphor*apply*pronoun-resolve*if-wcounts-equal
+   (state <s> ^operator <o> ^refsets.refs <refs> <ante-refs> ^anaphor <anaphor>)
+   (<anaphor> ^merge <merge> ^cascades <cascs>)
+   (<o> ^name resolve ^kind pronoun ^ana-ref <ana-ref> ^ante-ref <ante-ref>)
+   (<refs> ^ref <ana-ref>)
+   (<ana-ref> ^center <center> ^head <ana-head>)
+   (<ana-head> ^wcount <ana-wcount>)
+   (<ante-ref> ^pointer <idea> ^head <ante-head>)
+   (<ante-refs> ^ref <ante-ref>)
+   (<ante-head> ^wcount <ana-wcount>)
+   (<merge> ^temp <old-temp> ^replace <old-replace>)
+   (<cascs> ^ante-off-set <old-ante-off-set> ^ana-off-set <old-ana-off-set>)
+-->
+   (<refs> ^ref <ana-ref> - <ante-ref> +)
+   (<ana-head> ^ref <ana-ref> - <ante-ref> +)
+   (<center> ^ref <ana-ref> - <ante-ref> +)
+   (<merge> ^temp <old-temp> - <ana-ref> +)
+   (<merge> ^replace <old-replace> - <ante-ref> +)
+   (<cascs> ^cascading <ante-ref> +)
+   (<ante-ref> ^binding <idea>)
+   (<cascs> ^ante-off-set <old-ante-off-set> - <ana-wcount> +)
+   (<cascs> ^ana-off-set <old-ana-off-set> - <ana-wcount> +)
+}
+
+sp	{anaphor*apply*verb-ellipsis-resolve*if-refs-does-not-have-ante-ref
+   (state <s> ^operator <o> ^refsets.refs <refs> <ante-refs> ^anaphor <anaphor>)
+   (<anaphor> ^merge <merge> ^cascades <cascs>)
+   (<o> ^name resolve ^kind verb-ellipsis ^ana-ref <ana-ref> ^ante-ref <ante-ref>)
+   (<refs> ^ref <ana-ref> -^ref <ante-ref>)
+   (<ana-ref> ^center <center> ^head <ana-head>)
+   (<ana-head> ^wcount <ana-wcount>)
+   (<ante-ref> ^pointer <idea> ^head <ante-head> ^rooted-in <old-count>)
+   (<ante-refs> ^ref <ante-ref>)
+   (<ante-head> ^wcount <ante-wcount>)
+   (<merge> ^temp <old-temp> ^replace <old-replace>)
+   (<cascs> ^ante-off-set <old-ante-off-set> ^ana-off-set <old-ana-off-set>)
+-->
+   (<refs> ^ref <ana-ref> - <ante-ref> +)
+   (<ana-head> ^ref <ana-ref> - <ante-ref> +)
+   (<ana-head> ^wcount <ana-wcount> -)
+   (<ana-head> ^return <ana-wcount> +)
+   (<ante-head> ^wcount <ante-wcount> - <ana-wcount> +)
+   (<center> ^ref <ana-ref> - <ante-ref> +)
+   (<merge> ^temp <old-temp> - <ana-ref> +)
+   (<merge> ^replace <old-replace> - <ante-ref> +)
+   (<cascs> ^cascading <ante-ref> +)
+   (<ante-refs> ^ref <ante-ref> -)
+   (<ante-ref> ^rooted-in <old-count> - <count> +)
+   (<ante-ref> ^return-to-nil <ante-wcount>)
+   (<cascs> ^ante-off-set <old-ante-off-set> - <ante-wcount> +)
+   (<cascs> ^ana-off-set <old-ana-off-set> - <ana-wcount> +)
+}
+
+sp	{anaphor*apply*verb-ellipsis-resolve*if-refs-has-ante-ref
+   (state <s> ^operator <o> ^refsets.refs <refs> ^anaphor <anaphor>)
+   (<anaphor> ^merge <merge> ^cascades <cascs>)
+   (<o> ^name resolve ^kind verb-ellipsis ^ana-ref <ana-ref> ^ante-ref <ante-ref>)
+   (<refs> ^ref <ana-ref> <ante-ref>)
+   (<ana-ref> ^center <center> ^head <ana-head>)
+   (<ana-head> ^wcount <ana-wcount>)
+   (<ante-ref> ^pointer <idea> ^head <ante-head> ^rooted-in <old-count>)
+   (<ante-head> ^wcount <ante-wcount>)
+   (<merge> ^temp <old-temp> ^replace <old-replace>)
+   (<cascs> ^ante-off-set <old-ante-off-set> ^ana-off-set <old-ana-off-set>)
+-->
+   (<refs> ^ref <ana-ref> -)
+   (<ana-head> ^ref <ana-ref> - <ante-ref> +)
+   (<ana-head> ^wcount <ana-wcount> -)
+   (<ana-head> ^return <ana-wcount> +)
+   (<ante-head> ^wcount <ante-wcount> - <ana-wcount> +)
+   (<center> ^ref <ana-ref> - <ante-ref> +)
+   (<merge> ^temp <old-temp> - <ana-ref> +)
+   (<merge> ^replace <old-replace> - <ante-ref> +)
+   (<cascs> ^cascading <ante-ref> +)
+   (<ante-ref> ^rooted-in <old-count> - <count> +)
+   (<ante-ref> ^return-to-nil <ante-wcount>)
+   (<cascs> ^ante-off-set <old-ante-off-set> - <ante-wcount> +)
+   (<cascs> ^ana-off-set <old-ana-off-set> - <ana-wcount> +)
+}
+
+sp	{anaphor*apply*phrase-ellipsis-resolve
+   (state <s> ^operator <o> ^refsets.refs <refs> <ante-refs> ^anaphor <anaphor>)
+   (<anaphor> ^merge <merge> ^cascades <cascs>)
+   (<o> ^name resolve ^kind phrase-ellipsis ^ana-ref <ana-ref> ^ante-ref <ante-ref>)
+   (<refs> ^ref <ana-ref>)
+   (<ana-ref> ^center <center> ^head <ana-head>)
+   (<ana-head> ^wcount <ana-wcount>)
+   (<ante-ref> ^pointer <idea> ^head <ante-head>)
+   (<ante-refs> ^ref <ante-ref>)
+   (<ante-head> ^wcount <ante-wcount>)
+   (<merge> ^temp <old-temp> ^replace <old-replace>)
+   (<cascs> ^ante-off-set <old-ante-off-set> ^ana-off-set <old-ana-off-set>)
+-->
+   (<refs> ^ref <ana-ref> - <ante-ref> +)
+   (<ana-head> ^ref <ana-ref> - <ante-ref> +)
+   (<ante-head> ^wcount <ante-wcount> - <ana-wcount> +)
+   (<center> ^ref <ana-ref> - <ante-ref> +)
+   (<merge> ^temp <old-temp> - <ana-ref> +)
+   (<merge> ^replace <old-replace> - <ante-ref> +)
+   (<cascs> ^cascading <ante-ref> +)
+   (<ante-refs> ^ref <ante-ref> -)
+   (<cascs> ^ante-off-set <old-ante-off-set> - <ante-wcount> +)
+   (<cascs> ^ana-off-set <old-ana-off-set> - <ana-wcount> +)
+}
+
+## rip
+
+sp	{anaphor*propose*rip
+   (state <s> ^refsets.refs <refs> ^anaphor <anaphor>)
+   (<anaphor> ^acount <acount> ^merge <merge> ^cascades.records <records>)
+   (<merge> ^temp <temp> ^replace <replace>)
+   (<refs> ^count <count> ^ref <ref>)
+   (<ref> ^{<> pos <aug>} <replace> ^head.wcount <wcount> -^special ^head.wvalue <wval>)
+  -{(<records> ^record <record>)
+    (<record> ^ref <replace> ^cascaded-at <acount>)}
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name rip ^priority 204 ^ref <ref> ^aug <aug> ^replace <replace>
+        ^order <count> ^level-two-order <wcount>
+        ^debug-info (concat |removing aug ^| <aug> | | <replace> | from reference for "| <wval> |"|))
+}
+
+sp	{anaphor*apply*rip
+ # :o-support
+   (state <s> ^operator <o>)
+   (<o> ^name rip ^ref <ref> ^aug <aug> ^replace <replace>)
+-->
+   (<ref> ^<aug> <replace> -)
+}
+
+## cascade
+
+sp	{anaphor*propose*cascade*into-river
+   (state <s> ^refsets.refs <refs> ^anaphor.cascades <cascs>)
+   (<refs> ^ref <arg> ^count <count>)
+   (<cascs> ^cascading <casc>)
+   (<casc> ^{<> ext <aug>} <arg>)
+   (<arg> ^pointer <pointer> ^head.wcount <wcount>)
+   (<cascs> -^cascading <arg>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name cascade ^priority 203 ^kind into-river ^river <arg>
+        ^order <count> ^level-two-order <wcount> )}
+
+sp	{anaphor*apply*cascade*into-river
+   (state <s> ^current-refset <new-refs>  ^operator <o> ^anaphor.cascades <cascs>
+              ^refsets.refs <old-refs> {<> <old-refs> <new-refs>})
+   (<old-refs> ^ref <arg>)
+   (<o> ^name cascade ^kind into-river ^river <arg>)
+   (<arg> ^head <head> ^center <center>)
+   (<head> ^wcount <wcount>)
+   (<cascs> ^ante-off-set <ante-off-set> ^ana-off-set <ana-off-set>)
+-->
+   (<cascs> ^cascading <arg> +)
+   (<head> ^wcount <wcount> - (+ (+ (- <wcount> <ante-off-set>) .2) <ana-off-set>))
+   (<arg> ^remove center)
+   (<old-refs> ^ref <arg> -)
+   (<new-refs> ^ref <arg> +)
+}
+
+sp	{anaphor*propose*cascage*dried-up
+   (state <s> ^anaphor.cascades <cascs>)
+   (<cascs> ^cascading <casc>)
+   (<casc> ^head.wcount <wcount>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name cascade ^priority 202 ^kind dried-up ^river <casc>
+        ^order <wcount> )}
+
+sp	{anaphor*apply*cascage*dried-up
+   (state <s> ^operator <o> ^anaphor <anaphor>)
+   (<anaphor> ^acount <acount> ^cascades <cascs>)
+   (<o> ^name cascade ^kind dried-up ^river <casc>)
+   (<cascs> ^records <records>)
+   (<casc> ^pointer <pointer>)
+-->
+   (<cascs> ^cascading <casc> -)
+   (<casc> ^pointer <pointer> -)
+   (<records> ^record <record> +)
+   (<record> ^ref <casc> ^cascaded-at <acount>)
+}
+
+## merge
+
+sp	{anaphor*propose*merge
+   (state <s> ^refsets.refs <refs> ^anaphor.merge <merge>)
+   (<refs> ^ref <ref> ^count <count>)
+   (<merge> ^temp <temp> ^replace <replace>)
+   (<ref> ^<aug> <temp> ^head.wcount <wcount>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name merge ^priority 201 ^ref <ref> ^aug <aug> ^temp <temp> ^replace <replace>
+        ^order <count> ^level-two-order <wcount> )}
+
+sp	{anaphor*apply*merge
+   (state <s> ^operator <o>)
+   (<o> ^name merge ^ref <ref> ^aug <aug> ^temp <temp> ^replace <replace>)
+-->
+   (<ref> ^<aug> <temp> - <replace> +)
+}
+
+## clean-up-merge
+
+sp	{anaphor*propose*clean-up-merge
+   (state <s> ^anaphor.merge <merge>)
+   (<merge> -^replace nil)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name clean-up-merge ^priority 200 )}
+
+sp	{anaphor*apply*clean-up-merge
+   (state <s> ^operator <o> ^anaphor <anaphor>)
+   (<anaphor> ^merge <old-merge>)
+   (<o> ^name clean-up-merge )
+-->
+   (<anaphor> ^merge <old-merge> - <merge> +)
+   (<merge> ^temp nil ^replace nil)
+}
+
+## remove-non-elliptically-included-semantics
+
+sp	{anaphor*propose*remove-non-elliptically-included-semantics*ext
+   (state <s> ^anaphor.merge <merge>)
+   (<merge> ^replace <replace>)
+   (<replace> ^ext <ext>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name remove-non-elliptically-included-semantics ^priority 210 ^replace <replace>
+        ^aug ext ^arg <ext> ^merge <merge> )}
+
+sp	{anaphor*propose*remove-non-elliptically-included-semantics*int-with-no-ext
+   (state <s> ^anaphor.merge <merge>)
+   (<merge> ^replace <replace> -^flag block-int-removal)
+   (<replace> ^int <int>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name remove-non-elliptically-included-semantics ^priority 205 ^replace <replace>
+        ^aug int ^arg <int> ^merge <merge> )}
+
+sp	{anaphor*apply*remove-non-elliptically-included-semantics
+   (state <s> ^operator <o>)
+   (<o> ^name remove-non-elliptically-included-semantics ^replace <replace>
+        ^aug <aug> ^arg <arg> ^merge <merge>)
+-->
+   (<replace> ^<aug> <arg> -)
+   (<merge> ^flag block-int-removal)
+}
+
+## remove-center
+
+sp	{anaphor*propose*remove-center
+   (state <s> ^refsets.refs.ref <ref>)
+   (<ref> ^head.wcount <wcount> ^remove center)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name remove-center ^priority 150 ^ref <ref> ^order <wcount> )}
+
+sp	{anaphor*apply*remove-center
+   (state <s> ^operator <o>)
+   (<o> ^name remove-center ^ref <ref>)
+   (<ref> ^center <center>)
+-->
+   (<ref> ^remove center -)
+   (<ref> ^center <center> -)
+}
+

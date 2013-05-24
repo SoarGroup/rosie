@@ -1,0 +1,114 @@
+# complete-index-object 
+# 	This operator returns the result of the index-object onto the superstate operator
+# index-object-failure
+#   This operator returns ^match failure as the result onto the superstate operator
+
+# Mark the operator as finished
+sp {complete*index-object*mark-finished
+   (state <s> ^name index-object
+              ^operator.name << index-object-failure complete-index-object >>
+              ^superstate.operator <ss-op>)
+-->
+   (<ss-op> ^finished true)
+}
+
+
+# SM: is there a need to remove the context? if the purpose of the segment is achieved, the segment will go away 
+# Removes the context from the topstate when the operator finishes
+
+# sp {complete*index-object*destroy-context
+#    (state <s> ^operator <o>
+#               ^topstate <top>)
+#    (<o> ^name index-object
+#         ^finished true)
+#    (<top> ^interaction.stack.segment.info <info>)
+#    (<info> ^index-object-context <context>)
+# -->
+#    (<info> ^index-object-context <context> -)
+# }
+#sp {complete*index-object*destroy-context
+#   (state <s> ^name index-object
+#              ^operator.name << index-object-failure complete-index-object >>
+#              ^topstate <top>)
+#   (<top> ^interaction.stack.segment.info <info>)
+#   (<info> ^index-object-context <context>)
+#-->
+#   (<info> ^index-object-context <context> -)
+#}
+
+# index-object-failure
+#  As soon as we know that the index will fail, we mark it on the superstate operator
+sp {index-object*propose*index-object-failure
+   (state <s> ^name index-object
+              ^final-matches.match failure)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name index-object-failure
+        ^category indexing)
+}
+
+sp {index-object*apply*index-object-failure
+   (state <s> ^name index-object
+              ^operator.name index-object-failure
+              ^superstate.operator <ss-op>)
+-->
+   (<ss-op> ^match failure)
+}
+
+# complete-index-object
+sp {index-object*propose*complete-index-object*no-matches
+   (state <s> ^name index-object
+             -^final-matches.match)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name complete-index-object
+        ^category indexing
+        ^match failure)
+}
+
+#  copy matches to the superstate operator
+sp {index-object*propose*complete-index-object
+   (state <s> ^name index-object
+              ^final-matches.match {<m> <> failure})
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name complete-index-object
+        ^category indexing
+        ^match <m>)
+}
+
+# If allow-ties=false, then just one of the matches will randomly be returned
+sp {index-object*elaborate*complete-index-object*allow-ties*false
+   (state <s> ^name index-object
+ #             ^allow-ties false
+              ^operator <o> +)
+   (<o> ^name complete-index-object)
+-->
+   (<s> ^operator <o> =)
+}
+
+# If return-all=true, then all the matches will be returned
+sp {index-object*elaborate*complete-index-object*return-all*true
+   (state <s> ^name index-object
+              ^return-all true
+              ^operator <o>
+              ^final-matches.match {<m> <> <obj> <> failure})
+   (<o> ^name complete-index-object
+   	^match <obj>
+	-^match-type)
+-->
+   (<o> ^match <m>)
+}
+
+# Copies all matches
+sp {index-object*apply*complete-index-object*copy-match
+   (state <s> ^name index-object
+              ^superstate.operator <ss-op>
+              ^operator <o>)
+   (<o> ^name complete-index-object
+        ^match <m>)
+-->
+   (<ss-op> ^match <m>)
+}
+
+

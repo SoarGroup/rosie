@@ -1,0 +1,226 @@
+sp {handle-skipped-word*propose*init-state
+   (state <s> ^superstate.operator <o>
+             -^word
+             -^sent)
+   (<o> ^name handle-skipped-word
+        ^word <w>
+        ^sent <sent>)
+-->
+   (<s> ^operator <o2> + >)
+   (<o2> ^name init-state
+         ^word <w>
+         ^sent <sent>)
+}
+
+sp {handle-skipped-word*apply*init-state
+   (state <s> ^name handle-skipped-word
+              ^operator <o>)
+   (<o> ^name init-state
+        ^word <w>
+        ^sent <sent>)
+-->
+   (<s> ^problem-space lgsoar
+		^name handle-skipped-word
+        ^word <w>
+        ^sent <sent>)
+}
+
+sp {handle-skipped-word*propose*init-msg
+   (state <s> ^name handle-skipped-word
+              ^word <w>
+              ^sent <sent>
+             -^msg)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name init-msg)
+}
+
+sp {handle-skipped-word*apply*init-msg
+   (state <s> ^name handle-skipped-word
+              ^operator <o>
+              ^word <w>
+              ^sent <sent>)
+   (<o> ^name init-msg)
+   (<w> ^wvalue <wval>)
+-->
+   (<s> ^msg <msg>)
+   (<msg> ^first <w1>
+          ^word <w1> <w2> <w3> <w4> <w5> <w6>
+          ^last <w6>)
+   (<w1> ^value Please
+         ^next <w2>)
+   (<w2> ^value rephrase
+         ^next <w3>)
+   (<w3> ^value your
+         ^next <w4>)
+   (<w4> ^value request
+         ^next <w5>)
+   (<w5> ^value |.|
+         ^next <w6>)
+   (<w6> ^value |(Consider:|)
+}
+
+sp {handle-skipped-word*propose*add-word-to-msg
+   (state <s> ^name handle-skipped-word
+              ^msg <msg>
+              ^sent.words.word <w>
+             -^word.handled true
+             -^handled-nums <wcount>)
+   (<w> ^wvalue <wval>
+       -^wvalue << LEFT-WALL RIGHT-WALL NOUN-PHRASE-WALL >>
+        ^wcount <wcount>
+       -^skipped)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name add-word-to-msg
+        ^wvalue <wval>
+        ^wcount <wcount>)
+}
+
+sp {handle-skipped-word*elaborate*prefer*lower-word-count
+   (state <s> ^name handle-skipped-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name add-word-to-msg
+         ^wcount <c1>)
+   (<o2> ^name add-word-to-msg
+         ^wcount < <c1>)
+-->
+   (<s> ^operator <o2> > <o1>)
+}
+   
+sp {handle-skipped-word*apply*add-word-to-msg
+   (state <s> ^name handle-skipped-word
+              ^operator <o>
+              ^msg <msg>)
+   (<msg> ^last <lword>)
+   (<o> ^name add-word-to-msg
+        ^wvalue <wval>
+        ^wcount <wcount>)
+-->
+   (<s> ^handled-nums <wcount>)
+   (<msg> ^last <lword> - <nword>)
+   (<msg> ^word <nword>)
+   (<nword> ^value <wval>)
+   (<lword> ^next <nword>)
+}
+
+sp {handle-skipped-word*propose*add-generic-word-to-msg
+   (state <s> ^name handle-skipped-word
+              ^top-state.sentence-mapping.word <w>
+              ^msg <msg>
+              ^sent.words.word <w2>
+             -^word.handled true
+             -^handled-nums <wcount>)
+   (<w> ^parser-wvalue <pval>
+        ^real-wvalue {<rval> <> <pval>}
+       -^replaced)
+   (<w2> ^wvalue <pval>
+        -^wvalue << LEFT-WALL RIGHT-WALL NOUN-PHRASE-WALL >>
+         ^wcount <wcount>
+        -^skipped)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name add-generic-word-to-msg
+        ^rword <w>
+        ^rval <rval>
+        ^wcount <wcount>)
+}
+
+sp {handle-skipped-word*apply*add-generic-word-to-msg
+   (state <s> ^name handle-skipped-word
+              ^operator <o>
+              ^sent.words.word <word>
+              ^msg <msg>)
+   (<word> ^wvalue <pval>)
+   (<msg> ^last <lword>)
+   (<o> ^name add-generic-word-to-msg
+        ^rword <w>
+        ^rval <rval>
+        ^wcount <wcount>)
+-->
+   (<s> ^handled-nums <wcount>)
+   (<msg> ^last <lword> - <nword>)
+   (<msg> ^word <nword>)
+   (<nword> ^value <rval>)
+   (<lword> ^next <nword>)
+   (<w> ^replaced true)
+}
+
+sp {handle-skipped-word*elaborate*prefer*add-generic-word-to-msg
+   (state <s> ^name handle-skipped-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name add-word-to-msg)
+   (<o2> ^name add-generic-word-to-msg)
+-->
+   (<s> ^operator <o2> > <o1>)
+}
+
+sp {handle-skipped-word*elaborate*prefer*lower-word-count*generic
+   (state <s> ^name handle-skipped-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name add-generic-word-to-msg
+         ^wcount <c1>)
+   (<o2> ^name add-generic-word-to-msg
+         ^wcount < <c1>)
+-->
+   (<s> ^operator <o2> > <o1>)
+}
+
+sp {handle-skipped-word*propose*end-msg
+   (state <s> ^name handle-skipped-word
+              ^msg <msg>
+             -^msgfinished)
+-->
+   (<s> ^operator <o> + <)
+   (<o> ^name end-msg)
+}
+
+sp {handle-skipped-word*apply*end*msg
+   (state <s> ^name handle-skipped-word
+              ^operator <o>
+              ^msg <msg>)
+   (<o> ^name end-msg)
+   (<msg> ^last <oldlast>)
+-->
+   (<s> ^msgfinished true)
+   (<msg> ^word <newlast>
+          ^last <oldlast> - <newlast>)
+   (<newlast> ^value |)|)
+   (<oldlast> ^next <newlast>)
+}
+
+sp {handle-skipped-word*propose*copy-to-output-link
+   (state <s> ^name handle-skipped-word
+              ^msg <msg>
+             -^word.handled true)
+-->
+   (<s> ^operator <o> + <)
+   (<o> ^name copy-to-output-link
+        ^msg <msg>)
+}
+
+sp {handle-skipped-word*apply*copy-to-output-link
+   (state <s> ^name handle-skipped-word
+              ^operator <o>
+              ^top-state.io.output-link <ol>
+              ^word <w>
+              ^sent <sent>)
+   (<o> ^name copy-to-output-link
+        ^msg <msg>)
+-->
+   (<ol> ^message <msg>)
+   (<w> ^handled true)
+   (<sent> ^parse-skipped-word true
+           ^final-predicates not-applicable) # SBW added so the parse is ignored by LGSoar
+}
+
+sp {handle-skipped-word*prefer*end-msg*to*copy-to-output-link
+   (state <s> ^operator <o1> + <o2> +)
+   (<o1> ^name end-msg)
+   (<o2> ^name copy-to-output-link)
+-->
+   (<s> ^operator <o2> < <o1>)
+ }

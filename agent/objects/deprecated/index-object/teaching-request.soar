@@ -1,0 +1,93 @@
+# teaching-request
+# 	If use-interaction=true and no matches were found for the object, 
+#   ask the user for more information
+# The teaching interaction is finished with the single word 'cancel' or 'finished'
+
+sp {index-object*propose*teaching-request
+   (state <s> ^name index-object
+              ^index-object-context.use-interaction true
+              ^object-matches <matches>)
+   (<matches> ^object <obj>
+             -^match)
+   (<obj> -^no-teaching)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name teaching-request
+        ^category indexing
+        ^object <obj>)
+}
+
+# Creates a teaching-request context 
+sp {index-object*apply*teaching-request*create*context
+   (state <s> ^name index-object
+              ^operator <o>)
+   (<o> ^name teaching-request
+        ^object <obj>)
+-->
+   (<s> ^context <context>)
+   (<context> ^cause teaching-request
+        		^description <desc>
+        		^object <obj>)
+   (<desc> ^determiner a)
+}
+
+# Copies adjectives to the description
+sp {index-object*apply*teaching-request*copy*word
+   (state <s> ^name index-object
+              ^operator <o>
+              ^context.description <desc>)
+   (<o> ^name teaching-request
+        ^object.property <prop>)
+   (<prop> ^category <> name <> shape
+           ^word <word>)
+-->
+   (<desc> ^adjective <word>)
+}
+
+# Copies the name to the description
+sp {index-object*apply*teaching-request*copy*name
+   (state <s> ^name index-object
+              ^operator <o>
+              ^context.description <desc>)
+   (<o> ^name teaching-request
+        ^object.property <prop>)
+   (<prop> ^category << name shape >>
+           ^word <word>)
+-->
+   (<desc> ^word <word>)
+}
+
+# If no names, then copies the word object as the name
+sp {index-object*apply*teaching-request*copy*name*object
+   (state <s> ^name index-object
+              ^operator <o>
+              ^context.description <desc>)
+   (<o> ^name teaching-request
+        -^object.property.category << name shape >>)
+-->
+   (<desc> ^word object)
+}
+
+# Creates a status on the topstate to initiate a new segment
+sp {index-object*apply*teaching-request*create*status
+   (state <s> ^name index-object
+              ^operator.name teaching-request
+              ^topstate.status <status>
+              ^context <context>)
+   (<context> ^description <desc>)
+   (<desc> ^word)
+-->
+  (<status> ^type teaching-request
+         ^state-name topstate
+         ^purpose <p>)
+   (<p> ^type teaching-request
+        ^context <context>
+        ^parameters <params>
+        # AM: Changed the satisfaction structure
+        ^satisfaction.dialog-event.type single-word-response)
+   # Segment parameters - A message to send 
+   (<params> ^message <msg>)
+   (<msg> ^type teaching-request
+          ^originator agent
+          ^fields.description <desc>)
+}

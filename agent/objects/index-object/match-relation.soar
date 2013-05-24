@@ -1,0 +1,115 @@
+sp {index-object*propose*match-relation
+   (state <s> ^name index-object
+              ^index-object-context.relation <rel>
+              ^object-to-index <obj-ti1>
+              ^object-to-index <obj-ti2>)
+   (<rel> ^object1 <obj1>
+          ^object2 <obj2>)
+   (<obj-ti1> ^description <obj1>
+              ^matches.matched-visual.finished true)
+   (<obj-ti2> ^description <obj2>
+              ^matches.matched-visual.finished true)
+   -{(<obj-ti1> ^matches.matched-relation <m-rel>)
+     (<m-rel> ^relation <rel>
+              ^finished true)}
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name match-relation
+        ^category indexing
+        ^relation <rel>
+        ^object1 <obj-ti1>
+        ^object2 <obj-ti2>)
+}
+
+sp {index-object*apply*match-relation*create*relation-matches
+   (state <s> ^name index-object
+              ^operator <o>)
+   (<o> ^name match-relation
+        ^relation <rel>
+        ^object1.matches <m>)
+-->
+   (<m> ^matched-relation.relation <rel>)
+}
+
+sp {match-relation*elaborate*arguments
+   (state <s> ^name match-relation
+              ^superstate.operator.{<arg> << relation object1 object2 >>} <val>)
+-->
+   (<s> ^<arg> <val>)
+}
+
+sp {match-relation*propose*find-relations
+   (state <s> ^name match-relation
+              ^relation.property.word <prep>
+              ^object2.matches.match.id <id>
+             -^found-relation <id>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name find-relations
+        ^interaction true
+        ^category indexing
+        ^prep <prep>
+        ^ind 2
+        ^obj <id>)
+}
+
+sp {match-relation*apply*find-relations*mark*found-relation
+   (state <s> ^name match-relation
+              ^operator.name find-relations
+              ^relationships.with <id>)
+-->
+   (<s> ^found-relation <id>)
+}
+
+sp {match-relation*apply*find-relations*copy-match
+   (state <s> ^name match-relation
+              ^operator <o>
+              ^relationships.relations.obj <id>
+              ^relation <rel>
+              ^object1.matches <matches>)
+   (<matches> ^matched-visual.match <match>
+              ^matched-relation <m-rel>)
+   (<m-rel> ^relation <rel>)
+   (<match> ^id <id>)
+-->
+   (<m-rel> ^match <match>)
+}
+
+sp {match-relation*propose*complete-match-relation
+   (state <s> ^name match-relation)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name complete-match-relation
+        ^category indexing)
+}
+
+sp {match-relation*prefer*find-relations*over*complete-match-relation
+   (state <s> ^name match-relation
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name find-relations)
+   (<o2> ^name complete-match-relation)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {match-relation*apply*complete-match-relation
+   (state <s> ^name match-relation
+              ^operator.name complete-match-relation
+              ^relation <rel>
+              ^object1.matches.matched-relation <m-rel>)
+   (<m-rel> ^relation <rel>)
+-->
+   (<m-rel> ^finished true)
+}
+              
+              
+# The find-relations will add a ^relationships WME to the state
+# ^relationships will contain ^with <original-obj-id>, ^preposition right-of 
+# and a ^relations WME for each match, containing ^name <prepositon> and ^obj <id>
+
+# ind indicates the position in the relationship right-of with ind 1 would find all the 
+# objects that object 0 is right of
+
+# If the find-relations find no relationships the ^relationships response will contain
+# ^failure none-found

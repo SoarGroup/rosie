@@ -1,0 +1,149 @@
+# teaching-request
+# 	If use-interaction=true and no matches were found for the object, 
+#   ask the user for more information
+# The teaching interaction is finished with the single word 'cancel' or 'finished'
+
+sp {index-object*no-matches*propose*which-question
+   (state <s> ^name index-object
+              ^parameters.use-interaction true
+              ^object-to-index <obj>
+              ^index-object-context <context>)
+   (<obj> ^matches <matches>
+          ^description.desired true
+         -^use-all true)
+   (<matches> ^matched-visual.finished true
+             -^matched-visual.match)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name which-question
+        ^category indexing
+        ^index-object-context <context>
+        ^object-to-index <obj>)
+}
+
+sp {index-object*no-matches*propose*teaching-request
+   (state <s> ^name index-object
+              ^parameters.use-interaction true
+              ^object-to-index <obj>
+              ^index-object-context <context>)
+   (<obj> ^matches <matches>
+         -^description.no-teaching
+          ^description.desired true
+          ^use-all true)
+   (<matches> ^matched-visual.finished true
+             -^matched-visual.match)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name teaching-request
+        ^category indexing
+        ^index-object-context <context>
+        ^object-to-index <obj>)
+}
+
+# Creates a teaching-request context 
+sp {index-object*no-matches*apply*create*context
+   (state <s> ^name index-object
+              ^operator <o>)
+   (<o> ^name {<type> << which-question teaching-request >>}
+        ^object-to-index.description <obj>
+        ^index-object-context <io-context>)
+-->
+   (<s> ^context <context>)
+   (<context> ^cause <type>
+              ^description <desc>
+              ^index-object-context <io-context>
+              ^object <obj>)
+}
+
+# Copies specifier to the description
+sp {index-object*no-matches*apply*copy*specifier
+   (state <s> ^name index-object
+              ^operator <o>
+              ^context.description <desc>)
+   (<o> ^name << which-question teaching-request >>
+        ^object.description.specifier <spec>)
+-->
+   (<desc> ^specifier <spec>)
+}
+
+
+sp {index-object*no-matches*apply*copy*word
+   (state <s> ^name index-object
+              ^operator <o>
+              ^context.description <desc>)
+   (<o> ^name << which-question teaching-request >>
+        ^object.property <prop>)
+   (<prop> ^category <> name <> shape
+           ^word <word>)
+-->
+   (<desc> ^adjective <word>)
+}
+
+sp {index-object*no-matches*apply*copy*name
+   (state <s> ^name index-object
+              ^operator <o>
+              ^context.description <desc>)
+   (<o> ^name << which-question teaching-request >>
+        ^object.property <prop>)
+   (<prop> ^category << name shape >>
+           ^word <word>)
+-->
+   (<desc> ^word <word>)
+}
+
+# Marks the description as finished
+sp {index-object*no-matches*copy*finished
+   (state <s> ^name index-object
+              ^operator.name << which-question teaching-request >>
+              ^context.description <desc>)
+-->
+   (<desc> ^finished true)
+}
+
+# Creates a status on the topstate to cause a new interaction
+sp {index-object*no-matches*apply*which-question*create*status
+   (state <s> ^name index-object
+              ^operator.name which-question
+              ^topstate.status <status>
+              ^context <context>)
+   (<context> ^description <desc>)
+   (<desc> ^finished)
+-->
+  (<status> ^type which-question
+         ^state-name topstate
+         ^purpose <p>)
+   (<p> ^type which-question
+        ^context <context>
+        ^parameters <params>
+        # AM: Changed the satisfaction structure
+        ^satisfaction.dialog-event.type object-message)
+   # Segment parameters - A message to send 
+   (<params> ^message <msg>)
+   (<msg> ^type which-question
+          ^originator agent
+          ^fields.description <desc>)
+}
+
+# Creates a status on the topstate to initiate a new segment
+sp {index-object*no-matches*apply*teaching-request*create*status
+   (state <s> ^name index-object
+              ^operator.name teaching-request
+              ^topstate.status <status>
+              ^context <context>)
+   (<context> ^description <desc>)
+   (<desc> ^finished)
+-->
+  (<status> ^type teaching-request
+         ^state-name topstate
+         ^purpose <p>)
+   (<p> ^type teaching-request
+        ^context <context>
+        ^parameters <params>
+        # AM: Changed the satisfaction structure
+        ^satisfaction.dialog-event.type single-word-response)
+   # Segment parameters - A message to send 
+   (<params> ^message <msg>)
+   (<msg> ^type teaching-request
+          ^originator agent
+          ^fields.description <desc>)
+}

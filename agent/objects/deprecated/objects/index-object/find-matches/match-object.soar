@@ -1,0 +1,284 @@
+sp {index-object*find-matches*elaborate*match-info
+   (state <s> ^name find-matches)
+-->
+   (<s> ^match-info <i>)
+}
+
+sp {index-object*find-matches*elaborate*potential-match
+   (state <s> ^name find-matches
+              ^object-to-index <obj>
+              ^match-info <info>)
+   (<obj> ^candidates.candidate.object <c>
+         -^matches.match <obj>)
+-->
+   (<info> ^potential-match <c>)
+}
+
+# Partial match if at least one label matches
+sp {index-object*find-matches*elaborate*partial-match
+   (state <s> ^name find-matches
+              ^match-info <info>
+              ^object-to-index.description.property <desc-prop>)
+   (<info> ^potential-match <obj>
+          -^not-match <obj>)
+   (<obj> ^property <obj-prop>)
+   (<obj-prop> ^name <cat-name>
+           		^type visual
+           		^label <label>)
+   (<desc-prop> ^category <cat-name>
+         		^label <label>)
+-->
+   (<info> ^partial-match <obj>)
+}
+
+# If the object has not been marked as a poor-match or not-match then it is a good-match
+sp {index-object*find-matches*elaborate*good-match
+   (state <s> ^name find-matches      
+              ^match-info <info>)
+   (<info> ^potential-match <obj> 
+           -^not-match <obj>
+           -^poor-match <obj>)
+-->
+   (<info> ^good-match <obj>)
+}
+
+# Not matched if the object doesn't have the given category
+sp {index-object*find-matches*elaborate*not-match*category
+   (state <s> ^name find-matches
+              ^match-info <info>
+#              ^operator <o> +
+              ^object-to-index.description.property.category <cat-name>)
+   (<info> ^potential-match <obj>)   
+   (<obj> -^property.name <cat-name>)
+-->
+   (<info> ^not-match <obj>)
+}
+
+
+# Not matched if the object's visual label doesn't match
+sp {index-object*find-matches*elaborate*not-match*visual-label
+   (state <s> ^name find-matches
+              ^match-info <info>
+              ^object-to-index.description.property <desc-prop>)
+   (<info> ^potential-match <obj>)   
+   (<obj> ^property <obj-prop>)
+   (<obj-prop> ^name <cat-name>
+           		^type visual
+           		^label <p-label> <> <label>)
+   (<desc-prop> ^category <cat-name>
+         		^label <label>)
+-->
+   (<info> ^not-match <obj>)
+}
+
+# If there is no label of the given property, then mark it as a poor match
+sp {index-object*find-matches*reject*not-match*visual-label
+   (state <s> ^name find-matches
+              ^match-info <info>
+              ^object-to-index.description.property <desc-prop>)
+   (<info> ^potential-match <obj>
+           -^not-match <obj>)
+   (<obj> ^property <obj-prop>)
+   (<obj-prop> ^name <cat-name>
+           		^type visual
+           		-^label)
+   (<desc-prop> ^category <cat-name>
+         		^label <label>)
+-->
+   (<info> ^poor-match <obj>)
+}
+
+# If the name doesn't match then mark it as a poor match
+sp {index-object*find-matches*reject*not-match*name
+   (state <s> ^name find-matches
+              ^match-info <info>
+              ^object-to-index.description.property <desc-prop>)
+   (<info> ^potential-match <obj>
+           -^not-match <obj>)
+   (<obj> ^property <obj-prop>)
+   (<obj-prop> ^name name
+          	  -^word <name>)
+   (<desc-prop> ^category name
+                ^word {<name> <> object})
+-->
+   (<info> ^poor-match <obj>)
+}
+
+
+###################################################################
+# MATCH-OBJECT
+# Proposed for every good-match object,
+# If not rejected, then it marks that object as a match 
+
+sp {index-object*find-matches*propose*match-object
+   (state <s> ^name find-matches
+              ^match-info.good-match <obj>
+             -^object-to-index.matches.matched-visual.match <obj>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name match-object
+        ^category indexing
+        ^object <obj>)
+}
+
+# Mark the object as a match
+sp {index-object*find-matches*apply*match-object
+   (state <s> ^name find-matches
+              ^operator <o>
+              ^object-to-index.matches.matched-visual <m>)
+   (<o> ^name match-object
+        ^object <obj>)
+-->
+   (<m> ^match <obj>)
+}
+
+###################################################################
+# INFER-MATCH
+# If only one object could work, infer that as the answer
+# If there are no good-matches, and there is only one poor-match,
+#   Then ask the user for confirmation
+sp {index-object*find-matches*propose*infer-match*one*poor-match
+   (state <s> ^name find-matches
+              ^match-info <info>
+             -^object-to-index.matches.matched-visual.match
+              ^superstate.index-object-context.use-interaction true
+              ^superstate.index-object-context.infer-match true)
+   (<info> -^good-match
+            ^poor-match <obj>
+           -^poor-match <> <obj>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name infer-match
+        ^category indexing
+        ^object <obj>)
+}
+
+sp {index-object*find-matches*propose*infer-match*one*partial-match
+   (state <s> ^name find-matches
+              ^match-info <info>
+             -^object-to-index.matches.matched-visual.match
+              ^superstate.index-object-context.use-interaction true
+              ^superstate.index-object-context.infer-match true)
+   (<info> -^good-match
+            ^partial-match <obj>
+           -^partial-match <> <obj>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name infer-match
+        ^category indexing
+        ^object <obj>)
+}
+
+sp {index-object*find-matches*apply*infer-match
+   (state <s> ^name find-matches
+              ^operator <o>
+              ^object-to-index.matches.matched-visual <m>)
+   (<o> ^name infer-match
+        ^object <obj>)
+-->
+   (<m> ^match <obj>)
+}
+
+
+#sp {index-object*find-matches*apply*infer-match*point
+#   (state <s> ^name find-matches
+#              ^io.output-link <out>
+#              ^operator <o>)
+#   (<o> ^name infer-match
+#        ^object <obj>)
+#   (<obj> ^id <id>
+#          ^pose <pose>)
+#-->
+#   (<out> ^point <point>)
+#   (<point> ^id <id>
+#            ^pose <pose>)
+#}
+#
+#sp {index-object*find-matches*reject*infer-match*holding
+#   (state <s> ^name find-matches
+#              ^operator <o> +
+#              ^io.input-link.self.grabbed-object <> -1)
+#   (<o> ^name infer-match)
+#-->
+#   (<s> ^operator <o> -)
+#}
+#
+## Creates a teaching-request context 
+#sp {index-object*find-matches*apply*infer-match*create*context
+#   (state <s> ^name find-matches
+#              ^object-matches.object <i-obj>
+#              ^superstate.index-object-context <i-context>
+#              ^operator <o>)
+#   (<o> ^name infer-match
+#        ^object.id <id>)
+#-->
+#   (<s> ^context <context>)
+#   (<context> ^cause request-index-confirmation
+#              ^index-object-context <i-context>
+#        		^index-object <i-obj>
+#        		^object-id <id>
+#         		^description <desc>)
+#   (<desc> ^determiner a)
+#}
+#
+## Copies adjectives to the description
+#sp {index-object*find-matches*apply*infer-match*copy*word
+#   (state <s> ^name find-matches
+#              ^operator.name infer-match
+#              ^context <context>)
+#   (<context> ^description <desc>
+#              ^index-object.property <prop>)
+#   (<prop> ^category <> name <> shape
+#           ^word <word>)
+#-->
+#   (<desc> ^adjective <word>)
+#}
+#
+## Copies the name to the description
+#sp {index-object*find-matches*apply*infer-match*copy*name
+#   (state <s> ^name find-matches
+#              ^operator.name infer-match
+#              ^context <context>)
+#   (<context> ^description <desc>
+#              ^index-object.property <prop>)
+#   (<prop> ^category << name shape >>
+#           ^word <word>)
+#-->
+#   (<desc> ^word <word>)
+#}
+#
+## If no names, then copies the word object as the name
+#sp {index-object*find-matches*apply*infer-match*copy*name*object
+#   (state <s> ^name find-matches
+#              ^operator.name infer-match
+#              ^context <context>)
+#   (<context> ^description <desc>
+#              ^index-object <i-obj>)
+#   (<i-obj> -^property.category << name shape >>)
+#-->
+#   (<desc> ^word object)
+#}
+#
+#sp {index-object*find-matches*apply*infer-match*send-message
+#   (state <s> ^name find-matches
+#              ^topstate.status <status>
+#              ^operator.name infer-match
+#              ^context <context>)
+#   (<context> ^description <desc>)
+#   (<desc> ^word <w>)
+#-->
+#  (<status> ^type request-index-confirmation
+#         ^state-name topstate
+#         ^purpose <p>)
+#   (<p> ^type request-index-confirmation
+#        ^context <context>
+#        ^parameters <params>
+#        # AM: Changed the satisfaction structure
+#        ^satisfaction.dialog-event.type single-word-response)
+#   # Segment parameters - A message to send 
+#   (<params> ^message <msg>)
+#   (<msg> ^type request-index-confirmation
+#          ^originator agent
+#          ^fields.object <desc>)
+#}
+#

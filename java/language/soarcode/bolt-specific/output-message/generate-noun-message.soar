@@ -1,0 +1,150 @@
+sp {generate-noun-message*propose*init-state
+   (state <s> ^superstate.operator <o>)
+   (<o> ^name generate-noun-message
+        ^category <cat>)
+-->
+   (<s> ^problem-space message-interpretation
+        ^name generate-noun-message
+        ^category <cat>)
+}
+
+sp {generate-noun-message*propose*init-message
+   (state <s> ^name generate-noun-message
+              ^category <cat>
+             -^msg)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name init-message)
+}
+
+sp {generate-noun-message*apply*init-message
+   (state <s> ^name generate-noun-message
+              ^category <cat>
+              ^operator <o>)
+   (<o> ^name init-message)
+-->
+   (<s> ^msg <msg>)
+   (<msg> ^first <w1>
+          ^word <w1> <w2> <w3> <w4>
+          ^last <w4>)
+   (<w1> ^value I
+         ^next <w2>)
+   (<w2> ^value know
+         ^next <w3>)
+   (<w3> ^value the
+         ^next <w4>)
+   (<w4> ^value (concat <cat> |s:|))
+}
+
+sp {generate-noun-message*prefer*init-message*not-empty
+   (state <s> ^name generate-noun-message
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name init-message-empty)
+   (<o2> ^name init-message)
+-->
+   (<s> ^operator <o2> < <o1>)
+}
+
+sp {generate-noun-message*propose*init-message-empty
+   (state <s> ^name generate-noun-message
+              ^superstate <s2>
+              ^category <cat>
+             -^msg)
+   (<s2> -^nouns.<cat>.words <word>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name init-message-empty)
+}
+
+sp {generate-noun-message*apply*init-message-empty
+   (state <s> ^name generate-noun-message
+              ^category <cat>
+              ^operator <o>)
+   (<o> ^name init-message-empty)
+-->
+   (<s> ^msg <msg>)
+   (<msg> ^first <w1>
+          ^word <w1> <w2> <w3> <w4> <w5> <w6>
+          ^last <w6>)
+   (<w1> ^value I
+         ^next <w2>)
+   (<w2> ^value |don't|
+         ^next <w3>)
+   (<w3> ^value know
+         ^next <w4>)
+   (<w4> ^value any
+         ^next <w5>)
+   (<w5> ^value (concat <cat> s)
+         ^next <w6>)
+   (<w6> ^value |.|)
+}
+
+sp {generate-noun-message*prefer*lower*add-word-to-msg
+   (state <s> ^name generate-noun-message
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name add-word-to-msg
+         ^word <w1>)
+   (<o2> ^name add-word-to-msg
+         ^word {<w2> < <w1>})
+-->
+   (<s> ^operator <o1> < <o2>)
+}
+
+sp {generate-noun-message*propose*add-word-to-msg
+   (state <s> ^name generate-noun-message
+              ^msg <msg>
+              ^category <cat>
+              ^superstate <s2>)
+   (<s2> ^nouns.<cat>.words <word>
+        -^nouns.<cat>.handled <word>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name add-word-to-msg
+        ^word <word>)
+}
+
+sp {generate-noun-message*apply*add-word-to-msg
+   (state <s> ^name generate-noun-message
+              ^msg <msg>
+              ^superstate <s2>
+              ^operator <o>
+              ^category <cat>)
+   (<o> ^name add-word-to-msg
+        ^word <word>)
+   (<msg> ^last <oldlast>)
+   (<s2> ^nouns.<cat> <nc>)
+-->
+   (<msg> ^last <oldlast> -)
+   (<msg> ^last <wnew>)
+   (<msg> ^word <wnew>)
+   (<wnew> ^value <word>)
+   (<oldlast> ^next <wnew>)
+   (<nc> ^handled <word>)
+}
+
+sp {generate-noun-message*propose*copy-to-output-link
+   (state <s> ^name generate-noun-message
+              ^msg <msg>)
+-->
+   (<s> ^operator <o> + <)
+   (<o> ^name copy-to-output-link
+        ^msg <msg>)
+}
+
+sp {generate-noun-message*apply*copy-to-output-link
+   (state <s> ^name generate-noun-message
+              ^operator <o>
+              ^top-state.io.output-link <ol>
+              ^superstate <s2>
+              ^category <cat>)
+   (<o> ^name copy-to-output-link
+        ^msg <msg>)
+   (<s2> ^nouns <n>)
+-->
+   (<ol> ^message <msg>)
+   (<n> ^<cat> message-generated)
+}
+
+

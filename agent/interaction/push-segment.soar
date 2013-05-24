@@ -1,0 +1,130 @@
+#### apply push-segment on the interaction.stack
+### substate to apply push-segment on the interaction.stack
+
+### add present-id from epmem to be able to do lookup during the explanation phase
+
+sp {push-segment*dont-learn
+   (state <s> ^name push-segment)
+-->
+   (dont-learn <s>)
+}
+   
+sp {push-segment*create-segment
+   (state <s> ^name push-segment
+   	      ^superstate <ss>
+	      ^epmem.present-id <eid>)
+   (<ss> ^operator <sop>
+   	 ^interaction <i>)
+   (<i> ^action-counter <count>
+   	^stack.segment <prev-segment>)
+   (<prev-segment> ^id <id>)
+   (<sop> ^name push-segment
+   	  ^originator <init>
+	  ^purpose <p>)
+   (<p> ^type <type>)
+-->
+   (<s> ^segment <seg>)
+   (<seg> ^originator <init>
+    	  ^purpose <np>
+       ^info <info>  #JK
+       ^context <context> #AM: Information about why the segment was initiated
+	  ^id ( + <id> 1)
+	  ^next <prev-segment>
+	  ^epmem-id <eid>
+	  ^action-id <count>)
+   (<np> ^type <type>
+         ^parameters <params>
+   	^satisfaction <new-sat>)
+}
+
+sp {push-segment*purpose*copy-parameters
+   (state <s> ^name push-segment
+              ^superstate.operator <op>
+              ^segment.purpose.parameters <params>)
+   (<op> ^name push-segment
+         ^purpose.parameters.<param-arg> <param-val>)
+-->
+   (<params> ^<param-arg> <param-val>)
+}
+
+sp {push-segment*apply*copy-context
+   (state <s> ^name push-segment
+              ^superstate.operator <op>
+              ^segment.context <context>)
+   (<op> ^name push-segment
+         ^purpose.context.<att> <val>)
+-->
+   (<context> ^<att> <val>)
+}
+
+sp {push-segment*create-satisfaction
+   (state <s> ^name push-segment
+   	      ^superstate.operator <op>)
+   (<op> ^name push-segment
+	 ^purpose.satisfaction <sat>)
+   (<s> ^segment <seg>)
+   (<seg> ^purpose <p>)
+   (<p> ^satisfaction <new-sat>)
+   (<sat> ^<arg> <val>)
+-->
+   (<new-sat> ^<arg> <val>)
+}
+
+# AM: Trying to give o-support to satisfactions
+sp {push-segment*copy*satisfaction*depth2
+   (state <s> ^name push-segment
+              ^superstate.operator.name push-segment
+              ^segment.purpose.satisfaction.<event> <e>)
+   (<e> ^<arg2> <val2>)
+-->
+   (<e> ^<arg2> <val2>)
+}
+
+sp {push-segment*propose*mark-as-success
+   (state <s> ^name push-segment
+	      ^segment <seg>
+	      ^superstate.operator <sop>)
+   (<sop> ^name push-segment)
+   (<seg> ^purpose.satisfaction <seg-ps>)
+   (<seg-ps> ^<arg> <val>)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name mark-as-success
+   	 ^category interaction-stack
+   	 ^superoperator <sop>)
+
+}
+
+sp {push-segment*apply*mark-as-success
+   (state <s> ^name push-segment
+   	      ^operator <op>
+	      ^segment <seg>
+	      ^superstate <ss>)
+   (<ss> ^interaction.stack <cs>)
+   (<cs> ^segment <prev-segment>)
+   (<op> ^name mark-as-success
+   	 ^superoperator <sop>)
+-->
+   (<ss> ^success-operator <sop>)
+   (<cs> ^segment <seg>
+   	 ^segment <prev-segment> -)
+   (<seg> ^next <prev-segment>)
+}
+
+   
+# AM: Putting stack information on the output link
+sp {apply*mark-as-success*output-link
+   (state <s> ^name push-segment
+              ^operator.name mark-as-success
+              ^io.output-link <out>
+              ^topstate.operator <o>)
+   (<o> ^name push-segment
+        ^originator <orig>
+        ^purpose <p>)
+   (<p> ^type <type>)
+   (<out> -^push-segment)
+-->
+   (<out> ^push-segment <ps>)
+   (<ps> ^type <type>
+         ^originator <orig>)
+}

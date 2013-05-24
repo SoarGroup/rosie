@@ -1,0 +1,151 @@
+sp {interpret-primitive-object*elaborate*mark-specifier
+   (state <s> ^name interpret-primitive-object
+              ^predicates.predicate <p>)
+   (<p> -^ignored
+         ^inner1 <prim>
+         ^outer {<sp> << this that DEF INDEF >>})
+-->
+   (<s> ^potential-specifier <sp>)
+   (<p> ^is-specifier true)
+}
+
+sp {interpret-primitive-object*propose*choose-specifier*none
+   (state <s> ^name interpret-primitive-object
+             -^potential-specifier
+             -^specifier)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name choose-specifier
+        ^specifier none)
+}
+
+sp {interpret-primitive-object*propose*choose-specifier*val
+   (state <s> ^name interpret-primitive-object
+             -^specifier
+              ^potential-specifier <val>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name choose-specifier
+        ^specifier <val>)
+}
+
+sp {interpret-primitive-object*choose-specifier*thisthat-over-others
+   (state <s> ^name interpret-primitive-object
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name choose-specifier
+         ^specifier << this that >>)
+   (<o2> ^name choose-specifier
+        -^specifier << this that >>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+# "This block is a red one." -> DEF, not INDEF
+sp {interpret-primitive-object*choose-specifier*def-over-indef 
+   (state <s> ^name interpret-primitive-object
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name choose-specifier
+         ^specifier DEF)
+   (<o2> ^name choose-specifier
+         ^specifier INDEF)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {interpret-primitive-object*apply*choose-specifier
+   (state <s> ^name interpret-primitive-object
+              ^operator <o>)
+   (<o> ^name choose-specifier
+        ^specifier <sp>)
+-->
+   (<s> ^specifier <sp>)
+}
+
+sp {interpret-primitive-object*apply*choose-specifier*consume-predicates
+   (state <s> ^name interpret-primitive-object
+              ^operator <o>
+              ^predicates.predicate <p>)
+   (<o> ^name choose-specifier)
+   (<p> ^is-specifier true)
+-->
+   (<p> ^accounted-for true)
+}
+
+sp {interpret-primitive-object*propose*build-interpretation
+   (state <s> ^name interpret-primitive-object
+              ^specifier <chosen>
+             -^interpreted)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name build-interpretation)
+}
+
+sp {interpret-primitive-object*apply*build-interpretation*base
+   (state <s> ^name interpret-primitive-object
+              ^operator.name build-interpretation)
+-->
+   (<s> ^interpretation <i>)
+}
+
+sp {interpret-primitive-object*apply*build-interpretation*specifier
+   (state <s> ^name interpret-primitive-object
+              ^operator.name build-interpretation
+              ^interpretation <ob>
+              ^specifier <sp>)
+-->
+   (<ob> ^specifier <sp>)
+}
+
+# all predicates that aren't specifiers are stored as words
+sp {interpret-primitive-object*apply*build-interpretation*nounjective
+   (state <s> ^name interpret-primitive-object
+              ^operator.name build-interpretation
+              ^interpretation <ob>
+              ^predicates.predicate <p>)
+   (<p> -^ignored
+        -^is-specifier
+         ^outer { <> what <> which <> where <wd> })
+-->
+   (<ob> ^word <wd>)
+   (<p> ^accounted-for true)
+}
+
+sp {interpret-primitive-object*apply*build-interpretation*question
+   (state <s> ^name interpret-primitive-object
+              ^operator.name build-interpretation
+              ^interpretation <ob>
+              ^predicates.predicate <p>)
+   (<p> -^ignored
+        -^is-specifier
+         ^outer << what which where >>)
+-->
+   (<ob> ^word UNKNOWN)
+}
+# sp {interpret-primitive-object*apply*build-interpretation*mark
+#    (state <s> ^name interpret-primitive-object
+#               ^operator.name build-interpretation
+#               ^interpretation <exists>
+#               ^predicates.predicate <p>)
+# -->
+#    (<p> ^accounted-for true)
+# }
+
+sp {interpret-primitive-object*apply*build-interpretation
+   (state <s> ^name interpret-primitive-object
+              ^operator.name build-interpretation
+              ^interpretation <ob>)
+-->
+   (<s> ^interpreted true) # no apply chaining after this
+}
+
+sp {interpret-primitive-object*elaborate*commit-result
+   (state <s> ^name interpret-primitive-object
+              ^interpreted true
+              ^interpretation <int>
+              ^predicates <ap>)
+-->
+   (<ap> ^interpretation <int>)
+}
+

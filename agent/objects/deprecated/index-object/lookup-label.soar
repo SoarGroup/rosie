@@ -1,0 +1,34 @@
+# For each category/word pair, look up the internal label for that concept
+# Copies the result to the object and causes the label-query to be removed
+
+# Fetch the label for the category-word pair from memory
+sp {index-object*propose*lookup-smem*label
+   (state <s> ^name index-object
+              ^label-query <lq>)
+   (<lq> ^category {<cat> <> failure <> name}
+          ^word <word>
+         -^label)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name lookup-smem
+        ^category smem
+        ^lookup-type label
+        ^query <q>
+        ^desired.label true)
+   (<q> ^type label-map ^word <word> ^category <cat> ^label <label>)
+}
+
+# Successful retrieval - add the label to the object
+sp {index-object*apply*lookup-smem*label*success*add*to*object
+   (state <s> ^name index-object
+              ^operator <o>
+              ^index-object-context.object <obj>)
+   (<o> ^name lookup-smem
+        ^lookup-type label
+        ^query.word <word>
+        ^result {<label> <> failure})
+   (<obj> ^property <prop>)
+   (<prop> ^word <word>)
+-->
+   (<prop> ^label <label>)
+}

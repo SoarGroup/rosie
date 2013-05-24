@@ -1,0 +1,132 @@
+#### search control to prefer instructed actions above all others. looked up in semantic memory
+
+sp {selection*propose*find-next-sub-action
+   (state <s> ^name selection
+   	      ^superstate.superstate.epmem.result <res>
+	      -^episode-id <eid>)
+   (<res> ^retrieved <episode>)
+   (<episode> ^interaction.stack.segment.action-id <id>)
+-->
+   (<s> ^operator <op> + >)
+   (<op> ^name find-next-episode
+   	 ^action-id <id>)
+}
+
+### find-next-epiode is better than indicate-unresolved-tie
+sp {selection*prefer*find-next-episode
+   (state <s> ^operator <op1> +
+	      ^operator <op2> +)
+   (<op1> ^name find-next-episode)
+   (<op2> ^name indicate-unresolved-tie)
+-->
+   (<s> ^operator <op1> > <op2>)
+}
+   	  
+
+sp {selection*retrieve*next-episode
+   (state <s> ^name selection
+   	      ^episode-id <eid>
+	      ^epmem.command <ecomm>)
+-->
+   (<ecomm> ^retrieve <eid>)
+}
+
+sp {selection*elaborate*instructed*action
+   (state <s> ^name selection
+   	      ^epmem.result.retrieved <ret>)
+   (<ret> ^interaction.stack.segment.purpose.indexed-operator <iop>)
+-->
+   (<s> ^indexed-operator <iop>)
+}
+
+### prefer the operator that matches the indexed operator
+sp {elaborate*attribute*match*epmem*arguments
+   (state <s> ^name selection
+   	      ^indexed-operator <map-op>
+   	      ^operator <o> +)
+   (<o> ^superoperator <sop>)
+   (<sop> ^<attr> <val>)
+   (<val> ^id <id>)
+   (<map-op> ^<attr> <anyval>) 
+   (<anyval> ^id <id>)
+-->
+   (<o> ^matched <attr>)
+}
+
+sp {elaborate*attribute*match*epmem*name
+   (state <s> ^name selection
+   	      ^indexed-operator <map-op>
+   	      ^operator <o> +)
+   (<o> ^superoperator <sop>)
+   (<sop> ^name <n>)
+   (<map-op> ^name <n>) 
+-->
+   (<o> ^matched name)
+}
+
+#### operator match is not complete untill all arguments are matched
+sp {elaborate*operator*match*epmem
+   (state <s> ^name selection
+   	      ^indexed-operator <map-op>
+   	      ^operator <o> +)
+   (<map-op> ^{<attr> <> applied <> information <> _metadata <> spatial_relationship <> _relation} <val>) ### excluded agent architecture arguments from matching: SM
+   (<o> -^matched <attr>)
+-->
+   (<o> ^not-matched <attr>)
+}
+
+### if there exists an operator for which all attributes match, give it a better preference than other operators
+
+sp {prefer*match*epmem
+   (state <s> ^name selection
+              ^indexed-operator <map-op>
+   	      ^operator <o> +)
+   (<o> -^not-matched <any>)
+   -->
+   (<s> ^operator <o> >)
+}
+
+sp {prefer*match*epmem*elaborate*spatial-rel
+   (state <s> ^name selection
+	      ^superstate.desired <des>
+   	      ^operator <o>)
+   (<o> -^not-matched <any>
+   	^superoperator <sop>)
+   (<des> ^track-relation <tr>)
+   (<tr> ^spatial-relationship <prep>
+   	 ^p1 <val3>
+	 ^p2 <val4>)
+   (<sop> ^<arg1> <val1>
+   	  ^<arg2> <val2>)
+   (<val1> ^focus <fval1>)
+   (<val2> ^focus <fval2>)
+   (<val3> ^focus <fval1>)
+   (<val4> ^focus <fval2>)
+   -->
+   (<sop> ^spatial-relationship <prep>)
+}
+
+
+### elaborate spatial relationship others
+sp {prefer*match*epmem*elaborate*spatial-rel*indexed-operator
+   (state <s> ^name selection
+   	      ^operator <o>
+	      ^superstate.desired <des>
+	      ^indexed-operator <iop>)
+   (<o> -^not-matched <any>
+   	^superoperator <sop>)
+   (<iop> ^_relation._ltid <prep>)
+   (<des> ^track-relation <tr>)
+   (<tr> ^spatial-relationship <prep>
+   	 ^p1 <val3>
+	 ^p2 <val4>)
+   (<sop> ^<arg1> <val1>
+   	  ^<arg2> <val2>)
+   -{(<val1> ^focus <fval1>)
+   (<val2> ^focus <fval2>)
+   (<val3> ^focus <fval1>)
+   (<val4> ^focus <fval2>)}
+-->
+   (<sop> ^spatial-relationship <prep>)
+}
+

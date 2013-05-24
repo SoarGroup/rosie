@@ -1,0 +1,188 @@
+# lookup-word
+#   Given a word, returns information about it
+# (<s> ^operator <o> +)
+# (<o> ^name lookup-word
+#      ^word <word>    <- required
+#      ^use-interaction true)  
+#
+# Returns the property structure on the superstate in the form
+# (<ss> ^lookup-word-result <res>)
+# (<res> ^wme-type word ^word <word> ^sense <s1> ^sense <s2>)
+# (<s1> ^wme-type sense ^property @P3 ^label <label1> ^word <res>)
+# (<s2> ^wme-type sense ^property @P5 ^label <label2> ^word <res>)
+# (@P3 ...)
+# (@P5 ...)
+  
+# (That is, each sense and property structure is fully expanded)
+
+# Or ^lookup-word-result failure
+# Note: The ^lookup-word-result <res> is the long term identifier, same with each sense and property
+
+# Parameters:
+sp {lookup-word*copy*parameters
+   (state <s> ^name lookup-word
+              ^superstate.operator.{<param> << use-interaction >>} <val>)
+-->
+   (<s> ^<param> <val>)
+}
+
+# Parameter: use-interaction << true false >>
+#   If the lookup fails, whether the user should be asked more information about the word
+#   Default: true
+sp {lookup-word*parameter*use-interaction*default*true
+   (state <s> ^name lookup-word
+             -^superstate.operator.use-interaction)
+-->
+   (<s> ^use-interaction true)
+}
+
+# smem-query: lookup the word
+sp {lookup-word*propose*smem-query*word
+   (state <s> ^name lookup-word
+              ^superstate.operator.word <word>
+             -^word)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name smem-query
+        ^category smem
+        ^query <q>
+        ^return-all false)
+   (<q> ^wme-type word ^word <word>)
+}
+
+sp {lookup-word*apply*smem-query*failure*use-interaction
+   (state <s> ^name lookup-word
+              ^operator <o>
+              ^use-interaction true
+              ^smem-query-result failure
+              ^topstate.status <status>)
+   (<o> ^name smem-query
+        ^query.word <word>)
+-->
+  (<status> ^type learn-word
+         ^state-name topstate
+         ^purpose <p>)
+   (<p> ^type learn-word
+        ^parameters.word <word>
+        ^satisfaction.learning-event <e>)
+   (<e> ^type word
+        ^word <word>)
+}
+
+sp {lookup-word*apply*smem-query*copy-result*failure
+   (state <s> ^name lookup-word
+              ^use-interaction false
+              ^operator.name smem-query
+              ^superstate <ss>
+              ^smem-query-result failure)
+-->
+   (<ss> ^lookup-word-result failure)
+}
+
+sp {lookup-word*apply*smem-query*copy-result*success
+   (state <s> ^name lookup-word
+              ^operator.name smem-query
+              ^smem-query-result {<res> <> failure})
+-->
+   (<s> ^word <res>)
+}
+
+# Retrieve each sense
+sp {lookup-word*propose*smem-retrieve*sense
+   (state <s> ^name lookup-word
+              ^word.sense <sense>)
+   (<sense> -^retrieved)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name smem-retrieve
+        ^category smem
+        ^type sense
+        ^identifier <sense>)
+}
+
+sp {lookup-word*apply*smem-retrieve*sense
+   (state <s> ^name lookup-word
+              ^operator <o>
+              ^smem-retrieve-result <res>)
+   (<o> ^name smem-retrieve
+        ^type sense
+        ^identifier <sense>)
+-->
+   (<sense> ^retrieved true)
+   (<s> ^smem-retrieve-result <res> -)
+}
+
+# Retrieve each property
+sp {lookup-word*propose*smem-retrieve*property
+   (state <s> ^name lookup-word
+              ^word.sense.property <prop>)
+   (<prop> -^retrieved)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name smem-retrieve
+        ^category smem
+        ^type property
+        ^identifier <prop>)
+}
+
+sp {lookup-word*apply*smem-retrieve*property
+   (state <s> ^name lookup-word
+              ^operator <o>
+              ^smem-retrieve-result <res>)
+   (<o> ^name smem-retrieve
+        ^type property
+        ^identifier <prop>)
+-->
+   (<prop> ^retrieved true)
+   (<s> ^smem-retrieve-result <res> -)
+}
+   
+
+# Finish the lookup
+sp {lookup-word*propose*complete-lookup-word
+   (state <s> ^name lookup-word
+              ^word <word>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name complete-lookup-word
+        ^category smem)
+}
+
+sp {lookup-word*prefer*all*over*complete-lookup-word
+   (state <s> ^name lookup-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name <> complete-lookup-word
+         ^category smem)
+   (<o2> ^name complete-lookup-word)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+# Copy the result structure to the superstate
+sp {lookup-word*apply*complete-lookup-word
+   (state <s> ^name lookup-word
+              ^operator.name complete-lookup-word
+              ^superstate <ss>
+              ^word <word>)
+-->
+   (<ss> ^lookup-word-result <word>)
+}
+
+# Updates any objects with the word, for convenience
+sp {lookup-word*apply*complete-lookup-word*annotate*object
+   (state <s> ^name lookup-word
+              ^operator.name complete-lookup-word
+              ^word <w>
+              ^topstate.object.property <prop>)
+   (<w> ^word <word>
+           ^sense <sense>)
+   (<sense> ^label <label>
+            ^property.name <prop-name>)
+   (<prop> ^name <prop-name>
+           ^value <val>)
+   (<val> ^label <label>
+         -^word <word>)
+-->
+   (<val> ^word <word>)
+}

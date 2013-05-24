@@ -1,0 +1,97 @@
+# File: realize.soar
+# Author: William Taysom
+# Version 2.0: July 24, 2001
+# Created: July 7, 2001
+#
+# Desc: Realizes referents as objects based on pragmatic cues.
+#
+# Realizations:
+#		new-idea (20)
+#
+# 7 June 2011: soar9 conversion: DWL removed attr prefs, added o-support
+#
+
+## realize as new-idea
+
+sp {realize*propose*ref*as*new-idea
+   (state <s> ^count <count> ^refsets.refs <refs>)
+   (<refs> ^count <count> ^ref <ref>)
+   (<ref> ^head.wcount <wcount> -^pointer -^sloppy-binding)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name new-idea ^priority 20 ^ref <ref>
+   	 ^order <wcount> ^complete? no)}
+
+sp {realize*apply*ref*as*new-idea
+   :o-support
+   (state <s> ^operator <o> ^model <m>)
+   (<o> ^name new-idea ^ref <ref>)
+   (<ref> ^head <head>)
+   (<head> ^wvalue <nuc>)
+-->
+   (<m> ^idea <new> +)
+   (<new> ^nuc <nuc>)
+   (<ref> ^pointer <new>)
+   (<o> ^complete?x yes +)}
+
+## realize as coref
+# def-desc
+
+sp {realize*propose*def-desc-ref*as*coref
+   (state <s> ^count <count> ^refsets.refs <refs> ^model.idea <idea>)
+   (<refs> ^count <count> ^ref <ref>)
+   (<ref> ^head <word> ^desc.feature def -^pointer)
+   (<word> ^wvalue <wvalue> ^wcount <wcount>)
+   (<idea> ^nuc <wvalue>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name coref ^priority 30 ^ref <ref> ^idea <idea> ^kind general
+   	 ^order <wcount> ^complete? no)}
+
+sp {realize*apply*general-coref
+   (state <s> ^operator <o>)
+   (<o> ^name coref ^ref <ref> ^idea <idea> ^kind general)
+-->
+   (<ref> ^pointer <idea>)
+   (<o> ^complete?x yes +)}
+
+# binding
+
+sp {realize*propose*binding*as*coref
+   (state <s> ^count <count> ^refsets.refs <refs> ^model.idea <idea>)
+   (<refs> ^count <count> ^ref <ref>)
+   (<ref> ^head.wcount <wcount> ^binding <idea> -^pointer)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name coref ^priority 30 ^ref <ref> ^idea <idea> ^kind remove-binding
+   	 ^order <wcount> ^complete? no)}
+
+sp {realize*apply*remove-binding
+   (state <s> ^operator <o>)
+   (<o> ^name coref ^ref <ref> ^idea <idea> ^kind remove-binding)
+-->
+   (<ref> ^pointer <idea>)
+   (<ref> ^binding <idea> -)
+   (<o> ^complete?x yes +)}
+
+# sloppy-binding
+
+sp {realize*propose*sloppy-binding*as*coref
+   (state <s> ^count <count> ^refsets.refs <refs>)
+   (<refs> ^count <count> ^ref <ana-ref> <pos-ref>)
+   (<ana-ref> ^head.wcount <wcount> ^sloppy-binding.to <ante-ref> -^pointer)
+   (<ante-ref> ^pointer <ante-idea>)
+   (<pos-ref> ^pos <ana-ref> ^pointer <pos-idea>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name coref ^priority 30 ^ref <ana-ref> ^idea <ante-idea> ^kind remove-sloppy-binding
+   	 ^order <wcount> ^complete? no)}
+
+sp {realive*apply*remove-sloppy-binding
+   (state <s> ^operator <o>)
+   (<o> ^name coref ^ref <ref> ^idea <idea> ^kind remove-sloppy-binding)
+   (<ref> ^sloppy-binding <to>)
+-->
+   (<ref> ^pointer <idea>)
+   (<ref> ^sloppy-binding <to> -)
+   (<o> ^complete?x yes +)}
