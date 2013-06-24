@@ -42,7 +42,8 @@ public class ScriptRunner extends Thread {
     		if(Settings.getInstance().isAutomated()) {
     			ChatFrame.Singleton().setWaitingForMentor(false);
     			ChatFrame.Singleton().addMessage(next.getAction(), ActionType.Mentor);
-    	        ChatFrame.Singleton().sendSoarMessage(next.getAction());
+    	        // XXX: 
+    			//ChatFrame.Singleton().sendSoarMessage(next.getAction());
     			Util.handleNextScriptAction(script, chatMessages);
     			return;
     		}
@@ -60,7 +61,7 @@ public class ScriptRunner extends Thread {
     			ChatFrame.Singleton().addMessage("- Error - Expected: "+expected, ActionType.Incorrect);
     			if(Settings.getInstance().isAutomated()) {
     				// AM: Changed so it refences the 
-    				InSoar.Singleton().getSoarAgent().stop();
+    				// XXX: InSoar.Singleton().getSoarAgent().stop();
     				//ChatFrame.Singleton().stopAgent();
     				return;
     			}
@@ -129,7 +130,8 @@ public class ScriptRunner extends Thread {
     		if(Settings.getInstance().isAutomated()) {
     			ChatFrame.Singleton().setWaitingForMentor(false);
     			ChatFrame.Singleton().addMessage(next.getAction(), ActionType.Mentor);
-    	        ChatFrame.Singleton().sendSoarMessage(next.getAction());
+    			// XXX: 
+    	        //ChatFrame.Singleton().sendSoarMessage(next.getAction());
     			Util.handleNextScriptAction(script, chatMessages);
     			return;
     		}
@@ -147,7 +149,7 @@ public class ScriptRunner extends Thread {
     			ChatFrame.Singleton().addMessage("- Error - Expected: "+expected, ActionType.Incorrect);
     			if(Settings.getInstance().isAutomated()) {
     				// AM: Changed so it refences the 
-    				InSoar.Singleton().getSoarAgent().stop();
+    				// XXX: InSoar.Singleton().getSoarAgent().stop();
     				//ChatFrame.Singleton().stopAgent();
     				return;
     			}

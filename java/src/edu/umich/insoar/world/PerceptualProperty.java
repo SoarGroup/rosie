@@ -1,7 +1,7 @@
 package edu.umich.insoar.world;
 
 import java.util.*;
-import abolt.lcmtypes.*;
+import probcog.lcmtypes.*;
 import sml.*;
 
 /**
@@ -19,7 +19,7 @@ public class PerceptualProperty implements IInputLinkElement
 			categoryNames.put(category_t.CAT_COLOR, "color");
 			categoryNames.put(category_t.CAT_SHAPE, "shape");
 			categoryNames.put(category_t.CAT_SIZE, "size");
-			categoryNames.put(category_t.CAT_TEXTURE, "texture");
+			categoryNames.put(category_t.CAT_LOCATION, "name");
 		}
 		return categoryNames.get(categoryID);
 	}
@@ -31,8 +31,8 @@ public class PerceptualProperty implements IInputLinkElement
 			return category_t.CAT_SHAPE;
 		} else if(categoryName.equals("size")){
 			return category_t.CAT_SIZE;
-		} else if(categoryName.equals("texture")){
-			return category_t.CAT_TEXTURE;
+		} else if(categoryName.equals("name")){
+			return category_t.CAT_LOCATION;
 		} else {
 			return null;
 		}

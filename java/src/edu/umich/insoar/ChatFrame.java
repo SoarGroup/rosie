@@ -11,14 +11,14 @@ import java.awt.event.WindowEvent;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -30,15 +30,11 @@ import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
-import com.soartech.bolt.BOLTLGSupport;
-import com.soartech.bolt.script.ui.command.ResetRobotArm;
 import com.soartech.bolt.testing.ActionType;
 import com.soartech.bolt.testing.Script;
 import com.soartech.bolt.testing.ScriptDataMap;
 import com.soartech.bolt.testing.Settings;
 import com.soartech.bolt.testing.Util;
-
-import edu.umich.insoar.world.World;
 
 public class ChatFrame extends JFrame
 {
@@ -64,7 +60,7 @@ public class ChatFrame extends JFrame
     private JButton startStopButton;
     // The button that you can use to start and stop the agent (toggles between them)
     
-    private JButton btnStartStopScript;
+    private JMenuItem btnStartStopScript;
     // The button to start and stop scripts
     
     // CHAT MESSAGES AND HISTORY
@@ -77,9 +73,6 @@ public class ChatFrame extends JFrame
     
     private int historyIndex = 0;
     // The current index into the history
-    
-    private BOLTLGSupport lgSupport;
-    // Used to send messages to Soar through LG-Soar
     
     
     // AGENT STATUS AND CONTROL
@@ -99,13 +92,20 @@ public class ChatFrame extends JFrame
     private Object outputLock = new Object();
     
     private Script script;
+    
+    private JMenuBar menuBar;
+    
+    private SoarAgent soarAgent;
+    
+    private LanguageConnector langConnector;
 
-    public ChatFrame(BOLTLGSupport lg, SoarAgent agent) {
+    public ChatFrame(LanguageConnector langConnector, SoarAgent agent) {
         super("SBolt");
+        this.langConnector = langConnector;
+        this.soarAgent = agent;
+        
         System.out.println("Set object");
-        World.Singleton().setPointedObjectID(0);
         instance = this;
-        lgSupport = lg;
         
         tPane = new JTextPane();
         tPane.setEditable(false);
@@ -151,19 +151,17 @@ public class ChatFrame extends JFrame
         this.setSize(800, 450);
         this.getRootPane().setDefaultButton(sendButton);
         
-        JMenuBar menuBar = new JMenuBar();     
-
+        menuBar = new JMenuBar();     
 
         startStopButton = new JButton("START");
         startStopButton.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
-				SoarAgent agent = InSoar.Singleton().getSoarAgent();
-				if(agent.isRunning()){
+				if(soarAgent.isRunning()){
 					startStopButton.setText("START");
-					agent.stop();
+					soarAgent.stop();
 				} else {
 					startStopButton.setText("STOP");
-					agent.start();
+					soarAgent.start();
 				}
 			}
         });
@@ -172,7 +170,7 @@ public class ChatFrame extends JFrame
         JButton clearButton  = new JButton("Clear Text");
         clearButton.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
-				if(InSoar.Singleton().getSoarAgent().isRunning()){
+				if(soarAgent.isRunning()){
         			JOptionPane.showMessageDialog(null, "The agent must be stopped first");
 				} else {
 					clear();
@@ -181,72 +179,8 @@ public class ChatFrame extends JFrame
         });
         menuBar.add(clearButton);
         
-        JButton armResetButton  = new JButton("Reset Arm");
-        armResetButton.addActionListener(new ActionListener(){
-			public void actionPerformed(ActionEvent arg0) {
-				new ResetRobotArm().execute();
-			}
-        });
-        menuBar.add(armResetButton);
         
-        SoarAgent.createAgentMenu(menuBar);
         
-        JButton btnLoadScript = new JButton("Load Script");
-		btnLoadScript.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Settings.getInstance().setAutomated(false);
-				setWaiting(false);
-				setWaitingForMentor(false);
-				setWaitingForScript(false);
-				script = Util.loadScript();
-			}
-		});
-		menuBar.add(btnLoadScript);
-		
-		JButton btnNext = new JButton("Next Action");
-		btnNext.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				btnStartStopScript.setText("Stop Script");
-				ChatFrame.Singleton().setWaitingForMentor(false);
-				ChatFrame.Singleton().preSetMentorMessage("");
-				Settings.getInstance().setScriptRunning(true);
-				Util.handleNextScriptAction(script, chatMessages);
-			}
-		});
-		menuBar.add(btnNext);
-		
-		btnStartStopScript = new JButton("Start Script");
-		btnStartStopScript.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if(Settings.getInstance().isScriptRunning()) {
-					btnStartStopScript.setText("Start Script");
-					Settings.getInstance().setScriptRunning(false);
-					setWaitingForMentor(false);
-					setWaiting(false);
-					setWaitingForScript(false);
-					preSetMentorMessage("");
-				} else {
-					btnStartStopScript.setText("Stop Script");
-					ChatFrame.Singleton().setWaitingForMentor(false);
-					ChatFrame.Singleton().preSetMentorMessage("");
-					Settings.getInstance().setScriptRunning(true);
-					Util.handleNextScriptAction(script, chatMessages);
-				}
-			}
-		});
-		menuBar.add(btnStartStopScript);
-		
-		JButton btnSaveScript = new JButton("Save Script");
-		btnSaveScript.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Util.saveScript(chatMessages);
-			}
-		});
-		menuBar.add(btnSaveScript);
        
         setJMenuBar(menuBar);
         
@@ -354,8 +288,7 @@ public class ChatFrame extends JFrame
 		} catch (BadLocationException e) {
 			e.printStackTrace();
 		}
-    	InputLinkHandler.Singleton().clearLGMessages();
-    	World.Singleton().destroyMessage();
+    	
     }
     
     public void addMessage(String message, ActionType type) {
@@ -395,13 +328,7 @@ public class ChatFrame extends JFrame
     }
     
     public void exit(){
-    	InSoar.Singleton().getSoarAgent().getAgent().KillDebugger();
-    	// sbolt.getKernel().DestroyAgent(sbolt.getAgent());
-    	
-    	// SBW removed DestroyAgent call, it hangs in headless mode for some reason
-    	// (even when the KillDebugger isn't there)
-    	// I don't think there's any consequence to simply exiting instead.
-    	
+    	soarAgent.kill();
     	System.exit(0);
     }
     
@@ -433,7 +360,7 @@ public class ChatFrame extends JFrame
            msg = msg.concat(" null");
            System.out.println(msg);
         }
-        sendSoarMessage(msg);
+    	langConnector.newMessage(msg);
         chatField.setText("");
         chatField.requestFocus();
         if(script != null && script.peekType() == ActionType.Agent) {
@@ -459,18 +386,71 @@ public class ChatFrame extends JFrame
 			chatField.setText(history.get(historyIndex));
 		}
     }
-
-    public void sendSoarMessage(String message)
-    {
-    	if (lgSupport == null) {
-    		World.Singleton().newMessage(message);
-    	} else if(message.length() > 0){
-    		if(message.charAt(0) == ':'){
-    			World.Singleton().newMessage(message.substring(1));
-    		} else {
-        		// LGSupport has access to the agent object and handles all WM interaction from here
-        		lgSupport.handleInput(message);
-    		}
-    	}
+    
+    public void addMenu(JMenu menu){
+    	menuBar.add(menu);
+    }
+    
+    public JMenu setupScriptMenu(){
+    	JMenu menu = new JMenu("Scripts");
+    	
+    	JMenuItem btnLoadScript = new JMenuItem("Load Script");
+		btnLoadScript.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Settings.getInstance().setAutomated(false);
+				setWaiting(false);
+				setWaitingForMentor(false);
+				setWaitingForScript(false);
+				script = Util.loadScript();
+			}
+		});
+		menu.add(btnLoadScript);
+		
+		JMenuItem btnNext = new JMenuItem("Next Action");
+		btnNext.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				btnStartStopScript.setText("Stop Script");
+				ChatFrame.Singleton().setWaitingForMentor(false);
+				ChatFrame.Singleton().preSetMentorMessage("");
+				Settings.getInstance().setScriptRunning(true);
+				Util.handleNextScriptAction(script, chatMessages);
+			}
+		});
+		menu.add(btnNext);
+		
+		btnStartStopScript = new JMenuItem("Start Script");
+		btnStartStopScript.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if(Settings.getInstance().isScriptRunning()) {
+					btnStartStopScript.setText("Start Script");
+					Settings.getInstance().setScriptRunning(false);
+					setWaitingForMentor(false);
+					setWaiting(false);
+					setWaitingForScript(false);
+					preSetMentorMessage("");
+				} else {
+					btnStartStopScript.setText("Stop Script");
+					ChatFrame.Singleton().setWaitingForMentor(false);
+					ChatFrame.Singleton().preSetMentorMessage("");
+					Settings.getInstance().setScriptRunning(true);
+					Util.handleNextScriptAction(script, chatMessages);
+				}
+			}
+		});
+		menu.add(btnStartStopScript);
+		
+		JMenuItem btnSaveScript = new JMenuItem("Save Script");
+		btnSaveScript.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Util.saveScript(chatMessages);
+			}
+		});
+		menu.add(btnSaveScript);
+		
+		return menu;
     }
 }
