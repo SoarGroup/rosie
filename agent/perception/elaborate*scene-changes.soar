@@ -1,0 +1,73 @@
+sp {topstate*elaborate*scene-changes
+   (state <s> ^topstate <s>)
+-->
+   (<s> ^scene-changes <sc>)
+}
+
+#########################################################
+# Change: new-object
+#   Occurs when a new object comes on the svs link
+#########################################################
+sp {topstate*elaborate*scene-changes*new-object
+   (state <s> ^topstate <s>
+              ^scene-changes <sc>
+              ^svs.spatial-scene.child <svs-obj>
+             -^object.id <id>)
+   (<svs-obj> ^id-int <id>
+             -^stale true)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type new-object
+             ^svs-object <svs-obj>)
+}
+
+#########################################################
+# Change: stale-object
+#   Occurs when an object on the svs link becomes stale
+#########################################################
+sp {topstate*apply*any-op*mark*stale-time
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^topstate.svs.spatial-scene.child <svs-obj>
+              ^object <obj>
+              ^io.input-link.time.seconds <sec>)
+   (<svs-obj> ^id-int <id>
+              ^stale true)
+   (<obj> ^id <id>
+          -^stale-time)
+-->
+   (<obj> ^stale-time (+ <sec> 2))
+}
+
+sp {topstate*apply*any-op*remove*stale-time
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^topstate.svs.spatial-scene.child <svs-obj>
+              ^object <obj>)
+   (<svs-obj> ^id-int <id>
+             -^stale true)
+   (<obj> ^id <id>
+          ^stale-time <time>)
+-->
+   (<obj> ^stale-time <time> -)
+}
+
+sp {topstate*elaborate*object*is-stale
+   (state <s> ^topstate <s>
+              ^object <obj>
+              ^io.input-link.time.seconds <sec>)
+   (<obj> ^stale-time <= <sec>)
+-->
+   (<obj> ^is-stale true)
+}
+
+sp {topstate*elaborate*scene-changes*stale-object
+   (state <s> ^topstate <s>
+              ^scene-changes <sc>
+              ^object <ts-obj>)
+   (<ts-obj> ^is-stale true)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type stale-object
+             ^object <ts-obj>)
+}
