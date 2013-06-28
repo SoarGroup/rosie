@@ -61,6 +61,8 @@ public class WorldObject
     
     protected object_data_t lastData = null;
     
+    protected boolean isNew = false;
+    
     public WorldObject(object_data_t object){
         name = null;
         id = -1;
@@ -85,11 +87,7 @@ public class WorldObject
     }
     
     public String getIdString(){
-    	if(id == 0){
-    		return "eye";
-    	} else {
-    		return (new Integer(id)).toString();
-    	}
+    	return (new Integer(id)).toString();
     }
     
     public double[] getPose(){
@@ -98,6 +96,11 @@ public class WorldObject
     
     public double[][] getBBox(){
     	return bbox;
+    }
+    
+    public void setPose(double[] pose){
+    	this.pose = pose;
+    	svsCommands.append(SVSCommands.changePos(this));
     }
     
     public synchronized String getValue(String attribute){
@@ -125,7 +128,11 @@ public class WorldObject
     	
         id = objectData.id;
         pose = objectData.pos;
-        bbox = objectData.bbox;
+        for(int i = 0; i < 2; i++){
+        	for(int j = 0; j < 3; j++){
+        		bbox[i][j] = objectData.bbox[i][j] - objectData.pos[j];
+        	}
+        }
         
         svsCommands.append(SVSCommands.add(this));
         
@@ -141,6 +148,11 @@ public class WorldObject
         	svsCommands.append(SVSCommands.addProperty(this, propName, propValue));
         	svsCommands.append(SVSCommands.addProperty(this, propName + "-conf", confidence));
         }
+        
+        isNew = true;
+        svsCommands.append(SVSCommands.addProperty(this, "newly-created", "true"));
+        
+        //System.out.println("CREATE " + id);
     }
     
     public synchronized void update(object_data_t objectData){   
@@ -149,12 +161,21 @@ public class WorldObject
         pose = objectData.pos;
         svsCommands.append(SVSCommands.changePos(this));
         
-        bbox = objectData.bbox;
+        for(int i = 0; i < 2; i++){
+        	for(int j = 0; j < 3; j++){
+        		bbox[i][j] = objectData.bbox[i][j] - objectData.pos[j];
+        	}
+        }
         svsCommands.append(SVSCommands.changeBBox(this));
         
         if(isStale){
         	isStale = false;
         	svsCommands.append(SVSCommands.deleteProperty(this, "stale"));
+        }
+        
+        if(isNew){
+        	isNew = false;
+            svsCommands.append(SVSCommands.deleteProperty(this, "newly-created"));
         }
         
         HashSet<String> propertiesToRemove = new HashSet<String>(perceptualProperties.keySet());
@@ -193,6 +214,8 @@ public class WorldObject
         	svsCommands.append(SVSCommands.deleteProperty(this, propName));
         	svsCommands.append(SVSCommands.deleteProperty(this, propName + "-conf"));
         }
+    	objectData.bbox = bbox;
+    	
     }
     
     public synchronized void mergeObject(WorldObject obj){	
@@ -206,12 +229,14 @@ public class WorldObject
     
     public synchronized void markStale(){
     	if(!isStale){
+    		//System.out.println("STALE  " + id);
         	isStale = true;
         	svsCommands.append(SVSCommands.addProperty(this, "stale", "true"));
     	}
     }
     
     public synchronized void delete(){
+    	//System.out.println("DELETE " + id);
     	svsCommands.append(SVSCommands.delete(this));
     }
     
@@ -220,7 +245,12 @@ public class WorldObject
     	objectData.id = id;
     	objectData.utime = TimeUtil.utime();
     	objectData.pos = pose;
-    	objectData.bbox = bbox;
+    	objectData.bbox = new double[2][3];
+        for(int i = 0; i < 2; i++){
+        	for(int j = 0; j < 3; j++){
+        		objectData.bbox[i][j] = bbox[i][j] + objectData.pos[j];
+        	}
+        }
     	objectData.num_cat = 0;
     	objectData.cat_dat = new categorized_data_t[perceptualProperties.size()];
     	for(Map.Entry<String, String> prop : perceptualProperties.entrySet()){

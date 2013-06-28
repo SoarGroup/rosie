@@ -40,6 +40,8 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
     private LCM lcm;
     
     protected WorldModel world;
+    
+    private String armStatus = "wait";
 	
     public PerceptionConnector(SoarAgent soarAgent)
     {
@@ -49,6 +51,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
     	
     	lcm = LCM.getSingleton();
         lcm.subscribe("OBSERVATIONS", this);
+        lcm.subscribe("ROBOT_ACTION", this);
     	
         String[] outputHandlerStrings = { "send-training-label", "modify-scene" };
 
@@ -166,6 +169,19 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
     		String originalId = WMUtil.getValueOfAttribute(rootId, "original-id", "Error (merge): No ^original-id");
     		String copyId = WMUtil.getValueOfAttribute(rootId, "copy-id", "Error (merge): No ^copy-id");
     		world.mergeObject(Integer.parseInt(originalId), Integer.parseInt(copyId));
+    	} else if(type.equals("move")){
+    		String moveId = WMUtil.getValueOfAttribute(rootId, "id", "Error (move): No ^id attribute");
+    		Identifier posId = WMUtil.getIdentifierOfAttribute(rootId, "pos", "Error (moidfy-scene.move): No pos");
+    		double x = Double.parseDouble(WMUtil.getValueOfAttribute(
+    				posId, "x", "Error (modify-scene.move): No ^x attribute"));
+	        double y = Double.parseDouble(WMUtil.getValueOfAttribute(
+	        		posId, "y", "Error (modify-scene.move): No ^y attribute"));
+	        double z = Double.parseDouble(WMUtil.getValueOfAttribute(
+	        		posId, "z", "Error (modify-scene.move): No ^z attribute"));
+	        world.moveObject(Integer.parseInt(moveId), x, y, z);
+    	} else {
+    		rootId.CreateStringWME("status", "error");
+    		return;
     	}
     	rootId.CreateStringWME("status", "complete");
     }
@@ -181,12 +197,22 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
             try {
                 obs = new observations_t(ins);
                 pointedId = obs.click_id;
-                world.newObservation(obs);
+                if(armStatus.equals("wait")){
+                    world.newObservation(obs);
+                }
+                world.sendObservation();
             }
             catch (IOException e){
                 e.printStackTrace();
                 return;
             }
+    	} else if(channel.equals("ROBOT_ACTION")){
+    		try {
+    			robot_action_t action = new robot_action_t(ins);
+    			armStatus = action.action.toLowerCase();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
     	}
     }
     

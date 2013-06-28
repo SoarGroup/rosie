@@ -21,7 +21,7 @@ public class WorldModel implements RunEventInterface
     private Map<Integer, WorldObject> objects;
     
     private Map<Integer, WorldObject> merged;
-    
+   
     private observations_t newObservation = null;
     
     private SoarAgent soarAgent;
@@ -36,6 +36,7 @@ public class WorldModel implements RunEventInterface
         
         merged = new HashMap<Integer, WorldObject>();
   
+        soarAgent.getAgent().SendSVSInput("a eye object world b .01 p 0 0 0");
     }    
     
     public void reset(){
@@ -53,6 +54,9 @@ public class WorldModel implements RunEventInterface
     	if(newObservation == null){
     		return;
     	}
+    	double[] eye = newObservation.eye;
+    	agent.SendSVSInput(String.format("c eye p %f %f %f", eye[0], eye[1], eye[2]));
+    	
     	Set<Integer> staleObjects = new HashSet<Integer>();
     	for(WorldObject object : objects.values()){
     		staleObjects.add(object.getId());
@@ -130,9 +134,21 @@ public class WorldModel implements RunEventInterface
     	}
     }
     
+    public synchronized void moveObject(Integer id, double x, double y, double z){
+    	WorldObject object = objects.get(id);
+    	if(object != null){
+    		System.out.println("MOVING OBJECT " + id + " to " + x + ", " + y + ", " + z);
+    		object.setPose(new double[]{x, y, z, 0, 0, 0});
+    		object.updateSVS(soarAgent.getAgent());
+    		soarAgent.commitChanges();
+    	}
+    }
+    
     public synchronized void newObservation(observations_t observation){
     	this.newObservation = observation;
-    	
+    }
+    
+    public synchronized void sendObservation(){
     	soar_objects_t outgoingObs = new soar_objects_t();
     	outgoingObs.utime = TimeUtil.utime();
     	outgoingObs.num_objects = 0;

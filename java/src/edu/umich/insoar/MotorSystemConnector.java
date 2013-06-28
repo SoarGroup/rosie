@@ -36,13 +36,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
 	private robot_action_t prevStatus = null;
 	// Last received information about the arm
 	
-	private boolean isIdle = true;
-	private String curActionName = null;
-	private Identifier curActionId = null;
-	
 	private boolean gotUpdate = false;
-	
-	private String prevAction = "";
 	
     private LCM lcm;
 
@@ -83,6 +77,14 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     	curStatus = status;
     	gotUpdate = true;
     }
+    
+    public String getStatus(){
+    	if(curStatus == null){
+    		return "wait";
+    	} else {
+    		return curStatus.action.toLowerCase();
+    	}
+    }
 
 	// Happens during an input phase
 	public synchronized void runEventHandler(int eventID, Object data, Agent agent, int phase){
@@ -97,10 +99,11 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     
     private void initIL(){
     	selfId = inputLinkId.CreateIdWME("self");
-    	inputLinkId.CreateStringWME("idle", "true");
-    	inputLinkId.CreateStringWME("action", "wait");
-    	inputLinkId.CreateStringWME("prev-action", "wait");
-    	inputLinkId.CreateStringWME("holding-obj", "false");
+    	selfId.CreateStringWME("action", "wait");
+    	selfId.CreateStringWME("prev-action", "wait");
+    	selfId.CreateStringWME("holding-obj", "false");
+    	selfId.CreateIntWME("grabbed-object", -1);
+    	pose.updateWithArray(new double[]{0, 0, 0, 0, 0, 0});
     	pose.updateInputLink(selfId);
     }
     
@@ -108,22 +111,12 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     	if(prevStatus == null){
     		return;
     	}
-    	WMUtil.updateStringWME(selfId, "idle", (isIdle ? "true" : "false"));
-    	WMUtil.updateStringWME(selfId, "action", curStatus.action);
-    	WMUtil.updateStringWME(selfId, "prev-action", prevStatus.action);
+    	WMUtil.updateStringWME(selfId, "action", curStatus.action.toLowerCase());
+    	WMUtil.updateStringWME(selfId, "prev-action", prevStatus.action.toLowerCase());
     	WMUtil.updateStringWME(selfId, "holding-obj", (curStatus.obj_id != -1 ? "true" : "false"));
-    	
-    	if(isIdle == false){
-    		if(curStatus.action.equals("error")){
-    			curActionId.CreateStringWME("status", "error");
-    			curActionId = null;
-    			isIdle = true;
-    		} else if(prevStatus.action.equals(curActionName) && curStatus.action.equals("wait")){
-    			curActionId.CreateStringWME("status", "complete");
-    			curActionId = null;
-    			isIdle = true;
-    		}
-    	}
+    	WMUtil.updateIntWME(selfId, "grabbed-object", curStatus.obj_id);
+    	pose.updateWithArray(curStatus.xyz);
+    	pose.updateInputLink(selfId);
     }
     
 
@@ -173,7 +166,8 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         command.utime = TimeUtil.utime();
         command.action = String.format("GRAB=%d", Integer.parseInt(objectIdStr));
         command.dest = new double[6];
-        sendArmCommand(command, "drop", pickUpId);
+        sendArmCommand(command);
+        pickUpId.CreateStringWME("status", "complete");
     }
 
     /**
@@ -196,7 +190,8 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         command.utime = TimeUtil.utime();
         command.action = "DROP";
         command.dest = new double[]{x, y, z, 0, 0, 0};
-        sendArmCommand(command, "drop", putDownId);
+        sendArmCommand(command);
+        putDownId.CreateStringWME("status", "complete");
     }
 
     /**
@@ -217,7 +212,8 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         command.utime = TimeUtil.utime();
         command.action = action;
         command.dest = new double[6];
-        lcm.publish("ROBOT_COMMAND", command);
+        sendArmCommand(command);
+        id.CreateStringWME("status", "complete");
     }
 
     private void processPointCommand(Identifier pointId)
@@ -228,7 +224,8 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         command.utime = TimeUtil.utime();
         command.dest = new double[]{0, 0, 0, 0, 0, 0};
     	command.action = "POINT=" + id;
-        sendArmCommand(command, "point", pointId);
+        sendArmCommand(command);
+        pointId.CreateStringWME("status", "complete");
     }
     
     private void processHomeCommand(Identifier id){
@@ -236,17 +233,11 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         command.utime = TimeUtil.utime();
         command.dest = new double[6];
     	command.action = "HOME";
-        sendArmCommand(command, "home", id);
+        sendArmCommand(command);
+        id.CreateStringWME("status", "complete");
     }
     
-    private void sendArmCommand(robot_command_t command, String actionName, Identifier id){
-    	if(!isIdle){
-    		// Currently doing a command, must abort
-    		curActionId.CreateStringWME("status", "error");
-    	}
-    	curActionId = id;
-    	curActionName = actionName;
-    	isIdle = false;
+    private void sendArmCommand(robot_command_t command){
         lcm.publish("ROBOT_COMMAND", command);
     }
     

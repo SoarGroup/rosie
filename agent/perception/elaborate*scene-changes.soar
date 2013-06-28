@@ -1,5 +1,11 @@
-sp {topstate*elaborate*scene-changes
+sp {topstate*elaborate*monitor-scene-changes*true
    (state <s> ^topstate <s>)
+-->
+   (<s> ^monitor-scene-changes true)
+}
+
+sp {monitor-scene-changes*elaborate*scene-changes
+   (state <s> ^monitor-scene-changes true)
 -->
    (<s> ^scene-changes <sc>)
 }
@@ -8,13 +14,14 @@ sp {topstate*elaborate*scene-changes
 # Change: new-object
 #   Occurs when a new object comes on the svs link
 #########################################################
-sp {topstate*elaborate*scene-changes*new-object
-   (state <s> ^topstate <s>
+sp {monitor-scene-changes*elaborate*scene-changes*new-object
+   (state <s> ^monitor-scene-changes true
               ^scene-changes <sc>
               ^svs.spatial-scene.child <svs-obj>
              -^object.id <id>)
    (<svs-obj> ^id-int <id>
              -^stale true)
+             #-^newly-created true)
 -->
    (<sc> ^change <change>)
    (<change> ^type new-object
@@ -25,6 +32,20 @@ sp {topstate*elaborate*scene-changes*new-object
 # Change: stale-object
 #   Occurs when an object on the svs link becomes stale
 #########################################################
+
+sp {monitor-scene-changes*elaborate*scene-changes*stale-object
+   (state <s> ^monitor-scene-changes true
+              ^scene-changes <sc>
+              ^object <ts-obj>)
+   (<ts-obj> ^is-stale true
+            -^held true)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type stale-object
+             ^object <ts-obj>)
+}
+
+
 sp {topstate*apply*any-op*mark*stale-time
    (state <s> ^topstate <s>
               ^operator <o>
@@ -59,15 +80,4 @@ sp {topstate*elaborate*object*is-stale
    (<obj> ^stale-time <= <sec>)
 -->
    (<obj> ^is-stale true)
-}
-
-sp {topstate*elaborate*scene-changes*stale-object
-   (state <s> ^topstate <s>
-              ^scene-changes <sc>
-              ^object <ts-obj>)
-   (<ts-obj> ^is-stale true)
--->
-   (<sc> ^change <change>)
-   (<change> ^type stale-object
-             ^object <ts-obj>)
 }

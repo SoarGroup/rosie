@@ -193,6 +193,10 @@ public class ChatFrame extends JFrame
         setReady(false);
     }
     
+    public SoarAgent getAgent(){
+    	return soarAgent;
+    }
+    
     private void setupStyles() {
     	Style defaultStyle = chatDoc.addStyle(ActionType.Default.toString(), null);
     	Style agentStyle = chatDoc.addStyle(ActionType.Agent.toString(), defaultStyle);
@@ -205,7 +209,7 @@ public class ChatFrame extends JFrame
         Style uiActionStyle = chatDoc.addStyle(ActionType.UiAction.toString(), defaultStyle);
         
         StyleConstants.setForeground(defaultStyle, Color.BLACK);
-        StyleConstants.setFontSize(defaultStyle, 18);
+        StyleConstants.setFontSize(defaultStyle, 24);
         StyleConstants.setFontFamily(defaultStyle, "SansSerif");
         StyleConstants.setLineSpacing(defaultStyle, 1f);
         
@@ -452,5 +456,9 @@ public class ChatFrame extends JFrame
 		menu.add(btnSaveScript);
 		
 		return menu;
+    }
+    
+    public void sendSoarMessage(String message){
+    	langConnector.newMessage(message);
     }
 }
