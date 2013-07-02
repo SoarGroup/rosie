@@ -20,7 +20,7 @@ public class WorldModel implements RunEventInterface
     // Mapping from object ids to objects
     private Map<Integer, WorldObject> objects;
     
-    private Map<Integer, WorldObject> merged;
+    private Map<Integer, Integer> merged;
    
     private observations_t newObservation = null;
     
@@ -34,7 +34,7 @@ public class WorldModel implements RunEventInterface
 
         objects = new HashMap<Integer, WorldObject>();
         
-        merged = new HashMap<Integer, WorldObject>();
+        merged = new HashMap<Integer, Integer>();
   
         soarAgent.getAgent().SendSVSInput("a eye object world b .01 p 0 0 0");
     }    
@@ -62,23 +62,25 @@ public class WorldModel implements RunEventInterface
     		staleObjects.add(object.getId());
     	}
     	
-    	Set<Integer> staleMerged = new HashSet<Integer>(merged.keySet());
+    	//Set<Integer> staleMerged = new HashSet<Integer>(merged.keySet());
         
         // update each object from the object_data_t
         for(object_data_t objectData : newObservation.observations){
-        	Integer id = objectData.id;
-        	WorldObject object = objects.get(id);
-        	WorldObject mergedObj = merged.get(id);
+        	Integer id = merged.get(objectData.id);
+        	if(id == null){
+        		// Not a merged object, just use the plain old id
+        		id = objectData.id;
+        	} else {
+        		// The reported id has been merged, use the stored id instead
+        		objectData.id = id;
+        	}
         	
-        	if(object == null && mergedObj == null){
+        	WorldObject object = objects.get(id);
+        	
+        	if(object == null){
         		// Not a regular object or merged, must be new
                 object = new WorldObject(objectData);
                 objects.put(objectData.id, object);
-        	} else if(object == null && mergedObj != null){
-        		// Getting a report for a merged object, update the original
-        		staleMerged.remove(id);
-        		staleObjects.remove(mergedObj.getId());
-                mergedObj.update(objectData);
         	} else if(object != null){
         		staleObjects.remove(id);
         		object.update(objectData);
@@ -91,9 +93,9 @@ public class WorldModel implements RunEventInterface
         }
         
         // Remove all stale merged objects
-        for(Integer id : staleMerged){
-        	merged.remove(id);
-        }
+//        for(Integer id : staleMerged){
+//        	merged.remove(id);
+//        }
         
         // Update the SVS link with the new information
         for(WorldObject object : objects.values()){
@@ -112,7 +114,7 @@ public class WorldModel implements RunEventInterface
     	original.mergeObject(copy);
     	original.updateSVS(soarAgent.getAgent());
     	removeObject(copyId);
-    	merged.put(copyId, original);
+    	merged.put(copyId, original.id);
     }
     
     public synchronized void removeObject(Integer id){
@@ -122,16 +124,16 @@ public class WorldModel implements RunEventInterface
     		objects.remove(id);
     		object.updateSVS(soarAgent.getAgent());
     	}
-    	Set<Integer> mergedToRemove = new HashSet<Integer>();
-    	for(Map.Entry<Integer, WorldObject> e : merged.entrySet()){
-    		if(e.getValue() == object){
-    			mergedToRemove.add(e.getKey());
-    		}
-    	}
-    	
-    	for(Integer oldId : mergedToRemove){
-    		merged.remove(oldId);
-    	}
+//    	Set<Integer> mergedToRemove = new HashSet<Integer>();
+//    	for(Map.Entry<Integer, WorldObject> e : merged.entrySet()){
+//    		if(e.getValue() == object){
+//    			mergedToRemove.add(e.getKey());
+//    		}
+//    	}
+//    	
+//    	for(Integer oldId : mergedToRemove){
+//    		merged.remove(oldId);
+//    	}
     }
     
     public synchronized void moveObject(Integer id, double x, double y, double z){
