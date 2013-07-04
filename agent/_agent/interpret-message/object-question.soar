@@ -1,0 +1,157 @@
+# Rules that handle when an object-question is sent by the user
+
+# Proposal
+sp {interpret-message*propose*object-question
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>)
+   (<msg> ^type object-question
+         -^processed)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name object-question
+        ^category communication
+        ^message <msg>)
+}
+
+# Elaborate useful information from the message to the operator
+sp {interpret-message*elaborate*object-question*object
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name object-question
+        ^message <msg>)
+   (<msg> ^information.object <obj>)
+-->
+   (<o> ^object <obj>)
+}
+
+#sp {elaborate*object-question*relation
+#   (state <s> ^operator <o> +)
+#   (<o> ^name object-question
+#        ^message <msg>)
+#   (<msg> ^information.relation <rel>)
+#-->
+#   (<o> ^relation <rel>)
+#}
+
+sp {interpret-message*elaborate*object-question*specifier
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name object-question
+        ^message <msg>)
+   (<msg> ^information.object.specifier <spec>)
+-->
+   (<o> ^specifier <spec>)
+}
+
+sp {interpret-message*elaborate*object-question*question-word
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name object-question
+        ^message <msg>)
+   (<msg> ^information.question-word <word>)
+-->
+   (<o> ^question-word <word>)
+}
+
+
+# Mark Processed
+sp {interpret-message*apply*object-question*mark*processed
+   (state <s> ^operator <o>)
+   (<o> ^name object-question
+        ^message <msg>)
+-->
+   (<msg> ^processed true)
+}
+
+################################################################
+# 
+# which-question
+#   E.g. 'Which is the red triangle?' (results in a point)
+# 
+################################################################
+# Handles which-questions
+sp {interpret-message*apply*object-question*which-question
+   (state <s> ^name interpret-message
+              ^operator <o>)
+   (<o> ^name object-question
+        ^question-word which
+        ^message <msg>
+        ^object <obj>)
+-->
+   (<s> ^new-segment-info <info>
+        ^originator mentor)
+   (<info> ^purpose <p>)
+   (<p> ^type which-question
+        ^parameters <params>
+        ^satisfaction.action-event.type point)
+   (<params> ^indexable <i>)
+   (<i> ^type object
+        ^lexical <obj>
+        ^index-info <idx-info>)
+   (<idx-info> ^use-interaction true
+               ^return-all false
+               ^infer-match true)
+}
+
+###############################################################
+#
+# description-request
+#   E.g. 'What is this?' (results in a description
+###############################################################
+sp {interpret-message*apply*object-question*description-request
+   (state <s> ^name interpret-message
+              ^operator <o>)
+   (<o> ^name object-question
+        ^question-word what
+        ^specifier << this that >>
+       -^object.word <> UNKNOWN)
+-->
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator mentor)
+   (<p> ^type describe-object
+        ^parameters.indexable <obj>
+        ^satisfaction.dialog-event.type describe)
+   (<obj> ^type object
+          ^lexical.specifier this
+          ^index-info <ii>)
+   (<ii> ^return-all false
+         ^use-interaction false
+         ^infer-match true)
+}
+
+## JK Handles where-questions
+#sp {apply*object-question*where-question
+#   (state <s> ^operator <o>)
+#   (<o> ^name object-question
+#        ^question-word where
+#        ^message <msg>
+#        ^object <obj>)
+#-->
+#   (<msg> ^purpose <p>)
+#   (<p> ^type location-question
+#        ^parameters <params>
+#        ^satisfaction <sat>)
+#   (<sat> ^dialog-event.type explanation)
+#   (<params> ^description <obj>)
+#}
+#
+
+## Handles 'what color is this' questions
+#sp {apply*object-question*property-question
+#   (state <s> ^operator <o>)
+#   (<o> ^name object-question
+#        ^question-word what
+#        ^specifier << this that >>
+#        ^object <obj>
+#        ^message <msg>)
+#	(<obj> ^word {<word> <> UNKNOWN})
+#-->
+#   (<msg> ^purpose <p>)
+#   (<p> ^type property-question
+#        ^parameters <params>
+#        ^satisfaction <sat>)
+#   (<params> ^property <word>)
+#        # AM: Changed satisfaction structure
+#   (<sat> ^dialog-event.type property-response)
+#}

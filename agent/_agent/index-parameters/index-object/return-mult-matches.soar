@@ -1,0 +1,162 @@
+#################################################
+#
+# return-mult-matches
+#   Multiple objects have matched, return all, use interaction, 
+#
+##################################################
+
+sp {index-object*propose*return-mult-matches
+   (state <s> ^name index-object
+              ^object-to-index.matches <m>)
+   (<m> ^finished true
+        ^mult-matches true
+        ^match <obj>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name return-mult-matches
+        ^match <obj>)
+}
+
+
+##################################################
+#
+# return-all = True
+#   Returns all matches to object
+#
+##################################################
+
+sp {index-object*apply*return-mult-matches*return-all*true
+   (state <s> ^name index-object
+              ^operator.name return-mult-matches
+              ^object-to-index.object <obj>
+              ^object-to-index.matches.match <m>
+              ^index-info.return-all true)
+-->
+   (<obj> ^internal <m>)
+}
+
+
+##################################################
+# 
+# return-all = False and use-interaction False
+#   Returns one at random
+#
+##################################################
+
+sp {index-object*apply*return-mult-matches*return-random
+   (state <s> ^name index-object
+              ^operator <o>
+              ^object-to-index.object <obj>
+              ^object-to-index.matches.match <m>
+              ^index-info.return-all false
+              ^index-info.use-interaction false)
+   (<o> ^name return-mult-matches
+        ^match <m>)
+-->
+   (<obj> ^internal <m>)
+}
+
+##################################################
+# 
+# return-all = False and use-interaction True
+#   Ask a which question
+#
+##################################################
+
+sp {index-object*apply*return-mult-matches*which-question
+   (state <s> ^name index-object
+              ^operator.name return-mult-matches
+              ^index-info.return-all false
+              ^index-info.use-interaction true)
+-->
+   (<s> ^which-question <q>)
+   (<q> ^type which-question
+        ^originator agent
+        ^fields.description <desc>)
+}
+
+sp {index-object*apply*return-mult-matches*which-question*copy*adjective*non-shape
+   (state <s> ^name index-object
+              ^operator.name return-mult-matches
+              ^which-question.fields.description <desc>
+              ^object-to-index.word <w>)
+   (<w> ^word <word>
+        ^sense.property <prop>)
+   (<prop> ^type visual
+           ^name <> shape)
+-->
+   (<desc> ^adjective <word>)
+}
+
+sp {index-object*apply*return-mult-matches*which-question*copy*adjective*shape
+   (state <s> ^name index-object
+              ^operator.name return-mult-matches
+              ^which-question.fields.description <desc>
+              ^object-to-index <oti>)
+   (<oti> ^word.sense.property.name name
+          ^word <w>)
+   (<w> ^word <word>
+        ^sense.property.name shape)
+-->
+   (<desc> ^adjective <word>)
+}
+
+sp {index-object*apply*return-mult-matches*which-question*copy*word*shape
+   (state <s> ^name index-object
+              ^operator.name return-mult-matches
+              ^which-question.fields.description <desc>
+              ^object-to-index <oti>)
+   (<oti> -^word.sense.property.name name
+          ^word <w>)
+   (<w> ^word <word>
+        ^sense.property.name shape)
+-->
+   (<desc> ^word <word>)
+}
+
+sp {index-object*apply*return-mult-matches*which-question*copy*word*name
+   (state <s> ^name index-object
+              ^operator.name return-mult-matches
+              ^which-question.fields.description <desc>
+              ^object-to-index.word <w>)
+   (<w> ^word <word>
+        ^sense.property.name name)
+-->
+   (<desc> ^word <word>)
+}
+
+sp {index-object*apply*return-mult-matches*which-question*copy*word*object
+   (state <s> ^name index-object
+              ^operator.name return-mult-matches
+              ^which-question.fields.description <desc>
+              ^object-to-index <oti>)
+   (<oti> -^word.sense.property.name name
+          -^word.sense.property.name shape)
+-->
+   (<desc> ^word object)
+}
+
+sp {index-object*apply*return-mult-matches*which-question*mark*message-ready
+   (state <s> ^name index-object
+              ^operator.name return-mult-matches
+              ^which-question.fields.description.word)
+-->
+   (<s> ^message-ready true)
+}
+
+sp {index-object*apply*return-mult-matches*which-question*create*new-segment
+   (state <s> ^name index-object
+              ^operator.name return-mult-matches
+              ^message-ready true
+              ^which-question <msg>
+              ^object-to-index.object <obj>
+              ^topstate.interaction.status <status>)
+-->
+   (<status> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+        ^message <msg>
+        ^originator agent)
+   (<p> ^type which-question
+        ^target-object <obj>
+        ^satisfaction.dialog-event.type object-message)
+}

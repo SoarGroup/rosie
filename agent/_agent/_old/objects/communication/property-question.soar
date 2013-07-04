@@ -1,0 +1,192 @@
+# Adds a segment to the interaction stack to deal with the property question
+sp {propose*property-question
+   (state <s> ^interaction.stack.segment.purpose <p>)
+   (<p> ^type property-question
+        ^parameters.property <prop-name>)
+        
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name property-question
+        ^category communication
+        ^property-name <prop-name>)
+}
+
+############################################
+# Step 1: resolve 'this' using index-object
+#############################################
+sp {property-question*propose*index-object*this
+   (state <s> ^name property-question
+             -^this-object)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name index-object
+        ^category communication
+        ^object.specifier this
+        ^return-all false
+        ^use-interaction true
+        ^allow-ties true)
+}
+
+sp {property-question*apply*index-object*success
+   (state <s> ^name property-question
+              ^operator <o>)
+   (<o> ^name index-object
+        ^finished true
+        ^match {<obj> <> failure})
+-->
+   (<s> ^this-object <obj>)
+}
+
+sp {property-question*apply*index-object*success*store*referent
+   (state <s> ^name property-question
+              ^operator <o>
+              ^topstate.interaction.stack.segment.info <info>
+              ^smem.command <cmd>)
+   (<o> ^name index-object
+        ^finished true
+        ^match {<obj> <> failure})
+   (<obj> ^smem-rep <rep>)
+-->
+   (<info> ^referent-object <obj>)
+   (<cmd> ^store <rep>)
+}
+
+###############################################
+# Step 2: Lookup the property being asked about
+################################################
+sp {property-question*propose*lookup-property
+   (state <s> ^name property-question
+              ^this-object
+              ^superstate.operator.property-name {<prop-name> <> category}
+             -^lookup-property-result)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name lookup-property
+        ^category communication
+        ^property-name <prop-name>
+        ^use-interaction false)
+}
+
+sp {property-question*apply*lookup-property*failure
+   (state <s> ^name property-question
+              ^operator.name lookup-property
+              ^lookup-property-result failure)
+-->
+   (<s> ^answer dont-know)
+}
+
+####################################################
+# Step 3: Attend to the given object and property
+####################################################
+sp {property-question*propose*attend-to-scene
+   (state <s> ^name property-question
+              ^this-object.id <id>
+              ^lookup-property-result.name <prop-name>
+             -^attended)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name attend-to-scene
+        ^category communication
+        ^use-all-objects false
+        ^object <id>
+        ^use-all-properties false
+        ^property <prop-name>)
+}
+
+sp {property-question*apply*attend-to-scene
+   (state <s> ^name property-question
+              ^operator <o>)
+   (<o> ^name attend-to-scene
+        ^status complete)
+-->
+   (<s> ^attended true)
+}
+
+######################################################
+# Step 4: If we have a label for the given property, but no word
+#         then look it up using lookup-label
+#########################################################
+
+# The label we are searching for (matches the given property)
+sp {property-question*elaborate*label
+   (state <s> ^name property-question
+              ^attended true
+              ^lookup-property-result.il-name <prop-name>
+              ^this-object <obj>)
+   (<obj> ^property <prop>)
+   (<prop> ^name <prop-name>
+           ^label <label>)
+-->
+   (<s> ^label <label>)
+}
+
+# Lookup the information with the given label
+sp {property-question*propose*lookup-label
+   (state <s> ^name property-question
+             -^lookup-label-result
+              ^label <label>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name lookup-label
+        ^category communication
+        ^label <label>)
+}
+
+# If we got the answer from a query, copy it
+sp {property-question*elaborate*answer*query-result
+   (state <s> ^name property-question
+              ^lookup-label-result.word.word <word>)
+-->
+   (<s> ^answer <word>)
+}
+
+#########################################################
+# Step 4: Report the answer using complete-property-question
+sp {property-question*propose*complete-property-question
+   (state <s> ^name property-question)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name complete-property-question
+        ^category communication)
+}
+
+sp {property-question*prefer*all*over*complete-property-question
+   (state <s> ^name property-question
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^category communication
+         ^name <> complete-property-question)
+   (<o2> ^name complete-property-question)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {property-question*apply*complete-property-question*dont-know
+   (state <s> ^name property-question
+              ^operator.name complete-property-question
+             -^answer
+              ^io.output-link <out>)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type dont-know
+          ^fields <f>)
+}
+
+sp {property-question*apply*complete-property-question*answer
+   (state <s> ^name property-question
+              ^operator.name complete-property-question
+              ^answer <ans>
+              ^io.output-link <out>)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type single-word-response
+          ^fields.word <ans>)
+}
+
+sp {property-question*apply*complete-property-question*mark-performed
+   (state <s> ^name property-question
+              ^operator.name complete-property-question
+              ^topstate.status <status>)
+-->
+   (<status> ^performed.dialog-event.type property-response)
+}

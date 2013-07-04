@@ -1,0 +1,159 @@
+###########################################################################
+#
+# Main source file for the instruction agent
+#
+###########################################################################
+
+# Soar Parameters - settings for things like memory, chunking, etc.
+source _soar_parameters.soar
+
+
+# Proposals: Contains ALL proposal rules for operators that resolve in op-no-changes (and substates
+#   Currently includes:
+#      push-segment
+#      interpret-message
+#      index-parameters
+#      satisfy-purpose
+source proposals.soar
+
+
+# Preferences: Contains preferences rules to avoid operator ties
+source preferences.soar
+
+
+source todo.soar
+
+#############################################################################
+# Elaborations: Contains many different elaborations that operate on 
+#   states or parts of the states, including the topstate, substates, stack,
+#   topstate objects... 
+pushd elaborations
+source elaborations_source.soar
+popd
+
+
+#############################################################################
+# Operator: init-agent
+#   This operator initializes the agent 
+source init-agent.soar
+
+
+#############################################################################
+# Operator: wait
+#   This operator is proposed when nothing else happens
+#   Used to avoid cascading state no-change impasses
+source wait.soar
+
+
+#################################################################################
+# Operator: parse-message
+# Copies the message from the input link to the nl.input-link and causes it to be parsed
+
+source parse-message.soar
+
+
+############################################################################
+# Operator: smem lti retrieval operator which can be fired on any state
+# If you add the wme ^retrieve-lti <lti> to ANY state, it will do the retrieval
+#   of the substructure for epmem
+source smem-retrieve.soar
+
+
+#############################################################################
+# Operator: push-segment
+#   This operator gets selected when there is a new segment on the interaction.status
+#	  This causes the current interaction to go into a new state and a new segment to be pushed
+#
+#   Spectifically, the following structure should be created on topstate.interaction.status <status>
+#  (<s> ^topstate <s>
+#       ^interaction.status <stat>)
+#  (<stat> ^new-segment-info <info>)
+#  (<info> ^purpose <purp>
+#          ^originator << agent mentor >>)
+#  (<purp> ^type <purpose-type>
+#             ^satisfaction.<event-type>.type <sat-type>)
+ 
+# Note you can also include parameters onto the purpose, such as when things need to be indexed
+
+# Example: Push a new segment whose purpose is to learn the new word 'red'
+# (<status> ^new-segment-info <info>)
+# (<info> ^purpose <purp>)
+# (<purp> ^type learn-word
+#         ^parameters.indexable <i>
+#         ^satisfaction.learning-event.type word)
+# (<i> ^type word
+#      ^lexical red)
+
+pushd push-segment
+source push-segment_source.soar
+popd
+
+
+#############################################################################
+# Operator: pop-segment
+#   This operator gets selected when there is a performed structure on the interaction.status
+#     and this performed matches the satisfaction wme for the current segment
+#   This causes the current segment to be removed and the interaction returns to a previous state
+
+# Example: see the example for learning a new word above
+#   Putting the following structure on the status wme would cause the current segment to be popped
+# (<s> ^interaction.status <status>)
+# (<status> ^performed.learning-event.type word)
+
+source pop-segment.soar
+
+
+###############################################################################
+# Operator: interpret-message
+#  This operator is selected when a new message appears on the nl.input-link
+#  In the substate, heuristics are used to determine what the message means and how to use it
+#    Usually either a new segment is added to the interaction stack, or the current segment is popped
+#  
+
+pushd interpret-message
+source interpret-message_source.soar
+popd
+
+
+###############################################################################
+# Operator: index-parameters
+#   This operator is selected when there is an indexable parameter which has not yet been indexed
+#   If there is an indexable wme on the current segment.purpose.parameters, it will be indexed
+
+# Note that indexable parameters should have the following format:
+
+#(<s> ^interaction.stack.segment.purpose.parameters <params>)
+#(<params> ^indexable <i>)
+#(<i> ^type << word property object relation verb >>
+#     ^lexical <lex>
+#     ^index-info <info>)
+ 
+# ^lexical <lex> is the lexical structure of the paramter, usually copies from a message
+# ^index-info <info> is any directions for the indexing process, 
+#	  for example whether interaction should be used to resolve impasses
+
+pushd index-parameters
+source index-parameters_source.soar
+popd
+
+
+###############################################################################
+# Operator: satisfy-purpose
+# This operator is selected once all the indexing has occured for the current segment purpose
+# The subspace is responsible for satisfying the current purpose
+# This is where learning, actions, or dialog occurs
+#   If successful, it should create a performed wme on the interaction.status link
+
+pushd satisfy-purpose
+source satisfy-purpose_source.soar
+popd
+
+
+################################################################################
+# Operator: attend-to-scene
+# This operator is selected once at the beginning, and is also called from index-object
+# It looks at the current info on the input link and updates the wm representations of objects
+
+pushd attend-to-scene
+source attend-to-scene_source.soar
+popd

@@ -1,0 +1,172 @@
+sp {index-object*find-matches*elaborate*object-to-index
+   (state <s> ^name find-matches
+              ^superstate.operator.object-to-index <obj>)
+-->
+   (<s> ^object-to-index <obj>)
+}
+
+#####################################################################
+#
+# match-evaluation
+#   This is where the magic happens
+#   Each candidate object is evaluated on how well it matches and the
+#     final determination is based upon those evaluations
+#
+#####################################################################
+
+
+sp {index-object*find-matches*elaborate*match-info
+   (state <s> ^name find-matches)
+-->
+   (<s> ^match-info <info>)
+}
+
+###
+# candidate: Every object that will be evaluated
+###
+sp {index-object*find-matches*elaborate*candidate
+   (state <s> ^name find-matches
+              ^object-to-index.candidates.candidate.object <obj>
+              ^match-info <info>)
+-->
+   (<info> ^candidate <obj>)
+}
+
+###
+# has-property: An object matches on a given property
+###
+
+# visual-property
+sp {index-object*find-matches*elaborate*has-property*visual
+   (state <s> ^name find-matches
+              ^object-to-index.word.sense <sense>
+              ^match-info <info>)
+   (<sense> ^label <label>
+        	^property.name <prop-name>)
+   (<info> ^candidate <c>)
+   (<c> ^property <prop>)
+   (<prop> ^name <prop-name>
+           ^type visual
+           ^label <label>)
+-->
+   (<info> ^has-property <c>)
+}
+
+# name
+sp {index-object*find-matches*elaborate*has-property*name
+   (state <s> ^name find-matches
+              ^object-to-index.word <w>
+              ^match-info <info>)
+   (<w> ^word <name>
+        ^property.name name)
+   (<info> ^candidate <c>)
+   (<c> ^property <prop>)
+   (<prop> ^name name
+           ^word <name>)
+-->
+   (<info> ^has-property <c>)
+}
+
+###
+# missing-property: An object does not have the given property
+###
+
+# The candidate does not have the property
+sp {index-object*find-matches*elaborate*has-property*no-property
+   (state <s> ^name find-matches
+              ^object-to-index.word.sense <sense>
+              ^match-info <info>)
+   (<sense> ^property.name <prop-name>)
+   (<info> ^candidate <c>)
+   (<c> -^property.name <prop-name>)
+-->
+   (<info> ^missing-property <c>)
+}
+
+# The candidate does not have a label for the property
+sp {index-object*find-matches*elaborate*has-property*no-label
+   (state <s> ^name find-matches
+              ^object-to-index.word.sense <sense>
+              ^match-info <info>)
+   (<sense> ^property.name <prop-name>)
+   (<info> ^candidate <c>)
+   (<c> ^property <prop>)
+   (<prop> ^name <prop-name>
+           ^type visual
+           -^label <label>)
+-->
+   (<info> ^missing-property <c>)
+}
+
+# The candidate does not have the given name
+sp {index-object*find-matches*elaborate*missing-property*no-name
+   (state <s> ^name find-matches
+              ^object-to-index.word <w>
+              ^match-info <info>)
+   (<w> ^word <name>
+        ^property.name name)
+   (<info> ^candidate <c>)
+   (<c> ^property <prop>)
+   (<prop> ^name name
+           -^word <name>)
+-->
+   (<info> ^missing-property <c>)
+}
+
+###
+# conflicting-property: The object has a different label for a property
+###
+sp {index-object*find-matches*elaborate*conflicting-property
+   (state <s> ^name find-matches
+              ^object-to-index.word.sense <sense>
+              ^match-info <info>)
+   (<sense> ^label <label>
+        	^property.name <prop-name>)
+   (<info> ^candidate <c>)
+   (<c> ^property <prop>)
+   (<prop> ^name <prop-name>
+           ^label <> <label>)
+-->
+   (<info> ^conflicting-property <c>)
+}
+
+###
+# perfect-match: The object does not have a conflicting-property or missing-property
+###
+sp {index-object*find-matches*elaborate*perfect-match
+   (state <s> ^name find-matches
+              ^match-info <info>)
+   (<info> ^candidate <c>
+          -^conflicting-property <c>
+          -^missing-property <c>)
+-->
+   (<info> ^perfect-match <c>)
+}
+
+###
+# partial-match: The object does not have a conflicting-property but has at least 1 missing-property and 1 matching property
+###
+sp {index-object*find-matches*elaborate*partial-match
+   (state <s> ^name find-matches
+              ^match-info <info>)
+   (<info> ^candidate <c>
+           ^has-property <c>
+          -^conflicting-property <c>
+           ^missing-property <c>)
+-->
+   (<info> ^partial-match <c>)
+}
+
+### 
+# empty-match: The object does not have any conflicts, but has no matching properties either
+###
+sp {index-object*find-matches*elaborate*empty-match
+   (state <s> ^name find-matches
+              ^match-info <info>)
+   (<info> ^candidate <c>
+          -^perfect-match <c>
+          -^has-property <c>
+          -^conflicting-property <c>)
+-->
+   (<info> ^empty-match <c>)
+}

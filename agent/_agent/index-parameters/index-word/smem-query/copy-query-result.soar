@@ -1,0 +1,43 @@
+sp {smem-query*propose*copy-query-result
+   (state <s> ^name smem-query
+              ^smem.result.{<< success failure >>} <query>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name copy-query-result)
+}
+
+# Remove the query from the smem.command link
+sp {smem-query*apply*copy-query-result*remove*query 
+   (state <s> ^name smem-query
+              ^operator.name copy-query-result
+              ^smem <smem>)
+   (<smem> ^command <cmd>
+           ^result.{<< success failure >>} <query>)
+   (<cmd> ^query <query>)
+-->
+   (<cmd> ^query <query> -)
+}
+
+# With a successful result, copy and increment the retrieval-count
+sp {smem-query*apply*copy-query-result*copy*result
+   (state <s> ^name smem-query
+              ^operator.name copy-query-result
+              ^smem.result <smem-result>
+             -^smem-query-result <ret>
+              ^retrieval-count <c>)
+   (<smem-result> ^success
+                  ^retrieved <ret>)
+-->
+   (<s> ^smem-query-result <ret>
+        ^retrieval-count <c> -
+        ^retrieval-count (+ <c> 1))
+}
+
+# If there were no successful queries return failure
+sp {smem-query*apply*copy-query-result*no-results
+   (state <s> ^name smem-query
+              ^operator.name copy-query-result
+              ^smem.result.failure)
+-->
+   (<s> ^smem-query-result failure)
+}
