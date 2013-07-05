@@ -45,15 +45,9 @@ source init-agent.soar
 source wait.soar
 
 
-#################################################################################
-# Operator: parse-message
-# Copies the message from the input link to the nl.input-link and causes it to be parsed
-
-source parse-message.soar
-
-
 ############################################################################
-# Operator: smem lti retrieval operator which can be fired on any state
+# Operator: smem-retrieve
+# Smem lti retrieval operator which can be fired on any state
 # If you add the wme ^retrieve-lti <lti> to ANY state, it will do the retrieval
 #   of the substructure for epmem
 # Will add a ^retrieved-lti <lti> to the state when done
@@ -61,63 +55,17 @@ source smem-retrieve.soar
 
 
 #############################################################################
-# Operator: push-segment
-#   This operator gets selected when there is a new segment on the interaction.status
-#	  This causes the current interaction to go into a new state and a new segment to be pushed
-#
-#   Spectifically, the following structure should be created on topstate.interaction.status <status>
-#  (<s> ^topstate <s>
-#       ^interaction.status <stat>)
-#  (<stat> ^new-segment-info <info>)
-#  (<info> ^purpose <purp>
-#          ^originator << agent mentor >>)
-#  (<purp> ^type <purpose-type>
-#             ^satisfaction.<event-type>.type <sat-type>)
- 
-# Note you can also include parameters onto the purpose, such as when things need to be indexed
-
-# Example: Push a new segment whose purpose is to learn the new word 'red'
-# (<status> ^new-segment-info <info>)
-# (<info> ^purpose <purp>)
-# (<purp> ^type learn-word
-#         ^parameters.indexable <i>
-#         ^satisfaction.learning-event.type word)
-# (<i> ^type word
-#      ^lexical red)
-
-pushd push-segment
-source push-segment_source.soar
+# Operator: interaction
+# Gets proposed when something happens to change the state of the interaction
+#   This could be a new message from the instructor, (nl.message)
+#   If the current interaction has been satisfied (topstate.interaction.status.performed)
+#   Or the agent has to initiate a new segment (topstate.interaction.status.new-segment-info)
+pushd interaction
+source interaction_source.soar
 popd
 
-
-#############################################################################
-# Operator: pop-segment
-#   This operator gets selected when there is a performed structure on the interaction.status
-#     and this performed matches the satisfaction wme for the current segment
-#   This causes the current segment to be removed and the interaction returns to a previous state
-
-# Example: see the example for learning a new word above
-#   Putting the following structure on the status wme would cause the current segment to be popped
-# (<s> ^interaction.status <status>)
-# (<status> ^performed.learning-event.type word)
-
-source pop-segment.soar
-
-
 ###############################################################################
-# Operator: interpret-message
-#  This operator is selected when a new message appears on the nl.input-link
-#  In the substate, heuristics are used to determine what the message means and how to use it
-#    Usually either a new segment is added to the interaction stack, or the current segment is popped
-#  
-
-pushd interpret-message
-source interpret-message_source.soar
-popd
-
-
-###############################################################################
-# Operator: index-parameters
+# Operator: comprehension 
 #   This operator is selected when there is an indexable parameter which has not yet been indexed
 #   If there is an indexable wme on the current segment.purpose.parameters, it will be indexed
 
@@ -133,8 +81,8 @@ popd
 # ^index-info <info> is any directions for the indexing process, 
 #	  for example whether interaction should be used to resolve impasses
 
-pushd index-parameters
-source index-parameters_source.soar
+pushd comprehension
+source comprehension_source.soar
 popd
 
 
@@ -158,3 +106,4 @@ popd
 pushd attend-to-scene
 source attend-to-scene_source.soar
 popd
+

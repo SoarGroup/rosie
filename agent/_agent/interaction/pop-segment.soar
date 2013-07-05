@@ -1,0 +1,69 @@
+#### apply pop-segment on the interaction-stack
+
+sp {interaction*propose*pop-segment*clear-stack
+   (state <s> ^name interaction
+              ^topstate.interaction.stack.segment <seg>
+              ^superstate.operator.clear-interaction-stack true)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name pop-segment
+        ^segment <seg>)
+}
+
+sp {interaction*propose*pop-segment
+   (state <s> ^name interaction
+              ^topstate.interaction.stack.segment <seg>
+              ^superstate.operator.performed <performed>)
+   (<seg> ^purpose.satisfaction <sat>)
+   (<sat> ^<event> <sat-event>)
+   (<sat-event> ^type <event-type>)
+   (<performed> ^<event> <status-event>)
+   (<status-event> ^type <event-type>)
+   # Everything listed in the satisfaction is on the status
+   -{(<sat-event> ^{<att> <> info} <val>)
+     (<status-event> -^<att> <val>)}
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name pop-segment
+        ^segment <seg>
+        ^performed <performed>)
+}
+
+sp {interaction*apply*pop-segment
+   (state <s> ^name interaction
+              ^operator <o>
+              ^topstate.interaction.stack <stack>)
+   (<o> ^name pop-segment
+        ^segment <top-seg>)
+   (<stack> ^segment <top-seg>)
+   (<top-seg> ^next <next-seg>)
+-->
+   (<stack> ^segment <top-seg> -
+            ^segment <next-seg>)
+   (<next-seg> ^prev <top-seg> -)
+}
+
+# If we're clearing the stack and try to remove the bottom
+#    remove the clear-interaction-stack flag
+sp {interaction*apply*pop-segment*pop*bottom-seg
+   (state <s> ^name interaction
+              ^operator <o>
+              ^topstate <top>)
+   (<o> ^name pop-segment
+        ^segment.id 0)
+   (<top> ^clear-interaction-stack true)
+-->
+   (<top> ^clear-interaction-stack true -)
+
+}
+
+sp {interaction*apply*pop-segment*clear*performed
+   (state <s> ^name interaction
+              ^operator <o>
+              ^topstate.interaction.status <status>)
+   (<o> ^name pop-segment
+        ^performed <perf>)
+   (<status> ^performed <perf>)
+-->
+   (<status> ^performed <perf> -)
+}
