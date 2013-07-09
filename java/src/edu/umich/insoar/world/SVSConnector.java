@@ -86,7 +86,7 @@ public class SVSConnector {
     	for(WorldObject object : newObjects.values()){
     		synchronized(object){
                 Pose pose = object.pose;
-                s+= "a " + object.getId() + " world v ";
+                s+= "a " + object.getId() + " object world v ";
                 //System.out.println(object.getId());
                 s+= object.getBBox().getFullPoints();
                 System.out.println("a " + object.getId() + " world v " + object.getBBox().getFullPoints());

@@ -131,6 +131,7 @@ public class Parser {
 	
 	//Get Soar structure
 	public boolean traslateToSoarSpeak(Identifier messageId, String tagString){
+	//	System.out.println("tagString: " + tagString);
 		Object obj = tagsToWords.get(tagString);
 		if(obj == null){
 			return false;
