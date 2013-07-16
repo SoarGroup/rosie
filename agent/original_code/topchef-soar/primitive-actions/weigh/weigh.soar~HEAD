@@ -1,0 +1,212 @@
+## propose pick-up for all known objects
+sp {propose*weigh*object
+   (state <s> ^object <obj>
+   	       -^problem-space << lgsoar message-interpretation >>
+	      ^name {<any> <> evaluate-operator}
+         ^topstate.interaction.stack.segment.info <info>)
+   (<obj> ^category block)
+   (<info> -^weighed <obj>)
+#   -{(<obj> ^property <prop>)
+#     (<prop> ^name weight
+#             ^active true)}
+ -->
+   (<s> ^operator <op> +)
+   (<op> ^name op_weigh-object
+   	 ^argument1 <obj>
+     ^category primitive-action
+     ^kind non-atomic)
+}
+
+
+sp {apply*weigh*object*copy*pose
+   (state <s> ^operator <o>
+       		  ^topstate.interaction.stack.segment.info <info>)
+   (<o> ^name op_weigh-object
+        ^argument1.pose <pose>)
+   (<info> -^saved-pose)
+   (<pose> ^x <x> ^y <y> ^z <z>)
+-->
+   (<info> ^weigh-state pickup-toscale
+			^saved-pose <p2>)
+   (<p2> ^x <x> ^y <y> ^z <z>)
+}
+
+sp {weigh*dont*wait
+   (state <s> ^name op_weigh-object
+              ^operator <o> +)
+   (<o> ^name wait)
+-->
+   (<s> ^operator <o> -)
+}   
+
+# Operators that cause state transitions in weigh
+sp {weigh*transition*pickup-toscale*putdown-toscale
+   (state <s> ^name op_weigh-object
+              ^grabbed <obj>
+              ^superstate.operator.argument1 <obj>
+              ^topstate.interaction.stack.segment.info <info>)
+   (<info> ^weigh-state pickup-toscale)
+-->
+   (<info> ^weigh-state pickup-toscale -
+           ^weigh-state putdown-toscale)
+}
+
+sp {weigh*transition*putdown-toscale*measure
+   (state <s> ^name op_weigh-object
+             -^grabbed <obj>
+              ^topstate.interaction.stack.segment.info <info>)
+   (<info> ^weigh-state putdown-toscale)
+-->
+   (<info> ^weigh-state putdown-toscale -
+           ^weigh-state measure)
+}
+
+sp {weigh*transition*measure*pickup-fromscale
+   (state <s> ^name op_weigh-object
+              ^superstate.operator.argument1 <obj>
+              ^topstate.interaction.stack.segment.info <info>)
+   (<obj> ^property <prop>)
+   (<prop> ^name weight
+           ^active true)
+   (<info> ^weigh-state measure)
+-->
+   (<info> ^weigh-state measure -
+           ^weigh-state pickup-fromscale)
+}
+
+sp {weigh*measure*remove*tracking
+   (state <s> ^name op_weigh-object
+              ^superstate.operator.argument1 <obj>
+              ^topstate <top>
+              ^topstate.interaction.stack.segment.info <info>)
+   (<obj> ^property <prop>)
+   (<prop> ^name weight
+           ^active true)
+   (<info> ^weigh-state measure)
+   (<top> ^track-relation <rel>)
+-->
+   (<top> ^track-relation <rel> -)
+}
+
+sp {weigh*transition*pickup-fromscale*putdown-fromscale
+   (state <s> ^name op_weigh-object
+              ^grabbed <obj>
+              ^superstate.operator.argument1 <obj>
+              ^topstate.interaction.stack.segment.info <info>)
+   (<info> ^weigh-state pickup-fromscale)
+-->
+   (<info> ^weigh-state pickup-fromscale -
+           ^weigh-state putdown-fromscale)
+}
+
+sp {weigh*transition*putdown-fromscale*finished
+   (state <s> ^name op_weigh-object
+             -^grabbed <obj>
+              ^superstate.operator.argument1 <obj>
+              ^topstate.interaction.stack.segment.info <info>)
+   (<info> ^weigh-state putdown-fromscale)
+-->
+   (<info> ^weigh-state putdown-fromscale -
+           ^weighed <obj>)
+}
+
+# Proposes operators for each state in the process
+sp {weigh*propose*pickup
+   (state <s> ^name op_weigh-object
+              ^superstate.operator.argument1 <obj>
+              ^topstate.interaction.stack.segment.info <info>)
+   (<info> ^weigh-state << pickup-toscale pickup-fromscale >>)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name op_pick-up-object
+        ^argument1 <obj>
+        ^category primitive-action
+        ^kind non-atomic)
+}
+
+sp {weigh*propose*putdown*toscale
+   (state <s> ^name op_weigh-object
+              ^topstate.object <scale>
+              ^superstate.operator.argument1 <obj>
+              ^topstate.interaction.stack.segment.info <info>)
+   (<info> ^weigh-state putdown-toscale)
+   (<scale> ^property.word scale)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name op_put-down-object-location
+        ^argument1 <obj>
+        ^argument2 <scale>
+        ^spatial-relationship in
+        ^category primitive-action
+        ^kind non-atomic)
+}
+
+
+sp {weigh*propose*putdown*fromscale
+   (state <s> ^name op_weigh-object
+              ^topstate.object <pantry>
+              ^superstate.operator.argument1 <obj>
+              ^topstate.interaction.stack.segment.info <info>)
+   (<info> ^weigh-state putdown-fromscale)
+   (<pantry> ^property.word pantry)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name op_put-down-object-location
+        ^argument1 <obj>
+        ^argument2 <pantry>
+        ^spatial-relationship in
+        ^category primitive-action
+        ^kind non-atomic)
+}
+
+sp {weigh*propose*measure
+   (state <s> ^name op_weigh-object
+              ^superstate.operator.argument1 <obj>
+              ^topstate.interaction.stack.segment.info <info>)
+   (<info> ^weigh-state measure)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name op_measure-object
+        ^argument1 <obj>
+        ^category primitive-action
+        ^kind non-atomic)
+}
+
+#sp {weigh*measure
+#   (state <s> ^name op_weigh-object
+#              ^operator <o> +
+#              ^superstate.operator.argument1 <obj>
+#              ^topstate.interaction.stack.segment.info.weigh-state measure)
+#   (<o> ^name op_measure-object
+#        ^argument1 <obj>)
+#-->
+#   (<s> ^operator <o> >)
+#   #(interrupt)
+#}
+#
+#sp {weigh*pickup-fromscale
+#   (state <s> ^name op_weigh-object
+#              ^operator <o> +
+#              ^superstate.operator.argument1 <obj>
+#              ^topstate.interaction.stack.segment.info.weigh-state pickup-fromscale)
+#   (<o> ^name op_pick-up-object
+#        ^argument1 <obj>)
+#-->
+#   (<s> ^operator <o> >)
+#}
+#
+#sp {weigh*put-down*fromscale
+#   (state <s> ^name op_weigh-object
+#              ^operator <o> +
+#              ^superstate.operator.argument1 <obj>
+#              ^topstate.interaction.stack.segment.info.weigh-state putdown-fromscale)
+#   (<o> ^name op_put-down-object-location
+#        ^argument1 <obj>
+#        ^argument2 <scale>)
+#   (<scale> ^property <prop>)
+#   (<prop> ^name name
+#           ^word pantry)
+#-->
+#   (<s> ^operator <o> >)
+#}
+#  
