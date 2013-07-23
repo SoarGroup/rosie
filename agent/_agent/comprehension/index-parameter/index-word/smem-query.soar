@@ -1,0 +1,53 @@
+# Use smem-query to look the word in semantic memory
+sp {index-word*propose*smem-query
+   (state <s> ^name index-word
+              ^word-param.lexical <word>
+             -^retrieved-word)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name smem-query
+        ^category smem
+        ^query <q>
+        ^return-all false)
+   (<q> ^wme-type word ^word <word>)
+}
+
+# The result was a failure, initiate a new interaction to get the missing information
+sp {index-word*apply*smem-query*failure*use-interaction
+   (state <s> ^name index-word
+              ^operator <o>
+              ^use-interaction true
+              ^smem-query-result failure
+              ^topstate.interaction.status <status>)
+   (<o> ^name smem-query
+        ^query.word <word>)
+-->
+   (<status> ^new-segment-info <info>
+             ^originator agent)
+   (<info> ^purpose <p>)
+   (<p> ^type learn-word
+        ^parameters.word.word <word>
+        ^satisfaction.learning-event <e>)
+   (<e> ^type word
+        ^word <word>)
+}
+   
+# The result was a failure, 
+sp {index-word*apply*smem-query*copy-result*failure
+   (state <s> ^name index-word
+              ^operator.name smem-query
+              ^use-interaction false
+              ^smem-query-result failure)
+-->
+   (<s> ^retrieved-word <empty>)
+}
+
+sp {index-word*apply*smem-query*copy-result*success
+   (state <s> ^name index-word
+              ^operator.name smem-query
+              ^smem-query-result {<res> <> failure})
+-->
+   (<s> ^retrieved-word <res>)
+}
+
+

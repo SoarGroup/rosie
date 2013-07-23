@@ -1,0 +1,62 @@
+
+
+#############################################################################
+# Operator: push-segment
+#   This operator gets selected when there is a new segment on the interaction.status
+#	  This causes the current interaction to go into a new state and a new segment to be pushed
+#
+#   Spectifically, the following structure should be created on topstate.interaction.status <status>
+#  (<s> ^topstate <s>
+#       ^interaction.status <stat>)
+#  (<stat> ^new-segment-info <info>)
+#  (<info> ^purpose <purp>
+#          ^originator << agent mentor >>)
+#  (<purp> ^type <purpose-type>
+#             ^satisfaction.<event-type>.type <sat-type>)
+ 
+# Note you can also include parameters onto the purpose, such as when things need to be indexed
+
+# Example: Push a new segment whose purpose is to learn the new word 'red'
+# (<status> ^new-segment-info <info>)
+# (<info> ^purpose <purp>)
+# (<purp> ^type learn-word
+#         ^parameters.indexable <i>
+#         ^satisfaction.learning-event.type word)
+# (<i> ^type word
+#      ^lexical red)
+
+pushd push-segment
+source push-segment_source.soar
+popd
+
+
+#############################################################################
+# Operator: pop-segment
+#   This operator gets selected when there is a performed structure on the interaction.status
+#     and this performed matches the satisfaction wme for the current segment
+#   This causes the current segment to be removed and the interaction returns to a previous state
+
+# Example: see the example for learning a new word above
+#   Putting the following structure on the status wme would cause the current segment to be popped
+# (<s> ^interaction.status <status>)
+# (<status> ^performed.learning-event.type word)
+
+source pop-segment.soar
+
+
+###############################################################################
+# Operator: interpret-message
+#  This operator is selected when a new message appears on the nl.input-link
+#  In the substate, heuristics are used to determine what the message means and how to use it
+#    Usually either a new segment is added to the interaction stack, or the current segment is popped
+#  
+
+pushd interpret-message
+source interpret-message_source.soar
+popd
+
+# Souce file "complete-interaction.soar"
+source complete-interaction.soar
+
+# Souce file "proposals.soar"
+source proposals.soar
