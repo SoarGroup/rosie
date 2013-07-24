@@ -34,6 +34,13 @@ public class Sentence extends LinguisticEntity{
 			component = (ObjectRelation)tagsToWords.get(m.group());
 		}
 		
+	/*	p = Pattern.compile("STT\\d*");
+		m = p.matcher(string);
+		if(m.find()){
+			type = "object-state-info";
+			component = (ObjectRelation)tagsToWords.get(m.group());
+		}*/
+		
 		p = Pattern.compile("GS\\d*");
 		m = p.matcher(string);
 		if(m.find()){
