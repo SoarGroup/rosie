@@ -146,7 +146,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
     	String propName = WMUtil.getValueOfAttribute(id, "property-name", 
     			"Error (send-training-label): No ^property-name attribute");
     	training_label_t newLabel = new training_label_t();
-    	Integer catNum = PerceptualProperty.getCategoryID(propName);
+    	Integer catNum = PerceptualProperty.getPropertyID(propName);
     	if(catNum == null){
     		return;
     	}
