@@ -41,8 +41,11 @@ public class VerbCommand extends LinguisticEntity{
 
 	
 	
-	public void translateToSoarSpeak(Identifier messageId, String connectingString){
-		Identifier verbId = messageId.CreateIdWME(connectingString);
+	public void translateToSoarSpeak(Identifier id, String connectingString){
+		Identifier messageId = id;
+		messageId.CreateStringWME("type", "verb-command");
+		Identifier infoId = messageId.CreateIdWME("information");
+		Identifier verbId = infoId.CreateIdWME("verb");
 		verbId.CreateStringWME("word", verb);
 		if(directObject != null)
 			directObject.translateToSoarSpeak(verbId,"direct-object");

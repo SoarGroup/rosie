@@ -54,10 +54,10 @@ public class LingObject extends LinguisticEntity {
 	
 	@Override
 	public void translateToSoarSpeak(Identifier id, String connectingString) {
-		id.CreateStringWME("type", "object-message");
-	    id.CreateStringWME("originator", "instructor");
-	    Identifier fieldsId = id.CreateIdWME("information");
-		Identifier objectId = fieldsId.CreateIdWME("object");
+//		id.CreateStringWME("type", "object-message");
+	    // id.CreateStringWME("originator", "instructor");
+	  //  Identifier fieldsId = id.CreateIdWME("information");
+		Identifier objectId = id.CreateIdWME(connectingString);
 	    objectId.CreateStringWME("word", noun);
 		if (determiner != null){
 			if(determiner.equals("the")){

@@ -13,35 +13,43 @@ import sml.Identifier;
 
 public class GoalInfo extends LinguisticEntity{
     public static String TYPE = "GoalInfo";
-	private VerbCommand verbCommand;
 	private Set<ObjectRelation> objectRelation;
+	private Set<ObjectState> objectState;
 
 	
 	public void extractLinguisticComponents(String string, Map tagsToWords) {
 		
 		objectRelation = new HashSet();
+		objectState = new HashSet();
 		//Pattern p = Pattern.compile();
-		Pattern p = Pattern.compile("VBC\\d*");
-		Matcher m = p.matcher(string);
-		if(m.find()){
-			verbCommand = (VerbCommand) tagsToWords.get(m.group());
-		}
 		
-		p = Pattern.compile("REL\\d*");
-		m = p.matcher(string);
+		Pattern p = Pattern.compile("REL\\d*");
+		Matcher m = p.matcher(string);
 		while(m.find()){
 			objectRelation.add((ObjectRelation) tagsToWords.get(m.group()));
+		}
+		
+		p = Pattern.compile("STT\\d*");
+		m = p.matcher(string);
+		while(m.find()){
+			objectState.add((ObjectState) tagsToWords.get(m.group()));
 		}
 		
 	}
 	@Override
 	public void translateToSoarSpeak(Identifier id, String connectingString) {
-		Identifier goalId = id.CreateIdWME(connectingString);
-		verbCommand.translateToSoarSpeak(goalId, "verb-command");
+		Identifier messageId = id;
+		messageId.CreateStringWME("type", "goal-relation-message");
+		Identifier goalId = messageId.CreateIdWME("information");
 		Iterator<ObjectRelation> itr = objectRelation.iterator();
 		while(itr.hasNext()){
 			ObjectRelation rel = itr.next();
-			rel.translateToSoarSpeak(goalId, "object-relation");
+			rel.translateToSoarSpeak(goalId, "relation");
+		}
+		Iterator<ObjectState> itro = objectState.iterator();
+		while(itro.hasNext()){
+			ObjectState state = itro.next();
+			state.translateToSoarSpeak(goalId, "state-predicate");
 		}
 		
 	}

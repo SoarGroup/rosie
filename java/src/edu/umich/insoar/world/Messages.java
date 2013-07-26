@@ -56,10 +56,10 @@ public class Messages implements IInputLinkElement
         messageNumber = latestMessageId;
         messageId.CreateIntWME("id", latestMessageId);
         messageId.CreateStringWME("type", latestMessage);
-//        if(!parser.getSoarSpeak(latestMessage, messageId)){
-//        	messageId.DestroyWME();
-//        	messageId = null;
-//        }
+        if(!parser.getSoarSpeak(latestMessage, messageId)){
+        	messageId.DestroyWME();
+        	messageId = null;
+        }
         messageChanged = false;
     }
 

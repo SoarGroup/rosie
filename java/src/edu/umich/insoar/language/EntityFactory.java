@@ -33,7 +33,9 @@ public class EntityFactory
         	return new CountRequest();
         } else if(entityType.equals(SimpleCommand.TYPE)){
         	return new SimpleCommand();
-        } else {
+        } else if(entityType.equals(ObjectState.TYPE)){
+        	return new ObjectState();
+        }else {
             return null;
         }
     }
