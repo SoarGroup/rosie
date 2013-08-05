@@ -52,8 +52,9 @@ public class PerceptualProperty
     	this.propName = getPropertyName(category.cat.cat);
     	this.values = new HashMap<String, Double>();
     	this.svsCommands = new StringBuilder();
+    	
+        svsCommands.append(SVSCommands.addProperty(parentName, propName + ".type", "visual"));
 
-    	svsCommands.append(SVSCommands.addProperty(parentName, propName + ".type", "visual"));
     	updateProperty(category);
     }
     

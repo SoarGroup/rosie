@@ -59,7 +59,7 @@ public class WorldObject
     
     protected Map<String, PerceptualProperty> perceptualProperties;
     
-    protected Map<String, StateProperty> stateProperties;
+    protected StateProperties stateProperties;
     
     private StringBuilder svsCommands;
     
@@ -71,13 +71,13 @@ public class WorldObject
     
     public WorldObject(object_data_t object){
         name = null;
-        id = -1;
+        id = object.id;
         bboxPos = new double[3];
         bboxRot = new double[3];
         bboxSize = new double[3];
         centroid = new double[3];
-        stateProperties = new HashMap<String, StateProperty>();
         perceptualProperties = new HashMap<String, PerceptualProperty>();
+        stateProperties = new StateProperties(getIdString());
         
         svsCommands = new StringBuilder();
         
@@ -161,22 +161,30 @@ public class WorldObject
     private synchronized void create(object_data_t objectData){ 
     	lastData = objectData;
     	
-        id = objectData.id;
-
-        setBBox(objectData.bbox_xyzrpy, objectData.bbox_dim);
-        centroid = objectData.pos;
-        
-        svsCommands.append(SVSCommands.add(getIdString(), bboxPos, bboxRot, bboxSize));
-        
-        for(categorized_data_t category : objectData.cat_dat){
-        	String propName = PerceptualProperty.getPropertyName(category.cat.cat);
-    		PerceptualProperty pp = new PerceptualProperty(getIdString(), category);
-    		perceptualProperties.put(propName, pp);
-        	pp.updateSVS(svsCommands);
-        }
-        
-        isNew = true;
-        svsCommands.append(SVSCommands.addProperty(getIdString(), "newly-created", "true"));
+		id = objectData.id;
+		
+		setBBox(objectData.bbox_xyzrpy, objectData.bbox_dim);
+		centroid = objectData.pos;
+		
+		svsCommands.append(SVSCommands.add(getIdString(), bboxPos, bboxRot, bboxSize));
+		
+		for(categorized_data_t category : objectData.cat_dat){
+			if(category.cat.cat == category_t.CAT_LOCATION){
+				this.name = category.label[0].toLowerCase();
+				svsCommands.append(SVSCommands.addProperty(getIdString(), "name", name));
+				continue;
+			}
+			String propName = PerceptualProperty.getPropertyName(category.cat.cat);
+			PerceptualProperty pp = new PerceptualProperty(getIdString(), category);
+			perceptualProperties.put(propName, pp);
+			pp.updateSVS(svsCommands);
+		}
+		
+		stateProperties.updateProperties(objectData.state_values);
+		stateProperties.updateSVS(svsCommands);
+		
+		isNew = true;
+		svsCommands.append(SVSCommands.addProperty(getIdString(), "newly-created", "true"));
         
         //System.out.println("CREATE " + id);
     }
@@ -199,6 +207,13 @@ public class WorldObject
         }
         
         for(categorized_data_t category : objectData.cat_dat){
+        	if(category.cat.cat == category_t.CAT_LOCATION){
+        		if(!category.label[0].toLowerCase().equals(name)){
+        			this.name = category.label[0].toLowerCase();
+        			svsCommands.append(SVSCommands.changeProperty(getIdString(), "name", name));
+        		}
+        		continue;
+        	}
         	String propName = PerceptualProperty.getPropertyName(category.cat.cat);
         	if(perceptualProperties.containsKey(propName)){
         		perceptualProperties.get(propName).updateProperty(category);
@@ -211,6 +226,9 @@ public class WorldObject
         for(PerceptualProperty pp : perceptualProperties.values()){
         	pp.updateSVS(svsCommands);
         }
+        
+        stateProperties.updateProperties(objectData.state_values);
+        stateProperties.updateSVS(svsCommands);
     }
     
     public synchronized void mergeObject(WorldObject obj){	
