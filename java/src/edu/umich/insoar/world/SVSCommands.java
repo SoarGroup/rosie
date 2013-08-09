@@ -44,7 +44,7 @@ public class SVSCommands {
         			if(i > 0 || j > 0 || k > 0){
         				sb.append(" ");
         			}
-        			sb.append(String.format("%d %d %d", i, j, k));
+        			sb.append(String.format("%f %f %f", i * .5, j * .5, k * .5));
         		}
         	}
         }

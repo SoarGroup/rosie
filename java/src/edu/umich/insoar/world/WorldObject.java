@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+
 import sml.Agent;
 import probcog.lcmtypes.*;
 import april.jmat.LinAlg;
@@ -152,7 +153,7 @@ public class WorldObject
 
     
     public synchronized void updateSVS(Agent agent){
-    	System.out.println(svsCommands.toString());
+    	//System.out.println(svsCommands.toString());
     	agent.SendSVSInput(svsCommands.toString());
     	//System.out.println(svsCommands.toString());
     	svsCommands = new StringBuilder();

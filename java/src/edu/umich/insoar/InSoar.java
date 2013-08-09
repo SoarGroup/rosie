@@ -93,7 +93,7 @@ public class InSoar implements PrintEventInterface, RunEventInterface
 
 		String throttleMSString = props.getProperty("decision-throttle-ms");
 		if (throttleMSString != null) {
-			throttleMS = Integer.parseInt(throttleMSString);
+			throttleMS = Integer.parseInt(throttleMSString.trim());
 			soarAgent.getAgent().RegisterForRunEvent(smlRunEventId.smlEVENT_AFTER_DECISION_CYCLE, this, this);
 		}
 
