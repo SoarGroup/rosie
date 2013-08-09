@@ -164,7 +164,9 @@ public class WorldObject
 		id = objectData.id;
 		
 		setBBox(objectData.bbox_xyzrpy, objectData.bbox_dim);
-		centroid = objectData.pos;
+		for(int i = 0; i < 3; i++){
+	          centroid[i] = objectData.pos[i];
+	    }
 		
 		svsCommands.append(SVSCommands.add(getIdString(), bboxPos, bboxRot, bboxSize));
 		
@@ -193,7 +195,9 @@ public class WorldObject
     	lastData = objectData;
         
         setBBox(objectData.bbox_xyzrpy, objectData.bbox_dim);
-        centroid = objectData.pos;
+        for(int i = 0; i < 3; i++){
+            centroid[i] = objectData.pos[i];
+        }
         
         
         if(isStale){
@@ -259,7 +263,7 @@ public class WorldObject
     	objectData.utime = TimeUtil.utime();
     	objectData.bbox_xyzrpy = new double[]{bboxPos[0], bboxPos[1], bboxPos[2], bboxRot[0], bboxRot[1], bboxRot[2]};
     	objectData.bbox_dim = bboxSize;
-    	objectData.pos = centroid;
+    	objectData.pos = new double[]{centroid[0], centroid[1], centroid[2], 0, 0, 0};
         
         int i = 0;
         objectData.num_cat = perceptualProperties.size();
