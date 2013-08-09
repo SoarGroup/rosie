@@ -6,8 +6,11 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import abolt.lcmtypes.*;
-import sml.*;
+
+import sml.Agent;
+import probcog.lcmtypes.*;
+import april.jmat.LinAlg;
+import april.util.TimeUtil;
 
 /**
  * A single Object in the world, can be created using either a sensable or an object_data_t
@@ -15,7 +18,7 @@ import sml.*;
  * @author mininger
  * 
  */
-public class WorldObject implements IInputLinkElement
+public class WorldObject 
 {
     public static String getSensableId(String sensable){
         // Matches against id=ID followed by a comma, whitespace, or end of string
@@ -36,218 +39,239 @@ public class WorldObject implements IInputLinkElement
         return id[1];
     }
     
-    
-    // Root identifier for the object
-    protected Identifier objectId;
-    
     // Name of the object (may be null if not named)
     protected String name;
-    protected StringElement nameWME;
     
     // Id of the object 
-    protected Integer id;
-    protected IntElement idWME;
+    protected int id;
     
-    // Pose of the object
-    protected Pose pose;
+    // Information about the bounding box
+    // Center of the bounding box (XYZ)
+    protected double[] bboxPos;
     
-    // Bounding box of the object
-    protected BBox bbox;
+    // Orientation of the bounding box (RPY)
+    protected double[] bboxRot;
+    
+    // Size of the bounding box (dX, dY, dZ)
+    protected double[] bboxSize;
+    
+    protected double[] centroid;
+    
     
     protected Map<String, PerceptualProperty> perceptualProperties;
     
-    protected Map<String, StateProperty> stateProperties;
-
-     // svs added
-    protected boolean isNew;
-    protected boolean hasChanged;
+    protected StateProperties stateProperties;
     
-    public WorldObject(String sensable){
-        initMembers();
-        newSensableString(sensable);
-    }
+    private StringBuilder svsCommands;
+    
+    protected boolean isStale = false;
+    
+    protected object_data_t lastData = null;
+    
+    protected boolean isNew = false;
     
     public WorldObject(object_data_t object){
-        initMembers();
-        newObjectData(object);
-    }
-    
-    private void initMembers(){
-        objectId = null;
-        idWME = null;
-        nameWME = null;
-        
         name = null;
-        id = -1;
-        pose = new Pose();
-        bbox = new BBox();
-        stateProperties = new HashMap<String, StateProperty>();
+        id = object.id;
+        bboxPos = new double[3];
+        bboxRot = new double[3];
+        bboxSize = new double[3];
+        centroid = new double[3];
         perceptualProperties = new HashMap<String, PerceptualProperty>();
-        isNew = true;
+        stateProperties = new StateProperties(getIdString());
+        
+        svsCommands = new StringBuilder();
+        
+        create(object);
     }
     
-    // Accessors
+    // ID: Get
+    public int getId(){
+        return id;
+    }
+    
+    public String getIdString(){
+    	return (new Integer(id)).toString();
+    }
+    
+    // Name: Get/Set
     public String getName(){
         return name;
     }
     
-    public Integer getId(){
-        return id;
+    public void setName(String name){
+    	this.name = name;
+    	svsCommands.append(SVSCommands.changeProperty(getIdString(), "name", name));
     }
     
-    public Pose getPose(){
-        return pose;
+    // Pose: Get
+    // Pose is a 3-tuple consisting of XYZ
+    
+    public double[] getPos(){
+        return bboxPos;
     }
     
-    public BBox getBBox(){
-    	return bbox;
+    public void setPos(double[] pos){
+    	this.bboxPos = pos;
+    	svsCommands.append(SVSCommands.changePos(getIdString(), pos));
     }
     
-    public synchronized String getValue(String attribute){
-        return stateProperties.get(attribute).getValue();
+    // Rot: Get
+    // Rot is a 3-tuple representing the rotation of the object in Roll-Pitch-Yaw
+    
+    public double[] getRot(){
+    	return bboxRot;
     }
     
-
-    // Mutators
-
-    @Override
-    public synchronized void updateInputLink(Identifier parentIdentifier)
-    {
-        if(objectId == null){
-            objectId = parentIdentifier.CreateIdWME("object");
-            idWME = objectId.CreateIntWME("id", id);
-        } 
-        if(name != null){
-        	if(nameWME == null){
-        		nameWME = objectId.CreateStringWME("name", name);
-        	}
-        	if(!nameWME.GetValueAsString().equals(name)){
-        		nameWME.Update(name);
-        	}
-        }
-        
-        for(PerceptualProperty category : perceptualProperties.values()){
-        	category.updateInputLink(objectId);
-        }
-        
-        pose.updateInputLink(objectId);
-        bbox.updateInputLink(objectId);
-        
-        for(StateProperty prop : stateProperties.values()){
-        	prop.updateInputLink(objectId);
-        }
-    }
-
-    @Override
-    public synchronized void destroy()
-    {
-        if(objectId != null){
-        	for(PerceptualProperty prop : perceptualProperties.values()){
-        		prop.destroy();
-        	}
-        	pose.destroy();
-        	bbox.destroy();
-        	idWME.DestroyWME();
-        	idWME = null;
-        	if(nameWME != null){
-            	nameWME.DestroyWME();
-            	nameWME = null;
-        	}
-            objectId.DestroyWME();
-            objectId = null;
-        }
+    // Size: Get
+    // Size is a 3-tuple representing the size of the object's bounding box (XYZ)
+    
+    public double[] getSize(){
+    	return bboxSize;
     }
     
-    public synchronized void newSensableString(String sensable){
-        sensable = sensable.toLowerCase();
-        String[] keyValPairs = sensable.split(",");
-        
-        for (String keyValPair : keyValPairs)
-        {
-            String[] keyVal = keyValPair.split("=");
-            if (keyVal.length < 2)
-            {
-                // Note a valid key-val pair, must be "key=value"
-                continue;
-            }
-
-            if (keyVal[0].equals("id"))
-            {
-                id = Integer.parseInt(keyVal[1]);
-            } else if(keyVal[0].equals("pose")){
-                if (!pose.equals(keyVal[1]))
-                {
-                    hasChanged = true;
-                }
-                
-                pose.updateWithString(keyVal[1]);
-                continue;
-            } else if(keyVal[0].equals("name")){
-            	name = keyVal[1].toLowerCase();
-            } else if(keyVal[0].equals("bbox")){
-            	bbox.updateWithString(keyVal[1]);
-            	continue;
-            } else {
-            	categorized_data_t category = new categorized_data_t();
-            	String categoryName = keyVal[0].toLowerCase();
-            	category.cat = new category_t();
-            	Integer catType = PerceptualProperty.getCategoryID(categoryName);
-            	if(catType == null){
-            		updateProperty(keyVal[0], keyVal[1]);
-            		continue;
-            	}
-            	category.cat.cat = catType;
-            	category.len = 1;
-            	category.label = new String[1];
-            	category.label[0] = keyVal[1].toLowerCase();
-            	category.confidence = new double[1];
-            	category.confidence[0] = 1;
-            	if(perceptualProperties.containsKey(categoryName)){
-            		perceptualProperties.get(categoryName).updateCategoryInfo(category);
-            	} else {
-            		perceptualProperties.put(categoryName, new PerceptualProperty(category));
-            	}
-            }        
-        }
-    }
     
-    public void updateProperty(String name, String value){
-    	name = name.toLowerCase();
-    	value = value.toLowerCase();
-    	if(stateProperties.containsKey(name)){
-    		stateProperties.get(name).update(value);
-    	} else {
-    		stateProperties.put(name, new StateProperty("state", name, value));
+    // Set Bounding Box Info
+    public void setBBox(double[] xyzrpy, double[] size){
+    	for(int i = 0; i < 3; i++){
+    		this.bboxPos[i] = xyzrpy[i];
+    		this.bboxRot[i] = xyzrpy[3+i];
+    		this.bboxSize[i] = size[i];
     	}
+    	
+    	svsCommands.append(SVSCommands.changePos(getIdString(), bboxPos));
+    	svsCommands.append(SVSCommands.changeRot(getIdString(), bboxRot));
+    	svsCommands.append(SVSCommands.changeSize(getIdString(), bboxSize));
+    }
+    
+    public void moveObject(double[] newPos){
+    	double[] diff = LinAlg.subtract(newPos, bboxPos);
+    	this.bboxPos = newPos;
+    	this.centroid = LinAlg.add(centroid, diff);
+    	svsCommands.append(SVSCommands.changePos(getIdString(), bboxPos));
     }
 
-    public synchronized void newObjectData(object_data_t objectData){        
-        id = objectData.id;
+    
+    public synchronized void updateSVS(Agent agent){
+    	//System.out.println(svsCommands.toString());
+    	agent.SendSVSInput(svsCommands.toString());
+    	//System.out.println(svsCommands.toString());
+    	svsCommands = new StringBuilder();
+    }
+    
+    private synchronized void create(object_data_t objectData){ 
+    	lastData = objectData;
+    	
+		id = objectData.id;
+		
+		setBBox(objectData.bbox_xyzrpy, objectData.bbox_dim);
+		for(int i = 0; i < 3; i++){
+	          centroid[i] = objectData.pos[i];
+	    }
+		
+		svsCommands.append(SVSCommands.add(getIdString(), bboxPos, bboxRot, bboxSize));
+		
+		for(categorized_data_t category : objectData.cat_dat){
+			if(category.cat.cat == category_t.CAT_LOCATION){
+				this.name = category.label[0].toLowerCase();
+				svsCommands.append(SVSCommands.addProperty(getIdString(), "name", name));
+				continue;
+			}
+			String propName = PerceptualProperty.getPropertyName(category.cat.cat);
+			PerceptualProperty pp = new PerceptualProperty(getIdString(), category);
+			perceptualProperties.put(propName, pp);
+			pp.updateSVS(svsCommands);
+		}
+		
+		stateProperties.updateProperties(objectData.state_values);
+		stateProperties.updateSVS(svsCommands);
+		
+		isNew = true;
+		svsCommands.append(SVSCommands.addProperty(getIdString(), "newly-created", "true"));
         
-        //used for svs
-        if (!pose.equals(objectData.pos))
-           hasChanged = true;
-        pose.updateWithArray(objectData.pos);
-        bbox.updateWithArray(objectData.bbox);
+        //System.out.println("CREATE " + id);
+    }
+    
+    public synchronized void update(object_data_t objectData){   
+    	lastData = objectData;
         
-        HashSet<String> propertiesToRemove = new HashSet<String>();
-        for(String propName : perceptualProperties.keySet()){
-        	propertiesToRemove.add(propName);
+        setBBox(objectData.bbox_xyzrpy, objectData.bbox_dim);
+        for(int i = 0; i < 3; i++){
+            centroid[i] = objectData.pos[i];
+        }
+        
+        
+        if(isStale){
+        	isStale = false;
+        	svsCommands.append(SVSCommands.deleteProperty(getIdString(), "stale"));
+        }
+        
+        if(isNew){
+        	isNew = false;
+            svsCommands.append(SVSCommands.deleteProperty(getIdString(), "newly-created"));
         }
         
         for(categorized_data_t category : objectData.cat_dat){
-        	String propName = PerceptualProperty.getCategoryName(category.cat.cat);
+        	if(category.cat.cat == category_t.CAT_LOCATION){
+        		if(!category.label[0].toLowerCase().equals(name)){
+        			this.name = category.label[0].toLowerCase();
+        			svsCommands.append(SVSCommands.changeProperty(getIdString(), "name", name));
+        		}
+        		continue;
+        	}
+        	String propName = PerceptualProperty.getPropertyName(category.cat.cat);
         	if(perceptualProperties.containsKey(propName)){
-        		perceptualProperties.get(propName).updateCategoryInfo(category);
-        		propertiesToRemove.remove(propName);
+        		perceptualProperties.get(propName).updateProperty(category);
         	} else {
-        		perceptualProperties.put(propName, new PerceptualProperty(category));
+        		PerceptualProperty pp = new PerceptualProperty(getIdString(), category);
+        		perceptualProperties.put(propName, pp);
         	}
         }
         
-        for(String propName : propertiesToRemove){
-        	perceptualProperties.get(propName).destroy();
-        	perceptualProperties.remove(propName);
+        for(PerceptualProperty pp : perceptualProperties.values()){
+        	pp.updateSVS(svsCommands);
         }
+        
+        stateProperties.updateProperties(objectData.state_values);
+        stateProperties.updateSVS(svsCommands);
+    }
+    
+    public synchronized void mergeObject(WorldObject obj){	
+    	if(obj.lastData != null){
+    		update(obj.lastData);
+    	}
+    	if(obj.isStale){
+    		this.markStale();
+    	}
+    }
+    
+    public synchronized void markStale(){
+    	if(!isStale){
+    		//System.out.println("STALE  " + id);
+        	isStale = true;
+        	svsCommands.append(SVSCommands.addProperty(getIdString(), "stale", "true"));
+    	}
+    }
+    
+    public synchronized void delete(){
+    	//System.out.println("DELETE " + id);
+    	svsCommands.append(SVSCommands.delete(getIdString()));
+    }
+    
+    public synchronized object_data_t createObjectData(){
+    	object_data_t objectData = new object_data_t();
+    	objectData.id = id;
+    	objectData.utime = TimeUtil.utime();
+    	objectData.bbox_xyzrpy = new double[]{bboxPos[0], bboxPos[1], bboxPos[2], bboxRot[0], bboxRot[1], bboxRot[2]};
+    	objectData.bbox_dim = bboxSize;
+    	objectData.pos = new double[]{centroid[0], centroid[1], centroid[2], 0, 0, 0};
+        
+        int i = 0;
+        objectData.num_cat = perceptualProperties.size();
+        objectData.cat_dat = new categorized_data_t[objectData.num_cat];
+        for(PerceptualProperty pp : perceptualProperties.values()){
+        	objectData.cat_dat[i++] = pp.getCatDat();
+        }
+    	return objectData;
     }
 }

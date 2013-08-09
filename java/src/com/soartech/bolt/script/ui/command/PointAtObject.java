@@ -1,6 +1,6 @@
 package com.soartech.bolt.script.ui.command;
 
-import edu.umich.insoar.world.World;
+import edu.umich.insoar.world.WorldModel;
 
 public class PointAtObject implements UiCommand {
 	private int objectId;
@@ -11,6 +11,7 @@ public class PointAtObject implements UiCommand {
 	
 	@Override
 	public void execute() {
-		World.Singleton().setPointedObjectID(objectId);
+		// XXX: Fix
+		//WorldModel.Singleton().setPointedObjectID(objectId);
 	}
 }
