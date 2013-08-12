@@ -18,6 +18,7 @@ import sml.WMElement;
 import sml.smlRunEventId;
 import probcog.lcmtypes.robot_action_t;
 import probcog.lcmtypes.robot_command_t;
+import probcog.lcmtypes.set_state_command_t;
 import april.util.TimeUtil;
 
 import com.soartech.bolt.script.ui.command.ResetRobotArm;
@@ -166,7 +167,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         command.utime = TimeUtil.utime();
         command.action = String.format("GRAB=%d", Integer.parseInt(objectIdStr));
         command.dest = new double[6];
-        sendArmCommand(command);
+    	lcm.publish("ROBOT_COMMAND", command);
         pickUpId.CreateStringWME("status", "complete");
     }
 
@@ -190,7 +191,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         command.utime = TimeUtil.utime();
         command.action = "DROP";
         command.dest = new double[]{x, y, z, 0, 0, 0};
-        sendArmCommand(command);
+    	lcm.publish("ROBOT_COMMAND", command);
         putDownId.CreateStringWME("status", "complete");
     }
 
@@ -208,11 +209,12 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
                 "Error (set-state): No ^value attribute");
 
         String action = String.format("ID=%s,%s=%s", objId, name, value);
-        robot_command_t command = new robot_command_t();
+        set_state_command_t command = new set_state_command_t();
         command.utime = TimeUtil.utime();
-        command.action = action;
-        command.dest = new double[6];
-        sendArmCommand(command);
+        command.state_name = name;
+        command.state_val = value;
+        command.obj_id = Integer.parseInt(objId);
+    	lcm.publish("SET_STATE_COMMAND", command);
         id.CreateStringWME("status", "complete");
     }
 
@@ -224,7 +226,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         command.utime = TimeUtil.utime();
         command.dest = new double[]{0, 0, 0, 0, 0, 0};
     	command.action = "POINT=" + id;
-        sendArmCommand(command);
+    	lcm.publish("ROBOT_COMMAND", command);
         pointId.CreateStringWME("status", "complete");
     }
     
@@ -233,12 +235,8 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         command.utime = TimeUtil.utime();
         command.dest = new double[6];
     	command.action = "HOME";
-        sendArmCommand(command);
+    	lcm.publish("ROBOT_COMMAND", command);
         id.CreateStringWME("status", "complete");
-    }
-    
-    private void sendArmCommand(robot_command_t command){
-        lcm.publish("ROBOT_COMMAND", command);
     }
     
     public JMenu createMenu(){
