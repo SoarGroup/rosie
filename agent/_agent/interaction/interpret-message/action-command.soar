@@ -4,42 +4,14 @@
 sp {interpret-message*propose*action-command
    (state <s> ^name interpret-message
    	      ^instructor-message <msg>
-	      -^new-segment-info.purpose.type action-command)
+	      -^new-segment-info
+	      -^modify-segment-info)
    (<msg> ^type verb-command)
 -->
    (<s> ^operator <o> +)
    (<o> ^name action-command
    	^message <msg>)
 }
-
-sp {interpret-message*elaborate*action-command*verb
-   (state <s> ^name interpret-message
-   	      ^operator <o> +)
-   (<o> ^name action-command
-   	^message.information.verb.word <verb-word>)
--->
-   (<o> ^verb <verb-word>)
-}
-
-sp {interpret-message*elaborate*direct-object
-   (state <s> ^name interpret-message
-   	      ^operator <o> +)
-   (<o> ^name action-command
-   	^message.information.verb.direct-object <do>)
--->
-   (<o> ^direct-object <obj>)
-}
-
-
-sp {interpret-message*elaborate*pp-object
-   (state <s> ^name interpret-message
-   	      ^operator <o> +)
-   (<o> ^name action-command
-   	^message.information.verb.object <obj>)
--->
-   (<o> ^pp-object <obj>)
-}
-
 
 ###############################################
 #
@@ -54,9 +26,9 @@ sp {interpret-message*apply*action-command
    	      ^operator <o>)
    (<o> ^name action-command
    	^message.information <vcomm>)
+   (<vcomm> -^verb.word done)
 -->
-   (<s> ^new-segment-info <info>
-   	^originator mentor)
+   (<s> ^new-segment-info <info>)
    (<info> ^purpose <p>)
    (<p> ^type action-command
    	^parameters <params>
@@ -68,3 +40,30 @@ sp {interpret-message*apply*action-command
    	^lexical <vcomm>)
 }
 
+
+###################################################
+#
+# you are done
+#
+###################################################
+
+sp {interpret-message*apply*action-command*done
+   (state <s> ^name interpret-message
+   	      ^operator <o>
+	      ^topstate <ts>)
+   (<ts> ^interaction.stack.segment.next <seg>)
+   (<o> ^name action-command
+   	^message.information <vcomm>)
+   (<vcomm> ^verb.word done)
+   (<seg> ^purpose.satisfaction <sat>)
+   (<sat> ^action-event <ae>)
+-->
+   (<s> ^modify-segment-info <info>)
+   (<info> ^segment <seg>
+   	   ^modification <m>)
+   (<m> ^type satisfaction
+   	^delete <delete>
+	^add <add>)
+   (<delete> ^action-event <ae>)
+   (<add> ^learning-event <ae>)
+}

@@ -4,51 +4,32 @@
 #
 ########################################################
 
-# sp {topstate*propose*interaction*new-segment-info
-#    (state <s> ^topstate <s>
-#               ^interaction.status.new-segment-info <info>)
-# -->
-#    (<s> ^operator <o> + =)
-#    (<o> ^name interaction
-#         ^new-segment-info <info>)
-# }
-
-sp {topstate*propose*interaction*clear-interaction-stack
+sp {topstate*propose*interaction*status-change
    (state <s> ^topstate <s>
-              ^clear-interaction-stack true)
+              ^interaction.status.<any> <status>)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name interaction
-        ^clear-interaction-stack true)
-}
-
-sp {topstate*propose*interaction*performed
-   (state <s> ^topstate <s>
-#              ^interaction.status.performed <perf>)
-	       ^interaction.status.<any> <stat>)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name interaction
-        ^status <stat>)
+        ^status <status>)
 }
 
 sp {topstate*propose*interaction*nl-input-link
-   (state <s> ^topstate <s>
-              ^nl.input-link.message <msg>)
+  (state <s> ^topstate <s>
+             ^nl.input-link.message <msg>)
 -->
-   (<s> ^operator <o> + =)
-   (<o> ^name interaction 
-        ^message <msg>)
+  (<s> ^operator <o> + =)
+  (<o> ^name interaction 
+       ^message <msg>)
 }
 
 sp {topstate*propose*interaction*input-link
-   (state <s> ^topstate <s>
-              ^io.input-link.message <msg>)
-   (<msg> -^processed)
+  (state <s> ^topstate <s>
+             ^io.input-link.message <msg>)
+  (<msg> -^processed)
 -->
-   (<s> ^operator <o> + =)
-   (<o> ^name interaction 
-        ^message <msg>)
+  (<s> ^operator <o> + =)
+  (<o> ^name interaction 
+       ^message <msg>)
 }
    
 #######################################################
@@ -84,19 +65,55 @@ sp {topstate*propose*comprehension
 sp {topstate*propose*satisfy-purpose
    (state <s> ^topstate <s>
               ^top-segment.purpose {<p> <> none})
-   (<p> -^type action-command)
+   (<p> -^type action-command
+   	-^type goal-description)
 -->
    (<s> ^operator <o> +)
    (<o> ^name satisfy-purpose
         ^purpose <p>)
 }
 
+#########################################################
+#
+# Propose: attend-to-scene-change
+#
+#########################################################
+sp {propose*attend-to-scene-change
+   (state <s> ^monitor-scene-changes true
+              ^topstate.scene-changes.change <change>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name attend-to-scene-change
+        ^category perception
+        ^change <change>)
+}
+
+sp {elaborate*attend-to-scene-change*create-delete-only
+   (state <s> ^operator <o> +
+              ^create-delete-only <val>)
+   (<o> ^name attend-to-scene-change)
+-->
+   (<o> ^create-delete-only <val>)
+}
+
+
 sp {topstate*propose*action
    (state <s> ^topstate <s>
               ^top-segment.purpose <p>)
-   (<p> ^type action-command)
+   (<p> ^satisfaction.action-event)
 -->
    (<s> ^operator <o> +)
    (<o> ^name action
+        ^purpose <p>)
+}
+
+sp {topstate*propose*learning
+   (state <s> ^topstate <s>
+              ^top-segment.purpose <p>)
+   (<p> ^satisfaction.learning-event)
+   (<p> ^type << action-command goal-description >>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name learning
         ^purpose <p>)
 }
