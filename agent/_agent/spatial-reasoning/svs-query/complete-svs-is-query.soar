@@ -1,0 +1,94 @@
+#find ids for both objects then process in svs
+sp {svs-is-query*propose*find-relations
+   (state <s> ^name svs-is-query
+              -^relationships
+              ^superstate.operator <so>)
+   (<so> ^message.fields.objects <objs>)
+   (<objs> ^obj <object>
+           ^type <prep>)
+   (<object> ^id <id> ^index {<ind> 2})
+-->
+   (<s> ^operator <o>)
+   (<o> ^name find-relations
+        ^category svs
+        ^interaction true
+        ^obj <id>
+        ^ind <ind>
+        ^prep <prep>) 
+}
+
+sp {svs-is-query*apply*find-relations
+   (state <s> ^name svs-is-query
+              ^operator <o>)
+   (<o> ^name find-relations)
+-->
+   (<s> ^operator <o> + =)
+}
+
+
+
+sp {svs-is-query*propose*complete-svs-is-query
+   (state <s> ^name svs-is-query
+              ^relationships <r>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name complete-svs-is-query
+        ^category svs)
+}
+
+
+sp {svs-is-query*apply*complete-svs-query*no
+   (state <s> ^name svs-is-query
+              ^relationships <r>
+             -^relationships.failure prep-not-found
+#             -^described
+              ^operator.name complete-svs-is-query
+              ^superstate.operator <so>
+              ^topstate.status <status>
+              ^io.output-link <out>)
+   (<so> ^message.fields.objects <objs>)
+   (<objs> ^obj <object>)
+   (<object> ^id <obj-id> ^index 1)           
+   (<r> -^relations.obj <obj-id>)  
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type single-word-response
+          ^fields.word No)
+   (<status> ^performed.action-event.type describe)
+}
+
+sp {svs-is-query*apply*complete-svs-query*yes
+   (state <s> ^name svs-is-query
+              ^relationships <r>
+             -^relationships.failure prep-not-found
+#             -^described
+              ^operator.name complete-svs-is-query
+              ^superstate.operator <so>
+              ^topstate.status <status>
+              ^io.output-link <out>)
+   (<so> ^message.fields.objects <objs>)
+   (<objs> ^obj <object>)
+   (<object> ^id <obj-id> ^index 1)           
+   (<r> ^relations.obj <obj-id>)  
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type single-word-response
+          ^fields.word Yes)
+   (<status> ^performed.action-event.type describe)
+}
+
+sp {svs-is-query*apply*complete-svs-is-query*preposition-unknown
+   (state <s> ^name svs-is-query
+              ^relationships.failure prep-not-found
+#             -^described
+              ^topstate.status <status>
+              ^operator.name complete-svs-is-query
+              ^io.output-link <out>)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type no-prep
+          ^fields.object failure)
+   (<status> ^performed.action-event.type describe)
+}
+
+
