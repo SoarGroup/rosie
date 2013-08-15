@@ -1,31 +1,46 @@
-sp {topstate*elaborate*monitor-scene-changes*true
+sp {topstate*elaborate*attend-to-all-scene-changes*true
    (state <s> ^topstate <s>)
 -->
-   (<s> ^monitor-scene-changes true)
+   (<s> ^attend-to-all-scene-changes true)
 }
 
-sp {monitor-scene-changes*elaborate*scene-changes
-   (state <s> ^monitor-scene-changes true)
+
+sp {topstate*elaborate*scene-changes*change-info
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes <sc>)
 -->
-   (<s> ^scene-changes <sc>)
+   (<sc> ^change-info <info>)
+   (<info> ^change <new-obj> <stale-obj> <chg-prop> <higher-conf> <diff-best>
+           ^parameter attend-to-all-scene-changes attend-to-create-delete-only attend-to-properties-only
+           ^parameter attend-to-object attend-to-property)
+   (<new-obj> ^name new-object
+              ^op-name attend-to-new-object)
+   (<stale-obj> ^name stale-object 
+                ^op-name attend-to-stale-object)
+   (<chg-prop> ^name changed-property
+               ^op-name attend-to-changed-property)
+   (<higher-conf> ^name higher-confidence
+                  ^op-name attend-to-higher-confidence)
+   (<diff-best> ^name different-best
+                ^op-name attend-to-different-best)
 }
+
 
 #########################################################
 # Change: new-object
 #   Occurs when a new object comes on the svs link
 #########################################################
 sp {monitor-scene-changes*elaborate*scene-changes*new-object
-   (state <s> ^monitor-scene-changes true
-              ^scene-changes <sc>
-              ^svs.spatial-scene.child <svs-obj>
-             -^object.id <id>)
-   (<svs-obj> ^id-int <id>
-             -^stale true)
-             #-^newly-created true)
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes <sc>
+              ^scene-monitor.object <obj>)
+   (<obj> ^svs-obj <svs-obj>
+         -^wm-obj)
+   (<svs-obj> -^stale true)
 -->
    (<sc> ^change <change>)
    (<change> ^type new-object
-             ^svs-object <svs-obj>)
+             ^object <obj>)
 }
 
 #########################################################
@@ -34,15 +49,16 @@ sp {monitor-scene-changes*elaborate*scene-changes*new-object
 #########################################################
 
 sp {monitor-scene-changes*elaborate*scene-changes*stale-object
-   (state <s> ^monitor-scene-changes true
-              ^scene-changes <sc>
-              ^object <ts-obj>)
-   (<ts-obj> ^is-stale true
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes <sc>
+              ^scene-monitor.object <obj>)
+   (<obj> ^wm-obj <wm-obj>)
+   (<wm-obj> ^is-stale true
             -^held true)
 -->
    (<sc> ^change <change>)
    (<change> ^type stale-object
-             ^object <ts-obj>)
+             ^object <obj>)
 }
 
 
@@ -104,9 +120,9 @@ sp {topstate*apply*any-op*delete*unattended-object
 #   Happens when the svs link reports something different about a property than we last noticed
 #############################################################################################
 sp {monitor-scene-changes*elaborate*scene-changes*changed-property
-   (state <s> ^monitor-scene-changes true
+   (state <s> ^topstate <s>
               ^scene-monitor.object <obj>
-              ^scene-changes <sc>)
+              ^scene-monitor.scene-changes <sc>)
    (<obj> ^property <prop>)
    (<prop> ^wm-prop <wm-prop>
            ^case <> <case-type>)
@@ -115,13 +131,19 @@ sp {monitor-scene-changes*elaborate*scene-changes*changed-property
    (<sc> ^change <change>)
    (<change> ^type changed-property
              ^object <obj>
-             ^property-info <prop>
-             ^wm-prop <wm-prop>)
+             ^property <prop>)
 }
 
+###########################################################################
+#
+# Change: higher-confidence
+#   When the confidence for a certain label changes
+#
+##########################################################################
+
 sp {monitor-scene-changes*elaborate*scene-changes*higher-confidence
-   (state <s> ^monitor-scene-changes true
-              ^scene-changes <sc>
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes <sc>
               ^scene-monitor.object <obj>)
    (<obj> ^property <prop>)
    (<prop> ^wm-prop <wm-prop>
@@ -134,14 +156,22 @@ sp {monitor-scene-changes*elaborate*scene-changes*higher-confidence
 -->
    (<sc> ^change <change>)
    (<change> ^type higher-confidence
-             ^wm-prop <wm-prop>
+             ^object <obj>
+             ^property <prop>
              ^new-confidence <new-conf>)
 }
 
+###########################################################################
+#
+# Change: different-best
+#   When a certain label changes values
+#
+##########################################################################
+
 sp {monitor-scene-changes*elaborate*scene-changes*different-best
-   (state <s> ^monitor-scene-changes true
-              ^scene-monitor.object <obj>
-              ^scene-changes <sc>)
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes <sc>
+              ^scene-monitor.object <obj>)
    (<obj> ^property <prop>)
    (<prop> ^wm-prop <wm-prop>
            ^hypothesis <h>
@@ -155,6 +185,6 @@ sp {monitor-scene-changes*elaborate*scene-changes*different-best
    (<sc> ^change <change>)
    (<change> ^type different-best
              ^object <obj>
-             ^hypothesis <h>
-             ^wm-prop <wm-prop>)
+             ^property <prop>
+             ^best-hyp <h>)
 }
