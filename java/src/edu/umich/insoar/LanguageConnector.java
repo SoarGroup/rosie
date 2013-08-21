@@ -179,9 +179,10 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
             for (int i = 0; i < currentWordId.GetNumberChildren(); i++)
             {
                 WMElement child = currentWordId.GetChild(i);
-                if (child.GetAttribute().equals("word"))
+                if (child.GetAttribute().equals("value"))
                 {
-                    message += child.GetValueAsString() + " ";
+               //     message += child.GetIdentifierName()+ " ";
+                    message += child.GetValueAsString()+ " ";
                 }
                 else if (child.GetAttribute().equals("next")
                         && child.IsIdentifier())
