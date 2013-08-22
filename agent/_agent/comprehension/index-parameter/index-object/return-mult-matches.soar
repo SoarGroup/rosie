@@ -12,9 +12,28 @@ sp {index-object*propose*return-mult-matches
         ^mult-matches true
         ^match <obj>)
 -->
-   (<s> ^operator <o> + =)
+   (<s> ^operator <o> +)
    (<o> ^name return-mult-matches
         ^match <obj>)
+}
+
+sp {index-object*return-mult-matches*prefer*lower-rank
+   (state <s> ^name index-object
+              ^operator <o1> +
+              ^operator <o2> +
+              ^object-to-index.candidates <c>)
+   (<o1> ^name return-mult-matches
+         ^match <obj1>)
+   (<o2> ^name return-mult-matches
+         ^match <obj2>)
+   (<c> ^candidate <c1>
+        ^candidate <c2>)
+   (<c1> ^object <obj1>
+         ^pref <p1>)
+   (<c2> ^object <obj2>
+         ^pref > <p1>)
+-->
+   (<s> ^operator <o1> > <o2>)
 }
 
 
@@ -38,8 +57,8 @@ sp {index-object*apply*return-mult-matches*return-all*true
 
 ##################################################
 # 
-# return-all = False and use-interaction False
-#   Returns one at random
+# return-all = False and no ties involved
+#   Returns the one with the best score
 #
 ##################################################
 
@@ -48,13 +67,56 @@ sp {index-object*apply*return-mult-matches*return-random
               ^operator <o>
               ^object-to-index.object <obj>
               ^object-to-index.matches.match <m>
-              ^index-info.return-all false
-              ^index-info.use-interaction false)
+              ^index-info.return-all false)
    (<o> ^name return-mult-matches
         ^match <m>)
 -->
    (<obj> ^result <m>)
 }
+
+#####################################################
+#
+# Tie Detected
+#
+#####################################################
+
+sp {index-object*elaborate*mult-matches-tie
+   (state <s> ^superstate.name index-object
+              ^impasse tie
+              ^choices multiple
+              ^item.name return-mult-matches)
+-->
+   (<s> ^name mult-matches-tie)
+}
+
+sp {index-object*propose*return-mult-matches-tie
+   (state <s> ^name mult-matches-tie
+              ^item.match <m>)
+-->
+   (<s> ^operator <o> + > =)
+   (<o> ^name return-mult-matches-tie
+        ^match <m>)
+}
+
+##################################################
+# 
+# Tie Detected
+# return-all = False and use-interaction False
+#   Returns one at random
+#
+##################################################
+#
+sp {index-object*apply*return-mult-matches-tie*return-random
+   (state <s> ^name mult-matches-tie
+              ^operator <o>
+              ^superstate.index-info.use-interaction false
+              ^superstate.object-to-index.object <obj>)
+   (<o> ^name return-mult-matches-tie
+        ^match <m>)
+-->
+   (<obj> ^result <m>)
+}
+
 
 ##################################################
 # 
@@ -63,12 +125,11 @@ sp {index-object*apply*return-mult-matches*return-random
 #
 ##################################################
 
-sp {index-object*apply*return-mult-matches*report*index-object-tie
-   (state <s> ^name index-object
-              ^operator.name return-mult-matches
-              ^index-info.return-all false
-              ^index-info.use-interaction true
-              ^object-to-index.object <obj>
+sp {index-object*apply*return-mult-matches-tie*report*index-object-tie
+   (state <s> ^name mult-matches-tie
+              ^operator.name return-mult-matches-tie
+              ^superstate.index-info.use-interaction true
+              ^superstate.object-to-index.object <obj>
               ^topstate.interaction.status <status>)
 -->
    (<status> ^failure <f>)
