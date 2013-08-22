@@ -1,0 +1,90 @@
+sp {query-relation*propose*find-relations
+   (state <s> ^name query-relation
+              -^relationships
+              ^superstate.operator <so>)
+   (<so> ^message.fields.objects <objs>)
+   (<objs> ^obj <object>
+           ^type <prep>)
+   (<object> ^id <id>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name find-relations
+        ^category svs
+        ^interaction true
+        ^obj <id>
+        ^ind 2
+        ^prep <prep>) 
+}
+
+#sp {query-relation*apply*find-relations
+#   (state <s> ^name query-relation
+#              ^operator <o>)
+#   (<o> ^name find-relations)
+#-->
+#   (<s> ^operator <o> + =)
+#}
+
+sp {query-relation*propose*describe-object
+   (state <s> ^name query-relation
+               ^relationships.relations.obj <obj-id>
+              -^described <obj>
+               ^topstate.object <obj>)
+   (<obj> ^id <obj-id>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name describe-object
+        ^category svs
+        ^object <obj>)
+}
+
+sp {query-relation*apply*describe-object*record
+   (state <s> ^name query-relation
+              ^relationships <r>
+              ^operator <o>
+              ^descriptions <d>
+              ^topstate.io.output-link <out>)
+   (<o> ^name describe-object
+        ^object <obj>
+        ^description <desc>)
+-->
+   (<s> ^described <obj>)
+   (<d> ^object <desc>)
+}
+
+sp {query-relation*propose*complete-query-relation
+   (state <s> ^name query-relation
+              ^relationships <r>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name complete-query-relation
+        ^category svs)
+}
+
+
+sp {query-relation*apply*complete-query-relation
+   (state <s> ^name query-relation
+              ^relationships <r>
+              ^descriptions <d>
+              ^io.output-link <out>
+              ^operator.name complete-query-relation
+              ^topstate.interaction.status <status>)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type list-objects
+          ^fields.objects <d>)
+   (<status> ^performed.dialog-event.type describe)
+}
+
+sp {query-relation*apply*complete-query-relation*preposition-unknown
+   (state <s> ^name query-relation
+              ^relationships.failure prep-not-found
+             -^described
+              ^operator.name complete-query-relation
+              ^io.output-link <out>)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type no-prep
+          ^fields.object failure)
+}
+
+
