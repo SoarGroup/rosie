@@ -1,0 +1,263 @@
+sp {find-parameters-results-impasse*propose*learn-action-result
+   (state <s> ^superstate.name select-param
+              ^superstate.legal-action <item>
+             -^superstate.action-result.item <item>
+              ^impasse no-change)
+    (<item> ^{<arg> 1})
+-->
+#   (force-learn <s>)
+#   (interrupt)
+   (<s> ^operator <o> + =)
+   (<o> ^name learn-action-result
+        ^category svs
+        ^superitem <item>)
+}
+
+sp {learn-action-result*elaborate*item
+   (state <s> ^name learn-action-result
+              ^superstate.operator.superitem <item>)
+-->
+   (<s> ^superitem <item>)
+}
+sp {learn-action-result*elaborate*found-preps
+   (state <s> ^name learn-action-result
+              ^superstate.superstate.found-prep <fprep>)
+-->
+   (<s> ^found-prep <fprep>)
+}
+sp {learn-action-result*elaborate*svs
+   (state <s> ^name learn-action-result
+              ^superstate.superstate.svs <svs>)
+-->
+   (<s> ^supersvs <svs>)
+}
+
+sp {learn-action-result*propose*find-projection
+   (state <s> ^name learn-action-result
+              ^supersvs <svs>
+              ^superstate.superstate.<arg0>.verbs.<argv>.verb-prep <name>
+              ^superitem <item>
+              ^found-prep <fprep>)
+    (<fprep> ^type <name>)
+   (<item> ^<arga> <a> ^<argb> <b> ^action <arg0> ^verbs.{<argv> << 1 2 3 4 5 6 7 8 9 10 >>} <va>)
+   (<va> ^verb-prep <name> ^{<arg1> 1} <arga> ^{<arg2> 2} <argb>)
+  -{(<s> ^projection-result <res>)
+    (<res> ^a <a> ^b <b>)}
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name find-projection
+        ^category svs
+        ^interaction false
+        ^svs-link <svs>
+        ^a.id <a>
+        ^b.id <b>
+        ^found-prep <fprep>)
+}
+
+sp {learn-action-result*property-adjust-x
+   (state <s> ^name learn-action-result
+              ^projection-result <res>
+              ^superitem <item>
+              ^supersvs.spatial-scene <sp> 
+              ^supersvs.command <cmd>)
+   (<sp> ^child <c1>)
+   (<c1> ^id-int <id> ^id <obja>)
+   (<res> ^x <x> ^a <id>)
+-->
+   (<cmd> ^property <P11>)
+   (<P11> ^id <obja> ^value <x> ^property px)
+}
+sp {learn-action-result*property-adjust-y
+   (state <s> ^name learn-action-result
+              ^projection-result <res>
+              ^superitem <item>
+              ^supersvs.spatial-scene <sp> 
+              ^supersvs.command <cmd>)
+   (<sp> ^child <c1>)
+   (<c1> ^id-int <id> ^id <obja>)
+   (<res> ^y <y> ^a <id>)
+-->
+   (<cmd> ^property <P11>)
+   (<P11> ^id <obja> ^value <y> ^property py)
+}
+
+sp {learn-action-result*property-adjust-z
+   (state <s> ^name learn-action-result
+              ^projection-result <res>
+              ^superitem <item>
+              ^supersvs.spatial-scene <sp> 
+              ^supersvs.command <cmd>)
+   (<sp> ^child <c1>)
+   (<c1> ^id-int <id> ^id <obja>)
+   (<res> ^z <z> ^a <id>)
+-->
+   (<cmd> ^property <P11>)
+   (<P11> ^id <obja> ^value <z> ^property pz)
+}
+
+####now find result again
+
+sp {learn-action-result*propose*find-relations
+   (state <s> ^name learn-action-result
+              #^superstate.superstate.<arg0>.verbs.<argv>.verb-prep <name>
+              ^superstate.superstate.found-prep <frep>
+              ^superitem <item>
+              ^projection-result.<< a b >> <id>
+              ^found-prep <fprep>
+              ^supersvs <svs>)
+    (<fprep> ^type <name>)
+    (<item> ^action <arg0> ^verbs.{<argv> << 1 2 3 4 5 6 7 8 9 10 >>} <va>)
+ -{(<s> ^relationships <rels>)
+   (<rels> ^with <id> ^preposition <name>)}
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name find-relations
+        ^category svs
+        ^svs-link <svs>
+        ^obj <id>
+        ^ind 1
+        ^found-prep <fprep>
+        ^prep <name>) 
+}
+sp {learn-action-result*propose*find-relations*related #TODO improve heuristic at what to look for
+   (state <s> ^name learn-action-result
+#              ^superstate.superstate.<arg0>.verbs.<argv>.verb-prep <name>
+              #^superstate.superstate.found-prep <frep>
+              #^superitem.<< 1 2 3 4 5 6 7 8 9 10 >> <id>
+              ^topstate.object.id <id>
+              ^superitem <item>
+              ^superstate.superstate.superstate.superstate.relationships <rels2>
+              ^projection-result.a <id2>
+              ^found-prep <fprep>
+              ^supersvs <svs>)
+    (<item> ^action <arg0> ^verbs.{<argv> << 1 2 3 4 5 6 7 8 9 10 >>} <va>)
+    (<rels2> ^with <id> ^preposition <name> ^relations.obj <id2>)
+    (<fprep> ^type <name>)
+ -{(<s> ^relationships <rels>)
+   (<rels> ^with <id> ^preposition <name>)}
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name find-relations
+        ^category svs
+        ^svs-link <svs>
+        ^obj <id>
+        ^ind 1
+        ^found-prep <fprep>
+        ^prep <name>) 
+}
+
+
+sp {learn-action-result*propose*create-result
+   (state <s> ^name learn-action-result
+             -^action-result
+              ^superitem <item>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name create-result
+        ^item <item>
+        ^category svs)
+}
+sp {learn-action-result*apply*create-result
+   (state <s> ^name learn-action-result
+              ^operator <o>)
+   (<o> ^name create-result
+        ^item <item>)
+-->
+   (<s> ^action-result <ar>)
+}
+
+#sp {learn-action-result*elaborate*relationship-change-status
+#   (state <s> ^name learn-action-result
+#              ^relationships <rels>
+#              ^superstate.superstate.relationships <rel2>
+#              ^superitem <item>)
+#   (<rels> ^with <id> ^preposition <name>)
+#   (<rel2> ^with <id> ^preposition <name>)
+#   (<rels> ^relations.obj <id2>)
+#   (<rel2> -^relations.obj <id2>)
+#-->
+#   (<rels> ^changed true)
+#}
+#sp {learn-action-result*elaborate*relationship-change-status2
+#   (state <s> ^name learn-action-result
+#              ^relationships <rels>
+#              ^superstate.superstate.relationships <rel2>
+#              ^superitem <item>)
+#   (<rels> ^with <id> ^preposition <name>)
+#   (<rel2> ^with <id> ^preposition <name>)
+#   (<rels> -^relations.obj <id2>)
+#   (<rel2> ^relations.obj <id2>)
+#-->
+#   (<rels> ^changed true)
+#}
+
+sp {learn-action-result*propose*copy-relation
+   (state <s> ^name learn-action-result
+              ^action-result <ar>
+              ^relationships <rels>
+              ^superitem <item>)
+   (<rels> -^copied true)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name copy-relation
+        ^category svs
+        ^action-result <ar>
+        ^relationships <rels>)
+}
+
+
+sp {learn-action-result*apply*copy-relation
+   (state <s> ^name learn-action-result
+#              ^superitem.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <id>
+              ^superitem.action <arg0>
+#              ^superstate.superstate.<arg0>.verb-prep <prep>
+              ^operator <o>)
+   (<o> ^name copy-relation
+        ^action-result <ar>
+        ^relationships <rels>)
+   (<rels> ^with <id>)
+   # ^preposition <prep> ^relations <r>)
+-->
+   (<rels> ^copied true)
+   (<ar> ^relationships <rels>)
+}
+
+#sp {learn-action-result*apply*copy-relation*nowith
+#   (state <s> ^name learn-action-result
+#              ^superitem.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <id>
+#              ^superitem.action <arg0>
+#              ^superstate.superstate.<arg0>.verb-prep <prep>
+#              ^operator <o>)
+#   (<o> ^name copy-relation
+#        ^action-result <ar>
+#        ^relationships <rels>)
+#    (<rels> ^with <id> ^preposition <prep> ^failure none-found)
+#-->
+#   (<rels> ^copied true)
+#   (<ar> ^relationships <rels>)
+#}
+
+sp {learn-action-result*propose*complete-learn-action-result
+   (state <s> ^name learn-action-result
+              ^projection-result
+              ^action-result <ar>
+              ^superitem <item>)
+--> 
+   (<s> ^operator <o> + =)
+   (<o> ^name complete-learn-action-result
+        ^category svs
+        ^action-result <ar>
+        ^item <item>)
+}
+sp {learn-action-result*apply*complete-learn-action-result
+   (state <s> ^name learn-action-result
+              ^superitem <item>
+              ^superstate.superstate <sss>
+              ^operator <o>)
+   (<o> ^name complete-learn-action-result
+        ^action-result <ar>
+        ^item <item>)
+-->
+   (<sss> ^action-result <ar>)
+   (<ar> ^item <item>)
+}
