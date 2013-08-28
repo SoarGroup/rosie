@@ -7,6 +7,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuBar;
 
+import edu.umich.insoar.world.SVSCommands;
 import edu.umich.insoar.world.WMUtil;
 
 import sml.Agent;
@@ -72,19 +73,22 @@ public class SVSTester extends JFrame implements OutputEventInterface, RunEventI
 		soarAgent.kill();
 	}
 	
+	float rotX = 0;
+	
 	public void runEventHandler(int eventID, Object data, Agent agent, int phase)
     {
-		stepNo++;
-		if(stepNo == 1){
-			String svs = "";
-			svs += "a test object world p 1 1 1\n";
-			svs += "p test a color.red .56\n";
-			svs += "p test a color.blue .74\n";
-			svs += "p test a shape.square true\n";
-			svs += "p test a shape.triangle false\n";
-			
-			agent.SendSVSInput(svs);
+		StringBuilder svsCommands = new StringBuilder();
+		if(stepNo == 0){
+			svsCommands.append("a 1 object world p 0 0 0 r 0 0 0 s 1 5 1 ");
+			svsCommands.append("v " + SVSCommands.bboxVertices() + "\n");
+		} else {
+			rotX += .1;
+			svsCommands.append("p 1 c rx " + rotX + "\n");
 		}
+		agent.SendSVSInput(svsCommands.toString());
+		System.out.println(rotX);
+		
+		stepNo++;
     }
 
 	@Override

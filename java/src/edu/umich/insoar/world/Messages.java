@@ -26,7 +26,7 @@ public class Messages implements IInputLinkElement
     // Represents an invalid id, or that no message is on the input-link
     private final Integer INVALID_ID = -1;
     
-    private BOLTDictionary dictionary = new BOLTDictionary("../java/src/edu/umich/insoar/language/dictionary.txt"); 
+    private BOLTDictionary dictionary = new BOLTDictionary("java/src/edu/umich/insoar/language/dictionary.txt"); 
     
 
     private int messageNumber;

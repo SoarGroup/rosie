@@ -197,9 +197,9 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
             try {
                 obs = new observations_t(ins);
                 pointedId = obs.click_id;
-                if(armStatus.equals("wait")){
+                //if(armStatus.equals("wait")){
                     world.newObservation(obs);
-                }
+                //}
                 world.sendObservation();
             }
             catch (IOException e){

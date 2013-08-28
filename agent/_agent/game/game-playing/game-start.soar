@@ -1,0 +1,147 @@
+sp {game-start*propose*lookup-game
+   (state <s> ^name game-start
+             -^game
+             -^failed
+              ^superstate.operator.game-name <game>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name lookup-game
+        ^full no
+        ^category svs # for now determine better or new category
+        ^game-name <game>)
+}
+
+sp {game-start*propose*store-game-context
+   (state <s> ^name game-start
+              ^game <g>
+              ^superstate.operator.game-name <name>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name store-game-context
+        ^category svs # for now determine better or new category
+        ^game-name <name>)
+}
+
+sp {game-start*propose*learn-new-game
+   (state <s> ^name game-start
+              ^failed true
+              ^superstate.operator.game-name <name>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name learn-new-game
+        ^category svs # for now determine better or new category
+        ^game-name <name>)
+}
+sp {game-start*apply*learn-new-game
+   (state <s> ^name game-start
+              ^operator <o>
+              ^topstate <ts>)
+   (<o> ^name learn-new-game
+        ^game-name <name>)
+-->
+   (<ts> ^current-game <cg>)
+   (<cg> ^learning <l> ^name <name> ^game <g>)
+   (<g> ^game-name <name> ^actions <a>)
+   (<l> ^type action ^action-number 1)
+}
+
+sp {game-start*apply*store-game-context
+   (state <s> ^name game-start
+              ^operator <o>
+              ^topstate <ts>)
+   (<o> ^name store-game-context
+         ^game-name <name>)
+-->
+   (<ts> ^current-game <cg>)
+   (<cg> ^game <game>)
+   (<game> ^game-name <name>)
+}
+
+
+sp {game-start*send-message
+   (state <s> ^name game-start
+              ^topstate.io.output-link <out>
+              ^topstate.interaction.status <status>
+              ^game <g>
+              ^topstate.current-game.game.game-name <game>
+              ^superstate.operator.game-name <game>)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type game-start
+          ^fields <f>)
+   (<status> ^performed.dialog-event.type game)
+}
+
+sp {game-start*send-message*new-game
+   (state <s> ^name game-start
+              ^topstate.io.output-link <out>
+              ^topstate.interaction.status <status>
+              ^topstate.current-game.learning.type action
+              ^superstate.operator.game-name <game>)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type game-new-action
+          ^fields <f>)
+   (<f> ^game-name <game>)
+   (<status> ^performed.dialog-event.type game)
+}
+
+
+#############################
+#initiate
+sp {game-initiate*send-message
+   (state <s> ^name game-initiate
+              ^topstate.io.output-link <out>
+              ^topstate.status <status>)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type play-game
+          ^fields <f>)
+   (<status> ^performed.dialog-event.type game)
+}
+#sp {game-initiate*send-message
+#   (state <s> ^name game-initiate
+#              ^topstate.io.output-link <out>
+#              ^topstate.svs <svs>
+#              ^topstate.interaction.status <status>)
+#   (<svs> ^spatial-scene <sc>
+#          ^command <cmd>)
+#-->
+#   (interrupt)
+#   (<cmd> ^extract_once <E11>)
+#   (<E11> ^a <N7> ^b <E14> ^type passthru ^mark left-of)   
+#   (<N7> ^type node ^id |6|)
+#   (<E14> ^type all_nodes)
+#   (<E14> ^a <E1> ^b <E2> ^type passthru)  
+#   (<E1> ^a <N7> ^b <E10> ^type x-less-than)
+#   (<E2> ^a <N7> ^b <E10> ^type x-greater-than)  
+#   (<E10> ^a <N7> ^b <E12> ^type z-aligned)
+#   (<E12> ^a <N7> ^b <E13> ^type dist_select_xyz ^axis 0 ^bot 0.007 ^top 0.017)  
+###   (<E9> ^a <N7> ^b <N10> ^type z-aligned)  
+##   (<E13> ^type all_nodes)
+#   (<E13> ^type all_nodes)
+#      (interrupt)
+#   (<cmd> ^extract_once <E11>)
+#   (<E11> ^a <N7> ^property-name id ^property-value 0 ^type has-property)   
+#   (<N7> ^type all_nodes)
+##   (<E8> ^a <E12> ^b <E10> ^type y-aligned ^type all_nodes)  
+###   (<E9> ^a <N7> ^b <N10> ^type z-aligned)  
+##   (<E10> ^type all_nodes)
+##   (<E12> ^type all_nodes)
+#}
+###########################
+## GAME OVER
+sp {game-over*send-message
+   (state <s> ^operator.name game-over
+              ^topstate <ts>
+              ^topstate.io.output-link <out>
+              ^topstate.interaction.status <status>)
+   (<ts> ^current-game <cg>)
+-->
+   (<ts> ^current-game <cg> -)
+   (<out> ^send-message <msg>)
+   (<msg> ^type game-over
+          ^fields <f>)
+   (<status> ^performed.dialog-event.type game)
+}
+

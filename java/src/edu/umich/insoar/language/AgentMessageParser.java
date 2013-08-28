@@ -107,7 +107,10 @@ public class AgentMessageParser
     private static String translateTeachingRequest(Identifier id){
     	LingObject obj = LingObject.createFromSoarSpeak(id, "description");
     	//JK different syntax for prepositions/verbs
-    	if ((obj.toString().contains("preposition")) || (obj.toString().contains("verb")))
+    	String prep = WMUtil.getValueOfAttribute(id, "preposition");
+    	if (prep != null && !prep.isEmpty())
+    	    return "I don't know the preposition " + prep + ". Please teach me with examples";
+    	else if ((obj.toString().contains("preposition")) || (obj.toString().contains("verb")))
     	    return "I don't know the " + obj.toString() + ". Please teach me with examples";
     	else
     	    return "I don't see " + obj.toString() + ". Please teach me to recognize one";
