@@ -1,0 +1,138 @@
+sp {learn-parameter*propose*store-parameter
+   (state <s> ^name learn-parameter
+              ^parameter <p>
+              ^topstate.current-game <cg>)
+   (<cg> ^learning <l>)
+   (<l> ^type parameter ^arg <arg> ^learn-link <link>)
+   (<link> -^parameters.<arg>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name store-parameter
+        ^category svs) # for now determine better or new category)
+}
+
+sp {learn-parameter*apply*store-parameter
+   (state <s> ^name learn-parameter
+              ^parameter <pname>
+              ^topstate <ts>
+              ^operator.name store-parameter)
+   (<ts> ^current-game <cg>)
+   (<cg> ^learning <l> ^name <gname>)
+   (<l> ^arg <arg> ^learn-link <link>)
+   (<cg> ^game <g>)
+   (<g> ^game-name <gname>)
+   (<link> ^conditions <c> ^parameters <p>)
+-->
+   (<p> ^<arg> <parama>)
+   (<c> ^<arg> <conda>)
+   (<parama> ^type <pname>)
+}
+
+sp {learn-parameter*propose*find-condition
+   (state <s> ^name learn-parameter
+              ^parameter <pname>
+              ^topstate.current-game.learning <l>)
+   (<l> ^learn-link <link> ^arg <arg>)
+   (<link> ^parameters.<arg>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name find-condition
+        ^category svs) # for now determine better or new category)
+}
+
+sp {learn-parameter*apply*find-condition
+   (state <s> ^name learn-parameter
+              ^parameter <pname>
+              ^operator.name find-condition
+              ^topstate.io.output-link <out>
+              ^topstate.status <status>
+              ^topstate.current-game.learning <l>)
+   (<l> ^type <t> ^arg <arg> ^learn-link <link>)
+   (<link> ^parameters.<arg>)
+-->
+   (<l> ^type <t> -)
+   (<l> ^type condition ^parameter <pname>)
+   (<out> ^send-message <msg>)
+   (<msg> ^type game-new-condition
+          ^fields <f>)
+   (<status> ^performed.dialog-event.type game)
+}
+
+sp {finish-parameters*propose*flush-out-conditions
+   (state <s> ^name finish-parameters
+              ^topstate.current-game <cg>
+              ^topstate.current-game.learning.learn-link <link>)
+   (<link> ^conditions.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.prep <p>)
+   (<p> -^btype)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name flush-out-conditions
+       ^category svs) # for now determine better or new category)
+}
+sp {finish-parameters*apply*flush-out-conditions
+   (state <s> ^name finish-parameters
+              ^topstate.current-game <cg>
+              ^operator.name flush-out-conditions
+              ^topstate.current-game.learning <l>)
+   (<l> ^learn-link <link>)
+   (<link> ^conditions.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.prep <p>)
+   (<p> -^btype ^b <arg2>)
+   (<link> ^parameters.<arg2>.type <btype>)
+-->
+   (<p> ^btype <btype>)
+}
+   
+sp {finish-parameters*send-message*next-action
+   (state <s> ^name finish-parameters
+              ^topstate.status <status>
+              ^topstate.current-game <cg>
+              ^topstate.io.output-link <out>
+              ^topstate.current-game.learning <l>)
+   (<l> ^type {<cond> << parameter >>} ^arg <arg> ^action-number <num> ^learn-link <link>)
+ -{(<link> ^conditions.{<argdfs> << 1 2 3 4 5 6 7 8 9 10 >>}.prep <p>)
+    (<p> -^btype)}
+-->
+   (<l> ^type <cond> -)
+   (<l> ^arg <arg> -)
+   (<l> ^action-number <num> -)
+   (<link> ^cond-args (- <arg> 1))
+   (<l> ^type action ^action-number (+ <num> 1))
+   (<out> ^send-message <msg>)
+   (<msg> ^type game-new-action2
+          ^fields <f>)
+   (<status> ^performed.dialog-event.type game)
+}
+
+#for goals you are done, dont send another message
+sp {finish-parameters*propose*finish-goals
+   (state <s> ^name finish-parameters
+             -^topstate.current-game.game.failures
+              ^topstate.current-game.game.goals
+              ^topstate.current-game.learning <l>)
+   (<l> ^arg <arg> -^action-number <num> ^learn-link <link>)
+ -{(<link> ^conditions.{<argasdf> << 1 2 3 4 5 6 7 8 9 10 >>}.prep <p>)
+    (<p> -^btype)}
+-->
+   (<link> ^goal-cond-args (- <arg> 1))
+   (<s> ^operator <o> +)
+   (<o> ^name finish-goals
+        ^category svs)
+}
+#for failures you are done, dont send another message
+sp {finish-parameters*propose*finish-failures
+   (state <s> ^name finish-parameters
+              ^topstate.current-game.game.failures
+              ^topstate.current-game.learning <l>)
+   (<l> ^arg <arg> -^action-number <num> ^learn-link <link>)
+ -{(<link> ^conditions.{<argasdf> << 1 2 3 4 5 6 7 8 9 10 >>}.prep <p>)
+    (<p> -^btype)}
+-->
+   (<link> ^failure-cond-args (- <arg> 1))
+   (<s> ^operator <o> +)
+   (<o> ^name finish-failures
+        ^category svs)
+}
+
+
+
+
