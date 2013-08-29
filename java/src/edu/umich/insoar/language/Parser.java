@@ -50,7 +50,7 @@ public class Parser {
             DocumentBuilder db = dbf.newDocumentBuilder();
 
             //parse using builder to get DOM representation of the XML file
-            Document dom = db.parse("../java/src/edu/umich/insoar/language/grammar.xml");
+            Document dom = db.parse("java/src/edu/umich/insoar/language/grammar.xml");
 
             //get the root element
             Element docEle = dom.getDocumentElement();
