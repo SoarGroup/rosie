@@ -120,13 +120,13 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
                 return;
             }
     		Identifier id = wme.ConvertToIdentifier();
-            System.out.println(wme.GetAttribute());
             
 
             try{
             	if(wme.GetAttribute().equals("send-training-label"))
 	            {
 	            	processSendTrainingLabelCommand(id);
+	                System.out.println(wme.GetAttribute());
 	            } else if(wme.GetAttribute().equals("modify-scene")){
 	            	processModifySceneCommand(id);
 	            }

@@ -1,5 +1,6 @@
 package edu.umich.insoar;
 
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -73,7 +74,13 @@ public class InSoar implements PrintEventInterface, RunEventInterface
         BOLTLGSupport lgSupport = null;
         
         if (useLG) {
+        	try{
         	lgSupport = new BOLTLGSupport(soarAgent.getAgent(), lgSoarDictionary);
+        	} catch (RuntimeException e){
+        		System.err.println("Couldn't open lg dictionary");
+        		useLG = false;
+        		lgSupport = null;
+        	}
         }
 
 		String doLog = props.getProperty("enable-log");
@@ -97,7 +104,8 @@ public class InSoar implements PrintEventInterface, RunEventInterface
 			soarAgent.getAgent().RegisterForRunEvent(smlRunEventId.smlEVENT_AFTER_DECISION_CYCLE, this, this);
 		}
 
-        language = new LanguageConnector(soarAgent, lgSupport);
+		
+		language = new LanguageConnector(soarAgent, lgSupport);
         perception = new PerceptionConnector(soarAgent);   
         motorSystem = new MotorSystemConnector(soarAgent);
         
