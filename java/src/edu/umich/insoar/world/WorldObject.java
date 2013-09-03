@@ -153,23 +153,25 @@ public class WorldObject
 
     
     public synchronized void updateSVS(Agent agent){
-    	//System.out.println(svsCommands.toString());
-    	agent.SendSVSInput(svsCommands.toString());
-    	//System.out.println(svsCommands.toString());
-    	svsCommands = new StringBuilder();
+    	if(svsCommands.length() > 0){
+        	//System.out.println(svsCommands.toString());
+        	agent.SendSVSInput(svsCommands.toString());
+        	svsCommands = new StringBuilder();
+    	}
     }
     
     private synchronized void create(object_data_t objectData){ 
     	lastData = objectData;
     	
 		id = objectData.id;
+
+		svsCommands.append(SVSCommands.add(getIdString(), bboxPos, bboxRot, bboxSize));
 		
 		setBBox(objectData.bbox_xyzrpy, objectData.bbox_dim);
 		for(int i = 0; i < 3; i++){
 	          centroid[i] = objectData.pos[i];
 	    }
 		
-		svsCommands.append(SVSCommands.add(getIdString(), bboxPos, bboxRot, bboxSize));
 		
 		for(categorized_data_t category : objectData.cat_dat){
 			if(category.cat.cat == category_t.CAT_LOCATION){
