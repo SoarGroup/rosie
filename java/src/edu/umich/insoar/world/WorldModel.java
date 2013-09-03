@@ -140,7 +140,7 @@ public class WorldModel implements RunEventInterface
     public synchronized void moveObject(Integer id, double x, double y, double z){
     	WorldObject object = objects.get(id);
     	if(object != null){
-    		System.out.println("MOVING OBJECT " + id + " to " + x + ", " + y + ", " + z);
+    		//System.out.println("MOVING OBJECT " + id + " to " + x + ", " + y + ", " + z);
     		object.moveObject(new double[]{x, y, z});
     		object.updateSVS(soarAgent.getAgent());
     		soarAgent.commitChanges();

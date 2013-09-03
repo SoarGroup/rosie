@@ -3,6 +3,7 @@ package edu.umich.insoar;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JMenu;
@@ -10,20 +11,26 @@ import javax.swing.JMenu;
 import lcm.lcm.LCM;
 import lcm.lcm.LCMDataInputStream;
 import lcm.lcm.LCMSubscriber;
+import probcog.arm.ArmStatus;
+import probcog.lcmtypes.robot_action_t;
+import probcog.lcmtypes.robot_command_t;
+import probcog.lcmtypes.set_state_command_t;
 import sml.Agent;
 import sml.Agent.OutputEventInterface;
 import sml.Agent.RunEventInterface;
 import sml.Identifier;
 import sml.WMElement;
 import sml.smlRunEventId;
-import probcog.lcmtypes.robot_action_t;
-import probcog.lcmtypes.robot_command_t;
-import probcog.lcmtypes.set_state_command_t;
+import april.config.Config;
+import april.config.ConfigFile;
+import april.jmat.LinAlg;
+import april.jmat.MathUtil;
 import april.util.TimeUtil;
 
 import com.soartech.bolt.script.ui.command.ResetRobotArm;
 
 import edu.umich.insoar.world.Pose;
+import edu.umich.insoar.world.SVSCommands;
 import edu.umich.insoar.world.WMUtil;
 
 public class MotorSystemConnector   implements OutputEventInterface, RunEventInterface, LCMSubscriber{
@@ -40,10 +47,25 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
 	private boolean gotUpdate = false;
 	
     private LCM lcm;
+    
+    private ArmStatus armStatus;
+    
+    StringBuilder svsCommands = new StringBuilder();
 
     public MotorSystemConnector(SoarAgent agent){
     	this.agent = agent;
     	pose = new Pose();
+    	
+    	if(agent.getArmConfig() == null){
+    		armStatus = null;
+    	} else {
+	        try {
+	  			Config config = new ConfigFile(agent.getArmConfig());
+	  			armStatus = new ArmStatus(config);
+	  		} catch (IOException e) {
+	  			armStatus = null;
+	  		}
+    	}
     	
     	// Setup LCM events
         lcm = LCM.getSingleton();
@@ -95,6 +117,14 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
 			updateIL();
 			gotUpdate = false;
 		}
+		if(armStatus != null){
+			updateArmInfo();
+		}
+		if(svsCommands.length() > 0){
+			agent.SendSVSInput(svsCommands.toString());
+			//System.out.println(svsCommands.toString());
+			svsCommands = new StringBuilder();
+		}
 		this.agent.commitChanges();
 	}
     
@@ -106,7 +136,28 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     	selfId.CreateIntWME("grabbed-object", -1);
     	pose.updateWithArray(new double[]{0, 0, 0, 0, 0, 0});
     	pose.updateInputLink(selfId);
+    	
+    	if(armStatus != null){
+        	svsCommands.append("a arm object world p 0 0 0 r 0 0 0\n");
+        	
+        	ArrayList<Double> widths = armStatus.getArmSegmentWidths();
+        	ArrayList<double[]> points = armStatus.getArmPoints();
+        	for(int i = 0; i < widths.size(); i++){
+        		// For each segment on the arm, initialize with the correct bounding volume
+        		String name = "seg" + i;
+        		
+        		double[] p1 = points.get(i);
+        		double[] p2 = points.get(i+1);
+        		double len = LinAlg.distance(p1, p2); 
+        		
+        		svsCommands.append("a " + name + " object arm p 0 0 0 r 0 0 0 ");
+        		svsCommands.append("s " + len + " " + widths.get(i) + " " + widths.get(i) + " ");
+        		svsCommands.append("v " + SVSCommands.bboxVertices() + "\n");
+        	}
+    	}
     }
+    
+    
     
     private void updateIL(){
     	if(prevStatus == null){
@@ -118,6 +169,39 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     	WMUtil.updateIntWME(selfId, "grabbed-object", curStatus.obj_id);
     	pose.updateWithArray(curStatus.xyz);
     	pose.updateInputLink(selfId);
+    }
+    
+    private void updateArmInfo(){
+    	ArrayList<Double> widths = armStatus.getArmSegmentWidths();
+    	ArrayList<double[]> points = armStatus.getArmPoints();
+    	for(int i = 0; i < widths.size(); i++){
+    		String name = "seg" + i;
+    		
+    		double[] p1 = points.get(i);
+			double[] p2 = points.get(i+1);
+			double[] center = LinAlg.scale(LinAlg.add(p1, p2), .5);
+			double[] dir = LinAlg.subtract(p2, p1);
+			
+			double hyp = Math.sqrt(dir[0] * dir[0] + dir[1] * dir[1]);
+			
+			double theta = 0;
+			if(Math.abs(dir[0]) > .0001 || Math.abs(dir[1]) > .0001){
+				theta = Math.atan2(dir[1], dir[0]);
+			} 
+			
+			double phi = Math.PI/2;
+			if(Math.abs(hyp) > .0001 || Math.abs(dir[2]) > .0001){
+				phi = -Math.atan2(dir[2], hyp);
+			}
+			
+			double[][] rotZ = LinAlg.rotateZ(theta);
+			double[][] rotY = LinAlg.rotateY(phi);
+			
+			double[] rot = LinAlg.matrixToRollPitchYaw(LinAlg.matrixAB(rotZ, rotY));
+			
+			svsCommands.append(SVSCommands.changePos(name, center));
+			svsCommands.append(SVSCommands.changeRot(name, rot));
+    	}
     }
     
 

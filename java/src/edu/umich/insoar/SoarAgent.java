@@ -2,11 +2,15 @@ package edu.umich.insoar;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.util.Properties;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+
+import april.config.Config;
+import april.config.ConfigFile;
 
 import sml.Agent;
 import sml.Agent.RunEventInterface;
@@ -31,6 +35,8 @@ public class SoarAgent implements RunEventInterface{
     private Kernel kernel;
     
     private WorldModel world = null;
+   
+    public String armConfig = null;
     
     public SoarAgent(String agentName, String agentSource, boolean headless){
     	kernel = Kernel.CreateKernelInNewThread();
@@ -89,6 +95,9 @@ public class SoarAgent implements RunEventInterface{
         } else {
         	lgSoarSource = null;
         }
+        
+        armConfig = props.getProperty("arm-config");
+        System.out.println("Getting Arm Config: " + armConfig);
     	
         // Source the agent
         sourceAgent(true);
@@ -107,6 +116,10 @@ public class SoarAgent implements RunEventInterface{
 	
 	public void setWorldModel(WorldModel worldModel){
 		this.world = worldModel;
+	}
+	
+	public String getArmConfig(){
+		return armConfig;
 	}
 
 	/**
@@ -166,16 +179,16 @@ public class SoarAgent implements RunEventInterface{
     	if(includeSmem && smemSource != null){
         	agent.ExecuteCommandLine("smem --set database memory");
         	agent.ExecuteCommandLine("epmem --set database memory");
-    		agent.LoadProductions(smemSource);
-    		System.out.println("  source " + smemSource);
+    		String ret = agent.ExecuteCommandLine("source " + smemSource);
+    		System.out.println(ret);
     	}
     	if(agentSource != null){
-    		agent.LoadProductions(agentSource);
-    		System.out.println("  source " + agentSource);
+    		String ret = agent.ExecuteCommandLine("source " + agentSource);
+    		System.out.println(ret);
     	}
     	if(lgSoarSource != null){
-    		agent.LoadProductions(lgSoarSource);
-    		System.out.println("  source " + lgSoarSource);
+    		String ret = agent.ExecuteCommandLine("source " + lgSoarSource);
+    		System.out.println(ret);
     	}
     	System.out.println("Agent re-initialized");
 	}
