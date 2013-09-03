@@ -7,9 +7,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import edu.umich.insoar.language.LinguisticEntity;
-
 import sml.Identifier;
+import edu.umich.insoar.language.LinguisticEntity;
 
 public class ProposalInfo extends LinguisticEntity{
     public static String TYPE = "ProposalInfo";

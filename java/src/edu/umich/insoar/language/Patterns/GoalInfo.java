@@ -4,12 +4,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-
-import java.util.regex.*;
-
-import edu.umich.insoar.language.LinguisticEntity;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import sml.Identifier;
+import edu.umich.insoar.language.LinguisticEntity;
 
 public class GoalInfo extends LinguisticEntity{
     public static String TYPE = "GoalInfo";

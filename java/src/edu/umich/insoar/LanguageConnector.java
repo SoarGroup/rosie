@@ -245,7 +245,10 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
     		String verb = WMUtil.getValueOfAttribute(context, "verb");
     		message = "Please tell me what the goal of '" + verb + "'is.";
     	}
-    	ChatFrame.Singleton().addMessage(message, ActionType.Agent);
+    	
+    	if(!message.isEmpty()){
+        	ChatFrame.Singleton().addMessage(message, ActionType.Agent);
+    	}
         id.CreateStringWME("status", "complete");
     }
 }
