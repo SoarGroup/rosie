@@ -18,7 +18,7 @@ public class ObjectState extends LinguisticEntity{
 	private String attribute;
 	private LingObject object;
 	
-	public String getPreposition(){
+	public String getAttribute(){
 	    return attribute;
 	}
 	
