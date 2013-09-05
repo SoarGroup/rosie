@@ -24,7 +24,7 @@ public class AgentMessageParser
             message = translateCommonAttributeQuestion(fieldsId);
         } else if(type.equals("attribute-presence-question")){
             message = translateAttributePresenceQuestion(fieldsId);
-        } else if(type.equals("category-of-word")){
+        } else if(type.equals("ask-property-name")){
             message = translateCategoryQuestion(fieldsId);
         } else if(type.equals("category-of-property")){
             message = translateCategoryPropertyQuestion(fieldsId);

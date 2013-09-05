@@ -219,10 +219,10 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
     
     private void processReportInteraction(Identifier id){
     	String type = WMUtil.getValueOfAttribute(id, "type");
-    	String originator = WMUtil.getValueOfAttribute(id, "originator");
-    	Identifier sat = WMUtil.getIdentifierOfAttribute(id, "satisfaction");
-    	String eventName = sat.GetChild(0).GetAttribute();
-    	WMElement eventTypeWME = sat.GetChild(0).ConvertToIdentifier().FindByAttribute("type", 0);
+    	//String originator = WMUtil.getValueOfAttribute(id, "originator");
+    	//Identifier sat = WMUtil.getIdentifierOfAttribute(id, "satisfaction");
+    	//String eventName = sat.GetChild(0).GetAttribute();
+    	//WMElement eventTypeWME = sat.GetChild(0).ConvertToIdentifier().FindByAttribute("type", 0);
     	Identifier context = WMUtil.getIdentifierOfAttribute(id, "context");
     	
     	String message = "";
@@ -236,10 +236,12 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
     		message = "I do not know the category of " + word + ". " + 
     		"You can say something like 'a shape' or 'blue is a color'";
     	} else if(type.equals("which-question")){
-    		String objStr = LingObject.createFromSoarSpeak(context, "description").toString();
+    		Identifier obj = WMUtil.getIdentifierOfAttribute(context, "object");
+    		String objStr = LingObject.createFromSoarSpeak(obj, "outgoing-desc").toString();
     		message = "I see multiple examples of '" + objStr + "' and I need clarification";
     	} else if(type.equals("teaching-request")){
-    		String objStr = LingObject.createFromSoarSpeak(context, "description").toString();
+    		Identifier obj = WMUtil.getIdentifierOfAttribute(context, "object");
+    		String objStr = LingObject.createFromSoarSpeak(obj, "outgoing-desc").toString();
     		message = "Please give me teaching examples of '" + objStr + "' and tell me 'finished' when you are done.";
     	} else if(type.equals("get-goal")){
     		String verb = WMUtil.getValueOfAttribute(context, "verb");
