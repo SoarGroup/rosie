@@ -21,12 +21,12 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
 	
 	private Messages messages;
 	
-    public LanguageConnector(SoarAgent soarAgent, BOLTLGSupport lgsupport)
+    public LanguageConnector(SoarAgent soarAgent, BOLTLGSupport lgsupport, String dictionaryFile, String grammarFile)
     {
     	this.soarAgent = soarAgent;
     	this.lgsupport = lgsupport;
     	
-    	messages = new Messages();
+    	messages = new Messages(dictionaryFile, grammarFile);
     	
         String[] outputHandlerStrings = { "send-message", "remove-message", "push-segment", 
         		"pop-segment", "report-interaction" };
@@ -231,7 +231,7 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
     	} else if(type.equals("get-next-subaction")){
     		String verb = WMUtil.getValueOfAttribute(context, "verb");
     		message = "What is the next step in performing '" + verb + "'?";
-    	} else if(type.equals("category-of-word")){
+    	} else if(type.equals("ask-property-name")){
     		String word = WMUtil.getValueOfAttribute(context, "word");
     		message = "I do not know the category of " + word + ". " + 
     		"You can say something like 'a shape' or 'blue is a color'";

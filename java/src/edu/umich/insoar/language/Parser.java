@@ -33,12 +33,12 @@ public class Parser {
 	
 	private List<EntityPattern> entityPatterns;
 	
-	public Parser(BOLTDictionary dictionary) {
+	public Parser(BOLTDictionary dictionary, String grammarFile) {
 		this.dictionary = dictionary;
-		parseXMLGrammar();
+		parseXMLGrammar(grammarFile);
 	}
 	
-	private void parseXMLGrammar(){
+	private void parseXMLGrammar(String grammarFile){
         entityPatterns = new ArrayList<EntityPattern>();
         
         //get the factory
@@ -50,7 +50,7 @@ public class Parser {
             DocumentBuilder db = dbf.newDocumentBuilder();
 
             //parse using builder to get DOM representation of the XML file
-            Document dom = db.parse("src/edu/umich/insoar/language/grammar.xml");
+            Document dom = db.parse(grammarFile);
             //Document dom = db.parse("./java/src/edu/umich/insoar/language/grammar.xml");
 
             //get the root element

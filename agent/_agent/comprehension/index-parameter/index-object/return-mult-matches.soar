@@ -17,18 +17,7 @@ sp {index-object*propose*return-mult-matches
         ^match <obj>)
 }
 
-#JK preference should not matter if you are going to return all
-sp {index-object*apply*return-mult-matches*return-all
-   (state <s> ^name index-object
-              ^operator <o> +
-              ^index-info.return-all true
-              ^object-to-index.matches <m>)
-   (<o> ^name return-mult-matches
-        ^match <obj>)
--->
-   (<s> ^operator <o> =)
-}
-
+# Prefer objects higher on the hierarchy (e.g. object referred to recently)
 sp {index-object*return-mult-matches*prefer*lower-rank
    (state <s> ^name index-object
               ^operator <o1> +
@@ -48,13 +37,31 @@ sp {index-object*return-mult-matches*prefer*lower-rank
    (<s> ^operator <o1> > <o2>)
 }
 
+sp {index-object*apply*return-mult-matches*copy*match
+   (state <s> ^name index-object
+              ^operator <o>
+              ^object-to-index.object <obj>)
+   (<o> ^name return-mult-matches
+        ^match <m>)
+-->
+   (<obj> ^result <m>)
+}
 
-##################################################
-#
-# return-all = True
-#   Returns all matches to object
-#
-##################################################
+##########################################
+# Case 1: return-all = true
+##########################################
+
+# No need to tie, just pick one operator then copy all matches
+sp {index-object*apply*return-mult-matches*return-all
+   (state <s> ^name index-object
+              ^operator <o> +
+              ^index-info.return-all true
+              ^object-to-index.matches <m>)
+   (<o> ^name return-mult-matches
+        ^match <obj>)
+-->
+   (<s> ^operator <o> =)
+}
 
 sp {index-object*apply*return-mult-matches*return-all*true
    (state <s> ^name index-object
@@ -66,31 +73,27 @@ sp {index-object*apply*return-mult-matches*return-all*true
    (<obj> ^result <m>)
 }
 
+##########################################
+# Case 2: return-all = false and use-interaction = false
+##########################################
 
-##################################################
-# 
-# return-all = False and no ties involved
-#   Returns the one with the best score
-#
-##################################################
-
-sp {index-object*apply*return-mult-matches*return-random
+# We just give indifferent preferences, so one is returned at random
+sp {index-object*apply*return-mult-matches*return-all
    (state <s> ^name index-object
-              ^operator <o>
-              ^object-to-index.object <obj>
-              ^object-to-index.matches.match <m>
-              ^index-info.return-all false)
-   (<o> ^name return-mult-matches
-        ^match <m>)
+              ^operator <o> +
+              ^index-info <info>)
+   (<o> ^name return-mult-matches)
+   (<info> ^return-all false
+           ^use-interaction false)
 -->
-   (<obj> ^result <m>)
+   (<s> ^operator <o> =)
 }
 
 #####################################################
-#
-# Tie Detected
-#
+# Case 3: return-all = false and use-interaction = true
 #####################################################
+
+# A tie occurs, so we ask a which-question to the user
 
 sp {index-object*elaborate*mult-matches-tie
    (state <s> ^superstate.name index-object
@@ -102,45 +105,15 @@ sp {index-object*elaborate*mult-matches-tie
 }
 
 sp {index-object*propose*return-mult-matches-tie
-   (state <s> ^name mult-matches-tie
-              ^item.match <m>)
+   (state <s> ^name mult-matches-tie)
 -->
-   (<s> ^operator <o> + > =)
-   (<o> ^name return-mult-matches-tie
-        ^match <m>)
+   (<s> ^operator <o> + >)
+   (<o> ^name return-mult-matches-tie)
 }
-
-##################################################
-# 
-# Tie Detected
-# return-all = False and use-interaction False
-#   Returns one at random
-#
-##################################################
-#
-sp {index-object*apply*return-mult-matches-tie*return-random
-   (state <s> ^name mult-matches-tie
-              ^operator <o>
-              ^superstate.index-info.use-interaction false
-              ^superstate.object-to-index.object <obj>)
-   (<o> ^name return-mult-matches-tie
-        ^match <m>)
--->
-   (<obj> ^result <m>)
-}
-
-
-##################################################
-# 
-# return-all = False and use-interaction True
-#   Ask a which question
-#
-##################################################
 
 sp {index-object*apply*return-mult-matches-tie*report*index-object-tie
    (state <s> ^name mult-matches-tie
               ^operator.name return-mult-matches-tie
-              ^superstate.index-info.use-interaction true
               ^superstate.object-to-index.object <obj>
               ^topstate.interaction.status <status>)
 -->
