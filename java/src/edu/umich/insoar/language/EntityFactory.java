@@ -35,7 +35,9 @@ public class EntityFactory
         	return new SimpleCommand();
         } else if(entityType.equals(ObjectState.TYPE)){
         	return new ObjectState();
-        }else {
+        }else if(entityType.equals(RelationQuestion.TYPE)){
+        	return new RelationQuestion();
+        } else {
             return null;
         }
     }

@@ -49,9 +49,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
     	
     	startTime = TimeUtil.utime();
     	
-    	lcm = LCM.getSingleton();
-        lcm.subscribe("OBSERVATIONS", this);
-        lcm.subscribe("ROBOT_ACTION", this);
+    	
     	
         String[] outputHandlerStrings = { "send-training-label", "modify-scene" };
 
@@ -66,6 +64,9 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         newLabels = new ArrayList<training_label_t>();
         
         world = new WorldModel(soarAgent);
+        lcm = LCM.getSingleton();
+        lcm.subscribe("OBSERVATIONS", this);
+        lcm.subscribe("ROBOT_ACTION", this);
     }
     
     /*************************************************

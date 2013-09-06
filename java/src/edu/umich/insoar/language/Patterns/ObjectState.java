@@ -1,15 +1,12 @@
 package edu.umich.insoar.language.Patterns;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import sml.Identifier;
 import edu.umich.insoar.language.LinguisticEntity;
 import edu.umich.insoar.world.WMUtil;
-
-import sml.Agent;
-import sml.Identifier;
 
 
 // will parse only positive predicates for now

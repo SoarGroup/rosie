@@ -4,10 +4,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import edu.umich.insoar.language.LinguisticEntity;
-
-import sml.Agent;
 import sml.Identifier;
+import edu.umich.insoar.language.LinguisticEntity;
 
 public class Sentence extends LinguisticEntity{
     public static String TYPE = "Sentence";
@@ -30,16 +28,9 @@ public class Sentence extends LinguisticEntity{
 		p = Pattern.compile("REL\\d*");
 		m = p.matcher(string);
 		if(m.find()){
-			type = "object-relation-info";
+			type = null;
 			component = (ObjectRelation)tagsToWords.get(m.group());
 		}
-		
-	/*	p = Pattern.compile("STT\\d*");
-		m = p.matcher(string);
-		if(m.find()){
-			type = "object-state-info";
-			component = (ObjectRelation)tagsToWords.get(m.group());
-		}*/
 		
 		p = Pattern.compile("GS\\d*");
 		m = p.matcher(string);
