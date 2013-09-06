@@ -3,7 +3,7 @@ sp {find-parameters*elaborate*copy-down-attrs
               ^superstate.operator <o>)
    (<o> ^game-name <name>)
 -->
-   (<s> ^desired <d> ^game-name <name> ^failure-args <fa> ^goal-args <ga> ^depth-limit 7 ^dcount 0)
+   (<s> ^desired <d> ^game-name <name> ^failure-args <fa> ^goal-args <ga> ^depth-limit 3 ^dcount 0)
    (<d> ^found true)
 }
 
@@ -104,35 +104,41 @@ sp {find-parameters*elaborate*args2
    (<objd> ^word object)
 }
 
-sp {find-parameters*propose*index-object
+sp {find-parameters*propose*index-parameter
    (state <s> ^name find-parameters
               ^dcount 0
              -^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.obj <objs>
               ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.objd <objd>)
 -->
    (<s> ^operator <o> + =)
-   (<o> ^name index-object
-        ^return-all true
-        ^object-param <p>
-        ^arg <arg>)
-   (<p> ^type object
-        ^lexical <objd>
-        ^index-info <ii>)
-   (<ii> ^return-all true
-         ^use-interaction false
-         ^infer-match false)
+   (<o> ^name index-parameter 
+        ^parameter <pa>)
+   (<pa> ^index-info <ii> ^lexical <objd> ^type object)
+   (<ii> ^infer-match false ^return-all true ^use-interaction false)
 }
+#   (<s> ^operator <o> + =)
+#   (<o> ^name index-object
+#        ^return-all true
+#        ^object-param <p>
+#        ^arg <arg>)
+#   (<p> ^type object
+#        ^lexical <objd>
+#        ^index-info <ii>)
+#   (<ii> ^return-all true
+#         ^use-interaction false
+#         ^infer-match false)
+#}
 
-sp {find-parameters*apply*index-object
+sp {find-parameters*apply*index-parameter
    (state <s> ^name find-parameters
               ^operator <o>
               ^dcount 0
               ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
               ^topstate.object <obj>)
    (<a> ^param <param> ^objd <objd> -^obj <obj>)
-   (<o> ^name index-object
-        ^object-param.lexical <objd2>
-        ^object-param.result.id <id>)
+   (<o> ^name index-parameter
+        ^parameter.lexical <objd2>
+        ^parameter.result.id <id>)
    (<obj> ^id <id> ^category <param>)
  -{(<objd2> ^word <word>)
    (<objd> -^word <word>)}
@@ -405,6 +411,7 @@ sp {find-parameters*propose*test-action
               ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.cond
              -^processing wait)
 -->
+#   (interrupt)
    (<s> ^operator <o> + =)
    (<o> ^name test-action
         ^category svs)
@@ -429,23 +436,28 @@ sp {find-parameters*check-relation*elaborate*found-possible-arg-match
     -{(<s> ^dcount <dc> ^depth-limit <dc>)}
    (<a> ^obj.id <id> -^cond.type indiff)
    -{(<a> ^cond.prep <prep>) #has matches for all of its conditions
-     (<prep> ^name <name> ^b <arg2> ^negative false)
+     (<prep> ^name <name> ^a this ^b <arg2> ^negative false)
      -{(<act> ^found-possible <fop>)
      (<fop> ^arg <arg> ^arg2 <arg2> ^objid <id> ^prep.name <name>)}}
   -{(<a> ^cond.prep <prep>)
-     (<prep> ^name <name> ^b {<arg2> INDEF} ^negative true)
+     (<prep> ^name <name> ^a this ^b {<arg2> INDEF} ^negative true)
      -{(<act> ^found-possible <fop>)
      (<fop> ^arg <arg> ^arg2 <arg2> ^objid <id> ^prep.name <name> ^neg true)}}
   -{(<act> ^{<arg3> << 1 2 3 4 5 6 7 8 9 10 >>}.cond.prep <p>)
-     (<p> ^name <n> ^b <arg> -^c ^negative false)
+     (<p> ^name <n> ^b <arg> ^a this ^negative false)
     -{(<act> ^found-possible <fp2>)
       (<fp2> ^prep.name <n> ^arg <arg3> ^arg2 <arg> ^withid <id>)}}
- -{(<act> ^{<arg3> << 1 2 3 4 5 6 7 8 9 10 >>}.cond.prep <p>)
-     (<p> ^name <n> ^b <arg> ^c <something> ^negative false)
-    -{(<act> ^found-possible <fp2>)
-      (<fp2> ^prep.name <n> ^arg <arg3> ^arg2 <arg> ^withid2 <id>)}}
+# -{(<act> ^{<arg3> << 1 2 3 4 5 6 7 8 9 10 >>}.cond.prep <p>)
+#     (<p> ^name <n> ^b <arg> ^c <something> ^negative false)
+#    -{(<act> ^found-possible <fp2>)
+#      (<fp2> ^prep.name <n> ^arg <arg3> ^arg2 <arg> ^withid2 <id>)}}
+   -{(<a> ^cond.prep <prep>)
+     (<prep> ^name <name2> ^b <arg2a> ^c <arg3a>)
+     -{(<act> ^found-possible <fop>)
+     (<fop> ^arg <arg> ^arg2 <arg2a> ^arg3 <arg3a> ^objid <id> ^prep.name <name2>)}}
 #TODO add checks for part c, should be able to make b case for both by changing to withid instead of withid2
 -->
+#   (interrupt)
    (<a> ^possible-match <pm>)
    (<pm> ^id <id>)
 }
@@ -458,21 +470,25 @@ sp {find-parameters*check-relation*elaborate*found-possible-arg-match*indiff
     -{(<s> ^dcount <dc> ^depth-limit <dc>)}
    (<a> ^obj.id <id> ^cond.type indiff)
    -{(<a> ^cond.prep <prep>) #has matches for all of its conditions
-     (<prep> ^name <name> ^b <arg2> ^negative false)
+     (<prep> ^name <name> ^a this ^b <arg2> ^negative false)
      -{(<act> ^found-possible <fop>)
      (<fop> ^arg <arg> ^arg2 <arg2> ^objid <id> ^prep.name <name>)}}
   -{(<a> ^cond.prep <prep>)
-     (<prep> ^name <name> ^b {<arg2> INDEF} ^negative true)
+     (<prep> ^name <name> ^a this ^b {<arg2> INDEF} ^negative true)
      -{(<act> ^found-possible <fop>)
      (<fop> ^arg <arg> ^arg2 <arg2> ^objid <id> ^prep.name <name>)}}
   -{(<act> ^{<arg3> << 1 2 3 4 5 6 7 8 9 10 >>}.cond.prep <p>)
      (<p> ^name <n> ^b <arg> -^c ^negative false)
     -{(<act> ^found-possible <fp2>)
       (<fp2> ^prep.name <n> ^arg <arg3> ^arg2 <arg> ^withid <id>)}}
- -{(<act> ^{<arg3> << 1 2 3 4 5 6 7 8 9 10 >>}.cond.prep <p>)
-     (<p> ^name <n> ^b <arg> ^c <something> ^negative false)
-    -{(<act> ^found-possible <fp2>)
-      (<fp2> ^prep.name <n> ^arg <arg3> ^arg2 <arg> ^withid2 <id>)}}
+# -{(<act> ^{<arg3> << 1 2 3 4 5 6 7 8 9 10 >>}.cond.prep <p>) #HUH check again?
+#     (<p> ^name <n> ^b <arg> ^c <something> ^negative false)
+#    -{(<act> ^found-possible <fp2>)
+#      (<fp2> ^prep.name <n> ^arg <arg3> ^arg2 <arg> ^withid2 <id>)}}
+   -{(<a> ^cond.prep <prep>)
+     (<prep> ^name <name> ^b <arg2> ^c <arg3>)
+     -{(<act> ^found-possible <fop>)
+     (<fop> ^arg <arg> ^arg2 <arg2> ^arg3 <arg3> ^objid <id> ^prep.name <name>)}}
 #TODO add checks for part c, should be able to make b case for both by changing to withid instead of withid2
 -->
    (<a> ^possible-match <pm>)
@@ -506,6 +522,10 @@ sp {find-parameters*check-relation*elaborate*possible-match*conditions2
    (<fp> ^arg <arg> ^arg2 {<arg2> <> INDEF} ^withid2 <id2> ^objid <id> -^neg true)
  -{(<act> ^found-possible <fp2>)
    (<fp2> ^arg <arg> ^arg2 <arg2> ^withid2 <id2> ^objid <id> ^neg true)}
+ -{(<act> ^found-possible <fp3>)
+   (<fp3> ^arg <arg> ^arg2 <arg2> ^withid <id2> ^objid <id> ^neg true)}
+ -{(<act> ^found-possible <fp4>)
+   (<fp4> ^arg <arg> ^arg2 <arg2> ^withid3 <id2> ^objid <id> ^neg true)}
 -->
    (<pm> ^<arg2> <id2> ^has <arg2>)
 }
@@ -521,6 +541,10 @@ sp {find-parameters*check-relation*elaborate*possible-match*conditions3
    (<fp> ^arg <arg> ^arg3 {<arg2> <> INDEF} ^withid3 <id2> ^objid <id> -^neg true)
  -{(<act> ^found-possible <fp2>)
    (<fp2> ^arg <arg> ^arg3 <arg2> ^withid3 <id2> ^objid <id> ^neg true)}
+ -{(<act> ^found-possible <fp3>)
+   (<fp3> ^arg <arg> ^arg3 <arg2> ^withid <id2> ^objid <id> ^neg true)}
+ -{(<act> ^found-possible <fp4>)
+   (<fp4> ^arg <arg> ^arg3 <arg2> ^withid3 <id2> ^objid <id> ^neg true)}
 -->
    (<pm> ^<arg2> <id2> ^has <arg2>)
 }
@@ -609,23 +633,24 @@ sp {find-parameters*apply*test-action15
 }
 
 
-sp {find-parameters*apply*test-action*remove-impossible
-   (state <s> ^name find-parameters
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <pos>
-#              ^<arg0>.<arg>.possible-match <p1>
-#              ^<arg0>.<arg>.possible-match {<p2> <> <p1>}
-              ^<arg0> <act>
-              ^operator.name test-action15)
-   (<pos> ^possible-match <p2>)
-   (<p2> ^id <id1>)#^type indiff 
-   (<pos> ^cond.prep.b {<arg2> <> INDEF})
- -{(<s> ^<arg0>.<arg2>.possible-match.id <id2>)
-   (<act> ^found-possible <fp>)
-   (<fp> ^arg <arg> ^arg2 <arg2> ^withid <id2> ^objid <id1> -^neg true)}
--->
-#  (<s> ^scratched true)
-  (<pos> ^possible-match <p2> -) #TODO DOESNT WORK
-}
+#sp {find-parameters*apply*test-action*remove-impossible
+#   (state <s> ^name find-parameters
+#              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <pos>
+##              ^<arg0>.<arg>.possible-match <p1>
+##              ^<arg0>.<arg>.possible-match {<p2> <> <p1>}
+#              ^<arg0> <act>
+#              ^operator.name test-action15)
+#   (<pos> ^possible-match <p2>)
+#   (<p2> ^id <id1>)#^type indiff 
+#   (<pos> ^cond.prep <cp>)
+#   (<cp> ^name ^a this ^b {<arg2> <> INDEF})
+# -{(<s> ^<arg0>.<arg2>.possible-match.id <id2>)
+#   (<act> ^found-possible <fp>)
+#   (<fp> ^arg <arg> ^arg2 <arg2> ^withid <id2> ^objid <id1> -^neg true)}
+#-->
+##  (<s> ^scratched true)
+#  (<pos> ^possible-match <p2> -) #TODO DOESNT WORK
+#}
 sp {find-parameters*apply*test-action*remove-indifferents
    (state <s> ^name find-parameters
               ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <pos>
@@ -847,13 +872,15 @@ sp {find-parameters*check-relation*propose*select-parameters
 #    (<la> ^<arg1> <obj1>)
 #    (<rels2> ^with <obj1> ^preposition <name> ^relations.obj <obj2>)}
   -{(<s> ^legal-action.<arg1> <obj1>)} #dont double touch heuristic (helpful for towers)
+#  -{(<s> ^legal-action <la>)#dont slide back (helpful for sokoban)
+#    (<la> -^4 <something> ^3 <obj2>)} 
   -{(<s> ^dcount <dc> ^depth-limit <dc>)}
    (<pms> ^{<arg1> 1}.possible-match <obj1>
           ^{<arg2> 2}.possible-match <obj2>)
    -{(<act> ^found-possible <fp>)
      (<pms> ^<argv>.possible-match <objv>
             ^{<arg2v> <> <argv>}.possible-match {<obj2v> <> <objv>})
-     (<fp> ^objid <objv> ^arg <argv> ^arg2 {<arg2v> <> INDEF} -^arg3)
+     (<fp> ^objid <objv> ^arg <argv> ^arg2 {<arg2v> <> INDEF} -^arg3 -^neg true)
     -{(<act> ^found-possible <fp2>)
        (<fp2> ^objid <objv> ^arg <argv> ^arg2 <arv2v> ^withid <obj2v> -^arg3)}}
    -{(<act> ^found-possible <fp3>) #TODO again simplify with withid2 gone
@@ -911,7 +938,7 @@ sp {find-parameters*elaborate*goal-object-desc
    (<objd> ^word <atr>)
 }
 
-sp {find-parameters*goal*propose*index-object
+sp {find-parameters*goal*propose*index-parameter
    (state <s> ^name find-parameters
               ^dcount 0
              -^goal-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.obj <objs>
@@ -922,31 +949,10 @@ sp {find-parameters*goal*propose*index-object
         ^parameter <pa>)
    (<pa> ^index-info <ii> ^lexical <objd> ^type object)
    (<ii> ^infer-match false ^return-all true ^use-interaction false)
-#   (<o> ^name index-object
-#        ^return-all true
-#        ^object-param <p>
-#        ^arg <arg>)
-#   (<p> ^type object
-#        ^lexical <objd>
-#        ^index-info <ii>)
-#   (<ii> ^return-all true
-#         ^use-interaction false
-#         ^infer-match false)
 }
-#sp {find-parameters*goal*apply*index-objectinterrupt
-#   (state <s> ^name find-parameters
-#              ^operator <o>
-#              ^dcount 0
-#              ^goal-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-#              ^topstate.object <obj>)
-#   (<a> ^param <param> ^objd <objd> -^obj <obj>)
-#   (<o> ^name index-object
-#        ^object-param.lexical.word grid-blue)
-#-->
-#   (interrupt)
-#}
 
-sp {find-parameters*goal*apply*index-object
+
+sp {find-parameters*goal*apply*index-parameter
    (state <s> ^name find-parameters
               ^operator <o>
               ^dcount 0
@@ -1057,36 +1063,42 @@ sp {find-parameters*elaborate*failure-object-desc
    (<objd> ^word <atr>)
 }
 
-sp {find-parameters*failure*propose*index-object
+sp {find-parameters*failure*propose*index-parameter
    (state <s> ^name find-parameters
               ^dcount 0
              -^failure-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.obj <objs>
               ^failure-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.objd <objd>)
 -->
    (<s> ^operator <o> + =)
-   (<o> ^name index-object
-        ^return-all true
-        ^object-param <p>
-        ^arg <arg>)
-   (<p> ^type object
-        ^lexical <objd>
-        ^index-info <ii>)
-   (<ii> ^return-all true
-         ^use-interaction false
-         ^infer-match false)
+   (<o> ^name index-parameter 
+        ^parameter <pa>)
+   (<pa> ^index-info <ii> ^lexical <objd> ^type object)
+   (<ii> ^infer-match false ^return-all true ^use-interaction false)
 }
+#   (<s> ^operator <o> + =)
+#   (<o> ^name index-object
+#        ^return-all true
+#        ^object-param <p>
+#        ^arg <arg>)
+#   (<p> ^type object
+#        ^lexical <objd>
+#        ^index-info <ii>)
+#   (<ii> ^return-all true
+#         ^use-interaction false
+#         ^infer-match false)
+#}
 
 
-sp {find-parameters*failure*apply*index-object
+sp {find-parameters*failure*apply*index-parameter
    (state <s> ^name find-parameters
               ^operator <o>
               ^dcount 0
               ^failure-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
               ^topstate.object <obj>)
    (<a> ^param <param> ^objd <objd> -^obj <obj>)
-   (<o> ^name index-object
-        ^object-param.lexical <objd2>
-        ^object-param.result.id <id>)
+   (<o> ^name index-parameter
+        ^parameter.lexical <objd2>
+        ^parameter.result.id <id>)
    (<obj> ^id <id> ^category <param>)
  -{(<objd2> ^word <word>)
    (<objd> -^word <word>)}
