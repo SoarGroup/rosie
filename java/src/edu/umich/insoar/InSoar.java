@@ -104,8 +104,21 @@ public class InSoar implements PrintEventInterface, RunEventInterface
 			soarAgent.getAgent().RegisterForRunEvent(smlRunEventId.smlEVENT_AFTER_DECISION_CYCLE, this, this);
 		}
 
+		String dictionaryFile = props.getProperty("dictionary-file");
+		if(dictionaryFile == null){
+			System.err.println("ERROR: No dictionary-file specified in sbolt.props");
+			soarAgent.kill();
+			return;
+		}
 		
-		language = new LanguageConnector(soarAgent, lgSupport);
+		String grammarFile = props.getProperty("grammar-file");
+		if(grammarFile == null){
+			System.err.println("ERROR: No grammar-file specified in sbolt.props");
+			soarAgent.kill();
+			return;
+		}
+		
+		language = new LanguageConnector(soarAgent, lgSupport, dictionaryFile, grammarFile);
         perception = new PerceptionConnector(soarAgent);   
         motorSystem = new MotorSystemConnector(soarAgent);
         

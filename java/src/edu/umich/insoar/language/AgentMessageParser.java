@@ -1,10 +1,11 @@
 package edu.umich.insoar.language;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.Set;
 
+import sml.Identifier;
 import edu.umich.insoar.language.Patterns.LingObject;
 import edu.umich.insoar.world.WMUtil;
-import sml.Identifier;
 
 public class AgentMessageParser
 {
@@ -24,11 +25,9 @@ public class AgentMessageParser
         } else if(type.equals("attribute-presence-question")){
             message = translateAttributePresenceQuestion(fieldsId);
         } else if(type.equals("ask-property-name")){
-            message = translateAskPropertyName(fieldsId);
-        } else if(type.equals("ask-property-type")){
-            message = translateAskPropertyTypeQuestion(fieldsId);
-        } else if(type.equals("ask-comparison-type")){
-        	message = translateAskComparisonType(fieldsId);
+            message = translateCategoryQuestion(fieldsId);
+        } else if(type.equals("category-of-property")){
+            message = translateCategoryPropertyQuestion(fieldsId);
         } else if(type.equals("how-to-measure")){
         	message = String.format("How do I measure %s?", WMUtil.getValueOfAttribute(fieldsId, "property"));
         } else if(type.equals("ambiguous-category")){
@@ -70,50 +69,26 @@ public class AgentMessageParser
             message = translateSceneObjectsQuestion(fieldsId);
         } else if(type.equals("list-objects")){
             message = translateObjectsQuestion(fieldsId);
-        } else if(type.equals("list-games")){
-            message = translateGamesQuestion(fieldsId);
         } else if(type.equals("location-unknown")){
             message = "Relative location of object unknown";
         } else if(type.equals("play-game")){
             message = "Shall we play a game?";
         } else if(type.equals("game-start")){
             message = "Ok I know that game.  Tell me \"your turn\" when it's my turn.";
-        } else if(type.equals("game-new-action2")){
-            message = "Ok tell me the name of another legal action in this game, or finished if no more actions.";
-        } else if(type.equals("game-new-action")){
-            String gameName = WMUtil.getValueOfAttribute(fieldsId, "game-name");
-            message = "I do not know how to play " + gameName + 
-                    ". Tell me the name of a legal action in this game.";
-        } else if(type.equals("game-new-verb")){
-            message = "I'm not familiar with that action. Tell me the name of the associated verb for this action.";
-        } else if(type.equals("game-new-goal")){
-            message = "Ok tell me the name of the goal in the game.";
-        } else if(type.equals("game-new-failure")){
-            message = "Ok tell me the name of a failure state in the game. (or none)";
-        } else if(type.equals("game-new-parameter1")){
-            message = "Ok list a parameter for this action. Parameters 1 and 2 should the verb arguments.\n";
-        } else if(type.equals("game-new-parameter")){
-            message = "Ok list a parameter for this action/goal/failure, or finished if no more parameters.";
-        } else if(type.equals("game-new-condition")){
-            message = "Ok list a condition for this parameter, or finished if no more conditions.";
-        } else if(type.equals("game-learned")){
-            message = "Ok I have now learned the basics of the game.";
-        } else if(type.equals("game-over")){
-            message = "Game Over. Shall we play another?";
         }
         return message;
     }
     
     private static String translateTeachingRequest(Identifier id){
     	LingObject obj = LingObject.createFromSoarSpeak(id, "description");
-    	//JK different syntax for prepositions/verbs
-    	String prep = WMUtil.getValueOfAttribute(id, "preposition");
-    	if (prep != null && !prep.isEmpty())
-    	    return "I don't know the preposition " + prep + ". Please teach me with examples";
-    	else if ((obj.toString().contains("preposition")) || (obj.toString().contains("verb")))
+    	//JK different syntax for prepositions
+    	if (obj.toString().contains("preposition"))
     	    return "I don't know the " + obj.toString() + ". Please teach me with examples";
-    	else
+    	else {
     	    return "I don't see " + obj.toString() + ". Please teach me to recognize one";
+    		
+    		
+    	}
     }
     
     private static String translateDifferentAttributeQuestion(Identifier id){
@@ -149,21 +124,15 @@ public class AgentMessageParser
         return exceptionStr + message;
     }
     
-    private static String translateAskPropertyName(Identifier id){
+    private static String translateCategoryQuestion(Identifier id){
         String word = WMUtil.getValueOfAttribute(id, "word");
         return String.format("What kind of attribute is %s?", word);
     }
 
-    private static String translateAskPropertyTypeQuestion(Identifier id){
-        String property = WMUtil.getValueOfAttribute(id, "property");
-        return String.format("What type of property is %s?", property);
-    }
-
-    private static String translateAskComparisonType(Identifier id){
+    private static String translateCategoryPropertyQuestion(Identifier id){
         String word = WMUtil.getValueOfAttribute(id, "word");
-        return String.format("How do I determine what is %s?", word);
+        return String.format("What type of property is %s?", word);
     }
-    
     
     private static String translateAmbiguousCategory(Identifier id){
     	Set<String> cats = WMUtil.getAllValuesOfAttribute(id, "result");
@@ -205,24 +174,6 @@ public class AgentMessageParser
             message += obj;
             if (it.hasNext() && object.size() > 2)
                 message+= ",";
-        }
-        return message;
-    }
-    private static String translateGamesQuestion(Identifier id){
-        Identifier objects = WMUtil.getIdentifierOfAttribute(id, "objects");
-        Set<String> games = WMUtil.getAllValuesOfAttribute(objects, "game");
-        
-        String message = "I know the following games:\n";
-        
-        Iterator<String> it = games.iterator();
-        if (games.isEmpty())
-            return "I do not know any games.";
-        while(it.hasNext())
-        {
-            String game = it.next();
-            message += game;
-            if (it.hasNext())
-                message+= "\n";
         }
         return message;
     }
