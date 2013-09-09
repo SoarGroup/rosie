@@ -1,15 +1,3 @@
-#TODO for now only handle world objects as parameters
-#sp {find-action*build-action-options
-#   (state <s> ^name find-action
-#              ^game.actions.action <a>
-#              ^topstate.<thing> <obj>
-#              ^game-name <game>)
-#   (<a> ^parameters <p>)
-#   (<p> ^<arg>.{<param> <> type} <pa> ^<arg>.type.world.<thing> <atr>)
-#   (<obj> ^<atr> <param>)
-#-->
-#   (<s> ^option.<arg> <obj>)
-#}
 
 # TODO this is a hack to use the compositve verbs
 sp {find-action*propose*lookup-preposition
@@ -28,37 +16,6 @@ sp {find-action*propose*lookup-preposition
         ^type on)
 }
 
-#sp {find-action*propose*find-parameters
-#   (state <s> ^name find-action
-##              ^found-prep <fprep>
-#             -^valid-arg.<arg> <something>
-#              ^game.actions.action <a>)
-#   (<a> ^parameters <p> ^conditions <c>)
-#-->
-#   (<s> ^operator <o> + =)
-#   (<o> ^name find-parameters
-#        ^category svs
-#        ^params <p>
-#        ^conds <c>)
-#}
-
-
-#sp {fdsfdfind-action*propose*find-parameters
-#   (state <s> ^name find-action
-#              ^game-name <name>
-#              ^svs <svs>)
-#   (<svs> ^spatial-scene <sc>
-#          ^command <cmd>)
-#   (<sc> ^child <C>)
-#   (<C> ^id <obja> ^id-int 7) 
-#-->
-#   (interrupt)
-#   (<cmd> ^extract_once <E11>)
-#   (<E11> ^a <N7> ^b <N8> ^c <N9> ^type linear-with)
-#   (<N7> ^type node ^id <obja>)
-#   (<N8> ^type all_nodes)
-#   (<N9> ^type all_nodes)
-#}
 sp {find-action*propose*found-next-action
    (state <s> ^name find-action
               ^game-name <name>
@@ -70,13 +27,32 @@ sp {find-action*propose*found-next-action
   -{(<ts> ^flound-action <fa2>)
     (<fa2> -^mark ^dcount < <dc>)}          
 -->
-#   (interrupt)
    (<s> ^operator <o> +)
    (<o> ^name found-next-action
         ^category svs
         ^action <fa>)
 }
-
+sp {find-action*propose*completed-all-actions
+   (state <s> ^name find-action
+              ^topstate <ts>
+             -^valid-arg
+              ^topstate.flound-action <fa>)
+   (<fa> ^obj1 <oa> ^obj2 <ob> ^dcount <dc> ^mark)
+  -{(<ts> ^flound-action <fa2>)
+    (<fa2> -^mark)}          
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name completed-all-actions
+        ^category svs)
+}
+sp {find-action*apply*completed-all-actions
+   (state <s> ^name find-action
+              ^superstate <ss>
+              ^operator <o>)
+   (<o> ^name completed-all-actions)
+-->
+   (<ss> ^completed-all-actions true)
+}
 
 sp {find-action*apply*found-next-action
    (state <s> ^name find-action
@@ -95,7 +71,6 @@ sp {find-action*apply*found-next-action
    (<vb> ^2 <ob>)
    (<a> ^verb move)
    (<fa> ^mark done)
-#   (<ts> ^flound-action <fa> -)
 }
 
 sp {find-action*propose*find-parameters
@@ -120,7 +95,6 @@ sp {find-action*propose*complete-find-action
    (<va> ^1 <o1>)
    (<vb> ^2 <o2>)
 -->
-#   (interrupt)
    (<s> ^operator <o> + =)
    (<o> ^name complete-find-action
         ^category svs
