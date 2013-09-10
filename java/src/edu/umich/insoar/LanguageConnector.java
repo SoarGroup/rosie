@@ -21,6 +21,9 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
 	
 	private Messages messages;
 	
+	private int totalIndexes = 0;
+	private int indexFailures = 0;
+	
     public LanguageConnector(SoarAgent soarAgent, BOLTLGSupport lgsupport, String dictionaryFile, String grammarFile)
     {
     	this.soarAgent = soarAgent;
@@ -29,7 +32,7 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
     	messages = new Messages(dictionaryFile, grammarFile);
     	
         String[] outputHandlerStrings = { "send-message", "remove-message", "push-segment", 
-        		"pop-segment", "report-interaction" };
+        		"pop-segment", "report-interaction", "indexing-report" };
 
         for (String outputHandlerString : outputHandlerStrings)
         {
@@ -114,6 +117,9 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
 	            }
 	            else if(wme.GetAttribute().equals("report-interaction")){
 	            	processReportInteraction(id);
+	            } 
+	            else if(wme.GetAttribute().equals("indexing-report")){
+	            	processReportIndexing(id);
 	            }
 	            soarAgent.commitChanges();
             } catch (IllegalStateException e){
@@ -229,7 +235,7 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
     	if(type.equals("get-next-task")){
     		message = "I am idle and waiting for you to initiate a new interaction";
     	} else if(type.equals("get-next-subaction")){
-    		String verb = WMUtil.getValueOfAttribute(context, "verb");
+    		String verb = WMUtil.getValueOfAttribute(context, "verb");  
     		message = "What is the next step in performing '" + verb + "'?";
     	} else if(type.equals("ask-property-name")){
     		String word = WMUtil.getValueOfAttribute(context, "word");
@@ -251,6 +257,20 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
     	if(!message.isEmpty()){
         	ChatFrame.Singleton().addMessage(message, ActionType.Agent);
     	}
+        id.CreateStringWME("status", "complete");
+    }
+    
+    private void processReportIndexing(Identifier id){
+    	String type = WMUtil.getValueOfAttribute(id, "type");
+    	System.out.println("INDEXTYPE " + type);
+    	if(type.equals("new")){
+    		totalIndexes++;
+    	} else if(type.equals("failure")){
+    		indexFailures++;
+    	} else if(type.equals("report")){
+        	ChatFrame.Singleton().addMessage("Indexing Success: (" + (totalIndexes-indexFailures) + "/" + totalIndexes + ")");
+    	}
+    	
         id.CreateStringWME("status", "complete");
     }
 }
