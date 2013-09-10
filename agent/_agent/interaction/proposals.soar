@@ -1,3 +1,5 @@
+# AM: IFIX: New versions of all the proposal rules based on the new elaborations 
+
 ####################################################
 #
 # new-message -> interpret-message
@@ -5,8 +7,7 @@
 ####################################################
 sp {interaction*propose*interpret-message
    (state <s> ^name interaction
-   	      ^message <msg>
-	      -^interpreted <msg>)
+   	      ^incoming-message <msg>)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name interpret-message
@@ -21,8 +22,7 @@ sp {interaction*propose*interpret-message
 
 sp {interaction*propose*interpret-status
    (state <s> ^name interaction
-   	      ^status.<any> <status>
-             -^interpreted <status>)
+              ^interaction-status <status>)
 -->
    (<s> ^operator <o> +)
    (<o> ^name interpret-status
@@ -37,11 +37,29 @@ sp {interaction*propose*interpret-status
 
 sp {interaction*propose*send-message
    (state <s> ^name interaction
-              ^outgoing-message <msg>)
+              ^change-type outgoing-message
+              ^change-info <msg>)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name send-message
         ^message <msg>)
+}
+
+####################################################
+#
+# report-interaction
+#
+####################################################
+
+# AM: IFIX: Moved from report-interaction.soar
+sp {interaction*propose*report-interaction
+   (state <s> ^name interaction
+              ^change-type report-interaction
+              ^change-info <rep>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name report-interaction
+        ^report <rep>)
 }
 
 ####################################################
@@ -52,7 +70,8 @@ sp {interaction*propose*send-message
 
 sp {interaction*propose*push-segment
    (state <s> ^name interaction
-              ^new-segment-info <info>)
+              ^change-type new-segment-info
+              ^change-info <info>)
 -->
    (<s> ^operator <o> +)
    (<o> ^name push-segment
@@ -62,13 +81,13 @@ sp {interaction*propose*push-segment
 ####################################################
 #
 # terminate-segment -> pop-segment
-#
+#interaction
 ####################################################
 
 sp {interaction*propose*pop-segment
    (state <s> ^name interaction
-   	      ^topstate.interaction.changes.terminate-segment <seg>
-              ^topstate.interaction.stack.segment <seg>)
+              ^change-type terminate-segment
+              ^change-info <seg>)
 -->
    (<s> ^operator <o> +)
    (<o> ^name pop-segment
@@ -77,20 +96,126 @@ sp {interaction*propose*pop-segment
 
 sp {interaction*propose*pop-segment*clear-stack
    (state <s> ^name interaction
-              ^clear-interaction-stack true
-              ^topstate.interaction.stack.segment <seg>
-              ^topstate.interaction.changes <chg>)
-   (<seg> -^id 0)
+              ^change-type clear-interaction-stack
+              ^topstate.interaction.stack.segment <seg>)
 -->
-   (<chg> ^terminate-segment <seg>)
+   (<s> ^operator <o> +)
+   (<o> ^name pop-segment
+        ^segment <seg>)
 }
+
+####################################################
+#
+# modify-segment
+#interaction
+####################################################
 
 sp {interaction*propose*modify-segment
    (state <s> ^name interaction
-   	      ^modify-segment-info <seg>)
+              ^change-type modify-segment-info
+              ^change-info <info>)
 -->
    (<s> ^operator <o> +)
    (<o> ^name modify-segment
-   	^modify-segment-info <seg>)
+   	^modify-segment-info <info>)
 }
+
+# AM: IFIX: Commented everything below
+#     This was the previous version where multiple things were handled in the same subspace
+
+#####################################################
+##
+## new-message -> interpret-message
+##
+#####################################################
+#sp {interaction*propose*interpret-message
+#   (state <s> ^name interaction
+#   	      ^message <msg>
+#	      -^interpreted <msg>)
+#-->
+#   (<s> ^operator <o> + =)
+#   (<o> ^name interpret-message
+#        ^message <msg>)
+#}
+#
+#####################################################
+##
+## other status -> interpret-status
+##
+#####################################################
+#
+#sp {interaction*propose*interpret-status
+#   (state <s> ^name interaction
+#   	      ^status.<any> <status>
+#             -^interpreted <status>)
+#-->
+#   (<s> ^operator <o> +)
+#   (<o> ^name interpret-status
+#        ^status <status>)
+#}
+#
+#####################################################
+##
+## outgoing-message -> send-message
+##
+#####################################################
+#
+#sp {interaction*propose*send-message
+#   (state <s> ^name interaction
+#              ^outgoing-message <msg>)
+#-->
+#   (<s> ^operator <o> + =)
+#   (<o> ^name send-message
+#        ^message <msg>)
+#}
+#
+#####################################################
+##
+## new-segment-info -> push-segment
+##
+#####################################################
+#
+#sp {interaction*propose*push-segment
+#   (state <s> ^name interaction
+#              ^new-segment-info <info>)
+#-->
+#   (<s> ^operator <o> +)
+#   (<o> ^name push-segment
+#        ^new-segment-info <info>)
+#}
+#
+#####################################################
+##
+## terminate-segment -> pop-segment
+##
+#####################################################
+#
+#sp {interaction*propose*pop-segment
+#   (state <s> ^name interaction
+#   	      ^topstate.interaction.changes.terminate-segment <seg>
+#              ^topstate.interaction.stack.segment <seg>)
+#-->
+#   (<s> ^operator <o> +)
+#   (<o> ^name pop-segment
+#        ^segment <seg>)
+#}
+#
+#sp {interaction*propose*pop-segment*clear-stack
+#   (state <s> ^name interaction
+#              ^clear-interaction-stack true
+#              ^topstate.interaction.stack.segment <seg>
+#              ^topstate.interaction.changes <chg>)
+#   (<seg> -^id 0)
+#-->
+#   (<chg> ^terminate-segment <seg>)
+#}
+#
+#sp {interaction*propose*modify-segment
+#   (state <s> ^name interaction
+#   	      ^modify-segment-info <seg>)
+#-->
+#   (<s> ^operator <o> +)
+#   (<o> ^name modify-segment
+#   	^modify-segment-info <seg>)
+#}
 
