@@ -222,15 +222,38 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
     	JMenuItem clearDataButton = new JMenuItem("Clear Classifier Data");
         clearDataButton.addActionListener(new ActionListener(){
         	public void actionPerformed(ActionEvent e){
-        		robot_command_t cmd = new robot_command_t();
+        		perception_command_t cmd = new perception_command_t();
         		cmd.utime = TimeUtil.utime();
-        		cmd.dest = new double[6];
-        		cmd.updateDest = false;
-        		cmd.action = "CLEAR";
-                LCM.getSingleton().publish("ROBOT_COMMAND", cmd);
+        		cmd.command = "CLEAR_CLASSIFIERS";
+                LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
         	}
         });
+        
         perceptionMenu.add(clearDataButton);  
+        
+        JMenuItem loadDataButton = new JMenuItem("Load Classifier Data");
+        loadDataButton.addActionListener(new ActionListener(){
+        	public void actionPerformed(ActionEvent e){
+        		perception_command_t cmd = new perception_command_t();
+        		cmd.utime = TimeUtil.utime();
+        		cmd.command = "LOAD_CLASSIFIERS";
+                LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
+        	}
+        });
+        
+        perceptionMenu.add(loadDataButton);
+        
+        JMenuItem saveDataButton = new JMenuItem("Save Classifier Data");
+        saveDataButton.addActionListener(new ActionListener(){
+        	public void actionPerformed(ActionEvent e){
+        		perception_command_t cmd = new perception_command_t();
+        		cmd.utime = TimeUtil.utime();
+        		cmd.command = "SAVE_CLASSIFIERS";
+                LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
+        	}
+        });
+        
+        perceptionMenu.add(saveDataButton);
         
         return perceptionMenu;
     }
