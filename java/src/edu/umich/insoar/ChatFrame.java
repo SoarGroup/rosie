@@ -125,6 +125,8 @@ public class ChatFrame extends JFrame
 					upPressed();
 				} else if(arg0.getKeyCode() == KeyEvent.VK_DOWN){
 					downPressed();
+				} else if(arg0.getKeyCode() == KeyEvent.VK_RIGHT){
+					tabPressed();
 				}
 			}
         });
@@ -393,6 +395,14 @@ public class ChatFrame extends JFrame
     
     public void addMenu(JMenu menu){
     	menuBar.add(menu);
+    }
+    
+    private void tabPressed(){
+		btnStartStopScript.setText("Stop Script");
+		ChatFrame.Singleton().setWaitingForMentor(false);
+		ChatFrame.Singleton().preSetMentorMessage("");
+		Settings.getInstance().setScriptRunning(true);
+		Util.handleNextScriptAction(script, chatMessages);
     }
     
     public JMenu setupScriptMenu(){
