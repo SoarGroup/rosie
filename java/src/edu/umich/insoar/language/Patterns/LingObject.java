@@ -1,23 +1,25 @@
 package edu.umich.insoar.language.Patterns;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import sml.Identifier;
+import sml.WMElement;
 import edu.umich.insoar.language.LinguisticEntity;
 import edu.umich.insoar.world.WMUtil;
-
-import sml.*;
 
 
 public class LingObject extends LinguisticEntity {
     public static String TYPE = "LingObject";
 	private String determiner = null;
 	private Set<String> adjective;
+	private String pronoun = null;
 	private String noun;
+	private Identifier rootId;
 	
 	public String getDeterminer(){
 	    return determiner;
@@ -29,6 +31,14 @@ public class LingObject extends LinguisticEntity {
 	
 	public String getNoun(){
 	    return noun;
+	}
+	
+	public String getPronoun(){
+		return pronoun;
+	}
+	
+	public Identifier getRoot(){
+		return rootId;
 	}
 	
 	public void extractLinguisticComponents(String string, Map tagsToWords){
@@ -50,6 +60,12 @@ public class LingObject extends LinguisticEntity {
 		while(m.find()){
 			noun = tagsToWords.get(m.group()).toString();
 		}
+		
+		p = Pattern.compile("PR\\d*");
+		m = p.matcher(string);
+		while(m.find()){
+			pronoun = tagsToWords.get(m.group()).toString();
+		}
 	}
 	
 	@Override
@@ -57,8 +73,17 @@ public class LingObject extends LinguisticEntity {
 //		id.CreateStringWME("type", "object-message");
 	    // id.CreateStringWME("originator", "instructor");
 	  //  Identifier fieldsId = id.CreateIdWME("information");
-		Identifier objectId = id.CreateIdWME(connectingString);
-	    objectId.CreateStringWME("word", noun);
+		Identifier objectId;
+		if(connectingString == null){
+			id.CreateStringWME("type", "object-message");
+			Identifier infoId = id.CreateIdWME("information");
+			objectId = infoId.CreateIdWME("object");
+		} else {
+			objectId = id.CreateIdWME(connectingString);
+		}
+		if (noun != null){
+			objectId.CreateStringWME("word", noun);
+		}
 		if (determiner != null){
 			if(determiner.equals("the")){
 				determiner = "DEF";
@@ -71,9 +96,20 @@ public class LingObject extends LinguisticEntity {
 				objectId.CreateStringWME("word", itr.next().toString());
 			}
 		}
+		if (pronoun != null){
+			objectId.CreateStringWME("specifier", pronoun);
+		}
+		rootId = objectId;
 	}
 	
 	public static LingObject createFromSoarSpeak(Identifier id){
+		
+		/*
+		 * SM: Had to change this to work correctly with goal definitions with multiple predicates (ObjectRelation, ObjectState)
+		 * It is likely that this will produce incorrect parse for ObjectResponse
+		 * 
+		 */
+		
 	    // Assumes id is the root of the object
         if(id == null){
             return null;

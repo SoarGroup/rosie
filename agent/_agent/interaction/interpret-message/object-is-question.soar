@@ -1,0 +1,90 @@
+# Rules that handle when an object-is-question is sent by the user
+
+# Proposal
+sp {interpret-message*propose*object-is-question
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>)
+   (<msg> ^type object-is-question
+         -^processed)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name object-is-question
+        ^category communication
+        ^message <msg>)
+}
+
+# Elaborate useful information from the message to the operator
+sp {interpret-message*elaborate*object-is-question*object
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name object-is-question
+        ^message <msg>)
+   (<msg> ^information.object <obj>)
+-->
+   (<o> ^object <obj>)
+}
+
+sp {interpret-message*elaborate*object-is-question*relation
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name object-is-question
+        ^message <msg>)
+   (<msg> ^information.relation <rel>)
+-->
+   (<o> ^relation <rel>)
+}
+
+
+# Mark Processed
+sp {interpret-message*apply*object-is-question*mark*processed
+   (state <s> ^operator <o>)
+   (<o> ^name object-is-question
+        ^message <msg>)
+-->
+   (<msg> ^processed true)
+}
+
+######################################################################
+#
+# object-is-question with relation
+#   e.g. 'Is the red triangle in the pantry?'
+#
+########################################################################
+sp {interpret-message*apply*object-is-question*relation
+   (state <s> ^name interpret-message
+              ^operator <o>)
+   (<o> ^name object-is-question
+        ^relation <rel>)
+   (<rel> ^p1.object <obj1>
+          ^p2.object <obj2>
+          ^word <prep>
+          ^questioned true)
+-->
+   (<s> ^new-segment-info <info>
+        ^originator instructor)
+   (<info> ^purpose <p>)
+   (<p> ^type is-question
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<params> ^indexable <i1>
+             ^indexable <i2>
+             ^relation-question <q>)
+   (<i1> ^type object
+         ^lexical <obj1>
+         ^index-info <ii1>)
+   (<i2> ^type object
+         ^lexical <obj2>
+         ^index-info <ii2>)
+   (<ii1> ^use-interaction true
+         ^return-all false
+         ^infer-match true)
+   (<ii2> ^use-interaction true
+         ^return-all false
+         ^infer-match true)
+   (<q> ^preposition <prep>
+        ^object1 <i1>
+        ^object2 <i2>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type single-word-response
+         ^originator agent)
+}

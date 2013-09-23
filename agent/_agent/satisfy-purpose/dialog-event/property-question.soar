@@ -1,0 +1,158 @@
+sp {dialog-event*propose*answer-property-question
+   (state <s> ^name dialog-event
+              ^purpose <p>)
+   (<p> ^type property-question
+        ^parameters.indexable <prop-index>
+        ^parameters.indexable <obj-index>)
+   (<prop-index> ^type property
+                 ^result <prop>)
+   (<obj-index> ^type object
+                ^result <obj>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name answer-property-question
+        ^object <obj>
+        ^property <prop>)
+}
+
+#######################################
+# answer-property-question
+#   Elaborations
+#######################################
+
+sp {answer-property-question*elaborate*this-object
+   (state <s> ^name answer-property-question
+              ^superstate.operator.object <obj>)
+-->
+   (<s> ^this-object <obj>)
+}
+
+sp {answer-property-question*elaborate*property
+   (state <s> ^name answer-property-question
+              ^superstate.operator.property <prop>)
+-->
+   (<s> ^property <prop>)
+}
+
+
+
+####################################################
+# Attend to the given object and property
+####################################################
+sp {answer-property-question*attend*to*object*property
+   (state <s> ^name answer-property-question
+              ^this-object.id <id>
+              ^property.name <prop-name>)
+-->
+   (<s> ^attend-to-object <id>
+        ^attend-to-property-type <prop-name>)
+}
+
+sp {answer-property-question*best-pref*attend-to-scene-change
+   (state <s> ^name answer-property-question
+              ^operator <o> +)
+   (<o> ^name attend-to-scene-change)
+-->
+   (<s> ^operator <o> >)
+}
+
+###################################################
+# Lookup the word for the given sense
+###################################################
+sp {answer-property-question*smem-query*lookup-label
+   (state <s> ^name answer-property-question
+              ^property <smem-prop>
+              ^this-object.property <prop>)
+   (<smem-prop> ^name <prop-name>)
+   (<prop> ^name <prop-name>
+           ^label <label>
+          -^word)
+-->
+   (<s> ^smem-query-cue <cue>)
+   (<cue> ^wme-type sense
+          ^label <label>
+          ^property <smem-prop>)
+}
+
+sp {answer-property-question*elaborate*sense
+   (state <s> ^name answer-property-question
+              ^retrieved-lti-cue.retrieved-lti <lti>)
+   (<lti> ^wme-type sense)
+-->
+   (<s> ^sense <lti>)
+}
+
+sp {answer-property-question*smem-retrieve*word
+   (state <s> ^name answer-property-question
+              ^sense.word <word>)
+-->
+   (<s> ^retrieve-lti <word>)
+}
+
+###############################################################
+# Elaborate answer
+###############################################################
+sp {answer-property-question*elaborate*answer*retrieval
+   (state <s> ^name answer-property-question
+              ^sense.word.word <word>)
+-->
+   (<s> ^answer <word>)
+}
+
+sp {answer-property-question*elaborate*answer*existing
+   (state <s> ^name answer-property-question
+              ^property.name <prop-name>
+              ^this-object.property <prop>)
+   (<prop> ^name <prop-name>
+           ^word <word>)
+-->
+   (<s> ^answer <word>)
+}
+
+sp {answer-property-question*elaborate*answer*dontknow
+   (state <s> ^name answer-property-question
+             -^answer <> dontknow)
+-->
+   (<s> ^answer dontknow)
+}
+
+#########################################################
+# Report the answer using complete-property-question
+#########################################################
+sp {answer-property-question*propose*complete-answer-property-question
+   (state <s> ^name answer-property-question)
+-->
+   (<s> ^operator <o> + <)
+   (<o> ^name complete-answer-property-question)
+}
+
+sp {answer-property-question*apply*complete-answer-property-question*send-message
+   (state <s> ^name answer-property-question
+              ^operator.name complete-answer-property-question
+              ^io.output-link <out>
+              ^answer <word>)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type single-word-response
+          ^fields.word <word>)
+}
+
+sp {answer-property-question*apply*complete-answer-property-question*mark*performed
+   (state <s> ^name answer-property-question
+              ^operator.name complete-answer-property-question
+              ^topstate.interaction.status <status>)
+-->
+   (<status> ^performed.dialog-event <de>)
+   (<de> ^type single-word-response
+         ^originator agent)
+}
+
+sp {answer-property-question*apply*complete-answer-property-question*store
+   (state <s> ^name answer-property-question
+              ^operator.name complete-answer-property-question
+              ^topstate.smem.command <cmd>
+              ^this-object.smem-rep <obj>)
+-->
+   (<cmd> ^store <obj>)
+}
+              

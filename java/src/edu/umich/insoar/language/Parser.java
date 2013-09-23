@@ -33,12 +33,12 @@ public class Parser {
 	
 	private List<EntityPattern> entityPatterns;
 	
-	public Parser(BOLTDictionary dictionary) {
+	public Parser(BOLTDictionary dictionary, String grammarFile) {
 		this.dictionary = dictionary;
-		parseXMLGrammar();
+		parseXMLGrammar(grammarFile);
 	}
 	
-	private void parseXMLGrammar(){
+	private void parseXMLGrammar(String grammarFile){
         entityPatterns = new ArrayList<EntityPattern>();
         
         //get the factory
@@ -50,7 +50,8 @@ public class Parser {
             DocumentBuilder db = dbf.newDocumentBuilder();
 
             //parse using builder to get DOM representation of the XML file
-            Document dom = db.parse("./java/src/edu/umich/insoar/language/grammar.xml");
+            Document dom = db.parse(grammarFile);
+            //Document dom = db.parse("./java/src/edu/umich/insoar/language/grammar.xml");
 
             //get the root element
             Element docEle = dom.getDocumentElement();
@@ -92,9 +93,11 @@ public class Parser {
 	
     public boolean getSoarSpeak(String latestMessage, Identifier messageId) {
         this.languageSentence = latestMessage;
+    //    System.out.println("The message is " + this.languageSentence);
         tagsToWords = new LinkedHashMap();
         mapTagToWord();
         this.tagString = getPOSTagString();
+     //   System.out.println("Tag string is " + this.tagString);
         return traslateToSoarSpeak(messageId, getParse());
     }
 	
@@ -126,12 +129,12 @@ public class Parser {
 		for(EntityPattern pattern : entityPatterns){
 		    tagString = util.extractPattern(pattern, tagString, tagsToWords);
 		}
+		System.out.println("the tag string is " + tagString);
 		return tagString;
 	}
 	
 	//Get Soar structure
 	public boolean traslateToSoarSpeak(Identifier messageId, String tagString){
-	//	System.out.println("tagString: " + tagString);
 		Object obj = tagsToWords.get(tagString);
 		if(obj == null){
 			return false;

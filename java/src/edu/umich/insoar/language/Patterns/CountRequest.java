@@ -4,11 +4,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import edu.umich.insoar.language.LinguisticEntity;
-import edu.umich.insoar.world.WMUtil;
-
-import sml.Agent;
 import sml.Identifier;
+import edu.umich.insoar.language.LinguisticEntity;
 
 public class CountRequest extends LinguisticEntity{
     public static String TYPE = "CountRequest";

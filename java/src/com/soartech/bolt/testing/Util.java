@@ -9,6 +9,8 @@ import java.util.List;
 
 import javax.swing.JFileChooser;
 
+import com.soartech.bolt.script.ui.command.PointAtObject;
+
 import edu.umich.insoar.ChatFrame;
 
 public class Util {
@@ -85,7 +87,12 @@ public class Util {
     
     public static void executeUiAction(String action) {
     	try {
-			ScriptDataMap.getInstance().getUiCommand(action).execute();
+    		if(action.contains("select")){
+    			Integer id = Integer.parseInt(action.split(" ")[1]);
+    			(new PointAtObject(id)).execute();
+    		} else {
+    			ScriptDataMap.getInstance().getUiCommand(action).execute();
+    		}
 		} catch (UiCommandNotFoundException e) {
 			e.printStackTrace();
 		}

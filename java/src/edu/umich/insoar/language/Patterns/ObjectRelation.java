@@ -1,15 +1,12 @@
 package edu.umich.insoar.language.Patterns;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import sml.Identifier;
 import edu.umich.insoar.language.LinguisticEntity;
 import edu.umich.insoar.world.WMUtil;
-
-import sml.Agent;
-import sml.Identifier;
 
 
 // will parse only positive predicates for now
@@ -58,12 +55,27 @@ public class ObjectRelation extends LinguisticEntity{
 
 	@Override
 	public void translateToSoarSpeak(Identifier id, String connectingString) {
-		Identifier relId = id.CreateIdWME(connectingString);
+		Identifier relId;
+		Identifier infoId = null;
+		if(connectingString == null){
+			id.CreateStringWME("type", "object-message");
+			infoId = id.CreateIdWME("information");
+			relId = infoId.CreateIdWME("relation");			
+		} else {
+			relId = id.CreateIdWME(connectingString);
+		}
+		
 		relId.CreateStringWME("word", preposition);
-		Identifier objId1 = relId.CreateIdWME("p1");
-		Identifier objId2 = relId.CreateIdWME("p2");
-		object1.translateToSoarSpeak(objId1, "object");
-		object2.translateToSoarSpeak(objId2, "object");
+		// P1
+		Identifier p1Id = relId.CreateIdWME("p1");
+		object1.translateToSoarSpeak(p1Id, "object");
+		// P2
+		Identifier p2Id = relId.CreateIdWME("p2");
+		object2.translateToSoarSpeak(p2Id, "object");
+		
+		if(infoId != null){
+			infoId.CreateSharedIdWME("object", object1.getRoot());
+		}
 	}
 	
     public static ObjectRelation createFromSoarSpeak(Identifier id, String name)
