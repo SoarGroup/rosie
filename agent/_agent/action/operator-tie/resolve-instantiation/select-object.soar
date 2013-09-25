@@ -1,0 +1,73 @@
+sp {resolve*propose*select*object
+   (state <s> ^name resolve-instantiation
+   	      ^object-link <link>)
+   (<link> ^result <res>)
+-->
+   (<s> ^operator <op> +)
+   (<op> ^name select-object
+   	 ^object <res>)
+}
+
+# AM: FIX: Also take into account operator selection knowledge
+#          (That is, only consider selecting objects that were part of the tie)
+sp {resolve*select*object*prefer*tied*object
+   (state <s> ^name resolve-instantiation
+              ^superstate <ss>
+              ^argument <arg>
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name select-object
+         ^object <obj1>)
+   (<o2> ^name select-object
+         ^object <obj2>)
+   (<ss> ^impasse tie
+         ^item.<arg> <obj1>
+        -^item.<arg> <obj2>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {resolve*select*object*preference*DEF
+   (state <s> ^name resolve-instantiation
+   	      ^operator <op1> +
+	      ^operator <op2> +
+	      ^object-link <link>)
+   (<link> ^result-info <info>
+   	   ^lexical.specifier << it this that DEF >>)
+   (<info> ^score <score1>
+	   ^score <score2>)
+   (<score1> ^result <obj1>
+   	    ^value <val1>)
+   (<score2> ^result <obj2>
+   	    ^value {<val2> > <val1>})
+   (<op1> ^object <obj1>
+   	  ^name select-object)
+   (<op2> ^object <obj2>
+   	  ^name select-object)
+-->
+   (<s> ^operator <op1> > <op2>)
+}
+
+sp {resolve*select*object*preference*INDEF
+   (state <s> ^name resolve-instantiation
+   	      ^operator <op1> +
+	      ^operator <op2> +
+	      ^object-link <link>)
+   (<link> ^result-info <info>
+   	   ^lexical.specifier << INDEF >>)
+   (<op1> ^object <obj1>
+   	  ^name select-object)
+   (<op2> ^object {<obj2> <> <obj1>}
+   	  ^name select-object)
+-->
+   (<s> ^operator <op1> = <op2>)
+}
+
+sp {resolve*instantiation*apply*select*object*
+   (state <s> ^name resolve-instantiation
+   	      ^operator <op1>)
+   (<op1> ^object <obj1>
+   	  ^name select-object)
+-->
+   (<s> ^winner <obj1>)
+}

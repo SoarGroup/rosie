@@ -14,6 +14,7 @@ public class VerbCommand extends LinguisticEntity{
 	private LingObject directObject = null;
 	private String preposition = null;
 	private LingObject secondObject = null;
+	private ObjectState objState = null;
 	
 
     public String getVerb()
@@ -36,6 +37,10 @@ public class VerbCommand extends LinguisticEntity{
     {
         return secondObject;
     }
+    
+    public ObjectState getObjectState(){
+    	return objState;
+    }
 	
 	public void translateToSoarSpeak(Identifier id, String connectingString){
 		Identifier messageId = id;
@@ -50,7 +55,13 @@ public class VerbCommand extends LinguisticEntity{
 		if(preposition != null){
 			Identifier prepId = verbId.CreateIdWME("preposition");
 			prepId.CreateStringWME("word", preposition);
-			secondObject.translateToSoarSpeak(prepId,"object");
+			if (secondObject != null)
+				secondObject.translateToSoarSpeak(prepId,"object");
+		}
+		if(objState != null){
+			Identifier stateId = verbId.CreateIdWME("state");
+			stateId.CreateStringWME("word", objState.getAttribute());
+			objState.getObject1().translateToSoarSpeak(stateId, "object");
 		}
 	}
 
@@ -61,7 +72,12 @@ public class VerbCommand extends LinguisticEntity{
 			verb = tagsToWords.get(m.group()).toString();
 		}
 		
-		
+		p = Pattern.compile("STT\\d*");
+		m = p.matcher(string);
+		if(m.find()){
+			objState = (ObjectState) tagsToWords.get(m.group());
+		}
+			
 		Pattern pp = Pattern.compile("PP\\d* OBJ\\d*");
 		Matcher mp = pp.matcher(string);
 		if (mp.find()){
@@ -77,9 +93,15 @@ public class VerbCommand extends LinguisticEntity{
 			if(m.find()){
 				secondObject = (LingObject) tagsToWords.get(m.group());
 			}
-			mp.appendReplacement(sb,"PPH");
+			mp.appendReplacement(sb,"PH");
 			mp.appendTail(sb);
 			string = sb.toString();
+		}
+		
+		p = Pattern.compile("PP\\d*");
+		m = p.matcher(string);
+		if(m.find()){
+			preposition = tagsToWords.get(m.group()).toString();
 		}
 		
 		p = Pattern.compile("OBJ\\d*");
