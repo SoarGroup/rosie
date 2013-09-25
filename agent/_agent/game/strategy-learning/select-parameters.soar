@@ -138,6 +138,7 @@ sp {select-parameters*elaborate*operator3
 }
 
 sp {select-parameters*elaborate*pop-up-bestfound
+#   :interrupt
    (state <s> ^superstate.name selection
               ^legal-action
              -^dcount 0
@@ -186,6 +187,7 @@ sp {select-parameters*elaborate*goal-failure-args
    (state <s> ^name select-param)
 -->
    (<s> ^goal-args <ga>
+        ^goal-score 0
         ^failure-args <fa>)
 }
 
@@ -450,7 +452,7 @@ sp {select-param*check-relation*positive-one*propose*found-possible-prep-match*a
    (<tobj2> ^id <obj3> ^category <btype>)
    (<prep> ^name <name> ^a same ^b <arg2> ^c <arg3> ^negative <bool> ^btype <btype>)
  -{(<s> ^goal-found-possible <fp>)
-   (<fp> ^prep.name <name> ^objid <id> ^arg <arg> ^withid2 <obj3> ^withid3 <obj2> ^arg2 <arg2> ^arg3 <arg3>)}
+   (<fp> ^prep.name <name> ^objid <id> ^arg <arg> ^withid2 <obj2> ^withid3 <obj3> ^arg2 <arg2> ^arg3 <arg3>)}
 -->
    (<s> ^operator <o> + =)
    (<o> ^name goal-found-possible-prep-match
@@ -467,6 +469,7 @@ sp {select-param*check-relation*apply*found-possible-prep-match*3arg
    (state <s> ^name select-param
               ^goal-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.obj.id <id>
               ^action-result <ar>
+#              ^goal-score <gs>
               ^operator <o>)
    (<ar> -^tried)
    (<o> ^name goal-found-possible-prep-match
@@ -478,20 +481,26 @@ sp {select-param*check-relation*apply*found-possible-prep-match*3arg
         ^arg3 <arg3>
         ^prep <prep>)
 -->
+#   (<s> ^goal-score <gs> -) 
+#   (<s> ^goal-score (+ <gs> 1))
    (<s> ^goal-found-possible <fp>)
-   (<fp> ^prep <prep> ^objid <id> ^arg <arg> ^withid2 <obj3> ^withid3 <obj2> ^arg2 <arg2> ^arg3 <arg3>)
+   (<fp> ^prep <prep> ^objid <id> ^arg <arg> ^withid2 <obj2> ^withid3 <obj3> ^arg2 <arg2> ^arg3 <arg3>)
 }
 sp {select-param*check-relation*elaborate*goal-possible-match*conditions*arg3
    (state <s> ^name select-param
               ^action-result <ar>
               ^simulated
+#              ^goal-score <gs>
               ^testing true
+#              ^operator.name test-goals
               ^goal-found-possible <fp>
               ^goal-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>)
    (<a> ^goal-possible-match <pgm>)
    (<pgm> ^id <id>)
    (<fp> ^arg <arg> ^arg2 {<arg2> <> INDEF} ^arg3 {<arg3> <> INDEF} ^withid2 <id2> ^withid3 <id3> ^objid <id>)
 -->
+#   (<s> ^goal-score <gs> -) 
+#   (<s> ^goal-score (+ <gs> 1))
    (<pgm> ^<arg2> <id2> ^<arg3> <id3> ^has <arg2> ^has <arg3>)
 }
 
@@ -499,6 +508,7 @@ sp {select-param*check-relation*apply*found-possible-prep-match
    (state <s> ^name select-param
               ^goal-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.obj.id <id>
               ^action-result <ar>
+#              ^goal-score <gs>
               ^operator <o>)
    (<ar> -^tried)
    (<o> ^name goal-found-possible-prep-match
@@ -508,25 +518,31 @@ sp {select-param*check-relation*apply*found-possible-prep-match
         ^arg2 <arg2>
         ^prep <prep>)
 -->
+#   (<s> ^goal-score <gs> -) 
+#   (<s> ^goal-score (+ <gs> 1))
    (<s> ^goal-found-possible <fp>)
    (<fp> ^prep <prep> ^objid <id> ^arg <arg> ^withid <with> ^arg2 <arg2>)
 }
 
 
 
-sp {select-param*check-relation*elaborate*goal-possible-match*conditions
+sp {select-param*check-relation*elaborate*goal-possible-match*conditionsa
    (state <s> ^name select-param
               ^action-result <ar>
               ^simulated
               ^dcount <dc> #only test goal when at depth limit
               ^depth-limit <dc>
+#              ^goal-score <gs>
               ^testing true
+#              ^operator.name test-goals
               ^goal-found-possible <fp>
               ^goal-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>)
    (<a> ^goal-possible-match <pgm>)
    (<pgm> ^id <id>)
    (<fp> ^arg <arg> ^arg2 {<arg2> <> INDEF} ^withid <id2> ^objid <id>)
 -->
+#   (<s> ^goal-score <gs> -) 
+#   (<s> ^goal-score (+ <gs> 1))
    (<pgm> ^<arg2> <id2> ^has <arg2>)
 }
 #TODO hmm will this still work to make sure not multiple linear and select dif objs
@@ -535,16 +551,82 @@ sp {select-param*check-relation*elaborate*goal-possible-match*conditions*none
    (state <s> ^name select-param
               ^action-result <ar>
               ^simulated
+              ^processing
               ^dcount <dc> #only test goal when at depth limit
               ^depth-limit <dc>
+#              ^operator.name test-goals
+#              ^goal-score <gs>
               ^testing true
               ^goal-args.{<arg3> << 1 2 3 4 5 6 7 8 9 10 >>} <b>
               ^goal-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} {<a> <> <b>})
    (<a> ^goal-possible-match <pgm> -^cond.prep.b <arg3> -^cond.prep.c <arg3>)
+   (<b> -^cond.prep.b <arg> -^cond.prep.c <arg>)
    (<pgm> ^id <id>)
    (<b> ^goal-possible-match.id {<id2> <> <id>})
 -->
+#   (<s> ^goal-score <gs> -) 
+#   (<s> ^goal-score (+ <gs> 1))
    (<pgm> ^<arg3> <id2>)
+}
+
+sp {select-param*check-relation*elaborate*goal-possible-match*conditions*matchedbyother
+   (state <s> ^name select-param
+              ^action-result <ar>
+              ^simulated
+              ^dcount <dc> #only test goal when at depth limit
+              ^depth-limit <dc>
+#              ^operator.name test-goals
+#              ^goal-score <gs>
+              ^testing true
+              ^goal-args.{<arg3> << 1 2 3 4 5 6 7 8 9 10 >>} <b>
+              ^goal-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} {<a> <> <b>})
+   (<a> ^goal-possible-match <pgm> -^cond.prep.b <arg3> -^cond.prep.c <arg3>)
+   (<b> ^cond.prep.b <arg> ^obj.id {<id2> <> <id>})
+   (<pgm> ^id <id>)
+   (<s> ^goal-found-possible <fp2>)
+   (<fp2> ^arg <arg3> ^arg2 <arg> ^objid <id2> ^withid <id>)
+-->
+   (<pgm> ^<arg3> <id2> ^has <arg3>)
+}
+sp {select-param*check-relation*elaborate*goal-possible-match*conditions*matchedbyother2
+   (state <s> ^name select-param
+              ^action-result <ar>
+              ^simulated
+              ^dcount <dc> #only test goal when at depth limit
+              ^depth-limit <dc>
+#              ^operator.name test-goals
+#              ^goal-score <gs>
+              ^testing true
+              ^goal-args.{<arg3> << 1 2 3 4 5 6 7 8 9 10 >>} <b>
+              ^goal-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} {<a> <> <b>})
+   (<a> ^goal-possible-match <pgm> -^cond.prep.b <arg3> -^cond.prep.c <arg3>)
+   (<b> ^cond.prep <cp>  ^obj.id {<id2> <> <id>})
+   (<cp> ^b <arg> ^c <arg4>)
+   (<pgm> ^id <id>)
+   (<s> ^goal-found-possible <fp2>)
+   (<fp2> ^arg <arg3> ^arg2 <arg> ^arg3 <arg4> ^objid <id2> ^withid2 <id> ^withid3 <id3>)
+-->
+   (<pgm> ^<arg3> <id2> ^<arg4> <id3> ^has <arg3> ^has <arg4>)
+}
+sp {select-param*check-relation*elaborate*goal-possible-match*conditions*matchedbyother3
+   (state <s> ^name select-param
+              ^action-result <ar>
+              ^simulated
+              ^dcount <dc> #only test goal when at depth limit
+              ^depth-limit <dc>
+#              ^operator.name test-goals
+#              ^goal-score <gs>
+              ^testing true
+              ^goal-args.{<arg3> << 1 2 3 4 5 6 7 8 9 10 >>} <b>
+              ^goal-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} {<a> <> <b>})
+   (<a> ^goal-possible-match <pgm> -^cond.prep.b <arg3> -^cond.prep.c <arg3>)
+   (<b> ^cond.prep <cp> ^obj.id {<id2> <> <id>})
+   (<cp> ^c <arg> ^b <arg4>)
+   (<pgm> ^id <id>)
+   (<s> ^goal-found-possible <fp2>)
+   (<fp2> ^arg <arg3> ^arg3 <arg> ^arg2 <arg4> ^objid <id2> ^withid3 <id> ^withid2 <id3>)
+-->
+   (<pgm> ^<arg3> <id2> ^<arg4> <id3> ^has <arg3> ^has <arg4>)
 }
 
 
@@ -554,7 +636,9 @@ sp {select-param*check-relation*elaborate*goal-found-possible-arg-match
               ^simulated
               ^dcount <dc> #only test goal when at depth limit
               ^depth-limit <dc>
-              ^testing true
+#              ^goal-score <gs>
+             # ^testing true
+              ^operator.name test-goals
               ^goal-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>)
    (<ar> -^tried)
    (<a> ^obj.id <id>)
@@ -570,9 +654,19 @@ sp {select-param*check-relation*elaborate*goal-found-possible-arg-match
      (<p> ^name <n> ^a this ^b <arg> ^negative false)
     -{(<s> ^goal-found-possible <fp2>)
       (<fp2> ^prep.name <n> ^arg <arg0> ^arg2 <arg> ^withid <id>)}}
+-{(<s> ^goal-args.{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.cond.prep <p>)
+     (<p> ^name <n> ^a same ^b <arg> ^negative false)
+    -{(<s> ^goal-found-possible <fp2>)
+      (<fp2> ^prep.name <n> ^arg <arg0> ^arg2 <arg> ^withid2 <id>)}}
+  -{(<s> ^goal-args.{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.cond.prep <p>)
+     (<p> ^name <n> ^c <arg> ^negative false)
+    -{(<s> ^goal-found-possible <fp2>)
+      (<fp2> ^prep.name <n> ^arg <arg0> ^arg3 <arg> ^withid3 <id>)}}
 #todo add contraint like last part for 3 args
 -->
-   (<a> ^goal-possible-match <pgm>)
+#   (<s> ^goal-score <gs> -) 
+#   (<s> ^goal-score (+ <gs> 1))
+   (<a> ^goal-possible-match <pgm>)##
    (<pgm> ^id <id>)
 }
 
@@ -592,6 +686,7 @@ sp {select-param*propose*test-goals
 }
 
 sp {select-param*apply*test-goals
+#   :interrupt
    (state <s> ^name select-param
               ^operator.name test-goals)
 -->
@@ -702,6 +797,21 @@ sp {select-param*check-relation*elaborate*goal-detected2
    (<s> ^goal-possible-match-set <pms>)
    (<pms> ^<arg1>.goal-possible-match <obj1>
           ^<arg2>.goal-possible-match <obj2>)
+}
+sp {select-param*check-relation*elaborate*goal-detected1
+   (state <s> ^name select-param
+              ^action-result <ar>
+              ^goal-cond-args 1
+              ^dcount <dc> #only test goal when at depth limit
+              ^depth-limit <dc>
+              ^test-goal-final true
+              ^testing true
+              ^goal-args.{<arg1> 1}.goal-possible-match <pm1>)
+   (<ar> -^tried)
+   (<pm1> ^id <obj1>)
+-->
+   (<s> ^goal-possible-match-set <pms>)
+   (<pms> ^<arg1>.goal-possible-match <obj1>)
 }
 sp {select-param*check-relation*elaborate*goal-detected9
    (state <s> ^name select-param
@@ -1244,7 +1354,7 @@ sp {select-param*check-relation*propose*goal-detected
     -{(<s> ^goal-found-possible <fp2>)
        (<fp2> ^objid <objv> ^arg <argv> ^arg2 <arv2v> ^arg2 <arv3v> ^withid2 <obj2v> ^withid3 <obj3v>)}}
 -->
-   (interrupt)
+#   (interrupt)
    (<s> ^operator <o> + =)
    (<o> ^name goal-detected
         ^category svs)
@@ -1284,13 +1394,25 @@ sp {select-param*check-relation*apply*goal-not-detected
    (<o> ^name goal-not-detected)
 --> 
    (<s> ^processing <p> -)
-   (<s> ^testing <t> -)
+#   (<s> ^testing <t> -)
    (<ar> ^tried true)
+}
+sp {select-param*check-relation*apply*goal-not-detected*testing
+   (state <s> ^name select-param
+              ^action-result <ar>
+              ^legal-action <a>
+              ^processing <p>
+             -^multiplayer
+              ^operator <o>)
+   (<o> ^name goal-not-detected)
+--> 
+   (<s> ^testing <t> -)
 }
 
 sp {select-param*check-relation*apply*goal-not-detected*simulated
    (state <s> ^name select-param
               ^simulated <sim>
+             -^multiplayer
               ^operator <o>)
    (<o> ^name goal-not-detected)
 --> 
@@ -1402,7 +1524,7 @@ sp {select-param*check-relation*positive-one*propose*failure-found-possible-prep
    (<tobj2> ^id <obj3> ^category <btype>)
    (<prep> ^name <name> ^a same ^b <arg2> ^c <arg3> ^negative <bool> ^btype <btype>)
  -{(<s> ^failure-found-possible <fp>)
-   (<fp> ^prep.name <name> ^objid <id> ^arg <arg> ^withid2 <obj3> ^withid3 <obj2> ^arg2 <arg2> ^arg3 <arg3>)}
+   (<fp> ^prep.name <name> ^objid <id> ^arg <arg> ^withid2 <obj2> ^withid3 <obj3> ^arg2 <arg2> ^arg3 <arg3>)}
 -->
    (<s> ^operator <o> + =)
    (<o> ^name failure-found-possible-prep-match
@@ -1431,7 +1553,7 @@ sp {select-param*check-relation*apply*failure-found-possible-prep-match*3arg
         ^prep <prep>)
 -->
    (<s> ^failure-found-possible <fp>)
-   (<fp> ^prep <prep> ^objid <id> ^arg <arg> ^withid2 <obj3> ^withid3 <obj2> ^arg2 <arg2> ^arg3 <arg3>)
+   (<fp> ^prep <prep> ^objid <id> ^arg <arg> ^withid2 <obj2> ^withid3 <obj3> ^arg2 <arg2> ^arg3 <arg3>)
 }
 
 sp {select-param*check-relation*apply*failure-found-possible-prep-match
