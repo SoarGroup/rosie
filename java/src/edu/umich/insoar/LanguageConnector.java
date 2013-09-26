@@ -247,8 +247,11 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
     		message = "I see multiple examples of '" + objStr + "' and I need clarification";
     	} else if(type.equals("teaching-request")){
     		Identifier obj = WMUtil.getIdentifierOfAttribute(context, "object");
-    		String objStr = LingObject.createFromSoarSpeak(obj, "outgoing-desc").toString();
-    		message = "Please give me teaching examples of '" + objStr + "' and tell me 'finished' when you are done.";
+    		if (obj != null)
+    		{	
+    			String objStr = LingObject.createFromSoarSpeak(obj, "outgoing-desc").toString();
+    			message = "Please give me teaching examples of '" + objStr + "' and tell me 'finished' when you are done.";
+    		}
     	} else if(type.equals("get-goal")){
     		String verb = WMUtil.getValueOfAttribute(context, "verb");
     		message = "Please tell me what the goal of '" + verb + "'is.";

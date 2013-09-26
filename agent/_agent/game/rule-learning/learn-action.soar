@@ -1,3 +1,40 @@
+
+sp {learn-action*propose*store-multiplayer
+   (state <s> ^name learn-action
+              ^multiplayer <word>
+             -^topstate.current-game.game.multiplayer <word>
+              ^topstate.current-game.learning <l>)
+   (<l> ^type mult)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name store-multiplayer
+        ^category svs) # for now determine better or new category)
+}
+sp {learn-action*apply*store-multiplayer
+   (state <s> ^name learn-action
+              ^multiplayer <word>
+              ^topstate.current-game.game <g>
+              ^operator <o>
+              ^topstate.current-game.learning <l>)
+   (<l> ^type <type>)
+   (<o> ^name store-multiplayer
+        ^category svs) # for now determine better or new category)
+-->
+   (<l> ^type <type> -)
+   (<l> ^type action)
+   (<g> ^multiplayer <word>)
+}
+sp {learn-action*propose*find-next-action*first
+   (state <s> ^name learn-action
+              ^multiplayer <word>
+              ^topstate.current-game.learning <l>)
+   (<l> ^type action)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name find-next-action
+        ^category svs)
+}
+
 sp {learn-action*name**query*smem
    (state <s> ^name learn-action
               ^action-name <name>
@@ -30,12 +67,13 @@ sp {learn-action*query*failure
 sp {learn-action*query*smem
    (state <s> ^name learn-action
               ^verb-name <name>
+              ^verb-prep <prep>
               ^topstate.current-game.learning <l>
               ^smem.command <sc>)
    (<l> ^type action)
 -->
    (<sc> ^query <q>)
-   (<q> ^direct-object <N208> ^to <N207> ^verb <name>)
+   (<q> ^direct-object <N208> ^pp-object <N207> ^verb <name>)
 }
 sp {learn-action*query*success*verb
    (state <s> ^name learn-action
@@ -96,10 +134,13 @@ sp {learn-action*propose*store-action
    (<o> ^name store-action
         ^category svs) # for now determine better or new category)
 }
-
+#TODO multiverbs
 sp {learn-action*apply*store-action*verb
    (state <s> ^name learn-action             
               ^verb-name <vname>
+              ^verb-prep <prep>
+              ^a <p1>
+              ^b <p2>
               ^topstate <ts>
               ^operator.name store-action)
    (<ts> ^current-game <cg>)
@@ -108,7 +149,9 @@ sp {learn-action*apply*store-action*verb
    (<g> ^actions <a>)
 -->
    (<a> ^<num> <act>)
-   (<act> ^action-name <aname> ^conditions <c> ^parameters <p> ^verb <vname> ^verb-prep in) #HACK TODO verb-prep
+   (<act> ^action-name <aname> ^conditions <c> ^parameters <p> ^verbs <verbs>)
+   (<verbs> ^1 <va>)
+   (<va> ^verb-name <vname> ^verb-prep <prep> ^1 <p1> ^2 <p2>)	
 }
 
 sp {learn-action*apply*store-action
@@ -140,7 +183,7 @@ sp {learn-action*propose*find-next-action
 }
 sp {learn-action*apply*find-next-action
    (state <s> ^name learn-action
-              ^topstate.status <status>
+              ^topstate.interaction.status <status>
               ^topstate.current-game <cg>
               ^operator.name find-next-action
               ^topstate.io.output-link <out>
@@ -186,7 +229,7 @@ sp {learn-action*apply*find-new-action
               ^topstate.current-game.game
               ^operator.name find-new-action
               ^topstate.io.output-link <out>
-              ^topstate.status <status>
+              ^topstate.interaction.status <status>
               ^topstate.current-game.learning <l>)
    (<l> ^type <t>)
 -->
@@ -203,7 +246,7 @@ sp {learn-action*apply*find-parameter*remove-interaction
               ^topstate.current-game.game
               ^operator.name find-parameter
               ^topstate.io.output-link <out>
-              ^topstate.status <status>
+              ^topstate.interaction.status <status>
               ^topstate.current-game.learning <l>)
    (<l> ^interaction <t>)
 -->
@@ -217,7 +260,7 @@ sp {learn-action*apply*find-parameter
               ^topstate.current-game.game
               ^operator.name find-parameter
               ^topstate.io.output-link <out>
-              ^topstate.status <status>
+              ^topstate.interaction.status <status>
               ^topstate.current-game.learning <l>)
    (<l> ^type <t> ^action-name <aname>)
 -->
@@ -234,7 +277,7 @@ sp {learn-action*apply*find-parameter
 sp {finish-actions*send-message*new-goal
    (state <s> ^name finish-actions
               ^topstate.io.output-link <out>
-              ^topstate.status <status>
+              ^topstate.interaction.status <status>
               ^topstate.current-game <cg>)
    (<cg> ^learning <l> ^game <g>)
    (<l> ^type <t> ^action-number <num>)
