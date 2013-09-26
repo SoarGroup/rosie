@@ -261,15 +261,16 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
     }
     
     private void processReportIndexing(Identifier id){
-    	String type = WMUtil.getValueOfAttribute(id, "type");
-    	System.out.println("INDEXTYPE " + type);
-    	if(type.equals("new")){
-    		totalIndexes++;
-    	} else if(type.equals("failure")){
-    		indexFailures++;
-    	} else if(type.equals("report")){
-        	ChatFrame.Singleton().addMessage("Indexing Success: (" + (totalIndexes-indexFailures) + "/" + totalIndexes + ")");
-    	}
+    	// AM: Enable this code to report the number of successful indexes
+//    	String type = WMUtil.getValueOfAttribute(id, "type");
+//    	//System.out.println("INDEXTYPE " + type);
+//    	if(type.equals("new")){
+//    		totalIndexes++;
+//    	} else if(type.equals("failure")){
+//    		indexFailures++;
+//    	} else if(type.equals("report")){
+//        	ChatFrame.Singleton().addMessage("Indexing Success: (" + (totalIndexes-indexFailures) + "/" + totalIndexes + ")");
+//    	}
     	
         id.CreateStringWME("status", "complete");
     }
