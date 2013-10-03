@@ -83,7 +83,7 @@ public class InSoar implements PrintEventInterface, RunEventInterface
         	}
         }
 
-		String doLog = props.getProperty("enable-log");
+		String doLog = props.getProperty("enable-soar-log");
 		if (doLog != null && doLog.equals("true")) {
 			try {
 				logWriter = new PrintWriter(new FileWriter("sbolt-log.txt"));
@@ -93,10 +93,12 @@ public class InSoar implements PrintEventInterface, RunEventInterface
 			soarAgent.getAgent().RegisterForPrintEvent(smlPrintEventId.smlEVENT_PRINT, this, this);
 		}
 		
+		
+		
 		String watchLevel = props.getProperty("watch-level");
 		if (watchLevel != null) {
 			soarAgent.getAgent().ExecuteCommandLine("watch " + watchLevel);
-		}
+		 }
 
 		String throttleMSString = props.getProperty("decision-throttle-ms");
 		if (throttleMSString != null) {
@@ -128,6 +130,12 @@ public class InSoar implements PrintEventInterface, RunEventInterface
         chatFrame.addMenu(perception.createMenu());  
         chatFrame.addMenu(motorSystem.createMenu());
         chatFrame.addMenu(chatFrame.setupScriptMenu());
+        
+        String interactionLog = props.getProperty("enable-interaction-log");
+        if (interactionLog != null && interactionLog.equals("true")) {
+			chatFrame.setInteractionLogFile("interaction-trace.txt");
+        }
+        
         
         soarAgent.setWorldModel(perception.world);
         

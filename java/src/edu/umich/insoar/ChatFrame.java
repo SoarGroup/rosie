@@ -8,6 +8,10 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -98,6 +102,20 @@ public class ChatFrame extends JFrame
     private SoarAgent soarAgent;
     
     private LanguageConnector langConnector;
+    
+    private String interactionLogFile;
+    
+    private PrintWriter logWriter;
+    
+    public void setInteractionLogFile(String fileName){
+    	interactionLogFile = fileName;
+		try {
+			logWriter = new PrintWriter(new File(interactionLogFile));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
 
     public ChatFrame(LanguageConnector langConnector, SoarAgent agent) {
         super("SBolt");
@@ -314,6 +332,8 @@ public class ChatFrame extends JFrame
     			// AM: Will make it auto scroll to bottom
     			int end = chatDoc.getLength();
     			tPane.select(end, end);
+    			logWriter.println(dateFormat.format(d)+" "+message);
+    			
     		} catch (BadLocationException e) {
     			// TODO Auto-generated catch block
     			e.printStackTrace();
@@ -324,7 +344,7 @@ public class ChatFrame extends JFrame
     	}
     }
 
-    public void addMessage(String message)
+	public void addMessage(String message)
     {
         addMessage(message, ActionType.Default);
     }
@@ -335,6 +355,7 @@ public class ChatFrame extends JFrame
     
     public void exit(){
     	soarAgent.kill();
+    	logWriter.close();
     	System.exit(0);
     }
     
