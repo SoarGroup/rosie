@@ -10,6 +10,7 @@ import java.util.List;
 import javax.swing.JFileChooser;
 
 import com.soartech.bolt.script.ui.command.PointAtObject;
+import com.soartech.bolt.script.ui.command.ResetEnvironmentState;
 
 import edu.umich.insoar.ChatFrame;
 
@@ -90,7 +91,12 @@ public class Util {
     		if(action.contains("select")){
     			Integer id = Integer.parseInt(action.split(" ")[1]);
     			(new PointAtObject(id)).execute();
-    		} else {
+    		}
+    		else if (action.contains("reset")){
+    			Integer id = Integer.parseInt(action.split(" ")[1]);
+    			(new ResetEnvironmentState(id)).execute();
+    		}		
+    		else {
     			ScriptDataMap.getInstance().getUiCommand(action).execute();
     		}
 		} catch (UiCommandNotFoundException e) {

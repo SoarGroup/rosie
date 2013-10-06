@@ -5,6 +5,7 @@ import com.soartech.bolt.script.ui.command.ClearClassifierData;
 import com.soartech.bolt.script.ui.command.PointAtObject;
 import com.soartech.bolt.script.ui.command.ResetRobotArm;
 import com.soartech.bolt.script.ui.command.UiCommand;
+import com.soartech.bolt.script.ui.command.ResetEnvironmentState;
 
 public class ScriptDataMap {
 	private static final ScriptDataMap instance = new ScriptDataMap();
@@ -32,6 +33,7 @@ public class ScriptDataMap {
 		addUiCommand("point tee", new PointAtObject(2));
 		addUiCommand("point triangle", new PointAtObject(3));
 		addUiCommand("classifier clear", new ClearClassifierData());
+//		addUiCommand("reset state", new ResetEnvironmentState());
 	}
 	
 	public void add(ActionType type, String s, char c) {
