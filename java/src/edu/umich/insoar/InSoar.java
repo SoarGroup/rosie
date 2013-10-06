@@ -1,5 +1,6 @@
 package edu.umich.insoar;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -42,11 +43,15 @@ public class InSoar implements PrintEventInterface, RunEventInterface
     private PerceptionConnector perception;
     
     private int throttleMS = 0;
+    
+    private Long logNum;
 
     public InSoar(String agentName, boolean headless)
     {     
 
         // Load the properties file
+    	logNum = System.currentTimeMillis();
+    	
         Properties props = new Properties();
         try {
 			props.load(new FileReader("sbolt.properties"));
@@ -86,7 +91,7 @@ public class InSoar implements PrintEventInterface, RunEventInterface
 		String doLog = props.getProperty("enable-soar-log");
 		if (doLog != null && doLog.equals("true")) {
 			try {
-				logWriter = new PrintWriter(new FileWriter("sbolt-log.txt"));
+				logWriter = new PrintWriter(new File("logs/soar-log-"+logNum+".txt"));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -133,7 +138,7 @@ public class InSoar implements PrintEventInterface, RunEventInterface
         
         String interactionLog = props.getProperty("enable-interaction-log");
         if (interactionLog != null && interactionLog.equals("true")) {
-			chatFrame.setInteractionLogFile("interaction-trace.txt");
+			chatFrame.setInteractionLogFile("logs/interaction-log-"+logNum+".txt");
         }
         
         
@@ -157,7 +162,7 @@ public class InSoar implements PrintEventInterface, RunEventInterface
 	@Override
 	public void printEventHandler(int eventID, Object data, Agent agent, String message) {
 		synchronized(logWriter) {
-			logWriter.print(message);
+			logWriter.println(message);
 		}
 	}
 	@Override
