@@ -11,6 +11,7 @@ import javax.swing.JFileChooser;
 
 import com.soartech.bolt.script.ui.command.PointAtObject;
 import com.soartech.bolt.script.ui.command.ResetEnvironmentState;
+import edu.umich.insoar.Environment;
 
 import edu.umich.insoar.ChatFrame;
 
@@ -94,7 +95,7 @@ public class Util {
     		}
     		else if (action.contains("reset")){
     			Integer id = Integer.parseInt(action.split(" ")[1]);
-    			(new ResetEnvironmentState(id)).execute();
+    			(new ResetEnvironmentState(id, Environment.getHeldObject())).execute();
     		}		
     		else {
     			ScriptDataMap.getInstance().getUiCommand(action).execute();

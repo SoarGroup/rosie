@@ -40,6 +40,8 @@ public class InSoar implements PrintEventInterface, RunEventInterface
     
     private MotorSystemConnector motorSystem;
     
+    private Environment environment;
+    
     private PerceptionConnector perception;
     
     private int throttleMS = 0;
@@ -51,6 +53,8 @@ public class InSoar implements PrintEventInterface, RunEventInterface
 
         // Load the properties file
     	logNum = System.currentTimeMillis();
+    	
+    	
     	
         Properties props = new Properties();
         try {
@@ -128,6 +132,7 @@ public class InSoar implements PrintEventInterface, RunEventInterface
 		language = new LanguageConnector(soarAgent, lgSupport, dictionaryFile, grammarFile);
         perception = new PerceptionConnector(soarAgent);   
         motorSystem = new MotorSystemConnector(soarAgent);
+        environment = new Environment(motorSystem);
         
         // Setup ChatFrame
         chatFrame = new ChatFrame(language, soarAgent);
@@ -135,6 +140,7 @@ public class InSoar implements PrintEventInterface, RunEventInterface
         chatFrame.addMenu(perception.createMenu());  
         chatFrame.addMenu(motorSystem.createMenu());
         chatFrame.addMenu(chatFrame.setupScriptMenu());
+        chatFrame.addMenu(environment.createMenu());
         
         String interactionLog = props.getProperty("enable-interaction-log");
         if (interactionLog != null && interactionLog.equals("true")) {

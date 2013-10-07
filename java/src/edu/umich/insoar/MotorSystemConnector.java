@@ -51,6 +51,8 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     private ArmStatus armStatus;
     
     StringBuilder svsCommands = new StringBuilder();
+	private Integer heldObject;
+    
 
     public MotorSystemConnector(SoarAgent agent){
     	this.agent = agent;
@@ -66,6 +68,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
 	  			armStatus = null;
 	  		}
     	}
+    	heldObject = -1;
     	
     	// Setup LCM events
         lcm = LCM.getSingleton();
@@ -160,6 +163,9 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     
     
     private void updateIL(){
+    	
+    	heldObject = curStatus.obj_id;
+    	
     	if(prevStatus == null){
     		return;
     	}
@@ -335,4 +341,8 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         
         return actionMenu;
     }
+
+	public Integer getHeldObject() {
+		return heldObject;
+	}
 }
