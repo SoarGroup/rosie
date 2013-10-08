@@ -75,15 +75,38 @@ public class AgentMessageParser
             message = "Shall we play a game?";
         } else if(type.equals("game-start")){
             message = "Ok I know that game.  Tell me \"your turn\" when it's my turn.";
+        } else if(type.equals("game-new-action2")){
+            message = "Ok tell me the name of a legal action in this game, or finished.";
+        } else if(type.equals("game-new-action")){
+            String gameName = WMUtil.getValueOfAttribute(fieldsId, "game-name");
+            message = "I do not know how to play " + gameName + 
+                    ". Is it a multiplayer game (true/false)?";
+        } else if(type.equals("game-new-verb")){
+            message = "What is the associated verb for this action. (ex: move 2 on 3)";
+        } else if(type.equals("game-new-goal")){
+            message = "Ok tell me the name of the goal in the game.";
+        } else if(type.equals("game-new-failure")){
+            message = "Ok tell me the name of a failure state in the game. (or none)";
+        } else if(type.equals("game-new-parameter1")){
+            message = "Ok list a parameter for this action.\n";
+        } else if(type.equals("game-new-parameter")){
+            message = "Ok list a parameter for this action/goal/failure, or finished.";
+        } else if(type.equals("game-new-condition")){
+            message = "Ok list a condition for this parameter, or finished.";
+        } else if(type.equals("game-learned")){
+            message = "Ok I have now learned the basics of the game.";
+        } else if(type.equals("game-over")){
+            message = "Game Over. Shall we play another?";
         }
+        
         return message;
     }
     
     private static String translateTeachingRequest(Identifier id){
     	LingObject obj = LingObject.createFromSoarSpeak(id, "description");
-    	//JK different syntax for prepositions
-    	if (obj.toString().contains("preposition"))
-    	    return "I don't know the " + obj.toString() + ". Please teach me with examples";
+    	String prep = WMUtil.getValueOfAttribute(id, "preposition");
+    	if (prep != null)
+    	    return "I don't know the preposition " + prep + ". Please teach me with examples";
     	else {
     	    return "I don't see " + obj.toString() + ". Please teach me to recognize one";
     		
