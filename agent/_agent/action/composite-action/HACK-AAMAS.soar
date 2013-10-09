@@ -1,3 +1,4 @@
+#### copy the desired operator if the state has a io link
 sp {composite-action*elaborate*io*desired
    (state <s> ^problemspace action
    	      ^action-type composite
@@ -7,29 +8,228 @@ sp {composite-action*elaborate*io*desired
    (<s> ^desired <d>)
 }
 
-sp {composite-action*elaborate*not-id*desired
+#### if the state does not have an io link, generate a two-level copy of the desired operator
+# sp {composite-action*elaborate*not-id*desired
+#    (state <s> ^problemspace action
+#    	      ^action-type composite
+# 	      -^io 
+# 	      ^ndesired <d>)
+#    (<d> ^track-relation <trel>
+#    	^list.next <trel>)
+#    (<trel> ^_instantiation-of <inst>
+#    	   ^next null
+# 	   ^p1 <obj1>
+# 	   ^p2 <obj2> 
+# 	   ^relation <rel>)
+#    (<obj1> ^focus <id1>)
+#    (<obj2> ^focus <id2>)
+# -->
+#    (<s> ^desired <new>)
+#    (<new> ^track-relation <ntrel>
+#    	  ^list.next <ntrel>)
+#    (<ntrel> ^_instantiation-of <inst>
+#    	   ^next null
+# 	   ^p1 <nobj1>
+# 	   ^p2 <nobj2> 
+# 	   ^relation <rel>)
+#     (<nobj1> ^focus <id1>)
+#     (<nobj2> ^focus <id2>)
+# }
+
+sp {composite-action*elaborate*not-id*propose*generate*copy
    (state <s> ^problemspace action
    	      ^action-type composite
+	      -^name generate-desired-copy
 	      -^io 
-	      ^ndesired <d>)
-   (<d> ^track-relation <trel>
-   	^list.next <trel>)
+	      ^ndesired <d>
+	      -^desired)
+-->
+   (<s> ^operator <op> + !)
+   (<op> ^name generate-desired-copy
+   	 ^ndesired <d>)
+}
+
+sp {generate-desired-copy*elaborate*state 
+   (state <s> ^name generate-desired-copy
+   	      ^superstate.operator.ndesired <d>)
+-->
+   (<s> ^ndesired <d>
+   	^copy-desired <nd>)
+   (<nd> ^list <nlist>)
+   (<nlist> ^next <next>)
+}
+
+sp {generate-desired-copy*propose*initialize
+   (state <s> ^name generate-desired-copy
+   	      ^ndesired <d>
+	      -^iterator)
+-->
+   (<s> ^operator <op> + >)
+   (<op> ^name initialize-iterator)
+}
+
+sp {generate-desired-copy*apply*initialize
+   (state <s> ^name generate-desired-copy
+   	      ^ndesired.list.next <pred>
+	      ^copy-desired.list.next <next>
+	      ^operator.name initialize-iterator)
+-->
+   (<s> ^iterator <pred>
+   	^copy-iterator <next>)
+}
+
+
+sp {generate-desired-copy*propose*copy*predicate
+   (state <s> ^name generate-desired-copy
+   	      ^iterator <pred>
+	      ^copy-iterator <next>)
+-->
+   (<s> ^operator <op> + >)
+   (<op> ^name copy-predicate
+   	 ^iterator <pred>
+	 ^copy-iterator <next>)
+}
+
+sp {generate-desired-copy*apply*copy*predicate*track-relation*not-null
+   (state <s> ^name generate-desired-copy
+   	      ^operator <op>
+	      ^ndesired <n>
+	      ^copy-desired <cd>
+	      ^iterator <trel>
+	      ^copy-iterator <ntrel>)
+   (<op> ^name copy-predicate
+   	 ^iterator <trel>
+	 ^copy-iterator <ntrel>)
+   (<n> ^track-relation <pred>)
    (<trel> ^_instantiation-of <inst>
-   	   ^next null
+   	   ^next <next-pred>
 	   ^p1 <obj1>
 	   ^p2 <obj2> 
 	   ^relation <rel>)
    (<obj1> ^focus <id1>)
    (<obj2> ^focus <id2>)
+   (<trel> ^next {<next> <> null})
 -->
-   (<s> ^desired <new>)
-   (<new> ^track-relation <ntrel>
-   	  ^list.next <ntrel>)
+   (<cd> ^track-relation <ntrel>)
    (<ntrel> ^_instantiation-of <inst>
-   	   ^next null
 	   ^p1 <nobj1>
 	   ^p2 <nobj2> 
-	   ^relation <rel>)
+	   ^relation <rel>
+	   ^next <new>)
     (<nobj1> ^focus <id1>)
     (<nobj2> ^focus <id2>)
+    (<s> ^iterator <trel> -
+    	 ^iterator <next>
+	 ^copy-iterator <ntrel> -
+	 ^copy-iterator <new>)
+}
+
+
+sp {generate-desired-copy*apply*copy*predicate*achieve-state*not-null
+   (state <s> ^name generate-desired-copy
+   	      ^operator <op>
+	      ^ndesired <n>
+	      ^copy-desired <cd>
+	      ^iterator <trel>
+	      ^copy-iterator <ntrel>)
+   (<op> ^name copy-predicate
+   	 ^iterator <trel>
+	 ^copy-iterator <ntrel>)
+   (<n> ^achieve-state <pred>)
+   (<trel> ^_instantiation-of <inst>
+   	   ^next <next-pred>
+	   ^p1 <obj1>
+	   ^state <state>)
+   (<obj1> ^focus <id1>)
+   (<trel> ^next {<next> <> null})
+-->
+   (<cd> ^achieve-state <ntrel>)
+   (<ntrel> ^_instantiation-of <inst>
+	   ^p1 <nobj1>
+	   ^state <state>
+	   ^next <new>)
+    (<nobj1> ^focus <id1>)
+    (<s> ^iterator <trel> -
+    	 ^iterator <next>
+	 ^copy-iterator <ntrel> -
+	 ^copy-iterator <new>)
+}
+
+sp {generate-desired-copy*apply*copy*predicate*track-relation*null
+   (state <s> ^name generate-desired-copy
+   	      ^operator <op>
+	      ^ndesired <n>
+	      ^copy-desired <cd>
+	      ^iterator <trel>
+	      ^copy-iterator <ntrel>)
+   (<op> ^name copy-predicate
+   	 ^iterator <trel>
+	 ^copy-iterator <ntrel>)
+   (<n> ^track-relation <pred>)
+   (<trel> ^_instantiation-of <inst>
+   	   ^next <next-pred>
+	   ^p1 <obj1>
+	   ^p2 <obj2> 
+	   ^relation <rel>)
+   (<obj1> ^focus <id1>)
+   (<obj2> ^focus <id2>)
+   (<trel> ^next null)
+-->
+   (<cd> ^track-relation <ntrel>)
+   (<ntrel> ^_instantiation-of <inst>
+	   ^p1 <nobj1>
+	   ^p2 <nobj2> 
+	   ^relation <rel>
+	   ^next <new>)
+    (<nobj1> ^focus <id1>)
+    (<nobj2> ^focus <id2>)
+    (<s> ^iterator <trel> -
+    	 ^iterator <next>
+	 ^copy-iterator <ntrel> -
+	 ^copy-iterator null)
+}
+
+
+sp {generate-desired-copy*apply*copy*predicate*achieve-state*null
+   (state <s> ^name generate-desired-copy
+   	      ^operator <op>
+	      ^ndesired <n>
+	      ^copy-desired <cd>
+	      ^iterator <trel>
+	      ^copy-iterator <ntrel>)
+   (<op> ^name copy-predicate
+   	 ^iterator <trel>
+	 ^copy-iterator <ntrel>)
+   (<n> ^achieve-state <pred>)
+   (<trel> ^_instantiation-of <inst>
+   	   ^next <next-pred>
+	   ^p1 <obj1>
+	   ^state <state>)
+   (<obj1> ^focus <id1>)
+   (<trel> ^next null)
+-->
+   (<cd> ^achieve-state <ntrel>)
+   (<ntrel> ^_instantiation-of <inst>
+	   ^p1 <nobj1>
+	   ^state <state>
+	   ^next <new>)
+    (<nobj1> ^focus <id1>)
+    (<s> ^iterator <trel> -
+    	 ^iterator <next>
+	 ^copy-iterator <ntrel> -
+	 ^copy-iterator null)
+}
+
+sp {generate-desired-copy*apply*copy*predicate*complete
+   (state <s> ^name generate-desired-copy
+   	      ^operator <op>
+	      ^ndesired <n>
+	      ^copy-desired <cd>
+	      ^iterator null
+	      ^superstate <ss>)
+   (<op> ^name copy-predicate
+   	 ^iterator <trel>
+	 ^copy-iterator <ntrel>)
+-->
+   (<ss> ^desired <cd>)
 }
