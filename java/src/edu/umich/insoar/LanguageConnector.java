@@ -54,9 +54,7 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
     }
     
     public void destroyMessage(int id){
-    	if(messages.getIdNumber() == id){
-    		messages.destroy();
-    	} 
+    	messages.destroy();
     }
     
     public void newMessage(String message){
