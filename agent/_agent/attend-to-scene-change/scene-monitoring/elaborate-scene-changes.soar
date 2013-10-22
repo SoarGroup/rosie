@@ -10,7 +10,7 @@ sp {topstate*elaborate*scene-changes*change-info
               ^scene-monitor.scene-changes <sc>)
 -->
    (<sc> ^change-info <info>)
-   (<info> ^change <new-obj> <stale-obj> <chg-prop> <higher-conf> <diff-best>
+   (<info> ^change <new-obj> <stale-obj> <chg-prop> <higher-conf> <diff-best> <stability-timer-satisfied> <unidentified-object>
            ^parameter attend-to-all-scene-changes attend-to-create-delete-only attend-to-properties-only
            ^parameter attend-to-object attend-to-property)
    (<new-obj> ^name new-object
@@ -23,6 +23,10 @@ sp {topstate*elaborate*scene-changes*change-info
                   ^op-name attend-to-higher-confidence)
    (<diff-best> ^name different-best
                 ^op-name attend-to-different-best)
+   (<stability-timer-satisfied> ^name stability-timer-satisfied
+                     	  	    ^op-name evaluate-stability)
+   (<unidentified-object> ^name unidentified-object
+                          ^op-name evaluate-new-object)
 }
 
 
@@ -114,6 +118,22 @@ sp {topstate*apply*any-op*delete*unattended-object
          ^id <id>)
 }
 
+sp {topstate*apply*any-op*delete*uncertain-object
+   (state <s> ^topstate <s>
+              ^io.output-link <ol>
+              ^svs.spatial-scene.child <svs-obj>
+              ^object <wm-obj>)
+   (<svs-obj> ^id-int <id>
+              ^stale true)
+   (<wm-obj> ^id <id>
+             ^status << uncertain unidentified >>)
+-->
+   (<ol> ^modify-scene <ms>)
+   (<ms> ^type delete
+         ^id <id>)
+}
+
+
 
 ############################################################################################
 # Change: changed-property
@@ -187,4 +207,64 @@ sp {monitor-scene-changes*elaborate*scene-changes*different-best
              ^object <obj>
              ^property <prop>
              ^best-hyp <h>)
+}
+
+###########################################################################
+#
+# Change: stability-timer-satisfied
+#   When the stability timer expires, then we need to check the new object out
+#
+##########################################################################
+
+sp {monitor-scene-changes*elaborate*scene-changes*evaluate-new-object
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes <sc>
+              ^scene-monitor.object <obj>)
+   (<obj> ^wm-obj <wm-obj>)
+   (<wm-obj> ^status uncertain
+             ^stability-timer-satisfied true)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type stability-timer-satisfied
+             ^object <obj>)
+}
+
+###########################################################################
+#
+# Change: unidentified-object
+#   Once we're fairly certain an object exists, we still need to fit it into
+#     out understainding of the world (identify it)
+#
+##########################################################################
+
+sp {monitor-scene-changes*elaborate*scene-changes*unidentified-object
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes <sc>
+              ^scene-monitor.object <obj>)
+   (<obj> ^wm-obj <wm-obj>)
+   (<wm-obj> ^status unidentified)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type unidentified-object
+             ^object <obj>)
+}
+
+###########################################################################
+#
+# Change: shrunken-object
+#   If an object's volume drastrically lowers, investigate
+#
+##########################################################################
+sp {monitor-scene-changes*elaborate*scene-changes*shurnken-object
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes <sc>
+              ^scene-monitor.object <obj>
+              ^agent-params.vol-low-diff-threshold <low>)
+   (<obj> ^svs-obj.vol-diff < <low>
+          ^wm-obj.id <id>)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type shrunken-object
+             ^object <obj>)
+   (write |Shrunken Object: | <id>)
 }

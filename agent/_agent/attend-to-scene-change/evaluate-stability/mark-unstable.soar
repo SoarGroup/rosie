@@ -1,0 +1,44 @@
+sp {evaluate-stability*propose*mark-unstable
+   (state <s> ^name evaluate-stability
+              ^obj-is-stable false
+              ^max-checks <max>
+              ^wm-object <obj>
+              ^svs-object <svs-obj>)
+   (<obj> ^number-checks < <max>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name mark-unstable
+        ^wm-object <obj>
+        ^svs-object <svs-obj>)
+}
+
+sp {evaluate-stability*apply*mark-unstable*save-snapshot
+   (state <s> ^name evaluate-stability
+              ^operator <o>
+              ^svs.command <cmd>)
+   (<o> ^name mark-unstable
+        ^svs-object.id <id>)
+-->
+   (<cmd> ^save-snapshot <ss>)
+   (<ss> ^id <id>)
+   (<s> ^save-snapshot-command <ss>)
+}
+   
+
+sp {evaluate-stability*apply*mark-unstable
+   (state <s> ^name evaluate-stability
+              ^operator <o>
+              ^save-snapshot-command.status success
+              ^io.input-link.time.seconds <cur-t>
+              ^topstate <top>)
+   (<o> ^name mark-unstable
+        ^wm-object <obj>)
+   (<obj> ^stability-check-time <old-t>
+          ^number-checks <num>)
+   (<top> ^agent-params.stability-check-duration <dur>)
+-->
+   (<obj> ^stability-check-time <old-t> -
+          ^stability-check-time (+ <cur-t> <dur>)
+          ^number-checks <num> -
+          ^number-checks (+ <num 1))
+}
