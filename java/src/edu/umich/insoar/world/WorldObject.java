@@ -70,6 +70,8 @@ public class WorldObject
     
     protected boolean isNew = false;
     
+    protected boolean confirmed = false;
+    
     public WorldObject(object_data_t object){
         name = null;
         id = object.id;
@@ -130,7 +132,6 @@ public class WorldObject
     	return bboxSize;
     }
     
-    
     // Set Bounding Box Info
     public void setBBox(double[] xyzrpy, double[] size){
     	for(int i = 0; i < 3; i++){
@@ -142,6 +143,12 @@ public class WorldObject
     	svsCommands.append(SVSCommands.changePos(getIdString(), bboxPos));
     	svsCommands.append(SVSCommands.changeRot(getIdString(), bboxRot));
     	svsCommands.append(SVSCommands.changeSize(getIdString(), bboxSize));
+    }
+
+    
+    public void confirm(){
+    	confirmed = true;
+    	svsCommands.append(SVSCommands.addProperty(getIdString(), "confirmed", "true"));
     }
     
     public void moveObject(double[] newPos){
@@ -261,6 +268,9 @@ public class WorldObject
     }
     
     public synchronized object_data_t createObjectData(){
+    	if(!confirmed){
+    		return null;
+    	}
     	object_data_t objectData = new object_data_t();
     	objectData.id = id;
     	objectData.utime = TimeUtil.utime();

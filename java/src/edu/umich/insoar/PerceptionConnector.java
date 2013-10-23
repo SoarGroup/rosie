@@ -75,8 +75,18 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
      * with perceptual information (time, pointed obj) as well as
      * Send training labels to perception
      *************************************************/
+    long decisionCycleTime = 0;
     public void runEventHandler(int eventID, Object data, Agent agent, int phase)
     {
+    	if(InSoar.DEBUG_TRACE){
+            System.out.println("DC     : " + (TimeUtil.utime() - decisionCycleTime)/1000);
+            decisionCycleTime = TimeUtil.utime();
+    	}
+    	
+    	long time = 0;
+    	if(InSoar.DEBUG_TRACE){
+    		time = TimeUtil.utime();
+    	}
     	
     	Identifier inputLinkId = agent.GetInputLink();
     	// Update time information on the input link
@@ -104,6 +114,10 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         	}
         	lcm.publish("TRAINING_DATA", trainingData);
         	newLabels.clear();
+    	}
+
+    	if(InSoar.DEBUG_TRACE){
+            System.out.println("  PERCP: " + (TimeUtil.utime() - time)/1000);
     	}
     }
 
@@ -180,6 +194,9 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
 	        double z = Double.parseDouble(WMUtil.getValueOfAttribute(
 	        		posId, "z", "Error (modify-scene.move): No ^z attribute"));
 	        world.moveObject(Integer.parseInt(moveId), x, y, z);
+    	} else if(type.equals("confirm")){
+    		String objId = WMUtil.getValueOfAttribute(rootId, "id", "Error (confirm): No ^id attribute");
+    		world.confirmObject(Integer.parseInt(objId));
     	} else {
     		rootId.CreateStringWME("status", "error");
     		return;
@@ -196,12 +213,19 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
     	if(channel.equals("OBSERVATIONS")){
             observations_t obs = null;
             try {
+            	long time = 0;
+            	if(InSoar.DEBUG_TRACE){
+            		time = TimeUtil.utime();
+            	}
                 obs = new observations_t(ins);
                 pointedId = obs.click_id;
                 //if(armStatus.equals("wait")){
                     world.newObservation(obs);
                 //}
                 world.sendObservation();
+                if(InSoar.DEBUG_TRACE){
+                    //System.out.println("  OBSRV: " + (TimeUtil.utime() - time)/1000);
+                }
             }
             catch (IOException e){
                 e.printStackTrace();

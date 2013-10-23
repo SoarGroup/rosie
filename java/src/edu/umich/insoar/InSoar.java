@@ -26,6 +26,7 @@ import edu.umich.insoar.world.WorldModel;
 
 public class InSoar implements PrintEventInterface, RunEventInterface
 {
+	public static final boolean DEBUG_TRACE = false;
     
     private Kernel kernel;
     

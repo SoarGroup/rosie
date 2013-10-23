@@ -1,0 +1,107 @@
+###############################################################################
+#
+# distance-command
+# (<s> ^operator <o>)
+# (<o> ^name distance-command
+#      ^object-a <ida>
+#      ^object-b <idb>
+#      ^distance-type <type>)
+# 
+# The id's given should be svs id's
+# The distance-type is optional, either centroid_distance or distance (between hulls)
+#     Default is centroid_distance
+#
+# Returns either ^distance-command.result # or ^distance-command.result none
+###############################################################################
+
+sp {distance-command*elaborate*object-a
+   (state <s> ^name distance-command
+              ^superstate.operator.object-a <ida>)
+-->
+   (<s> ^object-a <ida>)
+}
+
+sp {distance-command*elaborate*object-b
+   (state <s> ^name distance-command
+              ^superstate.operator.object-b <idb>)
+-->
+   (<s> ^object-b <idb>)
+}
+
+sp {distance-command*elaborate*distance-type*default
+   (state <s> ^name distance-command
+             -^superstate.operator.distance-type)
+-->
+   (<s> ^distance-type centroid_distance)
+}
+
+sp {distance-command*elaborate*distance-type
+   (state <s> ^name distance-command
+             ^superstate.operator.distance-type <type>)
+-->
+   (<s> ^distance-type <type>)
+}
+
+sp {distance-command*propose*create-distance-filter
+   (state <s> ^name distance-command
+              ^object-a <ida>
+              ^object-b <idb>
+              ^distance-type <type>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name create-distance-filter
+        ^category perception
+        ^object-a <ida>
+        ^object-b <idb>
+        ^distance-type <type>)
+}
+
+sp {distance-command*apply*create-distance-filter
+   (state <s> ^name distance-command
+              ^operator <o>
+              ^topstate.svs.command <cmd>)
+   (<o> ^name create-distance-filter
+        ^object-a <ida>
+        ^object-b <idb>
+        ^distance-type <type>)
+-->
+   (<cmd> ^extract_once <distance>)
+   (<distance> ^type <type>
+               ^a <obja>
+               ^b <objb>)
+   (<obja> ^type node
+           ^id <ida>)
+   (<objb> ^type node
+           ^id <idb>)
+   (<s> ^distance-filter <distance>)
+}
+
+sp {distance-command*apply*create-distance-filter*cleanup
+   (state <s> ^name distance-command
+              ^operator.name create-distance-filter
+              ^distance-filter <dist>
+              ^topstate.svs.command <cmd>)
+   (<cmd> ^extract_once <dist>)
+   (<dist> ^result <foo>)
+-->
+   (<cmd> ^extract_once <dist> -)
+}
+
+sp {distance-command*apply*create-distance-filter*success
+   (state <s> ^name distance-command
+              ^operator.name create-distance-filter
+              ^distance-filter.result.record.value <dist>
+              ^superstate <ss>)
+-->
+   (<ss> ^distance-command.result <dist>)
+}
+
+sp {distance-command*apply*create-distance-filter*failure
+   (state <s> ^name distance-command
+              ^operator.name create-distance-filter
+              ^distance-filter.result <res>
+              ^superstate <ss>)
+   (<res> -^record.value)
+-->
+   (<ss> ^distance-command.result none)
+}

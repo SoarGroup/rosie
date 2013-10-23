@@ -111,6 +111,11 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
 
 	// Happens during an input phase
 	public synchronized void runEventHandler(int eventID, Object data, Agent agent, int phase){
+    	long time = 0;
+    	if(InSoar.DEBUG_TRACE){
+    		time = TimeUtil.utime();
+    	}
+    	
 		if(selfId == null){
 			initIL();
 		} else if(gotUpdate){
@@ -126,6 +131,9 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
 			svsCommands = new StringBuilder();
 		}
 		this.agent.commitChanges();
+    	if(InSoar.DEBUG_TRACE){
+            System.out.println("  MOTOR: " + (TimeUtil.utime() - time)/1000);
+    	}
 	}
     
     private void initIL(){

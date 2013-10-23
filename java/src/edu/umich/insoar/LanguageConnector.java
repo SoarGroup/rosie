@@ -7,6 +7,8 @@ import sml.Identifier;
 import sml.WMElement;
 import sml.smlRunEventId;
 
+import april.util.TimeUtil;
+
 import com.soartech.bolt.BOLTLGSupport;
 import com.soartech.bolt.testing.ActionType;
 
@@ -74,6 +76,11 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
     
     public void runEventHandler(int eventID, Object data, Agent agent, int phase)
     {
+    	long time = 0;
+    	if(InSoar.DEBUG_TRACE){
+    		time = TimeUtil.utime();
+    	}
+    	
     	Identifier outputLink = agent.GetOutputLink();
     	if(outputLink != null){
         	WMElement waitingWME = outputLink.FindByAttribute("waiting", 0);
@@ -82,6 +89,10 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
     	Identifier inputLink = agent.GetInputLink();
     	if(inputLink != null){
     		messages.updateInputLink(inputLink);
+    	}
+    	
+    	if(InSoar.DEBUG_TRACE){
+            System.out.println("  LANG : " + (TimeUtil.utime() - time)/1000);
     	}
     }
 

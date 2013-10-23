@@ -1,5 +1,6 @@
 package edu.umich.insoar.world;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -143,7 +144,14 @@ public class WorldModel implements RunEventInterface
     		//System.out.println("MOVING OBJECT " + id + " to " + x + ", " + y + ", " + z);
     		object.moveObject(new double[]{x, y, z});
     		object.updateSVS(soarAgent.getAgent());
-    		soarAgent.commitChanges();
+    	}
+    }
+    
+    public synchronized void confirmObject(Integer id){
+    	WorldObject obj = objects.get(id);
+    	if(obj != null){
+    		obj.confirm();
+    		obj.updateSVS(soarAgent.getAgent());
     	}
     }
     
@@ -152,13 +160,17 @@ public class WorldModel implements RunEventInterface
     }
     
     public synchronized void sendObservation(){
+    	ArrayList<object_data_t> objectData = new ArrayList<object_data_t>();
+    	for(WorldObject obj : objects.values()){
+    		object_data_t objData = obj.createObjectData();
+    		if(objData != null){
+    			objectData.add(objData);
+    		}
+    	}
     	soar_objects_t outgoingObs = new soar_objects_t();
     	outgoingObs.utime = TimeUtil.utime();
-    	outgoingObs.num_objects = 0;
-    	outgoingObs.objects = new object_data_t[objects.size()];
-    	for(WorldObject obj : objects.values()){
-    		outgoingObs.objects[outgoingObs.num_objects++] = obj.createObjectData();
-    	}
+    	outgoingObs.objects = objectData.toArray(new object_data_t[objectData.size()]);
+    	outgoingObs.num_objects = outgoingObs.objects.length;
     	
     	LCM.getSingleton().publish("SOAR_OBJECTS", outgoingObs);
     }

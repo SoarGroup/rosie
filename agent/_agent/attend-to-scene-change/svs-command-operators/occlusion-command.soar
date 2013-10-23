@@ -1,0 +1,79 @@
+###############################################################################
+#
+# occlusion-command
+# (<s> ^operator <o>)
+# (<o> ^name occlusion-command
+#      ^object-id <id>)
+#
+# Returns either ^occlusion-command.result # or ^occlusion-command.result none
+# (none should only be returned in rare error cases)
+# The returned number represents an estimation of how occluded the given object is
+###############################################################################
+
+sp {occlusion-command*elaborate*object-id
+   (state <s> ^name occlusion-command
+              ^superstate.operator.object-id <id>)
+-->
+   (<s> ^object-id <id>)
+}
+
+# Operator: create-occlusion-filter
+#   Creates the extract command and copies the result to the superstate
+sp {occlusion-command*propose*create-occlusion-filter
+   (state <s> ^name occlusion-command
+              ^object-id <id>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name create-occlusion-filter
+        ^category perception
+        ^object-id <id>)
+}
+
+# Create the extract command
+sp {occlusion-command*apply*create-occlusion-filter
+   (state <s> ^name occlusion-command
+              ^operator <o>
+              ^topstate.svs.command <cmd>)
+   (<o> ^name create-occlusion-filter
+        ^object-id <id>)
+-->
+   (<cmd> ^extract_once <occlusion>)
+   (<occlusion> ^type occlusion
+                ^a <node>)
+   (<node> ^type node
+           ^id <id>)
+   (<s> ^occlusion-filter <occlusion>)
+}
+
+# Remove the command from the svs.command link
+sp {occlusion-command*apply*create-occlusion-filter*cleanup
+   (state <s> ^name occlusion-command
+              ^operator.name create-occlusion-filter
+              ^occlusion-filter <occlusion>
+              ^topstate.svs.command <cmd>)
+   (<cmd> ^extract_once <occlusion>)
+   (<occlusion> ^result <res>)
+-->
+   (<cmd> ^extract_once <occlusion> -)
+}
+
+# Copy result of the successful command to the superstate
+sp {occlusion-command*apply*create-occlusion-filter*success
+   (state <s> ^name occlusion-command
+              ^operator.name create-occlusion-filter
+              ^occlusion-filter.result.record.value <val>
+              ^superstate <ss>)
+-->
+   (<ss> ^occlusion-command.result <val>)
+}
+
+# There was no valid result given, return none
+sp {occlusion-command*apply*create-occlusion-filter*failure
+   (state <s> ^name occlusion-command
+              ^operator.name create-occlusion-filter
+              ^occlusion-filter.result <res>
+              ^superstate <ss>)
+   (<res> -^record.value <val>)
+-->
+   (<ss> ^occlusion-command.result none)
+}

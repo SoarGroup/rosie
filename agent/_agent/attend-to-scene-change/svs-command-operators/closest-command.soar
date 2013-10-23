@@ -1,0 +1,114 @@
+###############################################################################
+#
+# closest-command
+# (<s> ^operator <o>)
+# (<o> ^name closest-command
+#      ^object-id <id>
+#      ^candidate-set <cand>)
+# 
+# The id's given should be svs id's
+# The candidate set is optional, and defaults to all nodes
+#    Should be the node filter from which to check for closest node
+# 
+# The id's given should be svs id's
+#
+# Returns either ^closest-command.result <id> or ^occlusion-command.result none
+# (NOTE! the id returned is the svs id, so probably a string and not an integer)
+###############################################################################
+
+sp {closest-command*elaborate*object-id
+   (state <s> ^name closest-command
+              ^superstate.operator.object-id <id>)
+-->
+   (<s> ^object-id <id>)
+}
+
+sp {closest-command*elaborate*candidate-set*default
+   (state <s> ^name closest-command
+             -^superstate.operator.candidate-set)
+-->
+   (<s> ^candidate-set.type all_nodes)
+}
+
+sp {closest-command*elaborate*candidate-set*copy
+   (state <s> ^name closest-command
+              ^superstate.operator.candidate-set <set>)
+-->
+   (<s> ^candidate-set <set>)
+}
+
+# Operator: create-closest-filter
+#   Creates the extract command and copies the result to the superstate
+sp {closest-command*propose*create-closest-filter
+   (state <s> ^name closest-command
+              ^object-id <id>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name create-closest-filter
+        ^category perception
+        ^object-id <id>)
+}
+
+# Create the extract command
+sp {closest-command*apply*create-closest-filter
+   (state <s> ^name closest-command
+              ^operator <o>
+              ^topstate.svs.command <cmd>
+              ^candidate-set <candidates>)
+   (<o> ^name create-closest-filter
+        ^object-id <id>)
+-->
+   (<cmd> ^extract_once <closest>)
+   (<closest> ^type closest
+               ^a <obj>
+               ^b <candidates>)
+   (<obj> ^type node
+          ^id <id>)
+   (<s> ^closest-filter <closest>)
+}
+
+# Remove the command from the svs.command link
+sp {closest-command*apply*create-closest-filter*cleanup
+   (state <s> ^name closest-command
+              ^operator.name create-closest-filter
+              ^closest-filter <closest>
+              ^topstate.svs.command <cmd>)
+   (<cmd> ^extract_once <closest>)
+   (<closest> ^result <res>)
+-->
+   (<cmd> ^extract_once <closest> -)
+}
+
+# Copy result of the successful command to the superstate
+sp {closest-command*apply*create-closest-filter*success
+   (state <s> ^name closest-command
+              ^operator.name create-closest-filter
+              ^object-id <id>
+              ^closest-filter.result.record.params.b {<closest-id> <> <id>}
+              ^superstate <ss>)
+-->
+   (<ss> ^closest-command.result <closest-id>)
+}
+
+# The object returned was the one given, return as a none result
+sp {closest-command*apply*create-closest-filter*failure*same-id
+   (state <s> ^name closest-command
+              ^operator.name create-closest-filter
+              ^object-id <id>
+              ^closest-filter.result.record.params.b <id>
+              ^superstate <ss>)
+-->
+   (<ss> ^closest-command.result none)
+}
+
+# There was no valid result given, return none
+sp {closest-command*apply*create-closest-filter*failure*no-result
+   (state <s> ^name closest-command
+              ^operator.name create-closest-filter
+              ^object-id <id>
+              ^closest-filter.result <res>
+              ^superstate <ss>)
+   (<res> -^record.params.b <foo>)
+-->
+   (<ss> ^closest-command.result none)
+}
