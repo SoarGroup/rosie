@@ -1,0 +1,117 @@
+###############################################################################
+#
+# intersect-command
+# (<s> ^operator <o>)
+# (<o> ^name intersect-command
+#      ^object-id <id>
+#      ^candidate-set <cand>)
+# 
+# The id's given should be svs id's
+# The candidate set is optional, and defaults to all nodes
+#    Should be the node filter from which to check for intersect node
+# 
+# The id's given should be svs id's
+#
+# Returns either ^intersect-command.result <id> or ^occlusion-command.result none
+# (NOTE! the id returned is the svs id, so probably a string and not an integer)
+# Can return multiple results
+###############################################################################
+
+sp {intersect-command*elaborate*object-id
+   (state <s> ^name intersect-command
+              ^superstate.operator.object-id <id>)
+-->
+   (<s> ^object-id <id>)
+}
+
+sp {intersect-command*elaborate*candidate-set*default
+   (state <s> ^name intersect-command
+             -^superstate.operator.candidate-set)
+-->
+   (<s> ^candidate-set.type all_nodes)
+}
+
+sp {intersect-command*elaborate*candidate-set*copy
+   (state <s> ^name intersect-command
+              ^superstate.operator.candidate-set <set>)
+-->
+   (<s> ^candidate-set <set>)
+}
+
+# Operator: create-intersect-filter
+#   Creates the extract command and copies the result to the superstate
+sp {intersect-command*propose*create-intersect-filter
+   (state <s> ^name intersect-command
+              ^object-id <id>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name create-intersect-filter
+        ^category perception
+        ^object-id <id>)
+}
+
+# Create the extract command
+sp {intersect-command*apply*create-intersect-filter
+   (state <s> ^name intersect-command
+              ^operator <o>
+              ^topstate.svs.command <cmd>
+              ^candidate-set <candidates>)
+   (<o> ^name create-intersect-filter
+        ^object-id <id>)
+-->
+   (<cmd> ^extract_once <intersect>)
+   (<intersect> ^type intersect
+               ^a <obj>
+               ^b <candidates>)
+   (<obj> ^type node
+          ^id <id>)
+   (<s> ^intersect-filter <intersect>
+        ^intersect-command <f>)
+}
+
+
+# Remove the command from the svs.command link
+sp {intersect-command*apply*create-intersect-filter*cleanup
+   (state <s> ^name intersect-command
+              ^operator.name create-intersect-filter
+              ^intersect-filter <intersect>
+              ^topstate.svs.command <cmd>)
+   (<cmd> ^extract_once <intersect>)
+   (<intersect> ^result <res>)
+-->
+   (<cmd> ^extract_once <intersect> -)
+}
+
+# Copy result of the successful command to the superstate
+sp {intersect-command*apply*create-intersect-filter*copy*result
+   (state <s> ^name intersect-command
+              ^operator.name create-intersect-filter
+              ^intersect-command <f>
+              ^superstate <ss>)
+   (<f> ^result <res>)
+-->
+   (<ss> ^intersect-command <f>)
+}
+
+# Copy the results to the intersect-command wme
+sp {intersect-command*apply*create-intersect-filter*success
+   (state <s> ^name intersect-command
+              ^operator.name create-intersect-filter
+              ^intersect-filter.result.record <rec>
+              ^intersect-command <icmd>)
+   (<rec> ^value t
+          ^params.b <id>)
+-->
+   (<icmd> ^result <id>)
+}
+   
+# There was no valid result given, return none
+sp {intersect-command*apply*create-intersect-filter*failure*no-result
+   (state <s> ^name intersect-command
+              ^operator.name create-intersect-filter
+              ^intersect-filter.result <res>
+              ^intersect-command <icmd>)
+   (<res> -^record.value t)
+-->
+   (<icmd> ^result none)
+}
