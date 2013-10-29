@@ -4,7 +4,7 @@ sp {find-parameters*elaborate*copy-down-attrs
    (<o> ^game-name <name>)
 -->
    (<s> ^desired <d> ^game-name <name> ^action-args <aa> ^failure-args <fa> ^goal-args <ga> 
-        ^depth-limit 2 ^dcount 0)
+        ^depth-limit 4 ^dcount 0)
    (<d> ^found true)
    (<aa> ^type action)
    (<fa> ^type failure)
@@ -97,12 +97,24 @@ sp {find-parameters*propose*copy-relationships
    (<op> ^category svs
         ^name copy-rels)
 }
+sp {find-parameters*propose*delete-duplicates
+   (state <s> ^name find-parameters
+              ^dcount 0
+             -^deleted true
+              ^parameter-match complete)
+-->
+#   (interrupt)
+   (<s> ^operator <op> + =)
+   (<op> ^category svs
+        ^name delete-duplicates)
+}
 
-
+#fuck fix this
 sp {find-parameters*elaborate*right-handside-relations
    (state <s> ^name find-parameters
               ^dcount 0
 #              ^topstate.found-prep <fprep>
+              ^operator <op>
               ^<< action-args failure-args goal-args >> <aa>
               ^parameter-match complete)
    (<aa> ^{<n> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>)
@@ -111,6 +123,9 @@ sp {find-parameters*elaborate*right-handside-relations
    (<cond> ^prep <prep>)
    (<obj> ^id <id>)
    (<prep> ^name <name>)
+   (<op> ^name copy-rels)
+# -{(<s> ^relationships <rels2>)
+#   (<rels2> ^with <id> ^preposition <name>)}
 -->
    (<s> ^relationships <rels>)
    (<rels> ^with <id> ^preposition <name>)
@@ -129,6 +144,27 @@ sp {find-parameters*apply*copy-rels
 -->
    (<rels> ^relations <r>)
    (<r> ^name <name> ^obj <id2> ^matched true) 
+}
+
+sp {find-parameters*apply*delete-duplicates
+   (state <s> ^name find-parameters
+              ^dcount 0
+              ^relationships <rels>
+              ^relationships {<rels2> < <rels>}
+              ^operator <op>)
+   (<op> ^name delete-duplicates)
+   (<rels> ^with <id> ^preposition <name>)
+   (<rels2> ^with <id> ^preposition <name>)
+-->
+   (<s> ^relationships <rels> -)
+}
+sp {find-parameters*apply*delete-duplicates2
+   (state <s> ^name find-parameters
+              ^dcount 0
+              ^operator <op>)
+   (<op> ^name delete-duplicates)
+-->
+   (<s> ^deleted true)
 }
 
 sp {find-parameters*apply*copy-rels*linear
@@ -405,16 +441,16 @@ sp {select-parameters*apply*result
         ^verbs <verbs>
         ^possible-match-set <pms>)
    (<verbs> ^<a1> <verb1>)
-   (<verb1> ^{<a1> 1} <arg1> ^{<a2> 2} <arg2> ^verb-name <vname>)
+   (<verb1> ^{<a1> 1} <arg1> ^{<a2> 2} <arg2> ^verb-name <vname> ^verb-prep <pname>)
    (<pms> ^<arg1>.possible-match <obj1>
           ^<arg2>.possible-match <obj2>)       
 -->
    (<ss> ^valid-arg.<a1> <obj1>
          ^valid-arg.<a2> <obj2> #todo need all parameters of action
          ^action <a>)
-   (<a> ^verb <vname>)
+   (<a> ^verb <vname> ^pname <pname>)
    (<ts> ^flound-action <fa>)
-   (<fa> ^dcount 1 ^obj1 <obj1b> ^obj2 <obj2b> ^mark done)
+   (<fa> ^dcount 1 ^obj1 <obj1b> ^obj2 <obj2b> ^mark done ^pname <pname>)
 }
 
 sp {select-parameters*apply*result*2verbs
@@ -431,7 +467,7 @@ sp {select-parameters*apply*result*2verbs
         ^verbs <verbs>
         ^possible-match-set <pms>)
    (<verbs> ^<a1> <verb1> ^<a2> <verb2>)
-   (<verb1> ^{<a1> 1} <arg1> ^{<a2> 2} <arg2> ^verb-name <vname>)
+   (<verb1> ^{<a1> 1} <arg1> ^{<a2> 2} <arg2> ^verb-name <vname> ^verb-prep <pname>)
    (<verb2> ^<a1> <arg1b> ^<a2> <arg2b>)
    (<pms> ^<arg1>.possible-match <obj1>
           ^<arg2>.possible-match <obj2>
@@ -441,9 +477,9 @@ sp {select-parameters*apply*result*2verbs
    (<ss> ^valid-arg.<a1> <obj1>
          ^valid-arg.<a2> <obj2> #todo need all parameters of action
          ^action <a>)
-   (<a> ^verb <vname>)
+   (<a> ^verb <vname> ^pname <pname>)
    (<ts> ^flound-action <fa>)
-   (<fa> ^dcount 1 ^obj1 <obj1b> ^obj2 <obj2b>)
+   (<fa> ^dcount 1 ^obj1 <obj1b> ^obj2 <obj2b> ^pname <pname>)
 }
 
 #TODO DEPRICATED?
