@@ -3,12 +3,13 @@ sp {find-parameters*elaborate*copy-down-attrs
               ^superstate.operator <o>)
    (<o> ^game-name <name>)
 -->
-   (<s> ^desired <d> ^game-name <name> ^action-args <aa> ^failure-args <fa> ^goal-args <ga> 
-        ^depth-limit 1 ^dcount 0)
+   (<s> ^desired <d> ^game-name <name> 
+        #^action-args <aa> ^failure-args <fa> ^goal-args <ga> 
+        ^depth-limit 3 ^dcount 0)
    (<d> ^found true)
-   (<aa> ^type action)
-   (<fa> ^type failure)
-   (<ga> ^type goal)
+#      (<aa> ^type action)
+#   (<fa> ^type failure)
+#   (<ga> ^type goal)
 }
 
 sp {find-parameters*impasse*elaborate
@@ -33,48 +34,77 @@ sp {find-parameters-impasse*propose*lookup-game
         ^game-name <name>)
 }
 
+sp {find-parameters-impasse*elaborate*conditions-parameters*multiplayers
+   (state <s> ^name find-parameters-impasse
+              ^game <g>
+              ^superstate <ss>)
+   (<ss> ^game-name <name>)
+   (<g> ^game-name <name> ^actions <a> ^goals <go> ^failures <f> ^player-pieces <pie> ^multiplayer {<m> true})
+-->
+   (<ss> ^actions <a> ^failures <f> ^goals <go> ^player-args <pa> ^player-pieces <pie> ^current-player 1 ^multiplayer <m>)
+   (<pa> ^1 <pa1> ^2 <pa2> ^current 1)
+   (<pa1> ^action-args <aa> ^failure-args <fa> ^goal-args <ga> ^num 1)
+   (<pa2> ^action-args <aa1> ^failure-args <fa1> ^goal-args <ga1> ^num 2)
+   (<a> ^type action)
+   (<f> ^type failure)
+   (<go> ^type goal)
+   (<aa> ^type action ^num 1)
+   (<fa> ^type failure ^num 1)
+   (<ga> ^type goal ^num 1)
+   (<aa1> ^type action ^num 2)
+   (<fa1> ^type failure ^num 2)
+   (<ga1> ^type goal ^num 2)
+}
 sp {find-parameters-impasse*elaborate*conditions-parameters
    (state <s> ^name find-parameters-impasse
               ^game <g>
               ^superstate <ss>)
    (<ss> ^game-name <name>)
-   (<g> ^game-name <name> ^actions <a> ^goals <go> ^failures <f>)
+   (<g> ^game-name <name> ^actions <a> ^goals <go> ^failures <f> ^multiplayer {<m> false})
 -->
-   (<ss> ^actions <a> ^failures <f> ^goals <go>)
+   (<ss> ^actions <a> ^failures <f> ^goals <go> ^player-args <pa> ^current-player 1 ^multiplayer <m>)
+   (<pa> ^1 <pa1> ^current 1)
+   (<pa1> ^action-args <aa> ^failure-args <fa> ^goal-args <ga> ^num 1)
    (<a> ^type action)
    (<f> ^type failure)
    (<go> ^type goal)
+    (<aa> ^type action ^num 1)
+   (<fa> ^type failure ^num 1)
+   (<ga> ^type goal ^num 1)
 }
 
-sp {find-parameters-impasse*elaborate*conditions-parameters*multiplayer
-   (state <s> ^name find-parameters-impasse
-              ^game <g>
-              ^superstate <ss>)
-   (<ss> ^game-name <name>)
-   (<g> ^game-name <name> ^actions <a> ^goals <go> ^failures <f> ^multiplayer <m>)
--->
-   (<ss> ^multiplayer <m>)
-}
+#sp {find-parameters-impasse*elaborate*conditions-parameters*multiplayer
+#   (state <s> ^name find-parameters-impasse
+#              ^game <g>
+#              ^superstate <ss>)
+#   (<ss> ^game-name <name>)
+#   (<g> ^game-name <name> ^actions <a> ^goals <go> ^failures <f> 
+#-->
+#   (<ss> ^multiplayer <m>)
+#}
 
 #### parameter match here for all
+
+   
 sp {find-parameters*propose*parameter-match
    (state <s> ^name find-parameters
-              ^dcount 0
-              ^goal-args <ga>
-              ^action-args <aa>
+              ^dcount 0            
              -^parameter-match complete
-              ^failure-args <fa>
+              ^player-args <pa>
+              ^multiplayer <m>
               ^goals <g>
               ^failures <f>
               ^actions <a>)
 -->
    (<s> ^operator <o> +)
    (<o> ^name parameter-match
-        ^action-args <aa>
+        ^player-args <pa>
+#        ^action-args <aa>
         ^action-param <a>
-        ^failure-args <fa>
+#        ^failure-args <fa>
         ^failure-param <f>
-        ^goal-args <ga>
+        ^multiplayer <m>
+#        ^goal-args <ga>
         ^goal-param <g>)
 }
 #copy all relationships
@@ -108,7 +138,7 @@ sp {find-parameters*elaborate*right-handside-relations
    (state <s> ^name find-parameters
               ^dcount 0
               ^operator <op>
-              ^<< action-args failure-args goal-args >> <aa>
+              ^player-args.{<argn> << 1 2 >>}.<< action-args failure-args goal-args >> <aa>
               ^parameter-match complete)
    (<aa> ^{<n> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>)
    (<a> ^obj <obj> ^cond <cond>)
@@ -176,8 +206,9 @@ sp {find-parameters*propose*constraint-match
    (state <s> ^name find-parameters
              -^processing wait
              -^matches-found.action
+              ^current-player <num>
               ^parameter-match complete
-              ^action-args <aa>)
+              ^player-args.<num>.action-args <aa>)
 -->
    (<s> ^operator <o> +)
    (<o> ^name constraint-match
@@ -186,9 +217,10 @@ sp {find-parameters*propose*constraint-match
 sp {find-parameters*propose*select-parameters
    (state <s> ^name find-parameters
               ^matches-found.action true
-              ^action-args.parameter-match-set <pms>
+              ^current-player <num>
+              ^player-args.<num>.action-args.parameter-match-set <pms>
               ^parameter-match complete
-              ^action-args.<arg0>.verbs <verbs>)
+              ^player-args.<num>.action-args.<arg0>.verbs <verbs>)
    (<pms> ^{<arg1> 1}.possible-match <obj1>)
    (<pms> ^argnum <arg0>)
    -{(<s> ^legal-action.<arg1> <obj1>)} #dont double touch heuristic
@@ -198,6 +230,7 @@ sp {find-parameters*propose*select-parameters
         ^arg1 1 # HACK shouldnt assume first two conditions are for action
         ^arg2 2 #TODO multi action-remove
         ^action <arg0>
+        ^player-num <num>
         ^verbs <verbs>
         ^possible-match-set <pms>
         ^category svs)
@@ -217,8 +250,10 @@ sp {find-parameters*elaborate*problem-space
 sp {find-parameters*propose*complete-find-parameter-failed
    (state <s> ^name find-parameters
               ^matches-found.action
+             -^dcount 0
+             -^multiplayer true
               ^parameter-match complete)
--{(<s> ^dcount 0 ^multiplayer true)}
+#-{(<s> ^dcount 0 ^multiplayer true)}
 -->
    (<s> ^operator <o> + ) 
    (<o> ^name complete-find-parameter-failed
@@ -228,11 +263,30 @@ sp {find-parameters*propose*complete-find-parameter-failed2
    (state <s> ^name find-parameters
               -^matches-found.action
                ^dcount <dc>
+              -^dcount 0
                ^depth-limit <dc>
-               ^matches-found.goal false
+               ^matches-found.num 2
+               ^matches-found.num 1
+#               ^matches-found.goal false
               ^parameter-match complete)
--{(<s> ^dcount 0 ^multiplayer true)}
+#-{(<s> ^dcount 0 ^multiplayer true)}
 -->
+   (<s> ^operator <o> + ) 
+   (<o> ^name complete-find-parameter-failed
+        ^category svs)
+}
+sp {find-parameters*propose*complete-find-parameter-failed3
+   (state <s> ^name find-parameters
+#              -^matches-found.action
+             -^depth-limit <dc>
+               ^dcount <dc>
+               ^multiplayer true
+               ^val-count <vc>
+              -^dcount 0
+              ^parameter-match complete)
+#-{(<s> ^dcount 0 ^multiplayer true)}
+-->
+   (interrupt)
    (<s> ^operator <o> + ) 
    (<o> ^name complete-find-parameter-failed
         ^category svs)
@@ -248,14 +302,17 @@ sp {find-parameters*apply*complete-find-parameter-failed*sub
    (<s> ^partial-failure <d>)
 }
 
-
-sp {find-parameters*apply*complete-find-parameter-failed*multiplayer-evaluate
-   :interrupt
+#first do both goals and then use to evaluate all operators with num?
+#do all at once or somehow sequentially?
+sp {find-parameters*apply*complete-find-parameter-faileds*multiplayer-evaluate
    (state <s> ^name find-parameters
               ^multiplayer true
+              ^depth-limit <dc>
+              ^dcount <dc>
+              ^played-num <num>
               ^superstate.superstate <sss>
              # ^goal-args.{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.possible-match.has <yid>
-              ^goal-args.{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.possible-match <pm> 
+              ^player-args.<num>.goal-args.{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.possible-match <pm> 
               ^superstate.operator.superoperator <o>
               ^desired <d>
              -^dcount 0
@@ -263,9 +320,161 @@ sp {find-parameters*apply*complete-find-parameter-failed*multiplayer-evaluate
    (<sss> ^operator <o> +)
    (<pm> ^{<arg2> << 1 2 3 4 5 6 7 8 9 10 >>} <yid> -^none <arg2>)
 -->
-   (<s> ^indifferent <d>)
-   (<sss> ^operator <o> = 1.0)
+   (<s> ^addup <dag>)
 }
+
+sp {find-parameters*apply*complete-find-parameter-failed*multiplayer-evaluatesub
+   (state <s> ^name find-parameters
+              ^multiplayer true
+              ^depth-limit <dc>
+              ^dcount <dc>
+              ^current-player <num>
+              ^superstate.superstate <sss>
+             # ^goal-args.{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.possible-match.has <yid>
+              ^player-args.<num>.goal-args.{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.possible-match <pm> 
+              ^superstate.operator.superoperator <o>
+              ^desired <d>
+             -^dcount 0
+              ^operator.name complete-find-parameter-failed)
+   (<sss> ^operator <o> +)
+   (<pm> ^{<arg2> << 1 2 3 4 5 6 7 8 9 10 >>} <yid> -^none <arg2>)
+-->
+   (<s> ^subup <dag>)
+}
+sp {find-parameters*apply*complete-find-parameter-failed*multiplayer-evaluatetop
+   (state <s> ^name find-parameters
+              ^multiplayer true
+#              ^depth-limit <dc>
+#              ^dcount <dc>
+#              ^played-num <num>
+              ^superstate.superstate <sss>
+              ^superstate.operator.superoperator <o>
+              ^desired <d>
+              ^val-count <ic>
+             -^dcount 0 #comment out?
+              ^operator.name complete-find-parameter-failed)
+   (<sss> ^operator <o> +)
+-->
+  (<s> ^indifferent <d>)
+  (<o> ^valcue <ic>)
+  (<sss> ^operator <o> = <ic>)
+}
+sp {find-parameters*apply*complete-find-parameter-failed*multiplayer-evaluatetopsum
+   (state <s> ^name find-parameters
+              ^multiplayer true
+              ^depth-limit <dc>
+              ^dcount <dc>
+              ^val-count-pos <pc>
+              ^val-count-neg <nc>
+             -^dcount 0) #comment out?)
+-->
+    (<s> ^val-count (- <pc> <nc>))
+}
+
+sp {find-parameters*apply*complete-find-parameter-failed*multiplayer-evaluate2323
+#   :interrupt
+   (state <s> ^name find-parameters
+              ^multiplayer true
+              ^depth-limit <dc>
+              ^dcount <dc>
+              -^dcount 0
+             -^val-count-pos
+              ^played-num <num>
+              ^addup <a>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name count-val)
+}
+sp {find-parameters*prepose*complete-find-parameter-FCUKSTUPID2
+#   :interrupt
+   (state <s> ^name find-parameters
+              ^multiplayer true
+              ^depth-limit <dc>
+              ^dcount <dc>
+             -^count-done
+              -^dcount 0
+              ^val-count-pos
+              ^played-num <num>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name count-val-done)
+}
+sp {find-parameters*apply*complete-find-parameter-FCUKSTUPID
+#   :interrupt
+   (state <s> ^name find-parameters
+              ^multiplayer true
+              ^depth-limit <dc>
+              ^operator <o>)
+   (<o> ^name count-val-done)
+-->
+#   (interrupt)
+   (<s> ^count-done true)
+}
+
+
+sp {find-parameters*apply*complete-find-parameter-failed*multiplayer-evaluate2323sub
+#   :interrupt
+   (state <s> ^name find-parameters
+              ^multiplayer true
+              ^depth-limit <dc>
+              ^dcount <dc>
+              -^dcount 0
+               ^count-done true
+             -^val-count-neg
+              ^played-num <num>
+              ^subup <a>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name count-val2)
+}
+
+sp {find-parameters*apply*complete-find-parameter-failed*multiplayer-evaluate23v2
+#   :interrupt
+   (state <s> ^superstate.name find-parameters
+              ^superstate.multiplayer true
+              ^superstate.depth-limit <dc>
+             -^superstate.count-done
+              ^superstate <ss>
+              ^superstate.dcount <dc>
+              ^item-count <ic>)
+-->
+   (<ss> ^val-count-pos <ic>)
+}
+sp {find-parameters*apply*complete-find-parameter-failed*multiplayer-evaluate23v2neg
+#   :interrupt
+   (state <s> ^superstate.name find-parameters
+              ^superstate.multiplayer true
+              ^superstate.depth-limit <dc>
+#             ^superstate.get-neg
+              ^superstate.count-done
+#              -^item.name count-val
+              ^superstate <ss>
+              ^superstate.dcount <dc>
+              ^item-count <ic>)
+-->
+   (<ss> ^val-count-neg <ic>)
+}
+
+#sp {find-parameters*apply*complete-find-parameter-failed*multiplayer-evaluateother
+##   :interrupt
+#   (state <s> ^name find-parameters
+#              ^multiplayer true
+#              ^depth-limit <dc>
+#              ^dcount <dc>
+#              ^current-player <num>
+#              ^superstate.superstate.superstate.superstate <sss>
+#             # ^goal-args.{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.possible-match.has <yid>
+#              ^player-args.<num>.goal-args.{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.possible-match <pm> 
+#              ^superstate.superstate.superstate.operator.superoperator <o>
+#              ^desired <d>
+#             -^dcount 0
+#              ^operator.name complete-find-parameter-failed)
+#   (<sss> ^operator <o> +)
+#   (<pm> ^{<arg2> << 1 2 3 4 5 6 7 8 9 10 >>} <yid> -^none <arg2>)
+#-->
+#   (<s> ^indifferent <d>)
+#   (<sss> ^operator <o> = 1.0)
+#}
 
 sp {find-parameters*apply*complete-find-parameter-failed*top
    (state <s> ^name find-parameters
@@ -303,33 +512,65 @@ sp {selection*prefer*evaluate*select-parameters*over*complete-find-parameter-fai
    (<s> ^operator <o1> > <o2>)
 }
 
+
+
+
 #COPY DOWN STUFF
+
+#todo copy 1 level player-args
+
+sp {find-parameters*elaborate*problem-space*player-args
+   (state <s> ^name find-parameters
+              ^superstate.superstate.player-args <a>)
+-->
+   (<s> ^player-args <b>)
+}
+
+sp {find-parameters*elaborate*problem-space*player-argsnum
+   (state <s> ^name find-parameters
+              ^player-args <pa>
+              ^superstate.superstate.player-args <a>)
+   (<a> ^<argn> <so>)
+   (<so> ^num <num>)
+-->
+   (<pa> ^<argn> <b>)
+   (<b> ^num <num>)
+}
+
 sp {find-parameters*elaborate*problem-space*action-args
    (state <s> ^name find-parameters
-              ^superstate.superstate.{<args> << action-args >>} <a>)
+              ^player-args.<argn> <c>
+              ^superstate.superstate.player-args.<argn>.{<args> << goal-args failure-args action-args >>} <a>)
 -->
-   (<s> ^<args> <b>)
-   (<b> ^type action)
+   (<c> ^<args> <b>)
 }
+
 sp {find-parameters*elaborate*problem-space*-args*first
    (state <s> ^name find-parameters
-              ^superstate.superstate.<args>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              ^{<args> << goal-args failure-args action-args >>} <ga>)
+              ^superstate.superstate.player-args.<argn>.<args>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
+              ^player-args.<argn>.{<args> << goal-args failure-args action-args >>} <ga>)
 -->
    (<ga> ^<arg> <garg>)
 }
+sp {find-parameters*elaborate*problem-space*-args*numtype
+   (state <s> ^name find-parameters
+              ^superstate.superstate.player-args.<argn>.<args>.{<arg> << num type >>} <n>
+              ^player-args.<argn>.{<args> << goal-args failure-args action-args >>} <ga>)
+-->
+   (<ga> ^<arg> <n>)
+}
 sp {find-parameters*elaborate*problem-space*-args*second
    (state <s> ^name find-parameters
-              ^superstate.superstate.<args>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg2> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              ^{<args> << goal-args failure-args action-args >>}.<arg> <garg>)
+              ^superstate.superstate.player-args.<argn>.<args>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg2> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
+              ^player-args.<argn>.{<args> << goal-args failure-args action-args >>}.<arg> <garg>)
 -->
    (<garg> ^<arg2> <b>)
 }
 
 sp {find-parameters*elaborate*problem-space*-args*substructs
    (state <s> ^name find-parameters
-              ^superstate.superstate.<args>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg2> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              ^{<args> << goal-args failure-args action-args >>} <ga>)
+              ^superstate.superstate.player-args.<argn>.<args>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg2> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
+              ^player-args.<argn>.{<args> << goal-args failure-args action-args >>} <ga>)
    (<ga> ^<arg>.<arg2> <b>)
    (<a> ^{<something> <> possible-match} <x>)
 -->
@@ -338,7 +579,7 @@ sp {find-parameters*elaborate*problem-space*-args*substructs
 
 sp {find-parameters*elaborate*problem-space*act-other-attributes*verbssamelevel
    (state <s> ^name find-parameters
-              ^action-args.{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <act>
+              ^player-args.<argn>.action-args.{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <act>
               ^actions.<arg0>.{<atr> << verbs >>} <c>)#verb-prep
 -->
    (<act> ^<atr> <c>)
@@ -346,8 +587,8 @@ sp {find-parameters*elaborate*problem-space*act-other-attributes*verbssamelevel
 
 sp {find-parameters*elaborate*problem-space*act-other-attributes
    (state <s> ^name find-parameters
-              ^{<args> << goal-args failure-args action-args >>}.{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <act>
-              ^superstate.superstate.{<args> << goal-args failure-args action-args >>}.{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<atr> << verbs cond-args found-possible >>} <c>)#verb-prep
+              ^player-args.<argn>.<args>.<arg0> <act>
+              ^superstate.superstate.player-args.<argn>.{<args> << goal-args failure-args action-args >>}.{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<atr> << verbs cond-args found-possible >>} <c>)#verb-prep
 -->
    (<act> ^<atr> <c>)
 }
@@ -358,7 +599,27 @@ sp {find-parameters*elaborate*problem-space*argsdcount
 -->
    (<s> ^dcount (+ <c> 1))
 }
-
+sp {find-parameters*elaborate*problem-space*current-player2
+   (state <s> ^name find-parameters
+              ^multiplayer true
+              ^superstate.superstate.current-player 1)
+-->
+   (<s> ^current-player 2)
+}
+sp {find-parameters*elaborate*problem-space*current-player1
+   (state <s> ^name find-parameters
+              ^multiplayer true
+              ^superstate.superstate.current-player 2)
+-->
+   (<s> ^current-player 1)
+}
+sp {find-parameters*elaborate*problem-space*notmulti
+   (state <s> ^name find-parameters
+              ^multiplayer false
+              ^superstate.superstate.current-player <cp>)
+-->
+   (<s> ^current-player <cp>)
+}
 sp {select-parameters*apply*result
    (state <s> ^name select-parameters
               ^superstate.superstate <ss>
@@ -375,7 +636,7 @@ sp {select-parameters*apply*result
    (<pms> ^<arg1>.possible-match <obj1>
           ^<arg2>.possible-match <obj2>)       
 -->
-   (interrupt)
+#   (interrupt)
    (<ss> ^valid-arg.<a1> <obj1>
          ^valid-arg.<a2> <obj2> #todo need all parameters of action
          ^action <a>)
