@@ -1,9 +1,11 @@
 sp {find-parameters-results-impasse*propose*learn-action-result
    (state <s> ^superstate.name select-param
               ^superstate.legal-action <item>
-             -^superstate.action-result.item <item>
+#             -^superstate.simulated true
+              -^superstate.action-result
+#             -^superstate.action-result.item <item>
               ^impasse no-change)
-    (<item> ^{<arg> 1})
+#    (<item> ^{<arg> 1})
 -->
 #   (force-learn <s>)
 #   (interrupt)
@@ -19,12 +21,7 @@ sp {learn-action-result*elaborate*item
 -->
    (<s> ^superitem <item>)
 }
-sp {learn-action-result*elaborate*found-preps
-   (state <s> ^name learn-action-result
-              ^superstate.superstate.found-prep <fprep>)
--->
-   (<s> ^found-prep <fprep>)
-}
+
 sp {learn-action-result*elaborate*svs
    (state <s> ^name learn-action-result
               ^superstate.superstate.svs <svs>)
@@ -35,9 +32,10 @@ sp {learn-action-result*elaborate*svs
 sp {learn-action-result*propose*find-projection
    (state <s> ^name learn-action-result
               ^supersvs <svs>
-              ^superstate.superstate.<arg0>.verbs.<argv>.verb-prep <name>
+              ^superstate.superstate.played-num <num>
+              ^superstate.superstate.player-args.<num>.action-args.<arg0>.verbs.<argv>.verb-prep <name>
               ^superitem <item>
-              ^found-prep <fprep>)
+              ^topstate.found-prep <fprep>)
     (<fprep> ^type <name>)
    (<item> ^<arga> <a> ^<argb> <b> ^action <arg0> ^verbs.{<argv> << 1 2 3 4 5 6 7 8 9 10 >>} <va>)
    (<va> ^verb-prep <name> ^{<arg1> 1} <arga> ^{<arg2> 2} <argb>)
@@ -95,18 +93,16 @@ sp {learn-action-result*property-adjust-z
    (<P11> ^id <obja> ^value <z> ^property pz)
 }
 
-####now find result again
-
+#### now find relationship results again
 sp {learn-action-result*propose*find-relations
    (state <s> ^name learn-action-result
-              #^superstate.superstate.<arg0>.verbs.<argv>.verb-prep <name>
-              ^superstate.superstate.found-prep <frep>
+              ^topstate.found-prep <fprep>
+              ^superstate.superstate.superstate.superstate.relationships <rels2>
               ^superitem <item>
               ^projection-result.<< a b >> <id>
-              ^found-prep <fprep>
               ^supersvs <svs>)
     (<fprep> ^type <name>)
-    (<item> ^action <arg0> ^verbs.{<argv> << 1 2 3 4 5 6 7 8 9 10 >>} <va>)
+    (<rels2> ^with <id> ^preposition <name>)
  -{(<s> ^relationships <rels>)
    (<rels> ^with <id> ^preposition <name>)}
 -->
@@ -121,16 +117,12 @@ sp {learn-action-result*propose*find-relations
 }
 sp {learn-action-result*propose*find-relations*related #TODO improve heuristic at what to look for
    (state <s> ^name learn-action-result
-#              ^superstate.superstate.<arg0>.verbs.<argv>.verb-prep <name>
-              #^superstate.superstate.found-prep <frep>
-              #^superitem.<< 1 2 3 4 5 6 7 8 9 10 >> <id>
               ^topstate.object.id <id>
               ^superitem <item>
               ^superstate.superstate.superstate.superstate.relationships <rels2>
               ^projection-result.a <id2>
-              ^found-prep <fprep>
+              ^topstate.found-prep <fprep>
               ^supersvs <svs>)
-    (<item> ^action <arg0> ^verbs.{<argv> << 1 2 3 4 5 6 7 8 9 10 >>} <va>)
     (<rels2> ^with <id> ^preposition <name> ^relations.obj <id2>)
     (<fprep> ^type <name>)
  -{(<s> ^relationships <rels>)
@@ -145,6 +137,32 @@ sp {learn-action-result*propose*find-relations*related #TODO improve heuristic a
         ^found-prep <fprep>
         ^prep <name>) 
 }
+#sp {learn-action-result*propose*find-relations*related22 #TODO improve heuristic at what to look for
+#   (state <s> ^name learn-action-result
+##              ^superstate.superstate.<arg0>.verbs.<argv>.verb-prep <name>
+#              #^superstate.superstate.found-prep <fprep>
+#              #^superitem.<< 1 2 3 4 5 6 7 8 9 10 >> <id>
+#              ^topstate.object.id <id>
+#              ^superitem <item>
+#              ^superstate.superstate.superstate.superstate.relationships <rels2>
+#              ^topstate.found-prep <fprep>
+#              ^supersvs <svs>)
+# #   (<item> ^action <arg0> ^verbs.{<argv> << 1 2 3 4 5 6 7 8 9 10 >>} <va>)
+#    (<rels2> ^with <id> ^preposition <name> ^changed true)
+#    (<fprep> ^type <name>)
+# -{(<s> ^relationships <rels>)
+#   (<rels> ^with <id> ^preposition <name>)}
+#-->
+##   (interrupt)
+#   (<s> ^operator <o> + =)
+#   (<o> ^name find-relations
+#        ^category svs
+#        ^svs-link <svs>
+#        ^obj <id>
+#        ^ind 1
+#        ^found-prep <fprep>
+#        ^prep <name>) 
+#}
 
 
 sp {learn-action-result*propose*create-result
@@ -208,34 +226,17 @@ sp {learn-action-result*propose*copy-relation
 
 sp {learn-action-result*apply*copy-relation
    (state <s> ^name learn-action-result
-#              ^superitem.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <id>
               ^superitem.action <arg0>
-#              ^superstate.superstate.<arg0>.verb-prep <prep>
               ^operator <o>)
    (<o> ^name copy-relation
         ^action-result <ar>
         ^relationships <rels>)
    (<rels> ^with <id>)
-   # ^preposition <prep> ^relations <r>)
 -->
    (<rels> ^copied true)
    (<ar> ^relationships <rels>)
 }
 
-#sp {learn-action-result*apply*copy-relation*nowith
-#   (state <s> ^name learn-action-result
-#              ^superitem.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <id>
-#              ^superitem.action <arg0>
-#              ^superstate.superstate.<arg0>.verb-prep <prep>
-#              ^operator <o>)
-#   (<o> ^name copy-relation
-#        ^action-result <ar>
-#        ^relationships <rels>)
-#    (<rels> ^with <id> ^preposition <prep> ^failure none-found)
-#-->
-#   (<rels> ^copied true)
-#   (<ar> ^relationships <rels>)
-#}
 
 sp {learn-action-result*propose*complete-learn-action-result
    (state <s> ^name learn-action-result

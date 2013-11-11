@@ -88,9 +88,9 @@ public class AgentMessageParser
         } else if(type.equals("game-new-failure")){
             message = "Ok tell me the name of a failure state in the game. (or none)";
         } else if(type.equals("game-new-parameter1")){
-            message = "Ok list a parameter for this action.\n";
+            message = "Ok list a parameter (block/location/either) for this action.\n";
         } else if(type.equals("game-new-parameter")){
-            message = "Ok list a parameter for this action/goal/failure, or finished.";
+            message = "Ok list a parameter (block/location/either), or finished.";
         } else if(type.equals("game-new-condition")){
             message = "Ok list a condition for this parameter, or finished.";
         } else if(type.equals("game-learned")){

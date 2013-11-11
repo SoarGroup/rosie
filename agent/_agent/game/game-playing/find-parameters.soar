@@ -3,12 +3,11 @@ sp {find-parameters*elaborate*copy-down-attrs
               ^superstate.operator <o>)
    (<o> ^game-name <name>)
 -->
-   (<s> ^desired <d> ^game-name <name> ^failure-args <fa> ^goal-args <ga> ^depth-limit 3 ^dcount 0)
+   (<s> ^desired <d> ^game-name <name>
+        ^depth-limit 7 ^dcount 0)
    (<d> ^found true)
 }
 
-
-#####################impasse
 sp {find-parameters*impasse*elaborate
    (state <s> ^superstate.name find-parameters
              -^superstate.name evaluate-operator
@@ -16,12 +15,10 @@ sp {find-parameters*impasse*elaborate
              -^superstate.actions
               ^impasse no-change)
 -->
- #  (interrupt)
    (force-learn <s>)
    (<s> ^name find-parameters-impasse)
 }
 
-#######################
 sp {find-parameters-impasse*propose*lookup-game
    (state <s> ^name find-parameters-impasse
               ^superstate <ss>)
@@ -29,1167 +26,217 @@ sp {find-parameters-impasse*propose*lookup-game
 -->
    (<s> ^operator <o> + =)
    (<o> ^name lookup-game
-        ^category svs # for now determine better or new category
+        ^category svs 
         ^game-name <name>)
 }
 
-sp {find-parameters-impasse*elaborate*conditions-parameters
-   (state <s> ^name find-parameters-impasse
-              ^game <g>
-              ^superstate <ss>)
-   (<ss> ^game-name <name>)
-   (<g> ^game-name <name> ^actions <a> ^goals <go> ^failures <f>)
-   (<go> ^goal-cond-args <ga>)
-   (<f> ^failure-cond-args <fa>)
--->
-   (<ss> ^actions <a> ^failures <f> ^goals <go> ^goal-cond-args <ga> ^failure-cond-args <fa>)
-}
 sp {find-parameters-impasse*elaborate*conditions-parameters*multiplayer
    (state <s> ^name find-parameters-impasse
               ^game <g>
               ^superstate <ss>)
    (<ss> ^game-name <name>)
-   (<g> ^game-name <name> ^actions <a> ^goals <go> ^failures <f> ^multiplayer <m>)
-   (<go> ^goal-cond-args <ga>)
-   (<f> ^failure-cond-args <fa>)
+   (<g> ^game-name <name> ^actions <a> ^goals <go> ^failures <f> ^player-pieces <pie> ^multiplayer {<m> true})
 -->
-   (<ss> ^multiplayer <m>)
+   (<ss> ^actions <a> ^failures <f> ^goals <go> ^player-args <pa> ^player-pieces <pie> 
+         ^current-player 1 ^multiplayer <m>)
+   (<pa> ^1 <pa1> ^2 <pa2> ^current 1)
+   (<pa1> ^action-args <aa> ^failure-args <fa> ^goal-args <ga> ^num 1)
+   (<pa2> ^action-args <aa1> ^failure-args <fa1> ^goal-args <ga1> ^num 2)
+   (<a> ^type action)
+   (<f> ^type failure)
+   (<go> ^type goal)
+   (<aa> ^type action ^num 1)
+   (<fa> ^type failure ^num 1)
+   (<ga> ^type goal ^num 1)
+   (<aa1> ^type action ^num 2)
+   (<fa1> ^type failure ^num 2)
+   (<ga1> ^type goal ^num 2)
 }
-
-sp {find-parameters*elaborate*all-actions
+sp {find-parameters-impasse*elaborate*conditions-parameters
+   (state <s> ^name find-parameters-impasse
+              ^game <g>
+              ^superstate <ss>)
+   (<ss> ^game-name <name>)
+   (<g> ^game-name <name> ^actions <a> ^goals <go> ^failures <f> ^multiplayer {<m> false})
+-->
+   (<ss> ^actions <a> ^failures <f> ^goals <go> ^player-args <pa> ^current-player 1 
+         ^multiplayer <m>)
+   (<pa> ^1 <pa1> ^current 1)
+   (<pa1> ^action-args <aa> ^failure-args <fa> ^goal-args <ga> ^num 1)
+   (<a> ^type action)
+   (<f> ^type failure)
+   (<go> ^type goal)
+    (<aa> ^type action ^num 1)
+   (<fa> ^type failure ^num 1)
+   (<ga> ^type goal ^num 1)
+}
+  
+sp {find-parameters*propose*parameter-match
    (state <s> ^name find-parameters
-              ^dcount 0
+              ^dcount 0            
+             -^parameter-match complete
+              ^player-args <pa>
+              ^multiplayer <m>
+              ^goals <g>
+              ^failures <f>
               ^actions <a>)
-   (<a> ^{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <act>)
-   (<act> ^conditions <c> ^parameters <p> ^cond-args <ca> ^verbs <va>)
 -->
-   (<s> ^<arg> <b>)
-   (<b> ^conds <c> ^params <p> ^verbs <va> ^cond-args <ca>)
+   (<s> ^operator <o> +)
+   (<o> ^name parameter-match
+        ^player-args <pa>
+        ^action-param <a>
+        ^failure-param <f>
+        ^multiplayer <m>
+        ^goal-param <g>)
 }
 
-#######################################
-sp {find-parameters*elaborate*object-desc
+
+#TODO dont assume that all prepositions are extracted on top state
+#### parameter match here for all
+sp {find-parameters*propose*copy-rels
    (state <s> ^name find-parameters
               ^dcount 0
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>)
-   (<a> ^objd <objd>
-        ^cond <conda>)
-   (<conda> ^attribute.<type> <atr>)
+             -^relationships.relations
+              ^parameter-match complete)
 -->
-   (<objd> ^word <atr>)
+   (<s> ^operator <op> + =)
+   (<op> ^category svs
+        ^name copy-rels)
 }
-
-sp {find-parameters*elaborate*args
+sp {find-parameters*propose*delete-duplicates
    (state <s> ^name find-parameters
               ^dcount 0
-              ^{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <act>)
-   (<act> ^conds <c> ^params <p>)
-   (<p> ^{<arg2> << 1 2 3 4 5 6 7 8 9 10 >>} <p1>)
-   (<p1> ^type <param> -^both true)
-#   (<p> ^<arg2>.{<param> <> type} <pa> ^<arg2>.type.world.object <atr>)
-   (<c> ^<arg2> <conda>)
+             -^deleted true
+              ^parameter-match complete)
 -->
-   (<act> ^<arg2> <a>)
-   (<a> ^objd <objd>
-        ^cond <conda>
-        ^param <param>)
-   (<objd> ^word object)
+#   (interrupt)
+   (<s> ^operator <op> + =)
+   (<op> ^category svs
+        ^name delete-duplicates)
 }
 
-sp {find-parameters*elaborate*args2
+
+sp {find-parameters*apply*copy-rels
    (state <s> ^name find-parameters
               ^dcount 0
-              ^{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <act>)
-   (<act> ^conds <c> ^params <p>)
-   (<p> ^{<arg2> << 1 2 3 4 5 6 7 8 9 10 >>} <p1>)
-   (<p1> ^type {<param> << location >> } ^both true ^type {<param2> <> <param>})
-#   (<p> ^<arg2>.{<param> <> type} <pa> ^<arg2>.type.world.object <atr>)
-   (<c> ^<arg2> <conda>)
+              ^operator <op>
+              ^player-args.{<argn> << 1 2 >>}.<< action-args failure-args goal-args >> <aa>
+              ^parameter-match complete)
+   (<aa> ^{<n> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>)
+   (<a> ^obj <obj> ^cond <cond>)
+   (<cond> ^prep <prep>)
+   (<obj> ^id <id>)
+   (<prep> ^name <name>)
+   (<op> ^name copy-rels)
 -->
-   (<act> ^<arg2> <a>)
-   (<a> ^objd <objd>
-        ^cond <conda>
-        ^param <param2>
-        ^param <param>)
-   (<objd> ^word object)
+   (<s> ^relationships <rels>)
+   (<rels> ^with <id> ^preposition <name>)
 }
 
-sp {find-parameters*propose*index-parameter
-   (state <s> ^name find-parameters
-              ^dcount 0
-             -^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.obj <objs>
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.objd <objd>)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name index-parameter 
-        ^parameter <pa>)
-   (<pa> ^index-info <ii> ^lexical <objd> ^type object)
-   (<ii> ^infer-match false ^return-all true ^use-interaction false)
-}
-#   (<s> ^operator <o> + =)
-#   (<o> ^name index-object
-#        ^return-all true
-#        ^object-param <p>
-#        ^arg <arg>)
-#   (<p> ^type object
-#        ^lexical <objd>
-#        ^index-info <ii>)
-#   (<ii> ^return-all true
-#         ^use-interaction false
-#         ^infer-match false)
-#}
-
-sp {find-parameters*apply*index-parameter
+sp {find-parameters*apply*copy-rels*substructures
    (state <s> ^name find-parameters
               ^operator <o>
-              ^dcount 0
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              ^topstate.object <obj>)
-   (<a> ^param <param> ^objd <objd> -^obj <obj>)
-   (<o> ^name index-parameter
-        ^parameter.lexical <objd2>
-        ^parameter.result.id <id>)
-   (<obj> ^id <id> ^category <param>)
- -{(<objd2> ^word <word>)
-   (<objd> -^word <word>)}
- -{(<objd2> -^word <word2>)
-   (<objd> ^word <word2>)}
--->
-   (<a> ^obj <obj>)
-}
-
-sp {find-parameters*propose*lookup-preposition
-   (state <s> ^name find-parameters
-             -^processing wait
-             -^found-prep.type <name>
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.cond <conda>)
-   (<conda> ^prep <prep>)
-   (<prep> ^name <name> ^a this
-          -^name << smaller-than linear-with >>)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name lookup-preposition
-        ^category svs
-        ^type <name>)
-}
-sp {find-parameters*propose*lookup-preposition*verb
-   (state <s> ^name find-parameters
-             -^processing wait
-             -^found-prep.type <name>
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.verbs.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.verb-prep <name>)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name lookup-preposition
-        ^category svs
-        ^type <name>)
-}
-
-#######use find-all
-sp {find-parameters*propose*find-relations
-   (state <s> ^name find-parameters
-              ^svs <svs>
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              ^found-prep <fprep>)
-   (<a> ^obj <obj> ^cond <cond>)
-   (<fprep> ^type <name>)
-   (<cond> ^prep <prep>)
-   (<obj> ^id <id>)
-   (<prep> ^name <name> ^a this
-          -^name << smaller-than linear-with >>)
- -{(<s> ^relationships <rels>)
-   (<rels> ^with <id> ^preposition <name>)}
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name find-relations
-        ^category svs
-        ^obj <id>
-        ^ind 1
-#        ^svs-link <svs>
-        ^found-prep <fprep>
-        ^prep <name>) 
-}
-
-sp {find-parameters*propose*find-relations*smaller-than
-   (state <s> ^name find-parameters
-              ^svs <svs>
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>)
-   (<a> ^obj <obj> ^cond <cond>)
-   (<cond> ^prep <prep>)
-   (<obj> ^id <id>)
-   (<prep> ^name {<name> << smaller-than linear-with >>})
- -{(<s> ^relationships <rels>)
-   (<rels> ^with <id> ^preposition <name>)}
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name find-relations
-        ^category svs
-#        ^svs-link <svs>
-        ^obj <id>
-        ^ind 1
-        ^prep <name>) 
-}
-
-#############################################
-#LEGAL ACTION DETECTION!!!
-sp {find-parameters*check-relation*positive-one*propose*found-possible-prep-match*INDEF
-   (state <s> ^name find-parameters
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <act>
-              ^<arg0>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              -^processing wait
-              ^relationships <rels>
-              ^topstate.object <tobj>)
-   (<a> ^obj <obj> ^cond <conda>)
-   (<rels> ^with <id> ^preposition <name> ^relations <r>)
-   (<r> ^matched true ^obj <obj-id>)
-   (<conda> ^prep <prep>)
-   (<obj> ^id <id>)
-   (<tobj> ^id <obj-id> ^category <btype>)
-   (<prep> ^name <name> ^a this ^b INDEF ^negative false ^btype <btype>)
- -{(<s> ^dcount <dc> ^depth-limit <dc>)}
- -{(<act> ^found-possible <fp>)
-   (<fp> ^prep.name <name> ^objid <id> ^arg <arg> ^withid none ^arg2 INDEF)}
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name found-possible-prep-match
-        ^objid <id>
-        ^arg <arg>
-        ^withid none
-        ^arg2 INDEF
-        ^neg false
-        ^prep <prep>
-        ^action <arg0>
-        ^category svs) 
-}
-
-sp {find-parameters*negative-all*propose*found-possible-prep-match*INDEF
-   (state <s> ^name find-parameters
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <act>
-              ^<arg0>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              -^processing wait
+              ^topstate.prepositions.<< prep2 prep >> <p>
               ^relationships <rels>)
-   (<a> ^obj <obj> ^cond <conda>)
+   (<rels> ^with <id> ^preposition <name>
+           -^preposition << linear-with >>)
+   (<p> ^name <name> ^pair <pair>)
+   (<pair> ^a <id> ^b <id2>)
+   (<o> ^name copy-rels)
+-->
+   (<rels> ^relations <r>)
+   (<r> ^name <name> ^obj <id2> ^matched true) 
+}
+
+sp {find-parameters*apply*delete-duplicates
+   (state <s> ^name find-parameters
+              ^dcount 0
+              ^relationships <rels>
+              ^relationships {<rels2> < <rels>}
+              ^operator <op>)
+   (<op> ^name delete-duplicates)
    (<rels> ^with <id> ^preposition <name>)
-   (<conda> ^prep <prep>)
-   (<obj> ^id <id>)
-   (<prep> ^name <name> ^a this ^b INDEF ^negative true ^btype <btype>)
- -{(<rels> ^relations <r>)
-   (<r> ^matched true ^obj <obj-id>)
-   (<s> ^topstate.object <o1>)
-   (<o1> ^id <obj-id> ^category <btype>)}
- -{(<s> ^dcount <dc> ^depth-limit <dc>)}
- -{(<act> ^found-possible <fp>)
-   (<fp> ^prep.name <name> ^objid <id> ^arg <arg> ^withid none ^arg2 INDEF)}
+   (<rels2> ^with <id> ^preposition <name>)
+-->
+   (<s> ^relationships <rels> -)
+}
+sp {find-parameters*apply*delete-duplicates*mark-done
+   (state <s> ^name find-parameters
+              ^dcount 0
+              ^operator <op>)
+   (<op> ^name delete-duplicates)
+-->
+   (<s> ^deleted true)
+}
+
+sp {find-parameters*apply*copy-rels*linear-with
+   (state <s> ^name find-parameters
+              ^operator <o>
+              ^topstate.prepositions.prep2 <p>
+              ^relationships <rels>)
+   (<rels> ^with <id> ^preposition {<name> << linear-with >>})
+   (<p> ^name <name> ^pair <pair>)
+   (<pair> ^a <id> ^b <id2> ^c <id3>)
+   (<o> ^name copy-rels)
+-->
+   (<rels> ^relations <r>)
+   (<r> ^name <name> ^obj1 <id2> ^obj2 <id3> ^matched true) 
+}
+
+
+sp {find-parameters*propose*constraint-match*actions
+   (state <s> ^name find-parameters
+             -^processing wait
+             -^matches-found.action
+              ^current-player <num>
+              ^parameter-match complete
+              ^player-args.<num>.action-args <aa>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name constraint-match
+        ^param-args <aa>)
+}
+
+sp {find-parameters*propose*constraint-match*goals*multiplayer
+   (state <s> ^name find-parameters
+              ^matches-found.action true
+              ^dcount 0
+              ^multiplayer true
+             -^matches-found.num <num>
+              ^player-args.{<num> << 1 2 >>}.goal-args <ga>)
 -->
    (<s> ^operator <o> + =)
-   (<o> ^name found-possible-prep-match
-        ^objid <id>
-        ^arg <arg>
-        ^withid none
-        ^arg2 INDEF
-        ^action <arg0>
-        ^neg true
-        ^prep <prep>
-        ^category svs) 
-}
-
-sp {find-parameters*check-relation*positive-one*propose*found-possible-prep-match*arg
-   (state <s> ^name find-parameters
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <act>
-              ^<arg0>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              -^processing wait
-              ^relationships <rels>
-              ^topstate.object <tobj>)
-   (<a> ^obj <obj> ^cond <conda>)
-   (<rels> ^with <id> ^preposition <name> ^relations <r>)
-   (<r> ^matched true ^obj <obj-id>)
-   (<conda> ^prep <prep>)
-   (<obj> ^id <id>)
-   (<tobj> ^id <obj-id> ^category <btype>)
-   (<prep> ^name <name> ^a this ^b {<arg2> <> INDEF} ^negative <bool> ^btype <btype>)
- -{(<s> ^dcount <dc> ^depth-limit <dc>)}
- -{(<act> ^found-possible <fp>)
-   (<fp> ^prep.name <name> ^objid <id> ^arg <arg> ^withid <obj-id> ^arg2 <arg2>)}
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name found-possible-prep-match
-        ^objid <id>
-        ^arg <arg>
-        ^withid <obj-id>
-        ^arg2 <arg2>
-        ^action <arg0>
-        ^neg <bool>
-        ^prep <prep>
-        ^category svs)
-}
-#could possibly reduce by name
-sp {find-parameters*check-relation*positive-one*propose*found-possible-prep-match*arg*3arg
-   (state <s> ^name find-parameters
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <act>
-              ^<arg0>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              -^processing wait
-              ^relationships <rels>
-              ^topstate.object <tobj2>
-              ^topstate.object <tobj>)
-   (<a> ^obj <obj> ^cond <conda>)
-   (<rels> ^with <id> ^preposition <name> ^relations <r>)
-   (<r> ^matched true ^obj1 <obj2> ^obj2 {<obj3> <> <obj2>})
-   (<conda> ^prep <prep>)
-   (<obj> ^id <id>)
-   (<tobj> ^id <obj2> ^category <btype>)
-   (<tobj2> ^id <obj3> ^category <btype>)
-   (<prep> ^name <name> ^a same ^b <arg2> ^c <arg3> ^negative <bool> ^btype <btype>)
- -{(<s> ^dcount <dc> ^depth-limit <dc>)}
- -{(<act> ^found-possible <fp>)
-   (<fp> ^prep.name <name> ^objid <id> ^arg <arg> ^withid2 <obj2> ^withid3 <obj3> ^arg2 <arg2> ^arg3 <arg3>)}
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name found-possible-prep-match
-        ^objid <id>
-        ^arg <arg>
-        ^withid2 <obj2>
-        ^withid3 <obj3>
-        ^arg2 <arg2>
-        ^arg3 <arg3>
-        ^action <arg0>
-        ^neg <bool>
-        ^prep <prep>
-        ^category svs)
-}
-
-#sp {find-parameters*check-relation*negative-one*propose*found-possible-prep-match*arg
-#   (state <s> ^name find-parameters
-#              ^{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-#              -^processing wait
-#              ^relationships <rels>
-#              ^object <tobj>)
-#   (<a> ^obj <obj> ^cond <conda> ^atr <atr>)
-#   (<rels> ^with <id> ^preposition <name> -^relations.obj <obj-id>)
-##   (<r> ^matched true ^obj <obj-id>)
-#   (<conda> ^prep <prep>)
-#   (<obj> ^id <id>)
-#   (<tobj> ^id <obj-id> ^<atr> <btype>)
-#   (<prep> ^name <name> ^a this ^b {<arg2> <> INDEF} ^negative true ^btype <btype>)
-# -{(<s> ^found-possible <fp>)
-#   (<fp> ^prep <prep> ^objid <id> ^arg <arg> ^withid <obj-id> ^arg2 <arg2> ^neg true)}
-#-->
-#   (<s> ^operator <o> + =)
-#   (<o> ^name found-possible-prep-match
-#        ^objid <id>
-#        ^arg <arg>
-#        ^withid <obj-id>
-#        ^arg2 <arg2>
-#        ^neg true
-#        ^prep <prep>
-#        ^category svs)
-#}
-
-sp {find-parameters*check-relation*apply*found-possible-prep-match
-   (state <s> ^name find-parameters
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <act>
-              ^<arg0>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              ^operator <o>)
-   (<a> ^obj.id <id> )#^cond.prep <p>)
-#   (<p> ^name <prep> ^b <arg2>)
-   (<o> ^name found-possible-prep-match
-        ^objid <id>
-        ^arg <arg>
-        ^withid <with>
-        ^neg <neg>
-        ^arg2 <arg2>
-        ^action <arg0>
-        ^prep <prep>)
--->
-   (<act> ^found-possible <fp>)
-   (<fp> ^prep <prep> ^objid <id> ^arg <arg> ^withid <with> ^arg2 <arg2> ^neg <neg>)
-}
-
-sp {find-parameters*check-relation*apply*found-possible-prep-match*3arg
-   (state <s> ^name find-parameters
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <act>
-              ^<arg0>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              ^operator <o>)
-   (<a> ^obj.id <id>)# ^cond.prep <p>)
-#   (<p> ^name <prep> ^b <arg2> ^c <arg3>)
-   (<o> ^name found-possible-prep-match
-        ^objid <id>
-        ^arg <arg>
-        ^withid2 <obj2>
-        ^withid3 <obj3>
-        ^neg <neg>
-        ^arg2 <arg2>
-        ^arg3 <arg3>
-        ^action <arg0>
-        ^prep <prep>)
--->
-   (<act> ^found-possible <fp>)
-   (<fp> ^prep <prep> ^objid <id> ^arg <arg> ^withid2 <obj2> ^withid3 <obj3> ^arg3 <arg3> ^arg2 <arg2> ^neg <neg>)
-}
-#TODO enable work with args
-
-sp {find-parameters*propose*test-action
-   (state <s> ^name find-parameters
-             -^test-action
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.cond
-             -^processing wait)
--->
-#   (interrupt)
-   (<s> ^operator <o> + =)
-   (<o> ^name test-action
-        ^category svs)
-}
-
-sp {find-parameters*apply*test-action
-   (state <s> ^name find-parameters
-              ^operator.name test-action)
--->
-#   (interrupt)
-   (<s> ^test-action true)
-}
-
-#TODO rethink could be much better
-#NEXT SLOWER DOWN THING
-sp {find-parameters*check-relation*elaborate*found-possible-arg-match
-   (state <s> ^name find-parameters
-              ^operator.name test-action
-            #  ^test-action true
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <act>
-              ^<arg0>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>)
-    -{(<s> ^dcount <dc> ^depth-limit <dc>)}
-   (<a> ^obj.id <id> -^cond.type indiff)
-   -{(<a> ^cond.prep <prep>) #has matches for all of its conditions
-     (<prep> ^name <name> ^a this ^b <arg2> ^negative false)
-     -{(<act> ^found-possible <fop>)
-     (<fop> ^arg <arg> ^arg2 <arg2> ^objid <id> ^prep.name <name>)}}
-  -{(<a> ^cond.prep <prep>)
-     (<prep> ^name <name> ^a this ^b {<arg2> INDEF} ^negative true)
-     -{(<act> ^found-possible <fop>)
-     (<fop> ^arg <arg> ^arg2 <arg2> ^objid <id> ^prep.name <name> ^neg true)}}
-  -{(<act> ^{<arg3> << 1 2 3 4 5 6 7 8 9 10 >>}.cond.prep <p>)
-     (<p> ^name <n> ^b <arg> ^a this ^negative false)
-    -{(<act> ^found-possible <fp2>)
-      (<fp2> ^prep.name <n> ^arg <arg3> ^arg2 <arg> ^withid <id>)}}
-# -{(<act> ^{<arg3> << 1 2 3 4 5 6 7 8 9 10 >>}.cond.prep <p>)
-#     (<p> ^name <n> ^b <arg> ^c <something> ^negative false)
-#    -{(<act> ^found-possible <fp2>)
-#      (<fp2> ^prep.name <n> ^arg <arg3> ^arg2 <arg> ^withid2 <id>)}}
-   -{(<a> ^cond.prep <prep>)
-     (<prep> ^name <name2> ^b <arg2a> ^c <arg3a>)
-     -{(<act> ^found-possible <fop>)
-     (<fop> ^arg <arg> ^arg2 <arg2a> ^arg3 <arg3a> ^objid <id> ^prep.name <name2>)}}
-#TODO add checks for part c, should be able to make b case for both by changing to withid instead of withid2
--->
-#   (interrupt)
-   (<a> ^possible-match <pm>)
-   (<pm> ^id <id>)
-}
-sp {find-parameters*check-relation*elaborate*found-possible-arg-match*indiff
-   (state <s> ^name find-parameters
-              ^operator.name test-action
-            #  ^test-action true
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <act>
-              ^<arg0>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>)
-    -{(<s> ^dcount <dc> ^depth-limit <dc>)}
-   (<a> ^obj.id <id> ^cond.type indiff)
-   -{(<a> ^cond.prep <prep>) #has matches for all of its conditions
-     (<prep> ^name <name> ^a this ^b <arg2> ^negative false)
-     -{(<act> ^found-possible <fop>)
-     (<fop> ^arg <arg> ^arg2 <arg2> ^objid <id> ^prep.name <name>)}}
-  -{(<a> ^cond.prep <prep>)
-     (<prep> ^name <name> ^a this ^b {<arg2> INDEF} ^negative true)
-     -{(<act> ^found-possible <fop>)
-     (<fop> ^arg <arg> ^arg2 <arg2> ^objid <id> ^prep.name <name>)}}
-  -{(<act> ^{<arg3> << 1 2 3 4 5 6 7 8 9 10 >>}.cond.prep <p>)
-     (<p> ^name <n> ^b <arg> -^c ^negative false)
-    -{(<act> ^found-possible <fp2>)
-      (<fp2> ^prep.name <n> ^arg <arg3> ^arg2 <arg> ^withid <id>)}}
-# -{(<act> ^{<arg3> << 1 2 3 4 5 6 7 8 9 10 >>}.cond.prep <p>) #HUH check again?
-#     (<p> ^name <n> ^b <arg> ^c <something> ^negative false)
-#    -{(<act> ^found-possible <fp2>)
-#      (<fp2> ^prep.name <n> ^arg <arg3> ^arg2 <arg> ^withid2 <id>)}}
-   -{(<a> ^cond.prep <prep>)
-     (<prep> ^name <name> ^b <arg2> ^c <arg3>)
-     -{(<act> ^found-possible <fop>)
-     (<fop> ^arg <arg> ^arg2 <arg2> ^arg3 <arg3> ^objid <id> ^prep.name <name>)}}
-#TODO add checks for part c, should be able to make b case for both by changing to withid instead of withid2
--->
-   (<a> ^possible-match <pm>)
-   (<pm> ^id <id> ^type indiff)
-}
-#OTHER HUGE SLOWER DOWN TODO
-sp {find-parameters*check-relation*elaborate*possible-match*conditions
-   (state <s> ^name find-parameters
-              #^test-action true
-              ^operator.name test-action2
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <act>
-              ^<arg0>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>)
-   (<act> ^found-possible <fp>)
-   (<a> ^possible-match <pm>)
-   (<pm> ^id <id>)
-   (<fp> ^arg <arg> ^arg2 {<arg2> <> INDEF} ^withid <id2> ^objid <id> -^neg true)
- -{(<act> ^found-possible <fp2>)
-   (<fp2> ^arg <arg> ^arg2 <arg2> ^withid <id2> ^objid <id> ^neg true)}
--->
-   (<pm> ^<arg2> <id2> ^has <arg2>)
-}
-sp {find-parameters*check-relation*elaborate*possible-match*conditions2
-   (state <s> ^name find-parameters
-              #^test-action true
-              ^operator.name test-action2
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <act>
-              ^<arg0>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>)
-   (<act> ^found-possible <fp>)
-   (<a> ^possible-match <pm>)
-   (<pm> ^id <id>)
-   (<fp> ^arg <arg> ^arg2 {<arg2> <> INDEF} ^withid2 <id2> ^objid <id> -^neg true)
- -{(<act> ^found-possible <fp2>)
-   (<fp2> ^arg <arg> ^arg2 <arg2> ^withid2 <id2> ^objid <id> ^neg true)}
- -{(<act> ^found-possible <fp3>)
-   (<fp3> ^arg <arg> ^arg2 <arg2> ^withid <id2> ^objid <id> ^neg true)}
- -{(<act> ^found-possible <fp4>)
-   (<fp4> ^arg <arg> ^arg2 <arg2> ^withid3 <id2> ^objid <id> ^neg true)}
--->
-   (<pm> ^<arg2> <id2> ^has <arg2>)
-}
-sp {find-parameters*check-relation*elaborate*possible-match*conditions3
-   (state <s> ^name find-parameters
-              #^test-action true
-              ^operator.name test-action2
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <act>
-              ^<arg0>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>)
-   (<act> ^found-possible <fp>)
-   (<a> ^possible-match <pm>)
-   (<pm> ^id <id>)
-   (<fp> ^arg <arg> ^arg3 {<arg2> <> INDEF} ^withid3 <id2> ^objid <id> -^neg true)
- -{(<act> ^found-possible <fp2>)
-   (<fp2> ^arg <arg> ^arg3 <arg2> ^withid3 <id2> ^objid <id> ^neg true)}
- -{(<act> ^found-possible <fp3>)
-   (<fp3> ^arg <arg> ^arg3 <arg2> ^withid <id2> ^objid <id> ^neg true)}
- -{(<act> ^found-possible <fp4>)
-   (<fp4> ^arg <arg> ^arg3 <arg2> ^withid3 <id2> ^objid <id> ^neg true)}
--->
-   (<pm> ^<arg2> <id2> ^has <arg2>)
-}
-#sp {find-parameters*check-relation*elaborate*possible-match*conditions2to3
-#   (state <s> ^name find-parameters
-#              ^test-action true
-#              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <act>
-#              ^<arg0>.{<arg3> << 1 2 3 4 5 6 7 8 9 10 >>} <b>
-#              ^<arg0>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} {<a> <> <b>})
-#   (<act> ^found-possible <fp>)
-#   (<a> ^possible-match <pm>)
-#   (<pm> ^id <id>)
-#   (<fp> ^arg <arg3> ^arg2 <arg> ^arg3 {<arg2> <> INDEF} ^withid3 <id2> ^withid2 <id> -^neg true)
-# -{(<act> ^found-possible <fp2>)
-#   (<fp2> ^arg <arg3> ^arg2 <arg> ^arg3 <arg2> ^withid3 <id2> ^withid2 <id> ^neg true)}
-#-->
-#   (<pm> ^<arg2> <id2> ^has <arg2>)
-#}
-#sp {find-parameters*check-relation*elaborate*possible-match*conditions3to2
-#   (state <s> ^name find-parameters
-#              ^test-action true
-#              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <act>
-#              ^<arg0>.{<arg3> << 1 2 3 4 5 6 7 8 9 10 >>} <b>
-#              ^<arg0>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} {<a> <> <b>})
-#   (<act> ^found-possible <fp>)
-#   (<a> ^possible-match <pm>)
-#   (<pm> ^id <id>)
-#   (<fp> ^arg <arg3> ^arg3 <arg> ^arg2 {<arg2> <> INDEF} ^withid2 <id2> ^withid3 <id> -^neg true)
-# -{(<act> ^found-possible <fp2>)
-#   (<fp2> ^arg <arg3> ^arg3 <arg> ^arg2 <arg2> ^withid2 <id2> ^withid3 <id> ^neg true)}
-#-->
-#   (<pm> ^<arg2> <id2> ^has <arg2>)
-#}
-sp {find-parameters*check-relation*elaborate*possible-match*conditions*none
-   (state <s> ^name find-parameters
-              #^test-action true
-              ^operator.name test-action2
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg3> << 1 2 3 4 5 6 7 8 9 10 >>} <b>
-#              -^<arg0>.{<arg4> << 1 2 3 4 5 6 7 8 9 10 >>} <c>
-#              -^<arg0>.{<arg5> << 1 2 3 4 5 6 7 8 9 10 >>} <d>
-              ^<arg0>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} {<a> <> <b>})
-   (<a> ^possible-match <pm> -^cond.prep.b <arg3> -^cond.prep.c <arg3>) #todo for c too
-   (<pm> ^id <id>)
-#   (<c> ^cond.prep.b <arg> ^cond.prep.c <arg3>)
-#   (<d> ^cond.prep.b <arg3> ^cond.prep.c <arg>) 
-   (<b> ^possible-match.id {<id2> <> <id>})
--->
-   (<pm> ^<arg3> <id2>)
-}
-
-sp {find-parameters*propose*test-action2
-   (state <s> ^name find-parameters
-             -^test-action-final
-              ^test-action-15
-              ^test-action true
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.possible-match)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name test-action2
-        ^category svs)
-}
-sp {find-parameters*apply*test-action2
-   (state <s> ^name find-parameters
-              ^operator.name test-action2)
--->
-   (<s> ^test-action-final true) #changed here
-}
-
-sp {find-parameters*propose*test-action15
-   (state <s> ^name find-parameters
-             -^test-action-15
-              ^test-action true
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.possible-match
-             -^processing wait)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name test-action15
-        ^category svs)
-}
-sp {find-parameters*apply*test-action15
-   (state <s> ^name find-parameters
-              ^operator.name test-action15)
--->
-   (<s> ^test-action-15 true
-        ^processing wait)
+   (<o> ^name constraint-match
+        ^num-arg <num>
+        ^verbose false #implement todo
+        ^param-args <ga>)
 }
 
 
-#sp {find-parameters*apply*test-action*remove-impossible
-#   (state <s> ^name find-parameters
-#              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <pos>
-##              ^<arg0>.<arg>.possible-match <p1>
-##              ^<arg0>.<arg>.possible-match {<p2> <> <p1>}
-#              ^<arg0> <act>
-#              ^operator.name test-action15)
-#   (<pos> ^possible-match <p2>)
-#   (<p2> ^id <id1>)#^type indiff 
-#   (<pos> ^cond.prep <cp>)
-#   (<cp> ^name ^a this ^b {<arg2> <> INDEF})
-# -{(<s> ^<arg0>.<arg2>.possible-match.id <id2>)
-#   (<act> ^found-possible <fp>)
-#   (<fp> ^arg <arg> ^arg2 <arg2> ^withid <id2> ^objid <id1> -^neg true)}
-#-->
-##  (<s> ^scratched true)
-#  (<pos> ^possible-match <p2> -) #TODO DOESNT WORK
-#}
-sp {find-parameters*apply*test-action*remove-indifferents
+sp {find-parameters*propose*select-parameters
    (state <s> ^name find-parameters
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <pos>
-#              ^<arg0>.<arg>.possible-match <p1>
-#              ^<arg0>.<arg>.possible-match {<p2> <> <p1>}
-#              ^scratched
-              ^operator.name test-action2)
-   (<pos> ^possible-match <p1>
-          ^possible-match {<p2> <> <p1>})
-   (<p1> ^type indiff ^id <id1>)
-   (<p2> ^type indiff ^id <id2>)
- -{(<s> ^<arg0>.<arg>.possible-match <pm3>)
-   (<pm3> ^id <id3> > <id1>)}
--->
-#   (interrupt)
-#   (<pos> ^secondary <p2>)
-   (<pos> ^possible-match <p2> -) #TODO DOESNT WORK
-}
-
-sp {find-parameters*check-relation*elaborate*action-detected
-   (state <s> ^name find-parameters
-              ^test-action true
-              ^test-action-final true
-              ^<arg0>.cond-args 6
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              ^<arg0>.{<arg1> 1}.possible-match <pm1>
-              ^<arg0>.{<arg2> 2}.possible-match <pm2>
-              ^<arg0>.{<arg3> 3}.possible-match <pm3>
-              ^<arg0>.{<arg4> 4}.possible-match <pm4>
-              ^<arg0>.{<arg5> 5}.possible-match <pm5>
-              ^<arg0>.{<arg6> 6}.possible-match <pm6>)
-   (<pm1> ^id <obj1>
-          ^<arg2> <obj2>
-          ^<arg3> <obj3>
-          ^<arg4> <obj4>
-          ^<arg5> <obj5>
-          ^<arg6> <obj6>)
-   (<pm2> ^id <obj2>
-          ^<arg1> <obj1>
-          ^<arg3> <obj3>
-          ^<arg4> <obj4>
-          ^<arg5> <obj5>
-          ^<arg6> <obj6>)
-   (<pm3> ^id <obj3>
-          ^<arg1> <obj1>
-          ^<arg2> <obj2>
-          ^<arg4> <obj4>
-          ^<arg5> <obj5>
-          ^<arg6> <obj6>)
-   (<pm4> ^id <obj4>
-          ^<arg1> <obj1>
-          ^<arg2> <obj2>
-          ^<arg3> <obj3>
-          ^<arg5> <obj5>
-          ^<arg6> <obj6>)
-   (<pm5> ^id <obj5>
-          ^<arg1> <obj1>
-          ^<arg2> <obj2>
-          ^<arg3> <obj3>
-          ^<arg4> <obj4>
-          ^<arg6> <obj6>)
-   (<pm6> ^id <obj6>
-          ^<arg1> <obj1>
-          ^<arg2> <obj2>
-          ^<arg3> <obj3>
-          ^<arg4> <obj4>
-          ^<arg5> <obj5>)
- -{(<s> ^dcount <dc> ^depth-limit <dc>)}
--->
-   (<a> ^possible-match-set <pms>)
-   (<pms> ^<arg1>.possible-match <obj1>
-          ^<arg2>.possible-match <obj2>
-          ^<arg3>.possible-match <obj3>
-          ^<arg4>.possible-match <obj4>
-          ^<arg5>.possible-match <obj5>
-          ^<arg6>.possible-match <obj6>)
-}
-sp {find-parameters*check-relation*elaborate*action-detected5
-   (state <s> ^name find-parameters
-              ^test-action true
-              ^test-action-final true
-              ^<arg0>.cond-args 5
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              ^<arg0>.{<arg1> 1}.possible-match <pm1>
-              ^<arg0>.{<arg2> 2}.possible-match <pm2>
-              ^<arg0>.{<arg3> 3}.possible-match <pm3>
-              ^<arg0>.{<arg4> 4}.possible-match <pm4>
-              ^<arg0>.{<arg5> 5}.possible-match <pm5>)
-   (<pm1> ^id <obj1>
-          ^<arg2> <obj2>
-          ^<arg3> <obj3>
-          ^<arg4> <obj4>
-          ^<arg5> <obj5>)
-   (<pm2> ^id <obj2>
-          ^<arg1> <obj1>
-          ^<arg3> <obj3>
-          ^<arg4> <obj4>
-          ^<arg5> <obj5>)
-   (<pm3> ^id <obj3>
-          ^<arg1> <obj1>
-          ^<arg2> <obj2>
-          ^<arg4> <obj4>
-          ^<arg5> <obj5>)
-   (<pm4> ^id <obj4>
-          ^<arg1> <obj1>
-          ^<arg2> <obj2>
-          ^<arg3> <obj3>
-          ^<arg5> <obj5>)
-   (<pm5> ^id <obj5>
-          ^<arg1> <obj1>
-          ^<arg2> <obj2>
-          ^<arg3> <obj3>
-          ^<arg4> <obj4>)
- -{(<s> ^dcount <dc> ^depth-limit <dc>)}
--->
-   (<a> ^possible-match-set <pms>)
-   (<pms> ^<arg1>.possible-match <obj1>
-          ^<arg2>.possible-match <obj2>
-          ^<arg3>.possible-match <obj3>
-          ^<arg4>.possible-match <obj4>
-          ^<arg5>.possible-match <obj5>)
-}
-
-
-sp {find-parameters*check-relation*elaborate*action-detected4
-   (state <s> ^name find-parameters
-              ^test-action true
-              ^test-action-final true
-              ^<arg0>.cond-args 4
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              ^<arg0>.{<arg1> 1}.possible-match <pm1>
-              ^<arg0>.{<arg2> 2}.possible-match <pm2>
-              ^<arg0>.{<arg3> 3}.possible-match <pm3>
-              ^<arg0>.{<arg4> 4}.possible-match <pm4>)
-   (<pm1> ^id <obj1>
-          ^<arg2> <obj2>
-          ^<arg3> <obj3>
-          ^<arg4> <obj4>)
-   (<pm2> ^id <obj2>
-          ^<arg1> <obj1>
-          ^<arg3> <obj3>
-          ^<arg4> <obj4>)
-   (<pm3> ^id <obj3>
-          ^<arg1> <obj1>
-          ^<arg2> <obj2>
-          ^<arg4> <obj4>)
-   (<pm4> ^id <obj4>
-          ^<arg1> <obj1>
-          ^<arg2> <obj2>
-          ^<arg3> <obj3>)
- -{(<s> ^dcount <dc> ^depth-limit <dc>)}
--->
-   (<a> ^possible-match-set <pms>)
-   (<pms> ^<arg1>.possible-match <obj1>
-          ^<arg2>.possible-match <obj2>
-          ^<arg3>.possible-match <obj3>
-          ^<arg4>.possible-match <obj4>)
-}
-
-
-sp {find-parameters*check-relation*elaborate*action-detected3
-   (state <s> ^name find-parameters
-              ^test-action true
-              ^test-action-final true
-              ^<arg0>.cond-args 3
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              ^<arg0>.{<arg1> 1}.possible-match <pm1>
-              ^<arg0>.{<arg2> 2}.possible-match <pm2>
-              ^<arg0>.{<arg3> 3}.possible-match <pm3>)
-   (<pm1> ^id <obj1>
-          ^<arg2> <obj2>
-          ^<arg3> <obj3>)
-   (<pm2> ^id <obj2>
-          ^<arg1> <obj1>
-          ^<arg3> <obj3>)
-   (<pm3> ^id <obj3>
-          ^<arg1> <obj1>
-          ^<arg2> <obj2>)
- -{(<s> ^dcount <dc> ^depth-limit <dc>)}
--->
-   (<a> ^possible-match-set <pms>)
-   (<pms> ^<arg1>.possible-match <obj1>
-          ^<arg2>.possible-match <obj2>
-          ^<arg3>.possible-match <obj3>)
-}
-
-sp {find-parameters*check-relation*elaborate*action-detected2
-   (state <s> ^name find-parameters
-              ^test-action true
-              ^test-action-final true
-              ^<arg0>.cond-args 2
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              ^<arg0>.{<arg1> 1}.possible-match <pm1>
-              ^<arg0>.{<arg2> 2}.possible-match <pm2>)
-   (<pm1> ^id <obj1>
-          ^<arg2> <obj2>)
-   (<pm2> ^id <obj2>
-          ^<arg1> <obj1>)
- -{(<s> ^dcount <dc> ^depth-limit <dc>)}
--->
-   (<a> ^possible-match-set <pms>)
-   (<pms> ^<arg1>.possible-match <obj1>
-          ^<arg2>.possible-match <obj2>)
-}
-
-
-sp {find-parameters*check-relation*propose*select-parameters
-   (state <s> ^name find-parameters
-              ^test-action true
-              ^test-action-final true
-              ^depth-limit <dc>
-              ^<arg0>.verbs <verbs>
-#             -^processing wait
-             -^last-action
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <act>
-              ^<arg0>.possible-match-set <pms>)
-   #TODO rethink no undo heuristic for multi actions
-#  -{(<s> ^legal-action <la> ^superstate.superstate.relationships <rels2>) #heuristic to not undo last action
-#    (<la> ^<arg1> <obj1>)
-#    (<rels2> ^with <obj1> ^preposition <name> ^relations.obj <obj2>)}
-  -{(<s> ^legal-action.<arg1> <obj1>)} #dont double touch heuristic (helpful for towers and 5puzzle)
-#  -{(<s> ^legal-action <la>)#dont slide back (helpful for sokoban)
-#    (<la> -^4 <something> ^3 <obj2>)} 
-  -{(<s> ^dcount <dc> ^depth-limit <dc>)}
-   (<pms> ^{<arg1> 1}.possible-match <obj1>
-          ^{<arg2> 2}.possible-match <obj2>)
-   -{(<act> ^found-possible <fp>)
-     (<pms> ^<argv>.possible-match <objv>
-            ^{<arg2v> <> <argv>}.possible-match {<obj2v> <> <objv>})
-     (<fp> ^objid <objv> ^arg <argv> ^arg2 {<arg2v> <> INDEF} -^arg3 -^neg true)
-    -{(<act> ^found-possible <fp2>)
-       (<fp2> ^objid <objv> ^arg <argv> ^arg2 <arv2v> ^withid <obj2v> -^arg3)}}
-   -{(<act> ^found-possible <fp3>) #TODO again simplify with withid2 gone
-     (<pms> ^{<argz> <> <arg3z>}.possible-match {<objz> <> <obj3z>}
-            ^{<arg2z> <> <argz>}.possible-match {<obj2z> <> <objz>}
-            ^{<arg3z> <> <arg2z>}.possible-match {<obj3z> <> <obj2z>})
-     (<fp3> ^objid <objz> ^arg <argz> ^arg2 <arg2z> ^arg3 <arg3z>)
-    -{(<act> ^found-possible <fp4>)
-       (<fp4> ^objid <objz> ^arg <argz> ^arg2 <arg2z> ^arg3 <arg3z> ^withid2 <obj2z> ^withid3 <obj3z>)}}
-#-{(<act> ^found-possible <fp>) #TODO again simplify with withid2 gone
-#     (<pms> ^<argv>.possible-match <objv>
-#            ^{<arg2v> <> <argv>}.possible-match {<obj2v> <> <objv>})
-#     (<fp> ^objid <objv> ^arg <argv> ^arg3 {<arg2v> <> INDEF})
-#    -{(<act> ^found-possible <fp2>)
-#       (<fp2> ^objid <objv> ^arg <argv> ^arg3 <arv2v> ^withid3 <obj2v>)}}
+              ^matches-found.action true
+              ^current-player <num>
+              ^player-args.<num>.action-args.parameter-match-set <pms>
+              ^parameter-match complete
+              ^player-args.<num>.action-args.<arg0>.verbs <verbs>)
+   (<pms> ^{<arg1> 1}.possible-match <obj1>)
+   (<pms> ^argnum <arg0>)
+   -{(<s> ^legal-action.<arg1> <obj1>)} #dont double touch heuristic
+-{(<s> ^dcount 0 ^multiplayer true -^matches-found.num 1 -^matches-found.num 2)}
+#-{(<s> ^dcount 0)
+#  (<pms> ^{<arg2> 2}.possible-match << 11 12 14 15 16 17 >>)}
 -->
    (<s> ^operator <o> + ) # force tie
    (<o> ^name select-parameters
         ^arg1 1 # HACK shouldnt assume first two conditions are for action
-        ^arg2 2 #TODO multi action-remove
+        ^arg2 2 
         ^action <arg0>
+        ^player-num <num>
         ^verbs <verbs>
         ^possible-match-set <pms>
         ^category svs)
 }
-
-################################
-## GOAL DETECTION args!!!
-
-sp {find-parameters*elaborate*goal-args
-   (state <s> ^name find-parameters
-              ^dcount 0
-              ^goals <go>
-              ^goal-args <ga>)
-   (<go> ^conditions <c> ^parameters <p>)
-   (<p> ^{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.type <param>)
-#   (<p> ^<arg>.{<param> <> type} <pa> ^<arg>.type.world.object <atr>)
-   (<c> ^<arg> <conda>)
--->
-   (<ga> ^<arg> <a>)
-   (<a> ^objd <objd>
-        ^cond <conda>
-        ^param <param>)
-   (<objd> ^word object)
-}
-
-sp {find-parameters*elaborate*goal-object-desc
-   (state <s> ^name find-parameters
-              ^dcount 0
-              ^goal-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>)
-   (<a> ^objd <objd>
-        ^cond <conda>)
-   (<conda> ^attribute.<type> <atr>)
--->
-   (<objd> ^word <atr>)
-}
-
-sp {find-parameters*goal*propose*index-parameter
-   (state <s> ^name find-parameters
-              ^dcount 0
-             -^goal-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.obj <objs>
-              ^goal-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.objd <objd>)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name index-parameter 
-        ^parameter <pa>)
-   (<pa> ^index-info <ii> ^lexical <objd> ^type object)
-   (<ii> ^infer-match false ^return-all true ^use-interaction false)
-}
-
-
-sp {find-parameters*goal*apply*index-parameter
-   (state <s> ^name find-parameters
-              ^operator <o>
-              ^dcount 0
-              ^goal-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              ^topstate.object <obj>)
-   (<a> ^param <param> ^objd <objd> -^obj <obj>)
-   (<o> ^name index-parameter
-        ^parameter.lexical <objd2>
-        ^parameter.result.id <id>)
-   (<obj> ^id <id> ^category <param>)
- -{(<objd2> ^word <word>)
-   (<objd> -^word <word>)}
- -{(<objd2> -^word <word2>)
-   (<objd> ^word <word2>)}
--->
-   (<a> ^obj <obj>)
-}
-
-sp {find-parameters*goal*propose*lookup-preposition
-   (state <s> ^name find-parameters
-             -^processing wait
-             -^found-prep.type <name>
-              ^goal-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.cond <conda>)
-   (<conda> ^prep <prep>)
-   (<prep> ^name <name> ^a this
-          -^name << smaller-than linear-with >>)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name lookup-preposition
-        ^category svs
-        ^type <name>)
-}
-
-sp {find-parameters*goal*propose*find-relations
-   (state <s> ^name find-parameters
-              ^svs <svs>
-              ^goal-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              ^found-prep <fprep>)
-   (<a> ^obj <obj> ^cond <cond>)
-   (<fprep> ^type <name>)
-   (<cond> ^prep <prep>)
-   (<obj> ^id <id>)
-   (<prep> ^name <name> ^a this
-          -^name << smaller-than linear-with >>)
- -{(<s> ^relationships <rels>)
-   (<rels> ^with <id> ^preposition <name>)}
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name find-relations
-        ^category svs
-#        ^svs-link <svs>
-        ^obj <id>
-        ^ind 1
-        ^found-prep <fprep>
-        ^prep <name>)
-}
-sp {find-parameters*goal*propose*find-relations*smaller-than
-   (state <s> ^name find-parameters
-              ^svs <svs>
-              ^goal-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>)
-   (<a> ^obj <obj> ^cond <cond>)
-   (<cond> ^prep <prep>)
-   (<obj> ^id <id>)
-   (<prep> ^name {<name> << smaller-than linear-with >>})
- -{(<s> ^relationships <rels>)
-   (<rels> ^with <id> ^preposition <name>)}
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name find-relations
-        ^category svs
-#        ^svs-link <svs>
-        ^obj <id>
-        ^ind 1
-        ^prep <name>)
-}
-
-##END GOAL DETECTION ARG CODE
-###############################
-
-################################
-## FAILURE DETECTION args!!!
-
-sp {find-parameters*elaborate*failure-args
-   (state <s> ^name find-parameters
-              ^dcount 0
-              ^failures <go>
-              ^failure-args <ga>)
-   (<go> ^conditions <c> ^parameters <p>)
-   (<p> ^{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.type <param>)
-#   (<p> ^<arg>.{<param> <> type} <pa> ^<arg>.type.world.object <atr>)
-   (<c> ^<arg> <conda>)
--->
-   (<ga> ^<arg> <a>)
-   (<a> ^objd <objd>
-        ^cond <conda>
-        ^param <param>)
-   (<objd> ^word object)
-}
-
-sp {find-parameters*elaborate*failure-object-desc
-   (state <s> ^name find-parameters
-              ^dcount 0
-              ^failure-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>)
-   (<a> ^objd <objd>
-        ^cond <conda>)
-   (<conda> ^attribute.<type> <atr>)
--->
-   (<objd> ^word <atr>)
-}
-
-sp {find-parameters*failure*propose*index-parameter
-   (state <s> ^name find-parameters
-              ^dcount 0
-             -^failure-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.obj <objs>
-              ^failure-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.objd <objd>)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name index-parameter 
-        ^parameter <pa>)
-   (<pa> ^index-info <ii> ^lexical <objd> ^type object)
-   (<ii> ^infer-match false ^return-all true ^use-interaction false)
-}
-#   (<s> ^operator <o> + =)
-#   (<o> ^name index-object
-#        ^return-all true
-#        ^object-param <p>
-#        ^arg <arg>)
-#   (<p> ^type object
-#        ^lexical <objd>
-#        ^index-info <ii>)
-#   (<ii> ^return-all true
-#         ^use-interaction false
-#         ^infer-match false)
-#}
-
-
-sp {find-parameters*failure*apply*index-parameter
-   (state <s> ^name find-parameters
-              ^operator <o>
-              ^dcount 0
-              ^failure-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              ^topstate.object <obj>)
-   (<a> ^param <param> ^objd <objd> -^obj <obj>)
-   (<o> ^name index-parameter
-        ^parameter.lexical <objd2>
-        ^parameter.result.id <id>)
-   (<obj> ^id <id> ^category <param>)
- -{(<objd2> ^word <word>)
-   (<objd> -^word <word>)}
- -{(<objd2> -^word <word2>)
-   (<objd> ^word <word2>)}
--->
-   (<a> ^obj <obj>)
-}
-
-sp {find-parameters*failure*propose*lookup-preposition
-   (state <s> ^name find-parameters
-             -^processing wait
-             -^found-prep.type <name>
-              ^failure-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.cond <conda>)
-   (<conda> ^prep <prep>)
-   (<prep> ^name <name> ^a this
-          -^name << smaller-than linear-with >>)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name lookup-preposition
-        ^category svs
-        ^type <name>)
-}
-
-sp {find-parameters*failure*propose*find-relations
-   (state <s> ^name find-parameters
-              ^svs <svs>
-              ^failure-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              ^found-prep <fprep>)
-   (<a> ^obj <obj> ^cond <cond>)
-   (<fprep> ^type <name>)
-   (<cond> ^prep <prep>)
-   (<obj> ^id <id>)
-   (<prep> ^name <name> ^a this
-          -^name << smaller-than linear-with >>)
- -{(<s> ^relationships <rels>)
-   (<rels> ^with <id> ^preposition <name>)}
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name find-relations
-        ^category svs
-#        ^svs-link <svs>
-        ^obj <id>
-        ^ind 1
-        ^found-prep <fprep>
-        ^prep <name>)
-}
-
-sp {find-parameters*failure*propose*find-relations*smaller-than
-   (state <s> ^name find-parameters
-              ^svs <svs>
-              ^failure-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>)
-   (<a> ^obj <obj> ^cond <cond>)
-   (<cond> ^prep <prep>)
-   (<obj> ^id <id>)
-   (<prep> ^name {<name> << smaller-than linear-with >>})
- -{(<s> ^relationships <rels>)
-   (<rels> ^with <id> ^preposition <name>)}
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name find-relations
-        ^category svs
-#        ^svs-link <svs>
-        ^obj <id>
-        ^ind 1
-        ^prep <name>)
-}
-
-##END FAILURE DETECTION ARG CODE
-###############################
 
 sp {find-parameters*elaborate*problem-space
    (state <s> ^name find-parameters)
@@ -1197,23 +244,74 @@ sp {find-parameters*elaborate*problem-space
    (<s> ^problem-space <p>)
    (<p> ^name find-parameters
         ^default-state-copy yes
-        ^two-level-attributes relationships found-prep failure-found-possible goal-found-possible#goal-args # found-possible
-        ^one-level-attributes depth-limit goal-cond-args failure-cond-args multiplayer)
+        ^two-level-attributes relationships 
+        ^one-level-attributes depth-limit multiplayer parameter-match)
 }
 
-
-## NO ACTIONS LEFT
+### default
 sp {find-parameters*propose*complete-find-parameter-failed
    (state <s> ^name find-parameters
-              ^test-action true
-              ^goal-cond-args)
-#             -^processing wait)
--{(<s> ^dcount 0 ^multiplayer true)}
+              ^matches-found.action
+   #          -^dcount 0
+             -^multiplayer true
+              ^parameter-match complete)
 -->
    (<s> ^operator <o> + ) 
    (<o> ^name complete-find-parameter-failed
         ^category svs)
 }
+sp {find-parameters*propose*complete-find-parameter-failed*multiplayer*bottom
+   (state <s> ^name find-parameters
+              -^matches-found.action
+               ^dcount <dc>
+              -^dcount 0
+               ^depth-limit <dc>
+               ^matches-found.num 2
+               ^matches-found.num 1
+              ^parameter-match complete)
+-->
+   (<s> ^operator <o> + ) 
+   (<o> ^name complete-find-parameter-failed
+        ^category svs)
+}
+sp {find-parameters*propose*complete-find-parameter-failed*multiplayer
+   (state <s> ^name find-parameters
+              -^depth-limit <dc>
+               ^dcount <dc>
+               ^multiplayer true
+               ^val-count <vc>
+              -^dcount 0
+              ^parameter-match complete)
+-->
+   (<s> ^operator <o> + ) 
+   (<o> ^name complete-find-parameter-failed
+        ^category svs)
+}
+
+sp {find-parameters*propose*complete-find-parameter-failed*bottom2
+   (state <s> ^name find-parameters
+               ^depth-limit <dc>
+               ^dcount <dc>
+              -^multiplayer true
+               ^matches-found.goal false
+              -^dcount 0
+              ^parameter-match complete)
+-->
+   (<s> ^operator <o> + ) 
+   (<o> ^name complete-find-parameter-failed
+        ^category svs)
+}
+#sp {find-parameters*propose*complete-find-parameter-failed*multiplayer*firstmove
+#   (state <s> ^name find-parameters
+#               ^dcount 1
+#               ^multiplayer true
+#               ^match-found.goal true
+#              ^parameter-match complete)
+#-->
+#   (<s> ^operator <o> + ) 
+#   (<o> ^name complete-find-parameter-failed
+#        ^category svs)
+#}
 
 sp {find-parameters*apply*complete-find-parameter-failed*sub
    (state <s> ^name find-parameters
@@ -1222,44 +320,228 @@ sp {find-parameters*apply*complete-find-parameter-failed*sub
              -^dcount 0
               ^operator.name complete-find-parameter-failed)
 -->
-#   (interrupt)
-   (<s> ^partial-failure <d>) #TODO mark failure?
+   (<s> ^partial-failure <d>)
 }
 
-#sp {find-parameters*apply*complete-find-parameter-failed*multiplayer-evaluate
-#   :interrupt
-#   (state <s> ^name find-parameters
-#              ^multiplayer true
-#              ^goal-score <gs>
-##              ^superstate.
-#              ^desired <d>
-#             -^dcount 0
-#              ^operator.name complete-find-parameter-failed)
-#-->
-##   (interrupt)
-#   (<s> ^numeric-value <gs>
-#        ^indifferent <d>)
-#}
 
-sp {find-parameters*apply*complete-find-parameter-failed*multiplayer-evaluate
-#   :interrupt
+#SCORING CODE
+
+sp {find-parameters*apply*complete-find-parameter-failed*score-positives
+   (state <s> ^name find-parameters
+              ^multiplayer true
+              ^depth-limit <dc>
+              ^dcount <dc>
+              ^played-num <num>
+              ^superstate.superstate <sss>
+              ^player-args.<num>.goal-args.{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.possible-match <pm> 
+              ^superstate.operator.superoperator <o>
+              ^desired <d>
+              ^operator.name complete-find-parameter-failed)
+   (<sss> ^operator <o> +)
+   (<pm> ^{<arg2> << 1 2 3 4 5 6 7 8 9 10 >>} <yid> -^none <arg2>)
+-->
+   (<s> ^addup <dag>)
+}
+
+sp {find-parameters*apply*complete-find-parameter-failed*score-negatives
+   (state <s> ^name find-parameters
+              ^multiplayer true
+              ^depth-limit <dc>
+              ^dcount <dc>
+              ^current-player <num>
+              ^superstate.superstate <sss>
+              ^player-args.<num>.goal-args.{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.possible-match <pm> 
+              ^superstate.operator.superoperator <o>
+              ^desired <d>
+              ^operator.name complete-find-parameter-failed)
+   (<sss> ^operator <o> +)
+   (<pm> ^{<arg2> << 1 2 3 4 5 6 7 8 9 10 >>} <yid> -^none <arg2>)
+-->
+   (<s> ^subup <dag>)
+}
+sp {find-parameters*apply*complete-find-parameter-failed*evaluate-state-score
    (state <s> ^name find-parameters
               ^multiplayer true
               ^superstate.superstate <sss>
-              ^goal-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.goal-possible-match.{<arg2> << 1 2 3 4 5 6 7 8 9 10 >>} <yid>
               ^superstate.operator.superoperator <o>
               ^desired <d>
+              ^val-count <ic>
              -^dcount 0
               ^operator.name complete-find-parameter-failed)
    (<sss> ^operator <o> +)
 -->
-#   (interrupt)
-   (<s> ^indifferent <d>)
-   (<sss> ^operator <o> = 1.0)
+  (<s> ^indifferent <d>)
+  (<o> ^valcue <ic>)
+  (<sss> ^operator <o> = <ic>)
+}
+
+sp {find-parameters*apply*complete-find-parameter-failed*evaluate-state-score*lose
+   (state <s> ^name find-parameters
+              ^multiplayer true
+              ^depth-limit <dc>
+              ^dcount <dc>
+              ^matches-found <mf2>
+              ^superstate.superstate <sss>
+              ^superstate.operator.superoperator <o>
+              ^desired <d>
+              ^operator.name complete-find-parameter-failed)
+   (<sss> ^operator <o> +)
+   (<mf2> ^num 2 ^goal true)
+-->
+  (<s> ^indifferent <d>)
+  (<o> ^valcue -100)
+  (<sss> ^operator <o> = -100)
+}
+sp {find-parameters*apply*complete-find-parameter-failed*evaluate-state-score*win
+   (state <s> ^name find-parameters
+              ^multiplayer true
+              ^depth-limit <dc>
+              ^dcount <dc>
+              ^matches-found <mf>
+              ^matches-found <mf2>
+              ^superstate.superstate <sss>
+              ^superstate.operator.superoperator <o>
+              ^desired <d>
+              ^operator.name complete-find-parameter-failed)
+   (<sss> ^operator <o> +)
+   (<mf> ^num 1 ^goal true)
+   (<mf2> ^num 2 ^goal false)
+-->
+  (<s> ^indifferent <d>)
+  (<o> ^valcue 100)
+  (<sss> ^operator <o> = 100)
+}
+
+sp {find-parameters*apply*complete-find-parameter-failed*evaluate-state-score*win*firstmove
+   (state <s> ^name find-parameters
+              ^multiplayer true
+              -^depth-limit <dc>
+              ^dcount {<dc> 1}
+              ^matches-found.goal true
+              ^superstate.superstate <sss>
+              ^superstate.operator.superoperator <o>
+              ^desired <d>)
+#              ^operator <o>)
+   (<sss> ^operator <o> +)
+-->
+  (<s> ^success <d>)
+#  (<o> ^valcue 100)
+#  (<sss> ^operator <o> = 100)
 }
 
 
-sp {find-parameters*apply*complete-find-parameter-failed*top
+
+sp {find-parameters*elaborate*sum-negative-positive-scores
+   (state <s> ^name find-parameters
+              ^multiplayer true
+              ^depth-limit <dc>
+              ^dcount <dc>
+              ^val-count-pos <pc>
+              ^val-count-neg <nc>
+             -^dcount 0) #comment out?)
+-->
+    (<s> ^val-count (- <pc> <nc>))
+}
+
+sp {find-parameters*propose*count-val-positives
+   (state <s> ^name find-parameters
+              ^multiplayer true
+              ^depth-limit <dc>
+              ^dcount <dc>
+              -^dcount 0
+             -^val-count-pos
+              ^played-num <num>
+              ^addup <a>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name count-val-positives)
+}
+
+sp {find-parameters*propose*count-val-done
+   (state <s> ^name find-parameters
+              ^multiplayer true
+              ^depth-limit <dc>
+              ^dcount <dc>
+             -^count-done
+              -^dcount 0
+              ^val-count-pos
+              ^played-num <num>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name count-val-done)
+}
+
+sp {find-parameters*apply*count-val-done
+   (state <s> ^name find-parameters
+              ^multiplayer true
+              ^depth-limit <dc>
+              ^operator <o>)
+   (<o> ^name count-val-done)
+-->
+   (<s> ^count-done true)
+}
+
+
+sp {find-parameters*propose*count-negatives
+   (state <s> ^name find-parameters
+              ^multiplayer true
+              ^depth-limit <dc>
+              ^dcount <dc>
+              -^dcount 0
+               ^count-done true
+             -^val-count-neg
+              ^played-num <num>
+              ^subup <a>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name count-negatives)
+}
+
+sp {find-parameters*apply*count-val-positives
+   (state <s> ^superstate.name find-parameters
+              ^superstate.multiplayer true
+              ^superstate.depth-limit <dc>
+             -^superstate.count-done
+              ^superstate <ss>
+              ^superstate.dcount <dc>
+              ^item-count <ic>)
+-->
+   (<ss> ^val-count-pos <ic>)
+}
+sp {find-parameters*apply*count-val-negatives
+   (state <s> ^superstate.name find-parameters
+              ^superstate.multiplayer true
+              ^superstate.depth-limit <dc>
+              ^superstate.count-done
+              ^superstate <ss>
+              ^superstate.dcount <dc>
+              ^item-count <ic>)
+-->
+   (<ss> ^val-count-neg <ic>)
+}
+
+#sp {find-parameters*apply*complete-find-parameter-failed*multiplayer-evaluateother
+##   :interrupt
+#   (state <s> ^name find-parameters
+#              ^multiplayer true
+#              ^depth-limit <dc>
+#              ^dcount <dc>
+#              ^current-player <num>
+#              ^superstate.superstate.superstate.superstate <sss>
+#             # ^goal-args.{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.possible-match.has <yid>
+#              ^player-args.<num>.goal-args.{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.possible-match <pm> 
+#              ^superstate.superstate.superstate.operator.superoperator <o>
+#              ^desired <d>
+#             -^dcount 0
+#              ^operator.name complete-find-parameter-failed)
+#   (<sss> ^operator <o> +)
+#   (<pm> ^{<arg2> << 1 2 3 4 5 6 7 8 9 10 >>} <yid> -^none <arg2>)
+#-->
+#   (<s> ^indifferent <d>)
+#   (<sss> ^operator <o> = 1.0)
+#}
+
+sp {find-parameters*apply*complete-find-parameter-failed*depth-limit
    (state <s> ^name find-parameters
               ^desired <d>
               ^dcount 0
@@ -1280,7 +562,6 @@ sp {find-parameters*apply*complete-find-parameter-failed*multiplayer
               ^operator <o>)
    (<o> ^name complete-find-parameter-failed)
 -->
-#   (interrupt)
    (<s> ^operator <o> <)
 }
 
@@ -1295,136 +576,148 @@ sp {selection*prefer*evaluate*select-parameters*over*complete-find-parameter-fai
    (<s> ^operator <o1> > <o2>)
 }
 
-#todo failure handle better
-#sp {find-parameters*apply*complete-find-parameter-failed
-#   (state <s> ^name find-parameters
-#              ^conds.<arg>
-#              ^superstate <ss>
-#              ^operator.name complete-find-parameter-failed)
-#-->
-#   (<ss> ^valid-arg.<arg> failed ^action failed)
-#}
-###########################################3
+
+
 
 #COPY DOWN STUFF
-sp {find-parameters*elaborate*problem-space*goal-args
+sp {find-parameters*elaborate*problem-space*player-args
    (state <s> ^name find-parameters
-              ^superstate.superstate.goal-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              ^goal-args <ga>)
+              ^superstate.superstate.player-args <a>)
 -->
-   (<ga> ^<arg> <b>)
+   (<s> ^player-args <b>)
 }
 
-sp {find-parameters*elaborate*problem-space*goal-args*substructs
+sp {find-parameters*elaborate*problem-space*player-argsnum
    (state <s> ^name find-parameters
-              ^superstate.superstate.goal-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              ^goal-args <ga>)
-   (<ga> ^<arg> <b>)
-   (<a> ^{<something> <> goal-possible-match} <x>)
+              ^player-args <pa>
+              ^superstate.superstate.player-args <a>)
+   (<a> ^<argn> <so>)
+   (<so> ^num <num>)
 -->
-   (<b> ^<something> <x>)
+   (<pa> ^<argn> <b>)
+   (<b> ^num <num>)
 }
 
-sp {find-parameters*elaborate*problem-space*failure-args
+sp {find-parameters*elaborate*problem-space*param-args
    (state <s> ^name find-parameters
-              ^superstate.superstate.failure-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              ^failure-args <ga>)
+              ^player-args.<argn> <c>
+              ^superstate.superstate.player-args.<argn>.{<args> << goal-args failure-args action-args >>} <a>)
 -->
-   (<ga> ^<arg> <b>)
+   (<c> ^<args> <b>)
 }
 
-sp {find-parameters*elaborate*problem-space*failure-args*substructs
+sp {find-parameters*elaborate*problem-space*args*first
    (state <s> ^name find-parameters
-              ^superstate.superstate.failure-args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              ^failure-args <ga>)
-   (<ga> ^<arg> <b>)
-   (<a> ^{<something> <> failure-possible-match} <x>)
+              ^superstate.superstate.player-args.<argn>.<args>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
+              ^player-args.<argn>.{<args> << goal-args failure-args action-args >>} <ga>)
 -->
-   (<b> ^<something> <x>)
+   (<ga> ^<arg> <garg>)
 }
-
-
-sp {find-parameters*elaborate*problem-space*actions
+sp {find-parameters*elaborate*problem-space*args*numtype
    (state <s> ^name find-parameters
-              ^superstate.superstate.{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <a>)
+              ^superstate.superstate.player-args.<argn>.<args>.{<arg> << num type >>} <n>
+              ^player-args.<argn>.{<args> << goal-args failure-args action-args >>} <ga>)
 -->
-   (<s> ^<arg0> <b>)
+   (<ga> ^<arg> <n>)
 }
-sp {find-parameters*elaborate*problem-space*args
+sp {find-parameters*elaborate*problem-space*args*second
    (state <s> ^name find-parameters
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <act>
-              ^superstate.superstate.{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>)
+              ^superstate.superstate.player-args.<argn>.<args>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg2> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
+              ^player-args.<argn>.{<args> << goal-args failure-args action-args >>}.<arg> <garg>)
 -->
-   (<act> ^<arg> <b>)
-}
-sp {find-parameters*elaborate*problem-space*act-other-attributes
-   (state <s> ^name find-parameters
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <act>
-              ^superstate.superstate.{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<atr> << verbs cond-args found-possible >>} <c>)#verb-prep
--->
-   (<act> ^<atr> <c>)
-}
-
-sp {find-parameters*elaborate*problem-space*argsdcount
-   (state <s> ^name find-parameters
-              ^superstate.superstate.dcount <c>)
--->
-   (<s> ^dcount (+ <c> 1))
+   (<garg> ^<arg2> <b>)
 }
 
 sp {find-parameters*elaborate*problem-space*args*substructs
    (state <s> ^name find-parameters
-              ^{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <act>
-              ^superstate.superstate.<arg0>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
-              ^<arg0>.<arg> <b>)
+              ^superstate.superstate.player-args.<argn>.<args>.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>}.{<arg2> << 1 2 3 4 5 6 7 8 9 10 >>} <a>
+              ^player-args.<argn>.{<args> << goal-args failure-args action-args >>} <ga>)
+   (<ga> ^<arg>.<arg2> <b>)
    (<a> ^{<something> <> possible-match} <x>)
 -->
    (<b> ^<something> <x>)
 }
 
+sp {find-parameters*elaborate*problem-space*other-attributes*verbs
+   (state <s> ^name find-parameters
+              ^player-args.<argn>.action-args.{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>} <act>
+              ^actions.<arg0>.{<atr> << verbs >>} <c>)
+-->
+   (<act> ^<atr> <c>)
+}
 
-sp {select-parameters*apply*result
-#   :interrupt
+sp {find-parameters*elaborate*problem-space*other-attributes
+   (state <s> ^name find-parameters
+              ^player-args.<argn>.<args>.<arg0> <act>
+              ^superstate.superstate.player-args.<argn>.{<args> << goal-args failure-args action-args >>}.{<arg0> << 1 2 3 4 5 6 7 8 9 10 >>}.{<atr> << verbs cond-args found-possible >>} <c>)#verb-prep
+-->
+   (<act> ^<atr> <c>)
+}
+
+sp {find-parameters*elaborate*problem-space*dcount
+   (state <s> ^name find-parameters
+              ^superstate.superstate.dcount <c>)
+-->
+   (<s> ^dcount (+ <c> 1))
+}
+sp {find-parameters*elaborate*problem-space*current-player2
+   (state <s> ^name find-parameters
+              ^multiplayer true
+              ^superstate.superstate.current-player 1)
+-->
+   (<s> ^current-player 2)
+}
+sp {find-parameters*elaborate*problem-space*current-player1
+   (state <s> ^name find-parameters
+              ^multiplayer true
+              ^superstate.superstate.current-player 2)
+-->
+   (<s> ^current-player 1)
+}
+sp {find-parameters*elaborate*problem-space*current-player
+   (state <s> ^name find-parameters
+              ^multiplayer false
+              ^superstate.superstate.current-player <cp>)
+-->
+   (<s> ^current-player <cp>)
+}
+sp {select-parameters*apply*select-parameters*result
    (state <s> ^name select-parameters
               ^superstate.superstate <ss>
               ^topstate <ts>
-              ^superstate.<arg0>.verbs <verbs> #verb <verb>
+              ^superstate.actions.<arg0>.verbs <verbs>
               ^superstate.operator <o>)
    (<ss> ^name find-action)
    (<o> ^name select-parameters
         ^action <arg0>
-#        ^arg1 <arg1>
-#        ^arg2 <arg2>
         ^verbs <verbs>
         ^possible-match-set <pms>)
    (<verbs> ^<a1> <verb1>)
-   (<verb1> ^{<a1> 1} <arg1> ^{<a2> 2} <arg2> ^verb-name <vname>)
+   (<verb1> ^{<a1> 1} <arg1> ^{<a2> 2} <arg2> ^verb-name <vname> ^verb-prep <pname>)
    (<pms> ^<arg1>.possible-match <obj1>
           ^<arg2>.possible-match <obj2>)       
 -->
    (<ss> ^valid-arg.<a1> <obj1>
          ^valid-arg.<a2> <obj2> #todo need all parameters of action
          ^action <a>)
-   (<a> ^verb <vname>)
+   (<a> ^verb <vname> ^pname <pname>)
    (<ts> ^flound-action <fa>)
-   (<fa> ^dcount 1 ^obj1 <obj1b> ^obj2 <obj2b> ^mark done)
+   (<fa> ^dcount 1 ^obj1 <obj1> ^obj2 <obj2> ^mark done ^pname <pname>)
 }
 
-sp {select-parameters*apply*result*2verbs
+sp {select-parameters*apply*select-parameters*result*2verbs
    (state <s> ^name select-parameters
               ^superstate.superstate <ss>
               ^topstate <ts>
-              ^superstate.<arg0>.verbs <verbs> #verb <verb>
+              ^superstate.actions.<arg0>.verbs <verbs>
               ^superstate.operator <o>)
    (<ss> ^name find-action)
    (<o> ^name select-parameters
         ^action <arg0>
-#        ^arg1 <arg1>
-#        ^arg2 <arg2>
         ^verbs <verbs>
         ^possible-match-set <pms>)
    (<verbs> ^<a1> <verb1> ^<a2> <verb2>)
-   (<verb1> ^{<a1> 1} <arg1> ^{<a2> 2} <arg2> ^verb-name <vname>)
+   (<verb1> ^{<a1> 1} <arg1> ^{<a2> 2} <arg2> ^verb-name <vname> ^verb-prep <pname>)
    (<verb2> ^<a1> <arg1b> ^<a2> <arg2b>)
    (<pms> ^<arg1>.possible-match <obj1>
           ^<arg2>.possible-match <obj2>
@@ -1434,25 +727,28 @@ sp {select-parameters*apply*result*2verbs
    (<ss> ^valid-arg.<a1> <obj1>
          ^valid-arg.<a2> <obj2> #todo need all parameters of action
          ^action <a>)
-   (<a> ^verb <vname>)
+   (<a> ^verb <vname> ^pname <pname>)
    (<ts> ^flound-action <fa>)
-   (<fa> ^dcount 1 ^obj1 <obj1b> ^obj2 <obj2b>)
+   (<fa> ^dcount 2 ^obj1 <obj1b> ^obj2 <obj2b> ^pname <pname>)
 }
 
-sp {select-parameters*apply*result*solved
-   (state <s> ^name select-parameters
-              ^superstate.superstate <ss>
-#              ^superstate.<arg0>.verb <verb>
-              ^superstate.depth-limit 1
-              ^superstate.operator <o>)
-   (<ss> ^name find-action)
-   (<o> ^name select-parameters
-        ^action <arg0>
-        ^arg1 <arg1>
-        ^arg2 <arg2>
-        ^possible-match-set <pms>)
-   (<pms> ^<arg1>.possible-match <obj1>
-          ^<arg2>.possible-match <obj2>)
--->
-   (<ss> ^solved true)
-}
+
+
+##TODO DEPRICATED?
+#sp {select-parameters*apply*result*solved
+#  :interrupt
+#   (state <s> ^name select-parameters
+#              ^superstate.superstate <ss>
+#              ^superstate.depth-limit 1
+#              ^superstate.operator <o>)
+#   (<ss> ^name find-action)
+#   (<o> ^name select-parameters
+#        ^action <arg0>
+#        ^arg1 <arg1>
+#        ^arg2 <arg2>
+#        ^possible-match-set <pms>)
+#   (<pms> ^<arg1>.possible-match <obj1>
+#          ^<arg2>.possible-match <obj2>)
+#-->
+#   (<ss> ^solved true)
+#}
