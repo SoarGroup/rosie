@@ -32,6 +32,30 @@ sp {select-parameters*elaborate*operator
         ^<arg5> <obj5>
         ^<arg6> <obj6>)
 }
+#sp {select-param*tic-tac-rule
+#   (state <s> ^superstate.name selection
+##              ^superstate.game-name tic-tac-toe
+#              ^operator <o>
+#              ^superstate.superstate.relationships <rels>)
+#   (<o> ^name select-parameters
+#        ^possible-match-set <pms>)
+#   (<pms> ^{<arg1> 1}.possible-match <obj1>
+#          ^{<arg2> 2}.possible-match <obj2>)
+#   (<rels> ^preposition below ^relations.obj <obj1> ^with <obj3>) 
+## -{(<rels> ^relations.obj {<objx> <> <obj1>})}
+#-->
+##   (interrupt)
+#   (<s> ^action-result <ar>)
+#   (<ar> ^item <i>
+#         ^relationships <r1>
+#         ^relationships <r2>
+#         ^relationships <r3>)
+#   (<r1> ^preposition below ^relations <r11> ^with <obj2>)
+#   (<r11> ^matched true ^name below ^obj <obj1>)
+#   (<r2> ^preposition on ^relations <r21> ^with <obj1>)
+#   (<r21> ^matched true ^name on ^obj <obj2>)
+#   (<r3> ^preposition below ^with <obj3>)
+#}
 
 sp {select-parameters*elaborate*operator5
    (state <s> ^superstate.name selection
@@ -153,7 +177,7 @@ sp {select-parameters*elaborate*operator3
 }
 
 sp {select-parameters*elaborate*pop-up-bestfound
-   :interrupt
+#   :interrupt
    (state <s> ^superstate.name selection
               ^legal-action
              -^dcount 0
@@ -166,7 +190,7 @@ sp {select-parameters*elaborate*pop-up-bestfound
    (<s> ^success <d>)
 }
 sp {select-parameters*elaborate*pop-up-bestfoundmulti
-   :interrupt
+#   :interrupt
    (state <s> ^superstate.name selection
               ^legal-action
              -^dcount 0
@@ -181,12 +205,13 @@ sp {select-parameters*elaborate*pop-up-bestfoundmulti
 }
 
 sp {select-parameters*elaborate*pop-up-bestfound*copytotop
-   :interrupt
+#   :interrupt
    (state <s> ^superstate.name selection
               ^legal-action
               ^topstate <ts>
              -^dcount 0
               ^dcount <dc>
+             -^multiplayer true
               ^operator <o>)
    (<o> ^name select-parameters 
         ^possible-match-set <pms>
@@ -200,22 +225,12 @@ sp {select-parameters*elaborate*pop-up-bestfound*copytotop
    (<fa> ^dcount (+ (* <dc> 4) <varg>) ^obj1 <oa> ^obj2 <ob> ^pname <pname>)
 }
 
-
-#sp {select-parameters*elaborate*goal-failure-args
-#   (state <s> ^name select-param)
-#-->
-#   (<s> ^goal-args <ga>
-#        ^failure-args <fa>)
-#   (<ga> ^type goal)
-#   (<fa> ^type failure)
-#}
-
 sp {select-param*propose*simulate-action
    (state <s> ^name select-param
               ^legal-action <item>
              -^rels-copied
               ^action-result <ar>)
-   (<ar> ^item <item> -^tried)
+   (<ar> ^item <i> -^tried)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name simulate-action
@@ -342,11 +357,26 @@ sp {select-param*propose*constraint-match*goal-args*multiplayer
         ^param-args <ga>)
 }
 
+sp {select-param*propose*constraint-match*goal-args*multiplayer*firstmove
+   (state <s> ^name select-param
+              ^simulated true
+              ^multiplayer true
+              ^dcount 1
+             -^matches-found.num <num>
+              ^matches-found.failure false
+              ^player-args.{<num> << 1 >>}.goal-args <ga>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name constraint-match
+        ^num-arg <num>
+        ^param-args <ga>)
+}
 
 sp {select-param*apply*constraint-match*goal-args
-   :interrupt
+#   :interrupt
    (state <s> ^name select-param
               ^matches-found.goal true
+             -^multiplayer true
               ^simulated true
               ^desired <d>)
 -->
