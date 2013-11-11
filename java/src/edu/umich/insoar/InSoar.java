@@ -59,9 +59,9 @@ public class InSoar implements PrintEventInterface, RunEventInterface
         
         boolean useLG = false;
         String lgSoarDictionary = "";
-        if (useLGProp != null && useLGProp.equals("true")) {
+        if (useLGProp != null && useLGProp.trim().equals("true")) {
         	lgSoarDictionary = props.getProperty("lgsoar-dictionary");
-        	String lgSoarSource = props.getProperty("language-productions");
+        	String lgSoarSource = props.getProperty("language-productions").trim();
         	if (lgSoarSource != null && lgSoarDictionary != null) {
         		useLG = true;
         	}
@@ -132,9 +132,16 @@ public class InSoar implements PrintEventInterface, RunEventInterface
         
         soarAgent.setWorldModel(perception.world);
         
+        if(DEBUG_TRACE){
+			soarAgent.getAgent().RegisterForRunEvent(smlRunEventId.smlEVENT_BEFORE_OUTPUT_PHASE, this, this);
+			soarAgent.getAgent().RegisterForRunEvent(smlRunEventId.smlEVENT_AFTER_OUTPUT_PHASE, this, this);
+			soarAgent.getAgent().RegisterForRunEvent(smlRunEventId.smlEVENT_BEFORE_INPUT_PHASE, this, this);
+			soarAgent.getAgent().RegisterForRunEvent(smlRunEventId.smlEVENT_AFTER_INPUT_PHASE, this, this);
+        }
+        
         chatFrame.showFrame();   
     }
-
+    
     public static void main(String[] args)
     {
     	boolean headless = false;
@@ -153,12 +160,52 @@ public class InSoar implements PrintEventInterface, RunEventInterface
 			logWriter.print(message);
 		}
 	}
+	
+	
+    long prevTime = 0;
+    long outputTime = 0;
+    long outputInputTime = 0;
+    long inputTime = 0;
+    long dcTime = 0;
+    private long getElapsed(long prevTime){
+    	return (TimeUtil.utime() - prevTime)/1000;
+    }
 	@Override
 	public void runEventHandler(int arg0, Object arg1, Agent arg2, int arg3) {
-		try {
-			Thread.sleep(throttleMS);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+		smlRunEventId runEventId = smlRunEventId.swigToEnum(arg0);
+		switch(runEventId){
+		case smlEVENT_AFTER_DECISION_CYCLE:
+			try {
+				Thread.sleep(throttleMS);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			break;
+		case smlEVENT_BEFORE_OUTPUT_PHASE:
+			prevTime = TimeUtil.utime();
+			break;
+		case smlEVENT_AFTER_OUTPUT_PHASE:
+			dcTime = getElapsed(dcTime);
+			outputTime = getElapsed(prevTime);
+			
+			System.out.println("PHASE TIMERS");
+			System.out.println(String.format("%-20s : %d", "  PRE-INPUT", outputInputTime));
+			System.out.println(String.format("%-20s : %d", "  INPUT", inputTime));
+			System.out.println(String.format("%-20s : %d", "  OUTPUT", outputTime));
+			System.out.println(String.format("%-20s : %d", "  TOTAL", dcTime));
+			System.out.println("=============================================================");
+			
+			dcTime = TimeUtil.utime();
+			prevTime = TimeUtil.utime();
+			break;
+		case smlEVENT_BEFORE_INPUT_PHASE:
+			outputInputTime = getElapsed(prevTime);
+			prevTime = TimeUtil.utime();
+			break;
+		case smlEVENT_AFTER_INPUT_PHASE:
+			inputTime = getElapsed(prevTime);
+			prevTime = TimeUtil.utime();
+			break;
 		}
 	}
 }

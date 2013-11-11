@@ -3,7 +3,9 @@
 # occlusion-command
 # (<s> ^operator <o>)
 # (<o> ^name occlusion-command
-#      ^object-id <id>)
+#      ^object-id <id>
+#      ^candidate-set <cand>   # Optional: the set of objects to check for occlusion
+#      ^eye <eye>			   # Optional: The point at which the occlusion should be checked (Defaults to ^id eye))
 #
 # Returns either ^occlusion-command.result # or ^occlusion-command.result none
 # (none should only be returned in rare error cases)
@@ -15,6 +17,38 @@ sp {occlusion-command*elaborate*object-id
               ^superstate.operator.object-id <id>)
 -->
    (<s> ^object-id <id>)
+}
+
+sp {occlusion-command*elaborate*candidate-set*copy
+   (state <s> ^name occlusion-command
+              ^superstate.operator.candidate-set <cand>)
+-->
+   (<s> ^candidate-set <cand>)
+}
+
+sp {occlusion-command*elaborate*candidate-set*defualt
+   (state <s> ^name occlusion-command
+              ^superstate.operator <op>)
+   (<op> -^candidate-set)
+-->
+   (<s> ^candidate-set.type all_nodes)
+}
+
+sp {occlusion-command*elaborate*eye*copy
+   (state <s> ^name occlusion-command
+              ^superstate.operator.eye <eye>)
+-->
+   (<s> ^eye <eye>)
+}
+
+sp {occlusion-command*elaborate*eye*default
+   (state <s> ^name occlusion-command
+              ^superstate.operator <o>)
+   (<o> -^eye)
+-->
+   (<s> ^eye <eye>)
+   (<eye> ^type node
+          ^id eye)
 }
 
 # Operator: create-occlusion-filter
@@ -33,13 +67,17 @@ sp {occlusion-command*propose*create-occlusion-filter
 sp {occlusion-command*apply*create-occlusion-filter
    (state <s> ^name occlusion-command
               ^operator <o>
-              ^topstate.svs.command <cmd>)
+              ^topstate.svs.command <cmd>
+              ^candidate-set <cand>
+              ^eye  <eye>)
    (<o> ^name create-occlusion-filter
         ^object-id <id>)
 -->
    (<cmd> ^extract_once <occlusion>)
    (<occlusion> ^type occlusion
-                ^a <node>)
+                ^a <node>
+                ^b <cand>
+                ^eye <eye>)
    (<node> ^type node
            ^id <id>)
    (<s> ^occlusion-filter <occlusion>)

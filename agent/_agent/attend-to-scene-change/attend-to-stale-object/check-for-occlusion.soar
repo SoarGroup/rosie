@@ -1,68 +1,61 @@
-sp {attend-to-stale-object*propose*occlusion-command
+# See attend-to-scene-change.svs-command-operators.check-for-occlusion
+
+sp {attend-to-stale-object*propose*check-for-occlusion
    (state <s> ^name attend-to-stale-object
-              ^stale-object <obj>
-              ^svs-object.id <id>)
-   (<obj> -^marked-for-deletion)
+              ^monitor-obj <obj>
+             -^check-for-intersection)
 -->
    (<s> ^operator <o> +)
-   (<o> ^name occlusion-command
+   (<o> ^name check-for-occlusion
         ^category perception
-        ^object-id <id>)
+        ^monitor-obj <obj>
+        ^report-to-superstate true
+        ^report-to-topstate false)
 }
 
-sp {attend-to-stale-object*elaborate*object-occluded*true
+sp {attend-to-stale-object*apply*check-for-occlusion*not-occluded*mark-for-deletion
    (state <s> ^name attend-to-stale-object
-              ^topstate.agent-params.occlusion-threshold <occlusion-threshold>
-              ^occlusion-command.result >= <occlusion-threshold>)
+              ^operator.name check-for-occlusion
+              ^object-occluded false
+              ^monitor-obj <obj>)
 -->
-   (<s> ^object-occluded true)
+   (<obj> ^mark-for-deletion true)
 }
 
-sp {attend-to-stale-object*elaborate*object-occluded*false*not-occluded
+# Definitely occluded, don't do additional check
+sp {attend-to-stale-object*apply*check-for-occlusion*occluded*add*info
    (state <s> ^name attend-to-stale-object
-              ^topstate.agent-params.occlusion-threshold <occlusion-threshold>
-              ^occlusion-command.result < <occlusion-threshold>)
--->
-   (<s> ^object-occluded false)
-}
-
-sp {attend-to-stale-object*elaborate*object-occluded*false*no-result
-   (state <s> ^name attend-to-stale-object
-              ^occlusion-command.result none)
--->
-   (<s> ^object-occluded false)
-}
-
-sp {attend-to-stale-object*apply*occlusion-command*occluded
-   (state <s> ^name attend-to-stale-object
-              ^operator.name occlusion-command
-              ^stale-object <wm-obj>
+              ^operator.name check-for-occlusion
               ^object-occluded true
-              ^topstate.agent-params.occlusion-check-period <check-period>
-              ^io.input-link.time.seconds <cur-time>)
-   (<wm-obj> ^stale-time <time>)
+              ^occlusion-amount > .5
+              ^monitor-obj.differences <diffs>
+              ^io.input-link.time.seconds <cur-t>
+              ^occlusion-check-period <period>)
 -->
-   (<wm-obj> ^stale-time <time> -
-             ^stale-time (+ <cur-time> <check-period>))
+   (<diffs> ^is-occluded true
+            ^recheck-occlusion-time (+ <cur-t> <period>))
 }
 
-sp {attend-to-stale-object*apply*occlusion-command*not-occluded*mark-for-deletion
+sp {attend-to-stale-object*apply*check-for-occlusion*occluded*remove*old*info
    (state <s> ^name attend-to-stale-object
-              ^operator.name occlusion-command
-              ^stale-object <obj>
-              ^object-occluded false
-              ^topstate <top>)
+              ^operator.name check-for-occlusion
+              ^object-occluded true
+              ^occlusion-amount > .5
+              ^monitor-obj.differences <diffs>)
+   (<diffs> ^is-occluded true
+            ^recheck-occlusion-time <t>)
 -->
-   (<obj> ^marked-for-deletion true)
-   (<top> ^deleting-object true)
+   (<diffs> ^is-occluded true -
+            ^recheck-occlusion-time <t> -)
 }
 
-sp {attend-to-stale-object*apply*occlusion-command*not-occluded*report
+
+# The object is less than half occluded, we should do an additional check
+sp {attend-to-stale-object*apply*check-for-occlusion*mark*check-for-intersection
    (state <s> ^name attend-to-stale-object
-              ^operator.name occlusion-command
-              ^stale-object.id <id>
-              ^object-occluded false
-              ^topstate.agent-params.debug-perception true)
+              ^operator.name check-for-occlusion
+              ^object-occluded true
+              ^occlusion-amount <= .5)
 -->
-   (write |Deleting Object | <id>)
+   (<s> ^check-for-intersection true)
 }

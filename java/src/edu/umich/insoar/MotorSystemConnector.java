@@ -132,7 +132,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
 		}
 		this.agent.commitChanges();
     	if(InSoar.DEBUG_TRACE){
-            System.out.println("  MOTOR: " + (TimeUtil.utime() - time)/1000);
+			System.out.println(String.format("%-20s : %d", "MOTOR CONNECTOR", (TimeUtil.utime() - time)/1000));
     	}
 	}
     

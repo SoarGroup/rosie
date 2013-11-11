@@ -1,0 +1,68 @@
+sp {match-known-object*propose*overlap-command
+   (state <s> ^name match-known-object
+              ^monitor-obj.perception-obj.id <new-id>
+              ^intersect-command.result {<bel-id> <> none})
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name overlap-command
+        ^category perception
+        ^new-obj-id <new-id>
+        ^belief-id <bel-id>)
+}
+
+sp {match-known-object*apply*overlap-command
+   (state <s> ^name match-known-object
+              ^operator <o>
+              ^topstate.svs.command <cmd>)
+   (<o> ^name overlap-command
+        ^new-obj-id <new-id>
+        ^belief-id <bel-id>)
+-->
+   (<cmd> ^extract_once <filter>)
+   (<filter> ^type overlap
+             ^a <nodea>
+             ^b <nodeb>)
+   (<nodea> ^type node ^id <new-id>)
+   (<nodeb> ^type node ^id <bel-id>)
+   (<s> ^overlap-filter <filter>)
+}
+
+sp {match-known-object*apply*overlap-command*cleanup
+   (state <s> ^name match-known-object
+              ^operator.name overlap-command
+              ^overlap-filter <overlap>
+              ^topstate.svs.command <cmd>)
+   (<cmd> ^extract_once <filter>)
+   (<filter> ^result)
+-->
+   (<cmd> ^extract_once <filter> -)
+   (<s> ^overlap-filter <filter> -)
+}
+
+sp {match-known-object*apply*overlap-command*create-result
+   (state <s> ^name match-known-object
+              ^operator <o>
+              ^overlap-filter.result.record.value <val>
+              ^intersect-command <intersect>
+              ^overlap-command <overlap>)
+   (<o> ^name overlap-command
+        ^belief-id <bel-id>)
+   (<intersect> ^result <bel-id>)
+-->
+   (<intersect> ^result <bel-id> -)
+   (<overlap> ^result <res>)
+   (<res> ^object-id <bel-id>
+          ^overlap <val>)
+}
+
+sp {match-known-object*apply*overlap-command*debug-perception*report*overlap
+   (state <s> ^name match-known-object
+              ^operator <o>
+              ^overlap-filter.result.record.value <val>
+              ^topstate.agent-params.debug-perception true)
+   (<o> ^name overlap-command
+        ^belief-id <bel-id>
+        ^new-obj-id <new-id>)
+-->
+   (write |Overlap: | <val> | of | <new-id> | is contained by | <bel-id> (crlf))
+} 

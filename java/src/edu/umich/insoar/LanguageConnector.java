@@ -42,7 +42,7 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
         }
         
         soarAgent.getAgent().RegisterForRunEvent(
-                smlRunEventId.smlEVENT_AFTER_OUTPUT_PHASE, this, null);
+                smlRunEventId.smlEVENT_BEFORE_INPUT_PHASE, this, null);
     }
     
     public void clear(){
@@ -92,7 +92,7 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
     	}
     	
     	if(InSoar.DEBUG_TRACE){
-            System.out.println("  LANG : " + (TimeUtil.utime() - time)/1000);
+			System.out.println(String.format("%-20s : %d", "LANGUAGE CONNECTOR", (TimeUtil.utime() - time)/1000));
     	}
     }
 

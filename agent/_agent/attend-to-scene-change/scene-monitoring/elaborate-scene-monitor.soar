@@ -11,7 +11,7 @@
 #sp {topstate*elaborate*scene-monitor
 #   (state <s> ^topstate <s>
 #              ^scene-monitor.object <obj>)
-#   (<obj> ^svs-obj <svs-obj>
+#   (<obj> ^perception-obj <perc-obj>
 #          ^wm-obj <wm-obj>
 #          ^property <prop>)
 #   (<prop> ^name <prop-name>
@@ -27,9 +27,6 @@
 #   (<s> ^foo bar)
 #}
    
-
-
-
 sp {topstate*elaborate*scene-monitor
    (state <s> ^topstate <s>
    	      -^operator.name learning)
@@ -38,31 +35,340 @@ sp {topstate*elaborate*scene-monitor
    (<sm> ^scene-changes <sc>)
 }
 
+##############################################################
+#
+# Monitoring new objects
+#
+##############################################################
+
+
+sp {topstate*elaborate*scene-monitor*new-object
+   (state <s> ^topstate <s>
+              ^scene-monitor <sm>
+              ^svs.spatial-scene.child <perc-obj>
+             -^object.id <id>)
+   (<perc-obj> ^object-source perception
+               ^id-as-integer <id>)
+-->
+   (<sm> ^new-object.perception-obj <perc-obj>)
+}
+
+sp {topstate*elaborate*scene-monitor*new-object*stability-timer*satisfied
+   (state <s> ^topstate <s>
+              ^scene-monitor.new-object <obj>
+              ^io.input-link.time.seconds <cur-t>)
+   (<obj> ^stability-check-time <= <cur-t>)
+-->
+   (<obj> ^stability-timer-satisfied true)
+}
+
+sp {topstate*elaborate*scene-monitor*new-object*monitor-id
+   (state <s> ^topstate <s>
+              ^scene-monitor.new-object <obj>)
+   (<obj> ^perception-obj.id <id>)
+-->
+   (<obj> ^monitor-id <id>)
+}
+
+##################################################################
+#
+# Monitoring confirmed objects
+#
+##################################################################
+
 sp {topstate*elaborate*scene-monitor*object
    (state <s> ^topstate <s>
               ^scene-monitor <sm>
-              ^svs.spatial-scene.child <svs-obj>)
-   (<svs-obj> ^id-int <id>)
+              ^object <wm-obj>
+              ^svs.spatial-scene.child <bel-obj>)
+   (<wm-obj> ^id <id>
+             ^belief-id <bel-id>)
+   (<bel-obj> ^id <bel-id>)
 -->
    (<sm> ^object <obj>)
-   (<obj> ^svs-obj <svs-obj>)
+   (<obj> ^wm-obj <wm-obj>
+          ^belief-obj <bel-obj>
+          ^differences <diff>
+          ^monitor-id <id>)
 }
 
-sp {topstate*elaborate*scene-monitor*wm-object
+sp {topstate*elaborate*scene-monitor*object*perc-obj
    (state <s> ^topstate <s>
-              ^scene-monitor <sm>
-              ^object <obj>)
-   (<sm> ^object <sm-obj>)
-   (<sm-obj> ^svs-obj.id-int <id>)
-   (<obj> ^id <id>)
+              ^scene-monitor.object <obj>
+              ^svs.spatial-scene.child <perc-obj>)
+   (<obj> ^wm-obj.id <id>)
+   (<perc-obj> ^id-as-integer <id>)
 -->
-   (<sm-obj> ^wm-obj <obj>)
+   (<obj> ^perception-obj <perc-obj>)
 }
+
+##################################################################
+#
+# Monitoring stale objects (that have been confirmed)
+#
+##################################################################
+
+sp {topstate*scene-monitor*elaborate*wm-object*stale*true
+   (state <s> ^topstate <s>
+              ^scene-monitor.object <obj>)
+   (<obj> ^wm-obj <wm-obj>
+         -^perception-obj
+          ^differences <diff>)
+-->
+   (<diff> ^is-stale true)
+}
+
+sp {topstate*scene-monitor*elaborate*wm-object*stale*false
+   (state <s> ^topstate <s>
+              ^scene-monitor.object <obj>)
+   (<obj> ^wm-obj <wm-obj>
+          ^perception-obj <perc-obj>
+          ^differences <diff>)
+-->
+   (<diff> ^is-stale false)
+}
+
+
+sp {topstate*scene-monitor*elaborate*stale-object*possible-candidates
+   (state <s> ^topstate <s>
+              ^scene-monitor.object <obj>)
+   (<obj> ^differences <diff>)
+   (<diff> ^is-stale true)
+-->
+   (<diff> ^possible-candidates <c>)
+}
+           
+sp {topstate*scene-monitor*elaborate*stale-object*possible-candidates*candidate
+   (state <s> ^topstate <s>
+              ^scene-monitor <sm>)
+   (<sm> ^object <stale-obj>
+         ^new-object <new-obj>)
+   (<stale-obj> ^differences <diffs>
+                ^belief-obj.id <bel-id>)
+   (<diffs> ^is-stale true
+            ^possible-candidates <c>)
+   (<new-obj> ^perception-obj.id <new-id>
+              ^status << uncertain unidentified >>
+              ^stale-candidates.candidate <bel-id>)
+-->
+   (<c> ^candidate <new-id>)
+}
+
+##################################################################
+#
+# Monitoring occluded objects
+#
+##################################################################
+
+sp {topstate*scene-monitor*elaborate*is-occluded*false
+   (state <s> ^topstate <s>
+              ^scene-monitor.object.differences <diffs>)
+   (<diffs> -^is-occluded true)
+-->
+   (<diffs> ^is-occluded false)
+}
+
+sp {topstate*scene-monitor*elaborate*occlusion-time-expired
+   (state <s> ^topstate <s>
+              ^scene-monitor.object.differences <diffs>
+              ^io.input-link.time.seconds <t>)
+   (<diffs> ^is-occluded true
+            ^recheck-occlusion-time < <t>)
+-->
+   (<diffs> ^occlusion-time-expired true)
+}
+
+##################################################################
+#
+# Monitoring object movements and change in volumes
+#
+##################################################################
+sp {topstate*scene-monitor*elaborate*svs-command*compare-volume
+   (state <s> ^topstate <s>
+              ^scene-monitor.object <obj>
+              ^svs.command <cmd>)
+   (<obj> ^perception-obj.id <perc-id>
+          ^belief-obj.id <bel-id>
+          ^differences <diffs>)
+-->
+   (<cmd> ^extract <compare>)
+   (<compare> ^type compare-nodes
+              ^a <a>
+              ^b <b>
+              ^compare volume)
+   (<a> ^type node
+        ^id <perc-id>)
+   (<b> ^type node
+        ^id <bel-id>)
+   (<diffs> ^compare-volume <compare>)
+}
+
+sp {topstate*scene-monitor*elaborate*svs-command*compare-position
+   (state <s> ^topstate <s>
+              ^scene-monitor.object <obj>
+              ^svs.command <cmd>)
+   (<obj> ^perception-obj.id <perc-id>
+          ^belief-obj.id <bel-id>
+          ^differences <diffs>)
+-->
+   (<cmd> ^extract <compare>)
+   (<compare> ^type compare-nodes
+              ^a <a>
+              ^b <b>
+              ^compare position)
+   (<a> ^type node
+        ^id <perc-id>)
+   (<b> ^type node
+        ^id <bel-id>)
+   (<diffs> ^compare-position <compare>)
+}
+
+sp {topstate*scene-monitor*elaborate*vol-diff
+   (state <s> ^topstate <s> 
+              ^scene-monitor.object.differences <diffs>)
+   (<diffs> ^compare-volume.result.record.value <val>)
+-->
+   (<diffs> ^vol-diff <val>)
+}
+
+sp {topstate*scene-monitor*elaborate*pos-diff
+   (state <s> ^topstate <s>
+              ^scene-monitor.object.differences <diffs>)
+   (<diffs> ^compare-position.result.record.value <val>)
+-->
+   (<diffs> ^pos-diff <val>)
+}
+
+sp {topstate*scene-monitor*elaborate*has-shrunk
+   (state <s> ^topstate <s>
+              ^scene-monitor.object.differences <diffs>
+              ^agent-params.vol-low-diff-threshold <low>)
+   (<diffs> ^vol-diff < <low>)
+-->
+   (<diffs> ^has-shrunk true)
+}
+
+sp {topstate*scene-monitor*elaborate*has-grown
+   (state <s> ^topstate <s>
+              ^scene-monitor.object.differences <diffs>
+              ^agent-params.vol-high-diff-threshold <high>)
+   (<diffs> ^vol-diff > <high>)
+-->
+   (<diffs> ^has-grown true)
+}
+
+sp {topstate*scene-monitor*elaborate*has-moved
+   (state <s> ^topstate <s>
+              ^scene-monitor.object.differences <diffs>
+              ^agent-params.pos-diff-threshold <thresh>)
+   (<diffs> ^pos-diff > <thresh>)
+-->
+   (<diffs> ^has-moved true)
+}
+
+##################################################################
+#
+# Monitoring for need to copy an object
+#
+##################################################################
+sp {topstate*scene-monitor*mark-for-copying*apply*any-op*copy_node
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^scene-monitor.object <obj>
+              ^svs.command <cmd>)
+   (<obj> ^mark-for-copying true
+          ^perception-obj.id <perc-id>
+          ^belief-obj.id <bel-id>)
+-->
+   (<cmd> ^copy_node <copy>)
+   (<copy> ^source-id <perc-id>
+           ^dest-id <bel-id>)
+   (<obj> ^copy-command <copy>)
+}
+
+sp {topstate*scene-monitor*mark-for-copying*apply*any-op*debug-report
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^scene-monitor.object <obj>
+              ^svs.command <cmd>
+              ^agent-params.debug-perception true)
+   (<obj> ^mark-for-copying true
+          ^perception-obj
+          ^wm-obj.id <id>)
+-->
+   (write |Updating Object | <id>)
+}
+   
+sp {topstate*scene-monitor*mark-for-copying*apply*any-op*cleanup
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^scene-monitor.object <obj>
+              ^svs.command <cmd>)
+   (<obj> ^mark-for-copying true
+          ^copy-command <copy>)
+   (<copy> ^status success)
+-->
+   (<obj> ^mark-for-copying true -
+          ^copy-command <copy> -)
+}
+
+
+##################################################################
+#
+# Monitoring for an object that needs deleted
+#
+##################################################################
+sp {topstate*scene-monitor*mark-for-deletion*apply*any-op*delete*from*svs
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^scene-monitor.object <obj>
+              ^svs.command <cmd>)
+   (<obj> ^mark-for-deletion true
+          ^belief-obj.id <id>)
+-->
+   (<cmd> ^del_node.id <id>)
+}
+
+sp {topstate*scene-monitor*mark-for-deletion*apply*any-op*delete*from*wm
+  (state <s> ^topstate <s>
+              ^operator <o>
+              ^scene-monitor.object <obj>
+              ^object <wm-obj>)
+   (<obj> ^mark-for-deletion true
+          ^wm-obj <wm-obj>)
+-->
+   (<s> ^object <wm-obj> -)
+}
+
+sp {topstate*scene-monitor*mark-for-deletion*elaborate*stop-extracting-relations*true
+   (state <s> ^topstate <s>
+              ^scene-monitor.object.mark-for-deletion true)
+-->
+   (<s> ^stop-extracting-relations true)
+}
+
+sp {topstate*scene-monitor*mark-for-deletion*apply*any-op*report
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^scene-monitor.object <obj>
+              ^agent-params.debug-perception true)
+   (<obj> ^mark-for-deletion true
+          ^wm-obj.id <id>)
+-->
+   (write |Deleting Object | <id>)
+}
+
+##################################################################
+#
+# Monitoring for object properties
+#
+##################################################################
+
 
 sp {topstate*elaborate*scene-monitor*property
    (state <s> ^topstate <s>
               ^scene-monitor.object <obj>)
-   (<obj> ^svs-obj.<prop-name> <prop>)
+   (<obj> ^perception-obj.<prop-name> <prop>)
    (<prop> ^type {<type> << visual state >>})
 -->
    (<obj> ^property <p>)
@@ -124,6 +430,16 @@ sp {topstate*elaborate*scene-monitor*hypothesis*lower-threshold
    (<h> ^lower-threshold (* <conf> .8))
 }
 
+sp {topstate*elaborate*scene-monitor*hypothesis*upper-threshold
+   (state <s> ^topstate <s>
+              ^scene-monitor.object.property <prop>)
+   (<prop> ^hypothesis <h>)
+   (<h> ^best true
+        ^conf <conf>)
+-->
+   (<h> ^update-when-below (* <conf> .95))
+}
+
 sp {topstate*elaborate*scene-monitory*case*none*no-hypothesis
    (state <s> ^topstate <s>
               ^scene-monitor.object.property <prop>)
@@ -164,35 +480,4 @@ sp {topstate*elaborate*scene-monitor*case*certain
      (<h2> ^conf > <thresh>)}
 -->
    (<prop> ^case certain)
-}
-           
-sp {topstate*elaborate*scene-monitor*object*stability-timer*satisfied
-   (state <s> ^topstate <s>
-              ^scene-monitor.object.wm-obj <obj>
-              ^io.input-link.time.seconds <cur-t>)
-   (<obj> ^stability-check-time <= <cur-t>)
--->
-   (<obj> ^stability-timer-satisfied true)
-}
-
-sp {topstate*elaborate*stale-object*possible-candidates
-   (state <s> ^topstate <s>
-              ^object <obj>)
-   (<obj> ^is-stale true)
--->
-   (<obj> ^possible-candidates <c>)
-}
-
-sp {topstate*elaborate*stale-object*possible-candidates*candidate
-   (state <s> ^topstate <s>
-              ^object <stale-obj>
-              ^object <new-obj>)
-   (<stale-obj> ^svs-id <stale-id>
-                ^is-stale true
-                ^possible-candidates <c>)
-   (<new-obj> ^id <new-id>
-              ^status << uncertain unidentified >>
-              ^stale-candidates.result <stale-id>)
--->
-   (<c> ^candidate <new-id>)
 }

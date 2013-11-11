@@ -11,13 +11,15 @@ sp {topstate*elaborate*scene-changes*change-info
 -->
    (<sc> ^change-info <info>)
    (<info> ^change <new-obj> <stale-obj> <chg-prop> <higher-conf> <diff-best> <stability-timer-satisfied> <unidentified-object> 
-           			<shrunken-object>
+           			<shrunken-object> <recheck-occlusion> <moved-object> <grown-object>
            ^parameter attend-to-all-scene-changes attend-to-create-delete-only attend-to-properties-only
            ^parameter attend-to-object attend-to-property)
    (<new-obj> ^name new-object
               ^op-name attend-to-new-object)
    (<stale-obj> ^name stale-object 
                 ^op-name attend-to-stale-object)
+   (<recheck-occlusion> ^name recheck-occlusion
+                        ^op-name recheck-occlusion)
    (<chg-prop> ^name changed-property
                ^op-name attend-to-changed-property)
    (<higher-conf> ^name higher-confidence
@@ -30,6 +32,10 @@ sp {topstate*elaborate*scene-changes*change-info
                           ^op-name evaluate-new-object)
    (<shrunken-object> ^name shrunken-object
                       ^op-name evaluate-shrunken-object)
+   (<moved-object> ^name moved-object
+                   ^op-name evaluate-moved-object)
+   (<grown-object> ^name grown-object
+                   ^op-name evaluate-grown-object)
 }
 
 
@@ -40,10 +46,9 @@ sp {topstate*elaborate*scene-changes*change-info
 sp {monitor-scene-changes*elaborate*scene-changes*new-object
    (state <s> ^topstate <s>
               ^scene-monitor.scene-changes <sc>
-              ^scene-monitor.object <obj>)
-   (<obj> ^svs-obj <svs-obj>
-         -^wm-obj)
-   (<svs-obj> -^stale true)
+              ^scene-monitor.new-object <obj>)
+   (<obj> ^perception-obj <perc-obj>
+         -^status)
 -->
    (<sc> ^change <change>)
    (<change> ^type new-object
@@ -59,97 +64,48 @@ sp {monitor-scene-changes*elaborate*scene-changes*stale-object
    (state <s> ^topstate <s>
               ^scene-monitor.scene-changes <sc>
               ^scene-monitor.object <obj>)
-   (<obj> ^wm-obj <wm-obj>)
-   (<wm-obj> ^is-stale true
-            -^held true
-            -^possible-candidates.candidate)
+   (<obj> ^differences <diffs>)
+   (<diffs> ^is-stale true
+            ^is-occluded false
+           -^possible-candidates.candidate)
 -->
    (<sc> ^change <change>)
    (<change> ^type stale-object
              ^object <obj>)
 }
 
-
-sp {topstate*apply*any-op*mark*stale-time
+# Note: For a stale object, do a stale-object check instead of occlusion check
+sp {monitor-scene-changes*elaborate*scene-changes*stale-object*occluded
    (state <s> ^topstate <s>
-              ^operator <o>
-              ^topstate.svs.spatial-scene.child <svs-obj>
-              ^object <obj>
-              ^io.input-link.time.seconds <sec>)
-   (<svs-obj> ^id-int <id>
-              ^stale true)
-   (<obj> ^id <id>
-          -^stale-time)
+              ^scene-monitor.scene-changes <sc>
+              ^scene-monitor.object <obj>)
+   (<obj> ^differences <diffs>)
+   (<diffs> ^is-stale true
+            ^is-occluded true
+            ^occlusion-time-expired true
+           -^possible-candidates.candidate)
 -->
-   (<obj> ^stale-time (+ <sec> 1))
+   (<sc> ^change <change>)
+   (<change> ^type stale-object 
+             ^object <obj>)
 }
 
-sp {topstate*apply*any-op*remove*stale-time
-   (state <s> ^topstate <s>
-              ^operator <o>
-              ^topstate.svs.spatial-scene.child <svs-obj>
-              ^object <obj>)
-   (<svs-obj> ^id-int <id>
-             -^stale true)
-   (<obj> ^id <id>
-          ^stale-time <time>)
--->
-   (<obj> ^stale-time <time> -)
-}
+#############################################################################
+# Change: recheck-occlusion
+#   Periodically check occluded objects to see if they are still occluded
+#############################################################################
 
-sp {topstate*elaborate*object*is-stale
+sp {monitor-scene-changes*elaborate*scene-changes*recheck-occlusion
    (state <s> ^topstate <s>
-              ^object <obj>
-              ^io.input-link.time.seconds <sec>)
-   (<obj> ^stale-time <= <sec>)
+              ^scene-monitor.scene-changes <sc>
+              ^scene-monitor.object <obj>)
+   (<obj> ^differences <diffs>)
+   (<diffs> ^occlusion-time-expired true)
 -->
-   (<obj> ^is-stale true)
+   (<sc> ^change <change>)
+   (<change> ^type recheck-occlusion
+             ^object <obj>)
 }
-
-################################################################
-# Delete stale objects we never attended to (probably just noise)
-################################################################
-sp {topstate*apply*any-op*delete*unattended-object
-   (state <s> ^topstate <s>
-              ^operator <op>
-              ^io.output-link <ol>
-              ^svs.spatial-scene.child <svs-obj>
-             -^object.id <id>)
-   (<svs-obj> ^id-int <id>
-              ^stale true)
--->
-   (<ol> ^modify-scene <ms>)
-   (<ms> ^type delete
-         ^id <id>)
-}
-
-sp {topstate*apply*any-op*delete*uncertain-object
-   (state <s> ^topstate <s>
-              ^operator <op>
-              ^io.output-link <ol>
-              ^svs.spatial-scene.child <svs-obj>
-              ^object <wm-obj>)
-   (<svs-obj> ^id-int <id>
-              ^stale true)
-   (<wm-obj> ^id <id>
-             ^status << uncertain unidentified >>)
--->
-   (<ol> ^modify-scene <ms>)
-   (<ms> ^type delete
-         ^id <id>)
-}
-
-sp {topstate*apply*any-op*no-svs-object*delete-from-wm
-   (state <s> ^topstate <s>
-              ^operator <op>
-              ^object <obj>
-              ^svs.spatial-scene <scene>)
-   (<obj> ^id <id>)
-   (<scene> -^child.id-int <id>)
--->
-   (<s> ^object <obj> -)
-}
-
 
 
 ############################################################################################
@@ -174,7 +130,7 @@ sp {monitor-scene-changes*elaborate*scene-changes*changed-property
 ###########################################################################
 #
 # Change: higher-confidence
-#   When the confidence for a certain label changes
+#   When the confidence for a certain label increases 
 #
 ##########################################################################
 
@@ -189,7 +145,8 @@ sp {monitor-scene-changes*elaborate*scene-changes*higher-confidence
    (<wm-prop> ^value.confidence <conf>
               ^value.label <label>)
    (<h> ^label <label>
-        ^conf {<new-conf> > <conf>})
+        ^update-when-below {<low> > <conf>}
+        ^conf <new-conf>)
 -->
    (<sc> ^change <change>)
    (<change> ^type higher-confidence
@@ -236,10 +193,9 @@ sp {monitor-scene-changes*elaborate*scene-changes*different-best
 sp {monitor-scene-changes*elaborate*scene-changes*evaluate-new-object
    (state <s> ^topstate <s>
               ^scene-monitor.scene-changes <sc>
-              ^scene-monitor.object <obj>)
-   (<obj> ^wm-obj <wm-obj>)
-   (<wm-obj> ^status uncertain
-             ^stability-timer-satisfied true)
+              ^scene-monitor.new-object <obj>)
+   (<obj> ^stability-timer-satisfied true
+         -^status unidentified)
 -->
    (<sc> ^change <change>)
    (<change> ^type stability-timer-satisfied
@@ -257,9 +213,8 @@ sp {monitor-scene-changes*elaborate*scene-changes*evaluate-new-object
 sp {monitor-scene-changes*elaborate*scene-changes*unidentified-object
    (state <s> ^topstate <s>
               ^scene-monitor.scene-changes <sc>
-              ^scene-monitor.object <obj>)
-   (<obj> ^wm-obj <wm-obj>)
-   (<wm-obj> ^status unidentified)
+              ^scene-monitor.new-object <obj>)
+   (<obj> ^status unidentified)
 -->
    (<sc> ^change <change>)
    (<change> ^type unidentified-object
@@ -275,14 +230,49 @@ sp {monitor-scene-changes*elaborate*scene-changes*unidentified-object
 sp {monitor-scene-changes*elaborate*scene-changes*shurnken-object
    (state <s> ^topstate <s>
               ^scene-monitor.scene-changes <sc>
-              ^scene-monitor.object <obj>
-              ^agent-params.vol-low-diff-threshold <low>)
-   (<obj> ^svs-obj.vol-diff < <low>
-          ^wm-obj.id <id>
-         -^wm-obj.occluded true)
+              ^scene-monitor.object <obj>)
+   (<obj> ^differences <diffs>)
+   (<diffs> ^has-shrunk true
+            ^is-occluded false)
 -->
    (<sc> ^change <change>)
    (<change> ^type shrunken-object
              ^object <obj>)
-   (write |Shrunken Object: | <id>)
+}
+
+###########################################################################
+#
+# Change: grown-object
+#   If an object's volume drastrically increases, investigate
+#
+##########################################################################
+sp {monitor-scene-changes*elaborate*scene-changes*grown-object
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes <sc>
+              ^scene-monitor.object <obj>)
+   (<obj> ^differences <diffs>)
+   (<diffs> ^has-grown true)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type grown-object
+             ^object <obj>)
+}
+
+###########################################################################
+#
+# Change: moved-object
+#   If an object's position significantly changes, investigate
+#
+##########################################################################
+sp {monitor-scene-changes*elaborate*scene-changes*moved-object
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes <sc>
+              ^scene-monitor.object <obj>)
+   (<obj> ^differences <diffs>)
+   (<diffs> ^has-moved true
+            ^is-occluded false)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type moved-object
+             ^object <obj>)
 }

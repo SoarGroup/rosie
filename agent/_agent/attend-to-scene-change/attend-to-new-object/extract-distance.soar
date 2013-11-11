@@ -1,0 +1,75 @@
+sp {attend-to-new-object*propose*extract-distance
+   (state <s> ^name attend-to-new-object
+              ^perception-obj.id <id>
+             -^candidates.candidate)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name extract-distance
+        ^category perception
+        ^object-id <id>)
+}
+
+sp {attend-to-new-object*apply*extract-distance*create-filter
+   (state <s> ^name attend-to-new-object
+              ^operator <o>
+              ^topstate.svs.command <cmd>)
+   (<o> ^name extract-distance
+        ^object-id <id>)
+-->
+   (<cmd> ^extract_once <distance>)
+   (<distance> ^type distance
+               ^a <node>
+               ^b <stale-objects>)
+   (<node> ^type node ^id <id>)
+   (<stale-objects> ^type has-property
+                    ^a <belief-objs>
+                    ^property-name stale
+                    ^property-value true)
+   (<belief-objs> ^type has-property
+                  ^a.type all_nodes
+                  ^property-name object-source
+                  ^property-value belief)
+   (<s> ^distance-filter <distance>)
+}
+
+sp {attend-to-new-object*apply*extract-distance*create*candidates*wme
+   (state <s> ^name attend-to-new-object
+              ^operator.name extract-distance)
+-->
+   (<s> ^candidates <c>)
+}
+
+sp {attend-to-new-object*apply*extract-distance*no*results
+   (state <s> ^name attend-to-new-object
+              ^operator.name extract-distance
+              ^distance-filter.result <res>
+              ^candidates <c>
+              ^maximum-stale-distance <max>)
+   -{(<res> ^record.value < <max>)}
+-->
+   (<c> ^candidate none)
+}
+
+
+sp {attend-to-new-object*apply*extract-distance*copy
+   (state <s> ^name attend-to-new-object
+              ^operator.name extract-distance
+              ^maximum-stale-distance <max>
+              ^distance-filter.result.record <rec>
+              ^candidates <c>)
+   (<rec> ^value < <max>
+          ^params.b <id>)
+-->
+   (<c> ^candidate <id>)
+}
+
+sp {attend-to-new-object*apply*extract-distance*cleanup
+   (state <s> ^attend-to-new-object
+              ^operator.name extract-distance
+              ^distance-filter <filter>
+              ^topstate.svs.command <cmd>)
+   (<cmd> ^extract_once <filter>)
+   (<filter> ^result)
+-->
+   (<cmd> ^extract_once <filter> -)
+}

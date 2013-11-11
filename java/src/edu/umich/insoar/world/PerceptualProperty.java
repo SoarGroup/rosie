@@ -43,6 +43,8 @@ public class PerceptualProperty
     
     protected String propName;
     
+    protected Integer propId;
+    
     protected HashMap<String, Double> values;
     
     protected StringBuilder svsCommands;
@@ -50,12 +52,21 @@ public class PerceptualProperty
     public PerceptualProperty(String parentName, categorized_data_t category){
     	this.parentName = parentName;
     	this.propName = getPropertyName(category.cat.cat);
+    	this.propId = category.cat.cat;
     	this.values = new HashMap<String, Double>();
     	this.svsCommands = new StringBuilder();
     	
         svsCommands.append(SVSCommands.addProperty(parentName, propName + ".type", "visual"));
 
     	updateProperty(category);
+    }
+    
+    public String getPropertyName(){
+    	return propName;
+    }
+    
+    public Integer getPropertyID(){
+    	return propId;
     }
     
     public void updateSVS(StringBuilder svsCommands){
@@ -91,11 +102,16 @@ public class PerceptualProperty
     		String fullName = propName + "." + valueName;
     		svsCommands.append(SVSCommands.deleteProperty(parentName, fullName));
     	}
-    	values.clear();
+    	values.clear();categorized_data_t catDat = new categorized_data_t();
+		catDat.cat = new category_t();
     	svsCommands.append(SVSCommands.deleteProperty(parentName, propName + ".type"));
     }
     
     public categorized_data_t getCatDat(){
+    	return getCatDat(propName, values);
+    }
+    
+    public static categorized_data_t getCatDat(String propName, HashMap<String, Double> values){
     	categorized_data_t catDat = new categorized_data_t();
 		catDat.cat = new category_t();
 		catDat.cat.cat = PerceptualProperty.getPropertyID(propName);
