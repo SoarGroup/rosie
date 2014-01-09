@@ -1,0 +1,95 @@
+###############################################################################
+#
+# overlap-command
+# (<s> ^operator <o>)
+# (<o> ^name overlap-command
+#      ^object-a <ida>
+#      ^object-b <idb>)
+# 
+# The id's given should be svs id's
+#
+# Returns either ^overlap-command.result # or ^overlap-command.result none
+###############################################################################
+
+sp {overlap-command*elaborate*object-a
+   (state <s> ^name overlap-command
+              ^superstate.operator.object-a <ida>)
+-->
+   (<s> ^object-a <ida>)
+}
+
+sp {overlap-command*elaborate*object-b
+   (state <s> ^name overlap-command
+              ^superstate.operator.object-b <idb>)
+-->
+   (<s> ^object-b <idb>)
+}
+
+sp {overlap-command*propose*create-overlap-filter
+   (state <s> ^name overlap-command
+              ^object-a <ida>
+              ^object-b <idb>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name create-overlap-filter
+        ^category perception
+        ^object-a <ida>
+        ^object-b <idb>)
+}
+
+sp {overlap-command*apply*create-overlap-filter
+   (state <s> ^name overlap-command
+              ^operator <o>
+              ^topstate.svs.command <cmd>)
+   (<o> ^name create-overlap-filter
+        ^object-a <ida>
+        ^object-b <idb>)
+-->
+   (<cmd> ^extract_once <overlap>)
+   (<overlap> ^type overlap 
+               ^a <obja>
+               ^b <objb>)
+   (<obja> ^type node
+           ^id <ida>)
+   (<objb> ^type node
+           ^id <idb>)
+   (<s> ^overlap-filter <overlap>)
+}
+
+sp {overlap-command*apply*create-overlap-filter*cleanup
+   (state <s> ^name overlap-command
+              ^operator.name create-overlap-filter
+              ^overlap-filter <dist>
+              ^topstate.svs.command <cmd>)
+   (<cmd> ^extract_once <dist>)
+   (<dist> ^result <foo>)
+-->
+   (<cmd> ^extract_once <dist> -)
+}
+
+sp {overlap-command*apply*create-overlap-filter*success
+   (state <s> ^name overlap-command
+              ^operator.name create-overlap-filter
+              ^object-a <a>
+              ^object-b <b>
+              ^overlap-filter.result.record.value <val>
+              ^superstate <ss>)
+-->
+   (<ss> ^overlap-command.result <res>)
+   (<res> ^object-a <a> ^object-b <b>
+          ^overlap <val>)
+}
+
+sp {overlap-command*apply*create-overlap-filter*failure
+   (state <s> ^name overlap-command
+              ^operator.name create-overlap-filter
+              ^object-a <a>
+              ^object-b <b>
+              ^overlap-filter.result <res>
+              ^superstate <ss>)
+   (<res> -^record.value)
+-->
+   (<ss> ^overlap-command.result <r>)
+   (<r> ^object-a <a> ^object-b <b>
+        ^overlap none)
+}
