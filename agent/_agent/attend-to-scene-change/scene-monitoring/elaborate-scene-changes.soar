@@ -57,224 +57,224 @@ sp {topstate*elaborate*scene-changes*change-info
 #             ^object <obj>)
 #}
 
-#########################################################
-# Change: stale-object
-#   Occurs when an object on the svs link becomes stale
-#########################################################
-
-sp {monitor-scene-changes*elaborate*scene-changes*stale-object
-   (state <s> ^topstate <s>
-              ^scene-monitor.scene-changes <sc>
-              ^scene-monitor.object <obj>)
-   (<obj> ^differences <diffs>)
-   (<diffs> ^is-stale true
-            ^is-occluded false
-           -^possible-candidates.candidate)
--->
-   (<sc> ^change <change>)
-   (<change> ^type stale-object
-             ^object <obj>)
-}
-
-# Note: For a stale object, do a stale-object check instead of occlusion check
-sp {monitor-scene-changes*elaborate*scene-changes*stale-object*occluded
-   (state <s> ^topstate <s>
-              ^scene-monitor.scene-changes <sc>
-              ^scene-monitor.object <obj>)
-   (<obj> ^differences <diffs>)
-   (<diffs> ^is-stale true
-            ^is-occluded true
-            ^occlusion-time-expired true
-           -^possible-candidates.candidate)
--->
-   (<sc> ^change <change>)
-   (<change> ^type stale-object 
-             ^object <obj>)
-}
-
-#############################################################################
-# Change: recheck-occlusion
-#   Periodically check occluded objects to see if they are still occluded
-#############################################################################
-
-sp {monitor-scene-changes*elaborate*scene-changes*recheck-occlusion
-   (state <s> ^topstate <s>
-              ^scene-monitor.scene-changes <sc>
-              ^scene-monitor.object <obj>)
-   (<obj> ^differences <diffs>)
-   (<diffs> ^occlusion-time-expired true)
--->
-   (<sc> ^change <change>)
-   (<change> ^type recheck-occlusion
-             ^object <obj>)
-}
-
-
-############################################################################################
-# Change: changed-property
-#   Happens when the svs link reports something different about a property than we last noticed
+##########################################################
+## Change: stale-object
+##   Occurs when an object on the svs link becomes stale
+##########################################################
+#
+#sp {monitor-scene-changes*elaborate*scene-changes*stale-object
+#   (state <s> ^topstate <s>
+#              ^scene-monitor.scene-changes <sc>
+#              ^scene-monitor.object <obj>)
+#   (<obj> ^differences <diffs>)
+#   (<diffs> ^is-stale true
+#            ^is-occluded false
+#           -^possible-candidates.candidate)
+#-->
+#   (<sc> ^change <change>)
+#   (<change> ^type stale-object
+#             ^object <obj>)
+#}
+#
+## Note: For a stale object, do a stale-object check instead of occlusion check
+#sp {monitor-scene-changes*elaborate*scene-changes*stale-object*occluded
+#   (state <s> ^topstate <s>
+#              ^scene-monitor.scene-changes <sc>
+#              ^scene-monitor.object <obj>)
+#   (<obj> ^differences <diffs>)
+#   (<diffs> ^is-stale true
+#            ^is-occluded true
+#            ^occlusion-time-expired true
+#           -^possible-candidates.candidate)
+#-->
+#   (<sc> ^change <change>)
+#   (<change> ^type stale-object 
+#             ^object <obj>)
+#}
+#
+##############################################################################
+## Change: recheck-occlusion
+##   Periodically check occluded objects to see if they are still occluded
+##############################################################################
+#
+#sp {monitor-scene-changes*elaborate*scene-changes*recheck-occlusion
+#   (state <s> ^topstate <s>
+#              ^scene-monitor.scene-changes <sc>
+#              ^scene-monitor.object <obj>)
+#   (<obj> ^differences <diffs>)
+#   (<diffs> ^occlusion-time-expired true)
+#-->
+#   (<sc> ^change <change>)
+#   (<change> ^type recheck-occlusion
+#             ^object <obj>)
+#}
+#
+#
 #############################################################################################
-sp {monitor-scene-changes*elaborate*scene-changes*changed-property
-   (state <s> ^topstate <s>
-              ^scene-monitor.object <obj>
-              ^scene-monitor.scene-changes <sc>)
-   (<obj> ^property <prop>)
-   (<prop> ^wm-prop <wm-prop>
-           ^case <> <case-type>)
-   (<wm-prop> ^prev-case <case-type>)
--->
-   (<sc> ^change <change>)
-   (<change> ^type changed-property
-             ^object <obj>
-             ^property <prop>)
-}
-
+## Change: changed-property
+##   Happens when the svs link reports something different about a property than we last noticed
+##############################################################################################
+#sp {monitor-scene-changes*elaborate*scene-changes*changed-property
+#   (state <s> ^topstate <s>
+#              ^scene-monitor.object <obj>
+#              ^scene-monitor.scene-changes <sc>)
+#   (<obj> ^property <prop>)
+#   (<prop> ^wm-prop <wm-prop>
+#           ^case <> <case-type>)
+#   (<wm-prop> ^prev-case <case-type>)
+#-->
+#   (<sc> ^change <change>)
+#   (<change> ^type changed-property
+#             ^object <obj>
+#             ^property <prop>)
+#}
+#
+############################################################################
+##
+## Change: higher-confidence
+##   When the confidence for a certain label increases 
+##
 ###########################################################################
 #
-# Change: higher-confidence
-#   When the confidence for a certain label increases 
+#sp {monitor-scene-changes*elaborate*scene-changes*higher-confidence
+#   (state <s> ^topstate <s>
+#              ^scene-monitor.scene-changes <sc>
+#              ^scene-monitor.object <obj>)
+#   (<obj> ^property <prop>)
+#   (<prop> ^wm-prop <wm-prop>
+#           ^case certain
+#           ^hypothesis <h>)
+#   (<wm-prop> ^value.confidence <conf>
+#              ^value.label <label>)
+#   (<h> ^label <label>
+#        ^update-when-below {<low> > <conf>}
+#        ^conf <new-conf>)
+#-->
+#   (<sc> ^change <change>)
+#   (<change> ^type higher-confidence
+#             ^object <obj>
+#             ^property <prop>
+#             ^new-confidence <new-conf>)
+#}
 #
-##########################################################################
-
-sp {monitor-scene-changes*elaborate*scene-changes*higher-confidence
-   (state <s> ^topstate <s>
-              ^scene-monitor.scene-changes <sc>
-              ^scene-monitor.object <obj>)
-   (<obj> ^property <prop>)
-   (<prop> ^wm-prop <wm-prop>
-           ^case certain
-           ^hypothesis <h>)
-   (<wm-prop> ^value.confidence <conf>
-              ^value.label <label>)
-   (<h> ^label <label>
-        ^update-when-below {<low> > <conf>}
-        ^conf <new-conf>)
--->
-   (<sc> ^change <change>)
-   (<change> ^type higher-confidence
-             ^object <obj>
-             ^property <prop>
-             ^new-confidence <new-conf>)
-}
-
+############################################################################
+##
+## Change: different-best
+##   When a certain label changes values
+##
 ###########################################################################
 #
-# Change: different-best
-#   When a certain label changes values
+#sp {monitor-scene-changes*elaborate*scene-changes*different-best
+#   (state <s> ^topstate <s>
+#              ^scene-monitor.scene-changes <sc>
+#              ^scene-monitor.object <obj>)
+#   (<obj> ^property <prop>)
+#   (<prop> ^wm-prop <wm-prop>
+#           ^hypothesis <h>
+#           ^svs-prop <svs-prop>
+#           ^case certain)
+#   (<wm-prop> ^prev-case certain
+#              ^value.label <label>)
+#   (<h> ^best true
+#        ^label <> <label>)
+#-->
+#   (<sc> ^change <change>)
+#   (<change> ^type different-best
+#             ^object <obj>
+#             ^property <prop>
+#             ^best-hyp <h>)
+#}
 #
-##########################################################################
-
-sp {monitor-scene-changes*elaborate*scene-changes*different-best
-   (state <s> ^topstate <s>
-              ^scene-monitor.scene-changes <sc>
-              ^scene-monitor.object <obj>)
-   (<obj> ^property <prop>)
-   (<prop> ^wm-prop <wm-prop>
-           ^hypothesis <h>
-           ^svs-prop <svs-prop>
-           ^case certain)
-   (<wm-prop> ^prev-case certain
-              ^value.label <label>)
-   (<h> ^best true
-        ^label <> <label>)
--->
-   (<sc> ^change <change>)
-   (<change> ^type different-best
-             ^object <obj>
-             ^property <prop>
-             ^best-hyp <h>)
-}
-
+#############################################################################
+###
+### Change: stability-timer-satisfied
+###   When the stability timer expires, then we need to check the new object out
+###
+############################################################################
+##
+##sp {monitor-scene-changes*elaborate*scene-changes*evaluate-new-object
+##   (state <s> ^topstate <s>
+##              ^scene-monitor.scene-changes <sc>
+##              ^scene-monitor.new-object <obj>)
+##   (<obj> ^stability-timer-satisfied true
+##         -^status unidentified)
+##-->
+##   (<sc> ^change <change>)
+##   (<change> ^type stability-timer-satisfied
+##             ^object <obj>)
+##}
+#
+#############################################################################
+###
+### Change: unidentified-object
+###   Once we're fairly certain an object exists, we still need to fit it into
+###     out understainding of the world (identify it)
+###
+############################################################################
+##
+##sp {monitor-scene-changes*elaborate*scene-changes*unidentified-object
+##   (state <s> ^topstate <s>
+##              ^scene-monitor.scene-changes <sc>
+##              ^scene-monitor.new-object <obj>)
+##   (<obj> ^status unidentified)
+##-->
+##   (<sc> ^change <change>)
+##   (<change> ^type unidentified-object
+##             ^object <obj>)
+##}
+#
+############################################################################
+##
+## Change: shrunken-object
+##   If an object's volume drastrically lowers, investigate
+##
 ###########################################################################
+#sp {monitor-scene-changes*elaborate*scene-changes*shurnken-object
+#   (state <s> ^topstate <s>
+#              ^scene-monitor.scene-changes <sc>
+#              ^scene-monitor.object <obj>)
+#   (<obj> ^differences <diffs>)
+#   (<diffs> ^has-shrunk true
+#            ^is-occluded false)
+#-->
+#   (<sc> ^change <change>)
+#   (<change> ^type shrunken-object
+#             ^object <obj>)
+#}
 #
-# Change: stability-timer-satisfied
-#   When the stability timer expires, then we need to check the new object out
-#
-##########################################################################
-
-sp {monitor-scene-changes*elaborate*scene-changes*evaluate-new-object
-   (state <s> ^topstate <s>
-              ^scene-monitor.scene-changes <sc>
-              ^scene-monitor.new-object <obj>)
-   (<obj> ^stability-timer-satisfied true
-         -^status unidentified)
--->
-   (<sc> ^change <change>)
-   (<change> ^type stability-timer-satisfied
-             ^object <obj>)
-}
-
+############################################################################
+##
+## Change: grown-object
+##   If an object's volume drastrically increases, investigate
+##
 ###########################################################################
+#sp {monitor-scene-changes*elaborate*scene-changes*grown-object
+#   (state <s> ^topstate <s>
+#              ^scene-monitor.scene-changes <sc>
+#              ^scene-monitor.object <obj>)
+#   (<obj> ^differences <diffs>)
+#   (<diffs> ^has-grown true)
+#-->
+#   (<sc> ^change <change>)
+#   (<change> ^type grown-object
+#             ^object <obj>)
+#}
 #
-# Change: unidentified-object
-#   Once we're fairly certain an object exists, we still need to fit it into
-#     out understainding of the world (identify it)
-#
-##########################################################################
-
-sp {monitor-scene-changes*elaborate*scene-changes*unidentified-object
-   (state <s> ^topstate <s>
-              ^scene-monitor.scene-changes <sc>
-              ^scene-monitor.new-object <obj>)
-   (<obj> ^status unidentified)
--->
-   (<sc> ^change <change>)
-   (<change> ^type unidentified-object
-             ^object <obj>)
-}
-
+############################################################################
+##
+## Change: moved-object
+##   If an object's position significantly changes, investigate
+##
 ###########################################################################
-#
-# Change: shrunken-object
-#   If an object's volume drastrically lowers, investigate
-#
-##########################################################################
-sp {monitor-scene-changes*elaborate*scene-changes*shurnken-object
-   (state <s> ^topstate <s>
-              ^scene-monitor.scene-changes <sc>
-              ^scene-monitor.object <obj>)
-   (<obj> ^differences <diffs>)
-   (<diffs> ^has-shrunk true
-            ^is-occluded false)
--->
-   (<sc> ^change <change>)
-   (<change> ^type shrunken-object
-             ^object <obj>)
-}
-
-###########################################################################
-#
-# Change: grown-object
-#   If an object's volume drastrically increases, investigate
-#
-##########################################################################
-sp {monitor-scene-changes*elaborate*scene-changes*grown-object
-   (state <s> ^topstate <s>
-              ^scene-monitor.scene-changes <sc>
-              ^scene-monitor.object <obj>)
-   (<obj> ^differences <diffs>)
-   (<diffs> ^has-grown true)
--->
-   (<sc> ^change <change>)
-   (<change> ^type grown-object
-             ^object <obj>)
-}
-
-###########################################################################
-#
-# Change: moved-object
-#   If an object's position significantly changes, investigate
-#
-##########################################################################
-sp {monitor-scene-changes*elaborate*scene-changes*moved-object
-   (state <s> ^topstate <s>
-              ^scene-monitor.scene-changes <sc>
-              ^scene-monitor.object <obj>)
-   (<obj> ^differences <diffs>)
-   (<diffs> ^has-moved true
-            ^is-occluded false)
--->
-   (<sc> ^change <change>)
-   (<change> ^type moved-object
-             ^object <obj>)
-}
+#sp {monitor-scene-changes*elaborate*scene-changes*moved-object
+#   (state <s> ^topstate <s>
+#              ^scene-monitor.scene-changes <sc>
+#              ^scene-monitor.object <obj>)
+#   (<obj> ^differences <diffs>)
+#   (<diffs> ^has-moved true
+#            ^is-occluded false)
+#-->
+#   (<sc> ^change <change>)
+#   (<change> ^type moved-object
+#             ^object <obj>)
+#}
