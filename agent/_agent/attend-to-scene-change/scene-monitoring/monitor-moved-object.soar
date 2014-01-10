@@ -1,0 +1,64 @@
+sp {topstate*scene-monitor*elaborate*svs-command*compare-position
+   (state <s> ^topstate <s>
+              ^scene-monitor.object <obj>
+              ^svs.command <cmd>)
+   (<obj> ^perception-obj.id <perc-id>
+          ^belief-obj.id <bel-id>
+          ^differences <diffs>)
+-->
+   (<cmd> ^extract <compare>)
+   (<compare> ^type compare-nodes
+              ^a <a>
+              ^b <b>
+              ^compare position)
+   (<a> ^type node
+        ^id <perc-id>)
+   (<b> ^type node
+        ^id <bel-id>)
+   (<diffs> ^compare-position <compare>)
+}
+
+sp {topstate*scene-monitor*elaborate*pos-diff
+   (state <s> ^topstate <s>
+              ^scene-monitor.object.differences <diffs>)
+   (<diffs> ^compare-position.result.record.value <val>)
+-->
+   (<diffs> ^pos-diff <val>)
+}
+
+sp {topstate*scene-monitor*elaborate*has-moved
+   (state <s> ^topstate <s>
+              ^scene-monitor.object.differences <diffs>
+              ^agent-params.pos-diff-threshold <thresh>)
+   (<diffs> ^pos-diff > <thresh>)
+-->
+   (<diffs> ^has-moved true)
+}
+
+###########################################################################
+#
+# Change: moved-object
+#   If an object's position significantly changes, investigate
+#
+##########################################################################
+sp {monitor-scene-changes*elaborate*scene-changes*moved-object
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes <sc>
+              ^scene-monitor.object <obj>)
+   (<obj> ^differences <diffs>)
+   (<diffs> ^has-moved true
+            ^is-occluded false)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type moved-object
+             ^object <obj>)
+}
+
+sp {topstate*elaborate*scene-changes*change-info*moved-object
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes.change-info <info>)
+-->
+   (<info> ^change <moved-object>)
+   (<moved-object> ^name moved-object
+                   ^op-name check-for-occlusion)
+}
