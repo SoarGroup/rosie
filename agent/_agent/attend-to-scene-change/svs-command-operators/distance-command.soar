@@ -14,56 +14,29 @@
 # Returns either ^distance-command.result # or ^distance-command.result none
 ###############################################################################
 
-sp {distance-command*elaborate*object-a
-   (state <s> ^name distance-command
-              ^superstate.operator.object-a <ida>)
+sp {anystate*distance-command*elaborate*used-distance-type*default
+   (state <s> ^operator <o> +)
+   (<o> ^name distance-command
+       -^distance-type)
 -->
-   (<s> ^object-a <ida>)
+   (<o> ^used-distance-type centroid_distance)
 }
 
-sp {distance-command*elaborate*object-b
-   (state <s> ^name distance-command
-              ^superstate.operator.object-b <idb>)
--->
-   (<s> ^object-b <idb>)
-}
-
-sp {distance-command*elaborate*distance-type*default
-   (state <s> ^name distance-command
-             -^superstate.operator.distance-type)
--->
-   (<s> ^distance-type centroid_distance)
-}
-
-sp {distance-command*elaborate*distance-type
-   (state <s> ^name distance-command
-             ^superstate.operator.distance-type <type>)
--->
-   (<s> ^distance-type <type>)
-}
-
-sp {distance-command*propose*create-distance-filter
-   (state <s> ^name distance-command
-              ^object-a <ida>
-              ^object-b <idb>
-              ^distance-type <type>)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name create-distance-filter
-        ^category perception
-        ^object-a <ida>
-        ^object-b <idb>
+sp {anystate*distance-command*elaborate*used-distance-type*copy
+   (state <s> ^operator <o> +)
+   (<o> ^name distance-command
         ^distance-type <type>)
+-->
+   (<o> ^used-distance-type <type>)
 }
 
-sp {distance-command*apply*create-distance-filter
-   (state <s> ^name distance-command
-              ^operator <o>
+sp {anystate*distance-command*apply*create-distance-filter
+   (state <s> ^operator <o>
               ^topstate.svs.command <cmd>)
-   (<o> ^name create-distance-filter
+   (<o> ^name distance-command
         ^object-a <ida>
         ^object-b <idb>
-        ^distance-type <type>)
+        ^used-distance-type <type>)
 -->
    (<cmd> ^extract_once <distance>)
    (<distance> ^type <type>
@@ -76,9 +49,8 @@ sp {distance-command*apply*create-distance-filter
    (<s> ^distance-filter <distance>)
 }
 
-sp {distance-command*apply*create-distance-filter*cleanup
-   (state <s> ^name distance-command
-              ^operator.name create-distance-filter
+sp {anystate*distance-command*apply*distance-command*cleanup
+   (state <s> ^operator.name distance-command
               ^distance-filter <dist>
               ^topstate.svs.command <cmd>)
    (<cmd> ^extract_once <dist>)
@@ -87,21 +59,17 @@ sp {distance-command*apply*create-distance-filter*cleanup
    (<cmd> ^extract_once <dist> -)
 }
 
-sp {distance-command*apply*create-distance-filter*success
-   (state <s> ^name distance-command
-              ^operator.name create-distance-filter
-              ^distance-filter.result.record.value <dist>
-              ^superstate <ss>)
+sp {anystate*distance-command*apply*create-result*success
+   (state <s> ^operator.name distance-command
+              ^distance-filter.result.record.value <dist>)
 -->
-   (<ss> ^distance-command.result <dist>)
+   (<s> ^distance-command.result <dist>)
 }
 
-sp {distance-command*apply*create-distance-filter*failure
-   (state <s> ^name distance-command
-              ^operator.name create-distance-filter
-              ^distance-filter.result <res>
-              ^superstate <ss>)
+sp {anystate*distance-command*apply*create-result*failure
+   (state <s> ^operator.name distance-command
+              ^distance-filter.result <res>)
    (<res> -^record.value)
 -->
-   (<ss> ^distance-command.result none)
+   (<s> ^distance-command.result none)
 }
