@@ -31,7 +31,7 @@ public class ResetEnvironmentState implements UiCommand {
 	public void execute() {
 		
 		new ResetRobotArm().execute();
-		stoveHeatState = false;
+		stoveHeatState = random.nextBoolean();
 		pantryDoorState = random.nextBoolean();
 		objectCookedState = random.nextBoolean();
 		armState = random.nextBoolean();
