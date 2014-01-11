@@ -197,6 +197,7 @@ public class WorldObject
     	} else {
     		// Just one object, update using that
     		object_data_t objectData = objDatas.get(0);
+    		ArrayList<String> propsToDelete = new ArrayList<String>(perceptualProperties.keySet());
     		
     		for(categorized_data_t category : objectData.cat_dat){
              	if(category.cat.cat == category_t.CAT_LOCATION){
@@ -208,12 +209,20 @@ public class WorldObject
              	}
              	String propName = PerceptualProperty.getPropertyName(category.cat.cat);
              	if(perceptualProperties.containsKey(propName)){
+             		propsToDelete.remove(propName);
              		perceptualProperties.get(propName).updateProperty(category);
              	} else {
              		PerceptualProperty pp = new PerceptualProperty(getIdString(), category);
              		perceptualProperties.put(propName, pp);
              	}
             }
+    		
+    		for(String propName : propsToDelete){
+    			PerceptualProperty pp = perceptualProperties.get(propName);
+    			pp.deleteProperty();
+    			pp.updateSVS(svsCommands);
+    			perceptualProperties.remove(propName);
+    		}
 
     		stateProperties.updateProperties(objectData.state_values);
     	}

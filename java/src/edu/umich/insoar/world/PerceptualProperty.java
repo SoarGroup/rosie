@@ -21,6 +21,8 @@ public class PerceptualProperty
 			propertyNames.put(category_t.CAT_SHAPE, "shape");
 			propertyNames.put(category_t.CAT_SIZE, "size");
 			propertyNames.put(category_t.CAT_LOCATION, "name");
+			propertyNames.put(category_t.CAT_WEIGHT, "weight");
+			propertyNames.put(category_t.CAT_TEMPERATURE, "temperature");
 		}
 		return propertyNames.get(propertyID);
 	}
@@ -34,8 +36,23 @@ public class PerceptualProperty
 			return category_t.CAT_SIZE;
 		} else if(propertyName.equals("name")){
 			return category_t.CAT_LOCATION;
+		} else if(propertyName.equals("weight")){
+			return category_t.CAT_WEIGHT;
+		} else if(propertyName.equals("temperature")){
+			return category_t.CAT_TEMPERATURE;
 		} else {
 			return null;
+		}
+	}
+	
+	public static boolean isVisualProperty(int propID){
+		switch(propID){
+		case category_t.CAT_COLOR:
+		case category_t.CAT_SHAPE:
+		case category_t.CAT_SIZE:
+			return true;
+		default:
+			return false;
 		}
 	}
     
@@ -56,7 +73,12 @@ public class PerceptualProperty
     	this.values = new HashMap<String, Double>();
     	this.svsCommands = new StringBuilder();
     	
-        svsCommands.append(SVSCommands.addProperty(parentName, propName + ".type", "visual"));
+    	if(isVisualProperty(this.propId)){
+    		svsCommands.append(SVSCommands.addProperty(parentName, propName + ".type", "visual"));
+    	} else {
+    		svsCommands.append(SVSCommands.addProperty(parentName, propName + ".type", "measurable"));
+    		svsCommands.append(SVSCommands.addProperty(parentName, propName + ".feature-val", "0"));
+   		}
 
     	updateProperty(category);
     }
@@ -76,6 +98,12 @@ public class PerceptualProperty
     
     public void updateProperty(categorized_data_t data){
     	HashSet<String> valuesToRemove = new HashSet<String>(values.keySet());
+    	
+    	if(!isVisualProperty(propId) && data.num_features > 0){
+    		String featureValStr = propName + ".feature-val";
+    		svsCommands.append(SVSCommands.changeProperty(parentName, featureValStr, 
+    				Double.toString(data.features[0])));
+    	}
     	
     	for(int i = 0; i < data.len; i++){
     		String valueName = data.label[i];
@@ -102,9 +130,12 @@ public class PerceptualProperty
     		String fullName = propName + "." + valueName;
     		svsCommands.append(SVSCommands.deleteProperty(parentName, fullName));
     	}
-    	values.clear();categorized_data_t catDat = new categorized_data_t();
-		catDat.cat = new category_t();
+    	values.clear();
     	svsCommands.append(SVSCommands.deleteProperty(parentName, propName + ".type"));
+    	if(!isVisualProperty(propId)){
+    		svsCommands.append(SVSCommands.deleteProperty(parentName, propName + ".feature-val"));
+    	}
+    	svsCommands.append(SVSCommands.deleteProperty(parentName, propName));
     }
     
     public categorized_data_t getCatDat(){
