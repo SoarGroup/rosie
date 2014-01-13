@@ -157,9 +157,14 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         		double[] p1 = points.get(i);
         		double[] p2 = points.get(i+1);
         		double len = LinAlg.distance(p1, p2); 
+        		double[] size = new double[]{len, widths.get(i), widths.get(i)};
+        		if(i == widths.size()-1){
+        			// Make the gripper bigger to help with occlusion checks;
+        			size = LinAlg.scale(size, 2);
+        		}
         		
         		svsCommands.append("a " + name + " object arm p 0 0 0 r 0 0 0 ");
-        		svsCommands.append("s " + len + " " + widths.get(i) + " " + widths.get(i) + " ");
+        		svsCommands.append("s " + size[0] + " " + size[1] + " " + size[2] + " ");
         		svsCommands.append("v " + SVSCommands.bboxVertices() + "\n");
         	}
     	}

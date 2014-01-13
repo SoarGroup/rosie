@@ -1,0 +1,143 @@
+sp {check-for-occlusion*propose*occlusion-command
+   (state <s> ^name check-for-occlusion
+              ^monitor-obj.belief-obj.id <id>
+              ^candidate-set <cand>
+             -^retry-extract)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name occlusion-command
+        ^category perception
+        ^object-id <id>
+        ^candidate-set <cand>)
+}
+
+<<<<<<< HEAD:agent/_agent/attend-to-scene-change/svs-command-operators/check-for-occlusion/occlusion-command.soar
+=======
+sp {check-for-occlusion*apply*extract-occlusion*reject*operator*stuck
+   (state <s> ^attribute state
+              ^impasse no-change
+              ^superstate <ss>)
+   (<ss> ^name extract-occlusion
+         ^superstate <sss>)
+   (<sss> ^name check-for-occlusion
+          ^operator <o>)
+   (<o> ^name extract-occlusion)
+-->
+   (<sss> ^retry-extract true)
+#   (interrupt)
+}
+
+sp {check-for-occlusion*propose*retry-extract-occlusion
+   (state <s> ^name check-for-occlusion
+              ^retry-extract true)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name retry-extract-occlusion
+        ^category perception)
+}
+
+sp {check-for-occlusion*apply*retry-extract-occlusion
+   (state <s> ^name check-for-occlusion
+              ^operator.name retry-extract-occlusion
+              ^retry-extract true)
+-->
+   (<s> ^retry-extract true -)
+}
+
+sp {check-for-occlusion*apply*extract-occlusion*create*filter
+   (state <s> ^name check-for-occlusion
+              ^operator <o>
+              ^topstate.svs.command <cmd>)
+   (<o> ^name extract-occlusion
+        ^object-id <id>
+        ^candidate-set <cand>)
+-->
+   (<cmd> ^extract_once <occlusion>)
+   (<occlusion> ^type occlusion
+                ^a <node>
+                ^b <cand>
+                ^eye <eye>)
+   (<node> ^type node ^id <id>)
+   (<eye> ^type node ^id eye)
+   (<s> ^occlusion-filter <occlusion>)
+}
+
+>>>>>>> origin/temp-tracking:agent/_agent/attend-to-scene-change/svs-command-operators/check-for-occlusion/extract-occlusion.soar
+# occlusin-amount <num>
+#   value between 0 and 1 indicating how much the object is estimated to be occluded
+sp {check-for-occlusion*apply*occlusion-command*copy*occlusion-amount
+   (state <s> ^name check-for-occlusion
+              ^operator.name occlusion-command
+              ^occlusion-command.result <val>)
+-->
+   (<s> ^occlusion-amount <val>)
+}
+
+# object-occluded <bool>
+#   Based on the occlusion-threshold, whether the object is occluded
+sp {check-for-occlusion*apply*occlusion-command*copy*object-occluded*true
+   (state <s> ^name check-for-occlusion
+              ^operator.name occlusion-command
+              ^occlusion-threshold <threshold>
+              ^occlusion-amount >= <threshold>) 
+-->
+   (<s> ^object-occluded true)
+}
+
+sp {check-for-occlusion*apply*occlusion-command*copy*object-occluded*false
+   (state <s> ^name check-for-occlusion
+              ^operator.name occlusion-command
+              ^occlusion-threshold <threshold>
+              ^occlusion-amount < <threshold>)
+-->
+   (<s> ^object-occluded false)
+}
+
+sp {check-for-occlusion*apply*occlusion-command*remove*old*info
+   (state <s> ^name check-for-occlusion
+              ^operator.name occlusion-command
+              ^report-to-topstate true
+              ^monitor-obj.differences <diffs>
+              ^object-occluded <bool>)
+   (<diffs> ^is-occluded true
+            ^recheck-occlusion-time <t>)
+-->
+   (<diffs> ^is-occluded true -
+            ^recheck-occlusion-time <t> -)
+}
+
+sp {check-for-occlusion*apply*occlusion-command*is-occluded*true*add*info
+   (state <s> ^name check-for-occlusion
+              ^operator.name occlusion-command
+              ^report-to-topstate true
+              ^object-occluded true
+              ^occlusion-check-period <period>
+              ^io.input-link.time.seconds <cur-t>
+              ^monitor-obj.differences <diffs>)
+-->
+   (<diffs> ^is-occluded true
+            ^recheck-occlusion-time (+ <cur-t> <period>))
+}
+
+sp {check-for-occlusion*apply*occlusion-command*report-to-superstate
+   (state <s> ^name check-for-occlusion
+              ^operator.name occlusion-command
+              ^object-occluded <bool>
+              ^occlusion-amount <val>
+              ^report-to-superstate true
+              ^superstate <ss>)
+-->
+   (<ss> ^object-occluded <bool>
+         ^occlusion-amount <val>)
+}
+
+# Debugging only, report occlusion amount
+sp {check-for-occlusion*apply*occlusion-command*debug-perception*report
+   (state <s> ^name check-for-occlusion
+              ^operator.name occlusion-command
+              ^occlusion-amount <val>
+              ^monitor-obj.belief-obj.id <id>
+              ^topstate.agent-params.debug-perception true)
+-->
+   (write |Occlusion Result for | <id> | is | <val> (crlf))
+}
