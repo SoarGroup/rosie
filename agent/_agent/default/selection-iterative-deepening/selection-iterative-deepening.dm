@@ -1,4 +1,4 @@
-59
+63
 SOAR_ID 0
 SOAR_ID 1
 SOAR_ID 2
@@ -58,10 +58,15 @@ INTEGER_RANGE 55 0 2147483647
 INTEGER_RANGE 56 0 2147483647
 ENUMERATION 57 1 exceed-depth
 SOAR_ID 58
-70
+SOAR_ID 59
+ENUMERATION 60 1 mummy
+ENUMERATION 61 1 all-evaluations-failed
+SOAR_ID 62
+74
 0 desired 27
 0 io 1
 0 operator 4
+0 operator 59
 0 superstate 6
 0 superstate 36
 0 top-state 0
@@ -106,6 +111,7 @@ SOAR_ID 58
 13 name 15
 13 operator 17
 13 operator 52
+13 operator 62
 13 remaining-operators 55
 13 superstate 11
 13 top-state 0
@@ -129,3 +135,5 @@ SOAR_ID 58
 52 name 51
 54 name 53
 58 name 57
+59 name 60
+62 name 61
