@@ -9,7 +9,7 @@ sp {topstate*elaborate*scene-monitor*property
    (state <s> ^topstate <s>
               ^scene-monitor.object <obj>)
    (<obj> ^perception-obj.<prop-name> <prop>)
-   (<prop> ^type {<type> << visual state >>})
+   (<prop> ^type {<type> << visual state measurable >>})
 -->
    (<obj> ^property <p>)
    (<p> ^name <prop-name>
@@ -31,8 +31,8 @@ sp {topstate*elaborate*scene-monitor*wm-prop
 sp {topstate*elaborate*scene-monitor*hypothesis*visual
    (state <s> ^topstate <s>
               ^scene-monitor.object.property <prop>)
-   (<prop> ^type visual
-           ^svs-prop.{<label> <> type} {<conf> > .1})
+   (<prop> ^type << visual measurable >>
+           ^svs-prop.{<label> <> type <> feature-val} {<conf> > .1})
 -->
    (<prop> ^hypothesis <h>)
    (<h> ^label <label>
@@ -130,13 +130,17 @@ sp {topstate*elaborate*scene-changes*change-info*properties
    (state <s> ^topstate <s>
               ^scene-monitor.scene-changes.change-info <info>)
 -->
-   (<info> ^change <chg-prop> <higher-conf> <diff-best>)
+   (<info> ^change <chg-prop> <higher-conf> <diff-best> <new-prop> <diff-fv>)
    (<chg-prop> ^name changed-property
                ^op-name attend-to-changed-property)
    (<higher-conf> ^name higher-confidence
                   ^op-name attend-to-higher-confidence)
    (<diff-best> ^name different-best
                 ^op-name attend-to-different-best)
+   (<new-prop> ^name new-property
+               ^op-name attend-to-new-property)
+   (<diff-fv> ^name different-feature-val
+              ^op-name attend-to-different-feature-val)
 }
 
 
@@ -213,4 +217,48 @@ sp {monitor-scene-changes*elaborate*scene-changes*different-best
              ^object <obj>
              ^property <prop>
              ^best-hyp <h>)
+}
+
+###########################################################################
+#
+# Change: new property
+#   When a new property appears for the object
+#
+##########################################################################
+
+sp {monitor-scene-changes*elaborate*scene-changes*new-property
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes <sc>
+              ^scene-monitor.object <obj>)
+   (<obj> ^property <prop>)
+   (<prop> ^svs-prop <svs-prop>
+          -^wm-prop <wm-prop>)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type new-property
+             ^object <obj>
+             ^property <prop>)
+}
+
+###########################################################################
+#
+# Change: different-feature-val
+#   When measurable property value changes, update
+#
+############################################################################
+
+sp {monitor-scene-changes*elaborate*scene-change*different-feature-val
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes <sc>
+              ^scene-monitor.object <obj>
+              ^io.input-link.self.action wait)
+   (<obj> ^property <prop>)
+   (<prop> ^type measurable
+           ^svs-prop.feature-val <val>
+          -^wm-prop.feature-val <val>)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type different-feature-val
+             ^object <obj>
+             ^property <prop>)
 }
