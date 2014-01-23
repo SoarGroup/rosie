@@ -80,9 +80,9 @@ public class AgentMessageParser
         } else if(type.equals("game-new-action")){
             String gameName = WMUtil.getValueOfAttribute(fieldsId, "game-name");
             message = "I do not know how to play " + gameName + 
-                    ". Is it a multiplayer game (true/false)?";
+                    ". This is a multiplayer game (true/false)?";
         } else if(type.equals("game-new-verb")){
-            message = "What is the associated verb for this action. (ex: move 2 on 3)";
+            message = "What is an associated verb for this action, or finished";
         } else if(type.equals("game-new-goal")){
             message = "Ok tell me the name of the goal in the game.";
         } else if(type.equals("game-new-failure")){

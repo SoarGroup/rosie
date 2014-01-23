@@ -35,10 +35,10 @@ sp {find-parameters-impasse*elaborate*conditions-parameters*multiplayer
               ^game <g>
               ^superstate <ss>)
    (<ss> ^game-name <name>)
-   (<g> ^game-name <name> ^actions <a> ^goals <go> ^failures <f> ^player-pieces <pie> ^multiplayer {<m> true})
+   (<g> ^game-name <name> ^actions <a> ^goals <go> ^failures <f> ^player-pieces <pie> ^heuristics <heu> ^multiplayer {<m> true})
 -->
    (<ss> ^actions <a> ^failures <f> ^goals <go> ^player-args <pa> ^player-pieces <pie> 
-         ^current-player 1 ^multiplayer <m>)
+         ^current-player 1 ^multiplayer <m> ^heuristics <heu>)
    (<pa> ^1 <pa1> ^2 <pa2> ^current 1)
    (<pa1> ^action-args <aa> ^failure-args <fa> ^goal-args <ga> ^num 1)
    (<pa2> ^action-args <aa1> ^failure-args <fa1> ^goal-args <ga1> ^num 2)
@@ -221,6 +221,7 @@ sp {find-parameters*propose*select-parameters
               ^current-player <num>
               ^player-args.<num>.action-args.parameter-match-set <pms>
               ^parameter-match complete
+              ^player-args.<num>.action-args.<arg0>.name <action-name>
               ^player-args.<num>.action-args.<arg0>.verbs <verbs>)
    (<pms> ^{<arg1> 1}.possible-match <obj1>)
    (<pms> ^argnum <arg0>)
@@ -232,7 +233,8 @@ sp {find-parameters*propose*select-parameters
    (<s> ^operator <o> + ) # force tie
    (<o> ^name select-parameters
         ^arg1 1 # HACK shouldnt assume first two conditions are for action
-        ^arg2 2 
+        ^arg2 2
+        ^action-name <action-name>
         ^action <arg0>
         ^player-num <num>
         ^verbs <verbs>
@@ -573,6 +575,31 @@ sp {find-parameters*apply*count-val-negatives
    (<ss> ^val-count-neg <ic>)
 }
 
+
+
+
+
+###HEURISTICS
+#first ver just prefer
+#second -10 indifferent
+sp {find-parameters*apply*game*heuristics*action-name
+   :interrupt
+   (state <s> ^superstate.name find-parameters
+              ^superstate.heuristics <heu>
+              ^superstate <ss>
+#              ^item-count <ic>
+              ^superstate.operator <o1> +
+              ^superstate.operator <o2> +)
+   (<heu> ^preference <p>)
+   (<p> ^1 <pref1> ^2 <pref2>)
+   (<pref1> ^type action ^name <name>)
+   (<pref2> ^type action ^name <name2>)
+   (<o1> ^action-name <name>)
+   (<o2> ^action-name <name2>)
+-->
+   (<ss> ^operator <o1> > <o2>)
+}
+
 #sp {find-parameters*apply*complete-find-parameter-failed*multiplayer-evaluateother
 ##   :interrupt
 #   (state <s> ^name find-parameters
@@ -632,7 +659,12 @@ sp {selection*prefer*evaluate*select-parameters*over*complete-find-parameter-fai
 
 
 
-
+sp {find-parameters*elaborate*problem-space*heuristics
+   (state <s> ^name find-parameters
+              ^superstate.superstate.heuristics <heu>)
+-->
+   (<s> ^heuristics <heu>)
+}
 #COPY DOWN STUFF
 sp {find-parameters*elaborate*problem-space*player-args
    (state <s> ^name find-parameters

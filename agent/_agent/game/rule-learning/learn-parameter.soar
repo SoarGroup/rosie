@@ -46,6 +46,54 @@ sp {learn-parameter*apply*store-parameter*either
    (<parama> ^type location ^type block ^both true)
 }
 
+
+##handle a red clear block, a green object here
+sp {learn-parameter*propose*index-parameter
+   (state <s> ^name learn-parameter
+              ^topstate.current-game.learning <l>
+             -^found objects
+              ^object-desc <objd>)
+   (<l> ^learn-link <link> ^arg <arg>)
+   (<link> ^parameters.<arg>)
+-->
+#   (interrupt)
+   (<s> ^operator <o> + =)
+   (<o> ^name index-parameter 
+        ^parameter <pa>)
+   (<pa> ^index-info <ii> ^lexical <objd> ^type object)
+   (<ii> ^infer-match false ^return-all true ^use-interaction true)
+   (<l> ^interaction true)
+}
+
+sp {learn-parameter*apply*index-parameter
+#   :interrupt
+   (state <s> ^name learn-parameter
+              ^topstate.current-game.learning <l>
+              ^object-desc.word {<cond> <> block <> location <> object}
+              ^operator <o>)
+   (<l> ^learn-link <link> ^arg <arg>)
+   (<link> ^conditions.<arg> <conds>)
+   (<o> ^name index-parameter
+        ^parameter.result-info)
+-->
+   (<s> ^found objects)
+   (<conds> ^attribute.attr <cond>)
+}
+sp {learn-parameter*apply*index-parameter*default
+   (state <s> ^name learn-parameter
+              ^topstate.current-game.learning <l>
+              ^object-desc.word object
+              ^operator <o>)
+   (<l> ^learn-link <link> ^arg <arg>)
+   (<link> ^conditions.<arg> <conds>)
+   (<o> ^name index-parameter
+        ^parameter.result-info)
+-->
+   (<s> ^found objects)
+}
+
+
+
 sp {learn-parameter*propose*find-condition
    (state <s> ^name learn-parameter
               ^parameter <pname>
@@ -56,6 +104,15 @@ sp {learn-parameter*propose*find-condition
    (<s> ^operator <o> + =)
    (<o> ^name find-condition
         ^category svs) # for now determine better or new category)
+}
+sp {learn-parameter*apply*find-condition*remove-interaction
+   (state <s> ^name learn-parameter
+              ^operator.name find-condition
+              ^topstate.current-game.learning <l>)
+   (<l> ^interaction <t> ^arg <arg> ^learn-link <link>)
+   (<link> ^parameters.<arg>)
+-->
+   (<l> ^interaction <t> -)
 }
 
 sp {learn-parameter*apply*find-condition
@@ -111,14 +168,22 @@ sp {finish-parameters*send-message*next-action
     (<p> -^btype)}
 -->
    (<l> ^type <cond> -)
-   (<l> ^arg <arg> -)
-   (<l> ^action-number <num> -)
-   (<link> ^cond-args (- <arg> 1))
-   (<l> ^type action ^action-number (+ <num> 1))
+   (<l> ^type verb
+        ^verb-num 1)
    (<out> ^send-message <msg>)
-   (<msg> ^type game-new-action2
+   (<msg> ^type game-new-verb
           ^fields <f>)
    (<status> ^performed.dialog-event.type game)
+   #hobo
+#   (<l> ^type <cond> -)
+#   (<l> ^arg <arg> -)
+#   (<l> ^action-number <num> -)
+#   (<link> ^cond-args (- <arg> 1))
+#   (<l> ^type action ^action-number (+ <num> 1))
+#   (<out> ^send-message <msg>)
+#   (<msg> ^type game-new-action2
+#          ^fields <f>)
+#   (<status> ^performed.dialog-event.type game)
 }
 
 #for goals you are done, dont send another message
