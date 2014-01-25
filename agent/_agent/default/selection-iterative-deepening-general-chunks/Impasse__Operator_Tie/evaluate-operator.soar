@@ -1,46 +1,76 @@
 #Modification of original
 # Add test for current-evaluation-depth and instantiate operator with it
 #
-#sp {selection*propose*evaluate-operator*ced
-#   :default
-#   (state <s> ^name selection
-#              ^operator <o> +
-#              ^current-evaluation-depth <ced>
-#              ^remaining-operators <ro>)
-#   (<o> ^name evaluate-operator)
-#-->
-#   (<o> ^current-evaluation-depth <ced>
-#        ^remaining-operators <ro>)}
-#
 sp {selection*propose*evaluate-operator
    :default
    (state <s> ^name selection
-              ^item <i>
+              ^item <i>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name evaluate-operator
+        ^superoperator <i>)}
+
+sp {selection*apply*evaluate-operator*depth
+   :default
+   (state <s> ^operator <o> +
               ^current-evaluation-depth <ced>)
+   (<o> ^name evaluate-operator
+        ^superoperator <i>)
   -{(state <s> ^evaluation <e>)
     (<e> ^superoperator <i>
          ^current-evaluation-depth <ced>
          ^value true)}
+-->
+   (<o> ^current-evaluation-depth <ced>)}
+
+#
+#sp {selection*apply*evaluate-operator*depth*remove
+#   :default
+#   (state <s> ^operator <o>
+#              ^current-evaluation-depth <ced>)
+#   (<o> ^name evaluate-operator
+#        ^current-evaluation-depth { <> <ced> <oed> })
 #  -{(state <s> ^evaluation <e>)
-#    (<e> ^remaining-operators <ro>
+#    (<e> ^superoperator <i>
 #         ^current-evaluation-depth <ced>
 #         ^value true)}
--->
-   (<s> ^operator <o> +)
-   (<o> ^name evaluate-operator
-        ^superoperator <i>
-        ^current-evaluation-depth <ced>
-                                  )}#   ^remaining-operators <ro>)}
+#-->
+#   (<o> ^current-evaluation-depth <oed> -)}
+#
+#
+#sp {selection*apply*evaluate-operator*depth*remove
+#   :default
+#   (state <s> ^operator <o>
+#              ^evaluation <e>)
+#   (<e> ^superoperator <i>
+#        ^current-evaluation-depth <ced>
+#        ^value true)
+#   (<o> ^name evaluate-operator
+#        ^current-evaluation-depth <ced> )
+#-->
+#   (<o> ^current-evaluation-depth <ced> -)}
+
 sp {apply*evaluate-operator*clean-up-evaluations
    (state <s> ^operator <op>
               ^evaluation <e2>)
    (<op> ^name evaluate-operator
-         ^current-evaluation-depth <ced>
-                                   )#     ^remaining-operators <ro>)
-                                                               (<e2> ^value true)
-                                                              -(<e2> ^current-evaluation-depth <ced>)
+         ^current-evaluation-depth <ced>)
+   (<e2> ^value true
+        -^current-evaluation-depth <ced>)
 -->
    (<s> ^evaluation <e2> -)
+}
+
+
+sp {apply*evaluate-operator*clean-up-evaluations2
+   :o-support
+   (state <s> ^operator <op>)
+   (<op> ^name evaluate-operator
+         ^evaluation <e2>
+         ^current-evaluation-depth <ced>)
+   (<e2>  ^current-evaluation-depth <> <ced>)
+-->
+   (<op> ^evaluation <e2> -)
 }
 
 sp {selection*elaborate*evaluate-operator*remaining-operators*current-evaluation-depth
@@ -56,4 +86,12 @@ sp {selection*elaborate*evaluate-operator*remaining-operators*current-evaluation
    (<e>  ^remaining-operators <ro>
          ^current-evaluation-depth <ced>)}
 
+sp {selection*compare*evaluate-operator
+   (state <s> ^name selection 
+              ^operator <op1> +)
+   (<op1> ^name evaluate-operator
+         -^current-evaluation-depth)
+-->
+   (<s> ^operator <op1> -)
+}
 
