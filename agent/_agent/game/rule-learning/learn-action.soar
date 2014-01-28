@@ -21,14 +21,14 @@ sp {learn-action*apply*store-multiplayer
         ^category svs) # for now determine better or new category)
 -->
    (<l> ^type <type> -)
-   (<l> ^type action)
+   (<l> ^type game-params)
    (<g> ^multiplayer <word>)
 }
 sp {learn-action*propose*find-next-action*first
    (state <s> ^name learn-action
               ^multiplayer <word>
               ^topstate.current-game.learning <l>)
-   (<l> ^type action)
+   (<l> ^type game-params)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name find-next-action
@@ -40,7 +40,7 @@ sp {learn-action*name**query*smem
               ^action-name <name>
               ^topstate.current-game.learning <l>
               ^smem.command <sc>)
-   (<l> ^type action)
+   (<l> ^type game-params)
 -->
    (<sc> ^query <q>)
    (<q> ^action-name <name>)
@@ -48,7 +48,7 @@ sp {learn-action*name**query*smem
 sp {learn-action*query*success
    (state <s> ^name learn-action
               ^action-name <name>
-              ^topstate.current-game.learning.type action
+              ^topstate.current-game.learning.type game-params
               ^smem.result.success <cue>
               ^smem.result.retrieved <res>)
 -->
@@ -58,7 +58,7 @@ sp {learn-action*query*success
 sp {learn-action*query*failure
    (state <s> ^name learn-action
               ^action-name <name>
-              ^topstate.current-game.learning.type action
+              ^topstate.current-game.learning.type game-params
               ^smem.result.failure <cue>)
 -->
    (<s> ^found false)
@@ -160,7 +160,7 @@ sp {learn-action*propose*store-action
 #              ^found true #hobo
              -^topstate.current-game.game.actions.<num>
               ^topstate.current-game.learning <l>)
-   (<l> ^type action ^action-number <num>)
+   (<l> ^type game-params ^action-number <num>)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name store-action
@@ -235,6 +235,7 @@ sp {learn-action*propose*find-next-action
    (<o> ^name find-next-action
         ^category svs)
 }
+
 sp {learn-action*apply*find-next-action
    (state <s> ^name learn-action
               ^topstate.interaction.status <status>
@@ -242,15 +243,33 @@ sp {learn-action*apply*find-next-action
               ^operator.name find-next-action
               ^topstate.io.output-link <out>
               ^topstate.current-game.learning <l>)
-   (<l> ^action-number <num>)
+   (<l> ^action-number <num> ^type <type>)
 -->
    (<l> ^action-number <num> -)
-   (<l> ^action-number (+ <num> 1))
+   (<l> ^type <type> -)
+   (<l> ^action-number (+ <num> 1)
+        ^type game-params)
    (<out> ^send-message <msg>)
-   (<msg> ^type game-new-action2
+   (<msg> ^type game-new-params
           ^fields <f>)
    (<status> ^performed.dialog-event.type game)
 }
+#sp {learn-action*apply*find-next-action
+#   (state <s> ^name learn-action
+#              ^topstate.interaction.status <status>
+#              ^topstate.current-game <cg>
+#              ^operator.name find-next-action
+#              ^topstate.io.output-link <out>
+#              ^topstate.current-game.learning <l>)
+#   (<l> ^action-number <num>)
+#-->
+#   (<l> ^action-number <num> -)
+#   (<l> ^action-number (+ <num> 1))
+#   (<out> ^send-message <msg>)
+#   (<msg> ^type game-new-action2
+#          ^fields <f>)
+#   (<status> ^performed.dialog-event.type game)
+#}
 #new hobo ver
 #sp {learn-action*propose*find-new-action#getnewver
 #   (state <s> ^name learn-action
@@ -282,6 +301,7 @@ sp {learn-action*propose*find-new-action*verb
 
 sp {learn-action*propose*find-parameter*verb
    (state <s> ^name learn-action
+             -^found-action
               -^verb-name <name> 
               ^topstate.current-game.game.actions.<num>
               ^topstate.current-game.learning <l>)
@@ -398,9 +418,9 @@ sp {finish-verbs*send-message*new-action
    (<l> ^action-number <num> -)
    (<l> ^verb-num <vnum> -)
    (<link> ^cond-args (- <arg> 1))
-   (<l> ^type action ^action-number (+ <num> 1))
+   (<l> ^type game-params ^action-number (+ <num> 1))
    (<out> ^send-message <msg>)
-   (<msg> ^type game-new-action2
+   (<msg> ^type game-new-params#game-new-action2
           ^fields <f>)
    (<status> ^performed.dialog-event.type game)
 }

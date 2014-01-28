@@ -75,6 +75,8 @@ public class AgentMessageParser
             message = "Shall we play a game?";
         } else if(type.equals("game-start")){
             message = "Ok I know that game.  Tell me \"your turn\" when it's my turn.";
+        } else if(type.equals("game-new-params")){
+            message = "Tell me the name of an action, failure state, or goal of the game, or finished.";
         } else if(type.equals("game-new-action2")){
             message = "Ok tell me the name of a legal action in this game, or finished.";
         } else if(type.equals("game-new-action")){

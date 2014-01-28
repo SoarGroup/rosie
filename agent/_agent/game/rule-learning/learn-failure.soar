@@ -3,7 +3,7 @@ sp {learn-failure*name**query*smem
               ^failure-name <name>
               ^smem.command <sc>
               ^topstate.current-game.learning <l>)
-   (<l> ^type failure)
+   (<l> ^type game-params)
 -->
    (<sc> ^query <q>)
    (<q> ^failure-name <name>)
@@ -11,7 +11,7 @@ sp {learn-failure*name**query*smem
 sp {learn-failure*query*success
    (state <s> ^name learn-failure
               ^failure-name <name>
-              ^topstate.current-game.learning.type failure
+              ^topstate.current-game.learning.type game-params
               ^smem.result.success <cue>
               ^smem.result.retrieved <res>)
 -->
@@ -21,7 +21,7 @@ sp {learn-failure*query*success
 sp {learn-failure*query*failure
    (state <s> ^name learn-failure
               ^failure-name <name>
-              ^topstate.current-game.learning.type failure
+              ^topstate.current-game.learning.type game-params
               ^smem.result.failure <cue>)
 -->
    (<s> ^found false)
@@ -31,7 +31,7 @@ sp {learn-failure*propose*copy-failure
               ^failure-name <gname>
               ^found true
               ^topstate.current-game.learning <l>)
-   (<l> ^type failure)
+   (<l> ^type game-params)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name copy-failure
@@ -45,27 +45,54 @@ sp {learn-failure*apply*copy-failure
               ^operator.name copy-failure)
    (<ts> ^current-game <cg>)
    (<cg> ^learning <l> ^game <g>)
+   (<l> ^failure-number <fnum>)
+   (<g> ^failures <fo1>)
 -->
-   (<g> ^failures <go>)
+   (<fo1> ^<fnum> <go>)
 #   (<go> ^conditions <c> ^parameters <p> ^name <name>)
 }
-sp {copy-failure*propose*finish-failures
-   (state <s> ^name copy-failure
-              ^topstate.current-game.learning.type failure)
+#todo next here
+#sp {copy-failure*propose*finish-failures
+#   (state <s> ^name copy-failure
+#              ^topstate.current-game.learning.type failure)
+#-->
+#   (<s> ^operator <o> +)
+#   (<o> ^name finish-failures
+#        ^category svs)
+#}
+sp {learn-failure*apply*copy-failure*send-message
+   (state <s> ^name learn-failure
+              ^operator.name copy-failure
+              ^topstate.io.output-link <out>
+              ^topstate.current-game.game.failures.<num>
+              ^topstate.interaction.status <status>
+              ^topstate.current-game.learning <l>)
+   (<l> ^type <t> ^failure-number <num>)
 -->
-   (<s> ^operator <o> +)
-   (<o> ^name finish-failures
-        ^category svs)
+   #new game params
+#   (<l> ^type <t> -)
+#   (<l> ^type failure)
+#   (<out> ^send-message <msg>)
+#   (<msg> ^type game-new-failure
+#          ^fields <f>)
+#   (<status> ^performed.dialog-event.type game)
+   (<l> ^failure-number <num> -)
+   (<l> ^type <t> -)
+   (<l> ^failure-number (+ <num> 1)
+        ^type game-params)
+   (<out> ^send-message <msg>)
+   (<msg> ^type game-new-params
+          ^fields <f>)
+   (<status> ^performed.dialog-event.type game)
 }
-
 
 sp {learn-failure*propose*store-failure
    (state <s> ^name learn-failure
               ^failure-name <gname>
               ^found false
-             -^topstate.current-game.game.failures
+             -^topstate.current-game.game.failures.<num>
               ^topstate.current-game.learning <l>)
-   (<l> ^type failure)
+   (<l> ^type game-params ^failure-number <num>)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name store-failure
@@ -79,16 +106,19 @@ sp {learn-failure*apply*store-failure
               ^operator.name store-failure)
    (<ts> ^current-game <cg>)
    (<cg> ^learning <l> ^game <g>)
--->
+   (<l> ^failure-number <num>)
    (<g> ^failures <go>)
-   (<go> ^conditions <c> ^parameters <p> ^failure-name <name>)
+-->
+   (<go> ^<num> <go1>)
+   (<go1> ^conditions <c> ^parameters <p> ^failure-name <name>)
    (<c> ^cond <newcond>)
 }
 
 sp {learn-failure*propose*find-parameter
    (state <s> ^name learn-failure
-              ^topstate.current-game.game.failures
+              ^topstate.current-game.game.failures.<num>
               ^topstate.current-game.learning <l>)
+   (<l> ^failure-number <num>)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name find-parameter
@@ -112,7 +142,7 @@ sp {learn-failure*apply*find-parameter
    (<status> ^performed.dialog-event.type game)
 }
 
-
+#TODO reroute to final finish which could be finish-failures
 #FINISHED GAME STORE ALL- todo failures
 sp {finish-failures*store-game
    (state <s> ^name finish-failures
