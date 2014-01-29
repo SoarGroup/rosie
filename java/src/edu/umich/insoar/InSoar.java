@@ -26,6 +26,12 @@ import edu.umich.insoar.world.WorldModel;
 
 public class InSoar implements PrintEventInterface, RunEventInterface
 {
+	private static InSoar Singleton = null;
+	
+	public static long GetSoarTime(){
+		return Singleton.perception.getSoarTime();
+	}
+	
 	public static final boolean DEBUG_TRACE = false;
     
     private Kernel kernel;
@@ -46,6 +52,7 @@ public class InSoar implements PrintEventInterface, RunEventInterface
 
     public InSoar(String agentName, boolean headless)
     {     
+    	Singleton = this;
 
         // Load the properties file
         Properties props = new Properties();
@@ -140,6 +147,11 @@ public class InSoar implements PrintEventInterface, RunEventInterface
         }
         
         chatFrame.showFrame();   
+        
+        perception_command_t command = new perception_command_t();
+		command.utime = InSoar.GetSoarTime();
+		command.command = "reset=time";
+		LCM.getSingleton().publish("GUI_COMMAND", command);
     }
     
     public static void main(String[] args)

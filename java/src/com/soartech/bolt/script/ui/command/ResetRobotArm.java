@@ -9,7 +9,7 @@ public class ResetRobotArm implements UiCommand {
 	@Override
 	public void execute() {
 		robot_command_t command = new robot_command_t();
-		command.utime = TimeUtil.utime();
+		command.utime = InSoar.GetSoarTime();
 		command.action = "RESET";
 		command.dest = new double[6];
 		LCM.getSingleton().publish("ROBOT_COMMAND", command);

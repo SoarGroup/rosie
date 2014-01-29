@@ -32,6 +32,8 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
 	private Identifier timeId = null;
 	private int stepNumber = 0;
 	private long startTime;
+	private long soarTime = 0;
+	private long percTime = 0;
 	
 	// Object being pointed to
 	private int pointedId = -1;
@@ -71,6 +73,10 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         lcm.subscribe("ROBOT_ACTION", this);
     }
     
+    public long getSoarTime(){
+    	return soarTime;
+    }
+    
     /*************************************************
      * runEventHandler
      * Runs every input phase to update the input link
@@ -101,8 +107,10 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         stepNumber++;
         WMUtil.updateIntWME(timeId, "steps", stepNumber);
         long curTime = TimeUtil.utime();
-        WMUtil.updateIntWME(timeId, "seconds", (int)(curTime - startTime)/1000000);
-        WMUtil.updateIntWME(timeId, "microseconds", (int)(curTime - startTime));
+        soarTime = (long)(curTime - startTime);
+        WMUtil.updateIntWME(timeId, "seconds", soarTime / 1000000);
+        WMUtil.updateIntWME(timeId, "microseconds", soarTime);
+        WMUtil.updateIntWME(timeId, "perception-time", percTime);
         
         // Update pointed object
         WMUtil.updateIntWME(inputLinkId, "pointed-object", pointedId);
@@ -110,7 +118,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         // Send new training labels to perception
         if(newLabels.size() > 0){
             training_data_t trainingData = new training_data_t();
-        	trainingData.utime = TimeUtil.utime();
+        	trainingData.utime = soarTime;
         	trainingData.num_labels = newLabels.size();
         	trainingData.labels = new training_label_t[newLabels.size()];
         	for(int i = 0; i < newLabels.size(); i++){
@@ -230,6 +238,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
             		time = TimeUtil.utime();
             	}
                 obs = new observations_t(ins);
+                percTime = obs.utime;
                 pointedId = obs.click_id;
                 //if(armStatus.equals("wait")){
                     world.newObservation(obs);
@@ -255,7 +264,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         clearDataButton.addActionListener(new ActionListener(){
         	public void actionPerformed(ActionEvent e){
         		perception_command_t cmd = new perception_command_t();
-        		cmd.utime = TimeUtil.utime();
+        		cmd.utime = soarTime;
         		cmd.command = "CLEAR_CLASSIFIERS";
                 LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
         	}
@@ -267,7 +276,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         loadDataButton.addActionListener(new ActionListener(){
         	public void actionPerformed(ActionEvent e){
         		perception_command_t cmd = new perception_command_t();
-        		cmd.utime = TimeUtil.utime();
+        		cmd.utime = soarTime;
         		cmd.command = "LOAD_CLASSIFIERS";
                 LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
         	}
@@ -279,7 +288,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         saveDataButton.addActionListener(new ActionListener(){
         	public void actionPerformed(ActionEvent e){
         		perception_command_t cmd = new perception_command_t();
-        		cmd.utime = TimeUtil.utime();
+        		cmd.utime = soarTime;
         		cmd.command = "SAVE_CLASSIFIERS";
                 LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
         	}

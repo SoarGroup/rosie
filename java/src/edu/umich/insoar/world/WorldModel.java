@@ -170,7 +170,7 @@ public class WorldModel implements RunEventInterface
     	}
 
     	soar_objects_t outgoingObs = new soar_objects_t();
-    	outgoingObs.utime = TimeUtil.utime();
+    	outgoingObs.utime = InSoar.GetSoarTime();
     	outgoingObs.objects = objDatas.toArray(new object_data_t[objDatas.size()]);
     	outgoingObs.num_objects = outgoingObs.objects.length;
     	

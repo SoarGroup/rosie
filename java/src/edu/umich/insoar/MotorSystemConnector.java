@@ -96,7 +96,6 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     }
     
     public void newRobotStatus(robot_action_t status){
-    	prevStatus = curStatus;
     	curStatus = status;
     	gotUpdate = true;
     }
@@ -173,15 +172,17 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     
     
     private void updateIL(){
-    	if(prevStatus == null){
-    		return;
-    	}
     	WMUtil.updateStringWME(selfId, "action", curStatus.action.toLowerCase());
-    	WMUtil.updateStringWME(selfId, "prev-action", prevStatus.action.toLowerCase());
+    	if(prevStatus == null){
+        	WMUtil.updateStringWME(selfId, "prev-action", "wait");
+    	} else {
+        	WMUtil.updateStringWME(selfId, "prev-action", prevStatus.action.toLowerCase());
+    	}
     	WMUtil.updateStringWME(selfId, "holding-obj", (curStatus.obj_id != -1 ? "true" : "false"));
     	WMUtil.updateIntWME(selfId, "grabbed-object", curStatus.obj_id);
     	pose.updateWithArray(curStatus.xyz);
     	pose.updateInputLink(selfId);
+    	prevStatus = curStatus;
     }
     
     private void updateArmInfo(){
@@ -261,7 +262,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
                 "object-id", "pick-up does not have an ^object-id attribute");
         
         robot_command_t command = new robot_command_t();
-        command.utime = TimeUtil.utime();
+        command.utime = TimeUtil.utime(); 
         command.action = String.format("GRAB=%d", Integer.parseInt(objectIdStr));
         command.dest = new double[6];
     	lcm.publish("ROBOT_COMMAND", command);
@@ -285,7 +286,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         double z = Double.parseDouble(WMUtil.getValueOfAttribute(
                 locationId, "z", "Error (put-down): No ^location.z attribute"));
         robot_command_t command = new robot_command_t();
-        command.utime = TimeUtil.utime();
+        command.utime = TimeUtil.utime(); 
         command.action = "DROP";
         command.dest = new double[]{x, y, z, 0, 0, 0};
     	lcm.publish("ROBOT_COMMAND", command);
@@ -307,7 +308,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
 
         String action = String.format("ID=%s,%s=%s", objId, name, value);
         set_state_command_t command = new set_state_command_t();
-        command.utime = TimeUtil.utime();
+        command.utime = TimeUtil.utime(); 
         command.state_name = name;
         command.state_val = value;
         command.obj_id = Integer.parseInt(objId);
@@ -320,7 +321,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     	Integer id = Integer.parseInt(WMUtil.getValueOfAttribute(pointId, "id"));
         
         robot_command_t command = new robot_command_t();
-        command.utime = TimeUtil.utime();
+        command.utime = TimeUtil.utime(); 
         command.dest = new double[]{0, 0, 0, 0, 0, 0};
     	command.action = "POINT=" + id;
     	lcm.publish("ROBOT_COMMAND", command);
@@ -329,7 +330,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     
     private void processHomeCommand(Identifier id){
     	robot_command_t command = new robot_command_t();
-        command.utime = TimeUtil.utime();
+        command.utime = TimeUtil.utime(); 
         command.dest = new double[6];
     	command.action = "HOME";
     	lcm.publish("ROBOT_COMMAND", command);
