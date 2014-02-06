@@ -95,6 +95,10 @@ public class AgentMessageParser
             message = "Ok list an object, or finished.";
         } else if(type.equals("game-new-condition")){
             message = "Ok list a condition for this parameter, or finished.";
+        } else if(type.equals("game-new-heuristic")){
+            message = "Are there any heuristics you can teach me? (or finished)";
+        } else if(type.equals("game-final-state")){
+            message = "Please demonstrate the final goal state.";
         } else if(type.equals("game-learned")){
             message = "Ok I have now learned the basics of the game.";
         } else if(type.equals("game-over")){
