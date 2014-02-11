@@ -11,6 +11,8 @@ public class AgentMessageParser
 {
     public static String translateAgentMessage(Identifier id){
         String message = null;
+        
+        
         String type = WMUtil.getValueOfAttribute(id, "type");
         System.out.println(type);
         Identifier fieldsId = WMUtil.getIdentifierOfAttribute(id, "fields");
@@ -25,6 +27,7 @@ public class AgentMessageParser
         } else if(type.equals("attribute-presence-question")){
             message = translateAttributePresenceQuestion(fieldsId);
         } else if(type.equals("ask-property-name")){
+        	
             message = translateCategoryQuestion(fieldsId);
         } else if(type.equals("category-of-property")){
             message = translateCategoryPropertyQuestion(fieldsId);
@@ -92,9 +95,11 @@ public class AgentMessageParser
         } else if(type.equals("game-new-parameter1")){
             message = "Ok describe an object for this action.\n";
         } else if(type.equals("game-new-parameter")){
-            message = "Ok list an object, or finished.";
+        	String stateType = WMUtil.getValueOfAttribute(fieldsId, "state-type");
+            message = "Ok describe an object for this " + stateType + " state.";
         } else if(type.equals("game-new-condition")){
-            message = "Ok list a condition for this parameter, or finished.";
+        	String obj = WMUtil.getValueOfAttribute(fieldsId, "type");
+            message = "Ok list a condition for the " + obj + ", another object, or finished.";
         } else if(type.equals("game-new-heuristic")){
             message = "Are there any heuristics you can teach me? (or finished)";
         } else if(type.equals("game-final-state")){
