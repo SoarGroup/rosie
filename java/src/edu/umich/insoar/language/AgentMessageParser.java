@@ -1,10 +1,14 @@
 package edu.umich.insoar.language;
 
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import sml.Identifier;
+import sml.WMElement;
 import edu.umich.insoar.language.Patterns.LingObject;
+import edu.umich.insoar.language.Patterns.ObjectRelation;
 import edu.umich.insoar.world.WMUtil;
 
 public class AgentMessageParser
@@ -72,6 +76,8 @@ public class AgentMessageParser
             message = translateSceneObjectsQuestion(fieldsId);
         } else if(type.equals("list-objects")){
             message = translateObjectsQuestion(fieldsId);
+        } else if(type.equals("describe-goal-params")){
+            message = translateGoalDemoQuestion(fieldsId);
         } else if(type.equals("location-unknown")){
             message = "Relative location of object unknown";
         } else if(type.equals("play-game")){
@@ -212,6 +218,22 @@ public class AgentMessageParser
         return message;
     }
     
+    private static String translateGoalDemoQuestion(Identifier id){
+        Identifier description = WMUtil.getIdentifierOfAttribute(id, "description");
+        
+        List<ObjectRelation> sentence = ObjectRelation.createAllFromSoarSpeak(description, "sentence");
+        String message = "";
+        
+        Iterator<ObjectRelation> it = sentence.iterator();
+        if (sentence.isEmpty())
+            return "I did not understand that.";
+        while(it.hasNext())
+        {
+            String sent = it.next().toString();
+            message += sent + "\n";
+        }
+        return message;
+    }
     private static String translateObjectsQuestion(Identifier id){
         Identifier objects = WMUtil.getIdentifierOfAttribute(id, "objects");
         
