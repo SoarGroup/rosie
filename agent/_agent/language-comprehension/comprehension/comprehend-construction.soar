@@ -1,0 +1,119 @@
+## if just successfully retreived a new assigner of a word (not word pair) check to see if
+##   there is a construction that includes that.
+sp {comprehension*propose*comprehend-construction*after-success-assigner
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^retrieved-stack <rs>
+          ^current-word.processed true
+          ^unfilled-receiver-item <c-item>)
+   (<rs> ^item <c-item>
+         ^prior.item { <> nil <> |*| <p-item> })
+  -(<c-item> ^lt-lexical-item.converts-to-receiver-structure <dp>   # wait until it converts to its phrase type
+            -^structure-type <dp>)
+  -{(<seg> ^comprehension-structure <cs>)
+    (<cs> ^type construction
+          ^processed true)}
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name comprehend-construction
+         ^current-item <c-item>
+         ^prior-item <p-item>)
+}
+
+## if the two most recent items are not merged and the newer one isn't going to merge with anything else or convert to a phrase
+
+sp {comprehension*propose*comprehend-construction
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^retrieved-stack <rs>
+          ^current-word.processed true
+          ^unfilled-receiver-item <c-item>)
+   (<rs> ^item <c-item>
+         ^prior.item { <> nil <> |*| <p-item> })
+  -{(<seg> ^unfilled-assigner-item.structure-type <p>)}
+   (<c-item> ^structure-type <p>
+            -^lt-lexical-item.converts-to-receiver-structure)
+  -{(<seg> ^comprehension-structure <cs>)
+    (<cs> ^type construction
+          ^processed true)}
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name comprehend-construction
+         ^current-item <c-item>
+         ^prior-item <p-item>)
+}
+
+## if the two most recent items are not merged and the newer one is going to convert to a phrase but not for any assigner
+sp {comprehension*propose*comprehend-construction2
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^retrieved-stack <rs>
+          ^current-word.processed true
+          ^unfilled-receiver-item <c-item>)
+   (<rs> ^item <c-item>
+         ^prior.item { <> nil <> |*| <p-item> })
+  -{(<seg> ^unfilled-assigner-item.structure-type <p>)}
+  -{(<seg> ^unfilled-assigner-item.structure-type <dp>)}
+   (<c-item> ^structure-type <p>
+             ^lt-lexical-item.converts-to-receiver-structure <dp>)
+  -{(<seg> ^comprehension-structure <cs>)
+    (<cs> ^type construction
+          ^processed true)}
+-->
+   (<s> ^operator <op> + =, >)
+   (<op> ^name comprehend-construction
+         ^current-item <c-item>
+         ^prior-item <p-item>)
+}
+
+#### Failed merge on required assigner
+sp {comprehension*propose*comprehend-construction*failed-merge
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^current-word.processed true
+          ^retrieved-stack <rs>
+          ^unfilled-assigner-item <ass>)
+   (<rs> ^item <c-item>
+         ^prior.item <p-item>)
+  -{(<seg> ^comprehension-structure <cs>)
+    (<cs> ^type construction
+          ^processed true)}
+   (<ass> ^failed merge)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name comprehend-construction
+         ^failed-assigner <ass>
+         ^current-word <c-item>
+         ^prior-word <p-item>)
+}
+
+sp {apply*comprehend-construction
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<op> ^name comprehend-construction)
+-->
+   (<seg> ^comprehension-structure <cs>)
+   (<cs> ^type construction)
+}
+
+
+sp {comprehension*compare*comprehend-construction
+   (state <s> ^name comprehension
+              ^operator <op1> +
+                        <op2> +)
+   (<op1> ^name comprehend-construction)
+   (<op2> ^name next-word)
+-->
+   (<s> ^operator <op1> > <op2>)
+}
+
+sp {comprehension*compare*comprehend-construction2
+   (state <s> ^name comprehension
+              ^operator <op1> +
+                        <op2> +)
+   (<op1> ^name comprehend-construction)
+   (<op2> ^name << process-semantics process-phrase-end >>)
+-->
+   (<s> ^operator <op1> < <op2>)
+}
+

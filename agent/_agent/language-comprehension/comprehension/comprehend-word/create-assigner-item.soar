@@ -1,0 +1,86 @@
+sp {comprehend-word*propose*create-assigner-item
+   (state <s> ^name comprehend-word
+              ^current-word <cw>
+              ^segment.comprehension-structure.unfilled-receiver-item <r-item>
+              ^retrieved-lexical-item <a-lt-lexical-item>)
+   (<a-lt-lexical-item> ^assigners <id>)
+  -{(<s> ^segment.comprehension-structure.unfilled-assigner-item <item>)
+    (<item> ^decision-count
+            ^current-word <cw>
+            ^parent-structure <r-item>
+            ^lt-lexical-assigner <id>)}
+   (<r-item> ^lt-lexical-item <a-lt-lexical-item>
+             ^current-word <cw>)
+   (<id> ^structure-type <stype>)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name create-assigner-item
+         ^lt-lexical-assigner <id>
+         ^parent-structure <r-item>)
+}
+
+sp {apply*create-assigner-item*create-item
+   (state <s> ^operator <op>
+              ^current-word <cw>
+              ^segment <ss>
+             -^name comprehend-construction)
+   (<ss> ^comprehension-structure <cs>)
+   (<op> ^name create-assigner-item
+         ^lt-lexical-assigner <lt-lexical-item>
+         ^parent-structure <r-item>)
+   (<lt-lexical-item> ^structure-type <stype>)
+-->
+   (write (crlf) | parent-structure | <r-item> | for | <new-assigner> )
+   (<cs> ^unfilled-assigner-item <new-assigner>)
+   (<new-assigner> ^current-word <cw>
+                   ^lt-lexical-assigner <lt-lexical-item>
+                   ^parent-structure <r-item>
+                   ^structure-type <stype>
+                   ^decision-count (int (cmd stats -d)))}
+
+####
+sp {apply*create-assigner-item*create-item*no-remove
+   (state <s> ^operator <op>
+              ^current-word <cw>
+              ^segment <ss>
+              ^name comprehend-construction)
+   (<ss> ^comprehension-structure <cs>)
+   (<op> ^name create-assigner-item
+         ^lt-lexical-assigner <lt-lexical-item>
+         ^parent-structure <r-item>)
+   (<lt-lexical-item> ^structure-type <stype>)
+   (<cs> -^remove-assigner)
+-->
+   (write (crlf) | parent-structure | <r-item> | for | <new-assigner> )
+   (<cs> ^unfilled-assigner-item <new-assigner>)
+   (<new-assigner> ^current-word <cw>
+                   ^lt-lexical-assigner <lt-lexical-item>
+                   ^parent-structure <r-item>
+                   ^structure-type <stype>
+                   ^decision-count (int (cmd stats -d)))}
+
+####
+## Use old decision count so it stays older than others that
+                           ##  have been created in the mean time
+sp {apply*create-assigner-item*create-item*use-old-time
+   (state <s> ^operator <op>
+              ^current-word <cw>
+              ^segment <ss>
+              ^name comprehend-construction)
+   (<ss> ^comprehension-structure <cs>)
+   (<op> ^name create-assigner-item
+         ^lt-lexical-assigner <lt-lexical-item>
+         ^parent-structure <r-item>)
+   (<lt-lexical-item> ^structure-type <stype>)
+   (<cs> ^remove-assigner.decision-count <dc>
+        -^remove-assigner.decision-count < <dc>)
+-->
+   (write (crlf) | parent-structure | <r-item> | for | <new-assigner> )
+   (write (crlf) | use old decision-count | <dc>)
+   (<cs> ^unfilled-assigner-item <new-assigner>)
+   (<new-assigner> ^current-word <cw>
+                   ^lt-lexical-assigner <lt-lexical-item>
+                   ^parent-structure <r-item>
+                   ^structure-type <stype>
+                   ^decision-count <dc>)}
+

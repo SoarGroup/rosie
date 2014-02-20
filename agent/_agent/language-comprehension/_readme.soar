@@ -1,0 +1,70 @@
+## Parts of speech.
+
+
+# interjections: wow, holy cow, rats, oh no, congratulations, yes, dang, yuck
+
+############################################################################
+#State structure with some documentation of which operators test and modify them.
+#
+#First, the structure of smem elements for lexical items.
+#
+#There is one of these for each major "meaning" of a word (not just word sense). So for
+#"bank" there would be one for financial institution, edge of a river, maneuver in flying, ...
+#Retrieved using smem-lexical-retrieval
+#Tested in comprehend-word, merge, ...
+# Syntactic types: specifier (D), adjoin (ADJ), subject (DP), complement (DP), complement2 (PP), predicate (V)
+#    head (DP)
+#(<move> ^spelling |move|           # actual string of characters
+#        ^structure-type V          # can be more than one - determiners receivers in comprehend-word/create-receiver-item
+#        ^pos verb                  # part of speech
+#        ^tense present             # not used yet
+#        ^imperative true           # not used yet
+#        ^number singular           # not used yet
+#        ^assigners <a0> <a1> <a2>  # assigners - not sure about adjoiners and other complements and adverbs not included
+#                                   #   these are used to define assigners by comprehend-word/create-assigner-item
+#        ^soar-operator.name op-move# pointer to Soar operator that implements this verb
+#        ^agent <a0>                # pointer to assigner that will be the semantic agent (wrong)
+#        ^destination <a2>          # pointer to assigner that will be the destination (wrong)
+#        ^converts-to-receiver-structure VP) # structure-type this can be "elevated" to when its assigners are complete
+#
+#Assigner structure
+#(<a0> ^structure-type DP           # desired structure type that has to match
+#      ^parent-lexical-item <move>  # pointer back to parent lexical item
+#      ^relative-position before    # explicit constraint as to whether receiver must come before or after the superstructure
+#      ^syntactic-structure subject # syntactic role, such as subject, direct-object, ...
+#      ^default.name self           # if not filled, is there a default value
+#      ^constraint <con0>           # a set of constraints that must be met by any referent (grounded object/action)
+#      ^optional true)              # optional/required - whether this assigner must be merged 
+#
+#Constraint structure
+#(<con0> ^animate true)             # constraints usually have just an attribute and value that must
+#                                   # be matched by a referent. These are retrieved in retrieve-assigner-constraints
+#                                   # and tested in ground-referent
+#TOP STATE STRUCTURE 
+#(<s> ^name comprehension                #
+#     ^desired <d>                  # this is required for the selection space - no good descriptin yet
+#     ^semantics <sem>              # pointer to the semantic structure that is built up during parsing
+#     ^last-merge <lm>              # pointer to the assigner and receiver from the last merge. 
+#                                   # Useful for followup processing by process-phrase-end
+#     ^semantics <sentence>    # Top node the parse - 
+#     ^world <world>                # objects and locations in the world
+#     ^unfilled-assigner-item <uai>
+#     ^unfilled-receiver-item <uri>
+#     )
+#
+#(<uai> ^lt-lexical-assigner <lti>  # the lti for the "parent" assigner item retrieved from smem
+#       ^structure-type <stype>
+#       ^parent-structure <ps>      # the short-term structure that is the parent of this assigner (it is a receiver)
+#       ^decision-count <dc>        # when was the assigner created - used for some merge preferences
+#       )
+#
+#(<uri> ^lt-lexical-item <id>       # the lti for the lexical item retrieved from smem
+#       ^structure-type <stype>
+#       ^decision-count <dc> 
+#       ^V/VP/...                   # merged in assigners/receivers from below
+#       ^parent-assigner <pa>       # assigner it merged with - (whose parent-structure is another receiver)
+#       ^failed-constraints
+#       ^succeeded-constraints
+#       ^referent
+#       ^constraint <con>
+#       )

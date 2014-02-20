@@ -62,34 +62,35 @@ public class InSoar implements PrintEventInterface, RunEventInterface
 			e.printStackTrace();
 		}
         
-        String useLGProp = props.getProperty("enable-lgsoar");
+        // Disable LG
+        //String useLGProp = props.getProperty("enable-lgsoar");
         
         boolean useLG = false;
         String lgSoarDictionary = "";
-        if (useLGProp != null && useLGProp.trim().equals("true")) {
-        	lgSoarDictionary = props.getProperty("lgsoar-dictionary");
-        	String lgSoarSource = props.getProperty("language-productions").trim();
-        	if (lgSoarSource != null && lgSoarDictionary != null) {
-        		useLG = true;
-        	}
-        	else {
-        		System.out.println("ERROR: LGSoar misconfigured, not enabled.");
-        	}
-        }
+//        if (useLGProp != null && useLGProp.trim().equals("true")) {
+//        	lgSoarDictionary = props.getProperty("lgsoar-dictionary");
+//        	String lgSoarSource = props.getProperty("language-productions").trim();
+//        	if (lgSoarSource != null && lgSoarDictionary != null) {
+//        		useLG = true;
+//        	}
+//        	else {
+//        		System.out.println("ERROR: LGSoar misconfigured, not enabled.");
+//        	}
+//        }
         
         soarAgent = new SoarAgent(agentName, props, useLG, headless);
 
         BOLTLGSupport lgSupport = null;
         
-        if (useLG) {
-        	try{
-        	lgSupport = new BOLTLGSupport(soarAgent.getAgent(), lgSoarDictionary);
-        	} catch (RuntimeException e){
-        		System.err.println("Couldn't open lg dictionary");
-        		useLG = false;
-        		lgSupport = null;
-        	}
-        }
+//        if (useLG) {
+//        	try{
+//        	lgSupport = new BOLTLGSupport(soarAgent.getAgent(), lgSoarDictionary);
+//        	} catch (RuntimeException e){
+//        		System.err.println("Couldn't open lg dictionary");
+//        		useLG = false;
+//        		lgSupport = null;
+//        	}
+//        }
 
 		String doLog = props.getProperty("enable-log");
 		if (doLog != null && doLog.equals("true")) {

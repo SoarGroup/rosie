@@ -1,0 +1,165 @@
+### If fail on retrieval, just mark it as an unknown word.
+### Downstream parsing will have to figure out what to do with it
+###
+### If only one active assigner - assume that is what it is?
+
+sp {comprehend-word*propose*process-new-word
+   (state <s> ^name comprehend-word
+              ^segment <seg>
+              ^failed-retrieval true
+             -^retrieved-lexical-item.spelling <spell>)
+   (<seg> ^current-word <cw>
+          ^unfilled-assigner-item <uai>)
+   (<cw> ^spelling <spell>)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name process-new-word
+         ^assigner <uai>
+         ^word <cw>)
+}
+
+sp {comprehend-word*compare*process-new-word*before
+   (state <s> ^name comprehend-word
+              ^operator <op1> +
+                        {<> <op1> <op2> } +)
+   (<op1> ^name process-new-word
+          ^assigner.lt-lexical-assigner.before <lla>)
+   (<op2> ^name process-new-word
+          ^assigner.lt-lexical-assigner <lla>)
+-->
+   (<s> ^operator <op1> > <op2>)
+}
+
+sp {comprehend-word*compare*process-new-word*before-type
+   (state <s> ^name comprehend-word
+              ^operator <op1> +
+                        {<> <op1> <op2> } +)
+   (<op1> ^name process-new-word
+          ^assigner.lt-lexical-assigner.before-type <type>)
+   (<op2> ^name process-new-word
+          ^assigner.structure-type <type>)
+-->
+   (<s> ^operator <op1> > <op2>)
+}
+
+
+sp {comprehend-word*reject*process-new-word*fixed-primitive-sets
+   (state <s> ^name comprehend-word
+              ^operator <op1> +)
+   (<op1> ^name process-new-word
+          ^assigner.structure-type << D QT P T Q >>)
+-->
+   (<s> ^operator <op1> -)
+}
+
+########## Elaborate assigner with primitive or not
+
+sp {apply*process-new-word*elaborate*primitive-structure
+   (state <s> ^operator <op>)
+   (<op> ^name process-new-word
+         ^assigner <ass>)
+   (<ass> ^structure-type { <st> << V ADJ N ADV >> })
+-->
+   (<ass> ^primitive-structure true)
+}
+
+sp {apply*process-new-word*elaborate*primitive-structure*false
+   (state <s> ^operator <op>)
+   (<op> ^name process-new-word
+         ^assigner <ass>)
+   (<ass> ^structure-type { <st> << DP VP NP >> })
+-->
+   (<ass> ^primitive-structure false)
+}
+
+### For now, use primitive assigner to set structure type
+## Could be random if multiple assigners available
+
+sp {apply*process-new-word*assign*primitive
+   (state <s> ^operator <op>
+              ^segment.comprehension-structure <cs>
+              ^smem.command <cmd>)
+   (<op> ^name process-new-word
+         ^word <cw>
+         ^assigner <as>)
+   (<as> ^structure-type <st>
+         ^primitive-structure true)
+   (<cw> ^spelling <spell>)
+-->
+   (<s> ^retrieved-lexical-item <nw>)
+   (<cmd> ^store <nw>)
+   (<nw> ^spelling <spell>
+         ^structure-type <st>)
+   (<cs> ^retrieved-lexical-item <nw>)
+   (write (crlf) |I guess | <spell> | is a | <st>)
+}
+
+sp {apply*process-new-word*assign*DP*after*D*after*D
+   (state <s> ^operator <op>
+              ^segment <seg>
+              ^smem.command <cmd>)
+   (<seg> ^comprehension-structure <cs>
+          ^unfilled-receiver-item.structure-type D)
+   (<op> ^name process-new-word
+         ^word <cw>
+         ^assigner <as>)
+   (<as> ^structure-type DP)
+   (<cw> ^spelling <spell>)
+-->
+   (<s> ^retrieved-lexical-item <nw>)
+   (<cmd> ^store <nw>)
+   (<nw> ^spelling <spell>
+         ^structure-type N) # could be an adjective
+   (<cs> ^retrieved-lexical-item <nw>)
+   (write (crlf) |I guess | <spell> | is a N|)
+}
+
+sp {apply*process-new-word*assign*DP*not-after*D
+   (state <s> ^operator <op>
+              ^segment <seg>
+              ^smem.command <cmd>)
+   (<seg> ^comprehension-structure <cs>
+         -^unfilled-receiver-item.structure-type D)
+   (<op> ^name process-new-word
+         ^word <cw>
+         ^assigner <as>)
+   (<as> ^structure-type DP)
+   (<cw> ^spelling <spell>)
+-->
+   (<s> ^retrieved-lexical-item <nw>)
+   (<cmd> ^store <nw>)
+   (<nw> ^spelling <spell>
+         ^structure-type ADJ) # could be a proper noun
+   (<cs> ^retrieved-lexical-item <nw>)
+   (write (crlf) |I guess | <spell> | is a  ADJ|)
+}
+
+sp {apply*process-new-word*assign*VP*no*V
+   (state <s> ^operator <op>
+              ^segment <seg>
+              ^smem.command <cmd>)
+   (<seg> ^comprehension-structure <cs>
+         -^unfilled-receiver-item.structure-type V)
+   (<op> ^name process-new-word
+         ^word <cw>
+         ^assigner <as>)
+   (<as> ^structure-type VP)
+   (<cw> ^spelling <spell>)
+-->
+   (<s> ^retrieved-lexical-item <nw>)
+   (<cmd> ^store <nw>)
+   (<nw> ^spelling <spell>
+         ^structure-type V) # could be a proper noun
+   (<cs> ^retrieved-lexical-item <nw>)
+   (write (crlf) |I guess | <spell> | is a V|)
+}
+
+sp {apply*process-new-word*clean-up
+   (state <s> ^operator <op>
+              ^smem.command <cmd>)
+   (<op> ^name process-new-word
+         ^word <cw>)
+   (<cmd> ^query <q>)
+-->
+   (<cmd> ^query <q> -)
+}
