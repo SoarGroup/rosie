@@ -222,7 +222,7 @@ public class AgentMessageParser
         Identifier description = WMUtil.getIdentifierOfAttribute(id, "description");
         
         List<ObjectRelation> sentence = ObjectRelation.createAllFromSoarSpeak(description, "sentence");
-        String message = "";
+        String message = "The goal state is:\n";
         
         Iterator<ObjectRelation> it = sentence.iterator();
         if (sentence.isEmpty())
