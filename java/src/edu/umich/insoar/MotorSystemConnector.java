@@ -268,6 +268,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         command.utime = TimeUtil.utime(); 
         command.action = String.format("GRAB=%d", Integer.parseInt(objectIdStr));
         command.dest = new double[6];
+        System.out.println("PICK UP: " + objectIdStr);
     	lcm.publish("ROBOT_COMMAND", command);
         pickUpId.CreateStringWME("status", "complete");
     }

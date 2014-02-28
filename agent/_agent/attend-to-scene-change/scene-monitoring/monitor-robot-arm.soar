@@ -1,0 +1,74 @@
+sp {topstate*elaborate*scene-changes*change-info*arm*changes
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes.change-info <info>)
+-->
+   (<info> ^change <diff-arm-ac> <grabbed-obj> <released-obj>)
+   (<diff-arm-ac> ^name different-arm-action
+                  ^op-name attend-to-arm)
+   (<grabbed-obj> ^name grabbed-object
+                  ^op-name attend-to-arm)
+   (<released-obj> ^name released-object
+                   ^op-name attend-to-arm)
+}
+
+
+sp {anystate*scene-change*elaborate*attend-to-arm*top*priority
+   (state <s> ^operator <o> +)
+   (<o> ^name attend-to-scene-change
+         ^change.type << different-arm-action grabbed-object released-object >>)
+-->
+   (<o> ^attention-priority top)
+}
+
+#########################################################
+# Change: different-arm-action
+#   Occurs when the arm action of the robot changes
+#########################################################
+
+sp {monitor-scene-changes*elaborate*scene-change*different-arm-action
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes <sc>
+              ^io.input-link.self.action <cur-action>
+              ^robot-state.arm <arm>)
+   (<arm> -^action <cur-action>)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type different-arm-action)
+}
+
+#########################################################
+# Change: grabbed-object
+#   Occurs when the arm reports grabbing an object
+#########################################################
+
+sp {monitor-scene-changes*elaborate*scene-change*grabbed-object
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes <sc>
+              ^io.input-link.self.grabbed-object {<id> <> -1}
+              ^robot-state.arm <arm>
+              ^topstate.object <obj>)
+   (<obj> ^id <id>)
+   (<arm> ^action wait
+          -^grabbed <obj>)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type grabbed-object)
+}
+
+#########################################################
+# Change: released-object
+#   Occurs when the arm reports released an object
+#########################################################
+
+sp {monitor-scene-changes*elaborate*scene-change*released-object
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes <sc>
+             -^io.input-link.self.grabbed-object <id>
+              ^robot-state.arm <arm>
+              ^topstate.object <obj>)
+   (<arm> ^action wait
+          ^grabbed.id <id>)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type released-object)
+}
