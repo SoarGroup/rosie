@@ -40,6 +40,9 @@ public class AgentMessageParser
             message = "I don't know that preposition.";
         } else if(type.equals("single-word-response")){
         	message = WMUtil.getValueOfAttribute(fieldsId, "word");
+        	if(message.equals("dontknow")){
+        		message = "I don't know";
+        	}
         } else if(type.equals("no-object")){
         	message = "I do not see the object you are talking about";
         } else if(type.equals("count-response")){
