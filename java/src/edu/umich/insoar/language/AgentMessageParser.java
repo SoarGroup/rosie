@@ -1,16 +1,22 @@
 package edu.umich.insoar.language;
 
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import sml.Identifier;
+import sml.WMElement;
 import edu.umich.insoar.language.Patterns.LingObject;
+import edu.umich.insoar.language.Patterns.ObjectRelation;
 import edu.umich.insoar.world.WMUtil;
 
 public class AgentMessageParser
 {
     public static String translateAgentMessage(Identifier id){
         String message = null;
+        
+        
         String type = WMUtil.getValueOfAttribute(id, "type");
         System.out.println(type);
         Identifier fieldsId = WMUtil.getIdentifierOfAttribute(id, "fields");
@@ -25,6 +31,7 @@ public class AgentMessageParser
         } else if(type.equals("attribute-presence-question")){
             message = translateAttributePresenceQuestion(fieldsId);
         } else if(type.equals("ask-property-name")){
+        	
             message = translateCategoryQuestion(fieldsId);
         } else if(type.equals("category-of-property")){
             message = translateCategoryPropertyQuestion(fieldsId);
@@ -72,30 +79,40 @@ public class AgentMessageParser
             message = translateSceneObjectsQuestion(fieldsId);
         } else if(type.equals("list-objects")){
             message = translateObjectsQuestion(fieldsId);
+        } else if(type.equals("describe-goal-params")){
+            message = translateGoalDemoQuestion(fieldsId);
         } else if(type.equals("location-unknown")){
             message = "Relative location of object unknown";
         } else if(type.equals("play-game")){
             message = "Shall we play a game?";
         } else if(type.equals("game-start")){
             message = "Ok I know that game.  Tell me \"your turn\" when it's my turn.";
+        } else if(type.equals("game-new-params")){
+            message = "Tell me the name of an action, failure state, or goal of the game, or finished.";
         } else if(type.equals("game-new-action2")){
             message = "Ok tell me the name of a legal action in this game, or finished.";
         } else if(type.equals("game-new-action")){
             String gameName = WMUtil.getValueOfAttribute(fieldsId, "game-name");
-            message = "I do not know how to play " + gameName + 
-                    ". Is it a multiplayer game (true/false)?";
+            message = "I don't know how to play " + gameName + 
+                    ". Is it a multiplayer game?";
         } else if(type.equals("game-new-verb")){
-            message = "What is the associated verb for this action. (ex: move 2 on 3)";
+            message = "What is an associated verb for this action, or finished";
         } else if(type.equals("game-new-goal")){
             message = "Ok tell me the name of the goal in the game.";
         } else if(type.equals("game-new-failure")){
             message = "Ok tell me the name of a failure state in the game. (or none)";
         } else if(type.equals("game-new-parameter1")){
-            message = "Ok list a parameter (block/location/either) for this action.\n";
+            message = "Ok describe an object for this action.\n";
         } else if(type.equals("game-new-parameter")){
-            message = "Ok list a parameter (block/location/either), or finished.";
+        	String stateType = WMUtil.getValueOfAttribute(fieldsId, "state-type");
+            message = "Ok describe an object for this " + stateType + " state.";
         } else if(type.equals("game-new-condition")){
-            message = "Ok list a condition for this parameter, or finished.";
+        	String obj = WMUtil.getValueOfAttribute(fieldsId, "type");
+            message = "Ok list a condition for the " + obj + ", another object, or finished.";
+        } else if(type.equals("game-new-heuristic")){
+            message = "Are there any heuristics you can teach me? (or finished)";
+        } else if(type.equals("game-final-state")){
+            message = "Please demonstrate the final goal state.";
         } else if(type.equals("game-learned")){
             message = "Ok I have now learned the basics of the game.";
         } else if(type.equals("game-over")){
@@ -204,6 +221,22 @@ public class AgentMessageParser
         return message;
     }
     
+    private static String translateGoalDemoQuestion(Identifier id){
+        Identifier description = WMUtil.getIdentifierOfAttribute(id, "description");
+        
+        List<ObjectRelation> sentence = ObjectRelation.createAllFromSoarSpeak(description, "sentence");
+        String message = "The goal state is:\n";
+        
+        Iterator<ObjectRelation> it = sentence.iterator();
+        if (sentence.isEmpty())
+            return "I did not understand that.";
+        while(it.hasNext())
+        {
+            String sent = it.next().toString();
+            message += sent + "\n";
+        }
+        return message;
+    }
     private static String translateObjectsQuestion(Identifier id){
         Identifier objects = WMUtil.getIdentifierOfAttribute(id, "objects");
         

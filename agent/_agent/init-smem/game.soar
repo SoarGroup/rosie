@@ -2,101 +2,176 @@ smem --add {
 #DO NOT comment out this smem intialization- it is necessary
 (<games> ^list games)
 #Comment out this to remove all learned games
-(<games> ^game tower-of-hanoi ^game frog-puzzle ^game 5-puzzle)
+(<games> ^game towers-3d
+         ^game frog-puzzle 
+         ^game tic-tac-toe
+         ^game hexa-pawn
+         ^game queen-4
+         ^game knight-escape
+         ^game peg-sol
+         ^game connect-3
+         ^game knights-tour
+         ^game simple-sokoban
+         ^game 3-mens-morris
+         ^game river-crossing
+         ^game 5-puzzle)
 }
-
-# TODO fix up and test these games look at tmp/BOLT code for games
-
 
 ###############################################
 # Hexapawn
 ###############################################
+#todo unify concept with player pieces
 smem --add {
- (<G1> ^game-name hexa-pawn ^actions <A> ^goals <go> ^failures <fail> ^multiplayer true)
+ (<G1> ^game-name hexa-pawn 
+       ^actions <A> 
+       ^goals <go> 
+       ^failures <fail> 
+       ^player-pieces <pie>
+       ^heuristics <heu>
+       ^multiplayer true)
+ 
+ (<pie> ^2 <pie1> <pie1a> <pie1b> <pie1c> 
+        ^1 <pie2> <pie2a> <pie2b> <pie2c>)
+ (<pie1> ^name my-piece ^concept <pcond1>)
+ (<pie1a> ^name their-piece ^concept <pcond2>)
+ (<pie1b> ^name attack-direction ^concept <pcond3>)
+ (<pie1c> ^name goal-row ^concept <pcond5>)
+ 
+ (<pie2> ^name my-piece ^concept <pcond2>)
+ (<pie2a> ^name their-piece ^concept <pcond1>)
+ (<pie2b> ^name attack-direction ^concept <pcond4>)
+ (<pie2c> ^name goal-row ^concept <pcond6>)
+ 
+ (<pcond1> ^attribute <patr1>)
+ (<pcond2> ^attribute <patr2>)
+ (<pcond3> ^prep <pprep1>)
+ (<pcond4> ^prep <pprep2>)
+ (<pcond5> ^attribute <patr3>)
+ (<pcond6> ^attribute <patr4>)
+ (<patr1> ^attr red)
+ (<patr2> ^attr blue)
+ (<pprep1> ^name above ^a ^negative false)
+ (<pprep2> ^name under ^a ^negative false)
+ (<patr3> ^attr grid-red)
+ (<patr4> ^attr grid-blue)
+ 
+ #(<heu> ^1 <heu1>) #do to opponent or not?
+ (<heu> ^preference <pref>)
+ (<pref> ^1 <pref1> ^2 <pref2>)
+ (<pref1> ^type action ^name attack)#^parameter, ^attribute
+ (<pref2> ^type action ^name advance)
+ 
+#  (<cept> ^concept <pc1>)
+#  (<pc1> ^name clear ^prep <pch1>)
+#  (<pch1> ^name below ^btype block ^negative true ^b INDEF)
+# (<cept> ^concept <pc1>)
+# (<pc1> ^name center ^type location ^prep <ph1>)
+
+# (<ph1> ^name linear-with ^a thi ^negative true ^btype location)
+# (<heu> ^preference <pref>)
+# (<pref> ^1 <pref1>)
+# (<pref1> ^type action ^name board-place ^concept <pcondhh>)#^parameter, ^attribute
+# (<pcondhh> ^name center)
+ 
  (<A> ^1 <ac1> ^2 <ac2>)
- (<ac1> ^action-name advance ^conditions <c> ^parameters <p> ^verbs <verbs> ^cond-args 3)
+ (<ac1> ^name advance ^action-name advance ^conditions <c> ^parameters <p> ^verbs <verbs> ^cond-args 3)
  (<p> ^1 <parama> ^2 <paramb> ^3 <paramc>)
  (<parama> ^type block)
  (<paramb> ^type location)
  (<paramc> ^type location)
- (<c> ^1 <conda> ^2 <condb> ^3 <condc>)
- (<conda> ^prep <prep3> ^attribute <attr>)
- (<condb> ^prep <prep5> ^prep <prep6> )
- (<prep3> ^name on ^a this ^b 3 ^negative false ^btype location)
- (<prep5> ^name below ^a this ^b INDEF ^negative true ^btype block) 
- (<prep6> ^name above ^a this ^b 3 ^negative false ^btype location)
- (<attr> ^attr red)
+ (<c> ^1 <conda> ^2 <condb> ^3 <condc> ^cond <newcond>)
+ (<newcond> ^prep <prep3> ^prep <prep5> ^prep <prep6> ^concept <cprep7>)
+ (<conda> ^concept <attr>)#^prep <prep3> 
+ #(<condb> ^prep <prep5> ^prep <prep6> ^concept <cprep7>)
+ (<prep3> ^name on ^a 1 ^b 3 ^negative false ^btype location)
+ (<prep5> ^name below ^a 2 ^b INDEF ^negative true ^btype block) 
+ 
+ (<prep6> ^name aligned-with ^a 2 ^b 3 ^negative false ^btype location)
+ (<cprep7> ^name attack-direction ^a 2 ^b 3 ^btype location)
+# (<prep6> ^name above ^a 2 ^b 3 ^negative false ^btype location)
+# (<attr> ^attr red)
+ (<attr> ^name my-piece)
  
  (<verbs> ^1 <va>)
  (<va> ^verb-name move ^verb-prep on ^1 1 ^2 2)
 
- 
-  (<ac2> ^action-name attack ^conditions <xc> ^parameters <xp> ^verbs <verbs2> ^cond-args 5)
+ (<ac2> ^name attack ^action-name attack ^conditions <xc> ^parameters <xp> ^verbs <verbs2> ^cond-args 5)
  (<xp> ^1 <xparama> ^2 <xparamb> ^3 <xparamc> ^4 <xparamd> ^5 <xparame>)
  (<xparama> ^type block)
  (<xparamb> ^type location)
  (<xparamc> ^type location)
  (<xparamd> ^type block)
  (<xparame> ^type location)
- (<xc> ^1 <xconda> ^2 <xcondb> ^3 <xcondc> ^4 <xcondd> ^5 <xconde>)
- (<xconda> ^prep <xprepa1> ^attribute <xattr>)
- (<xcondb> ^prep <xprepb1> ^prep <xprepb2>)
- (<xcondd> ^attribute <xattr2>)
+ (<xc> ^1 <xconda> ^2 <xcondb> ^3 <xcondc> ^4 <xcondd> ^5 <xconde> ^cond <newcond2>)
+ (<newcond2> ^prep <xprepa1> ^prep <xprepb1> ^prep <xprepb2> ^concept <xprep7>)
+ (<xconda> ^concept <xattr>)#^prep <xprepa1> 
+# (<xcondb> ^prep <xprepb1> ^prep <xprepb2> ^concept <xprep7>)
+ (<xcondd> ^concept <xattr2>)
  (<xconde> ^attribute <xattr3>)
  
- (<xprepa1> ^name on ^a this ^b 3 ^negative false ^btype location) 
+ (<xprepa1> ^name on ^a 1 ^b 3 ^negative false ^btype location) 
  
- (<xprepb1> ^name below ^a this ^b 4 ^negative false ^btype block)
- (<xprepb2> ^name diagonal-from ^a this ^b 3 ^negative false ^btype location)
- (<xattr> ^attr red)
- (<xattr2> ^attr blue)
+ (<xprepb1> ^name below ^a 2 ^b 4 ^negative false ^btype block)
+ (<xprepb2> ^name diagonal-with ^a 2 ^b 3 ^negative false ^btype location)
+ (<xprep7> ^name attack-direction ^a 2 ^b 3 ^btype location)
+# (<xattr> ^attr red)
+# (<xattr2> ^attr blue)
+ (<xattr> ^name my-piece)
+ (<xattr2> ^name their-piece)
  (<xattr3> ^attr garbage)
  
  (<verbs2> ^1 <va2> ^2 <va3>)
  (<va2> ^verb-name move ^verb-prep on ^1 4 ^2 5)
  (<va3> ^verb-name move ^verb-prep on ^1 1 ^2 2)
  
-    (<go> ^parameters <pa> ^conditions <co> ^goal-cond-args 2)
+ (<fail> ^1 <fail1>)
+ (<go> ^1 <go1>)  
+ 
+    (<go1> ^name end-row ^parameters <pa> ^conditions <co> ^cond-args 2)
 (<pa> ^1 <param1> ^2 <param2>)
 (<param1> ^type block)
 (<param2> ^type location)
-(<co> ^1 <cond1> ^2 <cond2>)  
-(<cond1> ^prep <prep11> ^attribute <atrb>)
-(<cond2> ^attribute <atrc>)
-(<atrb> ^attr red)
-(<atrc> ^attr home)
-(<prep11> ^name on ^a this ^b 2 ^negative false ^btype location)
+(<co> ^1 <cond1> ^2 <cond2> ^cond <newcond3>)
+(<newcond3> ^prep <prep11>)
+(<cond1> ^concept <atrb>) #^prep <prep11> 
+(<cond2> ^concept <atrc>)
+#(<atrb> ^attr red)
+(<atrb> ^name my-piece)
+#(<atrc> ^attr home)
+(<atrc> ^name goal-row)
+(<prep11> ^name on ^a 1 ^b 2 ^negative false ^btype location)
 
- (<fail> ^parameters <paf> ^conditions <cof> ^failure-cond-args 0)
- 
+ (<fail1> ^name none ^parameters <paf> ^conditions <cof> ^cond-args 0)
 }
 
 ###############################################
 # 5 Puzzle
 ###############################################
 smem --add {
- (<G1> ^game-name 5-puzzle ^actions <A> ^goals <go> ^failures <fail> ^multiplayer false)
+ (<G1> ^game-name 5-puzzle ^actions <A> ^goals <go> ^failures <fail> ^multiplayer false ^player-pieces <pie>
+       ^heuristics <heu>)
  (<A> ^1 <ac1>)
  (<ac1> ^action-name slide ^conditions <c> ^parameters <p> ^verbs <verbs> ^cond-args 3)
  (<p> ^1 <parama> ^2 <paramb> ^3 <paramc>)
  (<parama> ^type block)
  (<paramb> ^type location)
  (<paramc> ^type location)
- (<c> ^1 <conda> ^2 <condb> ^3 <condc>)
- (<conda> ^prep <prep3>)
- (<condb> ^prep <prep5>)
- (<condc> ^prep <prep6> ^prep <prep7>)
- (<prep3> ^name on ^a this ^b 3 ^negative false ^btype location)
- (<prep5> ^name below ^a this ^b INDEF ^negative true ^btype block)
+ (<c> ^1 <conda> ^2 <condb> ^3 <condc> ^cond <newcond>)
+ (<newcond> ^prep <prep3> ^prep <prep5> ^prep <prep6> ^prep <prep7>)
+# (<conda> ^prep <prep3>)
+# (<condb> ^prep <prep5>)
+# (<condc> ^prep <prep6> ^prep <prep7>)
+ (<prep3> ^name on ^a 1 ^b 3 ^negative false ^btype location)
+ (<prep5> ^name below ^a 2 ^b INDEF ^negative true ^btype block)
  
- (<prep6> ^name near ^a this ^b 2 ^negative false ^btype location)
- (<prep7> ^name diagonal-with ^a this ^b 2 ^negative true ^btype location)
+ (<prep6> ^name near ^a 3 ^b 2 ^negative false ^btype location)
+ (<prep7> ^name diagonal-with ^a 3 ^b 2 ^negative true ^btype location)
  (<verbs> ^1 <va>)
  (<va> ^verb-name move ^verb-prep on ^1 1 ^2 2)
  
-(<fail> ^parameters <paf> ^conditions <cof> ^failure-cond-args 0)
+(<fail> ^parameters <paf> ^conditions <cof> ^cond-args 0)
 
- (<go> ^parameters <pa> ^conditions <co> ^goal-cond-args 10)
+ (<go> ^parameters <pa> ^conditions <co> ^cond-args 10)
 (<pa> ^1 <param1> ^2 <param2> ^3 <param3> ^4 <param4> ^5 <param5>
       ^6 <param6> ^7 <param7> ^8 <param8> ^9 <param9> ^10 <param10>)
 (<param1> ^type block)
@@ -110,13 +185,14 @@ smem --add {
 (<param9> ^type location)
 (<param10> ^type location)
 (<co> ^1 <cond1> ^2 <cond2> ^3 <cond3> ^4 <cond4> ^5 <cond5> 
-      ^6 <cond6> ^7 <cond7> ^8 <cond8> ^9 <cond9> ^10 <cond10>)
+      ^6 <cond6> ^7 <cond7> ^8 <cond8> ^9 <cond9> ^10 <cond10> ^cond <newcond2>)
+(<newcond2> ^prep <prepa1> ^prep <prepb1> ^prep <prepc1> ^prep <prepd1> ^prep <prepe1>)
       
-(<cond1> ^prep <prepa1> ^attribute <atra>)
-(<cond2> ^prep <prepb1> ^attribute <atrb>)
-(<cond3> ^prep <prepc1> ^attribute <atrc>)
-(<cond4> ^prep <prepd1> ^attribute <atrd>)
-(<cond5> ^prep <prepe1> ^attribute <atre>)
+(<cond1> ^attribute <atra>)# ^prep <prepa1> 
+(<cond2>  ^attribute <atrb>) #^prep <prepb1>
+(<cond3>  ^attribute <atrc>) # ^prep <prepc1>
+(<cond4> ^attribute <atrd>) # ^prep <prepd1> 
+(<cond5> ^attribute <atre>) # ^prep <prepe1> 
 (<cond6> ^attribute <atra1>)
 (<cond7> ^attribute <atrb1>)
 (<cond8> ^attribute <atrc1>)
@@ -132,79 +208,12 @@ smem --add {
 (<atrc1> ^attr grid-orange)
 (<atrd1> ^attr grid-yellow)
 (<atre1> ^attr grid-green)
-(<prepa1> ^name on ^a this ^b 6 ^negative false ^btype location)
-(<prepb1> ^name on ^a this ^b 7 ^negative false ^btype location)
-(<prepc1> ^name on ^a this ^b 8 ^negative false ^btype location)
-(<prepd1> ^name on ^a this ^b 9 ^negative false ^btype location)
-(<prepe1> ^name on ^a this ^b 10 ^negative false ^btype location)
+(<prepa1> ^name on ^a 1 ^b 6 ^negative false ^btype location)
+(<prepb1> ^name on ^a 2 ^b 7 ^negative false ^btype location)
+(<prepc1> ^name on ^a 3 ^b 8 ^negative false ^btype location)
+(<prepd1> ^name on ^a 4 ^b 9 ^negative false ^btype location)
+(<prepe1> ^name on ^a 5 ^b 10 ^negative false ^btype location)
 }
-
-###############################################
-# Towers of Hanoi (in 2D)
-###############################################
-smem --add {
- (<G1> ^game-name towers-2d ^actions <A> ^goals <go> ^failures <fail> ^multiplayer false)
- (<A> ^1 <ac1> ^2 <ac2>)
- 
- (<ac1> ^action-name move ^conditions <c> ^parameters <p> ^verbs <verbs> ^cond-args 6)
- (<p> ^1 <parama> ^2 <paramb> ^3 <paramc> ^4 <paramd> ^5 <parame> ^6 <paramf>)
- (<parama> ^type block)
- (<paramb> ^type location)
- (<paramc> ^type location)
- (<paramd> ^type block)
- (<parame> ^type location)
- (<paramf> ^type location)
- (<c> ^1 <conda> ^2 <condb> ^3 <condc> ^4 <condd> ^5 <conde> ^6 <condf>)
- (<conda> ^prep <prepa1> ^prep <prepa2>)#^attribute <small>)
- (<condb> ^prep <prepb1> ^prep <prepb2>)
- (<condd> ^prep <prepd1>)
-# (<small> ^attr red)
- (<condf> ^prep <prepf1> ^prep <prepf2>)
- (<prepa1> ^name on ^a this ^b 3 ^negative false ^btype location)
- (<prepa2> ^name smaller-than ^a this ^b 4 ^negative false ^btype block)
- 
- (<prepb1> ^name under ^a this ^b INDEF ^negative true ^btype block)
- (<prepb2> ^name above ^a this ^b 5 ^negative false ^btype location)
- (<prepd1> ^name on ^a this ^b 5 ^negative false ^btype location)
- (<prepf1> ^name above ^a this ^b 3 ^negative false ^btype location)
- (<prepf2> ^name under ^a this ^b INDEF ^negative true ^btype block)
- 
- (<verbs> ^1 <va>)
- (<va> ^verb-name move ^verb-prep on ^1 1 ^2 2)
- 
- (<ac2> ^action-name move ^conditions <xc> ^parameters <xp> ^verbs <verbs2> ^cond-args 4)
- (<xp> ^1 <xparama> ^2 <xparamb> ^3 <xparamc> ^4 <xparamd>)
- (<xparama> ^type block)
- (<xparamb> ^type location)
- (<xparamc> ^type location)
- (<xparamd> ^type location)
- (<xc> ^1 <xconda> ^2 <xcondb> ^3 <xcondc> ^4 <xcondd>)
- (<xconda> ^prep <xprepa1>)
- (<xcondb> ^prep <xprepb1> ^prep <xprepb2>)
- (<xcondd> ^prep <xprepd1> ^prep <xprepd2>)
- (<xprepa1> ^name on ^a this ^b 3 ^negative false ^btype location) 
- 
- (<xprepb1> ^name under ^a this ^b INDEF ^negative true ^btype block)
- (<xprepb2> ^name above ^a this ^b INDEF ^negative true ^btype location)
- (<xprepd1> ^name above ^a this ^b 3 ^negative false ^btype location)
- (<xprepd2> ^name under ^a this ^b INDEF ^negative true ^btype block)
- 
- (<verbs2> ^1 <va2>)
- (<va2> ^verb-name move ^verb-prep on ^1 1 ^2 2)
-
-   (<go> ^parameters <pa> ^conditions <co> ^goal-cond-args 2)
-(<pa> ^1 <param1> ^2 <param2>)
-(<param1> ^type block)
-(<param2> ^type location)
-(<co> ^1 <cond1> ^2 <cond2>)  
-(<cond1> ^prep <prep11>)
-(<cond2> ^attribute <atrc>)
-(<atrc> ^attr grid-blue)
-(<prep11> ^name on ^a this ^b 2 ^negative false ^btype location)
-
- (<fail> ^parameters <paf> ^conditions <cof> ^failure-cond-args 0)
-}
-
 
 ###############################################
 # Towers of Hanoi (in 3D)
@@ -214,15 +223,18 @@ smem --add {
  (<G1> ^game-name towers-3d ^actions <A> 
        ^goals <go> 
        ^failures <fail>
+       ^player-pieces <pie>
+       ^heuristics <heu>
        ^multiplayer false)
  (<A> ^1 <ac1>)
  (<ac1> ^action-name move ^conditions <xc> ^parameters <xp> ^verbs <verbs2> ^cond-args 2)
  (<xp> ^1 <xparama> ^2 <xparamb>)
  (<xparama> ^type block)
  (<xparamb> ^type location ^type block ^both true)
- (<xc> ^1 <xconda> ^2 <xcondb>)
- (<xconda> ^prep <xprepa1> ^prep <xprepa2>)
- (<xcondb> ^prep <xprepb1>)
+ (<xc> ^1 <xconda> ^2 <xcondb> ^cond <newcond>)
+ (<newcond> ^prep <xprepa1> ^prep <xprepa2> ^prep <xprepb1>)
+# (<xconda> ^prep <xprepa1> ^prep <xprepa2>)
+# (<xcondb> ^prep <xprepb1>)
  (<xprepa1> ^name below ^a 1 ^b INDEF ^negative true ^btype block) 
  (<xprepa2> ^name smaller-than ^a 1 ^b 2 ^negative false ^btype block ^btype location)
  (<xprepb1> ^name below ^a 2 ^b INDEF ^negative true ^btype block)
@@ -230,87 +242,91 @@ smem --add {
  (<verbs2> ^1 <va2>)
  (<va2> ^verb-name move ^verb-prep on ^1 1 ^2 2)
 
-   (<fail> ^1 <failure1>)
-(<go> ^1 <goal1>)
+ (<fail> ^1 <failure1>)
+ (<go> ^1 <goal1>)
  (<failure1> ^parameters <paf> ^conditions <cof> ^cond-args 0)
  
-(<goal1> ^parameters <pa> ^conditions <co> ^cond-args 4)
-(<pa> ^1 <param1> ^2 <param2> ^3 <param3> ^4 <param4>)
-(<param1> ^type block)
-(<param2> ^type block)
-(<param3> ^type block)
-(<param4> ^type location)
-(<co> ^1 <cond1> ^2 <cond2> ^3 <cond3> ^4 <cond4>)  
-(<cond1> ^prep <prep11>)# ^prep <prep12>)
-(<cond2> ^prep <prep21>)# ^prep <prep22>)
-(<cond3> ^prep <prep31>)
-(<cond4> ^attribute <atrc>)
-(<atrc> ^attr grid-blue)
-(<prep11> ^name on ^a this ^b 2 ^negative false ^btype block)
-#(<prep12> ^name smaller-than ^a this ^b 2 ^negative false ^btype block)
-(<prep21> ^name on ^a this ^b 3 ^negative false ^btype block)
-#(<prep22> ^name smaller-than ^a this ^b 3 ^negative false ^btype block)
-(<prep31> ^name on ^a this ^b 4 ^negative false ^btype location)
-
-#(<goal1> ^parameters <pa> ^conditions <co> ^cond-args 3)
-#(<pa> ^1 <param1> ^2 <param2> ^3 <param3>)
+#(<goal1> ^parameters <pa> ^conditions <co> ^cond-args 4)
+#(<pa> ^1 <param1> ^2 <param2> ^3 <param3> ^4 <param4>)
 #(<param1> ^type block)
 #(<param2> ^type block)
-#(<param3> ^type location)
-#(<co> ^1 <cond1> ^2 <cond2> ^3 <cond3>)  
-#(<cond1> ^prep <prep11>)# ^prep <prep12>)
-#(<cond2> ^prep <prep21>)
-#(<cond3> ^attribute <atrc>)
+#(<param3> ^type block)
+#(<param4> ^type location)
+#(<co> ^1 <cond1> ^2 <cond2> ^3 <cond3> ^4 <cond4> ^cond <newcond2>)
+#(<newcond2> ^prep <prep11> ^prep <prep21> ^prep <prep31>)
+##(<cond1> ^prep <prep11>)# ^prep <prep12>)
+##(<cond2> ^prep <prep21>)# ^prep <prep22>)
+##(<cond3> ^prep <prep31>)
+#(<cond4> ^attribute <atrc>)
 #(<atrc> ^attr grid-blue)
 #(<prep11> ^name on ^a 1 ^b 2 ^negative false ^btype block)
-##(<prep12> ^name smaller-than ^a this ^b 2 ^negative false ^btype block)
-#(<prep21> ^name on ^a 2 ^b 3 ^negative false ^btype location)
+#(<prep21> ^name on ^a 2 ^b 3 ^negative false ^btype block)
+#(<prep31> ^name on ^a 3 ^b 4 ^negative false ^btype location)
 
+(<goal1> ^parameters <pa> ^conditions <co> ^cond-args 3)
+(<pa> ^1 <param1> ^2 <param2> ^3 <param3>)
+(<param1> ^type block)
+(<param2> ^type block)
+(<param3> ^type location)
+(<co> ^1 <cond1> ^2 <cond2> ^3 <cond3> ^cond <newcond2>)
+(<newcond2> ^prep <prep11> ^prep <prep21>)
+#(<cond1> ^prep <prep11>)
+#(<cond2> ^prep <prep21>)
+(<cond3> ^attribute <atrc>)
+(<atrc> ^attr grid-blue)
+(<prep11> ^name on ^a 1 ^b 2 ^negative false ^btype block)
+(<prep21> ^name on ^a 2 ^b 3 ^negative false ^btype location)
 }
 
 ###############################################
 # Simple blocks world
 ###############################################
 smem --add {
- (<G1> ^game-name blocks-world ^actions <A> ^goals <go> ^failures <fail> ^multiplayer false)
+ (<G1> ^game-name blocks-world ^actions <A> ^goals <go> ^failures <fail> ^multiplayer false
+       ^player-pieces <pie>
+       ^heuristics <heu>)
  (<A> ^1 <ac1>)
 
  (<ac1> ^action-name move ^conditions <xc> ^parameters <xp> ^verbs <verbs2> ^cond-args 2)
  (<xp> ^1 <xparama> ^2 <xparamb>)
  (<xparama> ^type block)
  (<xparamb> ^type location ^type block ^both true)
- (<xc> ^1 <xconda> ^2 <xcondb>)
- (<xconda> ^prep <xprepa1>)
- (<xcondb> ^prep <xprepb1>)
- (<xprepa1> ^name below ^a this ^b INDEF ^negative true ^btype block) 
- (<xprepb1> ^name below ^a this ^b INDEF ^negative true ^btype block)
+ (<xc> ^1 <xconda> ^2 <xcondb> ^cond <newcond2>)
+(<newcond2> ^prep <xprepa1> ^prep <xprepb1>)
+# (<xconda> ^prep <xprepa1>)
+# (<xcondb> ^prep <xprepb1>)
+ (<xprepa1> ^name below ^a 1 ^b INDEF ^negative true ^btype block) 
+ (<xprepb1> ^name below ^a 2 ^b INDEF ^negative true ^btype block)
  
  (<verbs2> ^1 <va2>)
  (<va2> ^verb-name move ^verb-prep on ^1 1 ^2 2)
 
-   (<go> ^parameters <pa> ^conditions <co> ^goal-cond-args 3)
+   (<go> ^parameters <pa> ^conditions <co> ^cond-args 3)
 (<pa> ^1 <param1> ^2 <param2> ^3 <param3>)
 (<param1> ^type block)
 (<param2> ^type block)
 (<param3> ^type block)
-(<co> ^1 <cond1> ^2 <cond2> ^3 <cond3>)
-(<cond1> ^prep <prep11> ^attribute <atra>)
-(<cond2> ^prep <prep21> ^attribute <atrb>)
+(<co> ^1 <cond1> ^2 <cond2> ^3 <cond3> ^cond <newcond3>)
+(<newcond3> ^prep <prep21>  ^prep <prep11>)
+(<cond1> ^attribute <atra>) # ^prep <prep11> 
+(<cond2> ^attribute <atrb>) # ^prep <prep21> 
 (<cond3> ^attribute <atrc>)
 (<atra> ^attr blue)
 (<atrb> ^attr red)
 (<atrc> ^attr green)
-(<prep11> ^name on ^a this ^b 2 ^negative false ^btype block)
-(<prep21> ^name on ^a this ^b 3 ^negative false ^btype block)
+(<prep11> ^name on ^a 1 ^b 2 ^negative false ^btype block)
+(<prep21> ^name on ^a 2 ^b 3 ^negative false ^btype block)
 
- (<fail> ^parameters <paf> ^conditions <cof> ^failure-cond-args 0)
+ (<fail> ^parameters <paf> ^conditions <cof> ^cond-args 0)
 }
 
 ###############################################
 # Frog and Toads Puzzle
 ###############################################
 smem --add {
- (<G1> ^game-name frog-puzzle ^actions <A> ^goals <go> ^failures <fail> ^multiplayer false)
+ (<G1> ^game-name frog-puzzle ^actions <A> ^goals <go> ^failures <fail> ^multiplayer false
+       ^player-pieces <pie>
+       ^heuristics <heu>)
  (<A> ^1 <ac1> ^2 <ac2> ^3 <ac3> ^4 <ac4>)
  
  (<ac1> ^action-name move ^conditions <c> ^parameters <p> ^verbs <verbs> ^cond-args 3)
@@ -318,13 +334,14 @@ smem --add {
  (<parama> ^type block)
  (<paramb> ^type location)
  (<paramc> ^type location)
- (<c> ^1 <conda> ^2 <condb> ^3 <condc>)
- (<conda> ^prep <zxprepa1> ^attribute <asdf>)
- (<condb> ^prep <zxprepb1> ^prep <zxprepb2>)
- (<zxprepa1> ^name on ^a this ^b 3 ^negative false ^btype location)
+ (<c> ^1 <conda> ^2 <condb> ^3 <condc> ^cond <newcond3>)
+(<newcond3> ^prep <zxprepa1> ^prep <zxprepb1> ^prep <zxprepb2>)
+ (<conda> ^attribute <asdf>) # ^prep <zxprepa1> 
+ #(<condb> ^prep <zxprepb1> ^prep <zxprepb2>)
+ (<zxprepa1> ^name on ^a 1 ^b 3 ^negative false ^btype location)
  (<asdf> ^attr red)
- (<zxprepb1> ^name below ^a this ^b INDEF ^negative true ^btype block)
- (<zxprepb2> ^name right-of ^a this ^b 3 ^negative false ^btype location)
+ (<zxprepb1> ^name below ^a 2 ^b INDEF ^negative true ^btype block)
+ (<zxprepb2> ^name right-of ^a 2 ^b 3 ^negative false ^btype location)
  (<verbs> ^1 <va>)
  (<va> ^verb-name move ^verb-prep on ^1 1 ^2 2)
  
@@ -333,13 +350,14 @@ smem --add {
  (<zparama> ^type block)
  (<zparamb> ^type location)
  (<zparamc> ^type location)
- (<zc> ^1 <zconda> ^2 <zcondb> ^3 <zcondc>)
- (<zconda> ^prep <zprepa1> ^attribute <zasdf>)
- (<zcondb> ^prep <zprepb1> ^prep <zprepb2>)
- (<zprepa1> ^name on ^a this ^b 3 ^negative false ^btype location)
+ (<zc> ^1 <zconda> ^2 <zcondb> ^3 <zcondc> ^cond <newcond2>)
+(<newcond2> ^prep <zprepa1> ^prep <zprepb1> ^prep <zprepb2>)
+ (<zconda>  ^attribute <zasdf>) #^prep <zprepa1>
+# (<zcondb> ^prep <zprepb1> ^prep <zprepb2>)
+ (<zprepa1> ^name on ^a 1 ^b 3 ^negative false ^btype location)
  (<zasdf> ^attr blue)
- (<zprepb1> ^name below ^a this ^b INDEF ^negative true ^btype block)
- (<zprepb2> ^name left-of ^a this ^b 3 ^negative false ^btype location)
+ (<zprepb1> ^name below ^a 2 ^b INDEF ^negative true ^btype block)
+ (<zprepb2> ^name left-of ^a 2 ^b 3 ^negative false ^btype location)
  (<verbs2> ^1 <va2>)
  (<va2> ^verb-name move ^verb-prep on ^1 1 ^2 2)
  (<ac3> ^action-name move ^conditions <vc> ^parameters <vp> ^verbs <verbs3> ^cond-args 4)
@@ -348,16 +366,17 @@ smem --add {
  (<vparamb> ^type location)
  (<vparamc> ^type location)
  (<vparamd> ^type location)
- (<vc> ^1 <vconda> ^2 <vcondb> ^3 <vcondc> ^4 <vcondd>)
- (<vconda> ^prep <vprepa1> ^attribute <vasdf>)
- (<vcondb> ^prep <vprepb1> ^prep <vprepb2>)
- (<vcondd> ^prep <vprepd1> ^prep <vprepd2>)
- (<vprepa1> ^name on ^a this ^b 3 ^negative false ^btype location)
+ (<vc> ^1 <vconda> ^2 <vcondb> ^3 <vcondc> ^4 <vcondd> ^cond <newcond1>)
+(<newcond1> ^prep <vprepa1> ^prep <vprepb1> ^prep <vprepb2> ^prep <vprepd1> ^prep <vprepd2>)
+ (<vconda>  ^attribute <vasdf>) # ^prep <vprepa1>
+# (<vcondb> ^prep <vprepb1> ^prep <vprepb2>)
+# (<vcondd> ^prep <vprepd1> ^prep <vprepd2>)
+ (<vprepa1> ^name on ^a 1 ^b 3 ^negative false ^btype location)
  (<vasdf> ^attr red)
- (<vprepb1> ^name below ^a this ^b INDEF ^negative true ^btype block)
- (<vprepb2> ^name right-of ^a this ^b 4 ^negative false ^btype location)
- (<vprepd1> ^name below ^a this ^b INDEF ^negative false ^btype block)
- (<vprepd2> ^name right-of ^a this ^b 3 ^negative false ^btype location)
+ (<vprepb1> ^name below ^a 2 ^b INDEF ^negative true ^btype block)
+ (<vprepb2> ^name right-of ^a 2 ^b 4 ^negative false ^btype location)
+ (<vprepd1> ^name below ^a 3 ^b INDEF ^negative false ^btype block)
+ (<vprepd2> ^name right-of ^a 3 ^b 3 ^negative false ^btype location)
  (<verbs3> ^1 <va3>)
  (<va3> ^verb-name move ^verb-prep on ^1 1 ^2 2)
  
@@ -367,21 +386,22 @@ smem --add {
  (<tparamb> ^type location)
  (<tparamc> ^type location)
  (<tparamd> ^type location)
- (<tc> ^1 <tconda> ^2 <tcondb> ^3 <tcondc> ^4 <tcondd>)
- (<tconda> ^prep <tprepa1> ^attribute <tasdf>)
- (<tcondb> ^prep <tprepb1> ^prep <tprepb2>)
- (<tcondd> ^prep <tprepd1> ^prep <tprepd2>)
- (<tprepa1> ^name on ^a this ^b 3 ^negative false ^btype location)
+ (<tc> ^1 <tconda> ^2 <tcondb> ^3 <tcondc> ^4 <tcondd> ^cond <newcond4>)
+(<newcond4> ^prep <tprepa1> ^prep <tprepb1> ^prep <tprepb2> ^prep <tprepd1> ^prep <tprepd2>)
+ (<tconda>  ^attribute <tasdf>) #^prep <tprepa1>
+# (<tcondb> ^prep <tprepb1> ^prep <tprepb2>)
+# (<tcondd> ^prep <tprepd1> ^prep <tprepd2>)
+ (<tprepa1> ^name on ^a 1 ^b 3 ^negative false ^btype location)
  (<tasdf> ^attr blue)
- (<tprepb1> ^name below ^a this ^b INDEF ^negative true ^btype block)
- (<tprepb2> ^name left-of ^a this ^b 4 ^negative false ^btype location)
- (<tprepd1> ^name below ^a this ^b INDEF ^negative false ^btype block)
- (<tprepd2> ^name left-of ^a this ^b 3 ^negative false ^btype location)
+ (<tprepb1> ^name below ^a 2 ^b INDEF ^negative true ^btype block)
+ (<tprepb2> ^name left-of ^a 2 ^b 4 ^negative false ^btype location)
+ (<tprepd1> ^name below ^a 4 ^b INDEF ^negative false ^btype block)
+ (<tprepd2> ^name left-of ^a 4 ^b 3 ^negative false ^btype location)
  (<verbs4> ^1 <va4>)
  (<va4> ^verb-name move ^verb-prep on ^1 1 ^2 2)
  
-  (<fail> ^parameters <paf> ^conditions <cof> ^failure-cond-args 0)
- (<go> ^parameters <pa> ^conditions <co> ^goal-cond-args 8)
+  (<fail> ^parameters <paf> ^conditions <cof> ^cond-args 0)
+ (<go> ^parameters <pa> ^conditions <co> ^cond-args 8)
 (<pa> ^1 <param1> ^2 <param2> ^3 <param3> ^4 <param4>
       ^5 <param5> ^6 <param6> ^7 <param7> ^8 <param8>)
 (<param1> ^type block)
@@ -393,11 +413,12 @@ smem --add {
 (<param7> ^type location)
 (<param8> ^type location)
 (<co> ^1 <cond1> ^2 <cond2> ^3 <cond3> ^4 <cond4> ^5 <cond5> 
-      ^6 <cond6> ^7 <cond7> ^8 <cond8>) 
-(<cond1> ^prep <prepa1> ^attribute <atra>)
-(<cond2> ^prep <prepb1> ^attribute <atrb>)
-(<cond3> ^prep <prepc1> ^attribute <atrc>)
-(<cond4> ^prep <prepd1> ^attribute <atrd>)
+      ^6 <cond6> ^7 <cond7> ^8 <cond8> ^cond <newcond5>)
+(<newcond5> ^prep <prepa1> ^prep <prepb1> ^prep <prepc1> ^prep <prepd1>)
+(<cond1> ^attribute <atra>) #^prep <prepa1> 
+(<cond2> ^attribute <atrb>) #^prep <prepb1> 
+(<cond3> ^attribute <atrc>) #^prep <prepc1> 
+(<cond4> ^attribute <atrd>) #^prep <prepd1> 
 (<cond5> ^attribute <atra1>)
 (<cond6> ^attribute <atrb1>)
 (<cond7> ^attribute <atrc1>)
@@ -410,34 +431,36 @@ smem --add {
 (<atrb1> ^attr grid-blue)
 (<atrc1> ^attr grid-red)
 (<atrd1> ^attr grid-red)
-(<prepa1> ^name on ^a this ^b 5 ^negative false ^btype location)
-(<prepb1> ^name on ^a this ^b 6 ^negative false ^btype location)
-(<prepc1> ^name on ^a this ^b 7 ^negative false ^btype location)
-(<prepd1> ^name on ^a this ^b 8 ^negative false ^btype location)
+(<prepa1> ^name on ^a 1 ^b 5 ^negative false ^btype location)
+(<prepb1> ^name on ^a 2 ^b 6 ^negative false ^btype location)
+(<prepc1> ^name on ^a 3 ^b 7 ^negative false ^btype location)
+(<prepd1> ^name on ^a 4 ^b 8 ^negative false ^btype location)
 }
-
 
 ###############################################
 # simple-sokoban
 ###############################################
 smem --add {
- (<G1> ^game-name simple-sokoban ^actions <A> ^goals <go> ^failures <fail> ^multiplayer false)
+ (<G1> ^game-name simple-sokoban ^actions <A> ^goals <go> ^failures <fail> ^multiplayer false
+       ^player-pieces <pie>
+       ^heuristics <heu>)
  (<A> ^1 <ac1> ^2 <ac2>)
  (<ac1> ^action-name slide ^conditions <c> ^parameters <p> ^verbs <verbs> ^cond-args 3)
  (<p> ^1 <parama> ^2 <paramb> ^3 <paramc>)
  (<parama> ^type block)
  (<paramb> ^type location)
  (<paramc> ^type location)
- (<c> ^1 <conda> ^2 <condb> ^3 <condc>)
- (<conda> ^prep <prep3> ^attribute <ata>)
- (<condb> ^prep <prep5>)
- (<condc> ^prep <prep6> ^prep <prep7>)
+ (<c> ^1 <conda> ^2 <condb> ^3 <condc> ^cond <newconds>)
+ (<newconds> ^prep <prep3> ^prep <prep5> ^prep <prep6>)# ^prep <prep7>)
+ (<conda> ^attribute <ata>)# ^prep <prep3>
+# (<condb> ^prep <prep5>)
+# (<condc> ^prep <prep6> ^prep <prep7>)
  (<ata> ^attr green)
- (<prep3> ^name on ^a this ^b 3 ^negative false ^btype location)
- (<prep5> ^name below ^a this ^b INDEF ^negative true ^btype block)
+ (<prep3> ^name on ^a 1 ^b 3 ^negative false ^btype location)
+ (<prep5> ^name below ^a 2 ^b INDEF ^negative true ^btype block)
 
- (<prep6> ^name near ^a this ^b 2 ^negative false ^btype location)
- (<prep7> ^name diagonal-with ^a this ^b 2 ^negative true ^btype location)
+ (<prep6> ^name near ^a 3 ^b 2 ^negative false ^btype location)
+# (<prep7> ^name diagonal-with ^a 3 ^b 2 ^negative true ^btype location)
  
  (<verbs> ^1 <va>)
  (<va> ^verb-name move ^verb-prep on ^1 1 ^2 2)
@@ -449,37 +472,40 @@ smem --add {
  (<xparamc> ^type location)
  (<xparamd> ^type location)
  (<xparame> ^type block)
- (<xc> ^1 <xconda> ^2 <xcondb> ^3 <xcondc> ^4 <xcondd> ^5 <xconde>)
- (<xconda> ^prep <xprep3> ^attribute <xata>)
+ (<xc> ^1 <xconda> ^2 <xcondb> ^3 <xcondc> ^4 <xcondd> ^5 <xconde> ^cond <newconds2>)
+ (<newconds2> ^prep <xprep3> ^prep <xprep6> ^prep <xprep7> ^prep <xprep8>)#^prep <xprep6b> 
+ (<xconda>  ^attribute <xata>) #^prep <xprep3>
 # (<xcondb> ^prep <xprep5>)
  (<xcondc> ^prep <xprep6> ^prep <xprep6b>)
  (<xcondd> ^prep <xprep7>)
  (<xconde> ^prep <xprep8>)
  (<xata> ^attr green)
- (<xprep3> ^name on ^a this ^b 3 ^negative false ^btype location)
+ (<xprep3> ^name on ^a 1 ^b 3 ^negative false ^btype location)
  
-# (<xprep6> ^name near ^a this ^b 2 ^negative false ^btype location)
- (<xprep6> ^name linear-with ^a same ^b 2 ^c 4 ^negative false ^btype location)
- (<xprep6b> ^name diagonal-with ^a this ^b 2 ^negative true ^btype location)
+# (<xprep6> ^name near ^a 3 ^b 2 ^negative false ^btype location)
+ (<xprep6> ^name linear-with ^a 3 ^b 2 ^c 4 ^negative false ^btype location)
+# (<xprep6b> ^name diagonal-with ^a 3 ^b 2 ^negative true ^btype location)
  
- (<xprep7> ^name below ^a this ^b INDEF ^negative true ^btype block)
- (<xprep8> ^name on ^a this ^b 2 ^negative false ^btype location)
+ (<xprep7> ^name below ^a 4 ^b INDEF ^negative true ^btype block)
+ (<xprep8> ^name on ^a 5 ^b 2 ^negative false ^btype location)
  
  (<verbs2> ^1 <va2> ^2 <va2b>)
  (<va2> ^verb-name move ^verb-prep on ^1 5 ^2 4)
  (<va2b> ^verb-name move ^verb-prep on ^1 1 ^2 2)
     
- (<fail> ^parameters <paf> ^conditions <cof> ^failure-cond-args 0)
- 
- (<go> ^goal-name soko-done ^parameters <pa> ^conditions <co> ^goal-cond-args 4)
+ (<fail> ^1 <fail1>)
+ (<fail1> ^parameters <paf> ^conditions <cof> ^cond-args 0)
+ (<go> ^1 <goal1>)
+ (<goal1> ^goal-name soko-done ^parameters <pa> ^conditions <co> ^cond-args 4)
  (<pa> ^1 <param1> ^2 <param2> ^3 <param3> ^4 <param4>)
  (<param1> ^type block)
  (<param2> ^type block)
  (<param3> ^type location)
  (<param4> ^type location)
- (<co> ^1 <cond1> ^2 <cond2> ^3 <cond3> ^4 <cond4>)
- (<cond1> ^prep <prepa1> ^attribute <atra>)
- (<cond2> ^prep <prepb1> ^attribute <atrb>)
+ (<co> ^1 <cond1> ^2 <cond2> ^3 <cond3> ^4 <cond4> ^cond <newconds3>)
+ (<newconds3> ^prep <prepa1> ^prep <prepb1>)
+ (<cond1> ^attribute <atra>) #^prep <prepa1> 
+ (<cond2> ^attribute <atrb>) #^prep <prepb1> 
  (<cond3> ^attribute <atrc>)
  (<cond4> ^attribute <atrd>)
  (<atra> ^attr blue)
@@ -487,8 +513,8 @@ smem --add {
  (<atrc> ^attr grid-blue)
  (<atrd> ^attr grid-red)
  
- (<prepa1> ^name on ^a this ^b 3 ^negative false ^btype location)
- (<prepb1> ^name on ^a this ^b 4 ^negative false ^btype location)
+ (<prepa1> ^name on ^a 1 ^b 3 ^negative false ^btype location)
+ (<prepb1> ^name on ^a 2 ^b 4 ^negative false ^btype location)
 }
 
 ###############################################
@@ -496,7 +522,8 @@ smem --add {
 ###############################################
 smem --add {
  (<G1> ^player-pieces <pie> ^game-name tic-tac-toe 
-       ^actions <A> ^goals <go> ^failures <fail> ^multiplayer true)
+       ^actions <A> ^goals <go> ^failures <fail> ^multiplayer true
+       ^heuristics <heu>)
  (<pie> ^1 <pie1> ^2 <pie2>)
  (<pie1> ^name my-piece ^concept <pcond1>)
  (<pie2> ^name my-piece ^concept <pcond2>)
@@ -505,16 +532,16 @@ smem --add {
  (<patr1> ^attr blue)
  (<patr2> ^attr red)
  
- (<A> ^1 <ac1>)
+ (<A> ^1 <ac1>) 
  
- 
- (<ac1> ^action-name place ^conditions <c> ^parameters <p> ^verbs <verbs> ^cond-args 2)
+ (<ac1> ^action-name place ^name place ^conditions <c> ^parameters <p> ^verbs <verbs> ^cond-args 2)
  (<p> ^1 <parama> ^2 <paramb>)
  (<parama> ^type block)
  (<paramb> ^type location)
- (<c> ^1 <conda> ^2 <condb>)
- (<conda> ^prep <prep3> ^prep <prep4> ^concept <atr3>)
- (<condb> ^prep <prep5>)
+ (<c> ^1 <conda> ^2 <condb> ^cond <newconds1>)
+ (<newconds1> ^prep <prep3> ^prep <prep4> ^prep <prep5>)
+ (<conda> ^concept <atr3>) #^prep <prep3> ^prep <prep4> 
+# (<condb> ^prep <prep5>)
  (<atr3> ^name my-piece)
  #(<atr3> ^attr blue)
  (<prep3> ^name on ^a 1 ^b INDEF ^negative true ^btype location)
@@ -527,8 +554,8 @@ smem --add {
  (<fail> ^1 <fail1>)
  (<go> ^1 <go1>)   
    
- (<fail1> ^parameters <paf> ^conditions <cof> ^cond-args 0)
- (<go1> ^goal-name three-in-arow ^parameters <pa> ^conditions <co> ^cond-args 6)
+ (<fail1> ^name none ^parameters <paf> ^conditions <cof> ^cond-args 0)
+ (<go1> ^goal-name three-in-arow ^name three-in-arow ^parameters <pa> ^conditions <co> ^cond-args 6)
 
  (<pa> ^1 <param1> ^2 <param2> ^3 <param3> ^4 <param4> ^5 <param5> ^6 <param6>)
  (<param1> ^type block)
@@ -537,11 +564,12 @@ smem --add {
  (<param4> ^type location)
  (<param5> ^type location)
  (<param6> ^type location)
- (<co> ^1 <cond1> ^2 <cond2> ^3 <cond3> ^4 <cond4> ^5 <cond5> ^6 <cond6>)
- (<cond1> ^prep <prepa1> ^concept <atra>)
- (<cond2> ^prep <prepb1> ^concept <atrb>)
- (<cond3> ^prep <prepc1> ^concept <atrc>)
- (<cond4> ^prep <prepa2>)
+ (<co> ^1 <cond1> ^2 <cond2> ^3 <cond3> ^4 <cond4> ^5 <cond5> ^6 <cond6> ^cond <newconds2>)
+ (<newconds2> ^prep <prepa1> ^prep <prepb1> ^prep <prepc1> ^prep <prepa2>)
+ (<cond1> ^concept <atra>) # ^prep <prepa1> 
+ (<cond2> ^concept <atrb>) # ^prep <prepb1> 
+ (<cond3> ^concept <atrc>) # ^prep <prepc1> 
+# (<cond4> ^prep <prepa2>)
 # (<atra> ^attr blue)
 # (<atrb> ^attr blue)
 # (<atrc> ^attr blue)
@@ -554,59 +582,61 @@ smem --add {
  (<prepa2> ^name linear-with ^a 4 ^b 5 ^c 6 ^negative false ^btype location)
 }
 
-#smem --add {
-# (<G1> ^game-name tic-tac-toe ^actions <A> ^goals <go> ^failures <fail> ^multiplayer true)
-# (<A> ^1 <ac1>)
-# 
-# (<ac1> ^action-name place ^conditions <c> ^parameters <p> ^verbs <verbs> ^cond-args 2)
-# (<p> ^1 <parama> ^2 <paramb>)
-# (<parama> ^type block)
-# (<paramb> ^type location)
-# (<c> ^1 <conda> ^2 <condb>)
-# (<conda> ^prep <prep3> ^prep <prep4> ^attribute <atr3>)
+smem --add {
+ (<G1> ^player-pieces <pie> ^game-name tic-go
+       ^actions <A> ^goals <go> ^failures <fail> ^multiplayer true
+       ^heuristics <heu>)
+ (<A> ^1 <ac1>) 
+ 
+ (<ac1> ^action-name place ^conditions <c> ^parameters <p> ^verbs <verbs> ^cond-args 2)
+ (<p> ^1 <parama> ^2 <paramb>)
+ (<parama> ^type block)
+ (<paramb> ^type location)
+ (<c> ^1 <conda> ^2 <condb> ^cond <newconds1>)
+ (<newconds1> ^prep <prep3> ^prep <prep4> ^prep <prep5>)
+ (<conda> ^attribute <atr3>) #^prep <prep3> ^prep <prep4> 
 # (<condb> ^prep <prep5>)
-# (<atr3> ^attr blue)
-# (<prep3> ^name on ^a 1 ^b INDEF ^negative true ^btype location)
-# (<prep4> ^name below ^a 1 ^b INDEF ^negative true ^btype block)
-# (<prep5> ^name below ^a 2 ^b INDEF ^negative true ^btype block)
-# 
-# (<verbs> ^1 <va>)
-# (<va> ^verb-name move ^verb-prep on ^1 1 ^2 2)
-# 
-#   (<fail> ^1 <fail1>)
-#   (<go> ^1 <go1>)   
-# (<fail1> ^parameters <paf> ^conditions <cof> ^cond-args 0)
-# (<go1> ^goal-name three-in-arow ^parameters <pa> ^conditions <co> ^cond-args 6)
-# #(<fail> ^parameters <paf> ^conditions <cof> ^failure-cond-args 0)
-# 
-# #(<go> ^goal-name three-in-arow ^parameters <pa> ^conditions <co> ^goal-cond-args 6)
-# (<pa> ^1 <param1> ^2 <param2> ^3 <param3> ^4 <param4> ^5 <param5> ^6 <param6>)
-# (<param1> ^type block)
-# (<param2> ^type block)
-# (<param3> ^type block)
-# (<param4> ^type location)
-# (<param5> ^type location)
-# (<param6> ^type location)
-# (<co> ^1 <cond1> ^2 <cond2> ^3 <cond3> ^4 <cond4> ^5 <cond5> ^6 <cond6>)
-# (<cond1> ^prep <prepa1> ^attribute <atra>)
-# (<cond2> ^prep <prepb1> ^attribute <atrb>)
-# (<cond3> ^prep <prepc1> ^attribute <atrc>)
+ (<atr3> ^attr blue)
+ (<prep3> ^name on ^a 1 ^b INDEF ^negative true ^btype location)
+ (<prep4> ^name below ^a 1 ^b INDEF ^negative true ^btype block)
+ (<prep5> ^name below ^a 2 ^b INDEF ^negative true ^btype block)
+ 
+ (<verbs> ^1 <va>)
+ (<va> ^verb-name move ^verb-prep on ^1 1 ^2 2)
+ 
+ (<fail> ^1 <fail1>)
+ (<go> ^1 <go1>)
+ (<fail1> ^parameters <paf> ^conditions <cof> ^cond-args 0)
+ (<go1> ^goal-name three-in-arow ^parameters <pa> ^conditions <co> ^cond-args 6)
+ (<pa> ^1 <param1> ^2 <param2> ^3 <param3> ^4 <param4> ^5 <param5> ^6 <param6>)
+ (<param1> ^type block)
+ (<param2> ^type block)
+ (<param3> ^type block)
+ (<param4> ^type location)
+ (<param5> ^type location)
+ (<param6> ^type location)
+ (<co> ^1 <cond1> ^2 <cond2> ^3 <cond3> ^4 <cond4> ^5 <cond5> ^6 <cond6> ^cond <newconds2>)
+ (<newconds2> ^prep <prepa1> ^prep <prepb1> ^prep <prepc1> ^prep <prepa2>)
+ (<cond1> ^attribute <atra>) # ^prep <prepa1> 
+ (<cond2> ^attribute <atrb>) # ^prep <prepb1> 
+ (<cond3> ^attribute <atrc>) # ^prep <prepc1> 
 # (<cond4> ^prep <prepa2>)
-# (<atra> ^attr blue)
-# (<atrb> ^attr blue)
-# (<atrc> ^attr blue)
-# (<prepa1> ^name on ^a 1 ^b 4 ^negative false ^btype location)
-# (<prepb1> ^name on ^a 2 ^b 5 ^negative false ^btype location)
-# (<prepc1> ^name on ^a 3 ^b 6 ^negative false ^btype location)
-# (<prepa2> ^name linear-with ^a 4 ^b 5 ^c 6 ^negative false ^btype location)
-#}
-
+ (<atra> ^attr blue)
+ (<atrb> ^attr blue)
+ (<atrc> ^attr blue)
+ (<prepa1> ^name on ^a 1 ^b 4 ^negative false ^btype location)
+ (<prepb1> ^name on ^a 2 ^b 5 ^negative false ^btype location)
+ (<prepc1> ^name on ^a 3 ^b 6 ^negative false ^btype location)
+ (<prepa2> ^name linear-with ^a 4 ^b 5 ^c 6 ^negative false ^btype location)
+}
 
 ###############################################
 # river-crossing
 ###############################################
 smem --add {
- (<G1> ^game-name river-crossing ^actions <A> ^goals <go> ^failures <fail> ^multiplayer false)
+ (<G1> ^game-name river-crossing ^actions <A> ^goals <go> ^failures <fail> ^multiplayer false
+       ^player-pieces <pie>
+       ^heuristics <heu>)
  (<A> ^1 <ac1> ^2 <ac2> ^3 <ac3>)
  
  (<ac1> ^action-name place ^conditions <c> ^parameters <p> ^verbs <verbs> ^cond-args 4)
@@ -615,12 +645,13 @@ smem --add {
  (<paramb> ^type location)
  (<paramc> ^type block)
  (<paramd> ^type location)
- (<c> ^1 <conda> ^2 <condb> ^3 <condc> ^4 <condd>)
- (<conda> ^prep <prep3> ^attribute <atr3>)
- (<condc> ^prep <prep4>)
+ (<c> ^1 <conda> ^2 <condb> ^3 <condc> ^4 <condd> ^cond <newconds>)
+ (<newconds> ^prep <prep3> ^prep <prep4>)
+ (<conda> ^attribute <atr3>) #^prep <prep3> 
+ #(<condc> ^prep <prep4>)
  (<atr3> ^attr blue)
- (<prep3> ^name right-of ^a this ^b 2 ^negative false ^btype location)
- (<prep4> ^name right-of ^a this ^b 4 ^negative false ^btype location)
+ (<prep3> ^name right-of ^a 1 ^b 2 ^negative false ^btype location)
+ (<prep4> ^name right-of ^a 3 ^b 4 ^negative false ^btype location)
  
  (<verbs> ^1 <va> ^2 <va2>)
  (<va> ^verb-name move ^verb-prep left-of ^1 1 ^2 2)
@@ -632,12 +663,13 @@ smem --add {
  (<xparamb> ^type location)
  (<xparamc> ^type block)
  (<xparamd> ^type location)
- (<xc> ^1 <xconda> ^2 <xcondb> ^3 <xcondc> ^4 <xcondd>)
- (<xconda> ^prep <xprepa1> ^attribute <xatr3>)
- (<xcondc> ^prep <xprepc1>)
+ (<xc> ^1 <xconda> ^2 <xcondb> ^3 <xcondc> ^4 <xcondd> ^cond <newconds2>)
+ (<newconds2> ^prep <xprepa1> ^prep <xprepc1>)
+ (<xconda> ^attribute <xatr3>)# ^prep <xprepa1> 
+# (<xcondc> ^prep <xprepc1>)
  (<xatr3> ^attr blue)
- (<xprepa1> ^name left-of ^a this ^b 2 ^negative false ^btype location) 
- (<xprepc1> ^name left-of ^a this ^b 4 ^negative false ^btype location)
+ (<xprepa1> ^name left-of ^a 1 ^b 2 ^negative false ^btype location) 
+ (<xprepc1> ^name left-of ^a 3 ^b 4 ^negative false ^btype location)
  
  (<verbs2> ^1 <xva> ^2 <xva2>)
  
@@ -648,10 +680,11 @@ smem --add {
  (<zp> ^1 <zparama> ^2 <zparamb>)
  (<zparama> ^type block)
  (<zparamb> ^type location)
- (<zc> ^1 <zconda> ^2 <zcondb>)
- (<zconda> ^prep <zprep3> ^attribute <zatr3>)
+ (<zc> ^1 <zconda> ^2 <zcondb> ^cond <newconds3>)
+ (<newconds3> ^prep <zprep3>)
+ (<zconda> ^attribute <zatr3>) #^prep <zprep3> 
  (<zatr3> ^attr blue)
- (<zprep3> ^name right-of ^a this ^b 2 ^negative false ^btype location)
+ (<zprep3> ^name right-of ^a 1 ^b 2 ^negative false ^btype location)
  
  (<zverbs> ^1 <zva>)
  (<zva> ^verb-name move ^verb-prep left-of ^1 1 ^2 2)
@@ -665,30 +698,32 @@ smem --add {
  (<fparam1> ^type block)
  (<fparam2> ^type block)
  (<fparam3> ^type block)
- (<cof> ^1 <fcond1> ^2 <fcond2> ^3 <fcond3>)
- (<fcond1> ^prep <fprepa1> ^attribute <fatra>)
- (<fcond2> ^prep <fprepb1> ^attribute <fatrb>)
+ (<cof> ^1 <fcond1> ^2 <fcond2> ^3 <fcond3> ^cond <newconds4>)
+ (<newconds4> ^prep <fprepa1> ^prep <fprepb1>)
+ (<fcond1> ^attribute <fatra>) #^prep <fprepa1> 
+ (<fcond2>  ^attribute <fatrb>) #^prep <fprepb1>
  (<fcond3> ^attribute <fatrc>)
  (<fatra> ^attr blue)
  (<fatrb> ^attr white)
  (<fatrc> ^attr red)
- (<fprepa1> ^name aligned-with ^a this ^b 2 ^negative true ^btype block) 
- (<fprepb1> ^name aligned-with ^a this ^b 3 ^negative false ^btype block)
+ (<fprepa1> ^name aligned-with ^a 1 ^b 2 ^negative true ^btype block) 
+ (<fprepb1> ^name aligned-with ^a 2 ^b 3 ^negative false ^btype block)
  
  (<fail2> ^failure-name goose-bean ^parameters <paf1> ^conditions <cof1> ^cond-args 3)
  (<paf1> ^1 <fparam1x> ^2 <fparam2x> ^3 <fparam3x>)
  (<fparam1x> ^type block)
  (<fparam2x> ^type block)
  (<fparam3x> ^type block)
- (<cof1> ^1 <fcond1x> ^2 <fcond2x> ^3 <fcond3x>)
- (<fcond1x> ^prep <fprepa1x> ^attribute <fatrax>)
- (<fcond2x> ^prep <fprepb1x> ^attribute <fatrbx>)
+ (<cof1> ^1 <fcond1x> ^2 <fcond2x> ^3 <fcond3x> ^cond <newconds5>)
+ (<newconds5> ^prep <fprepa1x> ^prep <fprepb1x>)
+ (<fcond1x> ^attribute <fatrax>)# ^prep <fprepa1x> 
+ (<fcond2x> ^attribute <fatrbx>)#^prep <fprepb1x> 
  (<fcond3x> ^attribute <fatrcx>)
  (<fatrax> ^attr blue)
  (<fatrbx> ^attr white)
  (<fatrcx> ^attr green)
- (<fprepa1x> ^name aligned-with ^a this ^b 2 ^negative true ^btype block) 
- (<fprepb1x> ^name aligned-with ^a this ^b 3 ^negative false ^btype block)
+ (<fprepa1x> ^name aligned-with ^a 1 ^b 2 ^negative true ^btype block) 
+ (<fprepb1x> ^name aligned-with ^a 2 ^b 3 ^negative false ^btype block)
  
  (<go1> ^goal-name across-river ^parameters <pa> ^conditions <co> ^cond-args 5)
 
@@ -698,8 +733,9 @@ smem --add {
  (<param3> ^type block)
  (<param4> ^type block)
  (<param5> ^type block)
- (<co> ^1 <cond1> ^2 <cond2> ^3 <cond3> ^4 <cond4> ^5 <cond5>)
- (<cond1> ^prep <prepa1> ^prep <prepa2> ^prep <prepa3> ^prep <prepa4> ^attribute <atra>)
+ (<co> ^1 <cond1> ^2 <cond2> ^3 <cond3> ^4 <cond4> ^5 <cond5> ^cond <newconds6>)
+ (<newconds6> ^prep <prepa1> ^prep <prepa2> ^prep <prepa3> ^prep <prepa4>)
+ (<cond1>  ^attribute <atra>) #^prep <prepa1> ^prep <prepa2> ^prep <prepa3> ^prep <prepa4>
  (<cond2> ^attribute <atrb>)
  (<cond3> ^attribute <atrc>)
  (<cond4> ^attribute <atrd>)
@@ -709,19 +745,19 @@ smem --add {
  (<atrc> ^attr red)
  (<atrd> ^attr white)
  (<atre> ^attr green)
- (<prepa1> ^name right-of ^a this ^b 2 ^negative false ^btype location)
- (<prepa2> ^name aligned-with ^a this ^b 3 ^negative false ^btype block)
- (<prepa3> ^name aligned-with ^a this ^b 4 ^negative false ^btype block)
- (<prepa4> ^name aligned-with ^a this ^b 5 ^negative false ^btype block)
-# (<prepa2> ^name next-to ^a this ^b INDEF ^negative true ^btype block)
+ (<prepa1> ^name right-of ^a 1 ^b 2 ^negative false ^btype location)
+ (<prepa2> ^name aligned-with ^a 1 ^b 3 ^negative false ^btype block)
+ (<prepa3> ^name aligned-with ^a 1 ^b 4 ^negative false ^btype block)
+ (<prepa4> ^name aligned-with ^a 1 ^b 5 ^negative false ^btype block)
 }
-
 
 ###############################################
 # 3-mens-morris
 ###############################################
 smem --add {
- (<G1> ^game-name 3-mens-morris ^actions <A> ^goals <go> ^failures <fail> ^multiplayer true)
+ (<G1> ^game-name 3-mens-morris ^actions <A> ^goals <go> ^failures <fail> ^multiplayer true
+       ^player-pieces <pie>
+       ^heuristics <heu>)
  (<A> ^1 <ac1> ^2 <ac2>)
  
  (<ac1> ^action-name place ^conditions <c> ^parameters <p> ^verbs <verbs> ^cond-args 3)
@@ -729,15 +765,16 @@ smem --add {
  (<parama> ^type block)
  (<paramb> ^type location)
  (<paramc> ^type location)
- (<c> ^1 <conda> ^2 <condb> ^3 <condc>)
- (<conda> ^prep <prep3> ^prep <prep4> ^attribute <atr3>)
- (<condb> ^prep <prep5>)
+ (<c> ^1 <conda> ^2 <condb> ^3 <condc> ^cond <newconds1>)
+ (<newconds1> ^prep <prep3> ^prep <prep4> ^prep <prep5>)
+ (<conda> ^attribute <atr3>) #^prep <prep3> ^prep <prep4> 
+# (<condb> ^prep <prep5>)
  (<condc> ^attribute <atr4>)
  (<atr3> ^attr blue)
  (<atr4> ^attr grid-blue)
- (<prep3> ^name on ^a this ^b 3 ^negative false ^btype location)
- (<prep4> ^name below ^a this ^b INDEF ^negative true ^btype block)
- (<prep5> ^name below ^a this ^b INDEF ^negative true ^btype block)
+ (<prep3> ^name on ^a 1 ^b 3 ^negative false ^btype location)
+ (<prep4> ^name below ^a 1 ^b INDEF ^negative true ^btype block)
+ (<prep5> ^name below ^a 2 ^b INDEF ^negative true ^btype block)
  
  (<verbs> ^1 <va>)
  (<va> ^verb-name move ^verb-prep on ^1 1 ^2 2)
@@ -748,26 +785,27 @@ smem --add {
  (<xparamb> ^type location)
  (<xparamc> ^type location)
  (<xparamd> ^type location)
- (<xc> ^1 <xconda> ^2 <xcondb> ^3 <xcondc> ^4 <xcondd>)
- (<xconda> ^prep <xprepa1> ^attribute <xatr>)
- (<xcondb> ^prep <xprepb1> ^prep <xprepb2>)
- (<xcondd> ^prep <xprepd1> ^attribute <xatr1>)
+ (<xc> ^1 <xconda> ^2 <xcondb> ^3 <xcondc> ^4 <xcondd> ^cond <newconds2>)
+ (<newconds2> ^prep <xprepa1> ^prep <xprepb1> ^prep <xprepb2> ^prep <xprepd1>)
+ (<xconda> ^attribute <xatr>) #^prep <xprepa1> 
+# (<xcondb> ^prep <xprepb1> ^prep <xprepb2>)
+ (<xcondd> ^attribute <xatr1>) #^prep <xprepd1> 
  
  (<xatr> ^attr blue)
  (<xatr1> ^attr grid-blue)
  
- (<xprepa1> ^name on ^a this ^b 3 ^negative false ^btype location) 
+ (<xprepa1> ^name on ^a 1 ^b 3 ^negative false ^btype location) 
  
- (<xprepb1> ^name below ^a this ^b INDEF ^negative true ^btype block)
- (<xprepb2> ^name near ^a this ^b 3 ^negative false ^btype location)
- (<xprepd1> ^name below ^a this ^b INDEF ^negative true ^btype block)
+ (<xprepb1> ^name below ^a 2 ^b INDEF ^negative true ^btype block)
+ (<xprepb2> ^name near ^a 2 ^b 3 ^negative false ^btype location)
+ (<xprepd1> ^name below ^a 4 ^b INDEF ^negative true ^btype block)
  
  (<verbs2> ^1 <va2>)
  (<va2> ^verb-name move ^verb-prep on ^1 1 ^2 2)
     
- (<fail> ^parameters <paf> ^conditions <cof> ^failure-cond-args 0)
+ (<fail> ^parameters <paf> ^conditions <cof> ^cond-args 0)
  
- (<go> ^goal-name three-in-arow ^parameters <pa> ^conditions <co> ^goal-cond-args 6)
+ (<go> ^goal-name three-in-arow ^parameters <pa> ^conditions <co> ^cond-args 6)
  (<pa> ^1 <param1> ^2 <param2> ^3 <param3> ^4 <param4> ^5 <param5> ^6 <param6>)
  (<param1> ^type block)
  (<param2> ^type block)
@@ -775,71 +813,28 @@ smem --add {
  (<param4> ^type location)
  (<param5> ^type location)
  (<param6> ^type location)
- (<co> ^1 <cond1> ^2 <cond2> ^3 <cond3> ^4 <cond4> ^5 <cond5> ^6 <cond6>)
- (<cond1> ^prep <prepa1> ^attribute <atra>)
- (<cond2> ^prep <prepb1> ^attribute <atrb>)
- (<cond3> ^prep <prepc1> ^attribute <atrc>)
- (<cond4> ^prep <prepa2>)
+ (<co> ^1 <cond1> ^2 <cond2> ^3 <cond3> ^4 <cond4> ^5 <cond5> ^6 <cond6> ^cond <newconds3>)
+ (<newconds3> ^prep <prepa1> ^prep <prepb1> ^prep <prepc1> ^prep <prepa2>)
+ (<cond1> ^attribute <atra>) #^prep <prepa1> 
+ (<cond2> ^attribute <atrb>) #^prep <prepb1> 
+ (<cond3> ^attribute <atrc>) #^prep <prepc1> 
+# (<cond4> ^prep <prepa2>)
  (<atra> ^attr blue)
  (<atrb> ^attr blue)
  (<atrc> ^attr blue)
- (<prepa1> ^name on ^a this ^b 4 ^negative false ^btype location)
- (<prepb1> ^name on ^a this ^b 5 ^negative false ^btype location)
- (<prepc1> ^name on ^a this ^b 6 ^negative false ^btype location)
- (<prepa2> ^name linear-with ^a same ^b 5 ^c 6 ^negative false ^btype location)
-}
-
-###############################################
-# N-Queens game (for 3 queens?)
-###############################################
-smem --add {
- (<G1> ^game-name queen-3 ^actions <A> ^goals <go> ^failures <fail> ^multiplayer false)
- (<A> ^1 <ac1>)
- 
- (<ac1> ^action-name move ^conditions <c> ^parameters <p> ^verbs ^cond-args 2)
- (<p> ^1 <parama> ^2 <paramb>)
- (<parama> ^type block)
- (<paramb> ^type location)
- (<c> ^1 <conda> ^2 <condb> )
- (<conda> ^prep <prep3>)
- (<condb> ^prep <prep5>)
- (<prep3> ^name on ^a this ^b INDEF ^negative true ^btype location)
- (<prep5> ^name below ^a this ^b INDEF ^negative true ^btype block)
- 
- (<go> ^parameters <pa> ^conditions <co> ^goal-cond-args 3)
- (<pa> ^1 <param1> ^2 <param2> ^3 <param3>)
- (<param1> ^type block)
- (<param2> ^type block)
- (<param3> ^type block)
- (<co> ^1 <cond1> ^2 <cond2> ^3 <cond3>)
- (<cond1> ^prep <prepa1>)
- (<cond2> ^prep <prepb1>)
- (<cond3> ^prep <prepc1>)
- (<prepa1> ^name on ^a this ^b INDEF ^negative false ^btype location)
- (<prepb1> ^name on ^a this ^b INDEF ^negative false ^btype location)
- (<prepc1> ^name on ^a this ^b INDEF ^negative false ^btype location)
- 
- (<fail> ^parameters <paf> ^conditions <cof> ^failure-cond-args 5)
- (<paf> ^1 <fparam1> ^2 <fparam2> ^3 <fparam3> ^4 <fparam4> ^5 <fparam5>)
- (<fparam1> ^type block)
- (<fparam2> ^type block)
- (<fparam3> ^type location)
- (<fparam4> ^type location)
- (<fparam5> ^type location)
- (<cof> ^1 <fcond1> ^2 <fcond2> ^3 <fcond3> ^4 <fcond4> ^5 <fcond5>)
- (<fcond1> ^prep <fprepa1>)
- (<fcond2> ^prep <fprepb1>)
- (<fcond3> ^prep <fprepa2>)
- (<fprepa1> ^name on ^a this ^b 3 ^negative false ^btype location)
- (<fprepb1> ^name on ^a this ^b 5 ^negative false ^btype location)
- (<fprepa2> ^name linear-with ^a same ^b 4 ^c 5 ^negative false ^btype location)
+ (<prepa1> ^name on ^a 1 ^b 4 ^negative false ^btype location)
+ (<prepb1> ^name on ^a 2 ^b 5 ^negative false ^btype location)
+ (<prepc1> ^name on ^a 3 ^b 6 ^negative false ^btype location)
+ (<prepa2> ^name linear-with ^a 4 ^b 5 ^c 6 ^negative false ^btype location)
 }
 
 ###############################################
 # Peg Solitaire
 ###############################################
 smem --add {
- (<G1> ^game-name peg-sol ^actions <A> ^goals <go> ^failures <fail> ^multiplayer false)
+ (<G1> ^game-name peg-sol ^actions <A> ^goals <go> ^failures <fail> ^multiplayer false
+       ^player-pieces <pie>
+       ^heuristics <heu>)
  (<A> ^1 <ac1>)
  
  (<ac1> ^action-name place ^conditions <c> ^parameters <p> ^verbs <verbs> ^cond-args 6)
@@ -850,28 +845,30 @@ smem --add {
  (<paramd> ^type location)
  (<parame> ^type block)
  (<paramf> ^type location)
- (<c> ^1 <conda> ^2 <condb> ^3 <condc> ^4 <condd> ^5 <conde> ^6 <condf>)
- (<conda> ^prep <prep1>)
- (<condb> ^prep <prep2>)
- (<condc> ^prep <prep3> ^prep <prep3b>)
- (<condd> ^prep <prep4> ^prep <prep4b>)
+ (<c> ^1 <conda> ^2 <condb> ^3 <condc> ^4 <condd> ^5 <conde> ^6 <condf> ^cond <newconds>)
+ (<newconds> ^prep <prep1> ^prep <prep2> ^prep <prep3>  ^prep <prep4>)# ^prep <prep4b>) ^prep <prep3b>
+# (<conda> ^prep <prep1>)
+# (<condb> ^prep <prep2>)
+# (<condc> ^prep <prep3> ^prep <prep3b>)
+# (<condd> ^prep <prep4> ^prep <prep4b>)
  
  (<condf> ^attribute <attr1>)
  (<attr1> ^attr home)
- (<prep1> ^name on ^a this ^b 3 ^negative false ^btype location)
- (<prep2> ^name below ^a this ^b INDEF ^negative true ^btype block)
- (<prep3> ^name linear-with ^a same ^b 4 ^c 2 ^negative false ^btype location)
- (<prep3b> ^name near ^a this ^b 4 ^negative false ^btype location)
- (<prep4> ^name below ^a this ^b 5 ^negative false ^btype block)
- (<prep4b> ^name near ^a this ^b 2 ^negative false ^btype location)
+ (<prep1> ^name on ^a 1 ^b 3 ^negative false ^btype location)
+ (<prep2> ^name below ^a 2 ^b INDEF ^negative true ^btype block)
+ (<prep3> ^name linear-with ^a 3 ^b 4 ^c 2 ^negative false ^btype location)
+# (<prep3b> ^name near ^a 3 ^b 4 ^negative false ^btype location)
+ (<prep4> ^name below ^a 4 ^b 5 ^negative false ^btype block)
+# (<prep4b> ^name near ^a 4 ^b 2 ^negative false ^btype location)
  
  (<verbs> ^1 <va> ^2 <vb>)
  (<va> ^verb-name move ^verb-prep on ^1 1 ^2 2)
  (<vb> ^verb-name move ^verb-prep on ^1 5 ^2 6)
  
- (<fail> ^parameters <paf> ^conditions <cof> ^failure-cond-args 0)
- 
-  (<go> ^goal-name most-removed ^parameters <pa> ^conditions <co> ^goal-cond-args 9)
+ (<fail> ^1 <fail1>)
+ (<fail1> ^parameters <paf> ^conditions <cof> ^cond-args 0)
+ (<go> ^1 <goal1>)
+  (<goal1> ^goal-name most-removed ^parameters <pa> ^conditions <co> ^cond-args 9)
  (<pa> ^1 <param1> ^2 <param2> ^3 <param3> ^4 <param4> ^5 <param5>
       ^6 <param6> ^7 <param7> ^8 <param8> ^9 <param9>)
  (<param1> ^type location)
@@ -884,16 +881,18 @@ smem --add {
  (<param8> ^type location)
  (<param9> ^type location)
  (<co> ^1 <cond1> ^2 <cond2> ^3 <cond3> ^4 <cond4> ^5 <cond5> 
-      ^6 <cond6> ^7 <cond7> ^8 <cond8> ^9 <cond9>)
- (<cond1> ^prep <prepa1> ^attribute <at1>)
- (<cond2> ^prep <prepb1> ^attribute <at2>)
- (<cond3> ^prep <prepc1> ^attribute <at3>)
- (<cond4> ^prep <prepd1> ^attribute <at4>)
- (<cond5> ^prep <prepe1> ^attribute <at5>)
- (<cond6> ^prep <prepf1> ^attribute <at6>)
- (<cond7> ^prep <prepg1> ^attribute <at7>)
- (<cond8> ^prep <preph1> ^attribute <at8>)
- (<cond9> ^prep <prepi1> ^attribute <at9>)
+      ^6 <cond6> ^7 <cond7> ^8 <cond8> ^9 <cond9> ^cond <newconds2>)
+ (<newconds2> ^prep <prepa1> ^prep <prepb1> ^prep <prepc1> ^prep <prepd1> ^prep <prepe1> 
+              ^prep <prepf1> ^prep <prepg1> ^prep <preph1> ^prep <prepi1>)
+ (<cond1> ^attribute <at1>) #^prep <prepa1> 
+ (<cond2> ^attribute <at2>) #^prep <prepb1>
+ (<cond3> ^attribute <at3>) #^prep <prepc1>
+ (<cond4> ^attribute <at4>) #^prep <prepd1>
+ (<cond5> ^attribute <at5>) #^prep <prepe1> 
+ (<cond6> ^attribute <at6>) #^prep <prepf1>
+ (<cond7> ^attribute <at7>) #^prep <prepg1>
+ (<cond8> ^attribute <at8>) #^prep <preph1> 
+ (<cond9> ^attribute <at9>) #^prep <prepi1>
  (<at1> ^attr grid1)
  (<at2> ^attr grid2)
  (<at3> ^attr grid3)
@@ -903,74 +902,79 @@ smem --add {
  (<at7> ^attr grid6)
  (<at8> ^attr grid7)
  (<at9> ^attr grid10)
- (<prepa1> ^name below ^a this ^b INDEF ^negative true ^btype block)
- (<prepb1> ^name below ^a this ^b INDEF ^negative true ^btype block)
- (<prepc1> ^name below ^a this ^b INDEF ^negative true ^btype block)
- (<prepd1> ^name below ^a this ^b INDEF ^negative true ^btype block)
- (<prepe1> ^name below ^a this ^b INDEF ^negative true ^btype block)
- (<prepf1> ^name below ^a this ^b INDEF ^negative true ^btype block)
- (<prepg1> ^name below ^a this ^b INDEF ^negative true ^btype block)
- (<preph1> ^name below ^a this ^b INDEF ^negative true ^btype block)
- (<prepi1> ^name below ^a this ^b INDEF ^negative true ^btype block)
- 
+ (<prepa1> ^name below ^a 1 ^b INDEF ^negative true ^btype block)
+ (<prepb1> ^name below ^a 2 ^b INDEF ^negative true ^btype block)
+ (<prepc1> ^name below ^a 3 ^b INDEF ^negative true ^btype block)
+ (<prepd1> ^name below ^a 4 ^b INDEF ^negative true ^btype block)
+ (<prepe1> ^name below ^a 5 ^b INDEF ^negative true ^btype block)
+ (<prepf1> ^name below ^a 6 ^b INDEF ^negative true ^btype block)
+ (<prepg1> ^name below ^a 7 ^b INDEF ^negative true ^btype block)
+ (<preph1> ^name below ^a 8 ^b INDEF ^negative true ^btype block)
+ (<prepi1> ^name below ^a 9 ^b INDEF ^negative true ^btype block)
 }
 
 ###############################################
 # N-Queens game (for 4 queens)
 ###############################################
 smem --add {
- (<G1> ^game-name queen-4 ^actions <A> ^goals <go> ^failures <fail> ^multiplayer false)
+ (<G1> ^game-name queen-4 ^actions <A> ^goals <go> ^failures <fail> ^multiplayer false
+       ^player-pieces <pie>
+       ^heuristics <heu>)
  (<A> ^1 <ac1>)
  
  (<ac1> ^action-name move ^conditions <c> ^parameters <p> ^verbs ^cond-args 2)
  (<p> ^1 <parama> ^2 <paramb>)
  (<parama> ^type block)
  (<paramb> ^type location)
- (<c> ^1 <conda> ^2 <condb> )
- (<conda> ^prep <prep3>)
- (<condb> ^prep <prep5> ^attribute <atra>)
+ (<c> ^1 <conda> ^2 <condb> ^cond <newconds2>)
+ (<newconds2> ^prep <prep3> ^prep <prep5>)
+# (<conda> ^prep <prep3>)
+ (<condb> ^attribute <atra>) #^prep <prep5> 
  (<atra> ^attr grid-green)
- (<prep3> ^name on ^a this ^b INDEF ^negative true ^btype location)
- (<prep5> ^name below ^a this ^b INDEF ^negative true ^btype block)
+ (<prep3> ^name on ^a 1 ^b INDEF ^negative true ^btype location)
+ (<prep5> ^name below ^a 2 ^b INDEF ^negative true ^btype block)
  
- (<go> ^parameters <pa> ^conditions <co> ^goal-cond-args 4)
+ (<go> ^parameters <pa> ^conditions <co> ^cond-args 4)
  (<pa> ^1 <param1> ^2 <param2> ^3 <param3> ^4 <param4>)
  (<param1> ^type block)
  (<param2> ^type block)
  (<param3> ^type block)
  (<param4> ^type block)
- (<co> ^1 <cond1> ^2 <cond2> ^3 <cond3> ^4 <cond4>)
- (<cond1> ^prep <prepa1>)
- (<cond2> ^prep <prepb1>)
- (<cond3> ^prep <prepc1>)
- (<cond4> ^prep <prepd1>)
- (<prepa1> ^name on ^a this ^b INDEF ^negative false ^btype location)
- (<prepb1> ^name on ^a this ^b INDEF ^negative false ^btype location)
- (<prepc1> ^name on ^a this ^b INDEF ^negative false ^btype location)
- (<prepd1> ^name on ^a this ^b INDEF ^negative false ^btype location)
+ (<co> ^1 <cond1> ^2 <cond2> ^3 <cond3> ^4 <cond4> ^cond <newconds3>)
+ (<newconds3> ^prep <prepa1> ^prep <prepb1> ^prep <prepc1> ^prep <prepd1>)
+# (<cond1> ^prep <prepa1>)
+# (<cond2> ^prep <prepb1>)
+# (<cond3> ^prep <prepc1>)
+# (<cond4> ^prep <prepd1>)
+ (<prepa1> ^name on ^a 1 ^b INDEF ^negative false ^btype location)
+ (<prepb1> ^name on ^a 2 ^b INDEF ^negative false ^btype location)
+ (<prepc1> ^name on ^a 3 ^b INDEF ^negative false ^btype location)
+ (<prepd1> ^name on ^a 4 ^b INDEF ^negative false ^btype location)
  
- (<fail> ^failure-name attack ^parameters <paf> ^conditions <cof> ^failure-cond-args 5)
+ (<fail> ^failure-name attack ^parameters <paf> ^conditions <cof> ^cond-args 5)
  (<paf> ^1 <fparam1> ^2 <fparam2> ^3 <fparam3> ^4 <fparam4> ^5 <fparam5>)
  (<fparam1> ^type block)
  (<fparam2> ^type block)
  (<fparam3> ^type location)
  (<fparam4> ^type location)
  (<fparam5> ^type location)
- (<cof> ^1 <fcond1> ^2 <fcond2> ^3 <fcond3> ^4 <fcond4> ^5 <fcond5>)
- (<fcond1> ^prep <fprepa1>)
- (<fcond2> ^prep <fprepb1>)
- (<fcond3> ^prep <fprepa2>)
- (<fprepa1> ^name on ^a this ^b 3 ^negative false ^btype location)
- (<fprepb1> ^name on ^a this ^b 5 ^negative false ^btype location)
- (<fprepa2> ^name linear-with ^a same ^b 4 ^c 5 ^negative false ^btype location)
+ (<cof> ^1 <fcond1> ^2 <fcond2> ^3 <fcond3> ^4 <fcond4> ^5 <fcond5> ^cond <newconds4>)
+ (<newconds4> ^prep <fprepa1> ^prep <fprepb1> ^prep <fprepa2>)
+# (<fcond1> ^prep <fprepa1>)
+# (<fcond2> ^prep <fprepb1>)
+# (<fcond3> ^prep <fprepa2>)
+ (<fprepa1> ^name on ^a 1 ^b 3 ^negative false ^btype location)
+ (<fprepb1> ^name on ^a 2 ^b 5 ^negative false ^btype location)
+ (<fprepa2> ^name linear-with ^a 3 ^b 4 ^c 5 ^negative false ^btype location)
 }
-
 
 ###############################################
 # Knight Escape (atypical game)
 ###############################################
 smem --add {
- (<G1> ^game-name knight-escape ^actions <A> ^goals <go> ^failures <fail> ^multiplayer false)
+ (<G1> ^game-name knight-escape ^actions <A> ^goals <go> ^failures <fail> ^multiplayer false
+        ^player-pieces <pie>
+       ^heuristics <heu>)
  (<A> ^1 <ac1> ^2 <ac2>)
  
  (<ac1> ^action-name move ^conditions <c> ^parameters <p> ^verbs ^cond-args 3)
@@ -978,66 +982,73 @@ smem --add {
  (<parama> ^type block)
  (<paramb> ^type location)
  (<paramc> ^type location)
- (<c> ^1 <conda> ^2 <condb> ^3 <condc>)
- (<conda> ^prep <prep3>)
- (<condb> ^prep <prep5>)
- (<condc> ^prep <prep7>)
- (<prep3> ^name on ^a this ^b 3 ^negative false ^btype location)
- (<prep5> ^name below ^a this ^b INDEF ^negative true ^btype block)
- (<prep7> ^name aligned-with ^a this ^b 2 ^negative false ^btype location)
+ (<c> ^1 <conda> ^2 <condb> ^3 <condc> ^cond <newconds2>)
+ (<newconds2> ^prep <prep3> ^prep <prep5> ^prep <prep7>)
+# (<conda> ^prep <prep3>)
+# (<condb> ^prep <prep5>)
+# (<condc> ^prep <prep7>)
+ (<prep3> ^name on ^a 1 ^b 3 ^negative false ^btype location)
+ (<prep5> ^name below ^a 2 ^b INDEF ^negative true ^btype block)
+ (<prep7> ^name aligned-with ^a 3 ^b 2 ^negative false ^btype location)
  
  (<ac2> ^action-name move ^conditions <xc> ^parameters <xp> ^verbs ^cond-args 3)
  (<xp> ^1 <xparama> ^2 <xparamb> ^3 <xparamc>)
  (<xparama> ^type block)
  (<xparamb> ^type location)
  (<xparamc> ^type location)
- (<xc> ^1 <xconda> ^2 <xcondb> ^3 <xcondc>)
- (<xconda> ^prep <xprep3>)
- (<xcondb> ^prep <xprep5>)
- (<xcondc> ^prep <xprep7>)
+ (<xc> ^1 <xconda> ^2 <xcondb> ^3 <xcondc> ^cond <newconds3>)
+ (<newconds3> ^prep <xprep3> ^prep <xprep5> ^prep <xprep7>)
+# (<xconda> ^prep <xprep3>)
+# (<xcondb> ^prep <xprep5>)
+# (<xcondc> ^prep <xprep7>)
  (<xatra> ^attr grid-green)
- (<xprep3> ^name on ^a this ^b 3 ^negative false ^btype location)
- (<xprep5> ^name below ^a this ^b INDEF ^negative true ^btype block)
- (<xprep7> ^name next-to ^a this ^b 2 ^negative false ^btype location)
+ (<xprep3> ^name on ^a 1 ^b 3 ^negative false ^btype location)
+ (<xprep5> ^name below ^a 2 ^b INDEF ^negative true ^btype block)
+ (<xprep7> ^name next-to ^a 3 ^b 2 ^negative false ^btype location)
  
- (<go> ^parameters <pa> ^conditions <co> ^goal-cond-args 2)
+ (<go> ^parameters <pa> ^conditions <co> ^cond-args 2)
  (<pa> ^1 <param1> ^2 <param2>)
  (<param1> ^type block)
  (<param2> ^type location)
- (<co> ^1 <cond1> ^2 <cond2>)
- (<cond1> ^prep <prepa1>)
+ (<co> ^1 <cond1> ^2 <cond2> ^cond <newconds4>)
+ (<newconds4> ^prep <prepa1>)
+# (<cond1> ^prep <prepa1>)
  (<cond2> ^attribute <att>)
  (<att> ^attr home)
- (<prepa1> ^name on ^a this ^b 2 ^negative false ^btype location)
+ (<prepa1> ^name on ^a 1 ^b 2 ^negative false ^btype location)
  
- (<fail> ^parameters <paf> ^conditions <cof> ^failure-cond-args 0)
+ (<fail> ^parameters <paf> ^conditions <cof> ^cond-args 0)
 }
 
 ###############################################
 # Knight's Tour
 ###############################################
 smem --add {
- (<G1> ^game-name knights-tour ^actions <A> ^goals <go> ^failures <fail> ^multiplayer false)
+ (<G1> ^game-name knights-tour ^actions <A> ^goals <go> ^failures <fail> ^multiplayer false
+       ^player-pieces <pie>
+       ^heuristics <heu>)
  (<A> ^1 <ac1> ^2 <ac2>)
  
- (<ac1> ^action-name move ^conditions <c> ^parameters <p> ^verbs <verbs> ^cond-args 5)
- (<p> ^1 <parama> ^2 <paramb> ^3 <paramc> ^4 <paramd> ^5 <parame>)
+ (<ac1> ^action-name move ^conditions <c> ^parameters <p> ^verbs <verbs> ^cond-args 4)
+ (<p> ^1 <parama> ^2 <paramb> ^3 <paramc> ^4 <paramd>)
  (<parama> ^type block)
  (<paramb> ^type location)
  (<paramc> ^type location)
  (<paramd> ^type block)
- (<parame> ^type location)
- (<c> ^1 <conda> ^2 <condb> ^3 <condc> ^4 <condd> ^5 <conde>)
- (<conda> ^prep <prep3> ^attribute <at>)
- (<condb> ^prep <prep5>)
- (<condc> ^prep <prep7>)
- (<condd> ^prep <prep8> ^type indiff ^attribute <attrb>)
- (<conde> ^attribute <attra>)
- (<prep3> ^name on ^a this ^b 3 ^negative false ^btype location)
- (<prep5> ^name below ^a this ^b INDEF ^negative true ^btype block)
- (<prep7> ^name aligned-with ^a this ^b 2 ^negative false ^btype location)
- (<prep8> ^name on ^a this ^b 5 ^negative false ^btype location)
- (<attra> ^attr home)
+# (<parame> ^type location)
+ (<c> ^1 <conda> ^2 <condb> ^3 <condc> ^4 <condd> ^cond <newconds2>)
+ (<newconds2> ^prep <prep3> ^prep <prep5> ^prep <prep7> ^prep <prep8> ^prep <prep9>)
+ (<conda> ^attribute <at>)# ^prep <prep3> 
+# (<condb> ^prep <prep5>)
+# (<condc> ^prep <prep7>)
+ (<condd>  ^attribute <attrb>) #^prep <prep8> #^type indiff
+# (<conde> ^attribute <attra>)
+ (<prep3> ^name on ^a 1 ^b 3 ^negative false ^btype location)
+ (<prep5> ^name below ^a 2 ^b INDEF ^negative true ^btype block)
+ (<prep7> ^name aligned-with ^a 3 ^b 2 ^negative false ^btype location)
+ (<prep8> ^name below ^a 4 ^b INDEF ^negative true ^btype block)
+ (<prep9> ^name on ^a 4 ^b INDEF ^negative true ^btype location)
+# (<attra> ^attr home)
  (<at> ^attr green)
  (<attrb> ^attr blue)
  
@@ -1045,24 +1056,27 @@ smem --add {
  (<va> ^verb-name move ^verb-prep on ^1 1 ^2 2)
  (<vb> ^verb-name move ^verb-prep on ^1 4 ^2 3)
  
- (<ac2> ^action-name move ^conditions <xc> ^parameters <xp> ^verbs <verbs2> ^cond-args 5)
- (<xp> ^1 <xparama> ^2 <xparamb> ^3 <xparamc> ^4 <xparamd> ^5 <xparame>)
+ (<ac2> ^action-name move ^conditions <xc> ^parameters <xp> ^verbs <verbs2> ^cond-args 4)
+ (<xp> ^1 <xparama> ^2 <xparamb> ^3 <xparamc> ^4 <xparamd>)#^5 <xparame>)
  (<xparama> ^type block)
  (<xparamb> ^type location)
  (<xparamc> ^type location)
  (<xparamd> ^type block)
- (<xparame> ^type location)
- (<xc> ^1 <xconda> ^2 <xcondb> ^3 <xcondc> ^4 <xcondd> ^5 <xconde>)
- (<xconda> ^prep <xprep3> ^attribute <xat>)
- (<xcondb> ^prep <xprep5>)
- (<xcondc> ^prep <xprep7>)
- (<xcondd> ^prep <xprep8> ^type indiff ^attribute <xattrb>)
- (<xconde> ^attribute <xattra>)
- (<xprep3> ^name on ^a this ^b 3 ^negative false ^btype location)
- (<xprep5> ^name below ^a this ^b INDEF ^negative true ^btype block)
- (<xprep7> ^name next-to ^a this ^b 2 ^negative false ^btype location)
- (<xprep8> ^name on ^a this ^b 5 ^negative false ^btype location)
- (<xattra> ^attr home)
+# (<xparame> ^type location)
+ (<xc> ^1 <xconda> ^2 <xcondb> ^3 <xcondc> ^4 <xcondd> ^cond <newconds3>)
+ (<newconds3> ^prep <xprep3> ^prep <xprep5> ^prep <xprep7> ^prep <xprep8> ^prep <xprep9>)
+ (<xconda> ^attribute <xat>) #^prep <xprep3> 
+# (<xcondb> ^prep <xprep5>)
+# (<xcondc> ^prep <xprep7>)
+ (<xcondd> ^attribute <xattrb>)# ^prep <xprep8> ^type indiff 
+# (<xconde> ^attribute <xattra>)
+ (<xprep3> ^name on ^a 1 ^b 3 ^negative false ^btype location)
+ (<xprep5> ^name below ^a 2 ^b INDEF ^negative true ^btype block)
+ (<xprep7> ^name next-to ^a 3 ^b 2 ^negative false ^btype location)
+ #(<xprep8> ^name on ^a 4 ^b 5 ^negative false ^btype location)
+ (<xprep8> ^name below ^a 4 ^b INDEF ^negative true ^btype block)
+ (<xprep9> ^name on ^a 4 ^b INDEF ^negative true ^btype location)
+# (<xattra> ^attr home)
  (<xat> ^attr green)
  (<xattrb> ^attr blue)
  
@@ -1070,16 +1084,19 @@ smem --add {
  (<va2> ^verb-name move ^verb-prep on ^1 1 ^2 2)
  (<vb2> ^verb-name move ^verb-prep on ^1 4 ^2 3)
  
- (<go> ^parameters <pa> ^conditions <co> ^goal-cond-args 2)
+ (<go> ^1 <goal1>)
+ (<goal1> ^parameters <pa> ^conditions <co> ^cond-args 2)
  (<pa> ^1 <param1> ^2 <param2>)
  (<param1> ^type block)
  (<param2> ^type location)
- (<co> ^1 <cond1> ^2 <cond2>)
+ (<co> ^1 <cond1> ^2 <cond2> ^cond <newconds3>)
+ (<newconds3> ^prep <prepa1>)
  (<cond1> ^attribute <att1>)
- (<cond2> ^attribute <att> ^prep <prepa1>)
+ (<cond2> ^attribute <att> ) #^prep <prepa1>
  (<att> ^attr home)
  (<att1> ^attr green)
- (<prepa1> ^name below ^a this ^b INDEF ^negative true ^btype block)
+ (<prepa1> ^name below ^a 2 ^b INDEF ^negative true ^btype block)
  
- (<fail> ^parameters <paf> ^conditions <cof> ^failure-cond-args 0)
+ (<fail> ^1 <fail1>)
+ (<fail1> ^parameters <paf> ^conditions <cof> ^cond-args 0)
 }
