@@ -1,16 +1,19 @@
 sp {learn-condition*propose*index-parameter-list*a
    (state <s> ^name learn-condition
+              ^arg <arg>
               ^a <a>)
    (<a> ^obj <objd> -^index)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name index-parameter-list
         ^conditions <objd>
+        ^arg <arg>
         ^category svs)
 }
 sp {learn-condition*propose*index-parameter-list*b
    (state <s> ^name learn-condition
               ^a.index <inda>
+              ^arg <arg>
               ^b <b>)
    (<b> ^obj <objd> -^index)
 -->
@@ -18,12 +21,14 @@ sp {learn-condition*propose*index-parameter-list*b
    (<o> ^name index-parameter-list
         ^prohibit <inda>
         ^conditions <objd>
+        ^arg <arg>
         ^category svs)
 }
 sp {learn-condition*propose*index-parameter-list*c
    (state <s> ^name learn-condition
               ^a.index <inda>
               ^b.index <indb>
+              ^arg <arg>
               ^c <c>)
    (<c> ^obj <objd> -^index)
 -->
@@ -31,6 +36,7 @@ sp {learn-condition*propose*index-parameter-list*c
    (<o> ^name index-parameter-list
         ^prohibit <inda>
         ^prohibit <indb>
+        ^arg <arg>
         ^conditions <objd>
         ^category svs)
 }
@@ -81,6 +87,14 @@ sp {learn-condition*apply*new-parameter*increase-arg
 }
 
 #will not try to learn!!! todo
+sp {learn-condition*elaborate*adjectives
+   (state <s> ^name learn-condition
+              ^<< a b c >> <abc>)
+   (<abc> ^obj.word {<word> <> object <> null <> location <> block})
+-->
+   (<s> ^adjective <word>)
+}
+
 sp {learn-condition*apply*new-parameter*add-attributes
    (state <s> ^name learn-condition
               ^topstate.current-game.learning <l>
@@ -93,8 +107,9 @@ sp {learn-condition*apply*new-parameter*add-attributes
         ^param <abc>
         ^new <arg2>)
 -->
-   (<conda> ^attribute <atr>)
-   (<atr> ^attr <cond>)
+ #  (<s> ^adjective <word>)
+      (<conda> ^attribute <atr>)
+      (<atr> ^attr <word>)
 }
 #deputize
 sp {learn-condition*apply*new-parameter*upgrade-param-list
@@ -163,7 +178,7 @@ sp {learn-condition*propose*store-condition*attribute
               ^arg <arg>
              -^stored <c>
               ^topstate.current-game.learning <l>)
-   (<l> ^type condition ^parameter <type>)# ^arg <arg>)
+ #  (<l> ^type condition ^parameter <type>)# ^arg <arg>)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name store-condition
@@ -231,6 +246,33 @@ sp {learn-condition*elaborate-attr
    (<objd> ^word <cond>)
 }
 
+
+sp {learn-condition*propose*index-parameter*find-adjective
+   (state <s> ^name learn-condition
+              ^adjective <adj>
+              ^topstate.current-game.learning <l>
+             -^found-adj <adj>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name index-parameter 
+        ^parameter <pa>)
+   (<pa> ^index-info <ii> ^lexical <objd> ^type object)
+   (<objd> ^word object ^word <adj>)
+   (<ii> ^infer-match false ^return-all true ^use-interaction true)
+   (<l> ^interaction true)
+}
+#TODO check if broken
+sp {learn-condition*apply*index-parameter*find-adjective
+   (state <s> ^name learn-condition
+              ^adjective <adj>
+              ^operator <o>)
+   (<o> ^name index-parameter
+        ^parameter.lexical.word <adj>
+        ^parameter.result.id <id>)
+-->
+   (<s> ^found-adj <adj>)
+}
+
 sp {learn-condition*propose*index-parameter
    (state <s> ^name learn-condition
               ^prep none
@@ -266,9 +308,10 @@ sp {learn-condition*apply*store-condition*attr
               ^arg <arg>
               ^found <cond>
               ^a.index <inda>
+              #^b <b>
               ^attr <cond>
               ^operator.name store-condition)
-   (<b>  ^index INDEF) #^obj.type <cond>
+#   (<b>  ^index INDEF) #^obj.type <cond>
    (<ts> ^current-game <cg>)
    (<cg> ^name <gname> ^learning <l>)
    (<l> ^learn-link <link>)#^arg <arg>
@@ -282,8 +325,6 @@ sp {learn-condition*apply*store-condition*attr
    (<atr> ^attr <cond>)
 }
 
-
-
 sp {learn-condition*propose*store-condition*relation
    (state <s> ^name learn-condition
               ^a.index <inda>
@@ -292,7 +333,7 @@ sp {learn-condition*propose*store-condition*relation
              -^c
              -^stored 
               ^topstate.current-game.learning <l>)
-   (<l> ^type condition ^parameter <type>)#^arg <arg>
+  # (<l> ^type condition ^parameter <type>)#^arg <arg>
 -->
    (<s> ^operator <o> + =)
    (<o> ^name store-condition
@@ -306,7 +347,7 @@ sp {learn-condition*propose*store-condition*linear
               ^arg <arg>
              -^stored 
               ^topstate.current-game.learning <l>)
-   (<l> ^type condition ^parameter <type>)#^arg <arg>
+   #(<l> ^type condition ^parameter <type>)#^arg <arg>
 -->
    (<s> ^operator <o> + =)
    (<o> ^name store-condition
@@ -480,16 +521,32 @@ sp {learn-condition*apply*find-something*remove-INDEFarg
    (<elem> ^arg <parg> -)
 #   (<elem> ^arg <arg2>)
 }
+#sp {learn-condition*apply*find-something*change-parameter
+#   (state <s> ^name learn-condition
+#              ^stored <c>
+#              ^a.obj.type <t>
+#              ^arg <argnew>
+#              ^operator.name find-something
+#              ^topstate.io.output-link <out>
+#              ^topstate.interaction.status <status>
+#              ^topstate.current-game.learning <l>)
+#   (<l> ^parameter <type>)
+#   (<link> ^conditions.<argnew>)
+#-->
+#   (<l> ^parameter <type> -)
+#   (<l> ^parameter <t>)
+#}
 sp {learn-condition*apply*find-something
    (state <s> ^name learn-condition
               ^stored <c>
+              ^a.obj.type <t>
               ^arg <argnew>
               ^operator.name find-something
               ^topstate.io.output-link <out>
               ^topstate.interaction.status <status>
               ^topstate.current-game.learning <l>)
-   (<l> ^type <t> ^arg <arg> ^learn-link <link>)
-   (<link> ^conditions.<arg>)
+   (<l>  ^arg <arg> ^learn-link <link>)#^type <t>
+   (<link> ^conditions.<argnew>)
 -->
    (<l> ^arg <arg> -)
    (<l> ^arg <argnew>)

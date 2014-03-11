@@ -90,8 +90,8 @@ public class AgentMessageParser
             message = "Ok tell me the name of a legal action in this game, or finished.";
         } else if(type.equals("game-new-action")){
             String gameName = WMUtil.getValueOfAttribute(fieldsId, "game-name");
-            message = "I do not know how to play " + gameName + 
-                    ". This is a multiplayer game (true/false)?";
+            message = "I don't know how to play " + gameName + 
+                    ". Is it a multiplayer game?";
         } else if(type.equals("game-new-verb")){
             message = "What is an associated verb for this action, or finished";
         } else if(type.equals("game-new-goal")){
