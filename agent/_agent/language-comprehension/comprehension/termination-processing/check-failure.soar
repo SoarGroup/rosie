@@ -7,38 +7,98 @@ sp {termination-processing*propose*check-failure
    (<op> ^name check-failure)
 }
 
+sp {apply*check-failure*monitor
+   (state <s> ^name termination-processing
+              ^operator.name check-failure
+              ^segment <seg>)
+   (<seg> ^original-sentence.complete-sentence <os>
+          ^semantics <sem>)
+-->
+   (write (crlf) |=======================| (crlf) <os>)
+   (write (crlf) (cmd print -d 2 <sem>) |=======================|)
+}
+
+
+sp {apply*check-failure*monitor*to-file
+   (state <s> ^name termination-processing
+              ^top-state.create-trace-file true
+              ^operator.name check-failure
+              ^segment <seg>)
+   (<seg> ^original-sentence <os>
+          ^semantics <sem>)
+-->
+   (cmd command-to-file -a |rosie-sentence-processing.trace| print <os>)
+   (cmd command-to-file -a |rosie-sentence-processing.trace| print -d 3 <sem>)
+}
+
+
+
 sp {apply*check-failure*failure
    (state <s> ^operator <op>
+              ^top-state.world-usage external
               ^segment <sp>
-             # ^top-state <ts>
               ^failed <item>)
    (<op> ^name check-failure)
-  # (<ts> ^current-sentence-number <csn>)
-   #       ^failure-count <fc>)
    (<sp> ^original-sentence <cs>)
 -->
    (write (crlf) |Parse FAILED.|)
    (<sp> ^processed-terminator true)
-   (<cs> ^processed-sentence true)
- #  (<ts> ^terminated-sentence <csn>
-  #       ^failure-count <fc> - (+ <fc> 1))
-  # (interrupt)
+   (<cs> ^processed-sentence true
+         ^processing-result failure)
 }
 
 sp {apply*check-failure*success
    (state <s> ^operator <op>
+              ^top-state.world-usage external
               ^segment <sp>
-         #    ^top-state <ts>
              -^failed <item>)
    (<op> ^name check-failure)
-  # (<ts> ^current-sentence-number <csn>
-   #      ^success-count <sc>)
    (<sp> ^original-sentence <cs>)
 -->
    (write (crlf) |Parse SUCCEEDED.|)
    (<sp> ^processed-terminator true)
-   (<cs> ^processed-sentence true)
-  # (<ts> ^terminated-sentence <csn>
-   #      ^success-count <sc> -
-    #                    (+ <sc> 1))
+   (<cs> ^processed-sentence true
+         ^processing-result success)
+}
+
+
+sp {apply*check-failure*failure*internal
+   (state <s> ^operator <op>
+              ^top-state.world-usage internal
+              ^segment <sp>
+              ^top-state <ts>
+              ^failed <item>)
+   (<op> ^name check-failure)
+   (<ts> ^current-sentence-number <csn>
+         ^failure-count <fc>)
+   (<sp> ^original-sentence <cs>)
+-->
+   (write (crlf) |Parse FAILED.|)
+   (<sp> ^processed-terminator true)
+   (<cs> ^processed-sentence true
+         ^processing-result failure)
+   (<ts> ^terminated-sentence <csn>
+         ^failure-count <fc> - (+ <fc> 1))
+ #  (interrupt)
+}
+
+sp {apply*check-failure*success*internal
+   (state <s> ^operator <op>
+              ^top-state.world-usage internal
+              ^segment <sp>
+             ^top-state <ts>
+             -^failed <item>)
+   (<op> ^name check-failure)
+   (<ts> ^current-sentence-number <csn>
+        ^success-count <sc>)
+   (<sp> ^original-sentence <cs>)
+-->
+   (write (crlf) |Parse SUCCEEDED.|)
+   (<sp> ^processed-terminator true)
+   (<cs> ^processed-sentence true
+         ^processing-result success)
+   (<ts> ^terminated-sentence <csn>
+         ^success-count <sc> -
+                        (+ <sc> 1))
+#   (interrupt)
 }
