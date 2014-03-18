@@ -1,0 +1,171 @@
+sp {comprehension*propose*process-missing-assigner
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^unfilled-assigner-item <ass1>)
+   (<ass1> ^structure-type <stype>
+           ^relative-position before
+          -^failed merge)
+  -(<seg> ^unfilled-receiver-item.structure-type <stype>)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name process-missing-assigner
+         ^item <ass1>)
+}
+
+sp {comprehension*propose*process-missing-assigner*before
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^unfilled-assigner-item <ass1>
+         -^unfilled-assigner-item.lt-lexical-assigner <ass-before>)
+   (<ass1> ^structure-type <stype>
+           ^lt-lexical-assigner.before <ass-before>
+          -^failed merge)
+  -(<seg> ^unfilled-receiver-item.structure-type <stype>)
+-->
+   (write (crlf) |Before Assigner removal: | <ass1>)
+   (<s> ^operator <op> + =, >)
+   (<op> ^name process-missing-assigner
+         ^item <ass1>)
+}
+
+
+sp {comprehension*propose*process-missing-assigner*after
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^unfilled-assigner-item <ass1>
+          ^unfilled-assigner-item.lt-lexical-assigner <ass-after>)
+   (<ass1> ^structure-type <stype>
+           ^lt-lexical-assigner.after <ass-after>
+          -^failed merge)
+   (<seg> ^unfilled-receiver-item.structure-type <stype>)
+-->
+   (write (crlf) |After Assigner removal: | <ass1>)
+   (<s> ^operator <op> + =, >)
+   (<op> ^name process-missing-assigner
+         ^item <ass1>)
+}
+
+
+# Should only be used after the receiver has merged
+sp {comprehension*propose*process-missing-assigner*before*type
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^unfilled-receiver-item <rec>
+          ^unfilled-assigner-item <ass1>)
+   (<ass1> ^lt-lexical-assigner.before-type <struc-before>
+          -^failed merge)
+   (<rec> ^structure-type <struc-before>)
+-->
+   (write (crlf) |Before-type Assigner removal: | <ass1>)
+   (<s> ^operator <op> + =, >)
+   (<op> ^name process-missing-assigner
+         ^item <ass1>)
+}
+
+
+sp {comprehension*propose*process-missing-assigner*exclusive
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^unfilled-assigner-item <ass1>
+         -^unfilled-assigner-item.lt-lexical-assigner <ass2>)
+   (<ass1> ^lt-lexical-assigner.exclusive <ass2>)
+-->
+   (write (crlf) |Exclusive Assigner removal: | <ass1>)
+   (<s> ^operator <op> + =, >)
+   (<op> ^name process-missing-assigner
+         ^item <ass1>)
+}
+
+sp {comprehension*compare*process-missing-assigner
+   (state <s> ^name comprehension
+              ^operator <op1> +
+                        <op2> +)
+   (<op1> ^name process-missing-assigner)
+   (<op2> ^name << next-word >>)
+-->
+   (<s> ^operator <op1> > <op2>)
+}
+
+sp {comprehension*compare*process-missing-assigner*comprehend
+   (state <s> ^name comprehension
+              ^operator <op1> +
+                        <op2> +)
+   (<op1> ^name process-missing-assigner)
+   (<op2> ^name << process-phrase-end comprehend-word >>)
+-->
+   (<s> ^operator <op1> < <op2>)
+}
+sp {apply*process-missing-assigner*optional*remove
+   (state <s> ^operator <op>
+             -^segment.unfilled-receiver-item.structure-type unknown
+              ^segment <seg>)
+   (<seg> ^unfilled-assigner-item <ass1>)
+   (<op> ^name process-missing-assigner
+         ^item <ass1>)
+   (<ass1> ^lt-lexical-assigner.optional true
+           ^structure-type <stype>)
+-->
+   (write (crlf) |Remove assigner | <ass1> | type | <stype>)
+   (<seg> ^unfilled-assigner-item <ass1> -)
+}
+
+sp {apply*process-missing-assigner*required*fail
+   (state <s> ^operator <op>
+             -^segment.unfilled-receiver-item.structure-type unknown)
+   (<op> ^name process-missing-assigner
+         ^item <ass1>)
+   (<ass1> ^lt-lexical-assigner.required true
+           ^structure-type <stype>)
+-->
+   (write (crlf) |Failed to find a merge for | <ass1> | type | <stype>)
+   (<ass1> ^failed merge)
+}
+
+sp {apply*process-missing-assigner*use-default
+ #  :interrupt
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<seg> ^semantics <sem>
+          ^unfilled-assigner-item <ass1>
+         -^unfilled-receiver-item.structure-type unknown)
+   (<op> ^name process-missing-assigner
+         ^item <ass1>)
+   (<ass1> ^lt-lexical-assigner <lt>
+           ^structure-type <stype>
+           ^parent-structure <parent>)
+   (<lt> ^default <default>
+         ^semantic-structure <ss>)
+-->
+   (<sem> ^<ss> <default>)
+   (<parent> ^<stype> <default>)
+   (write (crlf) |Using | <default> | for | <stype> | for | <parent>)
+  # (<default> ^super-structure <parent>)
+}
+
+
+
+sp {apply*process-missing-assigner*unknown-receiver
+ #  :interrupt
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<seg> ^semantics <sem>
+          ^unfilled-assigner-item <ass1>
+          ^unfilled-receiver-item <uri>)
+   (<op> ^name process-missing-assigner
+         ^item <ass1>)
+   (<ass1> ^lt-lexical-assigner <lt>
+           ^structure-type <stype>
+           ^parent-structure <parent>)
+   (<uri> ^structure-type unknown
+          ^current-word.spelling <word>
+          ^lt-lexical-item <lli>)
+-->
+   (write (crlf) | Assuming unknown | <word> | is a | <stype>)
+   (<s> ^store-concept <lli>)
+   (<uri> ^structure-type unknown -
+                          <stype>)
+   (<lli> ^structure-type unknown -
+                          <stype>)
+}
+
+

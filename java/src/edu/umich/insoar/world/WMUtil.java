@@ -67,7 +67,7 @@ public class WMUtil
      * Updates the given Identifier so that it becomes: identifier ^attribute
      * value, using a IntWME
      */
-    public static void updateIntWME(Identifier identifier, String attribute, int value){
+    public static void updateIntWME(Identifier identifier, String attribute, long value){
         WMElement valueWME = identifier.FindByAttribute(attribute, 0);
 
         if (valueWME == null){
@@ -122,7 +122,7 @@ public class WMUtil
     {
         try
         {
-            Integer.parseInt(s);
+            Long.parseLong(s);
             return INTEGER_VAL;
         }
         catch (NumberFormatException e)

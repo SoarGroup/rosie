@@ -1,0 +1,114 @@
+#####################################################################
+#
+# check-for-occlusion parameters
+#
+#####################################################################
+
+# monitor-obj <obj> [REQUIRED]
+#   Must come from ^topstate.scene-monitor.object <obj>
+sp {check-for-occlusion*elaborate*monitor-obj
+   (state <s> ^name check-for-occlusion
+              ^superstate.operator.monitor-obj <obj>)
+-->
+   (<s> ^monitor-obj <obj>)
+}
+
+# report-to-superstate <bool> [OPTIONAL]
+#   If true, adds a ^object-occluded <bool> wme to the superstate
+#      and a ^occlusion-amount <num> wme to superstate range(0-1)
+#   [DEFAULT-VALUE] false
+sp {check-for-occlusion*elaborate*report-to-superstate*copy
+   (state <s> ^name check-for-occlusion
+              ^superstate.operator.report-to-superstate <bool>)
+-->
+   (<s> ^report-to-superstate <bool>)
+}
+
+sp {check-for-occlusion*elaborate*report-to-superstate*default
+   (state <s> ^name check-for-occlusion
+              ^superstate.operator <op>)
+   (<op> -^report-to-superstate)
+-->
+   (<s> ^report-to-superstate false)
+}
+
+# report-to-topstate <bool> [OPTIONAL]
+#  If true, the given monitor-obj will be modified to reflect 
+#     an update in the occlusion-time and is-occluded variables
+#  [DEFAULT-VALUE] true
+
+sp {check-for-occlusion*elaborate*report-to-topstate*copy
+   (state <s> ^name check-for-occlusion
+              ^superstate.operator.report-to-topstate <bool>)
+-->
+   (<s> ^report-to-topstate <bool>)
+}
+
+sp {check-for-occlusion*elaborate*report-to-topstate*default
+   (state <s> ^name check-for-occlusion
+              ^superstate.operator <op>)
+   (<op> -^report-to-topstate)
+-->
+   (<s> ^report-to-topstate true)
+}
+
+# Required agent-params from topstate
+
+sp {check-for-occlusion*elaborate*agent-params*occlusion-check-period
+   (state <s> ^name check-for-occlusion
+              ^topstate.agent-params.occlusion-check-period <p>)
+-->
+   (<s> ^occlusion-check-period <p>)
+}
+
+sp {check-for-occlusion*elaborate*agent-params*occlusion-threshold
+   (state <s> ^name check-for-occlusion
+              ^topstate.agent-params.occlusion-threshold <t>)
+-->
+   (<s> ^occlusion-threshold <t>)
+}
+
+# Candidate-set
+# 2 cases: one when there is a perception object (partial occlusion, must ignore)
+#			and one where there is no such perception object
+
+sp {check-for-occlusion*propose*occlusion-command*no-perception-obj
+   (state <s> ^name check-for-occlusion
+              ^monitor-obj <obj>)
+   (<obj> ^belief-obj.id <id>
+         -^perception-obj)
+-->
+   (<s> ^candidate-set <cand>)
+   (<cand> ^type combine
+           ^a <arm>
+           ^a <perc-objs>)
+   (<arm> ^type node
+          ^id arm)
+   (<perc-objs> ^type has-property
+		       ^a.type all_nodes
+		       ^property-name object-source 
+		       ^property-value perception)
+}
+
+# Make sure there is not self occlusion
+sp {check-for-occlusion*propose*occlusion-command*with*perception-obj
+   (state <s> ^name check-for-occlusion
+              ^monitor-obj <obj>)
+   (<obj> ^belief-obj.id <id>
+          ^perception-obj.id <perc-id>)
+-->
+   (<s> ^candidate-set <cand>)
+   (<cand> ^type combine
+           ^a <arm>
+           ^a <filtered-p-objs>)
+   (<arm> ^type node
+          ^id arm)
+   (<filtered-p-objs> ^type remove_node
+                ^a <perc-objs>
+                ^b <node>)
+   (<perc-objs> ^type has-property
+		       ^a.type all_nodes
+		       ^property-name object-source 
+		       ^property-value perception)
+   (<node> ^type node ^id <perc-id>)
+}

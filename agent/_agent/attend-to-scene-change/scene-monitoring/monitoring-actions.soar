@@ -1,0 +1,92 @@
+##################################################################
+#
+# Monitoring for need to copy an object
+#
+##################################################################
+sp {topstate*scene-monitor*mark-for-copying*apply*any-op*copy_node
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^scene-monitor.object <obj>
+              ^svs.command <cmd>)
+   (<obj> ^mark-for-copying true
+          ^perception-obj.id <perc-id>
+          ^belief-obj.id <bel-id>)
+-->
+   (<cmd> ^copy_node <copy>)
+   (<copy> ^source-id <perc-id>
+           ^dest-id <bel-id>
+           ^adjust true)
+   (<obj> ^copy-command <copy>)
+}
+
+sp {topstate*scene-monitor*mark-for-copying*apply*any-op*debug-report
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^scene-monitor.object <obj>
+              ^svs.command <cmd>
+              ^agent-params.debug-perception true)
+   (<obj> ^mark-for-copying true
+          ^perception-obj
+          ^wm-obj.id <id>)
+-->
+   (write |Updating Object | <id>)
+}
+   
+sp {topstate*scene-monitor*mark-for-copying*apply*any-op*cleanup
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^scene-monitor.object <obj>
+              ^svs.command <cmd>)
+   (<obj> ^mark-for-copying true
+          ^copy-command <copy>)
+   (<copy> ^status success)
+-->
+   (<obj> ^mark-for-copying true -
+          ^copy-command <copy> -)
+}
+
+
+##################################################################
+#
+# Monitoring for an object that needs deleted
+#
+##################################################################
+sp {topstate*scene-monitor*mark-for-deletion*apply*any-op*delete*from*svs
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^scene-monitor.object <obj>
+              ^svs.command <cmd>)
+   (<obj> ^mark-for-deletion true
+          ^belief-obj.id <id>)
+-->
+   (<cmd> ^del_node.id <id>)
+}
+
+sp {topstate*scene-monitor*mark-for-deletion*apply*any-op*delete*from*wm
+  (state <s> ^topstate <s>
+              ^operator <o>
+              ^scene-monitor.object <obj>
+              ^object <wm-obj>)
+   (<obj> ^mark-for-deletion true
+          ^wm-obj <wm-obj>)
+-->
+   (<s> ^object <wm-obj> -)
+}
+
+sp {topstate*scene-monitor*mark-for-deletion*elaborate*stop-extracting-relations*true
+   (state <s> ^topstate <s>
+              ^scene-monitor.object.mark-for-deletion true)
+-->
+   (<s> ^stop-extracting-relations true)
+}
+
+sp {topstate*scene-monitor*mark-for-deletion*apply*any-op*report
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^scene-monitor.object <obj>
+              ^agent-params.debug-perception true)
+   (<obj> ^mark-for-deletion true
+          ^wm-obj.id <id>)
+-->
+   (write |Deleting Object | <id>)
+}

@@ -1,0 +1,133 @@
+
+## Try word-phrase first..
+sp {comprehend-construction*propose*smem-construction-retrieval*structure-word-phrase
+   (state <s> ^name comprehend-construction
+              ^current-item <c-item>
+              ^prior-item <p-item>
+              ^segment.retrieved-stack <rs>
+             -^retrieved-lexical-item)
+   (<c-item> ^structure-type <up-type>
+             ^lt-lexical-item.spelling <up-word>)
+   (<p-item> ^lt-lexical-item.converts-to-receiver-structure <pick-type>
+             ^structure-type <pick-type>)
+  -{(<s> ^failed-retrieval <fr2>)
+    (<fr2> ^current-word <up-word>
+           ^prior-word <pick-type>)}
+-->
+   (<s> ^operator <o>)
+   (<o> ^name smem-construction-retrieval
+        ^current-structure <up-word>
+        ^prior-structure <pick-type>)}
+
+sp {comprehend-construction*propose*smem-construction-retrieval*structure-word-not-phrase
+   (state <s> ^name comprehend-construction
+              ^current-item <c-item>
+              ^prior-item <p-item>
+              ^segment.retrieved-stack <rs>
+             -^retrieved-lexical-item)
+   (<c-item> ^structure-type <up-type>
+             ^lt-lexical-item.spelling <up-word>)
+   (<p-item> -^lt-lexical-item.converts-to-receiver-structure
+              ^structure-type <pick-type>)
+  -{(<s> ^failed-retrieval <fr2>)
+    (<fr2> ^current-word <up-word>
+           ^prior-word <pick-type>)}
+-->
+   (<s> ^operator <o>)
+   (<o> ^name smem-construction-retrieval
+        ^current-structure <up-word>
+        ^prior-structure <pick-type>)}
+                         
+sp {comprehend-construction*propose*smem-construction-retrieval*structure-type-word
+   (state <s> ^name comprehend-construction
+              ^current-item <c-item>
+              ^prior-item <p-item>
+              ^segment.retrieved-stack <rs>
+             -^retrieved-lexical-item
+              ^failed-retrieval <fr>)
+   (<fr> ^current-word <up-word>
+         ^prior-word <pick-type>)
+   (<c-item> ^structure-type <up-type>
+             ^lt-lexical-item.spelling <up-word>)
+   (<p-item> ^lt-lexical-item.spelling <pick-word>
+             ^structure-type <pick-type>)
+  -{(<s> ^failed-retrieval <fr2>)
+    (<fr2> ^current-word <up-type>
+           ^prior-word <pick-word>)}
+-->
+   (<s> ^operator <o>)
+   (<o> ^name smem-construction-retrieval
+        ^current-structure <up-type>
+        ^prior-structure <pick-word>)}
+
+## Try type - type if previous fails..
+sp {comprehend-construction*propose*smem-construction-retrieval*structure-type-structure-type
+   (state <s> ^name comprehend-construction
+              ^current-item <c-item>
+              ^prior-item <p-item>
+             -^retrieved-lexical-item
+              ^failed-retrieval <fr>)
+   (<fr> ^current-word <up-type>
+         ^prior-word <pick-word>)
+  -{(<s> ^failed-retrieval <fr2>)
+    (<fr2> ^current-word <up-type>
+           ^prior-word <pick-type>)}
+   (<c-item> ^structure-type <up-type>)
+   (<p-item> ^structure-type <pick-type>
+             ^lt-lexical-item.spelling <pick-word>)
+-->
+   (<s> ^operator <o>)
+   (<o> ^name smem-construction-retrieval
+        ^current-structure <up-type>
+        ^prior-structure <pick-type>)}
+
+##### Apply
+
+sp {comprehend-construction*apply*smem-construction-retrieval*receiver
+   (state <s> ^operator <o>
+              ^smem.command <cmd>)
+   (<o> ^name smem-construction-retrieval
+        ^current-structure <up>
+        ^prior-structure <pick>)
+-->
+   (<cmd> ^query <x>)
+   (<x> ^current-word <up>
+        ^prior-word <pick>)
+}
+
+#### Success
+
+sp {comprehend-construction*apply*smem-construction-retrieval*success
+   (state <s> ^operator.name smem-construction-retrieval
+              ^superstate.segment.comprehension-structure <cs>
+              ^smem <smem>)
+   (<smem> ^result.retrieved <rli>
+           ^command <c>)
+   (<c> ^query <q>)
+   (<rli> ^spelling <sp>)
+-->
+   (write (crlf) |Successful retrieval of: | <sp>)
+   (<c> ^query <q> -)
+   (<s> ^retrieved-lexical-item <rli>
+        ^name comprehend-word
+        ^current-word <rli>)
+   (<cs> ^retrieved-lexical-item <rli>
+         ^successful-query <q>)
+}
+
+##### Failure
+
+sp {comprehend-word*apply*smem-construction-retrieval*fail
+   (state <s> ^superstate.operator <so>
+              ^operator.name << smem-construction-retrieval
+                                smem-lexical-retrieval-cw-pw
+                                smem-lexical-retrieval-cw-pw-type >>
+              ^smem <smem>)
+   (<smem> ^result.failure <t>
+           ^command <cmd>)
+   (<cmd> ^query <query>)
+-->
+   (write (crlf) |No construction item found in semantic memory.|)
+   (<s> ^failed-retrieval <query>)
+   (<cmd> ^query <query> -)
+}

@@ -5,6 +5,7 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -31,6 +32,8 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
 	private Identifier timeId = null;
 	private int stepNumber = 0;
 	private long startTime;
+	private long soarTime = 0;
+	private long percTime = 0;
 	
 	// Object being pointed to
 	private int pointedId = -1;
@@ -58,8 +61,9 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         	soarAgent.getAgent().AddOutputHandler(outputHandlerString, this, null);
         }
         
-        soarAgent.getAgent().RegisterForRunEvent(
-                smlRunEventId.smlEVENT_AFTER_OUTPUT_PHASE, this, null);
+       	soarAgent.getAgent().RegisterForRunEvent(
+               smlRunEventId.smlEVENT_BEFORE_INPUT_PHASE, this, null);
+        
         
         newLabels = new ArrayList<training_label_t>();
         
@@ -69,15 +73,31 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         lcm.subscribe("ROBOT_ACTION", this);
     }
     
+    public long getSoarTime(){
+    	return soarTime;
+    }
+    
     /*************************************************
      * runEventHandler
      * Runs every input phase to update the input link
      * with perceptual information (time, pointed obj) as well as
      * Send training labels to perception
      *************************************************/
+    long time = 0;
+
     public void runEventHandler(int eventID, Object data, Agent agent, int phase)
     {
-    	
+    	smlRunEventId runEventId = smlRunEventId.swigToEnum(eventID);
+    	if(runEventId == smlRunEventId.smlEVENT_BEFORE_INPUT_PHASE){
+    		time = TimeUtil.utime();
+    		updateInputLink(agent);
+    		if(InSoar.DEBUG_TRACE){
+    			System.out.println(String.format("%-20s : %d", "PERCEPTION CONNECTOR", (TimeUtil.utime() - time)/1000));
+    		}
+    	}
+    }
+    
+    public void updateInputLink(Agent agent){
     	Identifier inputLinkId = agent.GetInputLink();
     	// Update time information on the input link
     	if(timeId == null){
@@ -87,8 +107,10 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         stepNumber++;
         WMUtil.updateIntWME(timeId, "steps", stepNumber);
         long curTime = TimeUtil.utime();
-        WMUtil.updateIntWME(timeId, "seconds", (int)(curTime - startTime)/1000000);
-        WMUtil.updateIntWME(timeId, "microseconds", (int)(curTime - startTime));
+        soarTime = (long)(curTime - startTime);
+        WMUtil.updateIntWME(timeId, "seconds", soarTime / 1000000);
+        WMUtil.updateIntWME(timeId, "microseconds", soarTime);
+        WMUtil.updateIntWME(timeId, "perception-time", percTime);
         
         // Update pointed object
         WMUtil.updateIntWME(inputLinkId, "pointed-object", pointedId);
@@ -96,7 +118,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         // Send new training labels to perception
         if(newLabels.size() > 0){
             training_data_t trainingData = new training_data_t();
-        	trainingData.utime = TimeUtil.utime();
+        	trainingData.utime = soarTime;
         	trainingData.num_labels = newLabels.size();
         	trainingData.labels = new training_label_t[newLabels.size()];
         	for(int i = 0; i < newLabels.size(); i++){
@@ -165,11 +187,11 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
     	String type = WMUtil.getValueOfAttribute(rootId, "type", "Error: No ^type attribute");
     	if(type.equals("delete")){
     		String deleteId = WMUtil.getValueOfAttribute(rootId, "id", "Error (delete): No ^id attribute");
-    		world.removeObject(Integer.parseInt(deleteId));
+    		//world.removeObject(Integer.parseInt(deleteId));
     	} else if(type.equals("merge")){
     		String originalId = WMUtil.getValueOfAttribute(rootId, "original-id", "Error (merge): No ^original-id");
     		String copyId = WMUtil.getValueOfAttribute(rootId, "copy-id", "Error (merge): No ^copy-id");
-    		world.mergeObject(Integer.parseInt(originalId), Integer.parseInt(copyId));
+    		//world.mergeObject(Integer.parseInt(originalId), Integer.parseInt(copyId));
     	} else if(type.equals("move")){
     		String moveId = WMUtil.getValueOfAttribute(rootId, "id", "Error (move): No ^id attribute");
     		Identifier posId = WMUtil.getIdentifierOfAttribute(rootId, "pos", "Error (moidfy-scene.move): No pos");
@@ -179,7 +201,22 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
 	        		posId, "y", "Error (modify-scene.move): No ^y attribute"));
 	        double z = Double.parseDouble(WMUtil.getValueOfAttribute(
 	        		posId, "z", "Error (modify-scene.move): No ^z attribute"));
-	        world.moveObject(Integer.parseInt(moveId), x, y, z);
+	        //world.moveObject(Integer.parseInt(moveId), x, y, z);
+    	} else if(type.equals("confirm")){
+    		String objId = WMUtil.getValueOfAttribute(rootId, "id", "Error (confirm): No ^id attribute");
+    		//world.confirmObject(Integer.parseInt(objId));
+    	} else if(type.equals("link")){
+    		Set<String> sourceIds = WMUtil.getAllValuesOfAttribute(rootId, "source-id");
+    		if(sourceIds.size() == 0){
+    			rootId.CreateStringWME("status", "error");
+    			System.err.println("Error (link): No ^source-id attribute");
+    		}
+    		String destId = WMUtil.getValueOfAttribute(rootId, "dest-id", "Error (link): No ^dest-id attribute");
+    		if(destId.contains("bel-")){
+    			destId = destId.substring(4);
+    		}
+    		world.linkObjects(sourceIds, destId);
+    		
     	} else {
     		rootId.CreateStringWME("status", "error");
     		return;
@@ -196,12 +233,16 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
     	if(channel.equals("OBSERVATIONS")){
             observations_t obs = null;
             try {
+            	long time = 0;
+            	if(InSoar.DEBUG_TRACE){
+            		time = TimeUtil.utime();
+            	}
                 obs = new observations_t(ins);
+                percTime = obs.utime;
                 pointedId = obs.click_id;
                 //if(armStatus.equals("wait")){
                     world.newObservation(obs);
                 //}
-                world.sendObservation();
             }
             catch (IOException e){
                 e.printStackTrace();
@@ -223,7 +264,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         clearDataButton.addActionListener(new ActionListener(){
         	public void actionPerformed(ActionEvent e){
         		perception_command_t cmd = new perception_command_t();
-        		cmd.utime = TimeUtil.utime();
+        		cmd.utime = soarTime;
         		cmd.command = "CLEAR_CLASSIFIERS";
                 LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
         	}
@@ -235,7 +276,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         loadDataButton.addActionListener(new ActionListener(){
         	public void actionPerformed(ActionEvent e){
         		perception_command_t cmd = new perception_command_t();
-        		cmd.utime = TimeUtil.utime();
+        		cmd.utime = soarTime;
         		cmd.command = "LOAD_CLASSIFIERS";
                 LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
         	}
@@ -247,7 +288,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         saveDataButton.addActionListener(new ActionListener(){
         	public void actionPerformed(ActionEvent e){
         		perception_command_t cmd = new perception_command_t();
-        		cmd.utime = TimeUtil.utime();
+        		cmd.utime = soarTime;
         		cmd.command = "SAVE_CLASSIFIERS";
                 LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
         	}

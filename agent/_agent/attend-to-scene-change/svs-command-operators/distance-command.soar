@@ -1,0 +1,75 @@
+###############################################################################
+#
+# distance-command
+# (<s> ^operator <o>)
+# (<o> ^name distance-command
+#      ^object-a <ida>
+#      ^object-b <idb>
+#      ^distance-type <type>)
+# 
+# The id's given should be svs id's
+# The distance-type is optional, either centroid_distance or distance (between hulls)
+#     Default is centroid_distance
+#
+# Returns either ^distance-command.result # or ^distance-command.result none
+###############################################################################
+
+sp {anystate*distance-command*elaborate*used-distance-type*default
+   (state <s> ^operator <o> +)
+   (<o> ^name distance-command
+       -^distance-type)
+-->
+   (<o> ^used-distance-type centroid_distance)
+}
+
+sp {anystate*distance-command*elaborate*used-distance-type*copy
+   (state <s> ^operator <o> +)
+   (<o> ^name distance-command
+        ^distance-type <type>)
+-->
+   (<o> ^used-distance-type <type>)
+}
+
+sp {anystate*distance-command*apply*create-distance-filter
+   (state <s> ^operator <o>
+              ^topstate.svs.command <cmd>)
+   (<o> ^name distance-command
+        ^object-a <ida>
+        ^object-b <idb>
+        ^used-distance-type <type>)
+-->
+   (<cmd> ^extract_once <distance>)
+   (<distance> ^type <type>
+               ^a <obja>
+               ^b <objb>)
+   (<obja> ^type node
+           ^id <ida>)
+   (<objb> ^type node
+           ^id <idb>)
+   (<s> ^distance-filter <distance>)
+}
+
+sp {anystate*distance-command*apply*distance-command*cleanup
+   (state <s> ^operator.name distance-command
+              ^distance-filter <dist>
+              ^topstate.svs.command <cmd>)
+   (<cmd> ^extract_once <dist>)
+   (<dist> ^result <foo>)
+-->
+   (<cmd> ^extract_once <dist> -)
+}
+
+sp {anystate*distance-command*apply*create-result*success
+   (state <s> ^operator.name distance-command
+              ^distance-filter.result.record.value <dist>)
+-->
+   (<s> ^distance-command.result <dist>)
+}
+
+sp {anystate*distance-command*apply*create-result*failure
+   (state <s> ^operator.name distance-command
+              ^distance-filter.result <res>)
+   (<res> -^record.value)
+-->
+   (<s> ^distance-command.result none)
+}

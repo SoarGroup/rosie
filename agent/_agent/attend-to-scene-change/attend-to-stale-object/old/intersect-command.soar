@@ -1,0 +1,52 @@
+# Here the object is only partially occluded (less than half), so we should be able to see something
+# If there are no objects intersecting it, then it is probably actually gone
+# Whereas if an object does intersect it, that could be a candidate for a match, so keep it around
+
+sp {attend-to-stale-object*propose*intersect-command
+   (state <s> ^name attend-to-stale-object
+              ^check-for-intersection true
+              ^monitor-obj.belief-obj.id <id>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name intersect-command
+        ^category perception
+        ^object-id <id>
+        ^candidate-set <perc-objs>)
+   (<perc-objs> ^type has-property
+                ^a.type all_nodes
+                ^property-name object-source
+                ^property-value perception)
+}
+
+sp {attend-to-stale-object*apply*intersect-command*not*intersected*delete
+   (state <s> ^name attend-to-stale-object
+              ^operator.name intersect-command
+              ^intersect-command.result none
+              ^monitor-obj <obj>)
+-->
+   (<obj> ^mark-for-deletion true)
+}
+
+sp {attend-to-stale-object*apply*intersect-command*intersected*keep
+   (state <s> ^name attend-to-stale-object
+              ^operator.name intersect-command
+              ^intersect-command.result <> none
+              ^monitor-obj.differences <diffs>
+              ^io.input-link.time.seconds <cur-t>
+              ^occlusion-check-period <period>)
+-->
+   (<diffs> ^is-occluded true
+            ^recheck-occlusion-time (+ <cur-t> <period>))
+}
+
+sp {attend-to-stale-object*apply*intersect-command*intersected*remove*old-info
+   (state <s> ^name attend-to-stale-object
+              ^operator.name intersect-command
+              ^intersect-command.result <> none
+              ^monitor-obj.differences <diffs>)
+   (<diffs> ^is-occluded true
+            ^recheck-occlusion-time <t>)
+-->
+   (<diffs> ^is-occluded true -
+            ^recheck-occlusion-time <t> -)
+}

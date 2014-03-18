@@ -1,0 +1,44 @@
+sp {termination-processing*propose*check-failure
+   (state <s> ^name termination-processing
+              ^checked-unfilled-receivers true
+              ^checked-unfilled-assigners true)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name check-failure)
+}
+
+sp {apply*check-failure*failure
+   (state <s> ^operator <op>
+              ^segment <sp>
+             # ^top-state <ts>
+              ^failed <item>)
+   (<op> ^name check-failure)
+  # (<ts> ^current-sentence-number <csn>)
+   #       ^failure-count <fc>)
+   (<sp> ^original-sentence <cs>)
+-->
+   (write (crlf) |Parse FAILED.|)
+   (<sp> ^processed-terminator true)
+   (<cs> ^processed-sentence true)
+ #  (<ts> ^terminated-sentence <csn>
+  #       ^failure-count <fc> - (+ <fc> 1))
+  # (interrupt)
+}
+
+sp {apply*check-failure*success
+   (state <s> ^operator <op>
+              ^segment <sp>
+         #    ^top-state <ts>
+             -^failed <item>)
+   (<op> ^name check-failure)
+  # (<ts> ^current-sentence-number <csn>
+   #      ^success-count <sc>)
+   (<sp> ^original-sentence <cs>)
+-->
+   (write (crlf) |Parse SUCCEEDED.|)
+   (<sp> ^processed-terminator true)
+   (<cs> ^processed-sentence true)
+  # (<ts> ^terminated-sentence <csn>
+   #      ^success-count <sc> -
+    #                    (+ <sc> 1))
+}

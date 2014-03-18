@@ -1,0 +1,64 @@
+sp {evaluate-stability*propose*mark-unstable
+   (state <s> ^name evaluate-stability
+              ^obj-is-stable false
+              ^monitor-obj <obj>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name mark-unstable
+        ^monitor-obj <obj>)
+}
+
+sp {evaluate-stability*apply*mark-unstable*reset*timers
+   (state <s> ^name evaluate-stability
+              ^operator <o>
+              ^io.input-link.time.seconds <cur-t>
+              ^topstate.agent-params.stability-check-duration <dur>)
+   (<o> ^name mark-unstable
+        ^monitor-obj <obj>)
+   (<obj> ^stability-check-time <old-t>
+          ^number-checks <num>)
+-->
+   (<obj> ^stability-check-time <old-t> -
+          ^stability-check-time (+ <cur-t> <dur>)
+          ^number-checks <num> -
+          ^number-checks (+ <num> 1))
+}
+
+sp {evaluate-stability*apply*mark-unstable*remove*filters
+   (state <s> ^name evaluate-stability
+              ^operator <o>
+              ^topstate.svs.command <cmd>)
+   (<o> ^name mark-unstable
+        ^monitor-obj <obj>)
+   (<obj> ^perception-obj.id <id>
+          ^position-monitor <old-pos>
+          ^volume-monitor <old-vol>)
+-->
+   (<cmd> ^extract <old-pos> -
+          ^extract <old-vol> -)
+   (<obj> ^position-monitor <old-pos> -
+          ^volume-monitor <old-vol> -)   
+}
+
+sp {evaluate-stability*apply*mark-unstable*reset*filters
+   (state <s> ^name evaluate-stability
+              ^operator <o>
+              ^topstate.svs.command <cmd>)
+   (<o> ^name mark-unstable
+        ^monitor-obj <obj>)
+   (<obj> ^perception-obj.id <id>)
+-->
+   (<cmd> ^extract <pos>)
+   (<pos> ^type monitor_position
+          ^a <pa>)
+   (<pa> ^type node
+         ^id <id>)
+   (<obj> ^position-monitor <pos>)
+   
+   (<cmd> ^extract <vol>)
+   (<vol> ^type monitor_volume
+          ^a <va>)
+   (<va> ^type node
+         ^id <id>)
+   (<obj> ^volume-monitor <vol>)
+}

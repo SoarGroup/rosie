@@ -1,0 +1,152 @@
+# Rules that handle when an action-command is sent by the instructor
+
+# Proposal
+sp {interpret-message*propose*action-command
+   (state <s> ^name interpret-message
+   	      ^instructor-message <msg>
+	      -^new-segment-info
+	      -^modify-segment-info)
+   (<msg> ^type verb-command)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name action-command
+   	^message <msg>)
+}
+
+#verb description for game
+###############################################
+#
+# verb-description
+#	move 1 <prep> 2
+#
+#
+###############################################
+sp {interpret-message*apply*action-command*games
+   (state <s> ^name interpret-message
+              ^topstate.current-game.learning.type action
+   	          ^operator <o>)        
+	(<o> ^name action-command
+   	     ^message.information.verb <vcomm>)
+   (<vcomm> ^word <verb>
+            ^direct-object <do>)
+   (<do> ^object.word <p2> ^relation <r>)
+   (<r> ^|p2|.object.word <p3> ^word <prep>)
+-->
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type verb-name-message
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<params> ^verb-name <verb> ^verb-prep <prep> ^a (int <p2>) ^b (int <p3>))
+   (<sat> ^dialog-event.type game)
+}
+#(I29 ^id 2 ^verb-command V57)
+#  (V57 ^verb I24)
+#    (I24 ^direct-object D14 ^word move)
+#      (D14 ^object I22 ^relation R457)
+#        (I22 ^specifier none ^word |1|)
+#        (R457 ^p1 P425 ^p2 P426 ^word on)
+#          (P425 ^object I22)
+#          (P426 ^object I23)
+#            (I23 ^specifier none ^word |2|)
+###############################################
+#
+# action-command
+#	move the red object to the right of the pantry.
+#
+#
+###############################################
+
+sp {interpret-message*apply*action-command
+   (state <s> ^name interpret-message
+   	      ^operator <o>)
+   (<o> ^name action-command
+   	^message.information <vcomm>)
+   (<vcomm> -^verb.word << done find >>)
+  -{(<s> ^topstate.current-game.learning <l>)
+    (<l> -^interaction true)}
+-->
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>)
+   (<p> ^type action-command
+   	^parameters <params>
+	^satisfaction <sat>)
+   (<sat> ^action-event <ae>)
+   (<ae> ^type <vcomm>)
+   (<params> ^indexable <i>)
+   (<i> ^type action-command
+   	^lexical <vcomm>)
+}
+
+###############################################
+# find the green block
+###############################################
+sp {interpret-message*apply*action-command*find
+   (state <s> ^name interpret-message
+   	      ^operator <o>)
+   (<o> ^name action-command
+   	^message.information <vcomm>)
+   (<vcomm> ^verb <verb>)
+   (<verb> ^word find
+           ^direct-object <obj>)
+  -{(<s> ^topstate.current-game.learning <l>)
+    (<l> -^interaction true)}
+-->
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>)
+   (<p> ^type action-command
+   	^parameters <params>
+	^satisfaction <sat>)
+   (<sat> ^action-event.type find)
+   (<params> ^verb <verb> 
+             ^object-desc <obj>)
+}
+
+
+###################################################
+#
+# you are done
+#
+###################################################
+
+sp {interpret-message*apply*action-command*done
+   (state <s> ^name interpret-message
+   	      ^operator <o>
+	      ^topstate <ts>)
+   (<ts> ^interaction.stack.segment.next <seg>)
+   (<o> ^name action-command
+   	^message.information <vcomm>)
+   (<vcomm> ^verb.word done)
+   (<seg> ^purpose.satisfaction <sat>)
+   (<sat> ^action-event <ae>)
+-->
+   (<s> ^modify-segment-info <info>)
+   (<info> ^segment <seg>
+   	   ^modification <m>)
+   (<m> ^type satisfaction
+   	^delete <delete>
+	^add <add>)
+   (<delete> ^action-event <ae>)
+   (<add> ^learning-event <ae>)
+}
+
+###################################################
+#
+# example execution
+#
+###################################################
+
+sp {interpret-message*apply*action-command*example*execution
+   (state <s> ^name interpret-message
+   	      ^operator <o>
+	      ^topstate <ts>)
+   (<ts> ^interaction.stack.segment.next <seg>)
+   (<o> ^name action-command
+   	^message.information <vcomm>)
+   (<vcomm> ^verb.word <any>)
+   (<seg> ^purpose.satisfaction <sat>)
+   (<sat> ^action-event <ae>)
+-->
+   (<ae> ^status learning)
+}

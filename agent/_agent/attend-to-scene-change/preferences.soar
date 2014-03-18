@@ -1,0 +1,93 @@
+# Ordering of scene change operators
+
+# stale-object is first
+# evaluate stability is whenever
+# evaluate-new-object is after stale-object and shrunken object (in case the new obj is part of an existing one)
+# do shrunken object before moved (in case it moved because it broke into fragments)
+# do stale/stability/new-object before moved/grown object
+# do recheck-occlusion last
+
+sp {anystate*scene-change*prefer*high*attention-priority*over*low
+   (state <s> ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name attend-to-scene-change
+         ^attention-priority high)
+   (<o2> ^name attend-to-scene-change
+         ^attention-priority low)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {anystate*scene-change*prefer*stale*over*all
+   (state <s> ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name attend-to-scene-change
+         ^attention-priority <p>
+         ^change.type stale-object)
+   (<o2> ^name attend-to-scene-change
+         ^attention-priority <p>
+         ^change.type <> stale-object)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {anystate*scene-change*prefer*shrunken-object*over*new-changes
+   (state <s> ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name attend-to-scene-change
+         ^attention-priority <p>
+         ^change.type shrunken-object)
+   (<o2> ^name attend-to-scene-change
+         ^attention-priority <p>
+         ^change.type << new-object grown-object moved-object >>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {anystate*scene-change*prefer*stale-new*over*changes
+   (state <s> ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name attend-to-scene-change
+         ^attention-priority <p>
+         ^change.type << stale-object stability-timer-satisfied new-object >>)
+   (<o2> ^name attend-to-scene-change
+         ^attention-priority <p>
+         ^change.type << grown-object moved-object >>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {anystate*scene-changes*prefer*properties*over*copy*feature
+   (state <s> ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name attend-to-scene-change
+         ^attention-priority <p>
+         ^change.type << changed-property higher-confidence new-property >>)
+   (<o2> ^name attend-to-scene-change
+         ^attention-priority <p>
+         ^change.type different-feature-val)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {anystate*scene-change*prefer*others*over*recheck-occlusion
+   (state <s> ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name attend-to-scene-change
+         ^attention-priority <p>
+         ^change.type <> recheck-occlusion)
+   (<o2> ^name attend-to-scene-change
+         ^attention-priority <p>
+         ^change.type recheck-occlusion)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {anystate*scene-change*reject*if*held
+   (state <s> ^operator <o> +)
+   (<o> ^name attend-to-scene-change
+        ^change.object.wm-obj.held true)
+-->
+   (<s> ^operator <o> -)
+}
+

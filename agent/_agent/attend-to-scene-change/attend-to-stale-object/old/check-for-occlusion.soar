@@ -1,0 +1,61 @@
+# See attend-to-scene-change.svs-command-operators.check-for-occlusion
+
+sp {attend-to-stale-object*propose*check-for-occlusion
+   (state <s> ^name attend-to-stale-object
+              ^monitor-obj <obj>
+             -^check-for-intersection)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name check-for-occlusion
+        ^category perception
+        ^monitor-obj <obj>
+        ^report-to-superstate true
+        ^report-to-topstate false)
+}
+
+sp {attend-to-stale-object*apply*check-for-occlusion*not-occluded*mark-for-deletion
+   (state <s> ^name attend-to-stale-object
+              ^operator.name check-for-occlusion
+              ^object-occluded false
+              ^monitor-obj <obj>)
+-->
+   (<obj> ^mark-for-deletion true)
+}
+
+# Definitely occluded, don't do additional check
+sp {attend-to-stale-object*apply*check-for-occlusion*occluded*add*info
+   (state <s> ^name attend-to-stale-object
+              ^operator.name check-for-occlusion
+              ^object-occluded true
+              ^occlusion-amount > .5
+              ^monitor-obj.differences <diffs>
+              ^io.input-link.time.seconds <cur-t>
+              ^occlusion-check-period <period>)
+-->
+   (<diffs> ^is-occluded true
+            ^recheck-occlusion-time (+ <cur-t> <period>))
+}
+
+sp {attend-to-stale-object*apply*check-for-occlusion*occluded*remove*old*info
+   (state <s> ^name attend-to-stale-object
+              ^operator.name check-for-occlusion
+              ^object-occluded true
+              ^occlusion-amount > .5
+              ^monitor-obj.differences <diffs>)
+   (<diffs> ^is-occluded true
+            ^recheck-occlusion-time <t>)
+-->
+   (<diffs> ^is-occluded true -
+            ^recheck-occlusion-time <t> -)
+}
+
+
+# The object is less than half occluded, we should do an additional check
+sp {attend-to-stale-object*apply*check-for-occlusion*mark*check-for-intersection
+   (state <s> ^name attend-to-stale-object
+              ^operator.name check-for-occlusion
+              ^object-occluded true
+              ^occlusion-amount <= .5)
+-->
+   (<s> ^check-for-intersection true)
+}

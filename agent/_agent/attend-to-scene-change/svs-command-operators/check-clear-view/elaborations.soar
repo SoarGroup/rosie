@@ -1,0 +1,72 @@
+##############################################################
+#
+# PARAMETERS
+#
+###############################################################
+
+# object-id <svs-id> [REQUIRED]
+#   The svs id of the object to check a clear view for
+sp {check-clear-view*elaborate*belief-id
+   (state <s> ^name check-clear-view
+              ^superstate.operator.object-id <id>)
+-->
+   (<s> ^object-id <id>)
+}
+
+# candidate-set <node-filter> [OPTIONAL]
+#   The set of objects to check for possible obstruction
+#   [DEFAULT-VALUE] - all_nodes except object-id
+
+sp {check-clear-view*elaborate*candidate-set
+   (state <s> ^name check-clear-view
+              ^superstate.operator.candidate-set <cand>)
+-->
+   (<s> ^candidate-set <cand>)
+}
+
+sp {check-clear-view*elaborate*candidate-set*default
+   (state <s> ^name check-clear-view
+              ^superstate.operator <op>
+              ^object-id <id>)
+   (<op> -^candidate-set)
+-->
+   (<s> ^candidate-set <cand>)
+   (<cand> ^type remove_node
+           ^a.type all_nodes
+           ^b <node>)
+   (<node> ^type node
+           ^id <id>)
+}
+
+# Topstate parameters (thresholds)
+
+sp {check-clear-view*elaborate*distance*threshold
+   (state <s> ^name check-clear-view
+              ^topstate.agent-params.clear-view-distance <dist>)
+-->
+   (<s> ^distance-threshold <dist>)
+}
+
+sp {check-clear-view*occluded*mark*clear-object-view*false
+   (state <s> ^name check-clear-view
+              ^occlusion-command.result > .001) # basically zero + slight noise
+-->
+   (<s> ^clear-object-view false)
+}
+
+sp {check-clear-view*too-far*mark*clear-object-view*false
+   (state <s> ^name check-clear-view
+              ^distance-threshold <dist>
+              ^distance-command.result < <dist>)
+-->
+   (<s> ^clear-object-view false)
+}
+
+sp {check-clear-view*elaborate*clear-object-view
+   (state <s> ^name check-clear-view
+              ^occlusion-command.result <= .001
+              ^distance-threshold <dist>
+              ^distance-command.result >= <dist>)
+-->
+   (<s> ^clear-object-view true)
+}

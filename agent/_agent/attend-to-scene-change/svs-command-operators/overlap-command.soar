@@ -1,0 +1,66 @@
+###############################################################################
+#
+# overlap-command
+# (<s> ^operator <o>)
+# (<o> ^name overlap-command
+#      ^object-a <ida>
+#      ^object-b <idb>)
+# 
+# The id's given should be svs id's
+#
+# Returns either ^overlap-command.result # or ^overlap-command.result none
+###############################################################################
+
+sp {anystate*apply*overlap-command*create-overlap-filter
+   (state <s> ^operator <o>
+              ^topstate.svs.command <cmd>)
+   (<o> ^name overlap-command 
+        ^object-a <ida>
+        ^object-b <idb>)
+-->
+   (<cmd> ^extract_once <overlap>)
+   (<overlap> ^type overlap 
+               ^a <obja>
+               ^b <objb>)
+   (<obja> ^type node
+           ^id <ida>)
+   (<objb> ^type node
+           ^id <idb>)
+   (<s> ^overlap-filter <overlap>)
+}
+
+sp {anystate*apply*overlap-command*create-overlap-filter*cleanup
+   (state <s> ^operator.name overlap-command 
+              ^overlap-filter <over>
+              ^topstate.svs.command <cmd>)
+   (<cmd> ^extract_once <over>)
+   (<over> ^result <foo>)
+-->
+   (<cmd> ^extract_once <over> -)
+   (<s> ^overlap-filter <over> -)
+}
+
+sp {anystate*apply*overlap-command*create-overlap-filter*success
+   (state <s> ^operator <o>
+              ^overlap-filter.result.record.value <val>)
+   (<o> ^name overlap-command
+        ^object-a <a>
+        ^object-b <b>)
+-->
+   (<s> ^overlap-command.result <res>)
+   (<res> ^object-a <a> ^object-b <b>
+          ^overlap <val>)
+}
+
+sp {anystate*apply*overlap-command*create-overlap-filter*failure
+   (state <s> ^operator <o>
+              ^overlap-filter.result <res>)
+   (<o> ^name overlap-command
+        ^object-a <a>
+        ^object-b <b>)
+   (<res> -^record.value)
+-->
+   (<s> ^overlap-command.result <r>)
+   (<r> ^object-a <a> ^object-b <b>
+        ^overlap 0)
+}

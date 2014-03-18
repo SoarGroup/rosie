@@ -1,7 +1,5 @@
 package edu.umich.insoar.world;
 
-import java.util.ArrayList;
-
 import edu.umich.insoar.language.BOLTDictionary;
 import edu.umich.insoar.language.Parser;
 import sml.Identifier;
@@ -14,15 +12,20 @@ import sml.Identifier;
 public class Messages implements IInputLinkElement
 {
     // Identifier of the message on the input link
-    private ArrayList<Identifier> messageLL;
+    private Identifier messageId;
 
     // Latest message received
     private String latestMessage;
     
+    // Id of the latest message received
+    private static int latestMessageId;
+    
     // True if a new message was received since the last update
     private Boolean messageChanged;
     
+
     private BOLTDictionary dictionary;
+    
 
     private int messageNumber;
 
@@ -30,11 +33,10 @@ public class Messages implements IInputLinkElement
 
     public Messages(String dictionaryFile, String grammarFile){
         latestMessage = "";
+        latestMessageId = 0;   
         messageChanged = false;
         dictionary = new BOLTDictionary(dictionaryFile); 
         parser = new Parser(dictionary, grammarFile);
-        messageLL = new ArrayList<Identifier>();
-        messageNumber = 0;
     }
 
 
@@ -44,59 +46,68 @@ public class Messages implements IInputLinkElement
         if(!messageChanged){
             return;
         }
-        destroy();
         
-        latestMessage = latestMessage.toLowerCase().trim();
-        
-        for(int i = messageLL.size()-1; i >= 0; i--){
-        	messageLL.get(i).DestroyWME();
+        latestMessage = latestMessage.trim().toLowerCase();
+        if(latestMessage.length() == 0){
+        	messageChanged = false;
+        	return;
         }
-        messageLL.clear();
         
-        Identifier rootID = parentIdentifier.CreateIdWME("message");
-        rootID.CreateIntWME("id", messageNumber);
-        messageLL.add(rootID);
+        if(messageId != null){
+            messageId.DestroyWME();
+        }
         
-        Identifier firstID = rootID.CreateIdWME("word-list");
-        firstID.CreateStringWME("word", "*");
-        messageLL.add(firstID);
+        messageId = parentIdentifier.CreateIdWME("sentence");
+        messageNumber = latestMessageId;
+        messageId.CreateIntWME("sentence-number", messageNumber);
+        messageId.CreateStringWME("complete-sentence", latestMessage);
+        messageId.CreateStringWME("spelling", "*");
         
-        int i = 1;
+        char lastChar = latestMessage.charAt(latestMessage.length()-1);
+        char punct = '.';
+        if(lastChar == '.' || lastChar == '!' || lastChar == '?'){
+        	latestMessage = latestMessage.substring(0, latestMessage.length()-1);
+        	punct = lastChar;
+        }
         
-        String[] words = latestMessage.split("[^0-9a-zA-Z]");	// Only consider numbers + letters for words
+        Identifier nextID = messageId.CreateIdWME("next");
+        String[] words = latestMessage.split(" ");
         for(String word : words){
         	if(word.isEmpty()){
         		continue;
         	}
-        	Identifier nextID = messageLL.get(i++).CreateIdWME("next");
-        	nextID.CreateStringWME("word", word);
-        	messageLL.add(nextID);
+        	nextID.CreateStringWME("spelling", word);
+        	nextID = nextID.CreateIdWME("next");
         }
+        nextID.CreateStringWME("spelling", Character.toString(punct));
+        nextID.CreateStringWME("next", "nil");
+
         
-        char punc = latestMessage.trim().charAt(latestMessage.length()-1);
-        if(punc != '.' && punc != '?' && punc != '!'){
-        	punc = '.';
-        }
-        
-        Identifier lastID = messageLL.get(i++).CreateIdWME("next");
-        lastID.CreateStringWME("word", Character.toString(punc));
-        messageLL.add(lastID);
-        
+//        //messageId.CreateStringWME("type", latestMessage);
+//        if(!parser.getSoarSpeak(latestMessage, messageId)){
+//        	messageId.DestroyWME();
+//        	messageId = null;
+//        }
+        messageChanged = false;
     }
 
     @Override
     public synchronized void destroy()
     {
-    	for(int i = messageLL.size()-1; i >= 0; i--){
-        	messageLL.get(i).DestroyWME();
+        if(messageId != null){
+            messageId.DestroyWME();
+            messageId = null;
         }
-        messageLL.clear();
         messageChanged = false;
     }
     
     public synchronized void addMessage(String message){
-        messageNumber++;
+        latestMessageId++;
         latestMessage = message;
         messageChanged = true;
+    }
+    
+    public Integer getIdNumber(){
+    	return messageNumber;
     }
 }

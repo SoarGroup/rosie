@@ -1,0 +1,101 @@
+##################################################################
+#
+# Monitoring change in volumes
+#
+##################################################################
+sp {topstate*scene-monitor*elaborate*svs-command*compare-volume
+   (state <s> ^topstate <s>
+              ^scene-monitor.object <obj>
+              ^svs.command <cmd>)
+   (<obj> ^perception-obj.id <perc-id>
+          ^belief-obj.id <bel-id>
+          ^differences <diffs>)
+-->
+   (<cmd> ^extract <compare>)
+   (<compare> ^type compare-nodes
+              ^a <a>
+              ^b <b>
+              ^compare volume)
+   (<a> ^type node
+        ^id <perc-id>)
+   (<b> ^type node
+        ^id <bel-id>)
+   (<diffs> ^compare-volume <compare>)
+}
+
+sp {topstate*scene-monitor*elaborate*vol-diff
+   (state <s> ^topstate <s> 
+              ^scene-monitor.object.differences <diffs>)
+   (<diffs> ^compare-volume.result.record.value <val>)
+-->
+   (<diffs> ^vol-diff <val>)
+}
+
+sp {topstate*scene-monitor*elaborate*has-shrunk
+   (state <s> ^topstate <s>
+              ^scene-monitor.object.differences <diffs>
+              ^agent-params.vol-low-diff-threshold <low>)
+   (<diffs> ^vol-diff < <low>)
+-->
+   (<diffs> ^has-shrunk true)
+}
+
+sp {topstate*scene-monitor*elaborate*has-grown
+   (state <s> ^topstate <s>
+              ^scene-monitor.object.differences <diffs>
+              ^agent-params.vol-high-diff-threshold <high>)
+   (<diffs> ^vol-diff > <high>)
+-->
+   (<diffs> ^has-grown true)
+}
+    
+###########################################################################
+#
+# Change: shrunken-object
+#   If an object's volume drastrically lowers, investigate
+#
+##########################################################################
+sp {monitor-scene-changes*elaborate*scene-changes*shurnken-object
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes <sc>
+              ^scene-monitor.object <obj>)
+   (<obj> ^differences <diffs>)
+   (<diffs> ^has-shrunk true
+            ^is-occluded false)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type shrunken-object
+             ^object <obj>)
+}
+
+###########################################################################
+#
+# Change: grown-object
+#   If an object's volume drastrically increases, investigate
+#
+##########################################################################
+sp {monitor-scene-changes*elaborate*scene-changes*grown-object
+   (state <s> ^topstate <s>
+              ^io.input-link.self.action wait
+              ^io.input-link.time.seconds <t>
+              ^scene-monitor.scene-changes <sc>
+              ^scene-monitor.object <obj>)
+   (<obj> ^differences <diffs>)
+   (<diffs> ^has-grown true
+           -^recheck-grown-at > <t>)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type grown-object
+             ^object <obj>)
+}
+
+sp {topstate*elaborate*scene-changes*change-info*volume-changes
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes.change-info <info>)
+-->
+   (<info> ^change <grown-obj> <shrunk-obj>)
+   (<shrunk-obj> ^name shrunken-object
+                    ^op-name evaluate-shrunken-object)
+   (<grown-obj> ^name grown-object
+                   ^op-name evaluate-grown-object)
+}

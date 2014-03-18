@@ -1,0 +1,472 @@
+########################################################################
+# 
+# Elaborate: category (block or location)
+#
+########################################################################
+sp {topstate*elaborate*category-info
+   (state <s> ^topstate <s>)
+-->
+   (<s> ^object-category-info <info>)
+   (<info> ^table location
+           ^garbage location
+           ^pantry location
+           ^stove location
+           ^scale location
+           ^thermometer location
+           ^home location
+           ^goal location
+           ^open-spot location
+           ^bin-1 location
+           ^bin-2 location
+           ^bin-3 location
+           ^bin-4 location
+           ^grid1 location
+           ^grid2 location
+           ^grid3 location
+           ^grid4 location
+           ^grid5 location
+           ^grid6 location
+           ^grid7 location
+           ^grid8 location
+           ^grid9 location
+           ^grid10 location
+           ^grid11 location
+           ^grid12 location
+           ^grid-red location
+           ^grid-orange location
+           ^grid-yellow location
+           ^grid-green location
+           ^grid-blue location)
+}
+
+sp {topstate*elaborate*object*category
+   (state <s> ^topstate <s>
+              ^object-category-info <info>
+              ^object <obj>)
+   (<obj> ^property <prop>)
+   (<prop> ^name name
+           ^word <name>)
+   (<info> ^<name> <cat>)
+-->
+   (<obj> ^category <cat>)
+}
+
+sp {topstate*elaborate*object*category*default
+   (state <s> ^topstate <s>
+              ^object-category-info <info>
+              ^object <obj>)
+   (<obj> ^property <prop>)
+   (<prop> ^name name
+           ^word <name>)
+   (<info> -^<name>)
+-->
+   (<obj> ^category block)
+}
+
+#### as locations
+#sp {elaborate*objects*locations
+#   (state <s> ^topstate <s>)
+#   (<s> ^object <obj>)
+#   (<obj> ^property.word << table garbage pantry stove scale thermometer home bin1 bin2 bin3 grid1 grid2 grid3 grid4 grid5 grid6 grid7 grid8 grid9 grid10 grid11 grid12 grid-red grid-yellow grid-orange grid-blue grid-green >>)
+#-->
+#   (<obj> ^category location)
+#}
+#
+#### as blocks
+#sp {elaborate*objects*blocks
+#   (state <s> ^topstate <s>)
+#   (<s> ^object <obj>)
+#   (<obj> -^property.word << table garbage pantry stove scale thermometer home bin1 bin2 bin3 grid1 grid2 grid3 grid4 grid5 grid6 grid7 grid8 grid9 grid10 grid11 grid12 grid-red grid-yellow grid-orange grid-blue grid-green >>)
+#-->
+#   (<obj> ^category block)
+#}
+
+sp {elaborate*objects*is-bin*true
+   (state <s> ^topstate <s>)
+   (<s> ^object <obj>)
+   (<obj> ^property.word << bin-1 bin-2 bin-3 bin-4 bin-5 >>)
+-->
+   (<obj> ^is-bin true)
+}
+
+########################################################################
+#
+# Elaborate: belief-obj and perception-obj 
+#
+########################################################################
+sp {elaborate*object*belief-obj
+   (state <s> ^topstate <s>
+              ^object <obj>
+              ^svs.spatial-scene.child <bel-obj>)
+   (<obj> ^belief-id <bel-id>)
+   (<bel-obj> ^id <bel-id>)
+-->
+   (<obj> ^belief-obj <bel-obj>)
+}
+
+sp {elaborate*object*perception-obj
+   (state <s> ^topstate <s>
+              ^object <obj>
+              ^svs.spatial-scene.child <perc-obj>)
+   (<obj> ^id <id>)
+   (<perc-obj> ^object-source perception
+               ^id-as-integer <id>)
+-->
+   (<obj> ^perception-obj <perc-obj>)
+}
+
+######################################
+#
+# Pose and Bounding Box
+#
+######################################
+sp {elaborate*object*pose
+   (state <s> ^topstate <s>
+              ^io.input-link.objects.object <il-obj>
+              ^object <obj>)
+   (<il-obj> ^id <id>
+             ^pose <pose>)
+   (<obj> ^id <id>)
+-->
+   (<obj> ^pose <pose>)
+}
+
+sp {elaborate*object*bbox
+   (state <s> ^topstate <s>
+              ^io.input-link.objects.object <il-obj>
+              ^object <obj>)
+   (<il-obj> ^id <id>
+             ^bbox <pose>)
+   (<obj> ^id <id>)
+-->
+   (<obj> ^bbox <pose>)
+}
+
+#######################################
+#
+# Default Name
+#
+#######################################
+sp {elaborate*object*default*name
+   (state <s> ^topstate <s>
+              ^object <obj>)
+   (<obj> ^property <name>)
+   (<name> ^name name
+          -^value.word <> object)
+-->
+   (<name> ^value.word object)
+}   
+   
+sp {elaborate*object*shape*name
+   (state <s> ^topstate <s>
+              ^object <obj>)
+   (<obj> ^property <shape>
+          ^property <name>)
+   (<shape> ^name shape
+            ^word <l>)
+   (<name> ^name name)
+-->
+   (<name> ^value.word <l>)
+}
+
+######################################
+#
+# Confidences
+#
+######################################
+# Uses the confidence information to give a estimate of how accurate the visual label is
+sp {elaborate*visual-properties*confidences*high
+   (state <s> ^topstate <s>
+              ^object.property.value <value>)
+   (<value> ^confidence-value > .7)
+-->
+   (<value> ^confidence high)
+}
+
+sp {elaborate*visual-properties*confidences*medium
+   (state <s> ^topstate <s>
+              ^object.property.value <value>)
+   (<value> ^confidence-value <= .7 > .3)
+-->
+   (<value> ^confidence medium)
+}
+
+sp {elaborate*visual-properties*confidences*low
+   (state <s> ^topstate <s>
+              ^object.property.value <value>)
+   (<value> ^confidence-value < .3)
+-->
+   (<value> ^confidence low)
+}
+
+########################################
+#
+# Unambiguous words/labels
+#
+########################################
+
+sp {elaborate*object*property*word
+   (state <s> ^topstate <s>
+              ^object.property <prop>)
+   (<prop> ^value.word <word>)
+-->
+   (<prop> ^word <word>)
+}
+
+sp {elaborate*object*property*label
+   (state <s> ^topstate <s>
+              ^object.property <prop>)
+   (<prop> ^value.label <label>)
+-->
+   (<prop> ^label <label>)
+}
+
+#sp {elaborate*object*word*unambiguous
+#   (state <s> ^topstate <s>
+#              ^object.property <prop>)
+#   (<prop> ^value.word <word>
+#          -^value.word <> <word>)
+#-->
+#   (<prop> ^word <word>)
+#}
+#
+#sp {elaborate*object*word*using*label
+#   (state <s> ^topstate <s> 
+#              ^object.property <prop>)
+#   (<prop> ^label <label>
+#           ^value <value>)
+#   (<value> ^label <label>
+#            ^word <word>)
+#-->
+#   (<prop> ^word <word>)
+#}
+#
+#sp {elaborate*object*label*unambiguous
+#   (state <s> ^topstate <s>
+#              ^object.property <prop>)
+#   (<prop> ^value <val>
+#          -^value.label <> <label>)
+#   (<val> ^label <label>)
+#-->
+#   (<prop> ^label <label>)
+#}
+#
+## Choose the word with the highest confidence
+#sp {elaborate*object*label*high*confidence
+#   (state <s> ^topstate <s>
+#              ^object.property <prop>)
+#   (<prop> ^value <v1>)
+#   (<v1> ^label <label>
+#         ^confidence high)
+#   -{(<prop> ^value <v2>)
+#     (<v2> ^label <> <label>
+#           ^confidence high)}
+#-->
+#   (<prop> ^label <label>)
+#}
+#
+#sp {elaborate*object*label*medium*confidence
+#   (state <s> ^topstate <s>
+#              ^object.property <prop>)
+#   (<prop> ^value <v1>)
+#   (<v1> ^label <label>
+#         ^confidence medium)
+#   -{(<prop> ^value <v2>)
+#     (<v2> ^label <> <label>
+#           ^confidence << high medium >>)}
+#-->
+#   (<prop> ^label <label>)
+#}
+         
+########################################################################
+# 
+# Elaborate: held
+#
+########################################################################
+sp {apply*any-op*mark*held*issued
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^object <obj>
+              ^io.output-link.pick-up <pickup>)
+   (<pickup> ^object-id <id>)
+   (<obj> ^id <id>)
+-->
+   (<obj> ^held issued)
+}
+
+sp {apply*any-op*mark*held*true
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^object <obj>
+              ^io.input-link.self.action grab)
+   (<obj> ^held issued)
+-->
+   (<obj> ^held issued -
+          ^held true)
+}
+
+sp {apply*any-op*failure*remove*held
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^object <obj>
+              ^io.input-link.self.action failure)
+   (<obj> ^held <held>)
+-->
+   (<obj> ^held <held> -)
+}
+
+sp {apply*any-op*finished*drop*remove*held
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^object <obj>
+              ^io.input-link.self <self>)
+   (<self> ^action wait
+           ^prev-action drop)
+   (<obj> ^held true)
+-->
+   (<obj> ^held true -)
+}
+
+sp {apply*any-op*remove*held
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^object <obj>
+              ^io.input-link.self <self>)
+   (<self> ^action wait
+           ^grabbed-object <> <id>)
+   (<obj> ^id <id>
+          ^held true)
+-->
+   (<obj> ^held true -)
+}
+
+########################################################################
+# 
+# Elaborate: linguistic-desc
+#
+########################################################################
+sp {elaborate*object*linguistic-desc
+   (state <s> ^topstate <s>
+              ^object <obj>)
+-->
+   (<obj> ^linguistic-desc <desc>)
+}
+
+sp {elaborate*object*linguistic-desc*word
+   (state <s> ^topstate <s>
+              ^object <obj>)
+   (<obj> ^linguistic-desc <desc>
+          ^property <name>)
+   (<name> ^name name
+           ^word <word>)
+-->
+   (<desc> ^word <word>)
+}
+
+sp {elaborate*object*linguistic-desc*adjective
+   (state <s> ^topstate <s>
+              ^object <obj>)
+   (<obj> ^linguistic-desc <desc>
+          ^property <prop>)
+   (<prop> ^type << visual measurable >>
+           ^word <word>)
+   (<desc> -^word <word>)
+-->
+   (<desc> ^adjective <word>)
+}
+
+## elaborate closed/open
+sp {elaborate*object*state-property*open*closed
+   (state <s> ^topstate <s>
+   	      ^object <obj>)
+   (<obj> ^property <prop>)
+   (<prop> ^name door
+   	   ^label <val>)
+-->
+   (<s> ^<val> <obj>)
+}
+
+# copy closed/open
+sp {copy*state-property*open
+   (state <s> ^object <obj>
+	      ^superstate.open <obj>)
+-->
+   (<s> ^open <obj>)
+}
+
+sp {copy*state-property*closed
+   (state <s> ^object <obj>
+	      ^superstate.closed <obj>)
+-->
+   (<s> ^closed <obj>)
+}
+
+### elaborate on/off
+sp {elaborate*object*state-property*on*off
+   (state <s> ^topstate <s>
+   	      ^object <obj>)
+   (<obj> ^property <prop>)
+   (<prop> ^name heat
+   	   ^label <val>)
+-->
+   (<s> ^<val> <obj>)
+}
+
+sp {copy*state-property*on
+   (state <s> ^object <obj>
+	      ^superstate.on <obj>)
+-->
+   (<s> ^on <obj>)
+}
+
+sp {copy*state-property*off
+   (state <s> ^object <obj>
+	      ^superstate.off <obj>)
+-->
+   (<s> ^off <obj>)
+}
+
+### elaborate cooked
+sp {elaborate*object*cooked
+   (state <s> ^topstate <s>
+   	      ^object <obj>)
+   (<obj> ^property <prop>)
+   (<prop> ^name cooked
+   	   ^label true)
+-->
+   (<s> ^cooked <obj>)
+}
+
+sp {copy*state-property*cooked
+   (state <s> ^object <obj>
+	      ^superstate.cooked <obj>)
+-->
+   (<s> ^cooked <obj>)
+}
+   	  
+
+########################################################################
+#
+# Elaborate: smem-rep
+#
+########################################################################
+
+sp {elaborate*object*smem-rep*adjective
+   (state <s> ^topstate <s>
+              ^object <obj>)
+   (<obj> ^smem-rep <rep>
+          ^property.word <word>)
+-->
+   (<rep> ^adjective <word>)
+}
+
+sp {topstate*apply*any-op*store-in-smem
+   (state <s> ^topstate <s>
+              ^object <obj>
+              ^smem.command <cmd>)
+   (<obj> ^store-in-smem true
+          ^smem-rep <rep>)
+-->
+   (<cmd> ^store <rep>)
+   (<obj> ^store-in-smem true -)
+}
