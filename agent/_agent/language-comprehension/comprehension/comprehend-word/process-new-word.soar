@@ -33,6 +33,8 @@ sp {comprehend-word*propose*process-new-word*no-assigner
          ^word <cw>)
 }
 
+##################
+
 sp {comprehend-word*compare*process-new-word*before
    (state <s> ^name comprehend-word
               ^operator <op1> +
@@ -57,6 +59,18 @@ sp {comprehend-word*compare*process-new-word*before-type
    (<s> ^operator <op1> > <op2>)
 }
 
+sp {comprehend-word*compare*process-new-word*prefer-primitive
+   (state <s> ^name comprehend-word
+              ^operator <op1> +
+                        {<> <op1> <op2> } +)
+   (<op1> ^name process-new-word
+          ^assigner.primitive-structure true)
+   (<op2> ^name process-new-word
+          ^assigner.primitive-structure false)
+-->
+   (<s> ^operator <op1> > <op2>)
+}
+
 ## Should already know all of these
 sp {comprehend-word*reject*process-new-word*fixed-primitive-sets
    (state <s> ^name comprehend-word
@@ -70,7 +84,8 @@ sp {comprehend-word*reject*process-new-word*fixed-primitive-sets
 ########## Elaborate assigner with primitive or not
 
 sp {apply*process-new-word*elaborate*primitive-structure
-   (state <s> ^operator <op>)
+   :interrupt
+   (state <s> ^operator <op> +)
    (<op> ^name process-new-word
          ^assigner <ass>)
    (<ass> ^structure-type { <st> << V ADJ N ADV >> })
@@ -79,10 +94,11 @@ sp {apply*process-new-word*elaborate*primitive-structure
 }
 
 sp {apply*process-new-word*elaborate*primitive-structure*false
-   (state <s> ^operator <op>)
+   :interrupt
+   (state <s> ^operator <op> +)
    (<op> ^name process-new-word
          ^assigner <ass>)
-   (<ass> ^structure-type { <st> << DP VP NP >> })
+   (<ass> ^structure-type { <st> << DP VP NP PP >> })
 -->
    (<ass> ^primitive-structure false)
 }
@@ -105,7 +121,8 @@ sp {apply*process-new-word*assign*primitive
    (<cmd> ^store <nw>)
    (<nw> ^spelling <spell>
          ^structure-type <st>)
-   (<cs> ^retrieved-lexical-item <nw>)
+   (<cs> ^retrieved-lexical-item <nw>
+         ^new-word <nw>)
    (write (crlf) |I guess | <spell> | is a | <st>)
 }
 
@@ -125,7 +142,8 @@ sp {apply*process-new-word*assign*DP*after*D*after*D
    (<cmd> ^store <nw>)
    (<nw> ^spelling <spell>
          ^structure-type N) # could be an adjective
-   (<cs> ^retrieved-lexical-item <nw>)
+   (<cs> ^retrieved-lexical-item <nw>
+         ^new-word <nw>)
    (write (crlf) |I guess | <spell> | is a N|)
 }
 
@@ -145,7 +163,8 @@ sp {apply*process-new-word*assign*DP*not-after*D
    (<cmd> ^store <nw>)
    (<nw> ^spelling <spell>
          ^structure-type ADJ) # could be a proper noun
-   (<cs> ^retrieved-lexical-item <nw>)
+   (<cs> ^retrieved-lexical-item <nw>
+         ^new-word <nw>)
    (write (crlf) |I guess | <spell> | is a  ADJ|)
 }
 
@@ -165,12 +184,13 @@ sp {apply*process-new-word*assign*VP*no*V
    (<cmd> ^store <nw>)
    (<nw> ^spelling <spell>
          ^structure-type V) # could be a proper noun
-   (<cs> ^retrieved-lexical-item <nw>)
+   (<cs> ^retrieved-lexical-item <nw>
+         ^new-word <nw>)
    (write (crlf) |I guess | <spell> | is a V|)
 }
 
 
-### Unknown - no assigner. Could be a lone ADJ or a proper noun
+### Unknown - no assigner. Could be a lone ADJ, exclamation, or a proper noun
 
 sp {apply*process-new-word*assign*no-assigner
    (state <s> ^operator <op>
@@ -187,7 +207,8 @@ sp {apply*process-new-word*assign*no-assigner
          ^structure-type U
          ^object-feature unknown
          ^perceptual-feature <spell>)
-   (<cs> ^retrieved-lexical-item <nw>)
+   (<cs> ^retrieved-lexical-item <nw>
+         ^new-word <nw>)
    (write (crlf) |I guess | <spell> | is a unknown (U).|)
 }
 

@@ -4,15 +4,54 @@ sp {termination-processing*propose*create-new-adjective
              -^stored-message <sem>
               ^segment.semantics <sem>)
    (<sem> ^message-type adjective-definition
-          ^object-feature-instance <spell>)
+          ^object-feature-instance.spelling <spell>)
+   (<sem> ^predicate { <> shape <pred> })
 -->
    (<s> ^operator <op> + =, >)
    (<op> ^name create-new-adjective
+         ^semantic-structure <new>
          ^perceptual-feature (make-constant-symbol <spell>))
+   (<new> ^spelling <spell>
+          ^structure-type ADJ)
 }
+
+sp {termination-processing*propose*create-new-noun
+ #  :interrupt
+   (state <s> ^name termination-processing
+             -^stored-message <sem>
+              ^segment.semantics <sem>)
+   (<sem> ^message-type adjective-definition
+          ^object-feature-instance.spelling <spell>)
+   (<sem> ^predicate shape)
+-->
+   (<s> ^operator <op> + =, >)
+   (<op> ^name create-new-adjective
+         ^semantic-structure <new>
+         ^perceptual-feature (make-constant-symbol <spell>))
+   (<new> ^spelling <spell>
+          ^structure-type N)
+}
+
+sp {termination-processing*propose*create-new-adjective*seen-word-before-but-not-defined
+ #  :interrupt
+   (state <s> ^name termination-processing
+             -^stored-message <sem>
+              ^segment.semantics <sem>)
+   (<sem> ^message-type adjective-definition
+          ^object-feature-instance-head <ofih>)
+   (<ofih> ^spelling <spell>
+          -^object-feature
+          -^perceptual-feature)
+ -->
+   (<s> ^operator <op> + =, >)
+   (<op> ^name create-new-adjective
+         ^semantic-structure <ofih>
+         ^perceptual-feature (make-constant-symbol <spell>))  
+}
+
 sp {termination-processing*compare*create-new-adjective
    (state <s> ^name termination-processing
-              ^operator <op1> +
+              ^operator <op1> +s
                         <op2> +)
    (<op1> ^name create-new-adjective)
    (<op2> ^name print-semantics)
@@ -20,49 +59,36 @@ sp {termination-processing*compare*create-new-adjective
    (<s> ^operator <op1> > <op2>)
 }
 
-# but not shapes - those become nouns
+
 sp {termination-processing*apply*create-new-adjective
    (state <s> ^operator <op>
               ^segment.semantics <sem>
               ^smem.command <cmd>)
    (<op> ^name create-new-adjective
+         ^semantic-structure <new>
          ^perceptual-feature <pf>)
-   (<sem> ^predicate { <> shape <pred> })
+   (<sem> ^predicate <pred>)
+   (<new> ^structure-type <type>)
 -->
    (<sem> ^feature-value <pf>
           ^feature-type <pred>)
    (<s> ^stored-message <sem>)
-   (<cmd> ^store <nw>)
-   (<nw> ^spelling <spell>
-         ^structure-type ADJ
-         ^pos adjective
-         ^object-feature <pred>
-         ^perceptual-feature <pf>)
-   (write (crlf) |Create new adjective | <pf> | of type | <pred>)
+   (<cmd> ^store <new>)
+   (<new> ^object-feature <pred>
+          ^perceptual-feature <pf>)
+   (write (crlf) |Create new | <type> |: | <pf> | of type | <pred>)
 }
 
-sp {termination-processing*apply*create-new-adjective*shapes
+sp {termination-processing*apply*create-new-adjective*update-semantic-memory
    (state <s> ^operator <op>
-              ^segment.semantics <sem>
-              ^smem.command <cmd>)
-   (<op> ^name create-new-adjective)
-   (<sem> ^unknown <spell>
-          ^predicate shape)
+              ^segment.semantics.new-word <nw>)
+   (<op> ^name create-new-adjective
+         ^semantic-structure <new>)
+   (<nw> ^structure-type U)
+   (<new> ^structure-type <type>)
 -->
-   (<sem> ^object-feature-instance <x>
-          ^adj-assignment.name soar-assign
-          ^predicate shape)
-   (<x> ^shape <pf>) 
-   (<s> ^stored-message <sem>)
-   (<cmd> ^store <nw>)
-   (<nw> ^spelling <spell>
-         ^structure-type N
-         ^semantic-entity-type object
-         ^pos noun
-         ^number singular
-         ^object-feature shape
-         ^perceptual-feature <pf>)
-   (write (crlf) |Create new noun | <pf> | of type shape.|)
+   (<nw> ^structure-type U -
+                          <type>)
 }
 
 
