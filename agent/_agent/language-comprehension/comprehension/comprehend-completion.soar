@@ -17,8 +17,7 @@ sp {apply*comprehend-completion*remove-comprehension-structure*receiver
               ^segment <seg>)
    (<seg> ^comprehension-structure.unfilled-receiver-item <item>)
 -->
-   (<seg> ^unfilled-receiver-item <item>
-          ^receiver-list-item <item>)}
+   (<seg> ^unfilled-receiver-item <item>)}
 
 sp {apply*comprehend-completion*remove-comprehension-structure*assigner
    (state <s> ^operator.name comprehend-completion
@@ -65,10 +64,10 @@ sp {apply*comprehend-completion*create-receiver-item*init-retrieved-stack
    (<ss> ^comprehension-structure.unfilled-receiver-item <item>
         -^retrieved-stack <x>)
 -->
+   (write (crlf) |Initialize retrieved-stack with | <item>)
    (<ss> ^retrieved-stack <stack>)
    (<stack> ^item <item>
-            ^prior <prior>)
-   (<prior> ^item |*|)}
+            ^prior nil)}
 
 sp {apply*comprehend-completion*create-receiver-item*push-retrieved-stack*noskip
    (state <s> ^operator.name comprehend-completion
@@ -81,10 +80,26 @@ sp {apply*comprehend-completion*create-receiver-item*push-retrieved-stack*noskip
          ^type word)
    (<rc> ^item { <rr> <> <item> })
 -->
+   (write (crlf) |Push: | <item> | with on retrieved-stack.|)
    (<ss> ^retrieved-stack <rc> -
                           <nrc>)
    (<nrc> ^item <item>
           ^prior <rc>)}
+
+sp {apply*comprehend-completion*create-receiver-item*push-retrieved-stack*replace*stale-receiver
+   (state <s> ^operator.name comprehend-completion
+              ^segment <ss>
+              ^quiescence t)
+   (<ss> ^comprehension-structure <cs>
+         ^retrieved-stack <rc>)
+   (<cs> ^unfilled-receiver-item <item>
+         ^remove-receiver <rr>
+         ^type word)
+   (<rc> ^item { <rr> <> <item> }
+         ^prior nil)
+-->
+   (write (crlf) |Replace retrieved-stack item: | <rr> | with | <item>)
+   (<rc> ^item <rr> - <item>)}
 
 
 sp {apply*comprehend-completion*create-receiver-item*push-retrieved-stack*skip1*stale-receiver
@@ -95,16 +110,13 @@ sp {apply*comprehend-completion*create-receiver-item*push-retrieved-stack*skip1*
          ^retrieved-stack <rc>)
    (<cs> ^unfilled-receiver-item <item>
          ^remove-receiver <rr>
-        -^remove-receiver <rr2>
-         ^type word)
+        -^remove-receiver <rr2>)
    (<rc> ^item { <rr> <> <item> }
          ^prior <prior>)
    (<prior> ^item <rr2>)
 -->
-   (<ss> ^retrieved-stack <rc> -
-                          <nrc>)
-   (<nrc> ^item <item>
-          ^prior <prior>)}
+   (write (crlf) |Replace retrieved-stack item: | <rr> | with | <item>)
+   (<rc> ^item <rr> - <item>)}
 
 
 sp {apply*comprehend-completion*create-receiver-item*push-retrieved-stack*skip2*stale-receiver
@@ -114,17 +126,32 @@ sp {apply*comprehend-completion*create-receiver-item*push-retrieved-stack*skip2*
    (<ss> ^comprehension-structure <cs>
          ^retrieved-stack <rc>)
    (<cs> ^unfilled-receiver-item <item>
-         ^remove-receiver <rr> <rr2>
-         ^type word)
+         ^remove-receiver <rr> <rr2>)
    (<rc> ^item { <rr> <> <item> }
          ^prior <prior>)
    (<prior> ^item <rr2>
             ^prior <prior2>)
--->
+-->   
+   (write (crlf) |Replace | <rr> | and | <rr2> |on retrieved stack with | <item>)
    (<ss> ^retrieved-stack <rc> -
                           <nrc>)
    (<nrc> ^item <item>
           ^prior <prior2>)}
+
+sp {apply*comprehend-completion*stale-receiver-prior-word
+   (state <s> ^operator.name comprehend-completion
+              ^segment <ss>
+              ^quiescence t)
+   (<ss> ^comprehension-structure <cs>
+         ^retrieved-stack <rc>)
+   (<cs> ^words prior-word
+         ^remove-receiver <item>)
+   (<rc> ^prior <prior>)
+   (<prior> ^item <item>
+            ^prior <prior2>)
+-->   
+   (write (crlf) |Pop | <prior> | from the stack.|)
+   (<rc> ^prior <prior> - <prior2>)}
 #
 #sp {apply*comprehend-completion*create-receiver-item*push-retrieved-stack2
 #   :interrupt
@@ -144,3 +171,28 @@ sp {apply*comprehend-completion*create-receiver-item*push-retrieved-stack*skip2*
 #         ^prior |*|
 #                <p> -)}
 #
+
+##### IF failed, then pop the second item off the retrieved-stack
+sp {apply*comprehend-completion*failed-with-stack
+   (state <s> ^operator.name comprehend-completion
+              ^segment <seg>)
+   (<seg> ^comprehension-structure.failed true 
+          ^retrieved-stack <rs>)
+   (<rs> ^prior <p>)
+   (<p> ^prior { <> nil <p2> })
+  -->
+   (<rs> ^prior <p> -
+                <p2>)
+   (write (crlf) |Failed construction retrieval. Remove prior item | <p>)
+}
+
+sp {apply*comprehend-completion*failed-without-stack
+   (state <s> ^operator.name comprehend-completion
+              ^segment <seg>)
+   (<seg> ^comprehension-structure.failed true 
+          ^retrieved-stack <rs>)
+   (<rs> ^prior <p>)
+   (<p> ^prior nil)
+  -->
+   (<seg> ^failed-construction true)
+}

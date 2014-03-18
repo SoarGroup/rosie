@@ -76,12 +76,35 @@ sp {comprehension*propose*process-missing-assigner*exclusive
          ^item <ass1>)
 }
 
+# If just hit phrase end and there is a previous assigner that can't be matched 
+#  by a current receiver - even if that receiver gets promoted (to avoid dropping PP at end of DP).
+#  This will be used to remove dangling ADJ in a DP
+sp {comprehension*propose*process-missing-assigner*phrase-end
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^unfilled-assigner-item <ass1>
+         -^unfilled-receiver-item.lt-lexical-item.converts-to-receiver-structure <rst>)
+   (<ass1> ^parent-structure <ps>
+           ^lt-lexical-assigner <lla>)
+   (<lla> ^optional true
+          ^structure-type <rst>)
+   (<ps> ^lt-lexical-item.converts-to-receiver-structure <nstruct>
+         ^structure-type <nstruct>)
+-->
+   (write (crlf) |Remove optional assigner: | <ass1> | that didn't get included in the phrase.|)
+   (<s> ^operator <op> + =, >)
+   (<op> ^name process-missing-assigner
+         ^item <ass1>)
+}
+
+##################
+
 sp {comprehension*compare*process-missing-assigner
    (state <s> ^name comprehension
               ^operator <op1> +
                         <op2> +)
    (<op1> ^name process-missing-assigner)
-   (<op2> ^name << next-word >>)
+   (<op2> ^name << next-word comprehend-construction >>)
 -->
    (<s> ^operator <op1> > <op2>)
 }
@@ -122,7 +145,7 @@ sp {apply*process-missing-assigner*required*fail
 }
 
 sp {apply*process-missing-assigner*use-default
- #  :interrupt
+   :interrupt
    (state <s> ^operator <op>
               ^segment <seg>)
    (<seg> ^semantics <sem>
@@ -131,7 +154,7 @@ sp {apply*process-missing-assigner*use-default
    (<op> ^name process-missing-assigner
          ^item <ass1>)
    (<ass1> ^lt-lexical-assigner <lt>
-           ^structure-type <stype>
+           ^syntactic-structure <stype>
            ^parent-structure <parent>)
    (<lt> ^default <default>
          ^semantic-structure <ss>)

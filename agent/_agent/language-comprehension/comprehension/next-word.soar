@@ -9,6 +9,27 @@ sp {comprehension*propose*next-word
    (<o> ^name next-word)
 }
 
+#################
+
+sp {comprehension*apply*next-word*decision-count-threshold*initial
+   (state <s> ^operator.name next-word
+              ^segment <seg>)
+   (<seg> -^decision-count-threshold)
+-->
+   (<seg> ^decision-count-threshold (+ 1000 (int (cmd stats -d))))  # can't use time.steps because causes problems with the GDS
+}
+
+sp {comprehension*apply*next-word*decision-count-threshold
+   (state <s> ^operator.name next-word
+              ^segment <seg>)
+   (<seg> ^decision-count-threshold <dct>)
+-->
+   (<seg> ^decision-count-threshold <dct> -          
+                                   (+ 1000 (int (cmd stats -d))))  # can't use time.steps because causes problems with the GDS
+}
+
+#################
+
 sp {comprehension*apply*next-word
    (state <s> ^operator.name next-word
               ^segment <seg>)
@@ -17,28 +38,10 @@ sp {comprehension*apply*next-word
           ^prior-word <pw>)
    (<i> ^next { <> nil <n> })
 -->
+   (<old-w> ^processed true -)
    (<seg> ^input-sentence <i> - # throw away word from input queue
                           <n>
           ^current-word <n>
-                        <old-w> -
-          ^prior-word <pw> -
-                      <old-w>)
-}
-
-sp {comprehension*apply*next-word*nil*missing-period
-   (state <s> ^operator.name next-word
-              ^segment <seg>)
-   (<seg> ^input-sentence <i>
-          ^current-word <old-w>
-          ^prior-word <pw>)
-   (<i> ^next nil)
--->
-   (<i> ^next <next>)
-   (<next> ^spelling |.|
-           ^next nil)
-   (<seg> ^input-sentence <i> - # throw away word from input queue
-                          <next>
-          ^current-word <next>
                         <old-w> -
           ^prior-word <pw> -
                       <old-w>)
@@ -52,19 +55,107 @@ sp {comprehension*apply*next-word*no-prior
          -^prior-word <pw>)
    (<i> ^next <n>)
 -->
+   (<old-w> ^processed true -)
    (<seg> ^input-sentence <i> - # throw away word from input queue
                           <n>
           ^current-word <n>
                         <old-w> -
           ^prior-word <old-w>)
 }
-sp {comprehension*apply*next-word*clean-up-processed-next-word
+
+sp {comprehension*apply*next-word*end-of-sentence-failure*external
+   (state <s> ^operator.name next-word
+              ^top-state <ts> 
+              ^segment <seg>)
+   (<ts> ^world-usage external
+         ^io.input-link.language.sentence <sentence>)
+   (<seg> ^input-sentence <i>
+          ^current-word <old-w>
+          ^prior-word <pw>
+          ^original-sentence <cs>)
+   (<i> ^next nil
+        ^spelling << |?| |!| |.| >>)
+-->
+   (interrupt)
+   (write (crlf) |Parse FAILED. Didn't get complete parse by time terminator appeared (., ?, !)|)
+   (<old-w> ^processed true -)
+   (<sentence> ^processed-sentence true
+               ^processing-result failure)
+}
+
+sp {comprehension*apply*next-word*end-of-sentence-failure*internal
+   (state <s> ^operator.name next-word
+              ^top-state <ts> 
+              ^segment <seg>)
+   (<ts> ^world-usage internal
+         ^current-sentence-number <csn>)
+   (<seg> ^input-sentence <i>
+          ^current-word <old-w>
+          ^prior-word <pw>
+          ^original-sentence <cs>)
+   (<i> ^next nil
+        ^spelling << |?| |!| |.| >>)
+-->
+   (interrupt)
+   (write (crlf) |Parse FAILED. Didn't get complete parse by time terminator appeared (., ?, !)|)
+   (<ts> ^terminated-sentence <csn>)
+   (<old-w> ^processed true -)
+}
+
+sp {comprehension*apply*next-word*mark-first-word
    (state <s> ^operator.name next-word
               ^segment <seg>)
-   (<seg> ^input-sentence <i>)
-   (<i> ^next <n>)
-   (<n> ^processed true)
+   (<seg> ^current-word.spelling |*|
+          ^input-sentence.next <n>)
 -->
-   (<n> ^processed true -)
+   (<n> ^first-word true)
 }
+
+
+sp {comprehension*apply*next-word*nil*missing-period
+   (state <s> ^operator.name next-word
+              ^segment <seg>)
+   (<seg> ^unfilled-assigner-item.structure-type T)
+   (<seg> ^input-sentence <i>
+          ^current-word <old-w>
+          ^prior-word <pw>)
+   (<i> ^next nil
+       -^spelling << |?| |!| |.| >>)
+-->
+   (write (crlf) |Assume missing period - added to end of sentence.|)
+   (<old-w> ^processed true -)
+   (<i> ^next <next>)
+   (<next> ^spelling |.|
+           ^next nil)
+   (<seg> ^input-sentence <i> - # throw away word from input queue
+                          <next>
+          ^current-word <next>
+                        <old-w> -
+          ^prior-word <pw> -
+                      <old-w>)
+}
+
+sp {comprehension*apply*next-word*nil*missing-question-mark
+   (state <s> ^operator.name next-word
+              ^segment <seg>)
+   (<seg> ^unfilled-assigner-item.structure-type QT)
+   (<seg> ^input-sentence <i>
+          ^current-word <old-w>
+          ^prior-word <pw>)
+   (<i> ^next nil
+       -^spelling << |?| |!| |.| >>)
+-->
+   (write (crlf) |Assume missing ? - added to end of sentence.|)
+   (<old-w> ^processed true -)
+   (<i> ^next <next>)
+   (<next> ^spelling |?|
+           ^next nil)
+   (<seg> ^input-sentence <i> - # throw away word from input queue
+                          <next>
+          ^current-word <next>
+                        <old-w> -
+          ^prior-word <pw> -
+                      <old-w>)
+}
+
 
