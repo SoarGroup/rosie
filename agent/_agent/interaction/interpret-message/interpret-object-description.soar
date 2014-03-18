@@ -1,0 +1,118 @@
+###################################################################
+#
+# interpret-object-description
+#   Occurs when the intructor wishes to give additional information about an object
+#   Construction: *-DP-is-ADJ/DP/PP-T
+#   	E.g. 'The ball is red', 'The ball is a sphere', 'The ball is in the pantry'
+#   Construction: *-This-is-DP-T
+#   	E.g. 'This is a large red block', 'This is to the right of the sphere'
+#
+###################################################################
+
+#######
+# OPERATOR PROPOSAL
+#######
+sp {interpret-message*propose*interpret-object-description
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>)
+   (<msg> ^message-type object-description
+         -^interpreted true)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name interpret-object-description
+        ^message <msg>)
+}
+
+######
+# OPERATOR ELABORATIONS
+######
+
+# Elaborate useful information from the message onto the operator
+
+# indicated-object: REQUIRED - the object being described
+sp {interpret-message*elaborate*interpret-object-description*indicated-object
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-object-description
+        ^message.indicated-object <obj>)
+-->
+   (<o> ^indicated-object <obj>)
+}
+
+# predicate: OPTIONAL - tells something that is true about the object (e.g. color=red)
+sp {interpret-message*elaborate*interpret-object-description*predicate
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-object-description
+        ^message.predicate <pred>)
+-->
+   (<o> ^predicate <pred>)
+}
+
+# relation: OPTIONAL - how the object is in relation to another
+sp {interpret-message*elaborate*interpret-object-description*relation
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-object-description
+        ^message.relation <rel>)
+-->
+   (<o> ^relation <rel>)
+}
+
+#####
+# OPERATOR APPLICATION
+#####
+
+# Mark the message as interpreted (retracts operator)
+sp {interpret-message*apply*interpret-object-description*mark*interpreted
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^quiescence t)
+   (<o> ^name interpret-object-description
+        ^message <msg>)
+-->
+   (<msg> ^interpreted true)
+}
+
+# Normal occurence of object-description
+#   Purpose is to learn someting about an object
+#   Could be a predicate (color=red) or a relation (on the pantry)
+sp {interpret-message*apply*interpret-object-description*create*segment
+   (state <s> ^name interpret-message
+              ^operator <o>)
+   (<o> ^name interpret-object-description
+        ^indicated-object <obj>)
+-->
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type train-on-object 
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<sat> ^learning-event.type object)
+   (<params> ^indicated-object <obj>)
+
+}
+
+# Copy any predicates to the new segment
+sp {interpret-message*apply*interpret-object-description*copy*predicate
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^new-segment-info.purpose.parameters <params>)
+   (<o> ^name interpret-object-description
+	    ^predicate <pred>)
+-->
+	(<params> ^predicate <pred>)
+}
+
+# Copy any relations to the new segment
+sp {interpret-message*apply*interpret-object-description*copy*relation
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^new-segment-info.purpose.parameters <params>)
+   (<o> ^name interpret-object-description
+        ^relation <rel>)
+-->
+	(<params> ^relation <rel>)
+}
+              

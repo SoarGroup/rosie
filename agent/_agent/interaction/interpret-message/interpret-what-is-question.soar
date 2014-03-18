@@ -1,0 +1,98 @@
+###################################################################
+#
+# interpret-what-is-question
+# - Description of message here
+#
+###################################################################
+
+#######
+# OPERATOR PROPOSAL
+#######
+sp {interpret-message*propose*interpret-what-is-question
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>)
+   (<msg> ^message-type what-is-question
+         -^interpreted true)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name interpret-what-is-question
+        ^message <msg>)
+}
+
+######
+# OPERATOR ELABORATIONS
+######
+
+# Elaborate useful information from the message onto the operator
+
+# destination: OPTIONAL - indicates we are looking for a block at the given destination
+sp {interpret-message*elaborate*interpret-what-is-question*destination
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-what-is-question
+        ^message.destination <dest>)
+-->
+   (<o> ^destination <dest>)
+}
+
+sp {interpret-message*elaborate*interpret-what-is-question*indicated-object
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-what-is-question
+        ^message.indicated-object <obj>)
+-->
+   (<o> ^indicated-object <obj>)
+}
+
+#####
+# OPERATOR APPLICATION
+#####
+
+# Mark the message as interpreted (retracts operator)
+sp {interpret-message*apply*interpret-what-is-question*mark*interpreted
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^quiescence t)
+   (<o> ^name interpret-what-is-question
+        ^message <msg>)
+-->
+   (<msg> ^interpreted true)
+}
+
+# No indicated object, only a destination
+#   Want to find what is at that destination and describe it
+#   E.g. 'What is in the pantry?'
+sp {interpret-message*apply*interpret-what-is-question*create*segment
+   (state <s> ^name interpret-message
+              ^operator <o>)
+   (<o> ^name interpret-what-is-question
+        ^destination <dest>
+       -^indicated-object)
+-->
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type describe-relation
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<sat> ^dialog-event.type describe)
+   (<params> ^destination <dest>)
+}
+
+# There is an indicated object, we just want a description of it
+#   E.g. 'What is this?'
+sp {interpret-message*apply*interpret-what-is-question*create*segment
+   (state <s> ^name interpret-message
+              ^operator <o>)
+   (<o> ^name interpret-what-is-question
+        ^indicated-object <obj>)
+-->
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type describe-object
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<sat> ^dialog-event.type describe)
+   (<params> ^indicated-object <obj>)
+}
