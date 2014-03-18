@@ -79,7 +79,7 @@ sp {interpret-message*apply*object-message*mark*processed2
 sp {interpret-message*apply*object-message*train-on-object
    (state <s> ^name interpret-message
               ^operator <o>
-             -^current-purpose.type which-question)
+             -^current-purpose.type << find-missing-object which-question >>)
    (<o> ^name object-message
         ^specifier << this that >>
        -^relation)
@@ -125,7 +125,7 @@ sp {interpret-message*apply*object-message*train-on-object*copy*word
 sp {interpret-message*apply*object-message*teach-preposition
    (state <s> ^name interpret-message
               ^operator <o>
-             -^current-purpose.type which-question)
+             -^current-purpose.type << find-missing-object which-question >> )
   -{(<s> ^topstate.current-game.learning <l>)
     (<l> -^interaction true)}
    (<o> ^name object-message
@@ -244,6 +244,67 @@ sp {interpret-message*apply*object-message*which-question-response*copy-relation
                ^word <prep>)
 }
 
+#############################################################
+#
+#  missing-object response
+#  After the agent asks for help finding a block
+#
+#############################################################
+
+sp {interpret-message*apply*object-message*missing-object-response*create*indexable
+   (state <s> ^name interpret-message
+              ^operator.name object-message
+              ^current-purpose <p>
+              ^message-context.parameters <prev-params>)
+   (<p> ^type find-missing-object
+        ^missing-object <obj>)
+-->
+   (<s> ^missing-object-indexable <i>)
+   (<prev-params> ^indexable <i>)
+   (<i> ^type object
+        ^matching-object <obj>
+        ^lexical <lex>
+        ^index-info <info>)
+   (<info> ^use-interaction true
+           ^return-all false)
+}
+
+sp {interpret-message*apply*object-message*missing-object-response*copy-word
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^current-purpose.type find-missing-object
+              ^missing-object-indexable.lexical <lex>)
+   (<o> ^name object-message
+        ^object.word {<word> <> UNKNOWN})
+-->
+   (<lex> ^word <word>)
+}
+
+sp {interpret-message*apply*object-message*missing-object-response*add*specifier
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^current-purpose.type find-missing-object
+              ^missing-object-indexable.lexical <lex>)
+   (<o> ^name object-message
+        ^specifier <new-spec>)
+-->
+   (<lex> ^specifier <new-spec>)
+}
+
+sp {interpret-message*apply*object-message*missing-object-response*copy-relation
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^current-purpose.type find-missing-object
+              ^missing-object-indexable.lexical <lex>)
+   (<o> ^name object-message
+        ^relation <rel>)
+   (<rel> ^p2.object <obj2> ^word <prep>)
+-->
+   (<lex> ^relation <rel-copy>)
+   (<rel-copy> ^p1.object <lex>
+               ^p2.object <obj2>
+               ^word <prep>)
+}
 
 ###########################
 # Messages for games
