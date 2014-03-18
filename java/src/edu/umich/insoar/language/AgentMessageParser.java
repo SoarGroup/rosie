@@ -70,7 +70,7 @@ public class AgentMessageParser
         } else if (type.equals("get-goal")){
         	message = "What is the goal of the action?";
         } else if (type.equals("restart-task-instruction")){
-        	message = "The provided instruction sequence does not lead to the provided goal. Please give the instructions again.";
+        	message = "The provided instructions do not lead to the goal. Please give instructions again.";
         } else if(type.equals("request-index-confirmation")){
         	message = translateRequestIndexConfirmation(fieldsId);
         } else if(type.equals("describe-scene")){

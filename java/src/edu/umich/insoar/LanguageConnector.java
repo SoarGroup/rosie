@@ -244,7 +244,7 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
     	
     	String message = "";
     	if(type.equals("get-next-task")){
-    		message = "I am idle and waiting for you to initiate a new interaction";
+    		//message = "I am idle and waiting for you to initiate a new interaction";
     	} else if(type.equals("get-next-subaction")){
     		String verb = WMUtil.getValueOfAttribute(context, "verb");  
     		message = "What is the next step in performing '" + verb + "'?";
@@ -261,7 +261,8 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
     		if (obj != null)
     		{	
     			String objStr = LingObject.createFromSoarSpeak(obj, "outgoing-desc").toString();
-    			message = "Please give me teaching examples of '" + objStr + "' and tell me 'finished' when you are done.";
+    			//message = "Ok.";
+    			//message = "Please give me teaching examples of '" + objStr + ".";
     		}
     	} else if(type.equals("get-goal")){
     		String verb = WMUtil.getValueOfAttribute(context, "verb");
