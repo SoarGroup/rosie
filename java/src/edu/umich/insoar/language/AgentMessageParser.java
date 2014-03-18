@@ -54,6 +54,8 @@ public class AgentMessageParser
         	message = translateTeachingRequest(fieldsId);
         } else if(type.equals("which-question")){
         	message = translateWhichQuestion(fieldsId);
+        } else if(type.equals("missing-object")){
+        	message = translateMissingObjectQuestion(fieldsId);
         } else if(type.equals("get-next-task")){
         	message = "Waiting for next command...";
         } else if(type.equals("get-next-subaction")){
@@ -283,6 +285,12 @@ public class AgentMessageParser
         return ret;
     }
     
+    private static String translateMissingObjectQuestion(Identifier id){
+    	Identifier objectId = WMUtil.getIdentifierOfAttribute(id, "description");
+    	if (objectId == null)
+    		return "Can you help me find the object I just lost?";
+        return "I can't find " + LingObject.createFromSoarSpeak(id, "description") + ". Can you help?";
+    }
     
     private static String translateWhichQuestion(Identifier id){
     	Identifier objectId = WMUtil.getIdentifierOfAttribute(id, "description");
