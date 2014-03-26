@@ -26,10 +26,13 @@ import edu.umich.insoar.world.WorldModel;
 
 public class InSoar implements PrintEventInterface, RunEventInterface
 {
-	private static InSoar Singleton = null;
+	private static long startTime = -1;
 	
 	public static long GetSoarTime(){
-		return Singleton.perception.getSoarTime();
+		if(startTime == -1){
+			startTime = TimeUtil.utime();
+		}
+		return TimeUtil.utime() - startTime;
 	}
 	
 	public static final boolean DEBUG_TRACE = false;
@@ -52,7 +55,6 @@ public class InSoar implements PrintEventInterface, RunEventInterface
 
     public InSoar(String agentName, boolean headless)
     {     
-    	Singleton = this;
 
         // Load the properties file
         Properties props = new Properties();
