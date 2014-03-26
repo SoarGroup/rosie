@@ -45,7 +45,7 @@ public class TextToSpeech
 	        		InputStream audioStream = urlConn.getInputStream();
 	        		DataInputStream data = new DataInputStream(audioStream);
 	        		
-	        		File file = new File("/home/bolt/insoar/sound.mp3");
+	        		File file = new File("sound.mp3");
 	        		OutputStream outstream = new FileOutputStream(file);
 	        		byte[] buffer = new byte[1024];
 	        		int len;
