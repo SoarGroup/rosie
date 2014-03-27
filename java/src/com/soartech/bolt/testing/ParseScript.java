@@ -24,7 +24,7 @@ public class ParseScript {
 	}
 	
 	public static Script parseDefaultFormatScript(Script script, Scanner s) {
-		while(s.hasNextLine()) {
+		while(s.hasNextLine()) {                                                                                                                                          
 			String scriptLine = s.nextLine();
 			String[] lineType = scriptLine.split(":");
 			ActionType type = ScriptDataMap.getInstance().getType(lineType[0]+":");
@@ -33,6 +33,7 @@ public class ParseScript {
 				System.out.println("Ignoring script line: "+scriptLine);
 				continue;
 			}
+			
 			
 			String action = scriptLine.substring(lineType[0].length()+1).trim();
 			script.addAction(new Action(type, action));
