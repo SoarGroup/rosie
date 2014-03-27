@@ -1,0 +1,164 @@
+sp {learn-goal-demonstration*propose*extract-state
+   (state <s> ^name learn-goal-demonstration
+              ^type {<type> << initial final >>}
+             -^topstate.current-game.game.<type>
+              ^topstate.current-game.learning <l>)
+   (<l> ^type game-params)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name extract-state
+        ^type <type>
+        ^category svs)
+}
+
+sp {learn-goal-demonstration*apply*extract-state
+   (state <s> ^name learn-goal-demonstration
+              ^type {<type> << initial final >>}
+              ^topstate.current-game.game <g>
+              ^operator <o>)
+   (<o> ^name extract-state
+        ^type <type>
+        ^state-result <staterep>
+        ^category svs)
+-->
+   (<g> ^<type> <staterep>)
+}
+
+sp {learn-goal-demonstration*propose*state-diff
+   (state <s> ^name learn-goal-demonstration
+              ^topstate.current-game.game.initial <istate>
+              ^topstate.current-game.game.final <fstate>
+             -^topstate.current-game.game.goal-state)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name state-diff
+        ^initial <istate>
+        ^final <fstate>
+        ^category svs)
+}
+sp {learn-goal-demonstration*apply*state-diff
+   (state <s> ^name learn-goal-demonstration
+              ^topstate.current-game.game.initial <istate>
+              ^topstate.current-game.game.final <fstate>
+              ^topstate.current-game.game <g>
+              ^operator <o>)
+   (<o> ^name state-diff
+        ^state-result <dstate>)
+-->
+   (<g> ^goal-state <dstate>)
+}
+
+#TODO convert to natural language and read back
+#TODO handle corrects by additions, or removals
+
+#for now converts to TCN and stores
+sp {learn-goal-demonstration*propose*convert-state-to-TCN
+   (state <s> ^name learn-goal-demonstration
+              ^topstate.current-game.game.goal-state <gstate>
+  #           -^topstate.current-game.game.goals.<gnum>
+             -^tcn
+              ^topstate.current-game.learning <l>)
+#   (<l> ^goal-number <gnum>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name convert-state-to-TCN
+        ^state-rep <gstate>
+        ^category svs)
+}
+
+#sp {learn-goal-demonstration*apply*convert-state-to-TCN
+#   (state <s> ^name learn-goal-demonstration
+#              ^topstate.current-game.game.goals <goals>
+#              ^operator <o>
+#              ^topstate.current-game.learning <l>)
+#   (<l> ^goal-number <gnum>)
+#   (<o> ^name convert-state-to-TCN
+#        ^result <tcn>
+#        ^param <p>
+#        ^state-rep <gstate>)
+#-->
+#   (<s> ^param <p>
+#        ^tcn <tcn>)
+#}
+sp {learn-goal-demonstration*propose*convert-TCN-to-NL
+   (state <s> ^name learn-goal-demonstration
+              ^topstate.current-game.game.goal-state <gstate>
+              ^param <param>
+              ^tcn <tcn>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name convert-TCN-to-NL
+        ^state-rep <gstate>
+        ^tcn <tcn>
+        ^param <param>
+        ^category svs)
+}
+
+
+
+
+sp {learn-goal-demonstration*apply*convert-TCN-to-NL
+   (state <s> ^name learn-goal-demonstration
+              ^topstate.current-game.game.goals <goals>
+              ^tcn <tcn>
+#              ^description <d>
+              ^operator <o>
+              ^topstate.current-game.learning <l>)
+   (<l> ^goal-number <gnum>)
+ #  (<o> ^name convert-TCN-to-NL
+ #       ^result <desc>)
+-->
+   (<goals> ^<gnum> <tcn>)
+#   (<s> ^description <desc>)
+}
+
+#sp {learn-goal-demonstration*apply*convert-state-to-TCNfuckfcuk
+#   (state <s> ^name learn-goal-demonstration
+#              ^name fuck-this-rule
+#              ^topstate.current-game.game.goals <goals>
+#              ^operator <o>
+#              ^topstate.current-game.learning <l>)
+#   (<l> ^goal-number <gnum>)
+#   (<o> ^name convert-state-to-TCN
+#        ^result <tcn>
+#        ^state-rep <gstate>)
+#-->
+#   (<goals> ^<gnum> <tcn>)
+#}
+
+#done learning goal by demo
+sp {learn-goal-demonstration*apply*convert-state-to-TCN*send-message
+   (state <s> ^name learn-goal-demonstration
+              ^operator.name convert-TCN-to-NL
+              ^topstate.io.output-link <out>
+              ^description <d>
+              ^topstate.current-game.game.goals.<num>
+              ^topstate.interaction.status <status>
+              ^topstate.current-game.learning <l>)
+   (<l> ^type <t> ^goal-number <num>)
+-->
+   (<l> ^goal-number <num> -)
+   (<l> ^type <t> -)
+   (<l> ^goal-number (+ <num> 1)
+        ^type game-params)
+   (<out> ^send-message <msg>)
+   (<msg> ^type describe-goal-params#game-new-params
+          ^fields <f>)
+   (<f> ^description <d>)
+   (<status> ^performed.dialog-event.type game)
+}
+
+#get final state
+sp {learn-goal-demonstration*send-message*game-final-state
+   (state <s> ^name learn-goal-demonstration
+              ^type initial
+              ^topstate.interaction.status <status>
+              ^topstate.current-game.game.initial
+             -^topstate.current-game.game.final
+              ^topstate.io.output-link <out>)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type game-final-state
+          ^fields <f>)
+   (<status> ^performed.dialog-event.type game)
+}

@@ -1,0 +1,74 @@
+##################################################################
+#
+# Monitoring stale objects (that have been confirmed)
+#
+##################################################################
+
+sp {topstate*scene-monitor*elaborate*wm-object*stale*true
+   (state <s> ^topstate <s>
+              ^scene-monitor.object <obj>)
+   (<obj> ^wm-obj <wm-obj>
+         -^perception-obj
+          ^differences <diff>)
+-->
+   (<diff> ^is-stale true)
+}
+
+sp {topstate*scene-monitor*elaborate*wm-object*stale*false
+   (state <s> ^topstate <s>
+              ^scene-monitor.object <obj>)
+   (<obj> ^wm-obj <wm-obj>
+          ^perception-obj <perc-obj>
+          ^differences <diff>)
+-->
+   (<diff> ^is-stale false)
+}
+
+#########################################################
+# Change: stale-object
+#   Occurs when an object on the svs link becomes stale
+#########################################################
+
+sp {monitor-scene-changes*elaborate*scene-changes*stale-object
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes <sc>
+              ^scene-monitor.object <obj>)
+   (<obj> ^differences <diffs>)
+   (<diffs> ^is-stale true
+            ^is-occluded false)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type stale-object
+             ^object <obj>)
+}
+
+sp {topstate*elaborate*scene-changes*change-info*stale-object
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes.change-info <info>)
+-->
+   (<info> ^change <stale-obj>)
+   (<stale-obj> ^name stale-object 
+                ^op-name attend-to-stale-object)
+}
+
+# Dont attend to a stale object if another has been flagged as a potential match
+sp {anystate*reject*attend-to-scene-change*stale-object*still*candidates
+   (state <s> ^operator <o> +
+              ^topstate.scene-monitor.new-object.candidate-for-missing-object <obj>)
+   (<o> ^name attend-to-scene-change
+        ^change.type stale-object
+        ^change.object.wm-obj <obj>)
+-->
+   (<s> ^operator <o> -)
+}
+
+# If we're searching for the object, don't delete it yet
+sp {anystate*reject*attend-to-scene-change*stale-object*searching-for-object
+   (state <s> ^operator <o> +)
+   (<o> ^name attend-to-scene-change
+        ^change.type stale-object
+        ^change.object.searching-for-object true)
+-->
+   (<s> ^operator <o> -)
+}
+

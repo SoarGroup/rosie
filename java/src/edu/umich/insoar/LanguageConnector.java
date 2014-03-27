@@ -7,6 +7,8 @@ import sml.Identifier;
 import sml.WMElement;
 import sml.smlRunEventId;
 
+import april.util.TimeUtil;
+
 import com.soartech.bolt.BOLTLGSupport;
 import com.soartech.bolt.testing.ActionType;
 
@@ -40,7 +42,7 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
         }
         
         soarAgent.getAgent().RegisterForRunEvent(
-                smlRunEventId.smlEVENT_AFTER_OUTPUT_PHASE, this, null);
+                smlRunEventId.smlEVENT_BEFORE_INPUT_PHASE, this, null);
     }
     
     public void clear(){
@@ -74,6 +76,11 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
     
     public void runEventHandler(int eventID, Object data, Agent agent, int phase)
     {
+    	long time = 0;
+    	if(InSoar.DEBUG_TRACE){
+    		time = TimeUtil.utime();
+    	}
+    	
     	Identifier outputLink = agent.GetOutputLink();
     	if(outputLink != null){
         	WMElement waitingWME = outputLink.FindByAttribute("waiting", 0);
@@ -82,6 +89,10 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
     	Identifier inputLink = agent.GetInputLink();
     	if(inputLink != null){
     		messages.updateInputLink(inputLink);
+    	}
+    	
+    	if(InSoar.DEBUG_TRACE){
+			System.out.println(String.format("%-20s : %d", "LANGUAGE CONNECTOR", (TimeUtil.utime() - time)/1000));
     	}
     }
 
@@ -233,7 +244,7 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
     	
     	String message = "";
     	if(type.equals("get-next-task")){
-    		message = "I am idle and waiting for you to initiate a new interaction";
+    		//message = "I am idle and waiting for you to initiate a new interaction";
     	} else if(type.equals("get-next-subaction")){
     		String verb = WMUtil.getValueOfAttribute(context, "verb");  
     		message = "What is the next step in performing '" + verb + "'?";
@@ -247,8 +258,12 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
     		message = "I see multiple examples of '" + objStr + "' and I need clarification";
     	} else if(type.equals("teaching-request")){
     		Identifier obj = WMUtil.getIdentifierOfAttribute(context, "object");
-    		String objStr = LingObject.createFromSoarSpeak(obj, "outgoing-desc").toString();
-    		message = "Please give me teaching examples of '" + objStr + "' and tell me 'finished' when you are done.";
+    		if (obj != null)
+    		{	
+    			String objStr = LingObject.createFromSoarSpeak(obj, "outgoing-desc").toString();
+    			//message = "Ok.";
+    			//message = "Please give me teaching examples of '" + objStr + ".";
+    		}
     	} else if(type.equals("get-goal")){
     		String verb = WMUtil.getValueOfAttribute(context, "verb");
     		message = "Please tell me what the goal of '" + verb + "'is.";

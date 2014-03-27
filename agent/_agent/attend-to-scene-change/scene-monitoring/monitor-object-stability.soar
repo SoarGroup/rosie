@@ -1,0 +1,37 @@
+###########################################################################
+#
+# Change: stability-timer-satisfied
+#   When the stability timer expires, then we need to check the new object out
+#   If the object is stable, we know it's actually there (as opposed to noise)
+#
+##########################################################################
+
+sp {topstate*elaborate*scene-monitor*new-object*stability-timer*satisfied
+   (state <s> ^topstate <s>
+              ^scene-monitor.new-object <obj>
+              ^io.input-link.time.seconds <cur-t>)
+   (<obj> ^stability-check-time <= <cur-t>)
+-->
+   (<obj> ^stability-timer-satisfied true)
+}
+
+sp {topstate*elaborate*scene-changes*evaluate-new-object
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes <sc>
+              ^scene-monitor.new-object <obj>)
+   (<obj> ^stability-timer-satisfied true)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type stability-timer-satisfied
+             ^object <obj>)
+}
+
+sp {topstate*elaborate*scene-changes*change-info*stability-timer-satisfied
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes.change-info <info>)
+-->
+   (<info> ^change <stability-timer-satisfied>)
+   (<stability-timer-satisfied> ^name stability-timer-satisfied
+                     	  	    ^op-name evaluate-stability)
+}
+

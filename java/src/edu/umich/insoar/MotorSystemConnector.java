@@ -51,10 +51,15 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     private ArmStatus armStatus;
     
     StringBuilder svsCommands = new StringBuilder();
+<<<<<<< HEAD
 	private Integer heldObject;
     
+=======
+    
+    PerceptionConnector perception;
+>>>>>>> master
 
-    public MotorSystemConnector(SoarAgent agent){
+    public MotorSystemConnector(SoarAgent agent, PerceptionConnector perception){
     	this.agent = agent;
     	pose = new Pose();
     	
@@ -70,6 +75,8 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     	}
     	heldObject = -1;
     	
+    	this.perception = perception;
+    	
     	// Setup LCM events
         lcm = LCM.getSingleton();
         lcm.subscribe("ROBOT_ACTION", this);
@@ -79,7 +86,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         agent.getAgent().RegisterForRunEvent(smlRunEventId.smlEVENT_BEFORE_INPUT_PHASE, this, null);
         
         // Setup Output Link Events
-        String[] outputHandlerStrings = { "pick-up", "put-down", "point", "set-state", "home"};
+        String[] outputHandlerStrings = { "pick-up", "put-down", "point", "set-state", "home", "reset"};
         for (String outputHandlerString : outputHandlerStrings)
         {
         	agent.getAgent().AddOutputHandler(outputHandlerString, this, null);
@@ -99,7 +106,6 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     }
     
     public void newRobotStatus(robot_action_t status){
-    	prevStatus = curStatus;
     	curStatus = status;
     	gotUpdate = true;
     }
@@ -114,6 +120,11 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
 
 	// Happens during an input phase
 	public synchronized void runEventHandler(int eventID, Object data, Agent agent, int phase){
+    	long time = 0;
+    	if(InSoar.DEBUG_TRACE){
+    		time = TimeUtil.utime();
+    	}
+    	
 		if(selfId == null){
 			initIL();
 		} else if(gotUpdate){
@@ -129,6 +140,9 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
 			svsCommands = new StringBuilder();
 		}
 		this.agent.commitChanges();
+    	if(InSoar.DEBUG_TRACE){
+			System.out.println(String.format("%-20s : %d", "MOTOR CONNECTOR", (TimeUtil.utime() - time)/1000));
+    	}
 	}
     
     private void initIL(){
@@ -152,9 +166,14 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         		double[] p1 = points.get(i);
         		double[] p2 = points.get(i+1);
         		double len = LinAlg.distance(p1, p2); 
+        		double[] size = new double[]{len, widths.get(i), widths.get(i)};
+        		if(i == widths.size()-1){
+        			// Make the gripper bigger to help with occlusion checks;
+        			size = LinAlg.scale(size, 2);
+        		}
         		
         		svsCommands.append("a " + name + " object arm p 0 0 0 r 0 0 0 ");
-        		svsCommands.append("s " + len + " " + widths.get(i) + " " + widths.get(i) + " ");
+        		svsCommands.append("s " + size[0] + " " + size[1] + " " + size[2] + " ");
         		svsCommands.append("v " + SVSCommands.bboxVertices() + "\n");
         	}
     	}
@@ -163,18 +182,23 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     
     
     private void updateIL(){
+//<<<<<<< HEAD
     	
     	heldObject = curStatus.obj_id;
     	
-    	if(prevStatus == null){
-    		return;
-    	}
+//=======
     	WMUtil.updateStringWME(selfId, "action", curStatus.action.toLowerCase());
-    	WMUtil.updateStringWME(selfId, "prev-action", prevStatus.action.toLowerCase());
+//>>>>>>> master
+    	if(prevStatus == null){
+        	WMUtil.updateStringWME(selfId, "prev-action", "wait");
+    	} else {
+        	WMUtil.updateStringWME(selfId, "prev-action", prevStatus.action.toLowerCase());
+    	}
     	WMUtil.updateStringWME(selfId, "holding-obj", (curStatus.obj_id != -1 ? "true" : "false"));
-    	WMUtil.updateIntWME(selfId, "grabbed-object", curStatus.obj_id);
+    	WMUtil.updateIntWME(selfId, "grabbed-object", perception.world.getSoarId(curStatus.obj_id));
     	pose.updateWithArray(curStatus.xyz);
     	pose.updateInputLink(selfId);
+    	prevStatus = curStatus;
     }
     
     private void updateArmInfo(){
@@ -237,6 +261,9 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
             else if(wme.GetAttribute().equals("home")){
             	processHomeCommand(id);
             }
+            else if(wme.GetAttribute().equals("reset")){
+            	processResetCommand(id);
+            }
             agent.commitChanges();
         } catch (IllegalStateException e){
         	System.out.println(e.getMessage());
@@ -252,11 +279,18 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     {
         String objectIdStr = WMUtil.getValueOfAttribute(pickUpId,
                 "object-id", "pick-up does not have an ^object-id attribute");
+        Integer id = perception.world.getPerceptionId(Integer.parseInt(objectIdStr));
+        if(id == null){
+        	System.err.println("Pick up: unknown id " + objectIdStr);
+        	pickUpId.CreateStringWME("status", "error");
+        	return;
+        }
         
         robot_command_t command = new robot_command_t();
-        command.utime = TimeUtil.utime();
-        command.action = String.format("GRAB=%d", Integer.parseInt(objectIdStr));
+        command.utime = TimeUtil.utime(); 
+        command.action = String.format("GRAB=%d", id);
         command.dest = new double[6];
+        System.out.println("PICK UP: " + id + " (" + objectIdStr + ")");
     	lcm.publish("ROBOT_COMMAND", command);
         pickUpId.CreateStringWME("status", "complete");
     }
@@ -271,6 +305,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         Identifier locationId = WMUtil.getIdentifierOfAttribute(
                 putDownId, "location",
                 "Error (put-down): No ^location identifier");
+        
         double x = Double.parseDouble(WMUtil.getValueOfAttribute(
                 locationId, "x", "Error (put-down): No ^location.x attribute"));
         double y = Double.parseDouble(WMUtil.getValueOfAttribute(
@@ -278,7 +313,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         double z = Double.parseDouble(WMUtil.getValueOfAttribute(
                 locationId, "z", "Error (put-down): No ^location.z attribute"));
         robot_command_t command = new robot_command_t();
-        command.utime = TimeUtil.utime();
+        command.utime = TimeUtil.utime(); 
         command.action = "DROP";
         command.dest = new double[]{x, y, z, 0, 0, 0};
     	lcm.publish("ROBOT_COMMAND", command);
@@ -291,40 +326,61 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
      */
     private void processSetCommand(Identifier id)
     {
-        String objId = WMUtil.getValueOfAttribute(id, "id",
+        String objIdStr = WMUtil.getValueOfAttribute(id, "id",
                 "Error (set-state): No ^id attribute");
+        Integer objId = perception.world.getPerceptionId(Integer.parseInt(objIdStr));
+        if(objId == null){
+        	System.err.println("Set: unknown id " + objIdStr);
+        	id.CreateStringWME("status", "error");
+        	return;
+        }
+        
         String name = WMUtil.getValueOfAttribute(id,
                 "name", "Error (set-state): No ^name attribute");
         String value = WMUtil.getValueOfAttribute(id, "value",
                 "Error (set-state): No ^value attribute");
 
-        String action = String.format("ID=%s,%s=%s", objId, name, value);
         set_state_command_t command = new set_state_command_t();
-        command.utime = TimeUtil.utime();
+        command.utime = TimeUtil.utime(); 
         command.state_name = name;
         command.state_val = value;
-        command.obj_id = Integer.parseInt(objId);
+        command.obj_id = objId;
     	lcm.publish("SET_STATE_COMMAND", command);
         id.CreateStringWME("status", "complete");
     }
 
     private void processPointCommand(Identifier pointId)
     {
-    	Integer id = Integer.parseInt(WMUtil.getValueOfAttribute(pointId, "id"));
+    	String idStr = WMUtil.getValueOfAttribute(pointId, "id", "Error (point): No ^id attribute");
+        Integer objId = perception.world.getPerceptionId(Integer.parseInt(idStr));
+        if(objId == null){
+        	System.err.println("Set: unknown id " + idStr);
+        	pointId.CreateStringWME("status", "error");
+        	return;
+        }
         
         robot_command_t command = new robot_command_t();
-        command.utime = TimeUtil.utime();
+        command.utime = TimeUtil.utime(); 
         command.dest = new double[]{0, 0, 0, 0, 0, 0};
-    	command.action = "POINT=" + id;
+    	command.action = "POINT=" + objId;
     	lcm.publish("ROBOT_COMMAND", command);
         pointId.CreateStringWME("status", "complete");
     }
     
     private void processHomeCommand(Identifier id){
     	robot_command_t command = new robot_command_t();
-        command.utime = TimeUtil.utime();
+        command.utime = TimeUtil.utime(); 
         command.dest = new double[6];
     	command.action = "HOME";
+    	lcm.publish("ROBOT_COMMAND", command);
+        id.CreateStringWME("status", "complete");
+    }
+
+    private void processResetCommand(Identifier id){
+    	robot_command_t command = new robot_command_t();
+        command.utime = TimeUtil.utime(); 
+        command.dest = new double[6];
+    	command.action = "RESET";
     	lcm.publish("ROBOT_COMMAND", command);
         id.CreateStringWME("status", "complete");
     }

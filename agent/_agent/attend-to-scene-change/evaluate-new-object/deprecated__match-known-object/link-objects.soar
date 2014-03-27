@@ -1,0 +1,67 @@
+sp {match-known-object*propose*link-objects
+   (state <s> ^name match-known-object
+              ^monitor-obj.perception-obj.id <source>
+              ^overlap-command.result <res>)
+   (<res> ^object-id <dest>
+          ^overlap <val>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name link-objects
+        ^category perception
+        ^dest-id <dest>
+        ^source-id <source>
+        ^overlap <val>)
+}
+
+# Easier to match a stale object than one that still exists
+sp {match-known-object*reject*not-stale*object
+   (state <s> ^name match-known-object
+              ^operator <o>
+              ^contained-threshold <thresh>
+              ^topstate.svs.spatial-scene.child <bel-obj>)
+   (<o> ^name link-objects
+        ^dest-id <bel-id>
+        ^overlap < <thresh>)
+   (<bel-obj> ^id <bel-id>
+              ^stale false)
+-->
+   (<s> ^operator <o> -)
+}
+
+sp {match-known-object*prefer*link-objects*more*overlap
+   (state <s> ^name match-known-object
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name link-objects
+         ^overlap <val>)
+   (<o2> ^name link-objects
+         ^overlap <val>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {match-known-object*apply*link-objects
+   (state <s> ^name match-known-object
+              ^operator <o>
+              ^io.output-link <ol>)
+   (<o> ^name link-objects
+        ^dest-id <dest>
+        ^source-id <source>)
+-->
+   (<ol> ^modify-scene <ms>)
+   (<ms> ^type link
+         ^source-id <source>
+         ^dest-id <dest>)
+}
+
+sp {match-known-object*apply*link-objects*monitor*perception
+   (state <s> ^name match-known-object
+              ^operator <o>
+              ^topstate.agent-params.debug-perception true)
+   (<o> ^name link-objects
+        ^dest-id <dest>
+        ^source-id <source>)
+-->
+   (write |Linking object | <source> | to | <dest>)
+}
+        

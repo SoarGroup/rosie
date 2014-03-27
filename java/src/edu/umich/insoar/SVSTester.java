@@ -24,16 +24,16 @@ public class SVSTester extends JFrame implements OutputEventInterface, RunEventI
 	
 	private PerceptionConnector perception;
 	
-	private double occlusion = .5;
+	private double val = .5;
 	
-	private JLabel occlusionLabel;
+	private JLabel label;
 	
 	private int stepNo = 0;
 	
 	public SVSTester() {
 		super("Test SVS");
-		soarAgent = new SoarAgent("svs-tester", "agent/empty_agent.soar", false);
-		soarAgent.getAgent().AddOutputHandler("occlusion", this, null);
+		soarAgent = new SoarAgent("svs-tester", "agent/test_svs_copy.soar", false);
+		soarAgent.getAgent().AddOutputHandler("report-val", this, null);
 		
 		perception = new PerceptionConnector(soarAgent);
 		soarAgent.setWorldModel(perception.world);
@@ -53,8 +53,8 @@ public class SVSTester extends JFrame implements OutputEventInterface, RunEventI
 		soarAgent.getAgent().RegisterForRunEvent(
                 smlRunEventId.smlEVENT_AFTER_OUTPUT_PHASE, this, null);
 		
-		occlusionLabel = new JLabel("Occlusion: " + occlusion);
-		this.add(occlusionLabel);
+		label = new JLabel("Filter Value: " + val);
+		this.add(label);
 		
 		this.setSize(200, 200);
 
@@ -78,15 +78,27 @@ public class SVSTester extends JFrame implements OutputEventInterface, RunEventI
 	public void runEventHandler(int eventID, Object data, Agent agent, int phase)
     {
 		StringBuilder svsCommands = new StringBuilder();
+//		if(stepNo == 0){
+//			svsCommands.append("a 1 object world p 0 0 0 r 0 0 0 s 1 1 1 v " + SVSCommands.bboxVertices() + "\n");
+//			svsCommands.append("a 2 object world p 3 -2 0 r 0 0 0 s 1 1 1 v " + SVSCommands.bboxVertices() + "\n");
+//			svsCommands.append("a 3 object world p 3 0 0 r 0 0 0 s 1 1 1 v " + SVSCommands.bboxVertices() + "\n");
+//			svsCommands.append("a eyeball object world p 5 4 0 b 0\n");
+//			svsCommands.append(SVSCommands.addProperty("1", "color", "blue"));
+//			svsCommands.append(SVSCommands.addProperty("2", "color", "red"));
+//			svsCommands.append(SVSCommands.addProperty("3", "color", "red"));
+//		} else if(stepNo % 3 == 0){
+//			float y = stepNo / 3.0f * .5f;
+//			svsCommands.append("c 2 p 3 " + (y-2) + " 0\n");
+//			svsCommands.append("c 3 p 3 " + y  + " 0\n");
+//		}
 		if(stepNo == 0){
-			svsCommands.append("a 1 object world p 0 0 0 r 0 0 0 s 1 5 1 ");
-			svsCommands.append("v " + SVSCommands.bboxVertices() + "\n");
-		} else {
-			rotX += .1;
-			svsCommands.append("p 1 c rx " + rotX + "\n");
+			System.out.println("CREATE");
+			svsCommands.append("a obj1 object world p 0 0 0 r 0 0 0 s 1 1 1 v " + SVSCommands.bboxVertices() + "\n");
+			svsCommands.append("a obj2 object world p .95 .95 .95 r 0 0 0 s 1 1 1 v " + SVSCommands.bboxVertices() + "\n");
+			svsCommands.append(SVSCommands.addProperty("obj1", "object-source", "perception"));
+			svsCommands.append(SVSCommands.addProperty("obj2", "object-source", "perception"));
 		}
 		agent.SendSVSInput(svsCommands.toString());
-		System.out.println(rotX);
 		
 		stepNo++;
     }
@@ -102,11 +114,11 @@ public class SVSTester extends JFrame implements OutputEventInterface, RunEventI
         System.out.println(wme.GetAttribute());
             
         try{
-            if (wme.GetAttribute().equals("occlusion")) {
+            if (wme.GetAttribute().equals("report-val")) {
             	String valueStr = WMUtil.getValueOfAttribute(id, "value");
-            	occlusion = Double.parseDouble(valueStr);
+            	val = Double.parseDouble(valueStr);
             	id.CreateStringWME("status", "success");
-                occlusionLabel.setText("Occlusion: " + occlusion);
+            	label.setText("Filter Value: " + val);
             } 
             soarAgent.commitChanges();
         } catch (IllegalStateException e){

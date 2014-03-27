@@ -1,61 +1,62 @@
+# See attend-to-scene-change.svs-command-operators.check-for-occlusion
+
 sp {attend-to-stale-object*propose*check-for-occlusion
    (state <s> ^name attend-to-stale-object
-              ^stale-object <obj>)
+              ^monitor-obj <obj>)
 -->
    (<s> ^operator <o> +)
    (<o> ^name check-for-occlusion
-        ^category perception)
+        ^category perception
+        ^monitor-obj <obj>
+        ^report-to-superstate true
+        ^report-to-topstate false)
 }
 
-sp {attend-to-stale-object*apply*check-for-occlusion*create*filter
+sp {attend-to-stale-object*apply*check-for-occlusion*not-occluded*mark-for-deletion
    (state <s> ^name attend-to-stale-object
               ^operator.name check-for-occlusion
-              ^stale-object <wm-obj>
-              ^topstate.svs <svs>)
-   (<wm-obj> ^id <id>)
-   (<svs> ^spatial-scene.child <svs-obj>
-          ^command <cmd>)
-   (<svs-obj> ^id-int <id>
-              ^id <svs-id>)
+             -^missing-object
+              ^object-occluded false
+              ^monitor-obj <obj>)
 -->
-   (<cmd> ^extract_once <occlusion>)
-   (<occlusion> ^type occlusion
-              ^a <node>)
-   (<node> ^type node
-               ^id <svs-id>)
-   (<s> ^occlusion-filter <occlusion>)
+   (<obj> ^mark-for-deletion true)
 }
 
-sp {attend-to-stale-object*apply*check-for-occlusion*occluded
+# If the object is missing and we need it, ask the user for help
+sp {attend-to-stale-object*apply*check-for-occlusion*not-occluded*missing-object*interaction
    (state <s> ^name attend-to-stale-object
               ^operator.name check-for-occlusion
-              ^stale-object <wm-obj>
-              ^occlusion-filter.result.record.value >= .5)
-   (<wm-obj> ^stale-time <time>)
+              ^missing-object true
+              ^object-occluded false
+              ^monitor-obj <monitor-obj>
+              ^topstate.interaction.status <status>)
+   (<monitor-obj> ^wm-obj <obj>)
 -->
-   (<wm-obj> ^stale-time <time> -
-             ^stale-time (+ <time> 2))
+   (<status> ^failure <f>)
+   (<f> ^type missing-object
+        ^missing-object <obj>)
+   (<monitor-obj> ^searching-for-object true)
 }
 
-sp {attend-to-stale-object*apply*check-for-occlusion*not-occluded
+sp {attend-to-stale-object*apply*check-for-occlusion*occluded*add*info
    (state <s> ^name attend-to-stale-object
               ^operator.name check-for-occlusion
-              ^stale-object.id <id>
-              ^occlusion-filter.result.record.value < .5
-              ^io.output-link <ol>)
+              ^object-occluded true
+              ^monitor-obj.differences <diffs>
+              ^io.input-link.time.seconds <cur-t>
+              ^occlusion-check-period <period>)
 -->
-   (<ol> ^modify-scene <ms>)
-   (<ms> ^type delete
-         ^id <id>)
+   (<diffs> ^is-occluded true
+            ^recheck-occlusion-time (+ <cur-t> <period>))
 }
 
-sp {attend-to-stale-object*apply*check-for-occlusion*not-occluded*delete
+sp {attend-to-stale-object*apply*check-for-occlusion*occluded*remove*old*info
    (state <s> ^name attend-to-stale-object
               ^operator.name check-for-occlusion
-              ^stale-object <obj>
-              ^occlusion-filter.result.record.value < .5
-              ^topstate <top>)
-   (<top> ^object <obj>)
+              ^object-occluded true
+              ^monitor-obj.differences <diffs>)
+   (<diffs> ^recheck-occlusion-time <t>)
 -->
-   (<top> ^object <obj> -)
+   (<diffs> ^recheck-occlusion-time <t> -)
 }
+
