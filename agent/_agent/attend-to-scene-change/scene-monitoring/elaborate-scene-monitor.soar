@@ -1,0 +1,121 @@
+##########################################################################
+#
+# scene-monitor: 
+#   A topstate set of elaborations that monitor the scene via
+#   the svs link and compare it to the current representations 
+#   in working memory. If discrepancies are reported they are recorded
+#
+##########################################################################
+
+# The structure will look as follows
+#sp {topstate*elaborate*scene-monitor
+#   (state <s> ^topstate <s>
+#              ^scene-monitor.object <obj>)
+#   (<obj> ^perception-obj <perc-obj>
+#          ^wm-obj <wm-obj>
+#          ^property <prop>)
+#   (<prop> ^name <prop-name>
+#           ^type <type>
+#           ^svs-prop <svs-prop>
+#           ^wm-prop <wm-prop>
+#           ^hypothesis <hyp>)
+#   (<hyp> ^label <label>
+#          ^conf <conf>
+#		   ^best true   # If this hypothesis is the best (highest confidence)
+#          ^case << none uncertain certain >>)
+#-->
+#   (<s> ^foo bar)
+#}
+   
+sp {topstate*elaborate*scene-monitor
+   (state <s> ^topstate <s>
+   	      -^operator.name learning)
+-->
+   (<s> ^scene-monitor <sm>)
+   (<sm> ^scene-changes <sc>)
+}
+
+##############################################################
+#
+# Monitoring new objects
+#
+##############################################################
+
+
+sp {topstate*elaborate*scene-monitor*new-object
+   (state <s> ^topstate <s>
+              ^scene-monitor <sm>
+              ^svs.spatial-scene.child <perc-obj>
+             -^object.id <id>)
+   (<perc-obj> ^object-source perception
+               ^id-as-integer <id>)
+-->
+   (<sm> ^new-object.perception-obj <perc-obj>)
+}
+
+sp {topstate*elaborate*scene-monitor*new-object*monitor-id
+   (state <s> ^topstate <s>
+              ^scene-monitor.new-object <obj>)
+   (<obj> ^perception-obj.id <id>)
+-->
+   (<obj> ^monitor-id <id>)
+}
+
+##################################################################
+#
+# Monitoring confirmed objects
+#
+##################################################################
+
+sp {topstate*elaborate*scene-monitor*object
+   (state <s> ^topstate <s>
+              ^scene-monitor <sm>
+              ^object <wm-obj>
+              ^svs.spatial-scene.child <bel-obj>)
+   (<wm-obj> ^id <id>
+             ^belief-id <bel-id>)
+   (<bel-obj> ^id <bel-id>)
+-->
+   (<sm> ^object <obj>)
+   (<obj> ^wm-obj <wm-obj>
+          ^belief-obj <bel-obj>
+          ^differences <diff>
+          ^monitor-id <id>)
+}
+
+sp {topstate*elaborate*scene-monitor*object*perc-obj
+   (state <s> ^topstate <s>
+              ^scene-monitor.object <obj>
+              ^svs.spatial-scene.child <perc-obj>)
+   (<obj> ^wm-obj.id <id>)
+   (<perc-obj> ^id-as-integer <id>)
+-->
+   (<obj> ^perception-obj <perc-obj>)
+}
+
+##################################################################
+#
+# Monitoring non-occluded objects
+#
+##################################################################
+#
+#sp {topstate*scene-monitor*apply*anyop*create*update-object-time
+#   (state <s> ^topstate <s>
+#              ^operator <o>
+#              ^scene-monitor.object.differences <diffs>
+#              ^io.input-link.time.seconds <t>
+#              ^agent-params.update-object-period <period>)
+#   (<diffs> -^update-object-time)
+#-->
+#   (<diffs> ^update-object-time (+ <t> <period>))
+#}
+#
+#sp {topstate*scene-monitor*elaborate*update-object-time-expired
+#   (state <s> ^topstate <s>
+#              ^scene-monitor.object.differences <diffs>
+#              ^io.input-link.time.seconds <t>)
+#   (<diffs> ^update-object-time < <t>)
+#-->
+#   (<diffs> ^update-object-time-expired true)
+#}
+

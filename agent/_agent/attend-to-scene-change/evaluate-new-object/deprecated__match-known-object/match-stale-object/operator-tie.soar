@@ -1,0 +1,94 @@
+sp {match-stale-object*impasse*operator-tie*multiple-stale-matches
+   (state <s> ^impasse tie
+              ^attribute operator
+              ^superstate.name match-stale-object
+              ^item.name evaluate-intersecting-object)
+-->
+   (<s> ^name multiple-stale-matches)
+}
+
+sp {multiple-stale-matches*elaborate*new-object
+   (state <s> ^name multiple-stale-matches
+              ^superstate.monitor-object <obj>)
+-->
+   (<s> ^new-object <obj>)
+}
+
+sp {multiple-stale-matches*elaborate*stale-candidate
+   (state <s> ^name multiple-stale-matches
+              ^item <op>)
+   (<op> ^name evaluate-intersecting-object
+         ^object <obj>)
+-->
+   (<s> ^stale-candidate.object <obj>)
+}
+
+sp {multiple-stale-matches*propose*distance-command
+   (state <s> ^name multiple-stale-matches
+              ^new-object.perception-obj.id <new-id>
+              ^stale-candidate <c>)
+   (<c> ^object.belief-obj.id <bel-id>
+       -^distance)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name distance-command
+        ^category perception
+        ^object-a <new-id>
+        ^object-b <bel-id>
+        ^distance-type centroid_distance)
+}
+
+sp {multiple-stale-matches*apply*copy*result
+   (state <s> ^name multiple-stale-matches
+              ^operator <o>
+              ^stale-candidate <c>
+              ^distance-command <cmd>)
+   (<o> ^name distance-command
+        ^object-b <id>)
+   (<c> ^object.belief-id <id>)
+   (<cmd> ^distance <dist>)
+-->
+   (<s> ^distance-command <cmd> -)
+   (<c> ^distance <dist>)
+}
+
+sp {multiple-stale-matches*elaborate*closest
+   (state <s> ^name multiple-stale-matches
+              ^distance-command <c>
+             -^distance-command.distance < <dist>)
+   (<c> ^object <obj>
+        ^distance <dist>)
+-->
+   (<s> ^closest-object <obj>)
+}
+
+sp {multiple-stale-matches*propose*return-closest-object
+   (state <s> ^name multiple-stale-matches
+              ^closest-object <obj>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name return-closest-object
+        ^category perception
+        ^object <obj>)
+}
+
+sp {multiple-stale-matches*prefer*distance-command*over*return
+   (state <s> ^name multiple-stale-matches
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name distance-command)
+   (<o2> ^return-closest-object)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+   
+sp {multiple-stale-matches*apply*return-closest-object
+   (state <s> ^name match-stale-object
+              ^operator <o>
+              ^superstate <ss>
+              ^topstate <top>)
+   (<o> ^name return-closest-object
+        ^object <obj>)
+-->
+   (<ss> ^matched-stale-object <obj>)
+}

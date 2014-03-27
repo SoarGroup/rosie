@@ -3,6 +3,7 @@ package com.soartech.bolt.script.ui.command;
 import lcm.lcm.LCM;
 import april.util.TimeUtil;
 import probcog.lcmtypes.perception_command_t;
+import edu.umich.insoar.InSoar;
 import edu.umich.insoar.world.WorldModel;
 
 public class PointAtObject implements UiCommand {

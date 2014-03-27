@@ -1,0 +1,186 @@
+#todo handle conceptual spatial rels
+sp {index-parameter-list*elaborate*copy-down-attrs
+   (state <s> ^name index-parameter-list
+              ^superstate.operator <o>)
+   (<o> ^conditions <cond>
+        ^arg <arg>)
+#	    ^param <num>) #param args
+-->
+   (<s> ^conditions <cond2>
+        ^arg <arg>)
+#	    ^param <num>)
+}
+
+sp {index-parameter-list*elaborate*copy-down-attrs*prohibit
+   (state <s> ^name index-parameter-list
+              ^superstate.operator <o>)
+   (<o> ^prohibit <p>)
+-->
+   (<s> ^prohibit <p>)
+}
+
+sp {index-parameter-list*elaborate*copy-down-attrs*prohibit-new
+   (state <s> ^name index-parameter-list
+              ^superstate.operator <o>)
+   (<o> ^prohibit-new <t>)
+-->
+   (<s> ^prohibit-new <t>)
+}
+
+sp {index-parameter-list*elaborate*copy-down-attrs*type
+   (state <s> ^name index-parameter-list
+              ^conditions <cond>
+              ^superstate.operator <o>)
+   (<o> ^conditions <cond2>)
+   (<cond2> ^word {<word> << location block >>})
+-->
+   (<cond> ^type <word>)
+}
+
+sp {index-parameter-list*elaborate*copy-down-attrs*typeboth
+   (state <s> ^name index-parameter-list
+              ^conditions <cond>
+              ^superstate.operator <o>)
+   (<o> ^conditions <cond2>)
+   (<cond2> -^word << location block >>)
+-->
+   (<cond> ^type either)
+}
+sp {index-parameter-list*elaborate*copy-down-attrs*word
+   (state <s> ^name index-parameter-list
+              ^conditions <cond>
+              ^superstate.operator <o>)
+   (<o> ^conditions <cond2>)
+   (<cond2> ^word {<word> <> location <> block <> object <> null})
+-->
+   (<cond> ^word <word>)
+}
+sp {index-parameter-list*elaborate*copy-down-attrs*specifier
+   (state <s> ^name index-parameter-list
+              ^conditions <cond>
+              ^superstate.operator <o>)
+   (<o> ^conditions <cond2>)
+   (<cond2> ^specifier <spec>)
+-->
+   (<cond> ^specifier <spec>)
+}
+
+
+#need to handle concepts like clear
+sp {index-parameter-list*propose*indexed-parameter
+   (state <s> ^name index-parameter-list
+              ^conditions <co>
+              ^arg <arg>
+ #             ^param <num> #number of args in param-list
+              ^topstate.current-game <cg>)
+   (<cg> ^learning <l>)
+   (<l> ^learn-link <link> ^param-list <pl>)# ^arg <arg> 
+   (<pl> ^<parg> <param>)
+   (<param> ^type <type> ^arg {<arg3> <> INDEF})
+   (<link> ^parameters.{<arg3> <= <arg>}.type <type>)
+   (<co> ^type <type> ^specifier DEF)
+-{(<co> ^word <word>)
+  -{(<link> ^conditions.<arg3>.attribute.attr <word>)}}
+#-{(<co> ^concept.name <cname>)
+#  -{(<link> ^conditions.<arg3>.concept.name <cname>)}}
+-{(<s> ^prohibit <arg3>)}
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name indexed-parameter
+        ^param-list-num <parg>
+        ^param <arg3>) 
+}
+#indexed success
+
+sp {index-parameter-list*propose*indexed-parameterINDEF
+   (state <s> ^name index-parameter-list
+              ^conditions <co>
+              ^arg <arg>
+              -^prohibit-new 
+  #            ^param <num> #number of args in param-list
+              ^topstate.current-game <cg>)
+   (<cg> ^learning <l>)
+   (<l> ^learn-link <link> ^param-list <pl>)#^arg <arg> 
+   (<pl> ^<parg> <param>)
+   (<param> ^type <type> ^arg INDEF)
+   (<co> ^type <type> -^word ^specifier DEF)
+   -{(<param> ^arg {<garg> <> INDEF})}
+-->
+   #arg indef??
+   (<s> ^operator <o> + =)
+   (<o> ^name indexed-parameter
+        ^param-list-num <parg>
+        ^param (+ 1 <arg>))
+}
+               
+sp {index-parameter-list*propose*create-new-parameter*INDEF
+   (state <s> ^name index-parameter-list
+              ^conditions <co>
+              ^arg <arg> 
+ #             ^param <num> #number of args in param-list
+              ^topstate.current-game <cg>)
+   (<cg> ^learning <l>)
+   (<l> ^learn-link <link> ^param-list <pl>)
+   (<co> ^type <type> -^word ^specifier INDEF)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name create-new-parameter
+      #  ^param-list-num none
+        ^param INDEF)
+}
+sp {index-parameter-list*propose*create-new-parameter*INDEF*adjective
+   (state <s> ^name index-parameter-list
+              ^conditions <co>
+              ^arg <arg>
+               -^prohibit-new 
+ #             ^param <num> #number of args in param-list
+              ^topstate.current-game <cg>)
+   (<cg> ^learning <l>)
+   (<l> ^learn-link <link> ^param-list <pl>)
+   (<co> ^type <type> ^specifier INDEF ^word)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name create-new-parameter
+     #   ^param-list-num none
+        ^param (+ 1 <arg>))
+}
+
+sp {index-parameter-list*apply*create-new-parameter
+   (state <s> ^name index-parameter-list
+  #            ^superstate <ss>
+              ^superstate.operator <op>
+              ^operator <o>)
+   (<o> ^name create-new-parameter
+        ^param <arg3>)
+-->
+#   (<ss> ^indexed <ind>)
+#   (<ind> ^index <arg3>)
+   (<op> ^index <arg3>
+         ^param-list-num none)
+}
+
+#todo worry about multiple on onestate
+sp {index-parameter-list*apply*indexed-parameter
+   (state <s> ^name index-parameter-list
+  #            ^superstate <ss>
+              ^superstate.operator <op>
+              ^operator <o>)
+   (<o> ^name indexed-parameter
+        ^param-list-num <parg>
+        ^param <arg3>)
+-->
+ #  (<ss> ^indexed <ind>)
+ #  (<ind> ^index <arg3>)
+   (<op> ^index <arg3>
+         ^param-list-num <parg>)
+}
+
+sp {index-parameter-list*pref*recency*indexed-parameter
+   (state <s> ^name index-parameter-list
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name indexed-parameter ^param-list-num <arg1>) 
+   (<o2> ^name indexed-parameter ^param-list-num {<arg2> < <arg1>}) 
+-->
+   (<s> ^operator <o1> > <o2>)
+}

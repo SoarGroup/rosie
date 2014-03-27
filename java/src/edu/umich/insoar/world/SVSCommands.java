@@ -7,6 +7,10 @@ public class SVSCommands {
     	return String.format("a %s object world v %s p %s r %s s %s\n", objID, bboxVertices(), posToStr(pos), rotToStr(rot), sizeToStr(size));
     }
     
+    public static String add(String objID){
+    	return String.format("a %s object world v %s\n", objID, bboxVertices());
+    }
+    
     public static String changePos(String objID, double[] pos){
     	return String.format("c %s p %s\n", objID, posToStr(pos));
     }

@@ -1,0 +1,50 @@
+##################################################################
+#
+# Monitoring occluded objects
+#
+##################################################################
+
+sp {topstate*scene-monitor*elaborate*is-occluded*false
+   (state <s> ^topstate <s>
+              ^scene-monitor.object.differences <diffs>)
+   (<diffs> -^is-occluded true)
+-->
+   (<diffs> ^is-occluded false)
+}
+
+sp {topstate*scene-monitor*elaborate*occlusion-time-expired
+   (state <s> ^topstate <s>
+              ^scene-monitor.object.differences <diffs>
+              ^io.input-link.time.seconds <t>)
+   (<diffs> ^is-occluded true
+            ^recheck-occlusion-time < <t>)
+-->
+   (<diffs> ^occlusion-time-expired true)
+}
+    
+#############################################################################
+# Change: recheck-occlusion
+#   Periodically check occluded objects to see if they are still occluded
+#############################################################################
+
+sp {monitor-scene-changes*elaborate*scene-changes*recheck-occlusion
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes <sc>
+              ^scene-monitor.object <obj>)
+   (<obj> ^differences <diffs>)
+   (<diffs> ^occlusion-time-expired true)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type recheck-occlusion
+             ^object <obj>)
+}
+
+sp {topstate*elaborate*scene-changes*change-info*recheck-occlusion
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes.change-info <info>)
+-->
+   (<info> ^change <recheck-occlusion>)
+   (<recheck-occlusion> ^name recheck-occlusion
+                        ^op-name check-for-occlusion)
+}
+

@@ -52,12 +52,20 @@ sp {select-parse*elaborate*init
          ^extra-cost 0)
 }
 
-sp {select-parse*elaborate*context*which-question*from-stack
-   (state <s> ^name select-parse
-              ^top-state.interaction.stack.segment.purpose.type which-question)
+# AM: added so we can get object fragments from certain responses
+sp {select-parse*elaborate*expect-object-fragment
+	(state <s> ^name select-parse
+						 ^top-state.interaction.stack.segment.purpose.type << which-question missing-object >>)
 -->
-   (<s> ^context which-question)
+	(<s> ^expect-object-fragment true)
 }
+
+#sp {select-parse*elaborate*context*which-question*from-stack
+#   (state <s> ^name select-parse
+#              ^top-state.interaction.stack.segment.purpose.type which-question)
+#-->
+#   (<s> ^context which-question)
+#}
 
 # Allow the input to force a context (for debugging) by prepending
 # context_which_question to the sentence. Preprocessing catches this and maps
@@ -67,6 +75,7 @@ sp {select-parse*elaborate*context*which-question*from-input
               ^top-state.sentence-mapping.word.real-wvalue context_which_question)
 -->
    (<s> ^context which-question)
+	(<s> ^expect-object-fragment true) #AM
 }
 
 sp {select-parse*elaborate*report-context
@@ -102,7 +111,8 @@ sp {select-parse*elaborate*noun-phrase-cost*false
 
 sp {select-parse*elaborate*weighting*baseline
    (state <s> ^name select-parse
-             -^context which-question
+							 -^context expect-object-fragment # AM
+							 #-^context which-question
               ^parse <parse>)
    (<parse> ^expensive-link-cost <elc>
             ^extra-cost <ec>
@@ -112,9 +122,10 @@ sp {select-parse*elaborate*weighting*baseline
 }
 
 # don't penalize noun phrases if we are expecting one
-sp {select-parse*elaborate*weighting*which-question
+sp {select-parse*elaborate*weighting*expect-object-fragment
    (state <s> ^name select-parse
-              ^context which-question
+							 ^context expect-object-fragment
+	 						#^context which-question
               ^parse <parse>)
    (<parse> ^expensive-link-cost <elc>
             ^extra-cost <ec>

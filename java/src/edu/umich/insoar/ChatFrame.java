@@ -8,12 +8,19 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.AudioFileFormat;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.TargetDataLine;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -35,6 +42,8 @@ import com.soartech.bolt.testing.Script;
 import com.soartech.bolt.testing.ScriptDataMap;
 import com.soartech.bolt.testing.Settings;
 import com.soartech.bolt.testing.Util;
+
+
 
 public class ChatFrame extends JFrame
 {
@@ -98,12 +107,28 @@ public class ChatFrame extends JFrame
     private SoarAgent soarAgent;
     
     private LanguageConnector langConnector;
+    
+    // Audio Recorder for Speech to Text
+    private AudioFormat audioFormat;
+    private AudioRecorder recorder;
+    private File audioFile;
+    private DataLine.Info info;
+    private TextToSpeech tts;
+	
+    TargetDataLine	targetDataLine;
 
     public ChatFrame(LanguageConnector langConnector, SoarAgent agent) {
         super("SBolt");
         this.langConnector = langConnector;
         this.soarAgent = agent;
+        this.audioFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 16000.0F, 16, 1, 2, 16000.0F, false);
         
+        this.audioFile = new File("forward.raw");
+        this.info = null;//new DataLine.Info(TargetDataLine.class, audioFormat);
+        this.targetDataLine = null;
+        //when to get line
+        this.recorder = null;
+        this.tts = new TextToSpeech();
         System.out.println("Set object");
         instance = this;
         
@@ -127,6 +152,15 @@ public class ChatFrame extends JFrame
 					downPressed();
 				} else if(arg0.getKeyCode() == KeyEvent.VK_RIGHT){
 					tabPressed();
+				}
+				// Ctrl toggles audio input
+				else if(arg0.getKeyCode() == KeyEvent.VK_CONTROL){
+					ctrlPressed();
+				}
+			}
+			public void keyReleased(KeyEvent arg0) {
+				if(arg0.getKeyCode() == KeyEvent.VK_CONTROL){
+					ctrlReleased();
 				}
 			}
         });
@@ -298,6 +332,7 @@ public class ChatFrame extends JFrame
     }
     
     public void addMessage(String message, ActionType type) {
+    	String preserveMsg = message;
     	synchronized(outputLock) {
     		message = ScriptDataMap.getInstance().getString(type)+" "+message.trim();
     		if(chatDoc.getStyle(type.toString()) == null) {
@@ -305,6 +340,10 @@ public class ChatFrame extends JFrame
     		}
     		chatMessages.add(message);
     		try {
+    			//TO ENABLE SPEAKING
+    			if (type == ActionType.Agent)
+    				tts.speak(preserveMsg);
+    			
     			DateFormat dateFormat = new SimpleDateFormat("mm:ss:SSS");
     			Date d = new Date();
     			int origLength = chatDoc.getLength();
@@ -381,6 +420,43 @@ public class ChatFrame extends JFrame
 		if(history.size() > 0){
 			chatField.setText(history.get(historyIndex));
 		}
+    }
+    
+    private void ctrlPressed(){
+    	//start recorder thread
+    	//create audiorecorder
+    	System.out.println("pressed");
+        info = new DataLine.Info(TargetDataLine.class, audioFormat);
+        try
+        {
+			targetDataLine = (TargetDataLine) AudioSystem.getLine(info);
+			targetDataLine.open(audioFormat);
+		}
+        catch (LineUnavailableException e)
+        {
+			e.printStackTrace();
+			System.exit(1);
+		}
+        recorder = new AudioRecorder(targetDataLine, AudioFileFormat.Type.WAVE, audioFile);
+    	recorder.start();
+    }
+    private void ctrlReleased(){
+    	recorder.stopRecording();
+    	
+    	//decode audio through jni call to sphinx code
+    	String result = new sphinxJNI().decodeAudio();
+    	if (result != null)
+    		result = result.toLowerCase();
+
+    	System.out.println("heard: " + result);
+    	addMessage(result, ActionType.Mentor);
+
+    	langConnector.newMessage(result);
+        chatField.setText("");
+        chatField.requestFocus();
+        if(script != null && script.peekType() == ActionType.Agent) {
+    		ChatFrame.Singleton().setWaiting(true);
+        }
     }
     
     private void downPressed(){

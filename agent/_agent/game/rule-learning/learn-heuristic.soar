@@ -1,0 +1,91 @@
+# TODO in future make sure action name matches
+#sp {learn-action*query*success*verb
+#   (state <s> ^name learn-action
+#              ^verb-name <name>
+#              ^topstate.current-game.learning.type verb
+#              ^smem.result.success <cue>
+#              ^smem.result <res>)
+#-->
+#   (<s> ^found true)
+#}
+#sp {learn-action*query*failure*verb
+#   (state <s> ^name learn-action
+#              ^verb-name <name>
+#              ^topstate.current-game.learning.type verb
+#              ^smem.result.failure <cue>)
+#-->
+#   (<s> ^found false)
+#}
+#sp {learn-action*propose*teaching-request
+#   (state <s> ^name learn-action
+#              ^verb-name <name>
+#              ^found false
+#              ^topstate.current-game.learning <l>)
+#   (<l> ^type verb)
+#-->
+#   (<l> ^interaction true)
+#   (<s> ^operator <o> + =)
+#   (<o> ^name teaching-request
+#        ^category svs
+#        ^verb <name>)
+#}
+
+
+sp {learn-heuristic*propose*store-heuristic
+   (state <s> ^name learn-heuristic
+              ^type action
+              ^action1 <action1>
+              ^action2 <action2>
+             -^stored <action1>
+              ^topstate.current-game.learning <l>)
+   (<l> ^type heuristic)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name store-action
+        ^category svs)
+}
+
+sp {learn-heuristic*apply*store-action*type-action
+   (state <s> ^name learn-heuristic 
+              ^type action
+              ^action1 <action1>
+              ^action2 <action2>
+              ^topstate <ts>
+              ^operator.name store-action)
+   (<ts> ^current-game <cg>)
+   (<cg> ^learning <l> ^name <gname> ^game <g>)
+   (<l> ^type heuristic)
+   (<g> ^heuristics <heu>)
+-->
+   (<s> ^stored <action1>)
+   (<heu> ^preference <pref>)
+   (<pref> ^1 <pref1> ^2 <pref2>)
+   (<pref1> ^type action ^name <action1>)
+   (<pref2> ^type action ^name <action2>)
+}
+
+sp {learn-heuristic*propose*find-next-heuristic
+   (state <s> ^name learn-heuristic
+              ^action1 <action1>
+              ^stored <action1>
+              ^topstate.current-game.learning <l>)
+   (<l> ^type heuristic)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name find-next-heuristic
+        ^category svs)
+}
+
+sp {learn-heuristic*apply*find-next-heuristic
+   (state <s> ^name learn-heuristic
+              ^topstate.interaction.status <status>
+              ^topstate.current-game <cg>
+              ^operator.name find-next-heuristic
+              ^topstate.io.output-link <out>
+              ^topstate.current-game.learning <l>)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type game-new-heuristic
+          ^fields <f>)
+   (<status> ^performed.dialog-event.type game)
+}

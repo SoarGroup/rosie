@@ -1,0 +1,110 @@
+sp {evaluate-stability*elaborate*monitor-obj
+   (state <s> ^name evaluate-stability
+              ^superstate.operator.object <obj>)
+-->
+   (<s> ^monitor-obj <obj>)
+}
+
+#####################
+# Elaborations that determine whether an object is stable or not
+
+sp {evaluate-stability*elaborate*thresholds
+   (state <s> ^name evaluate-stability
+              ^topstate.agent-params <params>)
+   (<params> ^pos-diff-threshold <pdt>
+             ^vol-low-diff-threshold <vlt>
+             ^vol-high-diff-threshold <vht>
+             ^max-stability-checks <max>)
+-->
+   (<s> ^pos-threshold <pdt>
+        ^vol-low-threshold <vlt>
+        ^vol-high-threshold <vht>
+        ^max-checks <max>)
+}
+
+sp {evaluate-stability*elaborate*pos-diff
+   (state <s> ^name evaluate-stability
+              ^monitor-obj.position-monitor.result.record.value <val>)
+-->
+   (<s> ^pos-diff <val>)
+}
+
+sp {evaluate-stability*elaborate*vol-diff
+   (state <s> ^name evaluate-stability
+              ^monitor-obj.volume-monitor.result.record.value <val>)
+-->
+   (<s> ^vol-diff <val>)
+}
+
+# stable position
+
+sp {evaluate-stability*elaborate*stable-pos*true
+   (state <s> ^name evaluate-stability
+              ^pos-threshold <t>
+              ^pos-diff < <t>)
+-->
+   (<s> ^stable-pos true)
+}
+
+sp {evaluate-stability*elaborate*stable-pos*false
+   (state <s> ^name evaluate-stability
+              ^pos-threshold <t>
+              ^pos-diff >= <t>)
+-->
+   (<s> ^stable-pos false)
+}
+
+# stable volume
+
+sp {evaluate-stability*elaborate*stable-vol*true
+   (state <s> ^name evaluate-stability
+              ^vol-low-threshold <low>
+              ^vol-high-threshold <high>
+              ^vol-diff { < <high> > <low>})
+-->
+   (<s> ^stable-vol true)
+}
+
+sp {evaluate-stability*elaborate*stable-vol*false*low
+   (state <s> ^name evaluate-stability
+              ^vol-low-threshold <low>
+              ^vol-diff <= <low>)
+-->
+   (<s> ^stable-vol false)
+}
+
+sp {evaluate-stability*elaborate*stable-vol*false*high
+   (state <s> ^name evaluate-stability
+              ^vol-high-threshold <high>
+              ^vol-diff >= <high>)
+-->
+   (<s> ^stable-vol false)
+}
+
+# Overall stability
+sp {evaluate-stability*elaborate*obj-is-stable*true
+   (state <s> ^name evaluate-stability
+              ^stable-vol true
+              ^stable-pos true)
+-->
+   (<s> ^obj-is-stable true)
+}
+
+sp {evaluate-stability*elaborate*obj-is-stable*true*timeout
+   (state <s> ^name evaluate-stability
+              ^{ << stable-pos stable-vol >> } false
+              ^max-checks <max>
+              ^monitor-obj.number-checks >= <max>)
+-->
+   (<s> ^obj-is-stable true)
+}
+
+sp {evaluate-stability*elaborate*obj-is-stable*false*more-checks
+   (state <s> ^name evaluate-stability
+              ^{ << stable-pos stable-vol >> } false
+              ^max-checks <max>
+              ^monitor-obj.number-checks < <max>)
+-->
+   (<s> ^obj-is-stable false)
+}
+ 

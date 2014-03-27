@@ -1,0 +1,115 @@
+# Elaborate svs object id's
+# belief objects have an id-int that corresponds to an id on a working memory object
+# perception objects have an id-as-integer that is the cast form of the id
+
+sp {svs*elaborate*perception-obj*id-as-integer
+   (state <s> ^svs.spatial-scene.child <perc-obj>)
+   (<perc-obj> ^object-source perception
+               ^id <id>)
+-->
+   (<perc-obj> ^id-as-integer (int <id>))
+}
+
+sp {svs*elaborate*belief-obj*id-int
+   (state <s> ^svs.spatial-scene.child <bel-obj>
+              ^topstate.object <wm-obj>)
+   (<bel-obj> ^id <bel-id>)
+   (<wm-obj> ^id <id>
+             ^belief-id <bel-id>)
+-->
+   (<bel-obj> ^id-int <id>)
+}
+
+sp {svs*elaborate*svs*objects*type*node
+   (state <s> #^superstate nil
+   	          ^svs.spatial-scene <sc>)
+   (<sc> ^child <C>)
+   (<C> ^object-source belief)
+ --> 
+   (<C> ^type node)
+ }
+
+# Create property on belief objects that mark their source 
+#    (Used to only grab the subset of svs objects that are belief objects)
+sp {svs*apply*any-op*property-command*object-source*belief
+   (state <s> ^topstate.object.belief-obj <bel-obj>
+              ^operator <o>
+              ^svs.command <cmd>)
+   (<bel-obj> ^id <bel-id>
+             -^object-source belief)
+-->
+   (<cmd> ^property <prop>)
+   (<prop> ^id <bel-id>
+           ^property object-source
+           ^value belief)
+}
+
+# Marks the object as stale in svs so that it can be used in filters
+sp {svs*apply*any-op*property-command*stale*true
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^scene-monitor.object <obj>
+              ^svs.command <cmd>)
+   (<obj> ^differences.is-stale true
+          ^belief-obj <bel-obj>)
+   (<bel-obj> ^id <id>
+             -^stale true)
+-->
+   (<cmd> ^property <prop>)
+   (<prop> ^id <id>
+           ^property stale
+           ^value true)
+}
+
+sp {svs*apply*any-op*property-command*stale*false
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^scene-monitor.object <obj>
+              ^svs.command <cmd>)
+   (<obj> ^differences.is-stale false
+          ^belief-obj <bel-obj>)
+   (<bel-obj> ^id <id>
+             -^stale false)
+-->
+   (<cmd> ^property <prop>)
+   (<prop> ^id <id>
+           ^property stale
+           ^value false)
+}
+
+# Cleans up the svs command link after commands have been  completed
+
+
+sp {topstate*apply*any-op*remove*monitor*filters
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^svs.command <cmd>
+              ^svs.spatial-scene <scene>)
+   (<cmd> ^extract <filter>)
+   (<filter> ^type << monitor_position monitor_volume >>
+             ^a.id <id>)
+   (<scene> -^child.id <id>)
+-->
+   (<cmd> ^extract <filter> -)
+}
+
+sp {svs*apply*any-op*remove*completed*commands
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^svs.command <cmd>)
+   (<cmd> ^{<type> << del_node copy_node property >>} <val>)
+   (<val> ^status success)
+-->
+   (<cmd> ^<type> <val> -)
+}
+
+sp {svs*apply*any-op*remove*completed*commands*errors
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^svs.command <cmd>)
+   (<cmd> ^{<type> << del_node copy_node property extract_once >>} <val>)
+   (<val> ^status {<status> <> success})
+-->
+   (<cmd> ^<type> <val> -)
+   (write |Filter Error (| <type> |): | <status> (crlf))
+}
