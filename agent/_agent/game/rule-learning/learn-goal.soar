@@ -3,7 +3,7 @@ sp {learn-goal*name**query*smem
               ^goal-name <name>
               ^smem.command <sc>
               ^topstate.current-game.learning <l>)
-   (<l> ^type goal)
+   (<l> ^type game-params)
 -->
    (<sc> ^query <q>)
    (<q> ^goal-name <name>)
@@ -11,7 +11,7 @@ sp {learn-goal*name**query*smem
 sp {learn-goal*query*success
    (state <s> ^name learn-goal
               ^goal-name <name>
-              ^topstate.current-game.learning.type goal
+              ^topstate.current-game.learning.type game-params
               ^smem.result.success <cue>
               ^smem.result.retrieved <res>)
 -->
@@ -21,7 +21,7 @@ sp {learn-goal*query*success
 sp {learn-goal*query*failure
    (state <s> ^name learn-goal
               ^goal-name <name>
-              ^topstate.current-game.learning.type goal
+              ^topstate.current-game.learning.type game-params
               ^smem.result.failure <cue>)
 -->
    (<s> ^found false)
@@ -31,7 +31,7 @@ sp {learn-goal*propose*copy-goal
               ^goal-name <gname>
               ^found true
               ^topstate.current-game.learning <l>)
-   (<l> ^type goal)
+   (<l> ^type game-params)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name copy-goal
@@ -45,34 +45,39 @@ sp {learn-goal*apply*copy-goal
               ^operator.name copy-goal)
    (<ts> ^current-game <cg>)
    (<cg> ^learning <l> ^game <g>)
+   (<l> ^goal-number <gnum>)
+   (<g> ^goals <go1>)
 -->
-   (<g> ^goals <go>)
+   (<go1> ^<gnum> <go>)
 #   (<go> ^conditions <c> ^parameters <p> ^name <name>)
 }
 sp {learn-goal*apply*copy-goal*send-message
    (state <s> ^name learn-goal
               ^operator.name copy-goal
               ^topstate.io.output-link <out>
-              ^topstate.current-game.game.goals
+              ^topstate.current-game.game.goals.<num>
               ^topstate.interaction.status <status>
               ^topstate.current-game.learning <l>)
-   (<l> ^type <t>)
+   (<l> ^type <t> ^goal-number <num>)
 -->
+   (<l> ^goal-number <num> -)
    (<l> ^type <t> -)
-   (<l> ^type failure)
+   (<l> ^goal-number (+ <num> 1)
+        ^type game-params)
    (<out> ^send-message <msg>)
-   (<msg> ^type game-new-failure
+   (<msg> ^type game-new-params
           ^fields <f>)
    (<status> ^performed.dialog-event.type game)
 }
+
 
 sp {learn-goal*propose*store-goal
    (state <s> ^name learn-goal
               ^goal-name <gname>
               ^found false
-             -^topstate.current-game.game.goals
+             -^topstate.current-game.game.goals.<num>
               ^topstate.current-game.learning <l>)
-   (<l> ^type goal)
+   (<l> ^type game-params ^goal-number <num>)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name store-goal
@@ -86,16 +91,20 @@ sp {learn-goal*apply*store-goal
               ^operator.name store-goal)
    (<ts> ^current-game <cg>)
    (<cg> ^learning <l> ^game <g>)
--->
    (<g> ^goals <go>)
-   (<go> ^conditions <c> ^parameters <p> ^goal-name <name>)
+   (<l> ^goal-number <num>)
+-->
+   (<go> ^<num> <go1>)
+   (<go1> ^conditions <c> ^parameters <p> ^goal-name <name> ^name <name>)
+   (<c> ^cond <newcond>)
 }
 
 
 sp {learn-goal*propose*find-parameter
    (state <s> ^name learn-goal
-              ^topstate.current-game.game.goals
+              ^topstate.current-game.game.goals.<num>
               ^topstate.current-game.learning <l>)
+   (<l> ^goal-number <num>)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name find-parameter
@@ -112,30 +121,32 @@ sp {learn-goal*apply*find-parameter
    (<l> ^type <t>)
 -->
    (<l> ^type <t> -)
-   (<l> ^type parameter ^arg 1)
+   (<l> ^type parameter ^arg 0 ^param-list-num 1 ^param-list <pl>)
    (<out> ^send-message <msg>)
    (<msg> ^type game-new-parameter
           ^fields <f>)
+   (<f> ^state-type goal)
    (<status> ^performed.dialog-event.type game)
 }
 
 #FINISHED goals
-sp {finish-goals*store-game
-   (state <s> ^name finish-goals
-              ^topstate.io.output-link <out>
-              ^topstate.interaction.status <status>
-              ^topstate.current-game <cg>)
-   (<cg> ^learning <l> ^game <g>)
-   (<l> ^type <t> ^arg <arg>)
--->
-   (<l> ^type <t> -)
-   (<l> ^arg <arg> -)
-   (<l> ^type failure)
-   (<out> ^send-message <msg>)
-   (<msg> ^type game-new-failure
-          ^fields <f>)
-   (<status> ^performed.dialog-event.type game)
-}
+# no longer routes from here
+#sp {finish-goals*store-game
+#   (state <s> ^name finish-goal
+#              ^topstate.io.output-link <out>
+#              ^topstate.interaction.status <status>
+#              ^topstate.current-game <cg>)
+#   (<cg> ^learning <l> ^game <g>)
+#   (<l> ^type <t> ^arg <arg>)
+#-->
+#   (<l> ^type <t> -)
+#   (<l> ^arg <arg> -)
+#   (<l> ^type failure)
+#   (<out> ^send-message <msg>)
+#   (<msg> ^type game-new-failure
+#          ^fields <f>)
+#   (<status> ^performed.dialog-event.type game)
+#}
 #FINISHED GAME STORE ALL- todo goals
 
 #sp {finish-goals*store-game

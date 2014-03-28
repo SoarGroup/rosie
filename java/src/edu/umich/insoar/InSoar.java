@@ -130,7 +130,7 @@ public class InSoar implements PrintEventInterface, RunEventInterface
 		
 		language = new LanguageConnector(soarAgent, lgSupport, dictionaryFile, grammarFile);
         perception = new PerceptionConnector(soarAgent);   
-        motorSystem = new MotorSystemConnector(soarAgent);
+        motorSystem = new MotorSystemConnector(soarAgent, perception);
         
         // Setup ChatFrame
         chatFrame = new ChatFrame(language, soarAgent);

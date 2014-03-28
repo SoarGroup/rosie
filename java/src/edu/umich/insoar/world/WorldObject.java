@@ -61,9 +61,6 @@ public class WorldObject
     
     protected ArrayList<object_data_t> lastData;
     
-    private boolean isLive = true;
-    
-    
     protected Map<String, PerceptualProperty> perceptualProperties;
     
     protected StateProperties stateProperties;
@@ -92,6 +89,19 @@ public class WorldObject
     
     public String getIdString(){
     	return (new Integer(id)).toString();
+    }
+    
+    public Integer getPerceptionId(){
+    	for(object_data_t objDat : lastData){
+    		if(objDat.id == id){
+    			return id;
+    		}
+    	}
+    	if(lastData.size() > 0){
+    		return lastData.get(0).id;
+    	}
+    	// This should never happen
+    	return null;
     }
     
     // Name: Get/Set
@@ -170,7 +180,6 @@ public class WorldObject
     	svsCommands.append(SVSCommands.add(getIdString()));
 		svsCommands.append(SVSCommands.addProperty(getIdString(), "object-source", "perception"));
 		svsCommands.append(SVSCommands.addProperty(getIdString(), "num-sources", new Integer(objDatas.size()).toString()));
-		svsCommands.append(SVSCommands.addProperty(getIdString(), "live", (isLive ? "true" : "false")));
     	
     	updateBbox(objDatas);
 		updateProperties(objDatas);
@@ -180,25 +189,9 @@ public class WorldObject
     public synchronized void update(ArrayList<object_data_t> objDatas){   
     	lastData = objDatas;
     	svsCommands.append(SVSCommands.changeProperty(getIdString(),  "num-sources",  new Integer(objDatas.size()).toString()));
-    	updateLive(objDatas);
         updateBbox(objDatas);
         updateProperties(objDatas);
     }
-    
-    private void updateLive(ArrayList<object_data_t> objDatas){
-    	boolean found = false;
-    	for(object_data_t od : objDatas){
-    		if(od.id == id){
-    			found = true;
-    			break;
-    		}
-    	}
-    	if(found != isLive){
-    		isLive = found;
-    		svsCommands.append(SVSCommands.changeProperty(getIdString(), "live", (found ? "true" : "false")));
-    	}
-    }
-    
     
     private void updateProperties(ArrayList<object_data_t> objDatas){
     	if(objDatas.size() > 1){

@@ -1,32 +1,11 @@
 
-# a block
-#sp {apply*push-object-message*action-parameter-message
-#   (state <s> ^name interpret-message
-#              ^topstate.current-game.learning <l>
-#              ^operator <o>)
-#   (<o> ^name object-message
-#        ^object <obj>)  
-#   (<l> ^type parameter)           
-##   (<o> ^name push-object-message
-##        ^message <msg>
-##        ^object <obj>)
-#   (<obj> ^specifier INDEF
-#          ^word <type>)
-#-->
-#   (<s> ^new-segment-info <info>)
-#   (<info> ^purpose <p>
-#           ^originator instructor)
-#   (<p> ^type action-parameter-message
-#        ^parameters <params>
-#        ^satisfaction <sat>)
-#   (<params> ^parameter <type>)
-#   (<sat> ^dialog-event.type game)
-#}
-sp {apply*push-object-message*action-parameter-message*either
+#TODO this type of response may be broken currently
+sp {apply*push-object-message*action-parameter-message*eitherDEPRICATED
+   :interrupt
    (state <s> ^name interpret-message
               ^operator <o>
               ^topstate.current-game.learning <l>)
-   (<l> ^type parameter)
+   (<l> ^type parameter -^interaction true)
    (<o> ^name object-message
         ^object.word {<name> << either >>})
 -->
@@ -40,11 +19,12 @@ sp {apply*push-object-message*action-parameter-message*either
    (<sat> ^dialog-event.type game)
 }
 
-sp {apply*push-object-message*action-parameter-message
+sp {apply*push-object-message*action-parameter-messageDEPRICATED
+   :interrupt
    (state <s> ^name interpret-message
               ^operator <o>
               ^topstate.current-game.learning <l>)
-   (<l> ^type parameter)
+   (<l> ^type parameter -^interaction true)
    (<o> ^name single-word-response
         ^response {<name> << block location >>})
 -->
@@ -55,6 +35,46 @@ sp {apply*push-object-message*action-parameter-message
         ^parameters <params>
         ^satisfaction <sat>)
    (<params> ^parameter <name>)
+   (<sat> ^dialog-event.type game)
+}
+
+# a blue block (first param)
+sp {apply*push-object-message*action-parameter-message*obj-desc
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^topstate.current-game.learning <l>)
+   (<l> ^type parameter -^interaction true)
+   (<o> ^name object-message
+        -^relation
+        ^object <obj>)#.word {<name> << either >>})
+-->
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type action-parameter-message
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<params> ^parameter.object <obj>)
+   (<sat> ^dialog-event.type game)
+}
+# a blue block (not first, incr params)
+sp {apply*push-object-message*action-parameter-message*obj-desc*next
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^topstate.current-game.learning <l>)
+   (<l> ^type condition -^interaction true)# ^parameter <type>)
+   (<o> ^name object-message
+        -^relation
+        ^object <obj>)
+   (<obj> ^specifier INDEF)
+-->
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type action-parameter-message
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<params> ^parameter.object <obj>)# ^type <type>)
    (<sat> ^dialog-event.type game)
 }
 #
@@ -72,17 +92,20 @@ sp {apply*push-object-message*action-parameter-message
 #	    ^parameter <type>)
 #}
 
+
+
+##no support initially for the red block is large or a block is blue
 ############################## the block is blue
 sp {apply*push-object-message*parameter-condition-message
    (state <s> ^name interpret-message
               ^operator <o>
               ^topstate.current-game.learning <l>)
-   (<l> ^type condition )#^parameter <type>)
+   (<l> ^type condition -^interaction true)#^parameter <type>)
    (<o> ^name object-message
         ^message <msg>
        -^relation
         ^object <obj>)
-   (<obj> ^specifier DEF
+   (<obj> ^specifier {<spec> << DEF >>}
           ^word {<cond> <> <type>}
           ^word {<type> << location block >>})
 -->
@@ -92,45 +115,26 @@ sp {apply*push-object-message*parameter-condition-message
    (<p> ^type parameter-condition-message
         ^parameters <params>
         ^satisfaction <sat>)
-   (<params> ^parameter <type> ^condition <cond>)
+   (<params> ^parameter <type> ^attribute <cond>)
    (<sat> ^dialog-event.type game)
 }
 
-###TODO
-#sp {parameter-condition-message*propose*learn-condition
-#   (state <s> ^interaction.stack.segment <seg>)
-#   (<seg> ^purpose <p>)
-#   (<p> ^type parameter-condition-message
-#        ^parameters <param>)
-#   (<param> ^parameter <type> ^condition <cond>)
-#-->
-#   (<s> ^operator <o> +)
-#   (<o> ^name learn-condition
-#        ^category svs
-#        ^prep none
-#        ^spec none
-#        ^negative false
-#        ^condition <cond>
-#	    ^parameter <type>)
-#}
-
-
-### the block is in a location
-sp {apply*push-object-message*parameter-condition-message*relation*positive*INDEF
+# <a,the> [red] block is on <a,the> [blue] location 
+sp {apply*push-object-message*parameter-condition-message*relation*positive*parameter-reference
    (state <s> ^name interpret-message
               ^operator <o>
               ^topstate.current-game.learning <l>)
-   (<l> ^type condition)# ^parameter <type>)
+   (<l> ^type << condition parameter >> -^interaction true)
    (<o> ^name object-message
         ^message <msg>
         ^relation.word <prep>
+       -^relation.word linear-with
         ^object <obj>
         ^relation.p2.object {<obj1> <> <obj>})
-   (<obj> ^specifier DEF
-          ^word {<type> << location block >>})
-   (<obj1> ^specifier {<spec> << INDEF DEF >>}
-          -^word null
-           ^word <cond>)
+   (<obj> ^specifier << DEF INDEF >>)
+#          ^word {<type> << location block >>})
+   (<obj1> -^word null
+            ^specifier << DEF INDEF >>)
 -->
    (<s> ^new-segment-info <info>)
    (<info> ^purpose <p>
@@ -138,25 +142,25 @@ sp {apply*push-object-message*parameter-condition-message*relation*positive*INDE
    (<p> ^type parameter-condition-message-relation
         ^parameters <params>
         ^satisfaction <sat>)
-   (<params> ^parameter <type> ^condition <cond> ^prep <prep> ^spec <spec> ^negative false)
+   (<params> ^objb <obj1> ^obja <obj> ^prep <prep> ^negative false)
    (<sat> ^dialog-event.type game)
 }
-
-sp {apply*push-object-message*parameter-condition-message*relation*negative*INDEF
+# <a,the> [red] block is not on <a,the> [blue] location 
+sp {apply*push-object-message*parameter-condition-message*relation*negative*parameter-reference
    (state <s> ^name interpret-message
               ^operator <o>
               ^topstate.current-game.learning <l>)
-   (<l> ^type condition)# ^parameter <type>)
+   (<l> ^type << parameter condition >> -^interaction true)# ^parameter <type>)
    (<o> ^name object-message
         ^message <msg>
         ^relation.word <prep>
+       -^relation.word linear-with
         ^object <obj>
         ^relation.p2.object {<obj1> <> <obj>})
-   (<obj> ^specifier DEF
-          ^word {<type> << location block >>})
-   (<obj1> ^specifier {<spec> << INDEF DEF >>}
-           ^word null
-           ^word {<cond> <> null})
+   (<obj> ^specifier << DEF INDEF >>)
+#          ^word {<type> << location block >>})
+   (<obj1>  ^word null
+            ^specifier << DEF INDEF >>)
 -->
    (<s> ^new-segment-info <info>)
    (<info> ^purpose <p>
@@ -164,31 +168,28 @@ sp {apply*push-object-message*parameter-condition-message*relation*negative*INDE
    (<p> ^type parameter-condition-message-relation
         ^parameters <params>
         ^satisfaction <sat>)
-   (<params> ^parameter <type> ^condition <cond> ^prep <prep> ^spec <spec> ^negative true)
+   (<params> ^objb <obj1> ^obja <obj> ^prep <prep> ^negative true)
    (<sat> ^dialog-event.type game)
 }
 
-### the location is linear-with 1 and 2
-sp {apply*push-object-message*parameter-condition-message*relation*positive*parameter*linear-with
+### a,the [red] location is linear-with a,the <obj> and a,the <obj>
+sp {apply*push-object-message*parameter-condition-message*relation*positive*parameter*linear-with*ref
    (state <s> ^name interpret-message
               ^operator <o>
               ^topstate.current-game.learning <l>)
-   (<l> ^type condition)# ^parameter <type>)
+   (<l> ^type << parameter condition >>  -^interaction true)# ^parameter <type>)
    (<o> ^name object-message
         ^message <msg>
         ^relation <r1>
         ^relation <r2>
         ^object {<obj> <> <obj2>})
    (<r1> ^word {<prep> linear-with} ^p2.object {<obj1> <> <obj>})
-   (<r2> ^word and ^p2.object {<obj2> <> <obj1>})
-   (<obj> ^specifier DEF
-          ^word {<type> << location block >>})
-   (<obj1> ^specifier {<spec> << none >>}
-          -^word null
-           ^word <cond>)
-   (<obj2> ^specifier {<spec> << none >>}
-          -^word null
-           ^word <cond2>)
+   (<r2> ^word and ^p2.object {<obj2> <> <obj1>}) #^word and TODO fix bug where and is sometimes linear-with from parser
+   (<obj> ^specifier << DEF INDEF >>)
+   (<obj1> ^specifier
+          -^word null)
+   (<obj2> ^specifier
+          -^word null)
 -->
    (<s> ^new-segment-info <info>)
    (<info> ^purpose <p>
@@ -196,96 +197,70 @@ sp {apply*push-object-message*parameter-condition-message*relation*positive*para
    (<p> ^type parameter-condition-message-relation
         ^parameters <params>
         ^satisfaction <sat>)
-   (<params> ^parameter <type> ^condition1 (int <cond>) ^condition2 (int <cond2>)  ^prep <prep> ^spec <spec> ^negative false)
+   (<params> ^objc <obj2> ^objb <obj1> ^obja <obj> ^prep <prep> ^negative false)
+   #(<params> ^parameter <type> ^condition1 (int <cond>) ^condition2 (int <cond2>)  ^prep <prep> ^spec <spec> ^negative false)
+   (<sat> ^dialog-event.type game)
+}
+sp {apply*push-object-message*parameter-condition-message*relation*positive*parameter*linear-with*ref*LGPARSEBUGHACK
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^topstate.current-game.learning <l>)
+   (<l> ^type << parameter condition >>  -^interaction true)# ^parameter <type>)
+   (<o> ^name object-message
+        ^message <msg>
+        ^relation <r1>
+        ^relation {<r2> > <r1>}
+        ^object {<obj> <> <obj2>})
+   (<r1> ^word {<prep> linear-with} ^p2.object {<obj1> <> <obj>})
+   (<r2> ^word <prep> ^p2.object {<obj2> <> <obj1>}) #^word and TODO fix bug where and is sometimes linear-with from parser
+   (<obj> ^specifier << DEF INDEF >>)
+   (<obj1> ^specifier
+          -^word null)
+   (<obj2> ^specifier
+          -^word null)
+-->
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type parameter-condition-message-relation
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<params> ^objc <obj2> ^objb <obj1> ^obja <obj> ^prep <prep> ^negative false)
+   #(<params> ^parameter <type> ^condition1 (int <cond>) ^condition2 (int <cond2>)  ^prep <prep> ^spec <spec> ^negative false)
    (<sat> ^dialog-event.type game)
 }
 
 ### the location is not linear-with 1 and 2
-sp {apply*push-object-message*parameter-condition-message*relation*negative*parameter*linear-with
-   (state <s> ^name interpret-message
-              ^operator <o>
-              ^topstate.current-game.learning <l>)
-   (<l> ^type condition)# ^parameter <type>)
-   (<o> ^name object-message
-        ^message <msg>
-        ^relation <r1>
-        ^relation <r2>
-        ^object {<obj> <> <obj2>})
-   (<r1> ^word {<prep> linear-with} ^p2.object {<obj1> <> <obj>})
-   (<r2> ^word and ^p2.object {<obj2> <> <obj1>})
-   (<obj> ^specifier DEF
-          ^word {<type> << location block >>})
-   (<obj1> ^specifier {<spec> << none >>}
-          -^word null
-           ^word <cond>)
-   (<obj2> ^specifier {<spec> << none >>}
-           ^word null
-           ^word {<cond2> <> null})
--->
-   (<s> ^new-segment-info <info>)
-   (<info> ^purpose <p>
-           ^originator instructor)
-   (<p> ^type parameter-condition-message-relation
-        ^parameters <params>
-        ^satisfaction <sat>)
-   (<params> ^parameter <type> ^condition1 (int <cond>) ^condition2 (int <cond2>)  ^prep <prep> ^spec <spec> ^negative true)
-   (<sat> ^dialog-event.type game)
-}
-### the block is in 1
-sp {apply*push-object-message*parameter-condition-message*relation*positive*parameter
-   (state <s> ^name interpret-message
-              ^operator <o>
-              ^topstate.current-game.learning <l>)
-   (<l> ^type condition)# ^parameter <type>)
-   (<o> ^name object-message
-        ^message <msg>
-        ^relation.word <prep>
-       -^relation.word linear-with
-        ^object <obj>
-        ^relation.p2.object {<obj1> <> <obj>})
-   (<obj> ^specifier DEF
-          ^word {<type> << location block >>})
-   (<obj1> ^specifier {<spec> << none >>}
-          -^word null
-           ^word <cond>)
--->
-   (<s> ^new-segment-info <info>)
-   (<info> ^purpose <p>
-           ^originator instructor)
-   (<p> ^type parameter-condition-message-relation
-        ^parameters <params>
-        ^satisfaction <sat>)
-   (<params> ^parameter <type> ^condition (int <cond>) ^prep <prep> ^spec <spec> ^negative false)
-   (<sat> ^dialog-event.type game)
-}
-### the block is not in 1
-sp {apply*push-object-message*parameter-condition-message*relation*negative*parameter
-   (state <s> ^name interpret-message
-              ^operator <o>
-              ^topstate.current-game.learning <l>)
-   (<l> ^type condition)# ^parameter <type>)
-   (<o> ^name object-message
-        ^message <msg>
-        ^relation.word <prep>
-       -^relation.word linear-with
-        ^object <obj>
-        ^relation.p2.object {<obj1> <> <obj>})
-   (<obj> ^specifier DEF
-          ^word {<type> << location block >>})
-   (<obj1> ^specifier {<spec> << none >>}
-           ^word null
-           ^word {<cond> <> null})
--->
-   (<s> ^new-segment-info <info>)
-   (<info> ^purpose <p>
-           ^originator instructor)
-   (<p> ^type parameter-condition-message-relation
-        ^parameters <params>
-        ^satisfaction <sat>)
-   (<params> ^parameter <type> ^condition (int <cond>) ^prep <prep> ^spec <spec> ^negative true)
-   (<sat> ^dialog-event.type game)
-}
-
+#sp {apply*push-object-message*parameter-condition-message*relation*negative*parameter*linear-with
+#   (state <s> ^name interpret-message
+#              ^operator <o>
+#              ^topstate.current-game.learning <l>)
+#   (<l> ^type condition -^interaction true)# ^parameter <type>)
+#   (<o> ^name object-message
+#        ^message <msg>
+#        ^relation <r1>
+#        ^relation <r2>
+#        ^object {<obj> <> <obj2>})
+#   (<r1> ^word {<prep> linear-with} ^p2.object {<obj1> <> <obj>})
+#   (<r2> ^word and ^p2.object {<obj2> <> <obj1>})
+#   (<obj> ^specifier DEF
+#          ^word {<type> << location block >>})
+#   (<obj1> ^specifier {<spec> << none >>}
+#          -^word null
+#           ^word <cond>)
+#   (<obj2> ^specifier {<spec> << none >>}
+#           ^word null
+#           ^word {<cond2> <> null})
+#-->
+#   (<s> ^new-segment-info <info>)
+#   (<info> ^purpose <p>
+#           ^originator instructor)
+#   (<p> ^type parameter-condition-message-relation
+#        ^parameters <params>
+#        ^satisfaction <sat>)
+#   (<params> ^parameter <type> ^condition1 (int <cond>) ^condition2 (int <cond2>)  ^prep <prep> ^spec <spec> ^negative true)
+#   (<sat> ^dialog-event.type game)
+#}
 
 ##TODO
 #sp {parameter-condition-message-relation*propose*learn-condition
@@ -325,13 +300,35 @@ sp {apply*push-object-message*parameter-condition-message*relation*negative*para
 #}
 
 ############################## action name
-sp {apply*push-object-message*action-name-message
+#here
+#sp {apply*push-object-message*action-name-message
+#   (state <s> ^name interpret-message
+#              ^operator <o>
+#              ^topstate.current-game.learning <l>)
+#   (<l> ^type action -^action-name)
+#   (<o> ^name single-word-response
+#        ^response {<name> <> finished})
+#-->
+#   (<s> ^new-segment-info <info>)
+#   (<info> ^purpose <p>
+#           ^originator instructor)
+#   (<p> ^type action-name-message
+#        ^parameters <params>
+#        ^satisfaction <sat>)
+#   (<params> ^action-name <name>)
+#   (<sat> ^dialog-event.type game)
+#}
+
+sp {apply*push-object-message*action-name-message*name-of
    (state <s> ^name interpret-message
               ^operator <o>
               ^topstate.current-game.learning <l>)
-   (<l> ^type action -^action-name)
-   (<o> ^name single-word-response
-        ^response {<name> <> finished})
+   (<l> ^type game-params -^action-name -^interaction true)
+   (<o> ^name object-message
+        ^message <msg>
+        ^relation <r> 
+        ^object.word action)
+   (<r> ^word name-of ^|p2|.object.word {<action-name> <> action})
 -->
    (<s> ^new-segment-info <info>)
    (<info> ^purpose <p>
@@ -339,15 +336,18 @@ sp {apply*push-object-message*action-name-message
    (<p> ^type action-name-message
         ^parameters <params>
         ^satisfaction <sat>)
-   (<params> ^action-name <name>)
+   (<params> ^action-name <action-name>)
    (<sat> ^dialog-event.type game)
 }
+
+
+
 
 sp {apply*push-object-message*action-name-message*multiplayer
    (state <s> ^name interpret-message
               ^operator <o>
               ^topstate.current-game.learning <l>)
-   (<l> ^type mult)
+   (<l> ^type mult -^interaction true)
    (<o> ^name single-word-response
         ^response {<name> <> finished})
 -->
@@ -361,24 +361,24 @@ sp {apply*push-object-message*action-name-message*multiplayer
    (<sat> ^dialog-event.type game)
 }
 
-sp {apply*push-object-message*action-name-message2
-    (state <s> ^name interpret-message
-               ^operator <o>
-               ^topstate.current-game.learning <l>)
-    (<l> ^type action -^action-name)
-    (<o> ^name object-message
-         ^message <msg>
-         ^object.word <name>)
--->
-    (<s> ^new-segment-info <info>)
-   (<info> ^purpose <p>
-           ^originator instructor)
-    (<p> ^type action-name-message
-         ^parameters <params>
-         ^satisfaction <sat>)
-    (<params> ^action-name <name>)
-    (<sat> ^dialog-event.type game)
-}
+#sp {apply*push-object-message*action-name-message2
+#    (state <s> ^name interpret-message
+#               ^operator <o>
+#               ^topstate.current-game.learning <l>)
+#    (<l> ^type action -^action-name)
+#    (<o> ^name object-message
+#         ^message <msg>
+#         ^object.word <name>)
+#-->
+#    (<s> ^new-segment-info <info>)
+#   (<info> ^purpose <p>
+#           ^originator instructor)
+#    (<p> ^type action-name-message
+#         ^parameters <params>
+#         ^satisfaction <sat>)
+#    (<params> ^action-name <name>)
+#    (<sat> ^dialog-event.type game)
+#}
 
 ##TODO
 #sp {action-name-message*propose*learn-action
@@ -431,7 +431,7 @@ sp {apply*push-object-message*goal-name-message2
    (state <s> ^name interpret-message
               ^operator <o>
               ^topstate.current-game.learning <l>)
-   (<l> ^type goal)
+   (<l> ^type goal -^interaction true)
    (<o> ^name object-message
         ^message <msg>
         ^object.word <name>)
@@ -449,7 +449,7 @@ sp {apply*push-object-message*goal-name-message
    (state <s> ^name interpret-message
               ^operator <o>
               ^topstate.current-game.learning <l>)
-   (<l> ^type goal)
+   (<l> ^type goal -^interaction true)
    (<o> ^name single-word-response
         ^response {<name> <> finished})
 -->
@@ -460,6 +460,25 @@ sp {apply*push-object-message*goal-name-message
         ^parameters <params>
         ^satisfaction <sat>)
    (<params> ^goal-name <name>)
+   (<sat> ^dialog-event.type game)
+}
+sp {apply*push-object-message*goal-name-message*name-of
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^topstate.current-game.learning <l>)
+   (<l> ^type game-params -^interaction true)
+   (<o> ^name goal-description
+        ^message.information <msg>)
+   (<msg> ^relation <r>)
+   (<r> ^word name-of ^|p2|.object.word {<goal-name> <> goal})
+-->
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type goal-name-message
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<params> ^goal-name <goal-name>)
    (<sat> ^dialog-event.type game)
 }
 
@@ -481,7 +500,7 @@ sp {apply*push-object-message*failure-name-message2
    (state <s> ^name interpret-message
               ^operator <o>
               ^topstate.current-game.learning <l>)
-   (<l> ^type failure)
+   (<l> ^type failure -^interaction true)
    (<o> ^name object-message
         ^message <msg>
         ^object.word <name>)
@@ -499,7 +518,7 @@ sp {apply*push-object-message*failure-name-message
    (state <s> ^name interpret-message
               ^operator <o>
               ^topstate.current-game.learning <l>)
-   (<l> ^type failure)
+   (<l> ^type failure -^interaction true)
    (<o> ^name single-word-response
         ^response {<name> <> finished})
 -->
@@ -510,6 +529,50 @@ sp {apply*push-object-message*failure-name-message
         ^parameters <params>
         ^satisfaction <sat>)
    (<params> ^failure-name <name>)
+   (<sat> ^dialog-event.type game)
+}
+
+sp {apply*push-object-message*failure-name-message*name-of
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^topstate.current-game.learning <l>)
+   (<l> ^type game-params -^interaction true)
+   (<o> ^name object-message
+        ^message <msg>
+        ^relation <r> 
+        ^object.word failure)
+   (<r> ^word name-of ^|p2|.object.word {<failure-name> <> failure})
+-->
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type failure-name-message
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<params> ^failure-name <failure-name>)
+   (<sat> ^dialog-event.type game)
+}
+
+
+sp {apply*push-object-message*state-demo-message
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^topstate.current-game.learning <l>)
+   (<l> ^type game-params -^interaction true)
+   (<o> ^name object-message
+        ^message <msg>
+        -^relation 
+        ^object <obj>)
+   (<obj> ^word state ^specifier this
+        ^word {<state-name> << initial final >>})
+-->
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type state-demo-message
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<params> ^state-name <state-name>)
    (<sat> ^dialog-event.type game)
 }
 
@@ -527,22 +590,32 @@ sp {apply*push-object-message*failure-name-message
 #        ^category svs)
 #}
 
+#qqq
 ##finished conditions for parameter
 sp {apply*push-object-message*conditions-finished-message
    (state <s> ^name interpret-message
               ^operator <o>
               ^topstate.current-game.learning <l>)
-   (<l> ^type {<cond> << condition >>} ^arg <arg> ^parameter <type> -^interaction true)
+   (<l> ^type {<cond> << condition parameter >>} ^arg <arg>  -^interaction true)#^parameter <type>
    (<o> ^name single-word-response
         ^response finished)
 -->
+#   (<s> ^new-segment-info <info>)
+#   (<info> ^purpose <p>
+#           ^originator instructor)
+#   (<p> ^type conditions-finished-message
+#        ^parameters <params>
+#        ^satisfaction <sat>)
+#   (<params> ^parameter <type>)
+#   (<sat> ^dialog-event.type game)
+#(interrupt)   
    (<s> ^new-segment-info <info>)
    (<info> ^purpose <p>
            ^originator instructor)
-   (<p> ^type conditions-finished-message
+   (<p> ^type parameters-finished-message
         ^parameters <params>
         ^satisfaction <sat>)
-   (<params> ^parameter <type>)
+#   (<params> ^type <type>)
    (<sat> ^dialog-event.type game)
 }
 
@@ -561,22 +634,24 @@ sp {apply*push-object-message*conditions-finished-message
 #}
 
 ##finished conditions for parameter
-sp {apply*push-object-message*parameters-finished-message
-   (state <s> ^name interpret-message
-              ^operator <o>
-              ^topstate.current-game.learning <l>)
-   (<l> ^type parameter ^arg <arg>)
-   (<o> ^name single-word-response
-        ^response finished)
--->
-   (<s> ^new-segment-info <info>)
-   (<info> ^purpose <p>
-           ^originator instructor)
-   (<p> ^type parameters-finished-message
-        ^parameters <params>
-        ^satisfaction <sat>)
-   (<sat> ^dialog-event.type game)
-}
+#DEPRICATED
+#sp {apply*push-object-message*parameters-finished-messageDEPRICATED
+#   :interrupt
+#   (state <s> ^name interpret-message
+#              ^operator <o>
+#              ^topstate.current-game.learning <l>)
+#   (<l> ^type parameter ^arg <arg> -^interaction true)
+#   (<o> ^name single-word-response
+#        ^response finished)
+#-->
+#   (<s> ^new-segment-info <info>)
+#   (<info> ^purpose <p>
+#           ^originator instructor)
+#   (<p> ^type parameters-finished-message
+#        ^parameters <params>
+#        ^satisfaction <sat>)
+#   (<sat> ^dialog-event.type game)
+#}
 
 ##TODO
 #sp {parameters-finished-message*propose*finish-parameters
@@ -592,11 +667,12 @@ sp {apply*push-object-message*parameters-finished-message
 #}
 
 ##finished conditions for actions
-sp {apply*push-object-message*actions-finished-message
+sp {apply*push-object-message*actions-finished-messageDEPRICATED
+ :interrupt
    (state <s> ^name interpret-message
               ^operator <o>
               ^topstate.current-game.learning <l>)
-   (<l> ^type action)
+   (<l> ^type action -^interaction true)
    (<o> ^name single-word-response
         ^response finished)
 -->
@@ -604,6 +680,70 @@ sp {apply*push-object-message*actions-finished-message
    (<info> ^purpose <p>
            ^originator instructor)
    (<p> ^type actions-finished-message
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<sat> ^dialog-event.type game)
+}
+
+#finished describe actions,failures,goals
+#now ask for heuristics
+sp {apply*push-object-message*game-params-finished-message
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^topstate.current-game.learning <l>)
+   (<l> ^type game-params -^interaction true)
+   (<o> ^name single-word-response
+        ^response finished)
+-->
+   # TODO UNCOMMENT TO REABLE HEURISTIC LEARNING
+#   (<s> ^new-segment-info <info>)
+#   (<info> ^purpose <p>
+#           ^originator instructor)
+#   (<p> ^type game-params-finished-message
+#        ^parameters <params>
+#        ^satisfaction <sat>)
+#   (<sat> ^dialog-event.type game)
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type game-heuristics-finished-message
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<sat> ^dialog-event.type game)
+   }
+
+
+#done heuristics-complete
+sp {apply*push-object-message*game-heuristics-finished-message
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^topstate.current-game.learning <l>)
+   (<l> ^type heuristic -^interaction true)
+   (<o> ^name single-word-response
+        ^response finished)
+-->
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type game-heuristics-finished-message
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<sat> ^dialog-event.type game)
+}
+
+
+sp {apply*push-object-message*verbs-finished-message
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^topstate.current-game.learning <l>)
+   (<l> ^type verb -^interaction true)
+   (<o> ^name single-word-response
+        ^response finished)
+-->
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type verbs-finished-message
         ^parameters <params>
         ^satisfaction <sat>)
    (<sat> ^dialog-event.type game)
