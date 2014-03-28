@@ -100,11 +100,13 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
     public void updateInputLink(Agent agent){
     	Identifier inputLinkId = agent.GetInputLink();
     	// Update time information on the input link
+    	
     	if(timeId == null){
             timeId = inputLinkId.CreateIdWME("time");
         }
         
         stepNumber++;
+        
         WMUtil.updateIntWME(timeId, "steps", stepNumber);
         long curTime = TimeUtil.utime();
         soarTime = (long)(curTime - startTime);
