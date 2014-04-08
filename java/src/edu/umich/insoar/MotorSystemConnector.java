@@ -51,13 +51,10 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     private ArmStatus armStatus;
     
     StringBuilder svsCommands = new StringBuilder();
-<<<<<<< HEAD
+
 	private Integer heldObject;
     
-=======
-    
     PerceptionConnector perception;
->>>>>>> master
 
     public MotorSystemConnector(SoarAgent agent, PerceptionConnector perception){
     	this.agent = agent;

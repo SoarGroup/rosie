@@ -9,12 +9,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
-<<<<<<< HEAD
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-=======
->>>>>>> master
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -114,7 +111,6 @@ public class ChatFrame extends JFrame
     
     private LanguageConnector langConnector;
     
-<<<<<<< HEAD
     private String interactionLogFile;
     
     private PrintWriter logWriter;
@@ -128,7 +124,7 @@ public class ChatFrame extends JFrame
 			e.printStackTrace();
 		}
     }
-=======
+
     // Audio Recorder for Speech to Text
     private AudioFormat audioFormat;
     private AudioRecorder recorder;
@@ -137,7 +133,6 @@ public class ChatFrame extends JFrame
     private TextToSpeech tts;
 	
     TargetDataLine	targetDataLine;
->>>>>>> master
 
     public ChatFrame(LanguageConnector langConnector, SoarAgent agent) {
         super("SBolt");
