@@ -370,7 +370,8 @@ public class ChatFrame extends JFrame
     			// AM: Will make it auto scroll to bottom
     			int end = chatDoc.getLength();
     			tPane.select(end, end);
-    			logWriter.println(dateFormat.format(d)+" "+message);
+    			if (logWriter != null)
+    				logWriter.println(dateFormat.format(d)+" "+message);
     			
     		} catch (BadLocationException e) {
     			// TODO Auto-generated catch block
@@ -393,7 +394,8 @@ public class ChatFrame extends JFrame
     
     public void exit(){
     	soarAgent.kill();
-    	logWriter.close();
+    	if(logWriter != null) 
+    		logWriter.close();
     	System.exit(0);
     }
     
