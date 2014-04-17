@@ -1,0 +1,122 @@
+# If an object is being internally linked to, link it to itself
+sp {topstate*scene-monitor*elaborate*internal-link
+   (state <s> ^topstate <s>
+              ^scene-monitor <m>)
+   (<m> ^object <obj>
+        ^object.internal-link <id>)
+   (<obj> ^monitor-id <id>)
+-->
+   (<obj> ^internal-link <id>)
+   (write |Linking | <id> | to itself| (crlf)) 
+}
+
+# If an internally-linked object appears again, remove the link
+sp {topstate*scene-monitor*remove*internal-link*not*stale
+   :o-support
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^scene-monitor.object <obj>)
+   (<obj> ^monitor-id <id>
+          ^internal-link {<id2> <> <id>}
+          ^perception-obj <p>)
+-->
+   (<obj> ^internal-link <id2> -)
+   (write |Removing link | <id2> | from | <id> |: visible again| (crlf))
+}
+
+
+# Don't attend to a stale object which is being linked to another one
+sp {anystate*reject*attend-to-scene-change*stale-object*internally-linked
+   (state <s> ^operator <o> +)
+   (<o> ^name attend-to-scene-change
+        ^change.type stale-object
+        ^change.object <obj>)
+   (<obj> ^monitor-id <id>
+          ^internal-link {<id2> <> <id>})
+-->
+   (<s> ^operator <o> -)
+   (write |Reject attend to stale object | <id> |: linked to | <id2> (crlf))
+}
+
+# Don't attend to linked object properties, size, or position changes (can't trust)
+sp {anystate*reject*attend-to-scene-change*pos*size*changes*internally-linked
+   (state <s> ^operator <o> +)
+   (<o> ^name attend-to-scene-change
+        ^change.type { <type> << grown-object shrunken-object moved-object >> }
+        ^change.object <obj>)
+   (<obj> ^monitor-id <id>
+          ^internal-link <id2>)
+-->
+   (<s> ^operator <o> -)
+   (write |Reject attend to | <type> | for object | <id> | linked to | <id2> (crlf))
+}
+
+sp {anystate*reject*attend-to-scene-change*property*changes*internally-linked
+   (state <s> ^operator <o> +)
+   (<o> ^name attend-to-scene-change
+        ^change.type { <type> << changed-property different-best higher-confidence new-property different-feature-val >> }
+        ^change.object <obj>)
+   (<obj> ^monitor-id <id>
+          ^internal-link <id2>)
+-->
+   (<s> ^operator <o> -)
+   (write |Reject attend to | <type> | for object | <id> | linked to | <id2> (crlf))
+}
+
+# Internally linked objects should periodically check occlusion
+#   If not occluded, then remove the link (should be able to see)
+sp {topstate*scene-monitor*elaborate*occlusion-time-expired*internal-link
+   (state <s> ^topstate <s>
+              ^scene-monitor.object <obj>)
+   (<obj> ^monitor-id <id>
+          ^internal-link {<id2> <> <id>}
+          ^differences <diffs>)
+   (<diffs> -^recheck-occlusion-time)
+-->
+   (<diffs> ^occlusion-time-expired true)
+   (write |Start checking occlusion for object | <id> | linked to | <id2> (crlf))
+}
+
+sp {check-for-occlusion*apply*occlusion-command*is-occluded*false*remove*internal-link
+   (state <s> ^name check-for-occlusion
+              ^operator.name occlusion-command
+              ^report-to-topstate true
+              ^object-occluded false
+              ^monitor-obj <obj>)
+   (<obj> ^monitor-id <id>
+          ^internal-link {<id2> <> <id>})
+-->
+   (<obj> ^internal-link <id2> -)
+   (write |Object | <id> | no longer occluded. Remove link to | <id2> (crlf))
+}
+
+
+# When we move an object, remove all internal links associated with it
+sp {attend-to-scene-change*apply*attend-to-arm*stopped*remove*moved-object*internal-links
+   (state <s> ^name attend-to-scene-change
+              ^operator.name attend-to-arm
+              ^io.input-link.self.action << wait failure >>
+              ^topstate.scene-monitor.object <obj>)
+   (<obj> ^wm-obj.moving-object true
+          ^monitor-id <id>
+          ^internal-link <id2>)
+-->
+   (<obj> ^internal-link <id2> -)
+   (write |Moved object | <id> | and removed link to | <id2> (crlf))
+}
+
+sp {attend-to-scene-change*apply*attend-to-arm*stopped*remove*other*internal-links
+   (state <s> ^name attend-to-scene-change
+              ^operator.name attend-to-arm
+              ^io.input-link.self.action << wait failure >>
+              ^topstate.scene-monitor <mon>)
+   (<mon> ^object <src-obj>
+          ^object <dest-obj>)
+   (<src-obj> ^wm-obj.moving-object true
+              ^monitor-id <id>)
+   (<dest-obj> ^internal-link <id>
+               ^monitor-id <id2>)
+-->
+   (<dest-obj> ^internal-link <id> -)
+   (write |Moved object | <id> | and removed link from | <id2> (crlf))
+}

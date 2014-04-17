@@ -24,6 +24,9 @@ public class LingObject extends LinguisticEntity {
 	public String getDeterminer(){
 	    return determiner;
 	}
+	public void setDeterminer(String det){
+	    determiner = det;
+	}
 	
 	public Set<String> getAdjectives(){
 	    return adjective;

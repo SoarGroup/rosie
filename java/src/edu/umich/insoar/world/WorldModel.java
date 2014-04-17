@@ -54,7 +54,7 @@ public class WorldModel implements RunEventInterface
     	soarAgent.commitChanges();
     }
     
-    public void linkObjects(Set<String> sourceIds, String destId){
+    public synchronized void linkObjects(Set<String> sourceIds, String destId){
     	Integer dId = Integer.parseInt(destId);
     	
     	ArrayList<object_data_t> objData = new ArrayList<object_data_t>();
@@ -253,5 +253,18 @@ public class WorldModel implements RunEventInterface
     	catDat.len = 1;
     	return catDat;
     }
-    	
+    
+    public synchronized Integer getPerceptionId(Integer id){
+    	if(objects.containsKey(id)){
+    		return objects.get(id).getPerceptionId();
+    	}
+    	return null;
+    }	
+    
+    public synchronized Integer getSoarId(Integer id){
+    	if(objectLinks.containsKey(id)){
+    		return objectLinks.get(id);
+    	}
+    	return id;
+    }
 }
