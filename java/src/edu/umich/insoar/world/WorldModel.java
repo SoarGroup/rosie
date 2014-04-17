@@ -6,9 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-
 import lcm.lcm.LCM;
-
 import sml.Agent.RunEventInterface;
 import sml.Agent;
 import sml.Identifier;
@@ -17,6 +15,7 @@ import probcog.lcmtypes.*;
 import april.util.TimeUtil;
 import edu.umich.insoar.InSoar;
 import edu.umich.insoar.SoarAgent;
+import edu.umich.insoar.SoarTimer;
 public class WorldModel implements RunEventInterface
 {    
     
