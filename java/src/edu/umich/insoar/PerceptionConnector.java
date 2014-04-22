@@ -14,6 +14,7 @@ import java.util.TimerTask;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 
 import lcm.lcm.LCM;
 import lcm.lcm.LCMDataInputStream;
@@ -306,7 +307,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         	public void actionPerformed(ActionEvent e){
         		perception_command_t cmd = new perception_command_t();
         		cmd.utime = InSoar.GetSoarTime();
-        		cmd.command = "LOAD_CLASSIFIERS";
+        		cmd.command = "LOAD_CLASSIFIERS=default";
                 LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
         	}
         });
@@ -318,12 +319,44 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         	public void actionPerformed(ActionEvent e){
         		perception_command_t cmd = new perception_command_t();
         		cmd.utime = InSoar.GetSoarTime();
-        		cmd.command = "SAVE_CLASSIFIERS";
+        		cmd.command = "SAVE_CLASSIFIERS=default";
                 LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
         	}
         });
         
         perceptionMenu.add(saveDataButton);
+        
+        JMenuItem loadDataFileButton = new JMenuItem("Load Data from File");
+        loadDataFileButton.addActionListener(new ActionListener(){
+        	public void actionPerformed(ActionEvent e){
+        		String filename = JOptionPane.showInputDialog(null, 
+            			  "Enter the filename to load from",
+            			  "Load Classifier Data From File",
+            			  JOptionPane.QUESTION_MESSAGE);
+        		perception_command_t cmd = new perception_command_t();
+        		cmd.utime = InSoar.GetSoarTime();
+        		cmd.command = "LOAD_CLASSIFIERS=" + filename;
+                LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
+        	}
+        });
+        
+        perceptionMenu.add(loadDataFileButton);
+        
+        JMenuItem saveDataFileButton = new JMenuItem("Save Data from File");
+        saveDataFileButton.addActionListener(new ActionListener(){
+        	public void actionPerformed(ActionEvent e){
+        		String filename = JOptionPane.showInputDialog(null, 
+          			  "Enter the filename to save to",
+          			  "Save Classifier Data To File",
+          			  JOptionPane.QUESTION_MESSAGE);
+        		perception_command_t cmd = new perception_command_t();
+        		cmd.utime = InSoar.GetSoarTime();
+        		cmd.command = "SAVE_CLASSIFIERS=" + filename;
+                LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
+        	}
+        });
+        
+        perceptionMenu.add(saveDataFileButton);
         
         return perceptionMenu;
     }
