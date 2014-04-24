@@ -51,6 +51,8 @@ public class InSoar implements PrintEventInterface, RunEventInterface
     
     private PerceptionConnector perception;
     
+    private ISpyRunner ispyRunner;
+    
     private int throttleMS = 0;
 
     public InSoar(String agentName, boolean headless)
@@ -134,9 +136,14 @@ public class InSoar implements PrintEventInterface, RunEventInterface
         
         // Setup ChatFrame
         chatFrame = new ChatFrame(language, soarAgent);
+        
+        ispyRunner = new ISpyRunner(soarAgent, chatFrame);
+        
+        // Setup menus
         chatFrame.addMenu(soarAgent.createMenu());
         chatFrame.addMenu(perception.createMenu());  
         chatFrame.addMenu(motorSystem.createMenu());
+        chatFrame.addMenu(ispyRunner.createMenu());
         chatFrame.addMenu(chatFrame.setupScriptMenu());
         
         soarAgent.setWorldModel(perception.world);
@@ -149,6 +156,8 @@ public class InSoar implements PrintEventInterface, RunEventInterface
         }
         
         chatFrame.showFrame();   
+        
+        
         
         perception_command_t command = new perception_command_t();
 		command.utime = InSoar.GetSoarTime();

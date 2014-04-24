@@ -2,30 +2,38 @@ package com.soartech.bolt.testing;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class ParseScript {
 	public static Script parse(File f) {
-		Script script = new Script();
-
+		Scanner s;
 		try {
-			Scanner s = new Scanner(f);
-			if(s.hasNext("#!BechtelFormat")) {
-				s.nextLine();
-				return parseBechtelFormatScript(script, s);
-			} else {
-				return parseDefaultFormatScript(script, s);
-			}
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
+			s = new Scanner(f);
+		} catch (FileNotFoundException e){
 			e.printStackTrace();
+			return new Script();
 		}
-		return script;
+		
+		ArrayList<String> lines = readFile(s);
+		if(lines.get(0).contains("#!BechtelFormat")){
+			return parseBechtelFormatScript(lines);
+		} else {
+			return parseDefaultFormatScript(lines);
+		}
 	}
 	
-	public static Script parseDefaultFormatScript(Script script, Scanner s) {
-		while(s.hasNextLine()) {
-			String scriptLine = s.nextLine();
+	public static ArrayList<String> readFile(Scanner s){
+		ArrayList<String> lines = new ArrayList<String>();
+		while(s.hasNextLine()){
+			lines.add(s.nextLine());
+		}
+		return lines;
+	}
+	
+	public static Script parseDefaultFormatScript(ArrayList<String> lines) {
+		Script script = new Script();
+		for(String scriptLine : lines){
 			String[] lineType = scriptLine.split(":");
 			ActionType type = ScriptDataMap.getInstance().getType(lineType[0]+":");
 			
@@ -40,9 +48,9 @@ public class ParseScript {
 		return script;
 	}
 	
-	public static Script parseBechtelFormatScript(Script script, Scanner s) {
-		while(s.hasNextLine()) {
-			String line = s.nextLine();
+	public static Script parseBechtelFormatScript(ArrayList<String> lines) {
+		Script script = new Script();
+		for(String line : lines){
 			char lineType = line.charAt(0);
 			ActionType type = ScriptDataMap.getInstance().getType(lineType);
 			
