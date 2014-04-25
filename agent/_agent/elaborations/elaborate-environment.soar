@@ -45,7 +45,8 @@ sp {elaborate*not-clear*object
    	      ^object <obj1>
 	      ^object <obj2>
 	      ^prepositions.prep <prep>
-	      ^environment <env>)
+	      ^environment <env>
+	      -^name evaluate-operator)
    (<env> ^intermediate <int>)
    (<obj1> ^category block
    	  ^id <id1>) 
@@ -61,7 +62,8 @@ sp {elaborate*not-clear*object
 sp {elaborate*clear*object
    (state <s> #^topstate <s>
    	      ^object <obj1>
-	      ^environment <env>)
+	      ^environment <env>
+	      -^name evaluate-operator)
    (<env> -^intermediate.not-clear <obj1>)
    (<obj1> ^category block)
 -->
@@ -70,13 +72,14 @@ sp {elaborate*clear*object
 
 
 ### elaborate predicates for objects and relations in focus
-sp {elaborate*relations*objects*relation*in*conversation-focus
+sp {elaborate*relations*objects*from*prepositon
    (state <s> ^topstate <s>
    	      ^environment <env>
-	      ^interaction.referents.relations.relation <rel-id>
-	      ^interaction.referents.objects.object <obj1>
+	      ^object <obj1>
+	      ^object <obj2>
 	      ^prepositions.prep <prep>
-	      ^object <obj2>)
+	      ^found-prep <fp>)
+   (<fp> ^predicate <rel-id>)
    (<rel-id> ^name <rel-name>)
    (<prep> ^name <rel-name>
    	   ^pair <pair>)
@@ -86,32 +89,10 @@ sp {elaborate*relations*objects*relation*in*conversation-focus
    	   ^{<attr2> > <attr>} <obj-id2>)
    	  
 -->
-   (<env> ^relation <relation>)
-   (<relation> ^type <rel-id>)
+   (<env> ^predicate <relation>)
+   (<relation> ^relation <fp>)
+   (<fp> ^smem-rep <rel-id>)
    (<relation> ^<attr> <obj1>
-   	       ^<attr2> <obj2>)
-}
-
-sp {elaborate*relations*objects*relation*in*conversation-focus*2
-   (state <s> ^topstate <s>
-   	      ^environment <env>
-	      ^interaction.referents.relations.relation <relation> 
-	      ^interaction.referents.objects.object <obj1>
-	      ^prepositions.prep <prep>
-	      ^object <obj2>)
-   (<relation> ^smem-rep <rel-id>)
-   (<rel-id> ^name <rel-name>)
-   (<prep> ^name <rel-name>
-   	   ^pair <pair>)
-   (<obj1> ^id <obj-id>)
-   (<obj2> ^id <obj-id2>)
-   (<pair> ^<attr> <obj-id>
-   	   ^{<attr2> > <attr>} <obj-id2>)
-   	  
--->
-   (<env> ^relation <nrel>)
-   (<nrel> ^type <relation>)
-   (<nrel> ^<attr> <obj1>
    	       ^<attr2> <obj2>)
 }
 
@@ -125,11 +106,69 @@ sp {elaborate*grabbed-object*from*robot-state
 }
 
 
+### if there is a desired goal, go from open-world state description to close-world state description. this is required to learn a good policy representation. this is required only for relation predicates as we have closed world representation for state predicates. eg open <o> /close <o>
+sp {elaborate*closed-world*relation*intermediate
+   (state <s> ^environment <env>
+   	      ^desired <des>
+	      -^name evaluate-operator)
+   (<env> ^predicate <env-rel>
+   	  ^intermediate <i>)
+   (<des> ^track-relation <rel-state>)
+   (<rel-state> ^relation <rel>
+   		^p1 <dobj1>
+		^p2 <dobj2>)
+   (<env-rel> ^relation <rel>
+   	  ^a <obj1>
+	  ^b <obj2>)
+   (<obj1> ^focus <id1>)
+   (<dobj1> ^focus <id1>)
+   (<obj2> ^focus <id2>)
+   (<dobj2> ^focus <id2>)
+-->
+   (<i> ^exists <rel-state>)
+}
+
+sp {elaborate*closed-word*relation
+   (state <s> ^environment <env>
+   	      ^desired <des>
+	      	      -^name evaluate-operator)
+   (<env> ^intermediate <int>)
+   (<int> -^exists <rel-state>)
+   (<des> ^track-relation <rel-state>)
+   (<rel-state> ^relation <rel>)
+
+-->
+   (<env> ^not-predicate <npred>)
+   (<npred> ^relation <rel>)
+   (<int> ^<rel-state> <npred>)
+}
+sp {elaborate*closed-word*relation*object
+   (state <s> ^environment <env>
+   	      ^desired <des>
+	      ^object <obj1>
+	      ^object <obj2>
+	      	      -^name evaluate-operator)
+   (<env> ^intermediate.<rel-state> <npred>)
+   (<des> ^track-relation <rel-state>)
+   (<rel-state> ^p1 <dobj1>
+		^p2 <dobj2>)
+   (<obj1> ^focus <id1>)
+   (<dobj1> ^focus <id1>)
+   (<obj2> ^focus <id2>)
+   (<dobj2> ^focus <id2>)
+-->
+   (<npred> ^a <obj1>
+   	    ^b <obj2>)
+}
+
+
 ### copy environment
-sp {copy*environment-state*superstate
+sp {copy*environment-state*superstate*attributes
    (state <s> ^superstate.environment <env>
-   	      -^problemspace.dont-copy environment)
+   	      -^problemspace.dont-copy environment
+	      ^environment <senv>)
+   (<env> ^{<> clear <> intermediate <> not-predicate <> not-state <attr>} <val>)
 --> 
-   (<s> ^environment <env>)
+   (<senv> ^<attr> <val>)
 }
    	  
