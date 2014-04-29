@@ -52,6 +52,10 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     
     StringBuilder svsCommands = new StringBuilder();
     
+    private robot_command_t sentCommand = null;
+    private long sentTime = 0;
+
+    
     PerceptionConnector perception;
 
     public MotorSystemConnector(SoarAgent agent, PerceptionConnector perception){
@@ -136,6 +140,23 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
 		this.agent.commitChanges();
     	if(InSoar.DEBUG_TRACE){
 			System.out.println(String.format("%-20s : %d", "MOTOR CONNECTOR", (TimeUtil.utime() - time)/1000));
+    	}
+    	if(sentCommand != null && curStatus != null){
+    		if(sentCommand.action.toLowerCase().contains("drop")){
+    			if(curStatus.action.toLowerCase().equals("drop")){
+    				sentCommand = null;
+    			} else if(TimeUtil.utime() > sentTime + 2000000){
+    		    	lcm.publish("ROBOT_COMMAND", sentCommand);
+    		    	sentTime = TimeUtil.utime();
+    			}
+    		} else if(sentCommand.action.toLowerCase().contains("grab")){
+    			if(curStatus.action.toLowerCase().equals("grab")){
+    				sentCommand = null;
+    			} else if(TimeUtil.utime() > sentTime + 2000000){
+    		    	lcm.publish("ROBOT_COMMAND", sentCommand);
+    		    	sentTime = TimeUtil.utime();
+    			}
+    		}
     	}
 	}
     
@@ -281,6 +302,8 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         System.out.println("PICK UP: " + id + " (" + objectIdStr + ")");
     	lcm.publish("ROBOT_COMMAND", command);
         pickUpId.CreateStringWME("status", "complete");
+        sentCommand = command;
+        sentTime = TimeUtil.utime();
     }
 
     /**
@@ -306,6 +329,8 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         command.dest = new double[]{x, y, z, 0, 0, 0};
     	lcm.publish("ROBOT_COMMAND", command);
         putDownId.CreateStringWME("status", "complete");
+        sentCommand = command;
+        sentTime = TimeUtil.utime();
     }
 
     /**

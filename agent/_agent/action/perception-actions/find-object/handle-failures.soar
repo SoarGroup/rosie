@@ -1,0 +1,111 @@
+# Keep track of number of actions taken, quit when we reach 20
+sp {find-object*elaborate*current-action*default-count
+   (state <s> ^name find-object
+              ^current-action <a>)
+   (<a> -^action-count > 0)
+-->
+   (<a> ^action-count 0)
+}
+
+sp {find-object*apply*select-subaction-clear-block-for-shape
+   :o-support
+   (state <s> ^name find-object
+              ^operator <o>
+              ^current-action <a>)
+   (<o> ^name << select-subaction-measure-object select-subaction-clear-object-for-shape >>
+       -^action-count)
+   (<a> ^action-count <c>)
+-->
+   (<o> ^action-count <c>)
+   (<a> ^action-count (+ <c> 1))
+   (<a> ^action-count <c> -)
+   (write |Incrementing action-count to | (+ <c> 1) (crlf))
+}
+
+sp {find-object*propose*give-up
+   (state <s> ^name find-object
+              ^current-action.action-count > 16)
+-->
+   (<s> ^operator <o> + > =)
+   (<o> ^name give-up
+        ^action-type custom)
+}
+
+sp {find-object*propose*report-failure
+   (state <s> ^name find-object)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name report-failure
+        ^action-type custom)
+}
+
+sp {find-object*apply*give-up*mark*complete
+   (state <s> ^name find-object
+              ^operator.name << report-failure give-up >>
+              ^current-action <a>)
+-->
+   (<a> ^complete true)
+}
+           
+sp {find-object*apply*give-up*report*failure
+   (state <s> ^name find-object
+              ^operator.name << report-failure give-up >>
+              ^io.output-link <out>
+              ^current-action.action-count <c>)
+-->
+   (<out> ^find-object-result <res>)
+   (<res> ^status failure
+          ^action-count <c>)
+}
+
+
+# reset-bins
+# If we've opened all the bins and we can't do anything, try again
+
+sp {find-object*propose*reset-bins
+   (state <s> ^name find-object
+              ^current-action.opened-bin <bin>)
+   (<bin> ^open false)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name reset-bins
+        ^action-type custom)
+}
+
+sp {find-object*apply*reset-bins
+   (state <s> ^name find-object
+              ^operator.name reset-bins
+              ^current-action <a>)
+   (<a> ^opened-bin <bin>)
+   (<bin> ^open false)
+-->
+   (<a> ^opened-bin <bin> -)
+}
+
+# If a subaction fails because something changed, mark it as complete
+
+# target object is missing
+sp {find-object*apply*subaction*complete*missing-object
+   (state <s> ^name find-object
+              ^operator <o>
+              ^topstate <top>)
+   (<o> ^name << stash-object move-object measure-object clear-object >>
+        ^subaction <sub>)
+   (<sub> ^object <obj>)
+   (<top> -^object <obj>)
+-->
+   (<sub> ^complete true)
+}
+
+# destination is missing
+sp {find-object*apply*subaction*complete*missing-destination
+   (state <s> ^name find-object
+              ^operator <o>
+              ^topstate <top>)
+   (<o> ^name << move-object >>
+        ^subaction <sub>)
+   (<sub> ^destination <dest>)
+   (<top> -^object <dest>)
+-->
+   (<sub> ^complete true)
+}
