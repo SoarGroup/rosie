@@ -74,14 +74,28 @@ public class ISpyRunner implements OutputEventInterface {
 		}
 	}
 	
-		private static String[][] properties = new String[][]{
-		new String[]{ "red", "orange", "yellow", "green", "blue", "purple" },
-		new String[]{ "crescent", "square", "l-block", "arch", "triangle", "rectangle"},
-//		new String[]{ "small", "medium", "large"},
-		new String[]{ "light", "moderate", "heavy", "hot", "warm", "cold"},
-		new String[]{ "cold-est", "hot-est", "heavy-est", "light-est", "heavy-est", "light-est"}
-//		new String[]{ "hot", "warm", "cool", "cold"}
+	private static String[] properties = new String[]{
+		"red", "hot", "heavy-est",
+		"orange", "light", "cold-est", 
+		"yellow", "cool", "light-est",
+		"green", "cold", "hot-est",
+		"blue", "warm", "heavy-est"
+//		"red", "arch", "light", "cold-est", 
+//		"orange", "square", "moderate", "hot-est",
+//		"yellow", "square", "heavy", "heavy-est",
+//		"green", "arch", "hot", "light-est",
+//		"blue", "triangle", "warm", "heavy-est", 
+//		"green", "rectangle", "cold", "light-est"
 	};
+//	
+//		private static String[][] properties = new String[][]{
+//		new String[]{ "red", "orange", "yellow", "green", "blue", "green" },
+//		new String[]{ "arch", "square", "square", "arch", "triangle", "rectangle"},
+////		new String[]{ "small", "medium", "large"},
+//		new String[]{ "light", "moderate", "heavy", "hot", "warm", "cold"},
+//		new String[]{ "cold-est", "hot-est", "heavy-est", "light-est", "heavy-est", "light-est"}
+////		new String[]{ "hot", "warm", "cool", "cold"}
+//	};
 	
 //	private static String[][] properties = new String[][]{
 //	new String[]{ "red", "green", "blue" },
@@ -95,12 +109,9 @@ public class ISpyRunner implements OutputEventInterface {
 	
 	private void generateFindCommands(){
 		findCommands = new ArrayList<String>();
-		for(String[] propList : properties){
-			for(String prop : propList){
-				findCommands.add(String.format("Find the %s object", prop));
-			}
+		for(String prop : properties){
+			findCommands.add(String.format("Find the %s object", prop));
 		}
-		Collections.shuffle(findCommands, new Random(TimeUtil.utime()));
 		cmdIndex = 0;
 	}
 
