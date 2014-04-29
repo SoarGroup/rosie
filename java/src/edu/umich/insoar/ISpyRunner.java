@@ -74,13 +74,14 @@ public class ISpyRunner implements OutputEventInterface {
 		}
 	}
 	
-	//	private static String[][] properties = new String[][]{
-	//	new String[]{ "red", "orange", "yellow", "green", "blue", "purple" },
-	//	new String[]{ "crescent", "square", "l-block", "arch", "triangle", "rectangle"},
-	//	new String[]{ "small", "medium", "large"},
-	//	new String[]{ "light", "moderate", "heavy"},
-	//	new String[]{ "hot", "warm", "cool", "cold"}
-	//};
+		private static String[][] properties = new String[][]{
+		new String[]{ "red", "orange", "yellow", "green", "blue", "purple" },
+		new String[]{ "crescent", "square", "l-block", "arch", "triangle", "rectangle"},
+//		new String[]{ "small", "medium", "large"},
+		new String[]{ "light", "moderate", "heavy", "hot", "warm", "cold"},
+		new String[]{ "cold-est", "hot-est", "heavy-est", "light-est", "heavy-est", "light-est"}
+//		new String[]{ "hot", "warm", "cool", "cold"}
+	};
 	
 //	private static String[][] properties = new String[][]{
 //	new String[]{ "red", "green", "blue" },
@@ -88,13 +89,9 @@ public class ISpyRunner implements OutputEventInterface {
 //	new String[]{ "light", "moderate", "heavy"},
 //	};
 	
-	private static String[][] properties = new String[][]{
-		new String[]{ "red", "heavy", "light-est" }
-	};
-	
-	
-//	private static String[] superlatives = new String[]{ "cold-est", "hot-est", "heavy-est", "light-est"};
-	private static String[] superlatives = new String[]{ };
+//	private static String[][] properties = new String[][]{
+//		new String[]{ "green", "triangle", "cold", "heavy-est" }
+//	};
 	
 	private void generateFindCommands(){
 		findCommands = new ArrayList<String>();
@@ -102,10 +99,6 @@ public class ISpyRunner implements OutputEventInterface {
 			for(String prop : propList){
 				findCommands.add(String.format("Find the %s object", prop));
 			}
-		}
-		for(String sup : superlatives){
-			findCommands.add(String.format("Find the %s object", sup));
-			findCommands.add(String.format("Find the %s object", sup));
 		}
 		Collections.shuffle(findCommands, new Random(TimeUtil.utime()));
 		cmdIndex = 0;
@@ -131,13 +124,13 @@ public class ISpyRunner implements OutputEventInterface {
 		    	logWriter.println(String.format("M %d", numMoves));
 		    	logWriter.println(String.format("F %d", numFailedPickups));
 		    	logWriter.println(String.format("T %d", (TimeUtil.utime() - commandTime)));
-		    	System.out.println("FINISHED: " + TimeUtil.utime());
 			}
 			
 			if(cmdIndex == findCommands.size()){
 				started = false;
 				logWriter.close();
 				logWriter = null;
+				return;
 			}
 			String cmd = findCommands.get(cmdIndex++);
 			chatFrame.addMessage(cmd, ActionType.Mentor);
@@ -207,10 +200,17 @@ public class ISpyRunner implements OutputEventInterface {
     	if(type != null && type.equals("idle")){
     		sendNextCommand();
     	}
+    	id.CreateStringWME("status", "complete");
     }
     
     private void handleFindObjectResults(Identifier id){
+    	if(logWriter == null){
+    		id.CreateStringWME("status", "complete");
+    		return;
+    	}
     	String status = WMUtil.getValueOfAttribute(id, "status");
+    	String count = WMUtil.getValueOfAttribute(id, "action-count");
+    //	logWriter.println(String.format("C %s", count));
     	logWriter.println(String.format("S %s", status));
     	if(status.equals("success")){
     		Identifier objId = WMUtil.getIdentifierOfAttribute(id, "object");
@@ -223,5 +223,6 @@ public class ISpyRunner implements OutputEventInterface {
             }
     		logWriter.println(desc);
     	}
+    	id.CreateStringWME("status", "complete");
     }
 }
