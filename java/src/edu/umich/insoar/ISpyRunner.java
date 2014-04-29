@@ -234,6 +234,7 @@ public class ISpyRunner implements OutputEventInterface {
             }
     		logWriter.println(desc);
     	}
+    	logWriter.flush();
     	id.CreateStringWME("status", "complete");
     }
 }

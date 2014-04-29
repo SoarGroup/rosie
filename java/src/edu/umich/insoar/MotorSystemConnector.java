@@ -331,6 +331,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         putDownId.CreateStringWME("status", "complete");
         sentCommand = command;
         sentTime = TimeUtil.utime();
+        System.out.println("Put down at " + x + ", " + y + ", " + z);
     }
 
     /**
