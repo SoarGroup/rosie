@@ -75,18 +75,12 @@ public class ISpyRunner implements OutputEventInterface {
 	}
 	
 	private static String[] properties = new String[]{
-		"red", "hot", "heavy-est",
-		"orange", "light", "cold-est", 
-		"yellow", "cool", "light-est",
-		"green", "cold", "hot-est",
-		"blue", "warm", "heavy-est"
-//		"red", "arch", "light", "cold-est", 
-//		"orange", "square", "moderate", "hot-est",
-//		"yellow", "square", "heavy", "heavy-est",
-//		"green", "arch", "hot", "light-est",
-//		"blue", "triangle", "warm", "heavy-est", 
-//		"green", "rectangle", "cold", "light-est"
+		"red", "orange", "yellow", "green", "blue", "purple",
+		"arch", "arch", "square", "square", "rectangle", "rectangle",
+		"heavy", "light", "cold", "cool", "warm", "hot",
+		"heavy-est", "light-est", "cold-est", "hot-est", "cold-est", "hot-est"
 	};
+
 //	
 //		private static String[][] properties = new String[][]{
 //		new String[]{ "red", "orange", "yellow", "green", "blue", "green" },
@@ -112,6 +106,7 @@ public class ISpyRunner implements OutputEventInterface {
 		for(String prop : properties){
 			findCommands.add(String.format("Find the %s object", prop));
 		}
+		Collections.shuffle(findCommands, new Random(TimeUtil.utime()));
 		cmdIndex = 0;
 	}
 
