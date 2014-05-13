@@ -75,11 +75,19 @@ public class ISpyRunner implements OutputEventInterface {
 	}
 	
 	private static String[] properties = new String[]{
-		"red", "orange", "yellow", "green", "blue", "purple",
-		"arch", "arch", "square", "square", "rectangle", "rectangle",
-		"heavy", "light", "cold", "cool", "warm", "hot",
-		"heavy-est", "light-est", "cold-est", "hot-est", "cold-est", "hot-est"
+//		"red", "orange", "yellow", "green", "blue", "purple",
+//		"arch", "arch", "square", "square", "rectangle", "rectangle",
+//		"heavy", "light", "cold", "cool", "warm", "hot",
+//		"heavy-est", "light-est", "cold-est", "hot-est", "cold-est", "hot-est"
+//		"purple", "hot", "yellow", "square", "cool", "hot-est",
+//		"orange", "blue", "light-est", "heavy", "cold", "hot-est",
+//		"heavy-est", "warm", "cold-est", "light", "rectangle", "cold-est",
+//		"green", "arch", "rectangle", "red", "arch", "square"
+		"heavy-est", "red", "light", "hot-est", "rectangle", "cool", 
+		"light-est", "orange", "heavy", "cold-est", "arch", "hot",
+		"heavy-est", "yellow", "light", "hot-est", "square", "cold"
 	};
+
 
 //	
 //		private static String[][] properties = new String[][]{
@@ -106,7 +114,7 @@ public class ISpyRunner implements OutputEventInterface {
 		for(String prop : properties){
 			findCommands.add(String.format("Find the %s object", prop));
 		}
-		Collections.shuffle(findCommands, new Random(TimeUtil.utime()));
+//		Collections.shuffle(findCommands, new Random(TimeUtil.utime()));
 		cmdIndex = 0;
 	}
 

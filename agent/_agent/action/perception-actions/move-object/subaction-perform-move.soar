@@ -3,7 +3,9 @@ sp {move-object*propose*select-subaction-perform-move
               ^move-metadata <move>
               ^object-to-move <obj>
               ^destination <dest>
-              ^current-action.cleared-object true)
+              ^current-action.cleared-object true
+             -^current-action.performed-move)
+   (<obj> ^perception-obj <p>)
 -->
    (<s> ^operator <o> +)
    (<o> ^name select-subaction-perform-move
@@ -22,13 +24,32 @@ sp {move-object*apply*select-subaction-perform-move
         ^destination <dest>
         ^metadata <move>)
 -->
-   (<a> ^subaction <sub>)
+   (<a> ^subaction <sub>
+        ^performed-move true)
    (<sub> ^name op_1
           ^parameters <p>)
    (<p> ^_metadata <move>
         ^action-type composite
         ^argument3 <obj>
         ^argument4.argument <dest>)
+}
+
+sp {move-object*apply*select-subaction-perform-move*remove*focus
+   (state <s> ^name move-object
+              ^operator.name select-subaction-perform-move
+              ^topstate.object <obj>)
+   (<obj> ^focus <any>)
+-->
+   (<obj> ^focus <any> -)
+}
+
+sp {move-object*apply*select-subaction-perform-move*remove*nfocus
+   (state <s> ^name move-object
+              ^operator.name select-subaction-perform-move
+              ^topstate.object <obj>)
+   (<obj> ^nfocus <any>)
+-->
+   (<obj> ^nfocus <any> -)
 }
 
 sp {move-object*move-to-location*propose*copy-success-to-superstate
@@ -49,6 +70,33 @@ sp {move-object*apply*perform-move*mark*complete
 -->
    (<a> ^complete true)
 }
+
+sp {move-object*op_1*tie*complete*move
+  (state <s> ^name op_1
+             ^impasse tie
+             ^attribute operator
+             ^superstate <ss>)
+  (<ss> ^name move-object
+        ^current-action <a>)
+-->
+   (<a> ^complete true)
+}
+             
+   
+   #sp {composite-action*operator-tie*report-status
+#   (state <s> ^impasse tie
+#   	      ^attribute operator
+#	      ^action-type composite
+#	      ^problemspace action
+#	      -^problemspace learning
+#	      ^topstate <ts>
+#	      ^superstate <ss>)
+#   (<ts> ^interaction.status <status>)
+#-->
+#   (<status> ^failure <f>)
+#   (<f> ^information unknown-subaction
+#   	^type failure)
+#}
 #
 #sp {move-object*apply*perform-move-object*cleanup*focus
 #   (state <s> ^name move-object

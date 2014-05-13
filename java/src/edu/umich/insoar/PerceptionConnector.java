@@ -44,6 +44,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
 	
 	// Object being pointed to
 	private int pointedId = -1;
+	private int currentTimer = -10;
 	
     private HashMap<training_label_t, Identifier> outstandingTraining;
     
@@ -61,7 +62,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
     	
     	outstandingTraining = new HashMap<training_label_t, Identifier>();
     	
-        String[] outputHandlerStrings = { "send-training-label", "modify-scene" };
+        String[] outputHandlerStrings = { "send-training-label", "modify-scene", "reset-timer"};
 
         for (String outputHandlerString : outputHandlerStrings)
         {
@@ -168,6 +169,14 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         
         // Update pointed object
         WMUtil.updateIntWME(inputLinkId, "pointed-object", pointedId);
+    	
+    	if(currentTimer <= -10){
+    		WMUtil.updateStringWME(timeId, "timer-status", "waiting");
+    	} else if(--currentTimer <= 0){
+    		WMUtil.updateStringWME(timeId, "timer-status", "expired");
+    	} else {
+    		WMUtil.updateStringWME(timeId, "timer-status", "ticking");
+    	}
     }
 
     /*************************************************
@@ -193,6 +202,8 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
 	                System.out.println(wme.GetAttribute());
 	            } else if(wme.GetAttribute().equals("modify-scene")){
 	            	processModifySceneCommand(id);
+	            } else if(wme.GetAttribute().equals("reset-timer")){
+	            	processResetTimerCommand(id);
 	            }
 	            soarAgent.commitChanges();
             } catch (IllegalStateException e){
@@ -201,6 +212,11 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
     	}
     }
     
+    
+    private void processResetTimerCommand(Identifier id){
+    	currentTimer = Integer.parseInt(WMUtil.getValueOfAttribute(id, "value"));
+    	id.CreateStringWME("status", "complete");
+    }
 
     private void processSendTrainingLabelCommand(Identifier id){
     	Integer objId = Integer.parseInt(WMUtil.getValueOfAttribute(id, "id", 
