@@ -41,6 +41,7 @@ public class ISpyRunner implements OutputEventInterface {
 	
 	private PrintWriter logWriter = null;
 	private boolean started = false;
+	private long startTime;
 	
 	private boolean prevPickup = false;
 	private long commandTime = 0;
@@ -129,6 +130,7 @@ public class ISpyRunner implements OutputEventInterface {
 		
 		generateFindCommands();
 		sendNextCommand();
+		startTime = TimeUtil.utime();
 	}
 	
 	private void sendNextCommand(){
@@ -142,6 +144,7 @@ public class ISpyRunner implements OutputEventInterface {
 			
 			if(cmdIndex == findCommands.size()){
 				started = false;
+				logWriter.write("Total Time: " + (startTime - TimeUtil.utime()));
 				logWriter.close();
 				logWriter = null;
 				return;

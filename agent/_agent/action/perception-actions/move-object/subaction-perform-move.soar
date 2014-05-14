@@ -3,6 +3,7 @@ sp {move-object*propose*select-subaction-perform-move
               ^move-metadata <move>
               ^object-to-move <obj>
               ^destination <dest>
+              ^robot-state.arm.action wait
               ^current-action.cleared-object true
              -^current-action.performed-move)
    (<obj> ^perception-obj <p>)
@@ -14,6 +15,50 @@ sp {move-object*propose*select-subaction-perform-move
         ^destination <dest>
         ^metadata <move>)
 }
+
+sp {move-object*reject*select-subaction-perform-move*not*wait
+   (state <s> ^name move-object
+              ^operator <o> +
+              ^robot-state.arm.action <> wait)
+   (<o> ^name select-subaction-perform-move)
+-->
+   (<s> ^operator <o> -)
+}
+
+sp {move-object*elaborate*attend-to-arm*not*idle
+   (state <s> ^name move-object
+              ^robot-state.arm.action <> wait
+             -^current-action.subaction)
+-->
+   (<s> ^attend-to-arm true)
+}
+
+sp {move-object*propose*wait
+   (state <s> ^name move-object
+              ^robot-state.arm.action <> wait
+             -^current-action.subaction
+             -^operator.name wait)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name wait
+        ^action-type custom)
+}
+sp {move-object*attend-to-scene-change*no*action*problemspace
+   (state <s> ^name attend-to-scene-change)
+-->
+   (<s> ^problemspace action -)
+}
+
+sp {move-object*prefer*attend-to-scene-change*over*wait
+   (state <s> ^name move-object
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name attend-to-scene-change)
+   (<o2> ^name wait)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
 
 sp {move-object*apply*select-subaction-perform-move
    (state <s> ^name move-object
@@ -37,7 +82,8 @@ sp {move-object*apply*select-subaction-perform-move
 sp {move-object*apply*select-subaction-perform-move*remove*focus
    (state <s> ^name move-object
               ^operator.name select-subaction-perform-move
-              ^topstate.object <obj>)
+              ^topstate.object <obj>
+             -^grabbed <obj>)
    (<obj> ^focus <any>)
 -->
    (<obj> ^focus <any> -)
@@ -46,7 +92,8 @@ sp {move-object*apply*select-subaction-perform-move*remove*focus
 sp {move-object*apply*select-subaction-perform-move*remove*nfocus
    (state <s> ^name move-object
               ^operator.name select-subaction-perform-move
-              ^topstate.object <obj>)
+              ^topstate.object <obj>
+             -^grabbed <obj>)
    (<obj> ^nfocus <any>)
 -->
    (<obj> ^nfocus <any> -)
@@ -72,17 +119,18 @@ sp {move-object*apply*perform-move*mark*complete
 }
 
 sp {move-object*op_1*tie*complete*move
-  (state <s> ^name op_1
+  (state <s>
              ^impasse tie
              ^attribute operator
              ^superstate <ss>)
-  (<ss> ^name move-object
+  (<ss> ^name op_1
+        ^superstate <sss>)
+  (<sss> ^name move-object
         ^current-action <a>)
 -->
    (<a> ^complete true)
 }
              
-   
    #sp {composite-action*operator-tie*report-status
 #   (state <s> ^impasse tie
 #   	      ^attribute operator
