@@ -45,6 +45,9 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
 	// Object being pointed to
 	private int pointedId = -1;
 	private int currentTimer = -10;
+	private long prevTime = 0;
+	private long totalTime = 0;
+	private int totalMoves = 0;
 	
     private HashMap<training_label_t, Identifier> outstandingTraining;
     
@@ -62,7 +65,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
     	
     	outstandingTraining = new HashMap<training_label_t, Identifier>();
     	
-        String[] outputHandlerStrings = { "send-training-label", "modify-scene", "reset-timer"};
+        String[] outputHandlerStrings = { "send-training-label", "modify-scene", "reset-timer", "report-attend-status", "put-down"};
 
         for (String outputHandlerString : outputHandlerStrings)
         {
@@ -155,6 +158,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
     }
     
     public void updateInputLink(Agent agent){
+    	prevTime = TimeUtil.utime();
     	Identifier inputLinkId = agent.GetInputLink();
     	// Update time information on the input link
     	
@@ -177,6 +181,8 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
     	} else {
     		WMUtil.updateStringWME(timeId, "timer-status", "ticking");
     	}
+    	
+    	
     }
 
     /*************************************************
@@ -204,6 +210,11 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
 	            	processModifySceneCommand(id);
 	            } else if(wme.GetAttribute().equals("reset-timer")){
 	            	processResetTimerCommand(id);
+	            } else if(wme.GetAttribute().equals("report-attend-status")){
+	            	totalTime += ((TimeUtil.utime() - prevTime)/1000);
+	            	id.CreateStringWME("status", "complete");
+	            } else if(wme.GetAttribute().equals("put-down")){
+	            	totalMoves ++;
 	            }
 	            soarAgent.commitChanges();
             } catch (IllegalStateException e){
@@ -373,6 +384,16 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         });
         
         perceptionMenu.add(saveDataFileButton);
+        
+        JMenuItem reportButton = new JMenuItem("Report Data");
+        reportButton.addActionListener(new ActionListener(){
+        	public void actionPerformed(ActionEvent e){
+        		System.out.println("T: " + totalTime);
+        		System.out.println("M: " + totalMoves);
+        	}
+        });
+        
+        perceptionMenu.add(reportButton);
         
         return perceptionMenu;
     }

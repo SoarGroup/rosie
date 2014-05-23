@@ -87,13 +87,13 @@ public class ISpyRunner implements OutputEventInterface {
 //		"heavy-est", "red", "light", "hot-est", "rectangle", "cool", 
 //		"light-est", "green", "heavy", "cold-est", "arch", "hot",
 //		"heavy-est", "blue", "light", "hot-est", "square", "cold"
-//		"heavy-est", "red", "light", "hot-est", "rectangle", "cool", 
-//		"light-est", "green", "heavy", "cold-est", "arch", "hot",
-//		"heavy-est", "green", "light", "hot-est", "square", "cool"
+		"heavy-est", "red", "light", "hot-est", "rectangle", "cool", 
+		"light-est", "green", "heavy", "cold-est", "arch", "hot",
+		"heavy-est", "green", "light", "hot-est", "square", "cool"
 		
-		"red", "light", "rectangle", "cool", 
-		"green", "heavy", "arch", "hot",
-		"blue", "light", "square", "cold"
+//		"red", "light", "rectangle", "cool", 
+//		"green", "heavy", "arch", "hot",
+//		"blue", "light", "square", "cold"
 
 
 	};
