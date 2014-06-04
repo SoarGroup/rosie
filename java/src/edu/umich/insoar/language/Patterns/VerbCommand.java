@@ -79,7 +79,13 @@ public class VerbCommand extends LinguisticEntity{
 		Pattern p = Pattern.compile("VB\\d*");
 		Matcher m = p.matcher(string);
 		if(m.find()){
-			verb = tagsToWords.get(m.group()).toString();
+			String foundString = tagsToWords.get(m.group()).toString();
+			if (foundString.contains("_")){
+				String[] list = foundString.split("_");
+				verb = list[0];
+			} else
+				verb = foundString;
+				
 		}
 		
 		p = Pattern.compile("STT\\d*");
