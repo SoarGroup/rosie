@@ -178,14 +178,9 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     
     
     
-    private void updateIL(){
-//<<<<<<< HEAD
-    	
+    private void updateIL(){   	
     	heldObject = curStatus.obj_id;
-    	
-//=======
     	WMUtil.updateStringWME(selfId, "action", curStatus.action.toLowerCase());
-//>>>>>>> master
     	if(prevStatus == null){
         	WMUtil.updateStringWME(selfId, "prev-action", "wait");
     	} else {
