@@ -141,7 +141,8 @@ public class ChatFrame extends JFrame
         this.audioFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 16000.0F, 16, 1, 2, 16000.0F, false);
         
         this.audioFile = new File("forward.raw");
-        this.info = null;//new DataLine.Info(TargetDataLine.class, audioFormat);
+        this.info = null;
+        //new DataLine.Info(TargetDataLine.class, audioFormat);
         this.targetDataLine = null;
         //when to get line
         this.recorder = null;
@@ -172,6 +173,7 @@ public class ChatFrame extends JFrame
 				}
 				// Ctrl toggles audio input
 				else if(arg0.getKeyCode() == KeyEvent.VK_CONTROL){
+					System.out.println("here");
 					ctrlPressed();
 				}
 			}
@@ -358,8 +360,8 @@ public class ChatFrame extends JFrame
     		chatMessages.add(message);
     		try {
     			//TO ENABLE SPEAKING
-    			//if (type == ActionType.Agent)
-    				//tts.speak(preserveMsg);
+    			if (type == ActionType.Agent)
+    				tts.speak(preserveMsg);
     			
     			DateFormat dateFormat = new SimpleDateFormat("mm:ss:SSS");
     			Date d = new Date();
