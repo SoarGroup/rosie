@@ -92,7 +92,7 @@ public class Parser {
 	}
 	
     public boolean getSoarSpeak(String latestMessage, Identifier messageId) {
-        this.languageSentence = latestMessage.replace(".", "");
+        this.languageSentence = latestMessage.replace(".", "").toLowerCase();
     //    System.out.println("The message is " + this.languageSentence);
         tagsToWords = new LinkedHashMap();
         mapTagToWord();
