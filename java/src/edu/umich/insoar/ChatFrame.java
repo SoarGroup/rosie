@@ -111,19 +111,9 @@ public class ChatFrame extends JFrame
     
     private LanguageConnector langConnector;
     
-    private String interactionLogFile;
     
     private PrintWriter logWriter;
     
-    public void setInteractionLogFile(String fileName){
-    	interactionLogFile = fileName;
-		try {
-			logWriter = new PrintWriter(new File(interactionLogFile));
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    }
 
     // Audio Recorder for Speech to Text
     private AudioFormat audioFormat;
@@ -131,14 +121,17 @@ public class ChatFrame extends JFrame
     private File audioFile;
     private DataLine.Info info;
     private TextToSpeech tts;
+    
+    private Logger logger;
 	
     TargetDataLine	targetDataLine;
 
-    public ChatFrame(LanguageConnector langConnector, SoarAgent agent) {
+    public ChatFrame(LanguageConnector langConnector, SoarAgent agent, Logger logger) {
         super("SBolt");
         this.langConnector = langConnector;
         this.soarAgent = agent;
         this.audioFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 16000.0F, 16, 1, 2, 16000.0F, false);
+        this.logger = logger;
         
         this.audioFile = new File("forward.raw");
         this.info = null;
@@ -372,8 +365,10 @@ public class ChatFrame extends JFrame
     			// AM: Will make it auto scroll to bottom
     			int end = chatDoc.getLength();
     			tPane.select(end, end);
-    			if (logWriter != null)
+    			if (logWriter != null){
     				logWriter.println(dateFormat.format(d)+" "+message);
+    			}
+    			logger.writeInteractionLog(dateFormat.format(d)+" "+message);
     			
     		} catch (BadLocationException e) {
     			// TODO Auto-generated catch block
@@ -396,6 +391,7 @@ public class ChatFrame extends JFrame
     
     public void exit(){
     	soarAgent.kill();
+    	logger.close();
     	if(logWriter != null) 
     		logWriter.close();
     	System.exit(0);

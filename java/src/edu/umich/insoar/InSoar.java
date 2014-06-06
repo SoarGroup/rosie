@@ -25,7 +25,7 @@ import com.soartech.bolt.BOLTLGSupport;
 
 import edu.umich.insoar.world.WorldModel;
 
-public class InSoar implements PrintEventInterface, RunEventInterface
+public class InSoar implements RunEventInterface
 {
 	private static InSoar Singleton = null;
 	
@@ -52,18 +52,14 @@ public class InSoar implements PrintEventInterface, RunEventInterface
     private PerceptionConnector perception;
     
     private int throttleMS = 0;
-    
-    private Long logNum;
+
+	private Logger logger;
 
     public InSoar(String agentName, boolean headless)
     {     
     	Singleton = this;
 
         // Load the properties file
-    	logNum = System.currentTimeMillis();
-    	
-    	
-    	
         Properties props = new Properties();
         try {
 			props.load(new FileReader("sbolt.properties"));
@@ -100,16 +96,7 @@ public class InSoar implements PrintEventInterface, RunEventInterface
         	}
         }
 
-		String doLog = props.getProperty("enable-soar-log");
-		if (doLog != null && doLog.equals("true")) {
-			try {
-				logWriter = new PrintWriter(new File("logs/soar-log-"+logNum+".txt"));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			soarAgent.getAgent().RegisterForPrintEvent(smlPrintEventId.smlEVENT_PRINT, this, this);
-		}
-		
+	
 		
 		
 		String watchLevel = props.getProperty("watch-level");
@@ -141,21 +128,21 @@ public class InSoar implements PrintEventInterface, RunEventInterface
         perception = new PerceptionConnector(soarAgent);   
         environment = new Environment(motorSystem);
         motorSystem = new MotorSystemConnector(soarAgent, perception);
+        try {
+			logger = new Logger(soarAgent, props.getProperty("enable-logs"));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
         
         // Setup ChatFrame
-        chatFrame = new ChatFrame(language, soarAgent);
+        chatFrame = new ChatFrame(language, soarAgent, logger);
         chatFrame.addMenu(soarAgent.createMenu());
         chatFrame.addMenu(perception.createMenu());  
         chatFrame.addMenu(motorSystem.createMenu());
         chatFrame.addMenu(chatFrame.setupScriptMenu());
         chatFrame.addMenu(environment.createMenu());
-        
-        String interactionLog = props.getProperty("enable-interaction-log");
-        if (interactionLog != null && interactionLog.equals("true")) {
-			chatFrame.setInteractionLogFile("logs/interaction-log-"+logNum+".txt");
-        }
-        
-        
+            
         soarAgent.setWorldModel(perception.world);
         
         if(DEBUG_TRACE){
@@ -184,14 +171,6 @@ public class InSoar implements PrintEventInterface, RunEventInterface
     	}
     	new InSoar("insoar-agent", headless);
     }
-    
-	@Override
-	public void printEventHandler(int eventID, Object data, Agent agent, String message) {
-		synchronized(logWriter) {
-			logWriter.println(message);
-		}
-	}
-	
 	
     long prevTime = 0;
     long outputTime = 0;
