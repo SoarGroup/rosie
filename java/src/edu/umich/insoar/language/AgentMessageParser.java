@@ -22,7 +22,7 @@ public class AgentMessageParser
         System.out.println(type);
         Identifier fieldsId = WMUtil.getIdentifierOfAttribute(id, "fields");
         if(type == null){
-            return null;
+            return null; 
         } else if(type.equals("different-attribute-question")){
             message = translateDifferentAttributeQuestion(fieldsId);
         } else if(type.equals("value-question")){
@@ -49,8 +49,7 @@ public class AgentMessageParser
         } else if(type.equals("single-word-response")){
         	message = WMUtil.getValueOfAttribute(fieldsId, "word");
         	if(message.equals("dontknow")){
-        		message = "I don't know";
-        	}
+        		message = "I don't know";}
         } else if(type.equals("no-object")){
         	message = "I do not see the object you are talking about";
         } else if(type.equals("count-response")){
@@ -64,6 +63,7 @@ public class AgentMessageParser
         	message = translateWhichQuestion(fieldsId);
         } else if(type.equals("missing-object")){
         	message = translateMissingObjectQuestion(fieldsId);
+// ---------------------- task related queries ---------------------------------
         } else if(type.equals("get-next-task")){
         	message = translateNextTaskPrompt();
         } else if(type.equals("get-next-subaction")){
@@ -74,9 +74,14 @@ public class AgentMessageParser
         	message = translateGoalQuery();
         } else if (type.equals("restart-task-instruction")){
         	message = "These actions do not lead to the goal you described. Please teach me again.";
-        } else if (type.equals("successful-explanation")){
-        	message = "OK. I now know how to do this task.";
-        }
+        } else if (type.equals("successful-task-learning")){
+        	message = "Okay. I got it";
+        } else if (type.equals("failure-exploration")){
+        	message = "I cannot figure it out.";
+        } else if (type.equals(("begin-exploration"))){
+        	message = "Let me see.";
+        } 
+// ----------------------------------------------------------------------------------
         else if(type.equals("request-index-confirmation")){
         	message = translateRequestIndexConfirmation(fieldsId);
         } else if(type.equals("describe-scene")){
@@ -124,8 +129,7 @@ public class AgentMessageParser
             message = "Ok I have now learned the basics of the game.";
         } else if(type.equals("game-over")){
             message = "Game Over. Shall we play another?";
-        }
-        
+        } 
         return message;
     }
     
@@ -141,7 +145,8 @@ public class AgentMessageParser
 		counter++;
 		if (counter == 1)
 			return "Give me a task.";
-		else return "Test me or give me another task.";
+		else 
+			return "Test me or give me another task.";
 	}
 
 	private static String translateTeachingRequest(Identifier id){
@@ -151,8 +156,6 @@ public class AgentMessageParser
     	    return "I don't know the preposition " + prep + ". Please teach me with examples";
     	else {
     	    return "I don't see " + obj.toString() + ". Please teach me to recognize one";
-    		
-    		
     	}
     }
     
