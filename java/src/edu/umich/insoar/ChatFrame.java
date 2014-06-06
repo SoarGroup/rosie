@@ -160,10 +160,10 @@ public class ChatFrame extends JFrame
 				if(arg0.getKeyCode() == KeyEvent.VK_UP) {
 					upPressed();
 				} else if(arg0.getKeyCode() == KeyEvent.VK_DOWN){
-					downPressed();
-				} else if(arg0.getKeyCode() == KeyEvent.VK_RIGHT){
-					tabPressed();
-				}
+					downPressed();}
+//				} else if(arg0.getKeyCode() == KeyEvent.VK_RIGHT){
+//					tabPressed();
+//				}
 				// Ctrl toggles audio input
 				else if(arg0.getKeyCode() == KeyEvent.VK_CONTROL){
 					System.out.println("here");
