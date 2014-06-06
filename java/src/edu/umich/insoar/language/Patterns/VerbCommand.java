@@ -53,7 +53,6 @@ public class VerbCommand extends LinguisticEntity{
 		Identifier verbId = infoId.CreateIdWME("verb");
 		verbId.CreateStringWME("word", verb);
 		
-		
 		if(directObject != null){
 			Identifier firstObjectId = verbId.CreateIdWME("direct-object");
 			Iterator<LingObject> objItr = directObject.iterator();

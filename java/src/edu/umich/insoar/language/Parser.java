@@ -97,7 +97,7 @@ public class Parser {
         tagsToWords = new LinkedHashMap();
         mapTagToWord();
         this.tagString = getPOSTagString();
-     //   System.out.println("Tag string is " + this.tagString);
+        System.out.println("Tag string is " + this.tagString);
         return traslateToSoarSpeak(messageId, getParse());
     }
 	

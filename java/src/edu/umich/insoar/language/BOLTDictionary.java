@@ -19,6 +19,7 @@ public class BOLTDictionary {
 	private Set<String> preposition;
 	private Set<String> attribute;
 	private Set<String> pronoun;
+	private Set<String> ignore;
 	
 	// relevant pos tags 
 	private String nounTag = "NN";
@@ -28,6 +29,7 @@ public class BOLTDictionary {
 	private String prepositionTag = "PP";
 	private String attributeTag = "AT";
 	private String pronounTag = "PR";
+	private String ignoreTag = "IG";
 
 
 	public BOLTDictionary(String filepath){
@@ -38,6 +40,7 @@ public class BOLTDictionary {
 		verb = new HashSet<String>();
 		attribute = new HashSet<String>();
 		pronoun = new HashSet<String>();
+		ignore = new HashSet<String>();
 		 try {
 			BufferedReader in = new BufferedReader(new FileReader(filepath));
 			String line;
@@ -58,6 +61,9 @@ public class BOLTDictionary {
 					fillSet(attribute,words);
 				if(group[0].equals("PRONOUN"))
 					fillSet(pronoun,words);
+				fillSet(attribute,words);
+				if(group[0].equals("IGNORE"))
+					fillSet(ignore,words);
 			}
 			
 		} catch (FileNotFoundException e) {
@@ -116,6 +122,12 @@ public class BOLTDictionary {
 		return false;
 	}
 	
+	private boolean isIgnore(String string){
+		if (ignore.contains(string))
+			return true;
+		return false;			
+	}
+	
 	public String getTag(String string){
 		String tag;
 		if (isNoun(string)) return nounTag;
@@ -123,6 +135,7 @@ public class BOLTDictionary {
 		if (isVerb(string)) return verbTag;
 		if (isDeterminer(string)) return determinerTag;
 		if (isPreposition(string)) return prepositionTag;
+		if (isIgnore(string)) return ignoreTag;
 		if (isAttribute(string)) return attributeTag;
 		if (isPronoun(string)) return pronounTag;
 		// return the string back for words that appear verbatim in the MIISI document
