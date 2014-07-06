@@ -1,14 +1,36 @@
+sp {revise-definition*copy*goal-definition
+   (state <s> ^name revise-definition
+   	      ^superstate.operator <sop>)
+   (<sop> ^purpose.details.goal-definition <gid>)
+--> 
+   (<s> ^goal-definition <gid>)
+}
+
+sp {revise-definition*elaborate*to-be-revised*predicates
+   (state <s> ^name revise-definition
+   	      ^superstate.operator.purpose.details <p>)
+   (<p> ^predicate-grounding-failure <pred>)
+-->
+   (<s> ^predicate-grounding-failure <pred>)
+}
+
 sp {revise-definition*elaborate*map-id
    (state <s> ^name revise-definition 
    	      ^topstate.interaction.stack.segment.next.purpose.parameters.indexable.result <ia>)
    (<ia> ^_metadata <met>)
    (<met> ^map-id <map>)
-   (<map> ^goal <gid>)
 -->
    (<s> ^map-id <map>
-   	^goal-id <gid>
 	^grounded-action <ia>)
 }
+
+sp {revise-definiton*elaborate*indexable
+   (state <s> ^name revise-definition
+   	      ^superstate.operator.purpose.parameters.indexable <index>)
+-->
+   (<s> ^indexable <index>)
+}
+
 
 sp {revise-definition*elaborate*new-goal
    (state <s> ^name revise-definition
@@ -16,37 +38,111 @@ sp {revise-definition*elaborate*new-goal
    (<sop> ^name revise-definition
    	  ^purpose.parameters.indexable.result <goal>)
 -->
-   (<s> ^new-goal <goal>)
+   (<s> ^grounded-goal <goal>)
 }
 
-sp {revise-defintion*elaborate*partial-grounds	
+sp {revise-definition*elaborate*generalizable*level1
    (state <s> ^name revise-definition
-   	      ^superstate.operator <sop>)
-   (<sop> ^name revise-definition
-   	  ^purpose.details.partial-grounds <ground>)
--->
-   (<s> ^grounded-goal <ground>)
-}
-
-### elaborate default values
-sp {revise-definition*elaborate*commond-with-action*grounds
-   (state <s> ^name revise-definition
-   	      ^new-goal <gg>
+   	      ^grounded-goal <gg>
 	      ^grounded-action <ga>)
-   (<gg> ^relation-predicate.<arg> <val>)
+   (<gg> ^<pred-type> <pred>)
+   (<pred> ^<garg> <val>)
    (<ga> ^<aarg> <val>)
 -->
-   (<s> ^common-with-action <val>)
+   (<s> ^generalizable <gen>)
+   (<gen> ^wmem-object <val>
+   	  ^procedural-argument <aarg>
+	  ^goal-argument <garg>
+	  ^features <ft>)
 }
 
-sp {revise-definition*elaborate*default-grounds
+sp {revise-definition*elaborate*generalizable*level2*object
    (state <s> ^name revise-definition
-   	      ^new-goal <gg>
-	      -^common-with-action <val>)
-   (<gg> ^relation-predicate.{<arg> <> _instantiation-of} <val>)
+   	      ^grounded-goal <gg>
+	      ^grounded-action <ga>)
+   (<gg> ^<pred-type> <pred>)
+   (<pred> ^<garg> <val>)
+   (<ga> ^<aarg>.<< argument >> <val>)
 -->
-   (<s> ^default-value <val>)
+   (<s> ^generalizable <gen>)
+   (<gen> ^wmem-object <val>
+   	  ^procedural-argument <aarg>
+	  ^goal-argument <arg>
+	  ^features <ft>)
+}
+
+sp {revise-definition*elaborate*generalizable*level2*relation
+   (state <s> ^name revise-definition
+   	      ^grounded-goal <gg>
+	      ^grounded-action <ga>)
+   (<gg> ^<pred-type> <pred>)
+   (<pred> ^<garg> <val>)
+   (<ga> ^<aarg>.<< relation >> <val>)
+-->
+   (<s> ^generalizable <gen>)
+   (<gen> ^wmem-object <val>
+   	  ^procedural-argument <aarg>
+	  ^goal-argument <arg>)
 }
 
 
- 
+sp {revise-definition*elaborate*predicate*failure*grounded
+   (state <s> ^name revise-definition
+   	      ^predicate-grounding-failure <rp>
+	      ^grounded-goal.<pred-type> <gg>)
+   (<rp> ^candidate-grounds <cg>
+   	 ^partial-grounds <pg>
+	 ^predicate-type <pred-type>)
+   (<cg> ^<arg> <obj>)
+   (<gg> ^<arg> <obj>)
+-->
+   (<s> ^revise-predicate-definition <rpd>)
+   (<rpd> ^grounded-predicate <gg>
+   	  ^failure-details <rp>)
+}
+	  
+sp {revise-definition*elaborate*predicate*failure*indexable
+   (state <s> ^name revise-definition
+   	      ^indexable <index>
+	      ^revise-predicate-definition <rpd>)
+   (<rpd> ^failure-details <f>)
+   (<f> ^predicate-type <pred-type>)
+   (<index> ^<arg> <val>)  
+   (<val> ^type <pred-type>)
+-->
+   (<rpd> ^indexable <val>)
+}
+
+
+##### elaborate features for generalizable objects
+sp {revise-definition*elaborate*features*generalizables*level1
+   (state <s> ^name revise-definition
+   	      ^generalizable <gen>
+	      ^grounded-action._metadata.argument-attributes <attrs>)
+   (<attrs> ^<arg>.<attr> <val>)
+   (<gen> ^procedural-argument <arg>
+   	  ^features <ft>)
+-->
+   (<ft> ^<attr> <val>)
+}
+
+sp {revise-definition*elaborate*features*generalizables*level2
+   (state <s> ^name revise-definition
+   	      ^generalizable <gen>
+	      ^grounded-action._metadata.argument-attributes <attrs>)
+   (<attrs> ^<arg>.argument.<attr> <val>)
+   (<gen> ^procedural-argument <arg>
+   	  ^features <ft>)
+-->
+   (<ft> ^<attr> <val>)
+}
+
+# sp {revise-definition*elaborate*features*generalizables*relation
+#    (state <s> ^name revise-definition
+#    	      ^generalizable <gen>
+# 	      ^grounded-action._metadata.argument-attributes <attrs>)
+#    (<attrs> ^<arg>.argument.<attr> <val>)
+#    (<gen> ^procedural-argument <arg>)
+# -->
+#    (<ft> ^<attr> <val>)
+# }

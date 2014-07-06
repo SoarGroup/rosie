@@ -12,15 +12,23 @@ sp {generate-grounded-predicate*elaborate*state
    	^grounded-action <ia>
 	^desired <d>
 	^procedural-id <pid>
-	^type <predicate>)
+	^predicate-type <predicate>)
 }
 
 sp {generate-grounded-predicate*elaborate*grounded-predicate
    (state <s> ^name generate-grounded-predicate
-   	      ^definition <def>)
+   	      ^definition <def>
+	      ^default-assignment <dva>)
 -->
-   (<s> ^grounded-predicate <gp>)
+   (<dva> ^grounded-predicate <gp>)
    (<gp> ^_instantiation-of <def>)
+}
+
+sp {generate-grounded-predicate*copy*failed*attribute
+   (state <s> ^name generate-grounded-predicate
+   	      ^superstate.failure <f>)
+-->
+   (<s> ^failure <f>)
 }
 
 #### retrieve defintion ##################################################
@@ -127,14 +135,13 @@ sp {generate-grounded-predicate*elaborate*default*relation
    (<fp> ^smem-rep <dval>)
    (<def> ^relation <val>)
    (<val> ^default <default>)
-   (<defaul> ^value <dval>)
+   (<default> ^value <dval>)
 -->
    (<s> ^pair <pair>)
    (<pair> ^smem-object <val>
    	   ^wmem-object <fp>
 	   ^argument relation
-	   ^default <default>
-	   ^matched yes)
+	   ^default <default>)
 }
 
 sp {generate-grounded-predicate*elaborate*default*state
@@ -149,110 +156,30 @@ sp {generate-grounded-predicate*elaborate*default*state
    (<pair> ^smem-object <dval>
    	   ^wmem-object <dval>
 	   ^argument state
-	   ^default <def>
-	   ^matched yes)
-}
-#### for defaults also match the constraint
-sp {generate-grounded-predicate*elaborate*extra-constraints
-   (state <s> ^name generate-grounded-predicate
-   	      ^pair <pair>)
-   (<pair> ^default <def>)
-   (<def> ^<arg> <sobj>)
-   (<pair2> ^argument <arg>
-   	    ^wmem-object <wobj>
-	    ^smem-object {<sobj2> <> <sobj>}
-	    ^filters <f>)
-   (<sobj> ^<attribute> <label>)
--->
-   (<f> ^<attribute> <label>)
+	   ^default <def>)
 }
 
-### object attribute match
-sp {generate-grounded-predicate*elaborate*filters
+############## elaborate default-value-assignment
+sp {generate-grounded-predicate*elaborate*default-value-assignment*one
    (state <s> ^name generate-grounded-predicate
-   	      ^pair <pair>)
+   	      ^definition <def>)
+   (<def> ^<arg1> <val1>)
+ -{(<def> ^{<arg2> <> <arg1>} <val2>)}
+   (<val1> ^default <def1>)
 -->
-   (<pair> ^filters <filter>)
-}
-sp {generate-grounded-predicate*elaborate*filters*attribute
-   (state <s> ^name generate-grounded-predicate
-   	      ^pair <pair>)
-   (<pair> ^filters <filter>
-   	   ^smem-object <sobj>)
-   (<sobj> ^<attribute> <label>)
--->
-   (<filter> ^<attribute> <label>)
+   (<s> ^default-assignment <dva>)
+   (<dva> ^<arg1> <def1>)
 }
 
-sp {generate-grounded-predicate*perform*feature*0*attribute
+sp {generate-grounded-predicate*elaborate*default-value-assignment*two
    (state <s> ^name generate-grounded-predicate
-   	      ^pair <pair>)
-   (<pair> ^filters <sobj>)
-   (<sobj> -^<attribute> <label1>)
+   	      ^definition <def>)
+   (<def> ^<arg1> <val1>)
+   (<def> ^{<arg2> > <arg1>} <val2>)
+   (<val1> ^default <def1>)
+   (<val2> ^default <def2>)
 -->
-   (<sobj> ^no attributes)
+   (<s> ^default-assignment <dva>)
+   (<dva> ^<arg1> <def1>
+   	  ^<arg2> <def2>)
 }
-
-sp {generate-grounded-predicate*perform*feature*match*0*attribute
-   (state <s> ^name generate-grounded-predicate
-   	      ^pair <pair>)
-   (<pair> ^filters <sobj>)
-   (<sobj> ^no attributes)
--->
-   (<pair> ^matched true)
-}
-
-sp {generate-grounded-predicate*perform*feature*match*1*attribute
-   (state <s> ^name generate-grounded-predicate
-   	      ^pair <pair>)
-   (<pair> ^filters <sobj>
-   	   ^wmem-object <wobj>)
-   (<sobj> ^<attribute1> <label1>
-   	   -^<attribute2> {<label2> <> <label1>})
-   (<wobj> ^property <prop>)
-   (<prop> ^label <label1>
-   	   ^name <attribute1>)
--->
-   (<pair> ^matched yes)
-}
-
-sp {generate-grounded-predicate*perform*feature*match*2*attribute
-   (state <s> ^name generate-grounded-predicate
-   	      ^pairing <pair>)
-   (<pair> ^filters <sobj>
-   	   ^wmem-object <wobj>)
-   (<sobj> ^<attribute1> <label1>
-   	   ^<attribute2> {<label2> <> <label1>}
-	   -^<attribute> {<label3> <> <label1> <> <label2>})
-   (<wobj> ^property <prop1>
-   	   ^property <prop2>)
-   (<prop1> ^label <label1>
-   	    ^name <attribute1>)
-   (<prop2> ^label <label2>
-   	    ^name <attribute2>)
--->
-   (<pair> ^matched yes)
-}
-
-sp {generate-grounded-predicate*perform*feature*match*3*attribute
-   (state <s> ^name generate-grounded-predicate
-   	      ^pairing <pair>)
-   (<pair> ^filters <sobj>
-   	   ^wmem-object <wobj>)
-   (<sobj> ^<attribute1> <label1>
-   	   ^<attribute2> {<label2> <> <label1>}
-	   ^<attribute3> {<label3> <> <label1> <> <label2>}
-	   -^attribute {<label4> <> <label3> <> <label1> <> <label2>})
-   (<wobj> ^property <prop1>
-   	   ^property <prop2>
-	   ^property <prop3>)
-   (<prop1> ^label <label1>
-   	    ^name <attribute1>)
-   (<prop2> ^label <label2>
-   	    ^name <attribute2>)
-   (<prop3> ^label <label3>
-   	    ^name <attribute3>)
--->
-   (<pair> ^matched yes)
-}
-
