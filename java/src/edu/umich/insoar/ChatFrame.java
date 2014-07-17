@@ -355,13 +355,15 @@ public class ChatFrame extends JFrame
     		chatMessages.add(message);
     		try {
     			//TO ENABLE SPEAKING
-    			//if (type == ActionType.Agent)
-    				//tts.speak(preserveMsg);
+    			if (type == ActionType.Agent)
+    				tts.speak(preserveMsg);
     			
-    			DateFormat dateFormat = new SimpleDateFormat("mm:ss:SSS");
-    			Date d = new Date();
+    			//DateFormat dateFormat = new SimpleDateFormat("mm:ss:SSS");
+    			//Date d = new Date();
     			int origLength = chatDoc.getLength();
-    			chatDoc.insertString(origLength, dateFormat.format(d)+" ", chatDoc.getStyle(ActionType.Default.toString()));
+    			//chatDoc.insertString(origLength, dateFormat.format(d)+" ", chatDoc.getStyle(ActionType.Default.toString()));
+    			chatDoc.insertString(origLength, " ", chatDoc.getStyle(ActionType.Default.toString()));
+    			
     			int nextLength = chatDoc.getLength();
     			chatDoc.insertString(nextLength, message+"\n", chatDoc.getStyle(type.toString()));
     			// AM: Will make it auto scroll to bottom

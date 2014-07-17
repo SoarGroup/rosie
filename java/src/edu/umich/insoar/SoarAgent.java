@@ -66,7 +66,11 @@ public class SoarAgent implements RunEventInterface{
     }
 	
 	public SoarAgent(String agentName, Properties props, boolean useLG, boolean headless){
-		kernel = Kernel.CreateKernelInNewThread();
+		if(headless){
+			kernel = Kernel.CreateKernelInCurrentThread();
+		} else {
+			kernel = Kernel.CreateKernelInNewThread();
+		}
         // !!! Important !!!
         // We set AutoCommit to false, and only commit inside of the event
         // handler

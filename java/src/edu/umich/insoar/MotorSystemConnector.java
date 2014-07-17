@@ -45,6 +45,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
 	// Last received information about the arm
 	
 	private boolean gotUpdate = false;
+	private boolean gotArmUpdate = false;
 	
     private LCM lcm;
     
@@ -78,6 +79,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     	// Setup LCM events
         lcm = LCM.getSingleton();
         lcm.subscribe("ROBOT_ACTION", this);
+        lcm.subscribe("ARM_STATUS", this);
 
         // Setup Input Link Events
         inputLinkId = agent.getAgent().GetInputLink();
@@ -100,6 +102,8 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+    	} else if(channel.equals("ARM_STATUS")){
+    		gotArmUpdate = true;
     	}
     }
     
@@ -194,8 +198,6 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     	}
     }
     
-    
-    
     private void updateIL(){
     	WMUtil.updateStringWME(selfId, "action", curStatus.action.toLowerCase());
     	if(prevStatus == null){
@@ -211,6 +213,10 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     }
     
     private void updateArmInfo(){
+    	if(!gotArmUpdate){
+    		return;
+    	}
+    	gotArmUpdate = false;
     	ArrayList<Double> widths = armStatus.getArmSegmentWidths();
     	ArrayList<double[]> points = armStatus.getArmPoints();
     	for(int i = 0; i < widths.size(); i++){
