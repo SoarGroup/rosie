@@ -187,7 +187,7 @@ public class SoarAgent implements RunEventInterface{
     		System.out.println(ret);
     	}
     	if(agentSource != null){
-    		String ret = agent.ExecuteCommandLine("source " + agentSource);
+    		String ret = agent.ExecuteCommandLine("source -v " + agentSource);
     		System.out.println(ret);
     	}
     	if(lgSoarSource != null){
