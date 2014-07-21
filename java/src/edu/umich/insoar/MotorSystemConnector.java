@@ -45,6 +45,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
 	// Last received information about the arm
 	
 	private boolean gotUpdate = false;
+	private boolean gotArmUpdate = false;
 	
     private LCM lcm;
     
@@ -53,6 +54,10 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     StringBuilder svsCommands = new StringBuilder();
 
 	private Integer heldObject;
+    
+    private robot_command_t sentCommand = null;
+    private long sentTime = 0;
+
     
     PerceptionConnector perception;
 
@@ -77,6 +82,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     	// Setup LCM events
         lcm = LCM.getSingleton();
         lcm.subscribe("ROBOT_ACTION", this);
+        lcm.subscribe("ARM_STATUS", this);
 
         // Setup Input Link Events
         inputLinkId = agent.getAgent().GetInputLink();
@@ -99,6 +105,8 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+    	} else if(channel.equals("ARM_STATUS")){
+    		gotArmUpdate = true;
     	}
     }
     
@@ -140,6 +148,23 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     	if(InSoar.DEBUG_TRACE){
 			System.out.println(String.format("%-20s : %d", "MOTOR CONNECTOR", (TimeUtil.utime() - time)/1000));
     	}
+    	if(sentCommand != null && curStatus != null){
+    		if(sentCommand.action.toLowerCase().contains("drop")){
+    			if(curStatus.action.toLowerCase().equals("drop")){
+    				sentCommand = null;
+    			} else if(TimeUtil.utime() > sentTime + 2000000){
+    		    	lcm.publish("ROBOT_COMMAND", sentCommand);
+    		    	sentTime = TimeUtil.utime();
+    			}
+    		} else if(sentCommand.action.toLowerCase().contains("grab")){
+    			if(curStatus.action.toLowerCase().equals("grab")){
+    				sentCommand = null;
+    			} else if(TimeUtil.utime() > sentTime + 2000000){
+    		    	lcm.publish("ROBOT_COMMAND", sentCommand);
+    		    	sentTime = TimeUtil.utime();
+    			}
+    		}
+    	}
 	}
     
     private void initIL(){
@@ -176,6 +201,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     	}
     }
     
+
     
     
     private void updateIL(){   	
@@ -194,6 +220,10 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     }
     
     private void updateArmInfo(){
+    	if(!gotArmUpdate){
+    		return;
+    	}
+    	gotArmUpdate = false;
     	ArrayList<Double> widths = armStatus.getArmSegmentWidths();
     	ArrayList<double[]> points = armStatus.getArmPoints();
     	for(int i = 0; i < widths.size(); i++){
@@ -285,6 +315,8 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         System.out.println("PICK UP: " + id + " (" + objectIdStr + ")");
     	lcm.publish("ROBOT_COMMAND", command);
         pickUpId.CreateStringWME("status", "complete");
+        sentCommand = command;
+        sentTime = TimeUtil.utime();
     }
 
     /**
@@ -310,6 +342,9 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         command.dest = new double[]{x, y, z, 0, 0, 0};
     	lcm.publish("ROBOT_COMMAND", command);
         putDownId.CreateStringWME("status", "complete");
+        sentCommand = command;
+        sentTime = TimeUtil.utime();
+        System.out.println("Put down at " + x + ", " + y + ", " + z);
     }
 
     /**

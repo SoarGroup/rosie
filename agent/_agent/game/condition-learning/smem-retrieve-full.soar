@@ -1,0 +1,124 @@
+sp {smem-retrieve-full*query
+   (state <s> ^name smem-retrieve-full
+              ^superstate.operator.query <q>
+              ^smem.command <sc>)
+-->
+   (<sc> ^query <q>)
+}
+
+sp {smem-retrieve-full*query*success
+   (state <s> ^name smem-retrieve-full
+              ^smem.result.success <cue>
+              ^smem.result <res>)
+   (<res> ^retrieved <ret>)
+-->
+   (<s> ^new <ret>
+        ^top <ret>)
+}
+
+sp {smem-retrieve-full*query*failure
+   (state <s> ^name smem-retrieve-full
+              ^smem.result.failure <cue>)
+-->
+   (<s> ^failure true)
+}
+
+sp {smem-retrieve-full*propose*lookup-next-levels
+   (state <s> ^name smem-retrieve-full
+              ^new <ret>
+             -^tried <lte>)
+   (<ret> ^<arg> <lte>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name lookup-next-levels
+        ^category svs
+        ^lte <lte>)
+}
+
+sp {smem-retrieve-full*propose*complete-smem-retrieve-full
+   (state <s> ^name smem-retrieve-full
+              ^top <top>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name complete-smem-retrieve-full
+        ^top <top>)
+}
+
+sp {smem-retrieve-full*propose*complete-smem-retrieve-full*failure
+   (state <s> ^name smem-retrieve-full
+              ^failure true)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name complete-smem-retrieve-full
+        ^failure true)
+}
+
+sp {smem-retrieve-full*apply*complete-smem-retrieve-full
+   (state <s> ^name smem-retrieve-full
+              ^operator <o>
+              ^superstate <ss>
+              ^top <top>)
+   (<o> ^name complete-smem-retrieve-full
+        ^top <top>)
+-->
+   (<ss> ^smem-result <top>)
+}
+
+sp {smem-retrieve-full*apply*complete-smem-retrieve-full*failure
+   (state <s> ^name smem-retrieve-full
+              ^operator <o>
+              ^superstate <ss>)
+   (<o> ^name complete-smem-retrieve-full
+        ^failure true)
+-->
+   (<ss> ^smem-result none)
+}
+
+sp {lookup-smem*lookup-next-levels*retrieve-lte2
+   (state <s> ^name lookup-next-levels
+              ^smem.command <sc>
+              ^superstate.operator.lte <lte>)
+-->
+   (<sc> ^retrieve <lte>)
+}
+
+sp {lookup-smem*lookup-next-levels*retrieved2
+   (state <s> ^name lookup-next-levels
+              ^smem.result <res>
+              ^superstate <ss>
+              ^smem.result.success
+              ^superstate.operator.lte <lte>)
+   (<res> ^retrieved <ret>)
+-->
+   (<ss> ^new <ret>
+         ^tried <lte>)
+}
+
+sp {lookup-smem*lookup-next-levels*retrieved*fail3
+   (state <s> ^name lookup-next-levels
+              ^smem.result <res>
+              ^superstate <ss>
+              ^smem.result.failure
+              ^superstate.operator.lte <lte>)
+-->
+   (<ss> ^tried <lte>)
+}
+
+sp {lookup-smem*lookup-next-levesl*retrieved*fail33
+   (state <s> ^name lookup-next-levels
+              ^superstate <ss>
+              ^smem.result.bad-cmd
+              ^superstate.operator.lte <lte>)
+-->
+   (<ss> ^tried <lte>)
+}
+
+sp {smem-retrieve-full*prefer*lookup-next-levels*over*complete-smem-retrieve-full3
+   (state <s> ^name smem-retrieve-full
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name lookup-next-levels)
+   (<o2> ^name complete-smem-retrieve-full)
+-->
+   (<s> ^operator <o1> > <o2>)
+}

@@ -1,218 +1,157 @@
 # init-smem.soar
 # Preloads information into semantic memory that has to do with learning about nouns and adjectives
 
-smem --add {
-	# Spatial property (ex: clear) #JK
-#    (<spatial> ^wme-type property ^name preposition ^type spatial ^il-name preposition)
+sp {topstate*propose*store-object-properties-smem
+   (state <s> ^topstate <s>
+              ^name <name>
+              ^agent-info <info>)
+   (<info> -^stored-object-properties)
+-->
+   (<s> ^operator <o> + = >)
+   (<o> ^name store-object-properties-smem)
+}
+
+# !!!!!!!!!!!!!!!!!! README !!!!!!!!!!!!!!!!!!!!!!!
+# This is the only rule you should edit for object properties
+# Simple add or remove adjectives from each property
+# The correct representations will be placed into smem automatically
+
+sp {topstate*elaborate*store-object-properties-smem*info
+   (state <s> ^topstate <s>
+              ^operator <o> +)
+   (<o> ^name store-object-properties-smem)
+-->
+   (<o> ^properties-to-store <p>)
+   (<p> ^property <color> <shape> <size> <name> <generic> <weight> <temp>)
+   (<color> ^property-name color
+            ^property-type visual)
+   (<shape> ^property-name shape
+            ^property-type visual)
+   (<size> ^property-name size
+           ^property-type visual)
+   (<name> ^property-name name
+           ^property-type linguistic)
+   (<generic> ^property-name generic
+              ^property-type linguistic)
+   (<weight> ^property-name weight
+             ^property-type measurable
+             ^measure-location scale
+             ^superlative.highest heavy-est 
+             ^superlative.lowest light-est)
+   (<temp> ^property-name temperature
+           ^property-type measurable
+           ^measure-location thermometer
+           ^superlative.highest hot-est
+           ^superlative.lowest cold-est)
+   # EDIT THESE VALUES BELOW:
+	(<color> ^adjective red orange yellow green blue purple white)
+ 	(<shape> ^adjective rectangle triangle arch square sphere l-block crescent)
+  	(<size> ^adjective small medium large)
+    (<name> ^adjective stove pantry garbage table dishwasher scale thermometer
+           ^adjective grid-red grid-orange grid-yellow grid-green grid-blue
+           ^adjective home goal open-spot
+           ^adjective bin-1 bin-2 bin-3 bin-4 bin-5 bin-6)
+    (<generic> ^adjective one object block)
+    (<weight> ^adjective heavy moderate light)
+    (<temp> ^adjective hot warm cool cold)
+}
+   
+# Generate smem representation for visual and linguistic properties
+sp {topstate*elaborate*store-object-properties-smem*visual*linguistic*property*rep
+   (state <s> ^topstate <s>
+              ^operator <o> +)
+   (<o> ^name store-object-properties-smem
+        ^properties-to-store.property <p>)
+   (<p> ^property-name <name>
+        ^property-type { <type> << visual linguistic >> })
+-->
+   (<p> ^smem-rep <rep>)
+   (<rep> ^wme-type property ^name <name> ^type <type>)
+}
+
+# Generate smem representations for measurable properties
+sp {topstate*elaborate*store-object-properties-smem*measurable*property*rep
+   (state <s> ^topstate <s>
+              ^operator <o> +)
+   (<o> ^name store-object-properties-smem
+        ^properties-to-store.property <p>)
+   (<p> ^property-name <name>
+        ^property-type measurable
+        ^measure-location <loc>)
+-->
+   (<p> ^smem-rep <rep>)
+   (<rep> ^wme-type property ^name <name> ^type measurable ^location <loc>)
+}
 
 
-	# Color
-	(<color> ^wme-type property ^name color ^type visual ^il-name color ^location open-spot)
+# Store the properties in smem
+sp {topstate*apply*store-object-properties-smem*store*properties
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^smem.command <cmd>)
+   (<o> ^name store-object-properties-smem
+        ^properties-to-store.property.smem-rep <prop>)
+-->
+   (<cmd> ^store <prop>)
+}
+
+# Generate and store smem representations for linguistic adjectives
+sp {topstate*apply*store-object-properties-smem*store*adjectives*linguistic
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^smem.command <cmd>)
+   (<o> ^name store-object-properties-smem
+        ^properties-to-store.property <prop>)
+   (<prop> ^smem-rep <prop-rep>
+           ^property-type linguistic
+           ^adjective <adj>)
+-->
+   (<cmd> ^store <word> <sense>)
+   (<word> ^wme-type word ^word <adj> ^sense <sense>)
+   (<sense> ^wme-type sense ^word <word> ^type adjective ^property <prop-rep>)
+}
+
+# Generate and store smem representations for visual and measurable adjectives
+sp {topstate*apply*store-object-properties-smem*store*adjectives*visual*measurable
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^smem.command <cmd>)
+   (<o> ^name store-object-properties-smem
+        ^properties-to-store.property <prop>)
+   (<prop> ^smem-rep <prop-rep>
+           ^property-name <prop-name>
+           ^property-type << measurable visual >>
+           ^adjective <adj>)
+-->
+   (<cmd> ^store <word> <sense>)
+   (<word> ^wme-type word ^word <adj> ^sense <sense>)
+   (<sense> ^wme-type sense ^word <word> ^type adjective ^property <prop-rep> ^label (concat <prop-name> |-| <adj>))
+}
 
 
-	(<w11> ^wme-type word ^word blue ^sense <s11>)
- 	(<s11> ^wme-type sense ^word <w11> ^type adjective ^property <color> ^label color-blue) 
+# Generate and store smem representations for superlatives
+sp {topstate*apply*store-object-properties-smem*store*superlatives
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^smem.command <cmd>)
+   (<o> ^name store-object-properties-smem
+        ^properties-to-store.property <prop>)
+   (<prop> ^smem-rep <prop-rep>
+           ^property-name <prop-name>
+           ^property-type measurable
+           ^superlative.<type> <sup>)
+-->
+   (<cmd> ^store <word> <sense>)
+   (<word> ^wme-type word ^word <sup> ^sense <sense>)
+   (<sense> ^wme-type sense ^word <word> ^type superlative ^property <prop-rep> ^value <type>)
+}
 
-  
-	(<w12> ^wme-type word ^word red ^sense <s12>)
- 	(<s12> ^wme-type sense ^word <w12> ^type adjective ^property <color> ^label color-red) 
-  
-	(<w13> ^wme-type word ^word green ^sense <s13>)
- 	(<s13> ^wme-type sense ^word <w13> ^type adjective ^property <color> ^label color-green) 
-  
-	(<w14> ^wme-type word ^word white ^sense <s14>)
- 	(<s14> ^wme-type sense ^word <w14> ^type adjective ^property <color> ^label color-white) 
-  
-	(<w15> ^wme-type word ^word yellow ^sense <s15>)
- 	(<s15> ^wme-type sense ^word <w15> ^type adjective ^property <color> ^label color-yellow) 
-  
-	(<w16> ^wme-type word ^word purple ^sense <s16>)
- 	(<s16> ^wme-type sense ^word <w16> ^type adjective ^property <color> ^label color-purple) 
-  
-    (<w17> ^wme-type word ^word orange ^sense <s17>)
- 	(<s17> ^wme-type sense ^word <w17> ^type adjective ^property <color> ^label color-orange) 
-  
-  #JK tmp hack for null
-(<w18> ^wme-type word ^word null ^sense <s18>)
- 	(<s18> ^wme-type sense ^word <w18> ^type adjective ^property <color> ^label color-null) 
-  
-	# Shape
-	(<shape> ^wme-type property ^name shape ^type visual ^il-name shape ^location open-spot)
-  
-	(<w21> ^wme-type word ^word rectangle ^sense <s21>)
- 	(<s21> ^wme-type sense ^word <w21> ^type adjective ^property <shape> ^label shape-rectangle) 
-  
-	(<w22> ^wme-type word ^word triangle ^sense <s22>)
- 	(<s22> ^wme-type sense ^word <w22> ^type adjective ^property <shape> ^label shape-triangle) 
-  
-	(<w23> ^wme-type word ^word arch ^sense <s23>)
- 	(<s23> ^wme-type sense ^word <w23> ^type adjective ^property <shape> ^label shape-arch) 
-  
-	(<w24> ^wme-type word ^word square ^sense <s24>)
- 	(<s24> ^wme-type sense ^word <w24> ^type adjective ^property <shape> ^label shape-square) 
-  
-	(<w25> ^wme-type word ^word sphere ^sense <s25>)
- 	(<s25> ^wme-type sense ^word <w25> ^type adjective ^property <shape> ^label shape-sphere) 
-
-	(<w26> ^wme-type word ^word steak ^sense <s26>)
- 	(<s26> ^wme-type sense ^word <w26> ^type adjective ^property <shape> ^label shape-steak) 
-    
-  
-
- 	
-	# Size
-	(<size> ^wme-type property ^name size ^type visual ^il-name size ^location open-spot)
- 
- 	(<w31> ^wme-type word ^word large ^sense <s31>)
-    (<s31> ^wme-type sense ^word <w31> ^type adjective ^property <size> ^label size-large)
-
-	(<w110> ^wme-type word ^word medium-large ^sense <s110>)
- 	(<s110> ^wme-type sense ^word <w110> ^type adjective ^property <size> ^label size-medium-large) 
- 
- 	(<w32> ^wme-type word ^word medium ^sense <s32>)
-    (<s32> ^wme-type sense ^word <w32> ^type adjective ^property <size> ^label size-medium)
- 
- 	(<w33> ^wme-type word ^word small ^sense <s33>)
-    (<s33> ^wme-type sense ^word <w33> ^type adjective ^property <size> ^label size-small)
- 
- 
-    # Weight
-#	(<weight> ^wme-type property ^name weight ^type measurable ^il-name weight ^location scale)
-# 
-# 	(<w61> ^wme-type word ^word heavy ^sense <s61>)
-#    (<s61> ^wme-type sense ^word <w61> ^type adjective ^property <weight> ^label weight-heavy)
-#
-# 	(<w62> ^wme-type word ^word medium ^sense <s62>)
-#    (<s62> ^wme-type sense ^word <w62> ^type adjective ^property <weight> ^label weight-medium)
-#
-# 	(<w63> ^wme-type word ^word light ^sense <s63>)
-#    (<s63> ^wme-type sense ^word <w63> ^type adjective ^property <weight> ^label weight-light)
-#    
-#    (<w64> ^wme-type word ^word heavier ^sense <s64>)
-#    (<s64> ^wme-type sense ^word <w64> ^type superlative ^property <weight> ^value highest)
-#    
-#    (<w65> ^wme-type word ^word lighter ^sense <s65>)
-#    (<s65> ^wme-type sense ^word <w65> ^type superlative ^property <weight> ^value lowest)
-    
-    # Temperature
-	(<temp> ^wme-type property ^name temperature ^type measurable ^il-name temperature ^location thermometer)
- 
- 	(<w71> ^wme-type word ^word hot ^sense <s71>)
-    (<s71> ^wme-type sense ^word <w71> ^type adjective ^property <temp> ^label temperature-hot)
-
- 	(<w72> ^wme-type word ^word mild ^sense <s72>)
-    (<s72> ^wme-type sense ^word <w72> ^type adjective ^property <temp> ^label temperature-mild)
-
- 	(<w73> ^wme-type word ^word cold ^sense <s73>)
-    (<s73> ^wme-type sense ^word <w73> ^type adjective ^property <temp> ^label temperature-cold)
- 
-    (<w74> ^wme-type word ^word hotter ^sense <s74>)
-    (<s74> ^wme-type sense ^word <w74> ^type superlative ^property <temp> ^value highest)
- 
-    (<w75> ^wme-type word ^word colder ^sense <s75>)
-    (<s75> ^wme-type sense ^word <w75> ^type superlative ^property <temp> ^value lowest)
-    
- 
- 	# Name
-	(<name> ^wme-type property ^name name ^type linguistic)
- 
- 	(<w41> ^wme-type word ^word oven ^sense <s41>)
-  	(<s41> ^wme-type sense ^word <w41> ^type adjective ^property <name>)
-
- 	(<w42> ^wme-type word ^word pantry ^sense <s42>)
-  	(<s42> ^wme-type sense ^word <w42> ^type adjective ^property <name>)
-   
- 	(<w43> ^wme-type word ^word garbage ^sense <s43>)
-  	(<s43> ^wme-type sense ^word <w43> ^type adjective ^property <name>)
-   
- 	(<w44> ^wme-type word ^word table ^sense <s44>)
-  	(<s44> ^wme-type sense ^word <w44> ^type adjective ^property <name>)
-   
-    (<w45> ^wme-type word ^word scale ^sense <s45>)
-  	(<s45> ^wme-type sense ^word <w45> ^type adjective ^property <name>)
-   
- 	(<w46> ^wme-type word ^word dishwasher ^sense <s46>)
-  	(<s46> ^wme-type sense ^word <w46> ^type adjective ^property <name>)
- 
-   	(<w47> ^wme-type word ^word grid-blue ^sense <s47>)
-  	(<s47> ^wme-type sense ^word <w47> ^type adjective ^property <name>)
-   
-   (<w48> ^wme-type word ^word grid-yellow ^sense <s48>)
-  	(<s48> ^wme-type sense ^word <w48> ^type adjective ^property <name>)
-   
-   (<w49> ^wme-type word ^word grid-red ^sense <s49>)
-  	(<s49> ^wme-type sense ^word <w49> ^type adjective ^property <name>)
-   
-   (<w147> ^wme-type word ^word blue-grid ^sense <s147>)
-  	(<s147> ^wme-type sense ^word <w147> ^type adjective ^property <name>)
-   
-   (<w148> ^wme-type word ^word green-grid ^sense <s148>)
-  	(<s148> ^wme-type sense ^word <w148> ^type adjective ^property <name>)
-   
-   (<w149> ^wme-type word ^word yellow-grid ^sense <s149>)
-  	(<s149> ^wme-type sense ^word <w149> ^type adjective ^property <name>)
-   
-   (<w50> ^wme-type word ^word home ^sense <s50>)
-  	(<s50> ^wme-type sense ^word <w50> ^type adjective ^property <name>)
-   
-   (<w60> ^wme-type word ^word grid ^sense <s60>)
-  	(<s60> ^wme-type sense ^word <w60> ^type adjective ^property <name>)
-   (<w61> ^wme-type word ^word grid-1 ^sense <s61>)
-  	(<s61> ^wme-type sense ^word <w61> ^type adjective ^property <name>)
-   (<w62> ^wme-type word ^word grid-2 ^sense <s62>)
-  	(<s62> ^wme-type sense ^word <w62> ^type adjective ^property <name>)
-   (<w63> ^wme-type word ^word grid-3 ^sense <s63>)
-  	(<s63> ^wme-type sense ^word <w63> ^type adjective ^property <name>)
-   (<w64> ^wme-type word ^word grid-4 ^sense <s64>)
-  	(<s64> ^wme-type sense ^word <w64> ^type adjective ^property <name>)
-   (<w65> ^wme-type word ^word grid-5 ^sense <s65>)
-  	(<s65> ^wme-type sense ^word <w65> ^type adjective ^property <name>)
-   (<w66> ^wme-type word ^word grid-6 ^sense <s66>)
-  	(<s66> ^wme-type sense ^word <w66> ^type adjective ^property <name>)
-   (<w67> ^wme-type word ^word grid-7 ^sense <s67>)
-  	(<s67> ^wme-type sense ^word <w67> ^type adjective ^property <name>)
-   (<w68> ^wme-type word ^word grid-8 ^sense <s68>)
-  	(<s68> ^wme-type sense ^word <w68> ^type adjective ^property <name>)
-   (<w69> ^wme-type word ^word grid-9 ^sense <s69>)
-  	(<s69> ^wme-type sense ^word <w69> ^type adjective ^property <name>)
-   (<w70> ^wme-type word ^word grid-10 ^sense <s70>)
-  	(<s70> ^wme-type sense ^word <w70> ^type adjective ^property <name>)
-   (<w71> ^wme-type word ^word grid-11 ^sense <s71>)
-  	(<s71> ^wme-type sense ^word <w71> ^type adjective ^property <name>)
-	
-	(<w89> ^wme-type word ^word grid-green ^sense <s89>) 
-  	(<s89> ^wme-type sense ^word <w89> ^type adjective ^property <name>)
-   
-	(<w79> ^wme-type word ^word grid-orange ^sense <s79>) 
-  	(<s79> ^wme-type sense ^word <w79> ^type adjective ^property <name>)
-   
- 	(<w81> ^wme-type word ^word bin-1 ^sense <s81>) 
-  	(<s81> ^wme-type sense ^word <w81> ^type adjective ^property <name>)  
-
- 	(<w82> ^wme-type word ^word bin-2 ^sense <s82>) 
-  	(<s82> ^wme-type sense ^word <w82> ^type adjective ^property <name>)  
-
- 	(<w83> ^wme-type word ^word bin-3 ^sense <s83>) 
-  	(<s83> ^wme-type sense ^word <w83> ^type adjective ^property <name>)  
-   
-    (<w84> ^wme-type word ^word goal ^sense <s84>)
-    (<s84> ^wme-type sense ^word <w84> ^type adjective ^property <name>)
-    
-    (<w85> ^wme-type word ^word open-spot ^sense <s85>)
-    (<s85> ^wme-type sense ^word <w85> ^type adjective ^property <name>)
-
-    (<w86> ^wme-type word ^word bin-4 ^sense <s86>)
-    (<s86> ^wme-type sense ^word <w86> ^type adjective ^property <name>)
- 	
- 	# Generic - words that are ignored when indexing objects
-	(<generic> ^wme-type property ^name generic ^type linguistic)
- 	
- 	(<w51> ^wme-type word ^word one ^sense <s51>)
-  	(<s51> ^wme-type sense ^word <w51> ^type adjective ^property <generic>)
-   
- 	(<w52> ^wme-type word ^word object ^sense <s52>)
-  	(<s52> ^wme-type sense ^word <w52> ^type adjective ^property <generic>)
-   
- 	(<w53> ^wme-type word ^word block ^sense <s53>)
-  	(<s53> ^wme-type sense ^word <w53> ^type adjective ^property <generic>)
+# Mark that the properties have been stored
+sp {topstate*apply*store-object-properties-smem*mark*stored
+   (state <s> ^topstate <s>
+              ^operator.name store-object-properties-smem
+              ^smem.result.success
+              ^agent-info <info>)
+-->
+   (<info> ^stored-object-properties true)
 }

@@ -1,109 +1,125 @@
-sp {topstate*elaborate*action-goal-stack
+sp {topstate*elaborate*action-stack
    (state <s> ^topstate <s>
-              ^interaction.stack.segment.goal-stack <stack>)
+              ^interaction.stack.segment.action-stack <stack>)
 -->
-   (<s> ^action-goal-stack <stack>)
+   (<s> ^action-stack <stack>)
 }
 
-sp {topstate*propose*action*achieve*action-goal
+## Topstate: propose action where there is a new action on the stack
+sp {topstate*propose*action*perform*action
    (state <s> ^topstate <s>
-              ^action-goal-stack <stack>)
-   (<stack> ^action-goal)
+              ^action-stack <stack>)
+   (<stack> ^action <action>)
 -->
    (<s> ^operator <o> + >)
    (<o> ^name action
-        ^action-goal-stack <stack>)
+        ^action-stack <stack>
+        ^subaction <action>)
 }
 
-sp {action*elaborate*action-goal-stack
-   (state <s> ^name action
-              ^superstate.action-goal-stack <stack>)
+sp {topstate*apply*action*remove*completed*action
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^action-stack <stack>)
+   (<stack> ^action <action>)
+   (<o> ^name action
+        ^subaction <action>)
+   (<action> ^complete true)
 -->
-   (<s> ^action-goal-stack <stack>)
+   (<stack> ^action <action> -)
 }
 
-sp {action*propose*achieve*goal
+# action problemspace, elaborate action-stack and current-action
+sp {action*elaborate*current-action*from*purpose
    (state <s> ^name action
-              ^action-goal-stack.action-goal <goal>)
-   (<goal> ^name <goal-name>)
+              ^superstate.operator.purpose.parameters.verb <v>)
+-->
+   (<s> ^current-action <v>)
+}
+
+sp {action*elaborate*name*current-action
+   (state <s> ^name action
+              ^current-action.name <name>)
+-->
+   (<s> ^name <name>)
+}
+
+sp {action*elaborate*action-stack
+   (state <s> ^problemspace action
+              ^superstate.action-stack <stack>)
+-->
+   (<s> ^action-stack <stack>)
+}
+
+sp {action*elaborate*current-action*subaction
+   (state <s> ^problemspace action
+              ^superstate.operator.subaction <sub>)
+-->
+   (<s> ^current-action <sub>)
+}
+
+# when the top level action is complete, mark satisfied
+sp {action*propose*complete-action
+   (state <s> ^name action
+              ^current-action.complete true
+              ^superstate.operator.purpose.satisfaction <sat>)
 -->
    (<s> ^operator <o> + >)
-   (<o> ^name <goal-name>
-        ^action-goal <goal>)
+   (<o> ^name complete-action
+        ^satisfaction <sat>)
 }
 
-sp {action*apply*achieve*goal*achieved
+sp {action*apply*complete-action
    (state <s> ^name action
               ^operator <o>
-              ^action-goal-stack <stack>)
-   (<o> ^name <goal-name>
-        ^action-goal <goal>)
-   (<stack> ^action-goal <goal>)
-   (<goal> ^name <goal-name>
-           ^achieved true)
+              ^topstate.interaction.status <status>)
+   (<o> ^name complete-action
+        ^satisfaction <sat>)
 -->
-   (<stack> ^action-goal <goal> -)
+   (<status> ^performed <sat>)
 }
 
-sp {action*problemspace*elaborate*action-goal
-   (state <s> ^superstate.operator.action-goal <goal>)
--->
-   (<s> ^action-goal <goal>)
-}
-
-sp {action*elaborate*global-parameters*stack
-   (state <s> ^name action
-              ^action-goal-stack <stack>)
-   (<stack> ^global-parameters <gp>
-            ^action-goal <goal>)
--->
-   (<goal> ^global-parameters <gp>)
-}
-
-sp {action*problemspace*elaborate*action-goal*global-parameters
-   (state <s> ^action-goal <goal>
-              ^superstate.action-goal.global-parameters <gp>)
--->
-   (<goal> ^global-parameters <gp>)
-}
-
-
-sp {action*problemspace*elaborate*move-metadata
-   (state <s> ^action-goal <goal>)
-   (<goal> ^action-goal <subgoal>
-           ^move-metadata <meta>)
--->
-   (<subgoal> ^move-metadata <meta>)
-}
-
-sp {action*problemspace*propose*achieve*subgoal
-   (state <s> ^action-goal.action-goal <subgoal>)
-   (<subgoal> ^name <subgoal-name>)
+# when there is a subaction, execute it
+sp {action*propose*execute-subaction
+   (state <s> ^problemspace action
+              ^current-action.subaction <sub>)
+   (<sub> ^name <name>)
 -->
    (<s> ^operator <o> + >)
-   (<o> ^name <subgoal-name>
-        ^action-goal <subgoal>)
+   (<o> ^name <name>
+        ^subaction <sub>)
 }
 
 sp {action*problemspace*elaborate*achieve*subgoal*parameters
    (state <s> ^problemspace.name action
               ^operator <o> +)
-   (<o> ^name <subgoal-name>
-        ^action-goal <subgoal>)
-   (<subgoal> ^parameters.<param> <val>)
+   (<o> ^name <name>
+        ^subaction.parameters.<att> <val>)
 -->
-   (<o> ^<param> <val>)
+   (<o> ^<att> <val>)
 }
 
-sp {action*problemspace*apply*achieve*subgoal*remove
-   (state <s> ^operator <o>
-              ^action-goal <goal>)
-   (<o> ^name <subgoal-name>
-        ^action-goal <subgoal>)
-   (<subgoal> ^name <subgoal-name>
-              ^achieved true)
-   (<goal> ^action-goal <subgoal>)
+sp {action*apply*execute-subaction*complete*remove
+   (state <s> ^problemspace action
+              ^operator <o>
+              ^current-action <action>)
+   (<o> ^name <name>
+        ^subaction <sub>)
+   (<sub> ^name <name>
+          ^complete true)
+   (<action> ^subaction <sub>)
 -->
-   (<goal> ^action-goal <subgoal> -
-           ^achieved-subgoal <subgoal>)
+   (<action> ^subaction <sub> -)
 }
+
+# prefer subactions over primitive
+sp {action*prefer*subaction*over*primitive
+   (state <s> ^problemspace action
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^action-type custom)
+   (<o2> ^action-type primitive)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+   

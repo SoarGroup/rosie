@@ -40,12 +40,17 @@ import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
+import lcm.lcm.LCM;
+import april.util.TimeUtil;
+
 import com.soartech.bolt.testing.ActionType;
+import com.soartech.bolt.testing.ISpyScriptGenerator;
 import com.soartech.bolt.testing.Script;
 import com.soartech.bolt.testing.ScriptDataMap;
 import com.soartech.bolt.testing.Settings;
 import com.soartech.bolt.testing.Util;
 
+import probcog.lcmtypes.chat_message_t;
 
 
 public class ChatFrame extends JFrame
@@ -343,23 +348,34 @@ public class ChatFrame extends JFrame
     	
     }
     
+    private void sendLCMChatMessage(String message, String sender){
+    	// Print message for logging
+    	chat_message_t chat_message = new chat_message_t();
+    	chat_message.utime = TimeUtil.utime();
+    	chat_message.message = message;
+    	chat_message.sender = sender;
+    	LCM.getSingleton().publish("CHAT_MESSAGES", chat_message);
+    }
+    
     public void addMessage(String message, ActionType type) {
     	String preserveMsg = message;
     	synchronized(outputLock) {
     		message = ScriptDataMap.getInstance().getString(type)+" "+message.trim();
     		if(chatDoc.getStyle(type.toString()) == null) {
     			type = ActionType.Default;
-    		}
+    		}    		
     		chatMessages.add(message);
     		try {
     			//TO ENABLE SPEAKING
-    			if (type == ActionType.Agent)
-    				tts.speak(preserveMsg);
+    			//if (type == ActionType.Agent)
+    			//	tts.speak(preserveMsg);
     			
     			DateFormat dateFormat = new SimpleDateFormat("mm:ss:SSS");
     			Date d = new Date();
     			int origLength = chatDoc.getLength();
     			chatDoc.insertString(origLength, dateFormat.format(d)+" ", chatDoc.getStyle(ActionType.Default.toString()));
+    			chatDoc.insertString(origLength, " ", chatDoc.getStyle(ActionType.Default.toString()));
+    			
     			int nextLength = chatDoc.getLength();
     			chatDoc.insertString(nextLength, message+"\n", chatDoc.getStyle(type.toString()));
     			// AM: Will make it auto scroll to bottom
@@ -378,11 +394,14 @@ public class ChatFrame extends JFrame
     	if(type == ActionType.Agent && script != null && script.hasNextAction()) {
     		Util.handleNextScriptAction(script, chatMessages);
     	}
+    	
+    	sendLCMChatMessage(preserveMsg, ScriptDataMap.getInstance().getString(type));
     }
 
 	public void addMessage(String message)
     {
         addMessage(message, ActionType.Default);
+        sendLCMChatMessage(message, "Agent:");
     }
     
     public void preSetMentorMessage(String message) {
