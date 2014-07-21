@@ -36,6 +36,13 @@ sp {game-search*elaborate*operator
    (<d> ^found true)
 }
 
+sp {game-search*elaborate*multiplayer
+   (state <s> ^name game-search
+              ^superstate.superstate.multiplayer <m>)
+-->
+   (<s> ^multiplayer <m>)
+}
+
 sp {game-search*elaborate*prepositions
    (state <s> ^name game-search
               ^superstate.superstate.prepositions <p>)
@@ -72,6 +79,7 @@ sp {game-search*elaborate*prepositions*pair
 
 sp {game-search*apply*simulate
    (state <s> ^name game-search
+              ^action.parameter-set.verbs <v>
               ^prepositions <p2>
               ^operator <o>)
    (<o> ^name action
@@ -82,7 +90,10 @@ sp {game-search*apply*simulate
    (<pair> ^b <obj>)
    (<prep2> ^name on ^pair <pair2>)
    (<pair2> ^a <obj>)
-   (<p> ^2 <obj> ^1 <obj1>)
+   (<p> ^<i1> <obj> ^<i2> <obj1>)
+   (<v> ^1 <v1>)#for now only handle 1 verb actions
+   (<v1> ^verb-prep on ^{<a1> 1} <i1> ^{<a2> 2} <i2>)
+   
 -->
    (<prep> ^pair <pair> -
            ^pair <pair3>)
@@ -93,6 +104,7 @@ sp {game-search*apply*simulate
 }
 sp {game-search*apply*simulate2
    (state <s> ^name game-search
+              ^action.parameter-set.verbs <v>
               ^prepositions <p2>
               ^operator <o>)
    (<o> ^name action
@@ -101,7 +113,9 @@ sp {game-search*apply*simulate2
    (<p2> ^prep <prep> ^prep <prep2>)
    (<prep> ^name below -^pair.b <obj>)
    (<prep2> ^name on -^pair.a <obj>)
-   (<p> ^2 <obj> ^1 <obj1>) #todo use verb info
+   (<p> ^<i1> <obj> ^<i2> <obj1>)
+   (<v> ^1 <v1>)#for now only handle 1 verb actions
+   (<v1> ^verb-prep on ^{<a1> 1} <i1> ^{<a2> 2} <i2>)
 -->
    (<prep> ^pair <pair3>)
    (<prep2> ^pair <pair4>)
@@ -193,13 +207,21 @@ sp {game-search*elaborate*condition*noargs
    (<c> ^args <args3> ^result.<s1>.<i2> <i>)
 }
 
-sp {game-search*apply*towers-of-hanoi*copyargnum
+sp {game-search*elaborate*parameter-set*argnum
    (state <s> ^name game-search
               ^gtype <type>
               ^superstate.superstate.<type>.parameter-set.argnum <num>
               ^<type>.parameter-set <ps>)
 -->
    (<ps> ^argnum <num>)
+}
+sp {game-search*elaborate*parameter-set*verbs
+   (state <s> ^name game-search
+              ^gtype <type>
+              ^superstate.superstate.<type>.parameter-set.verbs <v>
+              ^<type>.parameter-set <ps>)
+-->
+   (<ps> ^verbs <v>)
 }
 sp {game-search*apply*action-success
    (state <s> ^name game-search
@@ -213,15 +235,19 @@ sp {game-search*apply*action*flound-action
    (state <s> ^name game-search
               ^topstate <ts>
               ^dcount <dc>
+             -^multiplayer true
              -^dcount 0
+              ^action.parameter-set.verbs <v>
               ^operator <o>)
    (<o> ^name action -^duplicate-of ^parameters <p>)
-   (<p> ^1 <o1> ^2 <o2>)
-   (<o1> ^id <ob>)
-   (<o2> ^id <oa>)
+   (<p> ^<i1> <o1> ^<i2> <o2>)
+   (<o1> ^id <oa>)
+   (<o2> ^id <ob>)
+   (<v> ^1 <v1>)#for now only handle 1 verb actions
+   (<v1> ^verb-prep <vp> ^verb-name <vname> ^{<a1> 1} <i1> ^{<a2> 2} <i2>)
 -->
    (<ts> ^flound-action <fa>)
-   (<fa> ^dcount <dc> ^obj1 <oa> ^obj2 <ob> ^pname on)#(+ (* <dc> 4) <varg>) 
+   (<fa> ^dcount <dc> ^obj1 <oa> ^obj2 <ob> ^pname <vp>)#(+ (* <dc> 4) <varg>) 
 }
 
 sp {game-search*apply*action*flound-action*top
@@ -229,18 +255,21 @@ sp {game-search*apply*action*flound-action*top
               ^topstate <ts>
               ^superstate.superstate.superstate <sss>
               ^dcount 0
+              ^action.parameter-set.verbs <v>
               ^operator <o>)
    (<o> ^name action -^duplicate-of ^parameters <p>)
-   (<p> ^{<a1> 1} <o1> ^{<a2> 2} <o2>)
-   (<o1> ^id <ob>)
-   (<o2> ^id <oa>)
+   (<p> ^<i1> <o1> ^<i2> <o2>)
+   (<o1> ^id <oa>)
+   (<o2> ^id <ob>)
+   (<v> ^1 <v1>)#for now only handle 1 verb actions
+   (<v1> ^verb-prep <vp> ^verb-name <vname> ^{<a1> 1} <i1> ^{<a2> 2} <i2>)
 -->
    (<sss> ^valid-arg.<a1> <oa>
-         ^valid-arg.<a2> <ob> #todo need all parameters of action
+         ^valid-arg.<a2> <ob>
          ^action <a>)
-   (<a> ^verb move ^pname on)
+   (<a> ^verb <vname> ^pname <vp>)
    (<ts> ^flound-action <fa>)
-   (<fa> ^dcount 0 ^obj1 <oa> ^obj2 <ob> ^mark done ^pname on)
+   (<fa> ^dcount 0 ^obj1 <oa> ^obj2 <ob> ^mark done ^pname <vp>)
 }
 
 sp {game-search*apply*goal
@@ -293,9 +322,20 @@ sp {game-search*propose*default
 sp {game-search*apply*default
    (state <s> ^name game-search
               ^desired <d>
+             -^dcount 0
               ^operator.name default)
 -->
    (<s> ^partial-failure <d>)
+}
+sp {game-search*apply*default*top-select-random-action
+   (state <s> ^name game-search
+              ^operator <o> +
+              ^dcount 0
+              ^operator.name default)
+   (<o> ^name action)
+   -{(<s> ^operator {<o2> > <o>})}
+-->
+   (<s> ^operator <o> >)
 }
 
 sp {selection*prefer*evaluate*action*over*default
