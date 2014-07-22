@@ -93,6 +93,8 @@ public class AgentMessageParser
             message = translateObjectsQuestion(fieldsId);
         } else if(type.equals("describe-goal-params")){
             message = translateGoalDemoQuestion(fieldsId);
+        } else if(type.equals("goal-demo-done")){
+            message = "Ok I understand the goal.";
         } else if(type.equals("location-unknown")){
             message = "Relative location of object unknown";
         } else if(type.equals("play-game")){
