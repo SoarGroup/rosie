@@ -1,5 +1,6 @@
 package edu.umich.insoar;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -24,7 +25,7 @@ import com.soartech.bolt.BOLTLGSupport;
 
 import edu.umich.insoar.world.WorldModel;
 
-public class InSoar implements PrintEventInterface, RunEventInterface
+public class InSoar implements RunEventInterface
 {
 	private static long startTime = -1;
 	
@@ -49,11 +50,15 @@ public class InSoar implements PrintEventInterface, RunEventInterface
     
     private MotorSystemConnector motorSystem;
     
+    private Environment environment;
+    
     private PerceptionConnector perception;
     
     private ISpyRunner ispyRunner;
     
     private int throttleMS = 0;
+
+	private Logger logger;
 
     public InSoar(String agentName, boolean headless)
     {     
@@ -95,20 +100,13 @@ public class InSoar implements PrintEventInterface, RunEventInterface
         	}
         }
 
-		String doLog = props.getProperty("enable-log");
-		if (doLog != null && doLog.equals("true")) {
-			try {
-				logWriter = new PrintWriter(new FileWriter("sbolt-log.txt"));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			soarAgent.getAgent().RegisterForPrintEvent(smlPrintEventId.smlEVENT_PRINT, this, this);
-		}
+	
+		
 		
 		String watchLevel = props.getProperty("watch-level");
 		if (watchLevel != null) {
 			soarAgent.getAgent().ExecuteCommandLine("watch " + watchLevel);
-		}
+		 }
 
 		String throttleMSString = props.getProperty("decision-throttle-ms");
 		if (throttleMSString != null) {
@@ -132,10 +130,20 @@ public class InSoar implements PrintEventInterface, RunEventInterface
 		
 		language = new LanguageConnector(soarAgent, lgSupport, dictionaryFile, grammarFile);
         perception = new PerceptionConnector(soarAgent);   
+        environment = new Environment(motorSystem);
         motorSystem = new MotorSystemConnector(soarAgent, perception);
+        try {
+			logger = new Logger(soarAgent, props.getProperty("enable-logs"));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
         
         // Setup ChatFrame
-        chatFrame = new ChatFrame(language, soarAgent);
+
+        chatFrame = new ChatFrame(language, soarAgent, logger);
+
+        // chatFrame = new ChatFrame(language, soarAgent); SM: enabled logging
         
         ispyRunner = new ISpyRunner(soarAgent, chatFrame);
         
@@ -145,7 +153,8 @@ public class InSoar implements PrintEventInterface, RunEventInterface
         chatFrame.addMenu(motorSystem.createMenu());
         chatFrame.addMenu(ispyRunner.createMenu());
         chatFrame.addMenu(chatFrame.setupScriptMenu());
-        
+        chatFrame.addMenu(environment.createMenu());
+            
         soarAgent.setWorldModel(perception.world);
         
         if(DEBUG_TRACE){
@@ -176,14 +185,6 @@ public class InSoar implements PrintEventInterface, RunEventInterface
     	}
     	new InSoar("insoar-agent", headless);
     }
-    
-	@Override
-	public void printEventHandler(int eventID, Object data, Agent agent, String message) {
-		synchronized(logWriter) {
-			logWriter.print(message);
-		}
-	}
-	
 	
     long prevTime = 0;
     long outputTime = 0;
