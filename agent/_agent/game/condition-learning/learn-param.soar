@@ -11,12 +11,33 @@ sp {learn-param*apply*learn-param-complete
               ^operator.name learn-param-complete
               ^superstate <ss>
               ^gtype <type>
-              ^<type>.nlp-set <nps>
+             -^tcn.verbs <verbs>
+              ^<type> <t>
               ^done)
+   (<t> ^nlp-set <nps> ^parameter-set.argnum <num>)
 -->
    (<ss> ^done chunked-action)
-   (<cg> ^<type>.nlp-set <nps>)
+   (<cg> ^<type> <t2>)
+   (<t2> ^nlp-set <nps> ^parameter-set.argnum <num>)
 }
+
+sp {learn-param*apply*learn-param-complete*verbs
+   (state <s> ^name learn-param
+              ^topstate.current-game <cg>
+              ^operator.name learn-param-complete
+              ^superstate <ss>
+              ^gtype <type>
+              ^tcn.verbs <verbs>
+              ^<type> <t>
+              ^done)
+   (<t> ^nlp-set <nps> ^parameter-set.argnum <num>)
+-->
+   (<ss> ^done chunked-action)
+   (<cg> ^<type> <t2>)
+   (<t2> ^nlp-set <nps> ^parameter-set <ps>)
+   (<ps> ^argnum <num> ^verbs <verbs>)
+}
+
 
 sp {learn-param*propose*lookup-game
    (state <s> ^name learn-param
@@ -60,7 +81,6 @@ sp {learn-param*elaborate*list-games
               ^superstate.operator <op>)
    (<op> ^game-name <name>)
 -->
-   (interrupt)
    (<s> ^list.game <g> ^objects <o>)
    (<g> ^game <name> ^type <type>) 
    (<s> ^current <g> ^game <name>)# ^gtype action)
@@ -77,7 +97,7 @@ sp {learn-param*propose*convert-TCN-to-NLP
               ^gtype <type>
               ^tcn <g>)
 -->
-   (interrupt)
+#   (interrupt)
    (<s> ^operator <o> + = >)
    (<o> ^name convert-TCN-to-NLP
         ^type <type>
@@ -186,7 +206,7 @@ sp {chunk-parameters*apply*action
               ^operator <o> +)
    (<o> ^name action)           
 -->
-   (interrupt)
+ #  (interrupt)
 	(<s> ^done action)
 }
 
@@ -196,7 +216,7 @@ sp {chunk-parameters*apply*goal
               ^operator <o> +)
    (<o> ^name goal)           
 -->
-   (interrupt)
+#   (interrupt)
 	(<s> ^done goal)
 }
 
@@ -227,21 +247,20 @@ sp {setup-search*elaborate*tcn
               ^topstate.current-game <cg>
               ^superstate.operator <op>)
    (<op> ^game-name <name>)
-   (<cg> ^name <name> ^action <act> ^goal <goal>)
+   (<cg> ^name <name> ^action <act> ^goal <goal> ^multiplayer <m>)
 -->
    (<s> ^gtype action
         ^gtype goal
+        ^multiplayer <m>
         ^goal <goal>
         ^action <act>)
 }
-
 
 sp {setup-search*elaborate*list-games
    (state <s> ^name setup-search
               ^superstate.operator <op>)
    (<op> ^game-name <name>)
 -->
-   (interrupt)
    (<s>  ^objects <o>)
    (<s> ^prepositions <p>
         ^problemspace games)
@@ -258,6 +277,7 @@ sp {setup-search*propose*find-solution
 }
 sp {find-solution*propose*game-search
    (state <s> ^name find-solution
+              ^superstate.multiplayer false
               ^superstate.objects <objs>
               ^superstate.operator <op>)
    (<op> ^game-name <name>)
@@ -267,6 +287,23 @@ sp {find-solution*propose*game-search
         ^objects <objs>
         ^dcount 0
         ^depth-limit 7
+        ^list.game <g>
+        ^current <g> 
+        ^game <name>)
+   (<g> ^game <name> ^type action goal)
+}
+sp {find-solution*propose*game-search*muliplayer
+   (state <s> ^name find-solution
+              ^superstate.multiplayer true
+              ^superstate.objects <objs>
+              ^superstate.operator <op>)
+   (<op> ^game-name <name>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name game-search
+        ^objects <objs>
+        ^dcount 0
+        ^depth-limit 2
         ^list.game <g>
         ^current <g> 
         ^game <name>)
@@ -355,19 +392,4 @@ sp {setup-search*apply*copy-topstate*pairs*3arg
 -->
    (<prep2> ^pair <pair2>)
    (<pair2> ^a <obj> ^b <obj2> ^c <obj3>)
-}
-#TODO FIX
-sp {setup-search*elaborate*parameter-set*argnum*action
-   (state <s> ^name setup-search
-              #^gtype <type>
-              ^action <t>)#.parameter-set <ps>)
--->
-   (<t> ^parameter-set.argnum 2)
-}
-sp {setup-search*elaborate*parameter-set*argnum*goal
-   (state <s> ^name setup-search
-              #^gtype <type>
-              ^goal <t>)#.parameter-set <ps>)
--->
-   (<t> ^parameter-set.argnum 4)
 }

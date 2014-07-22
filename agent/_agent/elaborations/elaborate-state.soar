@@ -8,6 +8,36 @@ sp {all*elaborate*name
    (<s> ^name <name>)
 }
 
+sp {topstate*elaborate*intermediate
+   (state <s> ^superstate nil)
+-->
+   (<s> ^intermediate <int>)
+}
+
+
+# problemspace
+# every state has a problemspace
+sp {all*elaborate*problemspace
+   (state <s> ^topstate <ts>)
+-->
+   (<s> ^problemspace <ps>)
+}
+
+sp {all*elaborate*in-focus
+   (state <s> ^topstate <ts>)
+-->
+   (<s> ^in-focus <if>)
+}
+
+
+### all states have environments
+sp {all*elaborate*environment
+   (state <s> ^topstate <ts>)
+-->
+   (<s> ^environment <env>)
+   (<env> ^intermediate <int>)
+}
+
 # topstate/top-state
 # Copy direct top-state link to all substates
 # (yes, having both is dumb)
@@ -15,7 +45,7 @@ sp {all*elaborate*top-state*topstate
    (state <s> ^superstate.topstate <ts>)
 -->
    (<s> ^topstate <ts>
-		^top-state <ts>)
+   	^top-state <ts>)
 }
 
 sp {topstate*elaborate*top-state
@@ -28,6 +58,8 @@ sp {topstate*elaborate*top-state
 # Copy the io link to all substates
 sp {all*elaborate*io
    (state <s> ^superstate.io <io>
+	      -^name selection
+	      -^problemspace.state.dont-copy io
              -^name learn-param
              -^name setup-search
    	      -^name action-policy)
@@ -58,36 +90,15 @@ sp {topstate*elaborate*self
 sp {all*elaborate*object
    (state <s> ^superstate <ss>
       	  -^problem-space << lgsoar message-interpretation >>
-	  -^name action-policy
-   -^name learn-param
-   -^name setup-search
+	  -^problemspace.state.dont-copy object
+          -^name learn-param
+          -^name setup-search
 	  -^name selection)
    (<ss> -^problem-space << lgsoar message-interpretation >>
    	 ^object <obj>)
 -->
   (<s> ^object <obj>)
 }
-
-# grabbed
-# Elaborate the grabbed object onto substates
-#sp {topstate*elaborate*grabbed
-#   (state <s> ^self <self>
-#   	      ^object <obj>
-#          ^topstate <s>)
-#   (<self> ^grabbed-object <id> <> -1)
-#   (<obj> ^id <id>
-#   	  ^category block)
-#-->
-#   (<s> ^grabbed <obj>)
-#}
-#
-#sp {all*elaborate*grabbed
-#   (state <s> ^superstate <ss>
-#   	      ^io)
-#   (<ss> ^grabbed <obj>)
-#-->
-#   (<s> ^grabbed <obj>)
-#}
 
 # pointed-object
 # Elaborate the topstate with which object is being pointed at
@@ -117,7 +128,6 @@ sp {topstate*elaborate*top-segment
    (<s> ^top-segment <seg>)
 }
 
-
 # kind
 ## Elaborate a state as non-atomic/atomic if the operator proposed in superstate in non-atomic/atomic
 
@@ -127,15 +137,6 @@ sp {elaborate*atomicity
 -->
    (<s> ^kind <atom>)
 }
-
-# track-relation
-# copy track-relations to substates
-sp {all*elaborate*track-relations
-   (state <s> ^superstate.track-relation <rel>)
--->
-   (<s> ^track-relation <rel>)
-}
-   
 
 # If clear-interaction-stack is present, terminate the top segment
 sp {topstate*clear-stack*elaborate*terminate-segment
@@ -147,6 +148,23 @@ sp {topstate*clear-stack*elaborate*terminate-segment
    (<s> ^terminate-segment <seg>)
 }
 
+
+### SM: elaborate ignore-set - useful for matching and prefering actions 
+
+sp {all*elaborate*ignore-set
+   (state <s> ^problemspace <ps>)
+-->
+   (<s> ^ignore-set <nm>)
+   (<nm> ^attribute applied
+   	 ^attribute information
+	 ^attribute _relation
+	 ^attribute _metadata
+	 ^attribute actions
+	 ^attribute action-type
+	 ^attribute matched
+	 ^attribute _instantiation-of
+	 ^attribute op_name)
+}
 
 sp {topstate*elaborate*agent-info
    (state <s> ^topstate <s>)

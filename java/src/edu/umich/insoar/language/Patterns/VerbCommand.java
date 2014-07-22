@@ -1,6 +1,9 @@
 package edu.umich.insoar.language.Patterns;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -11,7 +14,8 @@ import edu.umich.insoar.world.WMUtil;
 public class VerbCommand extends LinguisticEntity{
     public static String TYPE = "VerbCommand";
 	private String verb = null;
-	private LingObject directObject = null;
+//	private LingObject directObject = null;
+	private Set<LingObject> directObject;
 	private String preposition = null;
 	private LingObject secondObject = null;
 	private ObjectState objState = null;
@@ -23,7 +27,7 @@ public class VerbCommand extends LinguisticEntity{
     }
 
 
-    public LingObject getDirectObject()
+    public Set<LingObject> getDirectObject()
     {
         return directObject;
     }
@@ -48,9 +52,14 @@ public class VerbCommand extends LinguisticEntity{
 		Identifier infoId = messageId.CreateIdWME("information");
 		Identifier verbId = infoId.CreateIdWME("verb");
 		verbId.CreateStringWME("word", verb);
+		
 		if(directObject != null){
 			Identifier firstObjectId = verbId.CreateIdWME("direct-object");
-			directObject.translateToSoarSpeak(firstObjectId,"object");
+			Iterator<LingObject> objItr = directObject.iterator();
+			while(objItr.hasNext()){
+				LingObject obj = (LingObject) objItr.next();
+				obj.translateToSoarSpeak(firstObjectId,"object");
+			}
 		}
 		if(preposition != null){
 			Identifier prepId = verbId.CreateIdWME("preposition");
@@ -69,7 +78,13 @@ public class VerbCommand extends LinguisticEntity{
 		Pattern p = Pattern.compile("VB\\d*");
 		Matcher m = p.matcher(string);
 		if(m.find()){
-			verb = tagsToWords.get(m.group()).toString();
+			String foundString = tagsToWords.get(m.group()).toString();
+			if (foundString.contains("_")){
+				String[] list = foundString.split("_");
+				verb = list[0];
+			} else
+				verb = foundString;
+				
 		}
 		
 		p = Pattern.compile("STT\\d*");
@@ -104,10 +119,11 @@ public class VerbCommand extends LinguisticEntity{
 			preposition = tagsToWords.get(m.group()).toString();
 		}
 		
+		directObject = new HashSet<LingObject>();
 		p = Pattern.compile("OBJ\\d*");
 		m = p.matcher(string);
-		if(m.find()){
-			directObject = (LingObject) tagsToWords.get(m.group());
+		while(m.find()){
+			directObject.add((LingObject) tagsToWords.get(m.group()));
 		}
 	
 	}
@@ -122,7 +138,7 @@ public class VerbCommand extends LinguisticEntity{
         }
 	    VerbCommand verbCommand = new VerbCommand();
 	    verbCommand.verb = WMUtil.getValueOfAttribute(verbId, "word");
-        verbCommand.directObject = LingObject.createFromSoarSpeak(verbId, "direct-object");
+//        verbCommand.directObject = LingObject.createFromSoarSpeak(verbId, "direct-object");
         Identifier prepositionId = WMUtil.getIdentifierOfAttribute(verbId, "preposition");
         if(prepositionId != null){
             verbCommand.preposition = WMUtil.getValueOfAttribute(prepositionId, "word");

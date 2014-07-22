@@ -1,5 +1,8 @@
 package edu.umich.insoar.world;
 
+import com.soartech.bolt.testing.ActionType;
+
+import edu.umich.insoar.ChatFrame;
 import edu.umich.insoar.language.BOLTDictionary;
 import edu.umich.insoar.language.Parser;
 import sml.Identifier;
@@ -61,6 +64,7 @@ public class Messages implements IInputLinkElement
         if(!parser.getSoarSpeak(latestMessage, messageId)){
         	messageId.DestroyWME();
         	messageId = null;
+        	ChatFrame.Singleton().addMessage("Can you repeat that?", ActionType.Agent);
         }
         messageChanged = false;
     }

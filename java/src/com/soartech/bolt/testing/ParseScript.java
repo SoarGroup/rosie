@@ -22,7 +22,7 @@ public class ParseScript {
 			return parseDefaultFormatScript(lines);
 		}
 	}
-	
+
 	public static ArrayList<String> readFile(Scanner s){
 		ArrayList<String> lines = new ArrayList<String>();
 		while(s.hasNextLine()){
@@ -41,6 +41,7 @@ public class ParseScript {
 				System.out.println("Ignoring script line: "+scriptLine);
 				continue;
 			}
+			
 			
 			String action = scriptLine.substring(lineType[0].length()+1).trim();
 			script.addAction(new Action(type, action));

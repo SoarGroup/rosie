@@ -9,6 +9,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -113,23 +116,31 @@ public class ChatFrame extends JFrame
     
     private LanguageConnector langConnector;
     
+    
+    private PrintWriter logWriter;
+    
+
     // Audio Recorder for Speech to Text
     private AudioFormat audioFormat;
     private AudioRecorder recorder;
     private File audioFile;
     private DataLine.Info info;
     private TextToSpeech tts;
+    
+    private Logger logger;
 	
     TargetDataLine	targetDataLine;
 
-    public ChatFrame(LanguageConnector langConnector, SoarAgent agent) {
+    public ChatFrame(LanguageConnector langConnector, SoarAgent agent, Logger logger) {
         super("SBolt");
         this.langConnector = langConnector;
         this.soarAgent = agent;
         this.audioFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 16000.0F, 16, 1, 2, 16000.0F, false);
+        this.logger = logger;
         
         this.audioFile = new File("forward.raw");
-        this.info = null;//new DataLine.Info(TargetDataLine.class, audioFormat);
+        this.info = null;
+        //new DataLine.Info(TargetDataLine.class, audioFormat);
         this.targetDataLine = null;
         //when to get line
         this.recorder = null;
@@ -154,12 +165,13 @@ public class ChatFrame extends JFrame
 				if(arg0.getKeyCode() == KeyEvent.VK_UP) {
 					upPressed();
 				} else if(arg0.getKeyCode() == KeyEvent.VK_DOWN){
-					downPressed();
-				} else if(arg0.getKeyCode() == KeyEvent.VK_RIGHT){
-					tabPressed();
-				}
+					downPressed();}
+//				} else if(arg0.getKeyCode() == KeyEvent.VK_RIGHT){
+//					tabPressed();
+//				}
 				// Ctrl toggles audio input
 				else if(arg0.getKeyCode() == KeyEvent.VK_CONTROL){
+					System.out.println("here");
 					ctrlPressed();
 				}
 			}
@@ -358,10 +370,10 @@ public class ChatFrame extends JFrame
     			//if (type == ActionType.Agent)
     			//	tts.speak(preserveMsg);
     			
-    			//DateFormat dateFormat = new SimpleDateFormat("mm:ss:SSS");
-    			//Date d = new Date();
+    			DateFormat dateFormat = new SimpleDateFormat("mm:ss:SSS");
+    			Date d = new Date();
     			int origLength = chatDoc.getLength();
-    			//chatDoc.insertString(origLength, dateFormat.format(d)+" ", chatDoc.getStyle(ActionType.Default.toString()));
+    			chatDoc.insertString(origLength, dateFormat.format(d)+" ", chatDoc.getStyle(ActionType.Default.toString()));
     			chatDoc.insertString(origLength, " ", chatDoc.getStyle(ActionType.Default.toString()));
     			
     			int nextLength = chatDoc.getLength();
@@ -369,6 +381,11 @@ public class ChatFrame extends JFrame
     			// AM: Will make it auto scroll to bottom
     			int end = chatDoc.getLength();
     			tPane.select(end, end);
+    			if (logWriter != null){
+    				logWriter.println(dateFormat.format(d)+" "+message);
+    			}
+    			logger.writeInteractionLog(dateFormat.format(d)+" "+message);
+    			
     		} catch (BadLocationException e) {
     			// TODO Auto-generated catch block
     			e.printStackTrace();
@@ -381,7 +398,7 @@ public class ChatFrame extends JFrame
     	sendLCMChatMessage(preserveMsg, ScriptDataMap.getInstance().getString(type));
     }
 
-    public void addMessage(String message)
+	public void addMessage(String message)
     {
         addMessage(message, ActionType.Default);
         sendLCMChatMessage(message, "Agent:");
@@ -393,6 +410,9 @@ public class ChatFrame extends JFrame
     
     public void exit(){
     	soarAgent.kill();
+    	logger.close();
+    	if(logWriter != null) 
+    		logWriter.close();
     	System.exit(0);
     }
     

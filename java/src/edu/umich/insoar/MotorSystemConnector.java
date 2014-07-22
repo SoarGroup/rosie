@@ -52,6 +52,8 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     private ArmStatus armStatus;
     
     StringBuilder svsCommands = new StringBuilder();
+
+	private Integer heldObject;
     
     private robot_command_t sentCommand = null;
     private long sentTime = 0;
@@ -73,6 +75,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
 	  			armStatus = null;
 	  		}
     	}
+    	heldObject = -1;
     	
     	this.perception = perception;
     	
@@ -198,7 +201,11 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     	}
     }
     
-    private void updateIL(){
+
+    
+    
+    private void updateIL(){   	
+    	heldObject = curStatus.obj_id;
     	WMUtil.updateStringWME(selfId, "action", curStatus.action.toLowerCase());
     	if(prevStatus == null){
         	WMUtil.updateStringWME(selfId, "prev-action", "wait");
@@ -417,4 +424,8 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         
         return actionMenu;
     }
+
+	public Integer getHeldObject() {
+		return heldObject;
+	}
 }
