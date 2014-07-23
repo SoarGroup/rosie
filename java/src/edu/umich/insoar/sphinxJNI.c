@@ -4,7 +4,10 @@
 #include <pocketsphinx.h>
 #define MODELDIR "/home/aaron/apps/pocketsphinx-0.8/model"
 // Implementation of native method sayHello() of HelloJNI class
-JNIEXPORT jstring JNICALL Java_edu_umich_insoar_sphinxJNI_decodeAudio(JNIEnv *env, jobject thisObj) {
+JNIEXPORT jstring JNICALL Java_edu_umich_insoar_sphinxJNI_decodeAudio(JNIEnv *env, jobject thisObj, jstring lmfile, jstring dicfile) {
+
+	const char *lmFileString = (*env)->GetStringUTFChars(env, lmfile, 0);
+	const char *dicFileString = (*env)->GetStringUTFChars(env, dicfile, 0);
    ps_decoder_t *ps;
     cmd_ln_t *config;
     FILE *fh;
@@ -17,8 +20,8 @@ JNIEXPORT jstring JNICALL Java_edu_umich_insoar_sphinxJNI_decodeAudio(JNIEnv *en
     config = cmd_ln_init(NULL, ps_args(), FALSE,
 			 "-logfn", "/home/aaron/demo/rosie/logfile",
 			 "-hmm", MODELDIR "/hmm/en_US/hub4wsj_sc_8k",
-			 "-lm", "/home/aaron/demo/speech/sample.lm",
-			 "-dict", "/home/aaron/demo/speech/sample.dic",
+			 "-lm", lmFileString,
+			 "-dict", dicFileString,
 			 NULL);
     if (config == NULL)
       return (*env)->NewStringUTF(env,"no config");// 1;

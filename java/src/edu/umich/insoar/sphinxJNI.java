@@ -8,7 +8,7 @@ public class sphinxJNI {
 	   }
 	 
 	   // Declare a native method sayHello() that receives nothing and returns void
-	   public native String decodeAudio();
+	   public native String decodeAudio(String lmFile, String dicFile);
 	   /*
 	   public String decode()
 	   {
@@ -20,6 +20,8 @@ public class sphinxJNI {
 	   */
 	   // Test Driver
 	   public static void main(String[] args) {
-	      new sphinxJNI().decodeAudio();  // invoke the native method
+		   String lmFile = "/home/aaron/demo/speech/sample.lm";
+		   String dicFile = "/home/aaron/demo/speech/sample.dic";
+	      new sphinxJNI().decodeAudio(lmFile, dicFile);  // invoke the native method
 	   }
 	}
