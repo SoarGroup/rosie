@@ -91,6 +91,8 @@ public class ChatFrame extends JFrame
     private int historyIndex = 0;
     // The current index into the history
     
+    private String speechFile;
+    
     
     // AGENT STATUS AND CONTROL
     
@@ -153,14 +155,16 @@ public class ChatFrame extends JFrame
 		}
     };
 
-    public ChatFrame(LanguageConnector langConnector, SoarAgent agent, Logger logger) {
+    public ChatFrame(LanguageConnector langConnector, SoarAgent agent, Logger logger, String speechFile) {
         super("SBolt");
         this.langConnector = langConnector;
         this.soarAgent = agent;
         this.audioFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 16000.0F, 16, 1, 2, 16000.0F, false);
         this.logger = logger;
         
-        this.audioFile = new File("forward.raw");
+        this.speechFile = speechFile;
+        
+        this.audioFile = new File("/home/aaron/demo/speech/forward.raw");
         this.info = null;
         //new DataLine.Info(TargetDataLine.class, audioFormat);
         this.targetDataLine = null;
@@ -374,8 +378,8 @@ public class ChatFrame extends JFrame
     		chatMessages.add(message);
     		try {
     			//TO ENABLE SPEAKING
-    			//if (type == ActionType.Agent)
-    			//	tts.speak(preserveMsg);
+    			if (type == ActionType.Agent)
+    				tts.speak(preserveMsg);
     			
     			DateFormat dateFormat = new SimpleDateFormat("mm:ss:SSS");
     			Date d = new Date();
@@ -490,8 +494,8 @@ public class ChatFrame extends JFrame
     	recorder.stopRecording();
     	
     	//decode audio through jni call to sphinx code
-		   String lmFile = "/home/aaron/demo/speech/sample.lm";
-		   String dicFile = "/home/aaron/demo/speech/sample.dic";
+		   String lmFile = speechFile + ".lm";
+		   String dicFile = speechFile + ".dic";
     	String result = new sphinxJNI().decodeAudio(lmFile, dicFile);
     	if (result != null)
     		result = result.toLowerCase();

@@ -18,7 +18,7 @@ JNIEXPORT jstring JNICALL Java_edu_umich_insoar_sphinxJNI_decodeAudio(JNIEnv *en
     int32 score;
    
     config = cmd_ln_init(NULL, ps_args(), FALSE,
-			 "-logfn", "/home/aaron/demo/rosie/logfile",
+			 "-logfn", "/home/aaron/demo/speech/logfile",
 			 "-hmm", MODELDIR "/hmm/en_US/hub4wsj_sc_8k",
 			 "-lm", lmFileString,
 			 "-dict", dicFileString,
@@ -29,7 +29,7 @@ JNIEXPORT jstring JNICALL Java_edu_umich_insoar_sphinxJNI_decodeAudio(JNIEnv *en
     if (ps == NULL)
       return (*env)->NewStringUTF(env,"no ps");
     
-    fh = fopen("/home/aaron/demo/rosie/forward.raw", "rb");
+    fh = fopen("/home/aaron/demo/speech/forward.raw", "rb");
     if (fh == NULL) {
       perror("Failed to open goforward.raw");
       return (*env)->NewStringUTF(env,"failed to open file");
