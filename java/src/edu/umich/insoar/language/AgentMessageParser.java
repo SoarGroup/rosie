@@ -102,15 +102,15 @@ public class AgentMessageParser
         } else if(type.equals("game-start")){
             message = "Ok I know that game.  Tell me \"your turn\" when it's my turn.";
         } else if(type.equals("game-new-params")){
-            message = "Tell me the name of an action, failure state, or goal of the game, or finished.";
+            message = "Tell me the name of an action, failure state, or goal.";
         } else if(type.equals("game-new-action2")){
-            message = "Ok tell me the name of a legal action in this game, or finished.";
+            message = "Ok tell me the name of a legal action in this game.";
         } else if(type.equals("game-new-action")){
             String gameName = WMUtil.getValueOfAttribute(fieldsId, "game-name");
             message = "I don't know how to play " + gameName + 
                     ". Is it a multiplayer game?";
         } else if(type.equals("game-new-verb")){
-            message = "What is an associated verb for this action, or finished";
+            message = "What is an associated verb for this action?";
         } else if(type.equals("game-new-goal")){
             message = "Ok tell me the name of the goal in the game.";
         } else if(type.equals("game-new-failure")){
@@ -122,7 +122,7 @@ public class AgentMessageParser
             message = "Ok describe an object for this " + stateType + " state.";
         } else if(type.equals("game-new-condition")){
         	String obj = WMUtil.getValueOfAttribute(fieldsId, "type");
-            message = "Ok list a condition for the " + obj + ", another object, or finished.";
+            message = "Ok list a condition for the " + obj + ", or another object.";
         } else if(type.equals("game-new-heuristic")){
             message = "Are there any heuristics you can teach me? (or finished)";
         } else if(type.equals("game-final-state")){

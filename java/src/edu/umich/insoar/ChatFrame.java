@@ -448,12 +448,12 @@ public class ChatFrame extends JFrame
     	}
     	
         addMessage(msg, ActionType.Mentor);
-        //JK hack to handle is not which cannot be handled
+        //JK hack to handle is not which cannot be handled by lgsoar
         if (msg.contains("not"))
         {
-           System.out.println("Orig: " + msg);
+           //System.out.println("Orig: " + msg);
            msg = msg.concat(" null");
-           System.out.println(msg);
+           //System.out.println(msg);
         }
     	langConnector.newMessage(msg);
         chatField.setText("");
@@ -502,7 +502,14 @@ public class ChatFrame extends JFrame
 
     	System.out.println("heard: " + result);
     	addMessage(result, ActionType.Mentor);
-
+    	
+    	//JK hack to handle is not which cannot be handled by lgsoar
+        if (result.contains("not"))
+        {
+           //System.out.println("Orig: " + msg);
+           result = result.concat(" null");
+           //System.out.println(msg);
+        }
     	langConnector.newMessage(result);
         chatField.setText("");
         chatField.requestFocus();
