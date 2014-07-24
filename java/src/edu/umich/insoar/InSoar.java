@@ -130,11 +130,8 @@ public class InSoar implements RunEventInterface
 		}
 		
 		String classifiersFile = props.getProperty("classifiers-file");
-		if(classifiersFile != null){
-        	perception_command_t cmd = new perception_command_t();
-			cmd.utime = InSoar.GetSoarTime();
-    		cmd.command = "LOAD_CLASSIFIERS=" + classifiersFile;
-            LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
+		if(classifiersFile == null){
+			classifiersFile = "default";
 		}
 		
 		String speechFile = props.getProperty("speech-file");
@@ -143,7 +140,7 @@ public class InSoar implements RunEventInterface
 		}
 		
 		language = new LanguageConnector(soarAgent, lgSupport, dictionaryFile, grammarFile);
-        perception = new PerceptionConnector(soarAgent);   
+        perception = new PerceptionConnector(soarAgent, classifiersFile);   
         environment = new Environment(motorSystem);
         motorSystem = new MotorSystemConnector(soarAgent, perception);
         try {
