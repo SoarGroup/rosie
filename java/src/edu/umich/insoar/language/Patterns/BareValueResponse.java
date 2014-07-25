@@ -21,9 +21,9 @@ public class BareValueResponse extends LinguisticEntity{
     }
     
     public void translateToSoarSpeak(Identifier messageId, String connectingString){
-        messageId.CreateStringWME("type", "bare-value-response");
+        messageId.CreateStringWME("type", "object-message");
         messageId.CreateStringWME("originator", "mentor");
-        Identifier fieldsId = messageId.CreateIdWME("fields");
+        Identifier fieldsId = messageId.CreateIdWME("information");
         fieldsId.CreateStringWME("attribute", attribute);
         fieldsId.CreateStringWME("value", value);
     }
