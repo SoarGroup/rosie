@@ -75,11 +75,11 @@ public class AgentMessageParser
         } else if (type.equals("restart-task-instruction")){
         	message = "These actions do not lead to the goal you described. Please teach me again.";
         } else if (type.equals("successful-task-learning")){
-        	message = "Okay. I got it";
+        	message = "I got it";
         } else if (type.equals("failure-exploration")){
         	message = "I cannot figure it out.";
         } else if (type.equals(("begin-exploration"))){
-        	message = "Let me see.";
+        	//message = "Let me see.";
         } 
 // ----------------------------------------------------------------------------------
         else if(type.equals("request-index-confirmation")){
