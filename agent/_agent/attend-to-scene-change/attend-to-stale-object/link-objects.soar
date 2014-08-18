@@ -1,5 +1,40 @@
+# EVAL_RULES
+# if we are not doing segmentation reasoning, only link 1 object
+sp {attend-to-stale-object*propose*link-objects*one-pair
+   (state <s> ^name attend-to-stale-object
+              ^topstate.agent-params.eval-params.segmentation-reasoning false
+              ^monitor-obj.belief-obj.id <stale-id>
+              ^contained-fragment <a>
+              ^overlap-results.result <res>)
+   (<res> ^object-a <a>
+          ^object-b <stale-id>
+          ^overlap <overlap>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name link-objects
+        ^category perception
+        ^dest-id <stale-id>
+        ^source-id <a>
+        ^overlap <overlap>)
+}
+
+sp {attend-to-stale-object*prefer*link-objects*higher*overlap
+   (state <s> ^name attend-to-stale-object
+              ^topstate.agent-params.eval-params.segmentation-reasoning false
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name link-objects
+         ^overlap <overlap>)
+   (<o2> ^name link-objects
+         ^overlap < <overlap>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+              
+# If we are doing segmentation reasoning, link multiple fragments
 sp {attend-to-stale-object*propose*link-objects
    (state <s> ^name attend-to-stale-object
+              ^topstate.agent-params.eval-params.segmentation-reasoning true
               ^found-contained-fragment true
               ^monitor-obj.belief-obj.id <dest-id>)
 -->
@@ -11,6 +46,7 @@ sp {attend-to-stale-object*propose*link-objects
 
 sp {attend-to-stale-object*elaborate*link-objects*source-id
    (state <s> ^name attend-to-stale-object
+              ^topstate.agent-params.eval-params.segmentation-reasoning true
               ^operator <o> +
               ^contained-fragment <src-id>)
    (<o> ^name link-objects)

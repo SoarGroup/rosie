@@ -1,0 +1,396 @@
+sp {learn-param*propose*learn-param-complete
+   (state <s> ^name learn-param
+              ^done)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name learn-param-complete)
+}
+sp {learn-param*apply*learn-param-complete
+   (state <s> ^name learn-param
+              ^topstate.current-game <cg>
+              ^operator.name learn-param-complete
+              ^superstate <ss>
+              ^gtype <type>
+             -^tcn.verbs <verbs>
+              ^<type> <t>
+              ^done)
+   (<t> ^nlp-set <nps> ^parameter-set.argnum <num>)
+-->
+   (<ss> ^done chunked-action)
+   (<cg> ^<type> <t2>)
+   (<t2> ^nlp-set <nps> ^parameter-set.argnum <num>)
+}
+
+sp {learn-param*apply*learn-param-complete*verbs
+   (state <s> ^name learn-param
+              ^topstate.current-game <cg>
+              ^operator.name learn-param-complete
+              ^superstate <ss>
+              ^gtype <type>
+              ^tcn.verbs <verbs>
+              ^<type> <t>
+              ^done)
+   (<t> ^nlp-set <nps> ^parameter-set.argnum <num>)
+-->
+   (<ss> ^done chunked-action)
+   (<cg> ^<type> <t2>)
+   (<t2> ^nlp-set <nps> ^parameter-set <ps>)
+   (<ps> ^argnum <num> ^verbs <verbs>)
+}
+
+
+sp {learn-param*propose*lookup-game
+   (state <s> ^name learn-param
+             -^tcn
+              ^superstate.operator <op>)
+   (<op> ^game-name <name>
+        -^tcn)
+-->
+   (<s> ^operator <o> + = >)
+   (<o> ^name lookup-game
+        ^game-name <name>)
+}
+sp {learn-param*elaborate*tcn
+   (state <s> ^name learn-param
+              ^superstate.operator <op>)
+   (<op> ^game-name <name>
+         ^tcn <tcn>
+         ^type <type>)
+-->
+   (<s> ^tcn <tcn>
+        ^gtype <type>
+        ^<type> <act>)
+   (<act> ^parameter-set <ps>
+        ^potential-args <po>)
+}
+
+sp {learn-param*elaborate*sub-conditions
+   (state <s> ^name learn-param
+              ^gtype <type>
+              ^<type> <t>)
+   (<t> ^condition <co>)
+   (<co> ^args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <cond>)
+   (<cond> ^name <name>)
+-->
+   (<t> ^condition <cond>)
+}
+
+sp {learn-param*elaborate*list-games
+   (state <s> ^name learn-param
+              ^gtype <type>
+              ^superstate.operator <op>)
+   (<op> ^game-name <name>)
+-->
+   (<s> ^list.game <g> ^objects <o>)
+   (<g> ^game <name> ^type <type>) 
+   (<s> ^current <g> ^game <name>)# ^gtype action)
+   (<s> ^prepositions <p>)
+  #      ^action <act>)
+ #  (<act> ^parameter-set <ps>
+ #       ^potential-args <po>)
+}
+
+
+sp {learn-param*propose*convert-TCN-to-NLP
+   (state <s> ^name learn-param
+             -^<type>.nlp-set
+              ^gtype <type>
+              ^tcn <g>)
+-->
+#   (interrupt)
+   (<s> ^operator <o> + = >)
+   (<o> ^name convert-TCN-to-NLP
+        ^type <type>
+        ^tcn <g>)
+}
+sp {learn-param*propose*formate-conditions
+   (state <s> ^name learn-param
+              ^gtype <type>
+              ^<type> <t>)
+   (<t> ^nlp-set <nlp> -^formated <type>)
+-->
+   (<s> ^operator <o> + = >)
+   (<o> ^name format-conditions
+        ^type <type>
+        ^nlp-set <nlp>)
+}
+sp {learn-param*propose*copy-topstate
+   (state <s> ^name learn-param
+              ^gtype <type>
+             -^prepositions.prep.pair.a
+              ^<type>.formated <type>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name copy-topstate)
+}
+
+sp {learn-param*apply*copy-topstate*objects
+   (state <s> ^name learn-param
+              ^objects <objs>
+              ^operator.name copy-topstate
+              ^topstate.object <obj>)
+   (<obj> ^id <id> ^category <cat>)
+-->
+   (<objs> ^object <obj2>)
+   (<obj2> ^id <id> ^type <cat>)
+}
+
+sp {learn-param*apply*copy-topstate*objects*desc
+   (state <s> ^name learn-param
+              ^objects.object <obj2>
+              ^operator.name copy-topstate
+              ^topstate.object <obj>)
+   (<obj> ^id <id> ^linguistic-desc.word <word>)
+   (<obj2> ^id <id>)
+-->
+   (<obj2> ^word <word>)
+}
+sp {learn-param*apply*copy-topstate*objects*desc*percept
+   (state <s> ^name learn-param
+              ^objects.object <obj2>
+              ^operator.name copy-topstate
+              ^topstate.object <obj>)
+   (<obj> ^id <id> ^object-desc.<< color shape size >> <word>)
+   (<obj2> ^id <id>)
+-->
+   (<obj2> ^word <word>)
+}
+
+sp {learn-param*apply*copy-topstate*preps
+   (state <s> ^name learn-param
+              ^prepositions <p>
+              ^operator.name copy-topstate
+              ^topstate.prepositions.<< prep prep2 >> <prep>)
+   (<prep> ^name <name>)
+-->
+   (<p> ^prep <prep2>)
+   (<prep2> ^name <name>)
+}
+sp {learn-param*apply*copy-topstate*pairs
+   (state <s> ^name learn-param
+              ^objects <o>
+              ^prepositions.prep <prep2>
+              ^operator.name copy-topstate
+              ^topstate.prepositions.<< prep prep2 >> <prep>)
+   (<o> ^object <obj> ^object <obj2>)
+   (<obj> ^id <ida>)
+   (<obj2> ^id <idb>)
+   (<prep> ^name <name> ^pair <pair>)
+   (<prep2> ^name <name>)
+   (<pair> ^a <ida> ^b <idb> -^c)
+-->
+   (<prep2> ^pair <pair2>)
+   (<pair2> ^a <obj> ^b <obj2>)
+}
+sp {learn-param*apply*copy-topstate*pairs*3arg
+   (state <s> ^name learn-param
+              ^objects <o>
+              ^prepositions.prep <prep2>
+              ^operator.name copy-topstate
+              ^topstate.prepositions.prep2 <prep>)
+   (<o> ^object <obj> ^object <obj2> ^object <obj3>)
+   (<obj> ^id <ida>)
+   (<obj2> ^id <idb>)
+   (<obj3> ^id <idc>)
+   (<prep> ^name <name> ^pair <pair>)
+   (<prep2> ^name <name>)
+   (<pair> ^a <ida> ^b <idb> ^c <idc>)
+-->
+   (<prep2> ^pair <pair2>)
+   (<pair2> ^a <obj> ^b <obj2> ^c <obj3>)
+}
+
+sp {chunk-parameters*apply*action
+   :o-support
+   (state <s> ^name learn-param
+              ^operator <o> +)
+   (<o> ^name action)           
+-->
+ #  (interrupt)
+	(<s> ^done action)
+}
+
+sp {chunk-parameters*apply*goal
+   :o-support
+   (state <s> ^name learn-param
+              ^operator <o> +)
+   (<o> ^name goal)           
+-->
+#   (interrupt)
+	(<s> ^done goal)
+}
+
+
+sp {setup-search*elaborate*nlp-set*conditions
+   (state <s> ^name setup-search
+              ^gtype <type>
+              ^<type> <t>)
+   (<t> ^nlp-set.nlp <nps>)
+ #  (<co> ^args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <cond>)
+ #  (<cond> ^name <name>)
+-->
+   (<t> ^condition <nps>)
+}
+sp {setup-search*elaborate*sub-conditionszz
+   (state <s> ^name setup-search
+              ^gtype <type>
+              ^<type> <t>)
+   (<t> ^condition <co>)
+   (<co> ^args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <cond>)
+   (<cond> ^name <name>)
+-->
+   (<t> ^condition <cond>)
+}
+
+sp {setup-search*elaborate*tcn
+   (state <s> ^name setup-search
+              ^topstate.current-game <cg>
+              ^superstate.operator <op>)
+   (<op> ^game-name <name>)
+   (<cg> ^name <name> ^action <act> ^goal <goal> ^multiplayer <m>)
+-->
+   (<s> ^gtype action
+        ^gtype goal
+        ^multiplayer <m>
+        ^goal <goal>
+        ^action <act>)
+}
+
+sp {setup-search*elaborate*list-games
+   (state <s> ^name setup-search
+              ^superstate.operator <op>)
+   (<op> ^game-name <name>)
+-->
+   (<s>  ^objects <o>)
+   (<s> ^prepositions <p>
+        ^problemspace games)
+}
+
+sp {setup-search*propose*find-solution
+   (state <s> ^name setup-search
+              ^superstate.operator <op>)
+   (<op> ^game-name <name>)
+-->
+#   (interrupt)
+   (<s> ^operator <o> + =)
+   (<o> ^name find-solution
+        ^game-name <name>)
+}
+sp {find-solution*propose*game-search
+   (state <s> ^name find-solution
+              ^superstate.multiplayer false
+              ^superstate.objects <objs>
+              ^superstate.operator <op>)
+   (<op> ^game-name <name>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name game-search
+        ^objects <objs>
+        ^dcount 0
+        ^depth-limit 7
+        ^list.game <g>
+        ^current <g> 
+        ^game <name>)
+   (<g> ^game <name> ^type action goal)
+}
+sp {find-solution*propose*game-search*muliplayer
+   (state <s> ^name find-solution
+              ^superstate.multiplayer true
+              ^superstate.objects <objs>
+              ^superstate.operator <op>)
+   (<op> ^game-name <name>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name game-search
+        ^objects <objs>
+        ^dcount 0
+        ^depth-limit 1
+        ^list.game <g>
+        ^current <g> 
+        ^game <name>)
+   (<g> ^game <name> ^type action goal)
+}
+
+sp {setup-search*propose*copy-topstate
+   (state <s> ^name setup-search
+             -^prepositions.prep.pair.a)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name copy-topstate)
+}
+
+sp {setup-search*apply*copy-topstate*objects
+   (state <s> ^name setup-search
+              ^objects <objs>
+              ^operator.name copy-topstate
+              ^topstate.object <obj>)
+   (<obj> ^id <id> ^category <cat>)
+-->
+   (<objs> ^object <obj2>)
+   (<obj2> ^id <id> ^type <cat>)
+}
+
+sp {setup-search*apply*copy-topstate*objects*desc
+   (state <s> ^name setup-search
+              ^objects.object <obj2>
+              ^operator.name copy-topstate
+              ^topstate.object <obj>)
+   (<obj> ^id <id> ^linguistic-desc.word <word>)
+   (<obj2> ^id <id>)
+-->
+   (<obj2> ^word <word>)
+}
+sp {setup-search*apply*copy-topstate*objects*desc*percept
+   (state <s> ^name setup-search
+              ^objects.object <obj2>
+              ^operator.name copy-topstate
+              ^topstate.object <obj>)
+   (<obj> ^id <id> ^object-desc.<< color shape size >> <word>)
+   (<obj2> ^id <id>)
+-->
+   (<obj2> ^word <word>)
+}
+
+sp {setup-search*apply*copy-topstate*preps
+   (state <s> ^name setup-search
+              ^prepositions <p>
+              ^operator.name copy-topstate
+              ^topstate.prepositions.<< prep prep2 >> <prep>)
+   (<prep> ^name <name>)
+-->
+   (<p> ^prep <prep2>)
+   (<prep2> ^name <name>)
+}
+sp {setup-search*apply*copy-topstate*pairs
+   (state <s> ^name setup-search
+              ^objects <o>
+              ^prepositions.prep <prep2>
+              ^operator.name copy-topstate
+              ^topstate.prepositions.<< prep prep2 >> <prep>)
+   (<o> ^object <obj> ^object <obj2>)
+   (<obj> ^id <ida>)
+   (<obj2> ^id <idb>)
+   (<prep> ^name <name> ^pair <pair>)
+   (<prep2> ^name <name>)
+   (<pair> ^a <ida> ^b <idb> -^c)
+-->
+   (<prep2> ^pair <pair2>)
+   (<pair2> ^a <obj> ^b <obj2>)
+}
+sp {setup-search*apply*copy-topstate*pairs*3arg
+   (state <s> ^name setup-search
+              ^objects <o>
+              ^prepositions.prep <prep2>
+              ^operator.name copy-topstate
+              ^topstate.prepositions.prep2 <prep>)
+   (<o> ^object <obj> ^object <obj2> ^object <obj3>)
+   (<obj> ^id <ida>)
+   (<obj2> ^id <idb>)
+   (<obj3> ^id <idc>)
+   (<prep> ^name <name> ^pair <pair>)
+   (<prep2> ^name <name>)
+   (<pair> ^a <ida> ^b <idb> ^c <idc>)
+-->
+   (<prep2> ^pair <pair2>)
+   (<pair2> ^a <obj> ^b <obj2> ^c <obj3>)
+}

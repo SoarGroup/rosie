@@ -13,7 +13,7 @@ extern "C" {
  * Signature: ()Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_sphinxJNI_decodeAudio
-  (JNIEnv *, jobject);
+  (JNIEnv *, jobject, jstring, jstring);
 
 #ifdef __cplusplus
 }

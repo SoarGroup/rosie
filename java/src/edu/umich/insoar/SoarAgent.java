@@ -66,7 +66,11 @@ public class SoarAgent implements RunEventInterface{
     }
 	
 	public SoarAgent(String agentName, Properties props, boolean useLG, boolean headless){
-		kernel = Kernel.CreateKernelInNewThread();
+		if(headless){
+			kernel = Kernel.CreateKernelInCurrentThread();
+		} else {
+			kernel = Kernel.CreateKernelInNewThread();
+		}
         // !!! Important !!!
         // We set AutoCommit to false, and only commit inside of the event
         // handler
@@ -183,7 +187,7 @@ public class SoarAgent implements RunEventInterface{
     		System.out.println(ret);
     	}
     	if(agentSource != null){
-    		String ret = agent.ExecuteCommandLine("source " + agentSource);
+    		String ret = agent.ExecuteCommandLine("source -v " + agentSource);
     		System.out.println(ret);
     	}
     	if(lgSoarSource != null){

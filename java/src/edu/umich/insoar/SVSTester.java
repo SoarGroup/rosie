@@ -35,7 +35,7 @@ public class SVSTester extends JFrame implements OutputEventInterface, RunEventI
 		soarAgent = new SoarAgent("svs-tester", "agent/test_svs_copy.soar", false);
 		soarAgent.getAgent().AddOutputHandler("report-val", this, null);
 		
-		perception = new PerceptionConnector(soarAgent);
+		perception = new PerceptionConnector(soarAgent, "default");
 		soarAgent.setWorldModel(perception.world);
 		
 		this.menuBar = new JMenuBar();

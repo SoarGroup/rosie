@@ -1,15 +1,8 @@
 sp {find-object*elaborate*object-desc
    (state <s> ^name find-object
-              ^superstate.operator.object <desc>)
+              ^current-action.object-to-find.object <desc>)
 -->
    (<s> ^object-desc <desc>)
-}
-
-sp {find-object*elaborate*moved-to-goal
-   (state <s> ^name find-object
-              ^action-goal.moved-to-goal true)
--->
-   (<s> ^moved-to-goal true)
 }
 
 sp {find-object*elaborate*goal-location
@@ -22,223 +15,172 @@ sp {find-object*elaborate*goal-location
    (<s> ^goal-location <goal>)
 }
 
-sp {find-object*elaborate*indexed-word
+sp {find-object*elaborate*above-prep
    (state <s> ^name find-object
-              ^action-goal.indexed-word.result.sense <word>)
-   (<word> ^property.type <> generic)
+              ^topstate.prepositions.prep <above>)
+   (<above> ^name above)
 -->
-   (<s> ^indexed-word <word>)
+   (<s> ^above-prep <above>)
 }
 
-sp {find-object*elaborate*matching-info
-   (state <s> ^name find-object)
+
+sp {find-object*elaborate*higher-than-prep
+   (state <s> ^name find-object
+              ^topstate.prepositions.prep <h>)
+   (<h> ^name higher-than)
 -->
-   (<s> ^matching-info <info>)
+   (<s> ^higher-than-prep <h>)
 }
 
-sp {find-object*elaborate*matching-info*match-word
+sp {find-object*elaborate*opened-bin
+   :o-support
    (state <s> ^name find-object
-              ^indexed-word <word>
-              ^matching-info <info>)
-   (<word> ^property.name <> generic)
+              ^current-action <a>
+              ^topstate.object <bin>)
+   (<bin> ^category bin
+          ^open true)
 -->
-   (<info> ^match-word.word <word>)
+   (<a> ^opened-bin <bin>)
 }
 
-sp {find-object*elaborate*matching-info*candidates
+sp {find-object*elaborate*unopened-bin
+   :o-support
    (state <s> ^name find-object
-              ^topstate.object <obj>
-              ^matching-info <info>)
-   (<obj> ^category block)
+              ^topstate.object <bin>
+              ^current-action <a>)
+   (<bin> ^category bin
+          ^open false)
+   (<a> -^opened-bin <bin>)
 -->
-   (<info> ^candidate <obj>)
-} 
-
-# Mark as unknown if the desired property isn't there
-sp {find-object*elaborate*match-word*unknown*no-property
-   (state <s> ^name find-object
-              ^matching-info <info>)
-   (<info> ^match-word <mw>
-           ^candidate <cand>)
-   (<mw> ^word <word>)
-   (<word> ^property.name <prop-name>)
-   (<cand> -^property.name <prop-name>)
--->
-   (<mw> ^unknown-match <cand>)
+   (<a> ^unopened-bin <bin>)
 }
 
-# Mark an adjective as unknown if the property is either none (unknown) or uncertain
-sp {find-object*elaborate*match-word*adjective*unknown*not-certain
+sp {find-object*elaborate*remove*unopened-bin
+   :o-support
    (state <s> ^name find-object
-              ^matching-info <info>)
-   (<info> ^match-word <mw>
-           ^candidate <cand>)
-   (<mw> ^word <word>)
-   (<word> ^type adjective
-           ^property.name <prop-name>)
-   (<cand> ^property <prop>)
-   (<prop> ^name <prop-name>
-           ^prev-case << none uncertain >>)
+              ^current-action <a>)
+   (<a> ^opened-bin <bin>
+        ^unopened-bin <bin>)
 -->
-   (<mw> ^unknown-match <cand>)
+   (<a> ^unopened-bin <bin> -)
 }
 
-# Mark a superlative as unknown if the property hasn't been measured (no feature-val)
-sp {find-object*elaborate*match-word*superlative*unknown
+sp {find-object*elaborate*candidate*above-bin
    (state <s> ^name find-object
-              ^matching-info <info>)
-   (<info> ^match-word <mw>
-           ^candidate <cand>)
-   (<mw> ^word <word>)
-   (<word> ^type superlative
-           ^property.name <prop-name>)
-   (<cand> ^property <prop>)
-   (<prop> ^name <prop-name>
-          -^feature-val)
+              ^matching-info.candidate <cand>
+              ^topstate.object <bin>
+              ^above-prep.pair <p>)
+   (<bin> ^id <bid>
+          ^category bin)
+   (<cand> ^object.id <oid>)
+   (<p> ^a <oid> ^b <bid>)
 -->
-   (<mw> ^unknown-match <cand>)
+   (<cand> ^above-bin <bin>)
 }
 
-# Mark an adjective as a bad match if the propetry's label is certain, but different
-sp {find-object*elaborate*match-word*adjective*bad-match
+sp {find-object*elaborate*candidate*above-location
    (state <s> ^name find-object
-              ^matching-info <info>)
-   (<info> ^match-word <mw>
-           ^candidate <cand>)
-   (<mw> ^word <word>)
-   (<word> ^type adjective
-           ^label <label>
-           ^property.name <prop-name>)
-   (<cand> ^property <prop>)
-   (<prop> ^name <prop-name>
-           ^prev-case certain
-           ^label <> <label>)
+              ^matching-info.candidate <cand>
+              ^topstate.object <loc>
+              ^above-prep.pair <p>)
+   (<loc> ^id <lid>
+          ^category location)
+   (<cand> ^object.id <oid>)
+   (<p> ^a <oid> ^b <lid>)
 -->
-   (<mw> ^bad-match <cand>)
+   (<cand> ^above-location <loc>)
 }
 
-# Mark a lowest superlative as a bad match if there is a candidate with a lower value for the property
-sp {find-object*elaborate*match-word*superlative*bad-match*lowest
+sp {find-object*elaborate*candidate*above-object
    (state <s> ^name find-object
-              ^matching-info <info>)
-   (<info> ^match-word <mw>
-           ^candidate <cand>
-           ^candidate.property <better-prop>)
-   (<mw> ^word <word>)
-   (<word> ^type superlative
-           ^property.name <prop-name>
-           ^value lowest)
-   (<cand> ^property <prop>)
-   (<prop> ^name <prop-name>
-           ^feature-val <val>)
-   (<better-prop> ^name <prop-name>
-            	  ^feature-val < <val>)
+              ^matching-info.candidate <cand>
+              ^topstate.object <obj2>
+              ^above-prep.pair <p>)
+   (<obj2> ^id <o2id>
+           ^category block)
+   (<cand> ^object.id <oid>)
+   (<p> ^a <oid> ^b <o2id>)
 -->
-   (<mw> ^bad-match <cand>)
+   (<cand> ^above-object <obj2>)
 }
 
-# Mark a highest superlative as a bad match if there is a candidate with a higher value for the property
-sp {find-object*elaborate*match-word*superlative*bad-match*highest
+sp {find-object*elaborate*candidate*clear
    (state <s> ^name find-object
-              ^matching-info <info>)
-   (<info> ^match-word <mw>
-           ^candidate <cand>
-           ^candidate.property <better-prop>)
-   (<mw> ^word <word>)
-   (<word> ^type superlative
-           ^property.name <prop-name>
-           ^value highest)
-   (<cand> ^property <prop>)
-   (<prop> ^name <prop-name>
-           ^feature-val <val>)
-   (<better-prop> ^name <prop-name>
-            	  ^feature-val > <val>)
+              ^matching-info.candidate <cand>
+              ^above-prep <above>)
+   (<cand> ^object.id <oid>)
+   (<above> -^pair.b <oid>)
 -->
-   (<mw> ^bad-match <cand>)
+   (<cand> ^clear true)
+}
+   
+sp {find-object*elaborate*object-on-location
+   (state <s> ^name find-object
+              ^goal-location <goal>
+              ^matching-info.candidate <cand>)
+   (<cand> ^above-location { <loc> <> <goal> }
+           ^object <obj>)
+-->
+   (<s> ^object-on-location <obj>)
 }
 
-# Mark a superlative as a bad match if its value is known but there is still an unknown somewhere out there
-#   (still can't stay it's the highest/lowest)
-sp {find-object*elaborate*match-word*superlative*bad-match*still*unknown
+sp {find-object*elaborate*object-on-goal
    (state <s> ^name find-object
-              ^matching-info <info>)
-   (<info> ^match-word <mw>
-           ^candidate <cand>)
-   (<mw> ^word <word>
-         ^unknown-match)
-   (<word> ^type superlative
-           ^property.name <prop-name>)
-   (<cand> ^property <prop>)
-   (<prop> ^name <prop-name>
-           ^feature-val <val>)
+              ^goal-location <goal>
+              ^matching-info.candidate <cand>)
+   (<cand> ^above-location <goal>
+           ^object <obj>)
 -->
-   (<mw> ^bad-match <cand>)
+   (<s> ^object-on-goal <obj>)
 }
 
-# Mark an adjective as a good match if the property's case is certain and a match
-sp {find-object*elaborate*match-word*adjective*good-match
+sp {find-object*elaborate*homeless-object
    (state <s> ^name find-object
-              ^matching-info <info>)
-   (<info> ^match-word <mw>
-           ^candidate <cand>)
-   (<mw> ^word <word>)
-   (<word> ^type adjective
-           ^label <label>
-           ^property.name <prop-name>)
-   (<cand> ^property <prop>)
-   (<prop> ^name <prop-name>
-           ^prev-case certain
-           ^label <label>)
+              ^matching-info.candidate <cand>)
+   (<cand> -^above-location
+           -^above-bin
+            ^object <obj>)
 -->
-   (<mw> ^good-match <cand>)
+   (<s> ^homeless-object <obj>)
 }
 
-# Mark a superlative as a good match if it's value is known and it is not a bad match
-#   (Previous rules list it as a bad match if there's a better match or still an unknown value)
-sp {find-object*elaborate*match-word*superlative*good-match
+sp {find-object*elaborate*desired-attribute
    (state <s> ^name find-object
-              ^matching-info <info>)
-   (<info> ^match-word <mw>
-           ^candidate <cand>)
-   (<mw> ^word <word>
-        -^bad-match <cand>)
-   (<word> ^type superlative
-           ^property.name <prop-name>)
-   (<cand> ^property <prop>)
-   (<prop> ^name <prop-name>
-           ^feature-val <val>)
+              ^object-desc.word {<word> <>  UNKNOWN <> none <> object <> block })
 -->
-   (<mw> ^good-match <cand>)
+   (<s> ^desired-attribute.word <word>)
 }
 
-# A candidate is a bad match if it is a bad match for some property
-sp {find-object*elaborate*match-info*bad-match
+
+sp {find-object*elaborate*desired-attribute*info
    (state <s> ^name find-object
-              ^matching-info <info>)
-   (<info> ^candidate <cand>
-           ^match-word.bad-match <cand>)
+              ^desired-attribute <att>
+              ^current-action.indexed-word <i>)
+   (<i> ^word <word>
+        ^sense <info>)
+   (<att> ^word <word>)
 -->
-   (<info> ^bad-match <cand>)
+   (<att> ^info <info>)
 }
 
-# A candidate is an unknown match if it is not a bad match, but at least 1 property is unknown
-sp {find-object*elaborate*match-info*unknown-match
+sp {find-object*elaborate*desired-attribute*indexable
    (state <s> ^name find-object
-              ^matching-info <info>)
-   (<info> ^candidate <cand>
-           ^match-word.unknown-match <cand>
-          -^match-word.bad-match <cand>)
+              ^desired-attribute <att>)
+   (<att> ^word <word>)
 -->
-   (<info> ^unknown-match <cand>)
+   (<att> ^indexable <i>)
+   (<i> ^type word
+        ^lexical <word>
+        ^index-info.use-interaction true)
 }
 
-# A candidate is a good match if it is neither a bad match or an unknown match
-sp {find-object*elaborate*match-info*good-match
+sp {find-object*elaborate*desired-attribute*indexed-word
    (state <s> ^name find-object
-              ^matching-info <info>)
-   (<info> ^candidate <cand>
-          -^match-word.bad-match <cand>
-          -^match-word.unknown-match <cand>)
+              ^operator.name index-parameter
+              ^desired-attribute <att>
+              ^current-action <a>)
+   (<att> ^indexable.result <res>)
 -->
-   (<info> ^good-match <cand>)
+   (<a> ^indexed-word <res>)
 }
+

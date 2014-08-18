@@ -7,6 +7,18 @@
 # attend-to-all-scene-changes
 #    If true, will attend to any changes in the scene
 #
+
+sp {anystate*propose*attend-to-scene-change*attend-to-arm
+   (state <s> ^attend-to-arm true
+              ^topstate.scene-monitor.scene-changes <sc>)
+   (<sc> ^change <c>)
+   (<c> ^type arm-status-change)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name attend-to-scene-change
+        ^change <c>)
+}
+
 sp {anystate*propose*attend-to-scene-change*attend-to-all-scene-changes
    (state <s> ^attend-to-all-scene-changes true
               ^topstate.scene-monitor.scene-changes <sc>)
@@ -17,13 +29,27 @@ sp {anystate*propose*attend-to-scene-change*attend-to-all-scene-changes
         ^change <c>)
 }
 
+sp {anystate*propose*attend-to-scene-change*attend-to-property
+   (state <s> ^attend-to-property <prop-name>
+              ^topstate.scene-monitor.scene-changes <sc>)
+   (<sc> ^change <c>)
+   (<c> ^property.name <prop-name>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name attend-to-scene-change
+        ^attention-priority low
+        ^change <c>)
+}
+
 sp {anystate*reject*attend-to-scene-change*dont-attend-to-object
    (state <s> ^operator <o> +
               ^dont-attend-to-object <obj>)
    (<o> ^name attend-to-scene-change
-        ^change.object.wm-obj <obj>)
+        ^change <c>)
+   (<c> ^object.wm-obj <obj>)
 -->
    (<s> ^operator <o> -)
+   (<c> ^rejected true)
 }
 
 sp {anystate*elaborate*attend-to-scene-change*low*priority
@@ -48,10 +74,25 @@ sp {anystate*elaborate*attend-to-scene-change*high*priority
 
 sp {anystate*reject*attend-to-scene-change*moving-object
    (state <s> ^operator <o> +)
+#              ^topstate.agent-params.eval-params.action-model-knowledge true)
    (<o> ^name attend-to-scene-change
-        ^change.object.wm-obj.moving-object true)
+        ^change <c>)
+   (<c> ^object.wm-obj.moving-object true)
 -->
    (<s> ^operator <o> -)
+   (<c> ^rejected true)
+}
+
+sp {anystate*reject*attend-to-scene-change*grabbed-object
+   (state <s> ^operator <o> +
+              ^robot-state.arm.grabbed <obj>)
+#              ^topstate.agent-params.eval-params.action-model-knowledge true)
+   (<o> ^name attend-to-scene-change
+        ^change <c>)
+   (<c> ^object.wm-obj <obj>)
+-->
+   (<s> ^operator <o> -)
+   (<c> ^rejected true)
 }
 
 ################################################################################
@@ -132,7 +173,7 @@ sp {anystate*apply*attend-to-scene-change*debug-perception*report-change*arm*act
               ^topstate.agent-params.debug-perception true)
    (<o> ^name attend-to-scene-change
         ^change <c>)
-   (<c> ^type { <type> << different-arm-action grabbed-object released-object >> })
+   (<c> ^type { <type> << arm-status-change >> })
 -->
    (write |Change | <type> (crlf))
 }

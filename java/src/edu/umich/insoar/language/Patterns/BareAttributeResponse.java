@@ -16,10 +16,12 @@ public class BareAttributeResponse extends LinguisticEntity{
     }
     
     public void translateToSoarSpeak(Identifier messageId, String connectingString){
-        messageId.CreateStringWME("type", "bare-attribute-response");
+        messageId.CreateStringWME("type", "object-message");
         messageId.CreateStringWME("originator", "mentor");
-        Identifier fieldsId = messageId.CreateIdWME("fields");
-        fieldsId.CreateStringWME("category", category);
+        Identifier fieldsId = messageId.CreateIdWME("information");
+        Identifier objectId = fieldsId.CreateIdWME("object");
+        objectId.CreateStringWME("word", category);
+        objectId.CreateStringWME("specifier", "INDEF");
     }
 
     public void extractLinguisticComponents(String string, Map tagsToWords) {

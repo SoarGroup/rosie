@@ -2,20 +2,16 @@ sp {topstate*elaborate*scene-changes*change-info*arm*changes
    (state <s> ^topstate <s>
               ^scene-monitor.scene-changes.change-info <info>)
 -->
-   (<info> ^change <diff-arm-ac> <grabbed-obj> <released-obj>)
-   (<diff-arm-ac> ^name different-arm-action
-                  ^op-name attend-to-arm)
-   (<grabbed-obj> ^name grabbed-object
-                  ^op-name attend-to-arm)
-   (<released-obj> ^name released-object
-                   ^op-name attend-to-arm)
+   (<info> ^change <arm-status-change>)
+   (<arm-status-change> ^name arm-status-change
+                        ^op-name attend-to-arm)
 }
 
 
 sp {anystate*scene-change*elaborate*attend-to-arm*top*priority
    (state <s> ^operator <o> +)
    (<o> ^name attend-to-scene-change
-         ^change.type << different-arm-action grabbed-object released-object >>)
+         ^change.type << arm-status-change >>)
 -->
    (<o> ^attention-priority top)
 }
@@ -33,7 +29,7 @@ sp {monitor-scene-changes*elaborate*scene-change*different-arm-action
    (<arm> -^action <cur-action>)
 -->
    (<sc> ^change <change>)
-   (<change> ^type different-arm-action)
+   (<change> ^type arm-status-change)
 }
 
 #########################################################
@@ -45,14 +41,12 @@ sp {monitor-scene-changes*elaborate*scene-change*grabbed-object
    (state <s> ^topstate <s>
               ^scene-monitor.scene-changes <sc>
               ^io.input-link.self.grabbed-object {<id> <> -1}
-              ^robot-state.arm <arm>
-              ^topstate.object <obj>)
-   (<obj> ^id <id>)
-   (<arm> ^action wait
-          -^grabbed <obj>)
+              ^robot-state.arm <arm>)
+   #(<arm> ^action wait
+   (<arm>      -^grabbed <obj>)
 -->
    (<sc> ^change <change>)
-   (<change> ^type grabbed-object)
+   (<change> ^type arm-status-change)
 }
 
 #########################################################
@@ -63,12 +57,9 @@ sp {monitor-scene-changes*elaborate*scene-change*grabbed-object
 sp {monitor-scene-changes*elaborate*scene-change*released-object
    (state <s> ^topstate <s>
               ^scene-monitor.scene-changes <sc>
-             -^io.input-link.self.grabbed-object <id>
-              ^robot-state.arm <arm>
-              ^topstate.object <obj>)
-   (<arm> ^action wait
-          ^grabbed.id <id>)
+              ^io.input-link.self.grabbed-object -1
+              ^robot-state.arm.grabbed)
 -->
    (<sc> ^change <change>)
-   (<change> ^type released-object)
+   (<change> ^type arm-status-change)
 }

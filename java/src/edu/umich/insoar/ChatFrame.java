@@ -40,12 +40,17 @@ import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
+import lcm.lcm.LCM;
+import april.util.TimeUtil;
+
 import com.soartech.bolt.testing.ActionType;
+import com.soartech.bolt.testing.ISpyScriptGenerator;
 import com.soartech.bolt.testing.Script;
 import com.soartech.bolt.testing.ScriptDataMap;
 import com.soartech.bolt.testing.Settings;
 import com.soartech.bolt.testing.Util;
 
+import probcog.lcmtypes.chat_message_t;
 
 
 public class ChatFrame extends JFrame
@@ -86,6 +91,8 @@ public class ChatFrame extends JFrame
     private int historyIndex = 0;
     // The current index into the history
     
+    private String speechFile;
+    
     
     // AGENT STATUS AND CONTROL
     
@@ -125,15 +132,39 @@ public class ChatFrame extends JFrame
     private Logger logger;
 	
     TargetDataLine	targetDataLine;
+    
+    private KeyAdapter ctrlListener = new KeyAdapter(){
+		public void keyPressed(KeyEvent arg0) {
+			if(arg0.getKeyCode() == KeyEvent.VK_UP) {
+				upPressed();
+			} else if(arg0.getKeyCode() == KeyEvent.VK_DOWN){
+				downPressed();}
+//			} else if(arg0.getKeyCode() == KeyEvent.VK_RIGHT){
+//				tabPressed();
+//			}
+			// Ctrl toggles audio input
+			else if(arg0.getKeyCode() == KeyEvent.VK_CONTROL){
+				System.out.println("here");
+				ctrlPressed();
+			}
+		}
+		public void keyReleased(KeyEvent arg0) {
+			if(arg0.getKeyCode() == KeyEvent.VK_CONTROL){
+				ctrlReleased();
+			}
+		}
+    };
 
-    public ChatFrame(LanguageConnector langConnector, SoarAgent agent, Logger logger) {
+    public ChatFrame(LanguageConnector langConnector, SoarAgent agent, Logger logger, String speechFile) {
         super("SBolt");
         this.langConnector = langConnector;
         this.soarAgent = agent;
         this.audioFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 16000.0F, 16, 1, 2, 16000.0F, false);
         this.logger = logger;
         
-        this.audioFile = new File("forward.raw");
+        this.speechFile = speechFile;
+        
+        this.audioFile = new File("/home/aaron/demo/speech/forward.raw");
         this.info = null;
         //new DataLine.Info(TargetDataLine.class, audioFormat);
         this.targetDataLine = null;
@@ -145,6 +176,7 @@ public class ChatFrame extends JFrame
         
         tPane = new JTextPane();
         tPane.setEditable(false);
+        tPane.addKeyListener(ctrlListener);
         JScrollPane pane = new JScrollPane(tPane);
         DefaultCaret caret = (DefaultCaret)tPane.getCaret();
 		caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
@@ -155,30 +187,11 @@ public class ChatFrame extends JFrame
         
         chatField = new JTextField();
         chatField.setFont(new Font("Serif",Font.PLAIN,18));
-        chatField.addKeyListener(new KeyAdapter(){
-			public void keyPressed(KeyEvent arg0) {
-				if(arg0.getKeyCode() == KeyEvent.VK_UP) {
-					upPressed();
-				} else if(arg0.getKeyCode() == KeyEvent.VK_DOWN){
-					downPressed();}
-//				} else if(arg0.getKeyCode() == KeyEvent.VK_RIGHT){
-//					tabPressed();
-//				}
-				// Ctrl toggles audio input
-				else if(arg0.getKeyCode() == KeyEvent.VK_CONTROL){
-					System.out.println("here");
-					ctrlPressed();
-				}
-			}
-			public void keyReleased(KeyEvent arg0) {
-				if(arg0.getKeyCode() == KeyEvent.VK_CONTROL){
-					ctrlReleased();
-				}
-			}
-        });
+        chatField.addKeyListener(ctrlListener);
         
         
         sendButton = new JButton("Send Message");
+        sendButton.addKeyListener(ctrlListener);
         sendButton.addActionListener(new ActionListener()
         {
             public void actionPerformed(ActionEvent e)
@@ -194,14 +207,16 @@ public class ChatFrame extends JFrame
 
         pane1.setDividerLocation(325);
         pane2.setDividerLocation(600);
-
+        
         this.add(pane1);
         this.setSize(800, 450);
         this.getRootPane().setDefaultButton(sendButton);
         
         menuBar = new JMenuBar();     
+        menuBar.addKeyListener(ctrlListener);
 
         startStopButton = new JButton("START");
+        startStopButton.addKeyListener(ctrlListener);
         startStopButton.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
 				if(soarAgent.isRunning()){
@@ -238,7 +253,7 @@ public class ChatFrame extends JFrame
         	}
      	});
         
-        setReady(false);
+        setReady(true);
     }
     
     public SoarAgent getAgent(){
@@ -286,7 +301,8 @@ public class ChatFrame extends JFrame
     }
     
     public void setReady(boolean isReady){
-    	ready = isReady;
+    	//ready = isReady;
+    	ready = true;
     	updateSendButtonStatus();
     }
     
@@ -343,13 +359,22 @@ public class ChatFrame extends JFrame
     	
     }
     
+    private void sendLCMChatMessage(String message, String sender){
+    	// Print message for logging
+    	chat_message_t chat_message = new chat_message_t();
+    	chat_message.utime = TimeUtil.utime();
+    	chat_message.message = message;
+    	chat_message.sender = sender;
+    	LCM.getSingleton().publish("CHAT_MESSAGES", chat_message);
+    }
+    
     public void addMessage(String message, ActionType type) {
     	String preserveMsg = message;
     	synchronized(outputLock) {
     		message = ScriptDataMap.getInstance().getString(type)+" "+message.trim();
     		if(chatDoc.getStyle(type.toString()) == null) {
     			type = ActionType.Default;
-    		}
+    		}    		
     		chatMessages.add(message);
     		try {
     			//TO ENABLE SPEAKING
@@ -360,6 +385,8 @@ public class ChatFrame extends JFrame
     			Date d = new Date();
     			int origLength = chatDoc.getLength();
     			chatDoc.insertString(origLength, dateFormat.format(d)+" ", chatDoc.getStyle(ActionType.Default.toString()));
+    			chatDoc.insertString(origLength, " ", chatDoc.getStyle(ActionType.Default.toString()));
+    			
     			int nextLength = chatDoc.getLength();
     			chatDoc.insertString(nextLength, message+"\n", chatDoc.getStyle(type.toString()));
     			// AM: Will make it auto scroll to bottom
@@ -378,11 +405,14 @@ public class ChatFrame extends JFrame
     	if(type == ActionType.Agent && script != null && script.hasNextAction()) {
     		Util.handleNextScriptAction(script, chatMessages);
     	}
+    	
+    	sendLCMChatMessage(preserveMsg, ScriptDataMap.getInstance().getString(type));
     }
 
 	public void addMessage(String message)
     {
         addMessage(message, ActionType.Default);
+        sendLCMChatMessage(message, "Agent:");
     }
     
     public void preSetMentorMessage(String message) {
@@ -418,12 +448,12 @@ public class ChatFrame extends JFrame
     	}
     	
         addMessage(msg, ActionType.Mentor);
-        //JK hack to handle is not which cannot be handled
+        //JK hack to handle is not which cannot be handled by lgsoar
         if (msg.contains("not"))
         {
-           System.out.println("Orig: " + msg);
+           //System.out.println("Orig: " + msg);
            msg = msg.concat(" null");
-           System.out.println(msg);
+           //System.out.println(msg);
         }
     	langConnector.newMessage(msg);
         chatField.setText("");
@@ -464,13 +494,22 @@ public class ChatFrame extends JFrame
     	recorder.stopRecording();
     	
     	//decode audio through jni call to sphinx code
-    	String result = new sphinxJNI().decodeAudio();
+		   String lmFile = speechFile + ".lm";
+		   String dicFile = speechFile + ".dic";
+    	String result = new sphinxJNI().decodeAudio(lmFile, dicFile);
     	if (result != null)
     		result = result.toLowerCase();
 
     	System.out.println("heard: " + result);
     	addMessage(result, ActionType.Mentor);
-
+    	
+    	//JK hack to handle is not which cannot be handled by lgsoar
+        if (result.contains("not"))
+        {
+           //System.out.println("Orig: " + msg);
+           result = result.concat(" null");
+           //System.out.println(msg);
+        }
     	langConnector.newMessage(result);
         chatField.setText("");
         chatField.requestFocus();

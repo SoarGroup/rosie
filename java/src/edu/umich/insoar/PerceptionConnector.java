@@ -4,11 +4,17 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 
 import lcm.lcm.LCM;
 import lcm.lcm.LCMDataInputStream;
@@ -20,6 +26,7 @@ import sml.Identifier;
 import sml.WMElement;
 import sml.smlRunEventId;
 import probcog.lcmtypes.*;
+import april.util.PeriodicTasks;
 import april.util.TimeUtil;
 import edu.umich.insoar.world.PerceptualProperty;
 import edu.umich.insoar.world.WMUtil;
@@ -28,33 +35,38 @@ import edu.umich.insoar.world.WorldModel;
 public class PerceptionConnector implements OutputEventInterface, RunEventInterface, LCMSubscriber {
 	private SoarAgent soarAgent;
 	
+	private static int SEND_TRAINING_FPS = 10;
+	Timer sendTrainingTimer;
+	
 	// Time Information
 	private Identifier timeId = null;
 	private int stepNumber = 0;
-	private long startTime;
-	private long soarTime = 0;
-	private long percTime = 0;
 	
 	// Object being pointed to
 	private int pointedId = -1;
+	private int currentTimer = -10;
+	private long prevTime = 0;
+	private long totalTime = 0;
+	private int totalMoves = 0;
 	
-    private List<training_label_t> newLabels;
+    private HashMap<training_label_t, Identifier> outstandingTraining;
     
     private LCM lcm;
     
     protected WorldModel world;
-    
+    private String classifiersFile;
     private String armStatus = "wait";
-	
-    public PerceptionConnector(SoarAgent soarAgent)
+    
+    
+    
+    public PerceptionConnector(SoarAgent soarAgent, String classifiersFile)
     {
     	this.soarAgent = soarAgent;
+    	this.classifiersFile = classifiersFile;
     	
-    	startTime = TimeUtil.utime();
+    	outstandingTraining = new HashMap<training_label_t, Identifier>();
     	
-    	
-    	
-        String[] outputHandlerStrings = { "send-training-label", "modify-scene" };
+        String[] outputHandlerStrings = { "send-training-label", "modify-scene", "reset-timer", "report-attend-status", "put-down"};
 
         for (String outputHandlerString : outputHandlerStrings)
         {
@@ -65,16 +77,65 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
                smlRunEventId.smlEVENT_BEFORE_INPUT_PHASE, this, null);
         
         
-        newLabels = new ArrayList<training_label_t>();
-        
         world = new WorldModel(soarAgent);
         lcm = LCM.getSingleton();
         lcm.subscribe("OBSERVATIONS", this);
         lcm.subscribe("ROBOT_ACTION", this);
+        
+        sendTrainingTimer = new Timer();
+        sendTrainingTimer.schedule(new TimerTask(){
+        	public void run(){
+        		sendTrainingLabels();
+        	}
+        }, 1000, 1000/SEND_TRAINING_FPS);
     }
     
-    public long getSoarTime(){
-    	return soarTime;
+    /*************************************************
+     * handling training labels
+     *************************************************/
+    
+    private void queueTrainingLabel(Integer objId, Integer cat, String label, Identifier id){
+    	training_label_t newLabel = new training_label_t();
+    	newLabel.utime = InSoar.GetSoarTime();
+    	newLabel.id = objId;
+    	newLabel.cat = new category_t();
+    	newLabel.cat.cat = cat;
+    	newLabel.label = label;
+    	synchronized(outstandingTraining){
+    		outstandingTraining.put(newLabel, id);
+    	}
+    }
+    
+    private void sendTrainingLabels(){
+    	synchronized(outstandingTraining){
+    		if(outstandingTraining.size() == 0){
+    			return;
+    		}
+    		training_data_t data = new training_data_t();
+    		data.utime = InSoar.GetSoarTime();
+    		data.num_labels = outstandingTraining.size();
+    		data.labels = new training_label_t[data.num_labels];
+    		int i = 0;
+    		for(training_label_t label : outstandingTraining.keySet()){
+    			data.labels[i++] = label;
+    		}
+    		lcm.publish("TRAINING_DATA", data);
+    	}
+    }
+    
+    private void receiveAckTime(long time){
+    	synchronized(outstandingTraining){
+	    	Set<training_label_t> finishedLabels = new HashSet<training_label_t>();
+	    	for(Map.Entry<training_label_t, Identifier> e : outstandingTraining.entrySet()){
+	    		if(e.getKey().utime <= time){
+	    			finishedLabels.add(e.getKey());
+	    			e.getValue().CreateStringWME("status", "complete");
+	    		}
+	    	}
+	    	for(training_label_t label : finishedLabels){
+	    		outstandingTraining.remove(label);
+	    	}
+    	}
     }
     
     /*************************************************
@@ -98,35 +159,31 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
     }
     
     public void updateInputLink(Agent agent){
+    	prevTime = TimeUtil.utime();
     	Identifier inputLinkId = agent.GetInputLink();
     	// Update time information on the input link
+    	
     	if(timeId == null){
             timeId = inputLinkId.CreateIdWME("time");
         }
         
         stepNumber++;
+        
         WMUtil.updateIntWME(timeId, "steps", stepNumber);
-        long curTime = TimeUtil.utime();
-        soarTime = (long)(curTime - startTime);
-        WMUtil.updateIntWME(timeId, "seconds", soarTime / 1000000);
-        WMUtil.updateIntWME(timeId, "microseconds", soarTime);
-        WMUtil.updateIntWME(timeId, "perception-time", percTime);
+        WMUtil.updateIntWME(timeId, "seconds", InSoar.GetSoarTime() / 1000000);
         
         // Update pointed object
         WMUtil.updateIntWME(inputLinkId, "pointed-object", pointedId);
-        
-        // Send new training labels to perception
-        if(newLabels.size() > 0){
-            training_data_t trainingData = new training_data_t();
-        	trainingData.utime = soarTime;
-        	trainingData.num_labels = newLabels.size();
-        	trainingData.labels = new training_label_t[newLabels.size()];
-        	for(int i = 0; i < newLabels.size(); i++){
-        		trainingData.labels[i] = newLabels.get(i);
-        	}
-        	lcm.publish("TRAINING_DATA", trainingData);
-        	newLabels.clear();
+    	
+    	if(currentTimer <= -10){
+    		WMUtil.updateStringWME(timeId, "timer-status", "waiting");
+    	} else if(--currentTimer <= 0){
+    		WMUtil.updateStringWME(timeId, "timer-status", "expired");
+    	} else {
+    		WMUtil.updateStringWME(timeId, "timer-status", "ticking");
     	}
+    	
+    	
     }
 
     /*************************************************
@@ -152,6 +209,13 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
 	                System.out.println(wme.GetAttribute());
 	            } else if(wme.GetAttribute().equals("modify-scene")){
 	            	processModifySceneCommand(id);
+	            } else if(wme.GetAttribute().equals("reset-timer")){
+	            	processResetTimerCommand(id);
+	            } else if(wme.GetAttribute().equals("report-attend-status")){
+	            	totalTime += ((TimeUtil.utime() - prevTime)/1000);
+	            	id.CreateStringWME("status", "complete");
+	            } else if(wme.GetAttribute().equals("put-down")){
+	            	totalMoves ++;
 	            }
 	            soarAgent.commitChanges();
             } catch (IllegalStateException e){
@@ -160,6 +224,11 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
     	}
     }
     
+    
+    private void processResetTimerCommand(Identifier id){
+    	currentTimer = Integer.parseInt(WMUtil.getValueOfAttribute(id, "value"));
+    	id.CreateStringWME("status", "complete");
+    }
 
     private void processSendTrainingLabelCommand(Identifier id){
     	Integer objId = Integer.parseInt(WMUtil.getValueOfAttribute(id, "id", 
@@ -174,13 +243,8 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
     		return;
     	}
     	
-    	newLabel.cat = new category_t();
-    	newLabel.cat.cat = catNum;
-    	newLabel.id = objId;
-    	newLabel.label = label;
     	
-    	newLabels.add(newLabel);
-    	id.CreateStringWME("status", "complete");
+    	queueTrainingLabel(objId, catNum, label, id);
     }
     
     private void processModifySceneCommand(Identifier rootId){
@@ -233,16 +297,10 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
     	if(channel.equals("OBSERVATIONS")){
             observations_t obs = null;
             try {
-            	long time = 0;
-            	if(InSoar.DEBUG_TRACE){
-            		time = TimeUtil.utime();
-            	}
                 obs = new observations_t(ins);
-                percTime = obs.utime;
                 pointedId = obs.click_id;
-                //if(armStatus.equals("wait")){
-                    world.newObservation(obs);
-                //}
+                world.newObservation(obs);
+                receiveAckTime(obs.soar_utime);
             }
             catch (IOException e){
                 e.printStackTrace();
@@ -264,7 +322,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         clearDataButton.addActionListener(new ActionListener(){
         	public void actionPerformed(ActionEvent e){
         		perception_command_t cmd = new perception_command_t();
-        		cmd.utime = soarTime;
+        		cmd.utime = InSoar.GetSoarTime();
         		cmd.command = "CLEAR_CLASSIFIERS";
                 LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
         	}
@@ -276,8 +334,8 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         loadDataButton.addActionListener(new ActionListener(){
         	public void actionPerformed(ActionEvent e){
         		perception_command_t cmd = new perception_command_t();
-        		cmd.utime = soarTime;
-        		cmd.command = "LOAD_CLASSIFIERS";
+        		cmd.utime = InSoar.GetSoarTime();
+        		cmd.command = "LOAD_CLASSIFIERS=" + classifiersFile;
                 LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
         	}
         });
@@ -288,13 +346,55 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         saveDataButton.addActionListener(new ActionListener(){
         	public void actionPerformed(ActionEvent e){
         		perception_command_t cmd = new perception_command_t();
-        		cmd.utime = soarTime;
-        		cmd.command = "SAVE_CLASSIFIERS";
+        		cmd.utime = InSoar.GetSoarTime();
+        		cmd.command = "SAVE_CLASSIFIERS=" + classifiersFile;
                 LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
         	}
         });
         
         perceptionMenu.add(saveDataButton);
+        
+        JMenuItem loadDataFileButton = new JMenuItem("Load Data from File");
+        loadDataFileButton.addActionListener(new ActionListener(){
+        	public void actionPerformed(ActionEvent e){
+        		String filename = JOptionPane.showInputDialog(null, 
+            			  "Enter the filename to load from",
+            			  "Load Classifier Data From File",
+            			  JOptionPane.QUESTION_MESSAGE);
+        		perception_command_t cmd = new perception_command_t();
+        		cmd.utime = InSoar.GetSoarTime();
+        		cmd.command = "LOAD_CLASSIFIERS=" + filename;
+                LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
+        	}
+        });
+        
+        perceptionMenu.add(loadDataFileButton);
+        
+        JMenuItem saveDataFileButton = new JMenuItem("Save Data from File");
+        saveDataFileButton.addActionListener(new ActionListener(){
+        	public void actionPerformed(ActionEvent e){
+        		String filename = JOptionPane.showInputDialog(null, 
+          			  "Enter the filename to save to",
+          			  "Save Classifier Data To File",
+          			  JOptionPane.QUESTION_MESSAGE);
+        		perception_command_t cmd = new perception_command_t();
+        		cmd.utime = InSoar.GetSoarTime();
+        		cmd.command = "SAVE_CLASSIFIERS=" + filename;
+                LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
+        	}
+        });
+        
+        perceptionMenu.add(saveDataFileButton);
+        
+        JMenuItem reportButton = new JMenuItem("Report Data");
+        reportButton.addActionListener(new ActionListener(){
+        	public void actionPerformed(ActionEvent e){
+        		System.out.println("T: " + totalTime);
+        		System.out.println("M: " + totalMoves);
+        	}
+        });
+        
+        perceptionMenu.add(reportButton);
         
         return perceptionMenu;
     }

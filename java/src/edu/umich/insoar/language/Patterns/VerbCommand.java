@@ -93,7 +93,7 @@ public class VerbCommand extends LinguisticEntity{
 			objState = (ObjectState) tagsToWords.get(m.group());
 		}
 			
-		Pattern pp = Pattern.compile("PP\\d* OBJ\\d*");
+		Pattern pp = Pattern.compile("(to\\d* )?(DT\\d* )?PP\\d* (of\\d* )?OBJ\\d*");
 		Matcher mp = pp.matcher(string);
 		if (mp.find()){
 			StringBuffer sb = new StringBuffer();
@@ -101,7 +101,12 @@ public class VerbCommand extends LinguisticEntity{
 			p = Pattern.compile("PP\\d*");
 			m = p.matcher(ppstring);
 			if(m.find()){
-				preposition = tagsToWords.get(m.group()).toString();
+				String prep = tagsToWords.get(m.group()).toString();
+				if(prep.equalsIgnoreCase("right"))
+					preposition = "right-of";
+				else if(prep.equalsIgnoreCase("left"))
+					preposition = "left-of";
+				else preposition = prep;
 			}
 			p = Pattern.compile("OBJ\\d*");
 			m = p.matcher(ppstring);
@@ -113,10 +118,10 @@ public class VerbCommand extends LinguisticEntity{
 			string = sb.toString();
 		}
 		
-		p = Pattern.compile("PP\\d*");
+		p = Pattern.compile("to\\d*");
 		m = p.matcher(string);
 		if(m.find()){
-			preposition = tagsToWords.get(m.group()).toString();
+			preposition = "to";
 		}
 		
 		directObject = new HashSet<LingObject>();

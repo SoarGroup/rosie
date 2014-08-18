@@ -47,7 +47,12 @@ public class ObjectRelation extends LinguisticEntity {
 		Pattern p = Pattern.compile("PP\\d*");
 		Matcher m = p.matcher(string);
 		if(m.find()){
-			preposition = tagsToWords.get(m.group()).toString();
+			String prep = tagsToWords.get(m.group()).toString();
+			if (prep.equalsIgnoreCase("right"))
+				preposition = "right-of";
+			else if (prep.equalsIgnoreCase("left"))
+			preposition = "left-of";
+			else preposition = prep;
 		//	System.out.println(preposition);
 		}
 		

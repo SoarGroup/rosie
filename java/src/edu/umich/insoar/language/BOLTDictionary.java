@@ -61,7 +61,6 @@ public class BOLTDictionary {
 					fillSet(attribute,words);
 				if(group[0].equals("PRONOUN"))
 					fillSet(pronoun,words);
-				fillSet(attribute,words);
 				if(group[0].equals("IGNORE"))
 					fillSet(ignore,words);
 			}
