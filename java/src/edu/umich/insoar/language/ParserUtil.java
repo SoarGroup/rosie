@@ -7,11 +7,13 @@ import java.util.regex.Pattern;
 public class ParserUtil {
     
     public String extractPattern(EntityPattern pattern, String tagString, Map<String, Object> tagsToWords){
+    
         int Counter = 0;
         Pattern regex = pattern.regex;
         String tag = pattern.tag;
         Matcher m = regex.matcher(tagString);
         if(m.find()){
+        	System.out.println("matched for " + pattern.tag);
             StringBuffer sb = new StringBuffer();
             do{ 
                 LinguisticEntity entity = EntityFactory.createEntity(pattern.entityType);

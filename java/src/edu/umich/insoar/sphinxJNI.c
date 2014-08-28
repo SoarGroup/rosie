@@ -2,9 +2,12 @@
 #include <stdio.h>
 #include "sphinxJNI.h"
 #include <pocketsphinx.h>
-#define MODELDIR "/home/bolt/SST/pocketsphinx-0.8/model"
+#define MODELDIR "/home/aaron/apps/pocketsphinx-0.8/model"
 // Implementation of native method sayHello() of HelloJNI class
-JNIEXPORT jstring JNICALL Java_edu_umich_insoar_sphinxJNI_decodeAudio(JNIEnv *env, jobject thisObj) {
+JNIEXPORT jstring JNICALL Java_edu_umich_insoar_sphinxJNI_decodeAudio(JNIEnv *env, jobject thisObj, jstring lmfile, jstring dicfile) {
+
+	const char *lmFileString = (*env)->GetStringUTFChars(env, lmfile, 0);
+	const char *dicFileString = (*env)->GetStringUTFChars(env, dicfile, 0);
    ps_decoder_t *ps;
     cmd_ln_t *config;
     FILE *fh;
@@ -15,10 +18,10 @@ JNIEXPORT jstring JNICALL Java_edu_umich_insoar_sphinxJNI_decodeAudio(JNIEnv *en
     int32 score;
    
     config = cmd_ln_init(NULL, ps_args(), FALSE,
-			 "-logfn", "/home/bolt/SST/logfile",
+			 "-logfn", "/home/aaron/demo/speech/logfile",
 			 "-hmm", MODELDIR "/hmm/en_US/hub4wsj_sc_8k",
-			 "-lm", "/home/bolt/SST/sample.lm",
-			 "-dict", "/home/bolt/SST/sample.dic",
+			 "-lm", lmFileString,
+			 "-dict", dicFileString,
 			 NULL);
     if (config == NULL)
       return (*env)->NewStringUTF(env,"no config");// 1;
@@ -26,7 +29,7 @@ JNIEXPORT jstring JNICALL Java_edu_umich_insoar_sphinxJNI_decodeAudio(JNIEnv *en
     if (ps == NULL)
       return (*env)->NewStringUTF(env,"no ps");
     
-    fh = fopen("/home/bolt/insoar/forward.raw", "rb");
+    fh = fopen("/home/aaron/demo/speech/forward.raw", "rb");
     if (fh == NULL) {
       perror("Failed to open goforward.raw");
       return (*env)->NewStringUTF(env,"failed to open file");

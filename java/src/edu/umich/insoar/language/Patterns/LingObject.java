@@ -179,4 +179,8 @@ public class LingObject extends LinguisticEntity {
         }        
         return String.format("%s %s%s", determiner, adjString, noun);
     }
+    
+    public void setValue(String attr, String val){
+    	rootId.CreateStringWME(attr, val);
+    }
 }

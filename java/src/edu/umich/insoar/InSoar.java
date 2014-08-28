@@ -60,14 +60,15 @@ public class InSoar implements RunEventInterface
 
 	private Logger logger;
 
-    public InSoar(String agentName, boolean headless)
+    public InSoar(String agentName, String propsFile, boolean headless)
     {     
 
         // Load the properties file
         Properties props = new Properties();
         try {
-			props.load(new FileReader("sbolt.properties"));
+			props.load(new FileReader(propsFile));
 		} catch (IOException e) {
+			System.out.println("File not found: " + propsFile);
 			e.printStackTrace();
 		}
         
@@ -128,8 +129,18 @@ public class InSoar implements RunEventInterface
 			return;
 		}
 		
+		String classifiersFile = props.getProperty("classifiers-file");
+		if(classifiersFile == null){
+			classifiersFile = "default";
+		}
+		
+		String speechFile = props.getProperty("speech-file");
+		if(speechFile == null){
+			speechFile = "/home/aaron/demo/speech/sample";
+		}
+		
 		language = new LanguageConnector(soarAgent, lgSupport, dictionaryFile, grammarFile);
-        perception = new PerceptionConnector(soarAgent);   
+        perception = new PerceptionConnector(soarAgent, classifiersFile);   
         environment = new Environment(motorSystem);
         motorSystem = new MotorSystemConnector(soarAgent, perception);
         try {
@@ -141,7 +152,7 @@ public class InSoar implements RunEventInterface
         
         // Setup ChatFrame
 
-        chatFrame = new ChatFrame(language, soarAgent, logger);
+        chatFrame = new ChatFrame(language, soarAgent, logger, speechFile);
 
         // chatFrame = new ChatFrame(language, soarAgent); SM: enabled logging
         
@@ -176,14 +187,18 @@ public class InSoar implements RunEventInterface
     
     public static void main(String[] args)
     {
+    	String propsFile = "sbolt.properties";
     	boolean headless = false;
-    	if (args.length > 0 && args[0].equals("--headless")) {
-    		// it might make sense to instead always make the parameter
-    		// be the properties filename, and load all others there
-    		// (currently, properties filename is hardcoded)
-    		headless = true;
+    	for(int i = 0; i < args.length; i++){
+    		if(args[i].equals("--headless")){
+    			headless = true;
+    		} else if(args[i].equals("-c") && args.length > i+1){
+    			propsFile = args[i+1];
+    			i++;
+    		}
     	}
-    	new InSoar("insoar-agent", headless);
+
+    	new InSoar("rosie", propsFile, headless);
     }
 	
     long prevTime = 0;

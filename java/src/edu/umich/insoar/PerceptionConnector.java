@@ -54,14 +54,15 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
     private LCM lcm;
     
     protected WorldModel world;
-    
+    private String classifiersFile;
     private String armStatus = "wait";
     
     
     
-    public PerceptionConnector(SoarAgent soarAgent)
+    public PerceptionConnector(SoarAgent soarAgent, String classifiersFile)
     {
     	this.soarAgent = soarAgent;
+    	this.classifiersFile = classifiersFile;
     	
     	outstandingTraining = new HashMap<training_label_t, Identifier>();
     	
@@ -334,7 +335,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         	public void actionPerformed(ActionEvent e){
         		perception_command_t cmd = new perception_command_t();
         		cmd.utime = InSoar.GetSoarTime();
-        		cmd.command = "LOAD_CLASSIFIERS=default";
+        		cmd.command = "LOAD_CLASSIFIERS=" + classifiersFile;
                 LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
         	}
         });
@@ -346,7 +347,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         	public void actionPerformed(ActionEvent e){
         		perception_command_t cmd = new perception_command_t();
         		cmd.utime = InSoar.GetSoarTime();
-        		cmd.command = "SAVE_CLASSIFIERS=default";
+        		cmd.command = "SAVE_CLASSIFIERS=" + classifiersFile;
                 LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
         	}
         });

@@ -41,6 +41,7 @@ public class TextToSpeech
 	        		ProcessBuilder pb = new ProcessBuilder("pico2wave", "-l=en-GB", "-w=test.wav", words);
 	        		
 	        		Process p = pb.start();
+	        		p.waitFor();
 	        		File file = new File("test.wav");
 	        		
 	        		/* ONLINE GOOGLE Text to Speech Services
