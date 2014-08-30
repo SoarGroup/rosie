@@ -41,141 +41,59 @@ sp {revise-definition*elaborate*new-goal
    (<s> ^grounded-goal <goal>)
 }
 
-sp {revise-definition*elaborate*generalizable*level1
-   (state <s> ^name revise-definition
-   	      ^grounded-goal <gg>
-	      ^grounded-action <ga>)
-   (<gg> ^<pred-type> <pred>)
-   (<pred> ^<garg> <val>)
-   (<ga> ^<aarg> <val>)
--->
-   (<s> ^generalizable <gen>)
-   (<gen> ^wmem-object <val>
-   	  ^procedural-argument <aarg>
-	  ^goal-argument <garg>
-	  ^features <ft>
-	  ^level one
-	  ^grounded-predicate <pred>)
-}
+###### caution: the rules below are very hacky: may not generalize to everything
 
-sp {revise-definition*elaborate*generalizable*level2*object
-   (state <s> ^name revise-definition
-   	      ^grounded-goal <gg>
-	      ^grounded-action <ga>)
-   (<gg> ^<pred-type> <pred>)
-   (<pred> ^<garg> <val>)
-   (<ga> ^<aarg>.<< argument >> <val>)
--->
-   (<s> ^generalizable <gen>)
-   (<gen> ^wmem-object <val>
-   	  ^procedural-argument <aarg>
-	  ^goal-argument <garg>
-	  ^features <ft>
-	  ^level two
-	  ^type argument)
-}
 
-sp {revise-definition*elaborate*generalizable*level2*relation
+### if there is only one relation-predicate and one state predicate in goal definition; assign to each
+
+sp {revise-definition*elaborate*predicate*failure*grounded*predicates  
    (state <s> ^name revise-definition
-   	      ^grounded-goal <gg>
-	      ^grounded-action <ga>)
-   (<gg> ^<pred-type> <pred>)
-   (<pred> ^<garg> <val>)
-   (<ga> ^<aarg>.<< relation >> <val>)
+   	      ^predicate-grounding-failure <rp1> 
+	      ^predicate-grounding-failure {<rp2> <> <rp1>}
+	      -^predicate-grounding-failure {<rp3> <> <rp2> <> <rp1>}
+	      ^grounded-goal <gg>)
+   (<gg> ^relation-predicate <rgg>
+   	 ^state-predicate <sgg>)
+   (<rp1> ^predicate-type relation-predicate)
+   (<rp2> ^predicate-type state-predicate)
 -->
-   (<s> ^generalizable <gen>)
-   (<gen> ^wmem-object <val>
-   	  ^procedural-argument <aarg>
-	  ^goal-argument relation
-	  ^level two
-	  ^type relation)
+   (<s> ^revise-predicate-definition <rpd1>
+   	^revise-predicate-definition <rpd2>)
+   (<rpd1> ^grounded-predicate <rgg>
+   	  ^failure-details <rp1>)
+   (<rpd2> ^grounded-predicate <sgg>
+   	  ^failure-details <rp2>)
 }
 
 
-# sp {revise-definition*elaborate*predicate*failure*grounded
-#    (state <s> ^name revise-definition
-#    	      ^predicate-grounding-failure <rp>
-# 	      ^grounded-goal.<pred-type> <gg>)
-#    (<rp> ^candidate-grounds <cg>
-#    	 ^partial-grounds <pg>
-# 	 ^predicate-type <pred-type>)
-#    (<cg> ^<arg> <obj>)
-#    (<gg> ^<arg> <obj>)
-# -->
-#    (<s> ^revise-predicate-definition <rpd>)
-#    (<rpd> ^grounded-predicate <gg>
-#    	  ^failure-details <rp>)
-# }
+### if multiple relation predicates, assign them by relation types
 
-sp {revise-definition*elaborate*predicate*failure*grounded
+sp {revise-definition*elaborate*predicate*failure*grounded*relation-predicate
    (state <s> ^name revise-definition
    	      ^predicate-grounding-failure <rp>
-	      ^grounded-goal.<pred-type> <gg>)
-   (<rp> ^predicate-type <pred-type>)
+	      -^predicate-grounding-failure.predicate-type state-predicate
+	      ^grounded-goal.relation-predicate <gg>)
+   (<rp> ^predicate-type relation-predicate
+   	 ^partial-grounds.relation <rel>)
+   (<gg> ^relation <rel>)
 -->
    (<s> ^revise-predicate-definition <rpd>)
    (<rpd> ^grounded-predicate <gg>
    	  ^failure-details <rp>)
 }
-	  
-sp {revise-definition*elaborate*predicate*failure*indexable
+
+
+### if multiple state predicates, assign them by state types
+sp {revise-definition*elaborate*predicate*failure*grounded*state-predicate
    (state <s> ^name revise-definition
-   	      ^indexable <index>
-	      ^revise-predicate-definition <rpd>)
-   (<rpd> ^failure-details <f>)
-   (<f> ^predicate-type <pred-type>)
-   (<index> ^<arg> <val>)  
-   (<val> ^type <pred-type>)
+   	      ^predicate-grounding-failure <rp>
+	      -^predicate-grounding-failure.predicate-type relation-predicate
+	      ^grounded-goal.state-predicate <gg>)
+   (<rp> ^predicate-type state-predicate
+   	 ^partial-grounds.state <st>)
+   (<gg> ^state <st>)
 -->
-   (<rpd> ^indexable <val>)
+   (<s> ^revise-predicate-definition <rpd>)
+   (<rpd> ^grounded-predicate <gg>
+   	  ^failure-details <rp>)
 }
-
-
-##### elaborate features for generalizable objects
-# version 1
-# sp {revise-definition*elaborate*features*generalizables*level1
-#    (state <s> ^name revise-definition
-#    	      ^generalizable <gen>
-# 	      ^grounded-action._metadata.argument-attributes <attrs>)
-#    (<attrs> ^<arg>.<attr> <val>)
-#    (<gen> ^procedural-argument <arg>
-#    	  ^features <ft>
-# 	  ^level one)
-# -->
-#    (<ft> ^<attr> <val>)
-# }
-
-# sp {revise-definition*elaborate*features*generalizables*level2
-#    (state <s> ^name revise-definition
-#    	      ^generalizable <gen>
-# 	      ^grounded-action._metadata.argument-attributes <attrs>)
-#    (<attrs> ^<arg>.argument.<attr> <val>)
-#    (<gen> ^procedural-argument <arg>
-#    	  ^features <ft>
-# 	  ^level two)
-# -->
-#    (<ft> ^<attr> <val>)
-# }
-
-# version 2
-sp {revise-definition*elaborate*features*generalizables*level1
-   (state <s> ^name revise-definition
-   	      ^generalizable <gen>)
-   (<gen> ^procedural-argument <arg>
-   	  ^features <ft>
-	  ^wmem-object.property <wprop>)
-   (<wprop> ^label <val>	
-   	    ^name <attr>)
--->
-   (<ft> ^<attr> <val>)
-}
-
-# sp {revise-definition*elaborate*features*generalizables*relation
-#    (state <s> ^name revise-definition
-#    	      ^generalizable <gen>
-# 	      ^grounded-action._metadata.argument-attributes <attrs>)
-#    (<attrs> ^<arg>.argument.<attr> <val>)
-#    (<gen> ^procedural-argument <arg>)
-# -->
-#    (<ft> ^<attr> <val>)
-# }
