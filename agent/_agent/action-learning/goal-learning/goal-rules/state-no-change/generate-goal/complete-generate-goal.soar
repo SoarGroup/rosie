@@ -1,3 +1,4 @@
+#################### learn goal-elaboration operator #######################
 sp {generate-goal*propose*complete-generate-goal*elaborate-goal
    (state <s> ^name generate-goal
    	      ^desired <d>
@@ -22,39 +23,67 @@ sp {generate-goal*propose*elaborate-goal
 	 ^indexed-action <ia>)
 }
 
+##############################################################################
+
 sp {generate-goal*apply*complete-generate-goal*single
    (state <s> ^operator <op>
    	      ^indexed-action <ia>)
+   (<ia> -^desired)
    (<op> ^name elaborate-goal
-   	 ^desired <d>)
+   	 ^desired <d>
+	 ^indexed-action <ia>)
 -->
    (<ia> ^desired <d>)
    (<s> ^operator <op> -)
 }
 
-sp {generate-goal*apply*complete-generate-goal*multiple
+sp {generate-goal*apply*complete-generate-goal*single*already-elaborated
    (state <s> ^operator <op>
-   	      ^indexed-action <ia>
+   	      ^indexed-action <ia>)
+   (<ia> ^desired)
+   (<op> ^name elaborate-goal
+   	 ^desired <d>
+	 ^indexed-action <ia>)
+-->
+   (<s> ^operator <op> -)
+}
+
+sp {generate-goal*prefer*any*elaborate-goal*same-indexed-action
+   (state <s> ^operator <op1> +
+   	      ^operator {<op2> > <op1>} +)
+   (<op1> ^name elaborate-goal
+   	  ^indexed-action <ia>)
+   (<op2> ^name elaborate-goal
+   	  ^indexed-action <ia>)
+-->
+   (<s> ^operator <op1> > <op2>)
+}
+
+sp {generate-goal*prefer*any*elaborate-goal*different-indexed-action
+   (state <s> ^operator <op1> +
+   	      ^operator {<op2> > <op1>} +)
+   (<op1> ^name elaborate-goal
+   	  ^indexed-action <ia>)
+   (<op2> ^name elaborate-goal
+   	  ^indexed-action {<ia3> <> <ia1>})
+-->
+   (<s> ^operator <op1> = <op2>)
+}
+
+sp {generate-goal*apply*complete-generate-goal*multiple*same-indexed-action
+   (state <s> ^operator <op>
 	      ^operator {<op2> <> <op>} +)
    (<op> ^name elaborate-goal
-   	 ^desired <d>)
-   (<op2> ^name elaborate-goal)
+   	 ^desired <d>
+	 ^indexed-action <ia>)
+   (<op2> ^name elaborate-goal
+   	  ^indexed-action <ia>)
 -->
    (<ia> ^desired <d>)
    (<s> ^operator <op> -
    	^operator <op2> -)
 }
 
-sp {generate-goal*prefer*elaborate-goal*equal
-   (state <s> ^operator <op1> +
-   	      ^operator {<op2> > <op1>} +)
-   (<op1> ^name elaborate-goal
-   	  ^desired <d1>)
-   (<op2> ^name elaborate-goal
-   	  ^desired <d2>)
--->
-   (<s> ^operator <op1> > <op2>)
-}
 
 sp {elaborate-goal*lookahead*required
    (state <s> ^look-ahead-operator <lop>
@@ -70,6 +99,15 @@ sp {elaborate-goal*primitive*better
    	      ^operator <op2> +)
    (<op2> ^name elaborate-goal)
    (<op1> ^action-type << primitive composite >>)
+-->
+   (<s> ^operator <op2> > <op1>)
+}
+
+sp {elaborate-goal*smem-retrieve*better
+   (state <s> ^operator <op1> +
+   	      ^operator <op2> +)
+   (<op1> ^name elaborate-goal)
+   (<op2> ^name smem-retrieve-new)
 -->
    (<s> ^operator <op2> > <op1>)
 }
