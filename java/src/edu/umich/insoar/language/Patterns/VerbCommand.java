@@ -1,9 +1,10 @@
 package edu.umich.insoar.language.Patterns;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Iterator;
-import java.util.Set;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,7 +16,7 @@ public class VerbCommand extends LinguisticEntity{
     public static String TYPE = "VerbCommand";
 	private String verb = null;
 //	private LingObject directObject = null;
-	private Set<LingObject> directObject;
+	private List<LingObject> directObject;
 	private String preposition = null;
 	private LingObject secondObject = null;
 	private ObjectState objState = null;
@@ -27,7 +28,7 @@ public class VerbCommand extends LinguisticEntity{
     }
 
 
-    public Set<LingObject> getDirectObject()
+    public List<LingObject> getDirectObject()
     {
         return directObject;
     }
@@ -124,7 +125,7 @@ public class VerbCommand extends LinguisticEntity{
 			preposition = "to";
 		}
 		
-		directObject = new HashSet<LingObject>();
+		directObject = new ArrayList<LingObject>();
 		p = Pattern.compile("OBJ\\d*");
 		m = p.matcher(string);
 		while(m.find()){
