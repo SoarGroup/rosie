@@ -76,6 +76,7 @@ public class VerbCommand extends LinguisticEntity{
 	}
 
 	public void extractLinguisticComponents(String string, Map tagsToWords) {
+		System.out.println("compiling verb command");
 		Pattern p = Pattern.compile("VB\\d*");
 		Matcher m = p.matcher(string);
 		if(m.find()){
@@ -85,6 +86,7 @@ public class VerbCommand extends LinguisticEntity{
 				verb = list[0];
 			} else
 				verb = foundString;
+			System.out.println("found verb");
 				
 		}
 		
@@ -92,6 +94,7 @@ public class VerbCommand extends LinguisticEntity{
 		m = p.matcher(string);
 		if(m.find()){
 			objState = (ObjectState) tagsToWords.get(m.group());
+		    System.out.println("found state");
 		}
 			
 		Pattern pp = Pattern.compile("(to\\d* )?(DT\\d* )?PP\\d* (of\\d* )?OBJ\\d*");
@@ -124,7 +127,7 @@ public class VerbCommand extends LinguisticEntity{
 		if(m.find()){
 			preposition = "to";
 		}
-		
+	
 		directObject = new ArrayList<LingObject>();
 		p = Pattern.compile("OBJ\\d*");
 		m = p.matcher(string);
