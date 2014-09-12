@@ -4,24 +4,8 @@ package edu.umich.insoar;
 public class sphinxJNI {
 	   static {
 	      System.loadLibrary("sphinx"); // Load native library at runtime
-	                                   // hello.dll (Windows) or libhello.so (Unixes)
+	      // sphinx.dll (Windows) or libsphinx.so (Unixes)
 	   }
-	 
-	   // Declare a native method sayHello() that receives nothing and returns void
+	   // Declare a native method decodeAudio
 	   public native String decodeAudio(String lmFile, String dicFile);
-	   /*
-	   public String decode()
-	   {
-		   String sentence;
-		   new sphinxJNI().decodeAudio();
-		   //sentence = "test";
-		   return null;
-	   }
-	   */
-	   // Test Driver
-	   public static void main(String[] args) {
-		   String lmFile = "/home/aaron/demo/speech/sample.lm";
-		   String dicFile = "/home/aaron/demo/speech/sample.dic";
-	      new sphinxJNI().decodeAudio(lmFile, dicFile);  // invoke the native method
-	   }
 	}

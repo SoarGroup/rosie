@@ -161,10 +161,10 @@ public class ChatFrame extends JFrame
         this.soarAgent = agent;
         this.audioFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 16000.0F, 16, 1, 2, 16000.0F, false);
         this.logger = logger;
-        
+
         this.speechFile = speechFile;
-        
-        this.audioFile = new File("/home/aaron/demo/speech/forward.raw");
+        this.audioFile = new File(speechFile.replaceFirst("sample", "forward.raw"));
+
         this.info = null;
         //new DataLine.Info(TargetDataLine.class, audioFormat);
         this.targetDataLine = null;
@@ -173,7 +173,7 @@ public class ChatFrame extends JFrame
         this.tts = new TextToSpeech();
         System.out.println("Set object");
         instance = this;
-        
+
         tPane = new JTextPane();
         tPane.setEditable(false);
         tPane.addKeyListener(ctrlListener);
@@ -184,7 +184,7 @@ public class ChatFrame extends JFrame
 		chatDoc = (StyledDocument)tPane.getDocument();
 
 		setupStyles();
-        
+
         chatField = new JTextField();
         chatField.setFont(new Font("Serif",Font.PLAIN,18));
         chatField.addKeyListener(ctrlListener);
