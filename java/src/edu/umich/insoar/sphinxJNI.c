@@ -30,7 +30,7 @@ JNIEXPORT jstring JNICALL Java_edu_umich_insoar_sphinxJNI_decodeAudio(JNIEnv *en
     
     fh = fopen("audio_files/forward.raw", "rb");
     if (fh == NULL) {
-      perror("Failed to open goforward.raw");
+      perror("Failed to open audio_files/forward.raw. Does it exist?");
       return (*env)->NewStringUTF(env,"failed to open file");
     }
     

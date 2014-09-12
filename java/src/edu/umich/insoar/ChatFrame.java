@@ -163,7 +163,7 @@ public class ChatFrame extends JFrame
         this.logger = logger;
 
         this.speechFile = speechFile;
-        this.audioFile = new File(speechFile.replaceFirst("sample", "forward.raw"));
+        this.audioFile = new File("audio_files/forward.raw");
 
         this.info = null;
         //new DataLine.Info(TargetDataLine.class, audioFormat);

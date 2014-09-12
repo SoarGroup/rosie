@@ -136,9 +136,7 @@ public class InSoar implements RunEventInterface
 		
 		String speechFile = props.getProperty("speech-file");
 		if(speechFile == null){
-		    System.err.println("ERROR: No speech-file specified in sbolt.props");
-		    soarAgent.kill();
-		    return;
+			speechFile = "audio_files/sample";
 		}
 		
 		language = new LanguageConnector(soarAgent, lgSupport, dictionaryFile, grammarFile);
