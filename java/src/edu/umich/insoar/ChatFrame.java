@@ -378,8 +378,8 @@ public class ChatFrame extends JFrame
     		chatMessages.add(message);
     		try {
     			//TO ENABLE SPEAKING
-    			//if (type == ActionType.Agent)
-    			//	tts.speak(preserveMsg);
+    			if (type == ActionType.Agent)
+    				tts.speak(preserveMsg);
     			
     			DateFormat dateFormat = new SimpleDateFormat("mm:ss:SSS");
     			Date d = new Date();
