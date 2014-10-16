@@ -1,9 +1,10 @@
 package edu.umich.insoar.language.Patterns;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Iterator;
-import java.util.Set;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,7 +16,7 @@ public class VerbCommand extends LinguisticEntity{
     public static String TYPE = "VerbCommand";
 	private String verb = null;
 //	private LingObject directObject = null;
-	private Set<LingObject> directObject;
+	private List<LingObject> directObject;
 	private String preposition = null;
 	private LingObject secondObject = null;
 	private ObjectState objState = null;
@@ -27,7 +28,7 @@ public class VerbCommand extends LinguisticEntity{
     }
 
 
-    public Set<LingObject> getDirectObject()
+    public List<LingObject> getDirectObject()
     {
         return directObject;
     }
@@ -75,6 +76,7 @@ public class VerbCommand extends LinguisticEntity{
 	}
 
 	public void extractLinguisticComponents(String string, Map tagsToWords) {
+		System.out.println("compiling verb command");
 		Pattern p = Pattern.compile("VB\\d*");
 		Matcher m = p.matcher(string);
 		if(m.find()){
@@ -84,6 +86,7 @@ public class VerbCommand extends LinguisticEntity{
 				verb = list[0];
 			} else
 				verb = foundString;
+			System.out.println("found verb");
 				
 		}
 		
@@ -91,6 +94,7 @@ public class VerbCommand extends LinguisticEntity{
 		m = p.matcher(string);
 		if(m.find()){
 			objState = (ObjectState) tagsToWords.get(m.group());
+		    System.out.println("found state");
 		}
 			
 		Pattern pp = Pattern.compile("(to\\d* )?(DT\\d* )?PP\\d* (of\\d* )?OBJ\\d*");
@@ -123,8 +127,8 @@ public class VerbCommand extends LinguisticEntity{
 		if(m.find()){
 			preposition = "to";
 		}
-		
-		directObject = new HashSet<LingObject>();
+	
+		directObject = new ArrayList<LingObject>();
 		p = Pattern.compile("OBJ\\d*");
 		m = p.matcher(string);
 		while(m.find()){
