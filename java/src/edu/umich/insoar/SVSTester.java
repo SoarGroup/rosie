@@ -93,10 +93,10 @@ public class SVSTester extends JFrame implements OutputEventInterface, RunEventI
 //		}
 		if(stepNo == 0){
 			System.out.println("CREATE");
-			svsCommands.append("a obj1 object world p 0 0 0 r 0 0 0 s 1 1 1 v " + SVSCommands.bboxVertices() + "\n");
-			svsCommands.append("a obj2 object world p .95 .95 .95 r 0 0 0 s 1 1 1 v " + SVSCommands.bboxVertices() + "\n");
-			svsCommands.append(SVSCommands.addProperty("obj1", "object-source", "perception"));
-			svsCommands.append(SVSCommands.addProperty("obj2", "object-source", "perception"));
+			svsCommands.append("a obj1 world p 0 0 0 r 0 0 0 s 1 1 1 v " + SVSCommands.bboxVertices() + "\n");
+			svsCommands.append("a obj2 world p .95 .95 .95 r 0 0 0 s 1 1 1 v " + SVSCommands.bboxVertices() + "\n");
+			svsCommands.append(SVSCommands.addTag("obj1", "object-source", "perception"));
+			svsCommands.append(SVSCommands.addTag("obj2", "object-source", "perception"));
 		}
 		agent.SendSVSInput(svsCommands.toString());
 		

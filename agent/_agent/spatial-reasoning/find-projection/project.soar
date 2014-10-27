@@ -62,6 +62,60 @@ sp {find-projection*project*svs*failure*objb-exist
          ^proj-failure-reason no-object)
 }
 
+sp {find-projection*elaborate*prep-map
+   (state <s> ^name find-projection)
+-->
+   (<s> ^prep-map <map>)
+   (<map> ^x-aligned <xa>
+          ^y-aligned <ya>
+          ^z-aligned <za>
+          ^x-greater-than <xg>
+          ^y-greater-than <yg>
+          ^z-greater-than <zg>
+          ^x-less-than <xl>
+          ^y-less-than <yl>
+          ^z-less-than <zl>)
+   (<xa> ^type x_axis_separation ^value zero)
+   (<ya> ^type y_axis_separation ^value zero)
+   (<za> ^type z_axis_separation ^value zero)
+   (<xg> ^type x_axis_separation ^value positive)
+   (<yg> ^type y_axis_separation ^value positive)
+   (<zg> ^type z_axis_separation ^value positive)
+   (<xl> ^type x_axis_separation ^value negative)
+   (<yl> ^type y_axis_separation ^value negative)
+   (<zl> ^type z_axis_separation ^value negative)
+}
+
+sp {find-projection*elaborate*predicate*zero*separation
+   (state <s> ^name find-projection
+              ^predicate.relation <rel>
+              ^prep-map.<axis-type> <axis-info>)
+   (<rel> ^type <axis-type>)
+   (<axis-info> ^type <sep-type> ^value zero)
+-->
+   (<rel> ^separation-axis <sep-type> ^separation-value 0)
+}
+
+sp {find-projection*elaborate*predicate*positive*separation
+   (state <s> ^name find-projection
+              ^predicate.relation <rel>
+              ^prep-map.<axis-type> <axis-info>)
+   (<rel> ^type <axis-type> ^avg <avg>)
+   (<axis-info> ^type <sep-type> ^value positive)
+-->
+   (<rel> ^separation-axis <sep-type> ^separation-value <avg>)
+}
+
+sp {find-projection*elaborate*predicate*negative-separation
+   (state <s> ^name find-projection
+              ^predicate.relation <rel>
+              ^prep-map.<axis-type> <axis-info>)
+   (<rel> ^type <axis-type> ^avg <avg>)
+   (<axis-info> ^type <sep-type> ^value negative)
+-->
+   (<rel> ^separation-axis <sep-type> ^separation-value (- 0 <avg>))
+}
+
 sp {find-projection*project*svs*create-projection
    (state <s> ^name find-projection
               ^a <ida>
@@ -69,12 +123,12 @@ sp {find-projection*project*svs*create-projection
               ^result <res>
               ^predicate <p1>
               ^svs-link.command <cmd>)
-   (<p1> ^all-aligned <val>)
 -->
-   (<cmd> ^project <P11>)
-   (<P11> ^a <N7> ^b <N8> ^aligned <val>)
-   (<N7> ^type node ^name <ida>)
-   (<N8> ^type node ^name <idb>)
+	(<cmd> ^extract_once <e>)
+	(<e> ^type calculate_placement 
+			 ^a <nodea> ^b <nodeb>)
+   (<nodea> ^type node ^id <ida>)
+   (<nodeb> ^type node ^id <idb>)
 }
 
 sp {find-projection*project*svs*create-projection*add-axis
@@ -86,34 +140,33 @@ sp {find-projection*project*svs*create-projection*add-axis
               ^predicate <p1>)
    (<p1> ^name <prep>
          ^relation <r>)
-   (<r> ^avg <avg> ^axis <axis>)
-   (<cmd> ^project <P11>)
-   (<P11> ^a <N7> ^b <N8>)
-   (<N7> ^type node ^name <ida>)
-   (<N8> ^type node ^name <idb>)
+   (<r> ^separation-axis <axis>
+        ^separation-value <value>)
+   (<cmd> ^extract_once <P11>)
+   (<P11> ^type calculate_placement
+		  ^a.id <ida> ^b.id <idb>)
 -->
-   (<P11> ^rel <rel>)
-   (<rel> ^axis <axis> ^avg <avg>)
+   (<P11> ^<axis> <value>)
 }
 
-sp {find-projection*project*svs*create-projection*add-primitives
-   (state <s> ^name find-projection
-              ^a <ida>
-              ^b <idb>
-              ^result <res>
-              ^svs-link.command <cmd>
-              ^predicate <p1>)
-   (<p1> ^name <prep>
-         ^relation <r>)
-   (<r> ^type <ptype> ^axis <axis>)
-   (<cmd> ^project <P11>)
-   (<P11> ^a <N7> ^b <N8> ^rel <rel>)
-   (<rel> ^axis <axis>)
-   (<N7> ^type node ^name <ida>)
-   (<N8> ^type node ^name <idb>)
--->
-   (<rel> ^type <ptype>)
-}
+#sp {find-projection*project*svs*create-projection*add-primitives
+#   (state <s> ^name find-projection
+#              ^a <ida>
+#              ^b <idb>
+#              ^result <res>
+#              ^svs-link.command <cmd>
+#              ^predicate <p1>)
+#   (<p1> ^name <prep>
+#         ^relation <r>)
+#   (<r> ^type <ptype> ^axis <axis>)
+#   (<cmd> ^project <P11>)
+#   (<P11> ^a <N7> ^b <N8> ^rel <rel>)
+#   (<rel> ^axis <axis>)
+#   (<N7> ^type node ^name <ida>)
+#   (<N8> ^type node ^name <idb>)
+#-->
+#   (<rel> ^type <ptype>)
+#}
 
 sp {find-projection*project*svs*complete-projection
    (state <s> ^name find-projection
@@ -122,11 +175,11 @@ sp {find-projection*project*svs*complete-projection
               ^result <res>
               ^superstate <ss>
               ^svs-link.command <cmd>)
-   (<cmd> ^project <P11>)
-   (<P11> ^a <N7> ^b <N8> ^result <r>)
-   (<r> ^x <x> ^y <y> ^z <z>)
-   (<N7> ^type node ^name <ida>)
-   (<N8> ^type node ^name <idb>)
+	(<cmd> ^extract_once <e>)
+	(<e> ^type calculate_placement
+			 ^a.id <ida> ^b.id <idb>
+			 ^result.record.value <pos>)
+	(<pos> ^x <x> ^y <y> ^z <z>)
 -->
    (<ss> ^projection-result <result>)
    (<result> ^x <x> ^y <y> ^z <z> ^a <ida> ^b <idb>)

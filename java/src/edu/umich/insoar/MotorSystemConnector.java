@@ -177,7 +177,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     	pose.updateInputLink(selfId);
     	
     	if(armStatus != null){
-        	svsCommands.append("a arm object world p 0 0 0 r 0 0 0\n");
+        	svsCommands.append("add arm world p 0 0 0 r 0 0 0\n");
         	
         	ArrayList<Double> widths = armStatus.getArmSegmentWidths();
         	ArrayList<double[]> points = armStatus.getArmPoints();
@@ -194,7 +194,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         			size = LinAlg.scale(size, 2);
         		}
         		
-        		svsCommands.append("a " + name + " object arm p 0 0 0 r 0 0 0 ");
+        		svsCommands.append("add " + name + " arm p 0 0 0 r 0 0 0 ");
         		svsCommands.append("s " + size[0] + " " + size[1] + " " + size[2] + " ");
         		svsCommands.append("v " + SVSCommands.bboxVertices() + "\n");
         	}

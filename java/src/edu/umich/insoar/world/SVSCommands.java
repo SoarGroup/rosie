@@ -4,39 +4,39 @@ package edu.umich.insoar.world;
 public class SVSCommands {
     
     public static String add(String objID, double[] pos, double[] rot, double[] size){
-    	return String.format("a %s object world v %s p %s r %s s %s\n", objID, bboxVertices(), posToStr(pos), rotToStr(rot), sizeToStr(size));
+    	return String.format("add %s world v %s p %s r %s s %s\n", objID, bboxVertices(), posToStr(pos), rotToStr(rot), sizeToStr(size));
     }
     
     public static String add(String objID){
-    	return String.format("a %s object world v %s\n", objID, bboxVertices());
+    	return String.format("add %s world v %s\n", objID, bboxVertices());
     }
     
     public static String changePos(String objID, double[] pos){
-    	return String.format("c %s p %s\n", objID, posToStr(pos));
+    	return String.format("change %s p %s\n", objID, posToStr(pos));
     }
     
     public static String changeRot(String objID, double[] rot){
-    	return String.format("c %s r %s\n", objID, rotToStr(rot));
+    	return String.format("change %s r %s\n", objID, rotToStr(rot));
     }
     
     public static String changeSize(String objID, double[] size){
-    	return String.format("c %s s %s\n", objID, rotToStr(size));
+    	return String.format("change %s s %s\n", objID, rotToStr(size));
     }
     
     public static String delete(String objID){
-    	return String.format("d %s\n",objID);
+    	return String.format("delete %s\n",objID);
     }
     
-    public static String addProperty(String objID, String propName, String value){
-    	return String.format("p %s a %s %s\n", objID, propName, value);
+    public static String addTag(String objID, String tagName, String tagValue){
+    	return String.format("tag add %s %s %s\n", objID, tagName, tagValue);
     }
     
-    public static String changeProperty(String objID, String propName, String value){
-    	return String.format("p %s c %s %s\n", objID, propName, value);
+    public static String changeTag(String objID, String tagName, String tagValue){
+    	return String.format("tag change %s %s %s\n", objID, tagName, tagValue);
     }
     
-    public static String deleteProperty(String objID, String propName){
-    	return String.format("p %s d %s\n", objID, propName);
+    public static String deleteTag(String objID, String tagName){
+    	return String.format("tag delete %s %s\n", objID, tagName);
     }
     
     public static String bboxVertices(){

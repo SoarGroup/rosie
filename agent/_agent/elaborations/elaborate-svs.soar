@@ -38,10 +38,10 @@ sp {svs*apply*any-op*property-command*object-source*belief
    (<bel-obj> ^id <bel-id>
              -^object-source belief)
 -->
-   (<cmd> ^property <prop>)
+   (<cmd> ^set_tag <prop>)
    (<prop> ^id <bel-id>
-           ^property object-source
-           ^value belief)
+           ^tag_name object-source
+           ^tag_value belief)
 }
 
 # Marks the object as stale in svs so that it can be used in filters
@@ -55,10 +55,10 @@ sp {svs*apply*any-op*property-command*stale*true
    (<bel-obj> ^id <id>
              -^stale true)
 -->
-   (<cmd> ^property <prop>)
+   (<cmd> ^set_tag <prop>)
    (<prop> ^id <id>
-           ^property stale
-           ^value true)
+           ^tag_name stale
+           ^tag_value true)
 }
 
 sp {svs*apply*any-op*property-command*stale*false
@@ -71,10 +71,10 @@ sp {svs*apply*any-op*property-command*stale*false
    (<bel-obj> ^id <id>
              -^stale false)
 -->
-   (<cmd> ^property <prop>)
+   (<cmd> ^set_tag <prop>)
    (<prop> ^id <id>
-           ^property stale
-           ^value false)
+           ^tag_name stale
+           ^tag_value false)
 }
 
 # Cleans up the svs command link after commands have been  completed
@@ -97,19 +97,30 @@ sp {svs*apply*any-op*remove*completed*commands
    (state <s> ^topstate <s>
               ^operator <o>
               ^svs.command <cmd>)
-   (<cmd> ^{<type> << del_node copy_node property >>} <val>)
+   (<cmd> ^{<type> << add_node copy_node delete_node set_transform copy_transform set_tag delete_tag >> } <val>)
    (<val> ^status success)
 -->
    (<cmd> ^<type> <val> -)
+}
+
+sp {svs*apply*any-op*report*filters*errors
+   (state <s> ^topstate <s>
+              ^operator <o>
+              ^svs.command <cmd>)
+   (<cmd> ^{ << extract extract_once >> } <val>)
+   (<val> ^type <type>
+          ^status {<status> <> success})
+-->
+   (write |Filter Error (| <type> |): | <status> (crlf))
 }
 
 sp {svs*apply*any-op*remove*completed*commands*errors
    (state <s> ^topstate <s>
               ^operator <o>
               ^svs.command <cmd>)
-   (<cmd> ^{<type> << del_node copy_node property extract_once >>} <val>)
+   (<cmd> ^{<type> <> extract <> extract_once } <val>)
    (<val> ^status {<status> <> success})
 -->
    (<cmd> ^<type> <val> -)
-   (write |Filter Error (| <type> |): | <status> (crlf))
+   (write |Command Error (| <type> |): | <status> (crlf))
 }

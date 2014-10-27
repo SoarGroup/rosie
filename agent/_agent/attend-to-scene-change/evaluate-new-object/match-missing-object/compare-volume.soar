@@ -19,28 +19,43 @@ sp {match-missing-object*apply*compare-volume*create*filter
          ^missing-id <bel-id>
          ^candidate-id <cand-id>)
 -->
-   (<cmd> ^extract_once <compare-vol>)
-   (<compare-vol> ^type compare-nodes
-                  ^a <a>
-                  ^b <b>
-                  ^compare volume)
-   (<a> ^type node ^id <bel-id>)
-   (<b> ^type node ^id <cand-id>)
-   (<s> ^compare-volume-filter <compare-vol>)
+   (<cmd> ^extract_once <bel-vol> <cand-vol>)
+   (<bel-vol> ^type volume
+              ^a <ba>
+              ^volume_type scale)
+   (<ba> ^type node
+         ^id <bel-id>)
+   (<cand-vol> ^type volume
+               ^a <ca>
+               ^volume_type scale)
+   (<ca> ^type node
+         ^id <cand-id>)
+   (<s> ^candidate-volume-filter <cand-vol>
+        ^belief-volume-filter <bel-vol>)
 }
 
 sp {match-missing-object*apply*compare-volume*copy*result
    (state <s> ^name match-missing-object
               ^operator.name compare-volume
-              ^compare-volume-filter.result.record.value <val>)
+              ^candidate-volume-filter.result.record.value <cand-vol>
+              ^belief-volume-filter.result.record.value <bel-vol>)
 -->
-   (<s> ^volume-diff <val>)
+   (<s> ^volume-diff (/ (+ <cand-vol> 0.000000001) (+ <bel-vol> 0.000000001)))
 }
 
-sp {match-missing-object*apply*compare-volume*no*result
+sp {match-missing-object*apply*compare-volume*no*result*belief
    (state <s> ^name match-missing-object
               ^operator.name compare-volume
-              ^compare-volume-filter.result <res>)
+              ^belief-volume-filter.result <res>)
+   (<res> -^record.value <val>)
+-->
+   (<s> ^volume-diff 0)
+}
+
+sp {match-missing-object*apply*compare-volume*no*result*candidate
+   (state <s> ^name match-missing-object
+              ^operator.name compare-volume
+              ^candidate-volume-filter.result <res>)
    (<res> -^record.value <val>)
 -->
    (<s> ^volume-diff 0)
@@ -49,11 +64,14 @@ sp {match-missing-object*apply*compare-volume*no*result
 sp {match-missing-object*apply*compare-volume*cleanup
    (state <s> ^name match-missing-object
               ^operator.name compare-volume
-              ^compare-volume-filter <filter>
+              ^candidate-volume-filter <cand-vol>
+              ^belief-volume-filter <bel-vol>
               ^topstate.svs.command <cmd>)
    (<cmd> ^extract_once <filter>)
    (<filter> ^result <res>)
 -->
-   (<cmd> ^extract_once <filter> -)
-   (<s> ^compare-volume-filter <filter> -)
+   (<cmd> ^extract_once <cand-vol> -
+          ^extract_once <bel-vol> -)
+   (<s> ^candidate-volume-filter <cand-vol> -
+        ^belief-volume-filter <bel-vol> -)
 }

@@ -20,6 +20,7 @@ public class WorldModel implements RunEventInterface
 {    
     
     // Mapping from object ids to objects
+	private Identifier objectsId;
     private Map<Integer, WorldObject> objects;
     
     private observations_t newObservation = null;
@@ -39,7 +40,7 @@ public class WorldModel implements RunEventInterface
         objectLinks = new HashMap<Integer, Integer>();
   
         StringBuilder svsCommands = new StringBuilder();
-        svsCommands.append("a eye object world b .01 p 0 0 0\n");
+        svsCommands.append("add eye world b .01 p 0 0 0\n");
         soarAgent.getAgent().SendSVSInput(svsCommands.toString());
     }    
     
@@ -63,8 +64,10 @@ public class WorldModel implements RunEventInterface
     		Integer sId = Integer.parseInt(sourceId);
     		objectLinks.put(sId, dId);
     		if(objects.containsKey(sId)){
-    			objData.addAll(objects.get(sId).getLastDatas());
+    			WorldObject wobj = objects.get(sId);
+    			objData.addAll(wobj.getLastDatas());
             	svsCommands.append(SVSCommands.delete(sId.toString()));
+            	wobj.destroy();
             	objects.remove(sId);
     		}
     	}
@@ -75,7 +78,7 @@ public class WorldModel implements RunEventInterface
         }
         
         if(objData.size() > 0){
-        	WorldObject object = new WorldObject(dId, objData);
+        	WorldObject object = new WorldObject(objectsId, dId, objData);
         	object.updateSVS(soarAgent.getAgent());
         	objects.put(dId, object);
         }
@@ -92,9 +95,12 @@ public class WorldModel implements RunEventInterface
     		time = TimeUtil.utime();
     		System.out.println("!!! GOT MESSAGE !!!");
     	}
+    	if(objectsId == null){
+    		objectsId = agent.GetInputLink().CreateIdWME("objects");
+    	}
 
     	double[] eye = newObservation.eye;
-    	agent.SendSVSInput(String.format("c eye p %f %f %f", eye[0], eye[1], eye[2]));
+    	agent.SendSVSInput(String.format("change eye p %f %f %f", eye[0], eye[1], eye[2]));
     	
     	Set<Integer> staleObjects = new HashSet<Integer>();
     	for(WorldObject object : objects.values()){
@@ -119,7 +125,7 @@ public class WorldModel implements RunEventInterface
     		}
     		WorldObject object = objects.get(id);
     		if(object == null){
-    			object = new WorldObject(id, e.getValue());
+    			object = new WorldObject(objectsId, id, e.getValue());
     			objects.put(id, object);
     		} else {
     			staleObjects.remove(id);
@@ -131,6 +137,7 @@ public class WorldModel implements RunEventInterface
         for(Integer id : staleObjects){
         	WorldObject object = objects.get(id);
         	svsCommands.append(SVSCommands.delete(object.getIdString()));
+        	object.destroy();
         	objects.remove(id);
         }
         String commands = svsCommands.toString();
