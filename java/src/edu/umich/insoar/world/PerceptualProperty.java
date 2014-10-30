@@ -2,8 +2,6 @@ package edu.umich.insoar.world;
 
 import java.util.*;
 
-import edu.umich.soar.FloatWme;
-import edu.umich.soar.StringWme;
 import probcog.lcmtypes.*;
 import sml.*;
 
