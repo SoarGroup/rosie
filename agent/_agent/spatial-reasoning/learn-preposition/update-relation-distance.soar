@@ -1,0 +1,122 @@
+# Operator: update-relation-distance
+# for relations where distance is a factor 
+# (That is, the objects were not aligned on that axis)
+# Then update the relation's distance information with the new distance
+sp {learn-preposition*propose*update-relation-distance
+   (state <s> ^name learn-preposition
+              ^instance-info.axis <axis>
+              ^predicate.relation <rel>)
+   (<axis> ^name <axis-name>
+           ^case << greater less >>
+          -^added)
+   (<rel> ^axis <axis-name>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name update-relation-distance
+        ^relation <rel>
+        ^axis <axis>)
+}
+
+# Compute the new distance sum, sum of the squares, and total count
+sp {learn-preposition*elaborate*update-relation-distance*new-info
+   (state <s> ^name learn-preposition
+              ^operator <o> +)
+   (<o> ^name update-relation-distance
+        ^axis.distance <d>
+        ^relation <rel>)
+   (<rel> ^count <count>
+          ^sum <sum>
+          ^squaredsum <sqsum>)
+-->
+   (<o> ^new-sum (+ <sum> <d>)
+        ^new-squaredsum (+ <sqsum> (* <d> <d>))
+        ^new-count (+ <count> 1))
+}
+
+# compute the new average distance and average squared distance
+sp {learn-preposition*elaborate*update-relation-distance*new-avg
+   (state <s> ^name learn-preposition
+              ^operator <o> +)
+   (<o> ^name update-relation-distance
+        ^new-count <count>
+        ^new-sum <sum>
+        ^new-squaredsum <sqsum>)
+-->
+   (<o> ^new-avg (/ <sum> <count>)
+        ^new-sq-avg (/ <sqsum> <count>)) # average of squared values
+}
+
+# Compute the new standard deviation
+sp {learn-preposition*elaborate*update-relation-distance*new-std-dev
+   (state <s> ^name learn-preposition
+              ^operator <o> +)
+   (<o> ^name update-relation-distance
+        ^new-avg <avg>
+        ^new-sq-avg <sq-avg>)
+-->
+   # Standard Deviation = sqrt(E[X^2] - E[X]^2)
+   (<o> ^new-std-dev (sqrt (- <sq-avg> (* <avg> <avg>))))
+}
+
+# Mark the distnace information as having been added
+sp {learn-preposition*apply*update-relation-distance*mark*added
+   (state <s> ^name learn-preposition
+              ^operator <o>)
+   (<o> ^name update-relation-distance
+        ^axis <axis>)
+-->
+   (<axis> ^added true)
+}
+
+# First time recording a distance
+sp {learn-preposition*apply*update-relation-distance*first*distance
+   (state <s> ^name learn-preposition
+              ^operator <o>)
+   (<o> ^name update-relation-distance
+        ^axis.distance <d>
+        ^relation <rel>)
+   (<rel> ^count 0)
+-->
+   (<rel> ^count 0 -)
+   (<rel> ^count 1
+          ^bottom 0.0 ^top 100.0
+          ^avg <d> ^dist <d>
+          ^sum <d> ^squaredsum (* <d> <d>))
+}
+
+# Aggregating multiple distances together
+sp {learn-preposition*apply*update-relation-distance*multiple
+   (state <s> ^name learn-preposition
+              ^operator <o>)
+   (<o> ^name update-relation-distance
+        ^axis.distance <d>
+        ^relation <rel>
+        ^new-count <new-count>
+        ^new-sum <new-sum>
+        ^new-squaredsum <new-sqsum>
+        ^new-avg <new-avg>
+        ^new-std-dev <new-std-dev>)
+   (<rel> ^count {<count> > 0}
+          ^sum <sum>
+          ^squaredsum <sqsum>
+          ^avg <avg>
+          ^dist <dist>
+          ^top <top>
+          ^bottom <bot>)
+-->
+   (<rel> ^count <count> -
+          ^sum <sum> -
+          ^squaredsum <sqsum> -
+          ^avg <avg> -
+          ^dist <dist> -
+          ^top <top> -
+          ^bottom <bot> -)
+   (<rel> ^count <new-count>
+          ^sum <new-sum>
+          ^squaredsum <new-sqsum>
+          ^avg <new-avg>
+          ^dist <new-avg>
+          # Mean +- 1.5*STD-DEV
+          ^top (+ <new-avg> (* 1.5 <new-std-dev>))
+          ^bottom (- <new-avg> (* 1.5 <new-std-dev>)))
+}
