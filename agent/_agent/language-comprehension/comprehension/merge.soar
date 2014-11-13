@@ -1,51 +1,75 @@
-sp {comprehension*propose*merge*not-grounded-at-merge
+sp {comprehension*elaborate*possible-merge
    (state <s> ^name comprehension
               ^segment <seg>)
-   (<seg> ^unfilled-receiver-item <receiver-item>
-          ^unfilled-assigner-item <assigner-item>)
-  -{(<assigner-item> ^lt-lexical-assigner.after <after>)
-    (<seg> ^unfilled-assigner-item.lt-lexical-assigner <after>)}
-   (<assigner-item> ^structure-type <stype>
-                   -^lt-lexical-assigner.lexical-item-spelling)
-   (<receiver-item> ^structure-type <stype>)
-  -(<assigner-item> ^parent-structure <receiver-item>) # Cannot fulfill itself
-#  -{(<assigner-item> ^parent-structure <parent>)
-#    (<receiver-item> ^ << DP VP PP >> <parent>)}   # should never have ^ << DP >>
+   (<seg> ^not-merged-receiver <receiver>
+          ^not-merged-assigner <assigner>)
+   (<assigner> ^structure-type <stype>
+              -^lt.lexical-item-spelling)
+   (<receiver> ^structure-type <stype>)
+  -(<assigner> ^parent-receiver <receiver>) # Cannot fulfill itself
+ -{(<assigner> ^lt.after <after>)           # enforce after
+   (<seg> ^not-merged-assigner.lt <after>)}
+ -{(<receiver> ^decision-count > <dl-dc>)   # enforce before
+   (<assigner> ^lt.relative-position before
+               ^decision-count <dl-dc>)}
+ -{(<receiver> ^decision-count < <dl-dc2>)   # enforce after on DC
+   (<assigner> ^lt.relative-position after
+               ^decision-count <dl-dc2>)}
+-->
+   (<s> ^possible-merge <pm>)
+   (<pm> ^receiver <receiver>
+         ^assigner <assigner>
+         ^type normal)
+   (write (crlf) |Possible Merge: | <stype>)
+}
+
+sp {comprehension*elaborate*possible-merge*lexical-item*match*required
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^not-merged-receiver <receiver>
+          ^not-merged-assigner <assigner>)
+   (<assigner> ^structure-type <stype>
+               ^lt.lexical-item-spelling <lex-item-spell>)
+   (<receiver> ^structure-type <stype>
+               ^lt.spelling <lex-item-spell>)
+  -(<assigner> ^parent-receiver <receiver>) # Cannot fulfill itself
+ -{(<assigner> ^parent-receiver <parent>)
+   (<receiver> ^ << DP VP PP CP >> <parent>)}
+ -{(<assigner> ^lt.after <after>)           # enforce after
+   (<seg> ^not-merged-assigner.lt <after>)}
+ -{(<receiver> ^decision-count > <dl-dc>)   # enforce before
+   (<assigner> ^lt.relative-position before
+               ^decision-count <dl-dc>)}
+ -{(<receiver> ^decision-count < <dl-dc>)   # enforce after on DC
+   (<assigner> ^lt.relative-position after
+               ^decision-count <dl-dc>)}
+-->
+   (<s> ^possible-merge <pm>)
+   (<pm> ^receiver <receiver>
+         ^assigner <assigner>
+         ^type lexical)
+   (write (crlf) |Propose lexical-item match merging: | <lex-item-spell>)
+}
+
+sp {comprehension*propose*merge
+   (state <s> ^name comprehension
+              ^possible-merge <pm>)
+   (<pm> ^receiver <receiver>
+         ^assigner <assigner>
+         ^type <type>) 
 -->
    (<s> ^operator <op> +)
    (<op> ^name merge
-         ^receiver <receiver-item>
-         ^assigner <assigner-item>)
-   (write (crlf) |Propose Merging: | <stype>)
+         ^receiver <receiver>
+         ^assigner <assigner>
+         ^type <type>)
+   (write (crlf) |Propose Merging: | <receiver> | and | <assigner>)
 }
 
-sp {comprehension*propose*merge*not-grounded-at-merge*lexical-item
-   (state <s> ^name comprehension
-              ^segment <seg>)
-   (<seg> ^unfilled-receiver-item <receiver-item>
-          ^unfilled-assigner-item <assigner-item>)
-  -{(<assigner-item> ^lt-lexical-assigner.after <after>)
-    (<seg> ^unfilled-assigner-item.lt-lexical-assigner <after>)}
-   (<assigner-item> ^structure-type <stype>
-                    ^lt-lexical-assigner.lexical-item-spelling <lex-item-spell>)
-   (<receiver-item> ^structure-type <stype>
-                    ^lt-lexical-item.spelling <lex-item-spell>)
-  -(<assigner-item> ^parent-structure <receiver-item>) # Cannot fulfill itself
-  -{(<assigner-item> ^parent-structure <parent>)
-    (<receiver-item> ^ << DP VP PP >> <parent>)}
--->
-   (<s> ^operator <op> +, >)
-  #Prefer to ones that have a lexical match
-   (<op> ^name merge
-         ^receiver <receiver-item>
-         ^assigner <assigner-item>)
-   (write (crlf) |Propose merging: | <lex-item-spell>)
-}
 
 ###Selection - rejects
- 
- 
-sp {comprehension*reject*merge
+  
+sp {comprehension*reject*merge*for-failed-grounding
   # :interrupt
    (state <s> ^name comprehension
               ^operator <op1> +
@@ -60,46 +84,31 @@ sp {comprehension*reject*merge
          ^lost-grounding <lg>)
    (<ai> ^structure-type <pos>
          ^spatial-relation <sr>)
-   (<ur> ^parent-structure.referent <lg>)
+   (<ur> ^parent-receiver.referent <lg>)
 -->
    (<s> ^operator <op1> -)
 }
 
-sp {comprehension*reject*merge*not-before
-  # :interrupt
+# prefer lexical merges
+sp {comprehension*compare*merge*prefer-lexical
    (state <s> ^name comprehension
-              ^operator <op1> +)
-   (<op1> ^name merge
-          ^receiver <ul>
-          ^assigner <dl>)
-   (<ul> ^decision-count > <dl-dc>)
-   (<dl> ^lt-lexical-assigner.relative-position before
-         ^decision-count <dl-dc>)
+              ^operator <op1> +
+                        <op2> +)
+   (<op1> ^name merge 
+          ^type normal)
+   (<op2> ^name merge
+          ^type lexical) 
 -->
-   (<s> ^operator <op1> -)
+   (<s> ^operator <op1> < <op2>)
 }
 
-sp {comprehension*reject*merge*not-after
-  # :interrupt
-   (state <s> ^name comprehension
-              ^operator <op1> +)
-   (<op1> ^name merge
-          ^receiver <ul>
-          ^assigner <dl>)
-   (<ul> ^decision-count < <dl-dc>)
-   (<dl> ^lt-lexical-assigner.relative-position after
-         ^decision-count <dl-dc>)
--->
-   (<s> ^operator <op1> -)
-}
-
-# avoid merging terminator until all others are merged.
+# avoid merging until comprehend-word is complete
 sp {comprehension*compare*merge*comprehend-word
    (state <s> ^name comprehension
               ^operator <op1> +
                         <op2> +)
    (<op1> ^name merge)
-   (<op2> ^name <<  comprehend-word >>) #process-missing-assigner
+   (<op2> ^name comprehend-word) 
 -->
    (<s> ^operator <op1> < <op2>)
 }
@@ -109,7 +118,7 @@ sp {comprehension*compare*merge*comprehend-word*process-missing-assigner
               ^operator <op1> +
                         <op2> +)
    (<op1> ^name merge)
-   (<op2> ^name << comprehend-construction process-missing-assigner >>)
+   (<op2> ^name << comprehend-construction failed-comprehension process-missing-assigner >>)
 -->
    (<s> ^operator <op1> > <op2>)
 }
@@ -135,7 +144,6 @@ sp {comprehension*compare*merge*indifferent-different-receiver
    (<s> ^operator <op1> = <op2>)
 }
 
-
 sp {comprehension*compare*merge*avoid-terminator
    (state <s> ^name comprehension
               ^operator <op1> +
@@ -157,47 +165,15 @@ sp {comprehension*compare*merge*prefer*directional-verb
               ^operator <op2> +)
    (<op1> ^name merge
           ^receiver <r1>
-          ^assigner.parent-structure.structure-type << V VP >>)
+          ^assigner.parent-receiver.structure-type << V VP >>)
    (<r1> ^structure-type PP
-         ^lt-lexical-item.directional true)
+         ^lt.directional true)
    (<op2> ^name merge
           ^receiver <r1>
-         -^assigner.parent-structure.structure-type << V VP >>)
+         -^assigner.parent-receiver.structure-type << V VP >>)
 -->
    (<s> ^operator <op1> > <op2>)
 }
-#
-#sp {comprehension*compare*merge*prefer*bottom-up
-#   (state <s> ^name comprehension
-#              ^operator <op1> +
-#              ^operator <op2> +)
-#   (<op1> ^name merge
-#          ^assigner <wws>)
-#   (<op2> ^name merge
-#          ^assigner.parent-structure <wws>)
-#-->
-#   (<s> ^operator <op1> < <op2>)
-#}
-#
-#sp {comprehension*compare*merge*prefer*most-recent
-#   (state <s> ^name comprehension
-#              ^operator <op1> +
-#              ^operator <op2> +)
-#   (<op1> ^name merge
-#          ^assigner <ass1>
-#          ^receiver <rec>)
-#   (<ass1> ^decision-count <dc>
-#          -^lt-lexical-assigner.before-type <bt>)
-#   (<op2> ^name merge
-#          ^assigner <ass2>
-#          ^receiver <> <rec>)
-#   (<ass2> ^decision-count > <dc>
-#           ^structure-type <bt>)
-#  - (<rec> ^structure-type PP
-#           ^lt-lexical-item.directional true)
-#-->
-#   (<s> ^operator <op1> < <op2>)
-#}
 
 sp {comprehension*compare*merge*prefer*most-recent*same-parent
    (state <s> ^name comprehension
@@ -206,12 +182,12 @@ sp {comprehension*compare*merge*prefer*most-recent*same-parent
    (<op1> ^name merge
           ^assigner <ass1>
           ^receiver <rec>)
-   (<ass1> ^parent-structure <ps>
-           ^lt-lexical-assigner.before-type <bt>)
+   (<ass1> ^parent-receiver <ps>
+           ^lt.before-type <bt>)
    (<op2> ^name merge
           ^assigner <ass2>
           ^receiver <> <rec>)
-   (<ass2> ^parent-structure <ps>
+   (<ass2> ^parent-receiver <ps>
            ^structure-type <bt>)
 -->
    (<s> ^operator <op1> > <op2>)
@@ -232,55 +208,98 @@ sp {comprehension*compare*merge*prefer*most-recent*not-pp
    (<s> ^operator <op1> < <op2>)
 }
 
+sp {comprehension*compare*merge*prefer*most-recent*attachment-immediate
+   (state <s> ^name comprehension
+              ^operator <op1> +
+              ^operator { <> <op1> <op2> } +)
+   (<op1> ^name merge
+          ^assigner <ass1>
+          ^receiver <rec>)
+   (<ass1> ^decision-count <dc>)
+   (<rec> ^lt.attachment immediate)
+   (<op2> ^name merge
+          ^assigner <ass2>
+          ^receiver <rec>)
+  (<ass2> ^decision-count > <dc>)
+-->
+   (<s> ^operator <op1> < <op2>)
+}
+
+
+############################################################################
 ### Apply MERGE
 
 sp {apply*merge
    (state <s> ^operator <op>
               ^segment <seg>)
-   (<seg> ^unfilled-receiver-item <receiver-item>
-          ^unfilled-assigner-item <assigner-item>)
+   (<seg> ^not-merged-receiver <receiver>
+          ^not-merged-assigner <assigner>)
    (<op> ^name merge
-         ^receiver <receiver-item>
-         ^assigner <assigner-item>)
-   (<assigner-item> ^parent-structure <pword>
-                   -^lt-lexical-assigner.repeatable true
-                    ^lt-lexical-assigner.syntactic-structure { <> nil <> reverse-merge <stype> })
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^parent-receiver <pword>
+              -^lt.repeatable true
+               ^lt.syntactic-structure { <> nil <> reverse-merge <stype> })
 -->
-   (<seg> ^unfilled-receiver-item <receiver-item> -
-          ^unfilled-assigner-item <assigner-item> -)
-   (<pword> ^<stype> <receiver-item>)
+   (<seg> ^not-merged-receiver <receiver> -
+          ^not-merged-assigner <assigner> -
+          ^merged-assigner <assigner>)
+   (<assigner> ^merged-receiver <receiver>)
+   (<pword> ^<stype> <receiver>)
 }
 
 
 sp {apply*merge*filler-word
    (state <s> ^operator <op>
               ^segment <seg>)
-   (<seg> ^unfilled-receiver-item <receiver-item>
-          ^unfilled-assigner-item <assigner-item>)
+   (<seg> ^not-merged-receiver <receiver>
+          ^not-merged-assigner <assigner>)
    (<op> ^name merge
-         ^receiver <receiver-item>
-         ^assigner <assigner-item>)
-   (<assigner-item> -^lt-lexical-assigner.repeatable true
-                    ^lt-lexical-assigner.syntactic-structure nil)
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> -^lt.repeatable true
+                ^lt.syntactic-structure nil)
 -->
-   (<seg> ^unfilled-receiver-item <receiver-item> -
-          ^unfilled-assigner-item <assigner-item> -)
+   (<seg> ^not-merged-receiver <receiver> -
+          ^not-merged-assigner <assigner> -
+          ^merged-assigner <assigner>)
+   (<assigner> ^merged-receiver <receiver>)
 }
 
 sp {apply*merge*repeatable
    (state <s> ^operator <op>
               ^segment <seg>)
-   (<seg> ^unfilled-receiver-item <receiver-item>
-          ^unfilled-assigner-item <assigner-item>)
+   (<seg> ^not-merged-receiver <receiver>
+          ^not-merged-assigner <assigner>)
    (<op> ^name merge
-         ^receiver <receiver-item>
-         ^assigner <assigner-item>)
-   (<assigner-item> ^parent-structure <pword>
-                    ^lt-lexical-assigner.repeatable true
-                    ^lt-lexical-assigner.syntactic-structure <stype>)
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^parent-receiver <pword>
+                    ^lt <lt>)
+   (<lt> ^repeatable true
+         ^syntactic-structure  { <> nil <stype> })
 -->
-   (<seg> ^unfilled-receiver-item <receiver-item> -)
-   (<pword> ^<stype> <receiver-item>)
+   (<seg> ^not-merged-receiver <receiver> -
+          ^merged-assigner <assigner>)
+   (<assigner> ^merged-receiver <receiver>)
+   (<pword> ^<stype> <receiver>)
+}
+
+sp {apply*merge*filler-word*repeatable
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<seg> ^not-merged-receiver <receiver>
+          ^not-merged-assigner <assigner>)
+   (<op> ^name merge
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner>  ^lt <lt>)
+   (<lt> ^repeatable true
+         ^syntactic-structure nil)
+-->
+   (<seg> ^not-merged-receiver <receiver> -
+          ^merged-assigner <assigner>)
+   (<assigner> ^merged-receiver <receiver>)
 }
 
 ######Update last-merge
@@ -289,65 +308,129 @@ sp {apply*merge*last-merge
    (state <s> ^operator <op>
               ^segment <seg>)
    (<seg> ^last-merge <lm>
-          ^unfilled-receiver-item <receiver-item>
-          ^unfilled-assigner-item <assigner-item>)
+          ^not-merged-receiver <receiver>
+          ^not-merged-assigner <assigner>)
    (<op> ^name merge
-         ^receiver <receiver-item>
-         ^assigner <assigner-item>)
-   (<assigner-item> ^lt-lexical-assigner.syntactic-structure <stype>)
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^lt.syntactic-structure <stype>)
 -->
    (<seg> ^last-merge <nm>
                       <lm> -)
-   (<nm> ^assigner <assigner-item>
-         ^receiver <receiver-item>
+   (<nm> ^assigner <assigner>
+         ^receiver <receiver>
          ^structure-type <stype>)
 }
 
-######Copy up first-word status
-
-sp {apply*merge*copy-first-word
-   :interrupt
-   (state <s> ^operator <op>
-              ^segment.unfilled-assigner-item <assigner-item>)
+######Copy up semantics
+sp {apply*merge*copy-semantics
+ # :interrupt
+   (state <s> ^operator <op>)
    (<op> ^name merge
-         ^receiver <receiver-item>
-         ^assigner <assigner-item>)
-   (<assigner-item> ^parent-structure <pword>)
-   (<receiver-item> ^first-word true)
-  -(<pword> ^constraint.<att> <val>)
+         ^receiver.semantics <sem>
+         ^assigner <ass>)
+   (<ass> ^parent-receiver.semantics <sem2>)
+   (<sem> ^<att> <value>)
+   -(<ass> ^lt.semantic-structure)   ### ADD JEL
 -->
-   (write (crlf) |Copy ^first-word true from | <receiver-item> | to | <pword>)
+   (write (crlf) |Copy ^semantics ^| <att> | | <value> | from | <sem> | to | <sem2>)
+   (<sem2> ^<att> <value>)
+   (<ass> ^process-semantics <value>)
+}
+
+######Copy up message-type
+sp {apply*merge*copy-message-type*semantics
+  #:interrupt
+   (state <s> ^operator <op>)
+   (<op> ^name merge
+         ^receiver.lt.message-type <ms-type>
+         ^assigner.parent-receiver <pword>)
+   (<pword> ^semantics <sem2>
+            ^lt.structure-type S)
+-->
+   (write (crlf) |Copy ^message-type | <ms-type> | to | <sem2>)
+   (<sem2> ^message-type <ms-type>)
+}
+
+######Copy up message-type
+sp {apply*merge*copy-message-type
+  #:interrupt
+   (state <s> ^operator <op>)
+   (<op> ^name merge
+         ^receiver.lt.message-type <ms-type>
+         ^assigner.parent-receiver <pword>)
+   (<pword> ^lt.structure-type S)
+-->
+   (write (crlf) |Copy ^message-type | <ms-type> | to | <pword>)
+   (<pword> ^message-type <ms-type>)
+}
+
+######Copy up first-word status
+sp {apply*merge*copy-first-word
+  #:interrupt
+   (state <s> ^operator <op>
+              ^segment.not-merged-assigner <assigner>)
+   (<op> ^name merge
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^parent-receiver <pword>)
+   (<receiver> ^current-word.first-word true)
+  -(<pword> ^constraint.<att> <val>)
+   (<pword> ^current-word <wd>)
+-->
+   (write (crlf) |Copy ^first-word true from | <receiver> | to | <pword>)
    (<pword> ^first-word true)
+   (<wd> ^first-word true)
+}
+############################################################
+## Special Cases (not good to have these, but ...)
+                 
+sp {apply*merge*relation-value
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<seg> ^not-merged-receiver <receiver>
+          ^not-merged-assigner <assigner>)
+   (<op> ^name merge
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^parent-receiver <pword>
+                    ^lt <rv>)
+   (<pword> ^lt <lla>)
+   (<lla> ^relation-source <rv>)
+   (<receiver> ^lt. { << relation spatial-relation >> <sr> } <relation>)
+-->
+   (write (crlf) |Inherited relation-source | <relation> | usually for THAT IS.|)
+   (<lla> ^<sr> <relation>)
 }
 
 ######Add Constraints
-## Copy constraints from assigner to parent-structure
+## Copy constraints from assigner to parent-receiver
 ##
 ## Changed to move to parent structure instead of receiver.
 
 sp {apply*merge*push-constraint
  #  :interrupt
    (state <s> ^operator <op>
-              ^segment.unfilled-assigner-item <assigner-item>)
+              ^segment.not-merged-assigner <assigner>)
    (<op> ^name merge
-         ^assigner <assigner-item>)
-   (<assigner-item> ^parent-structure <pword>
-                    ^lt-lexical-assigner.constraint <con>)
+         ^assigner <assigner>)
+   (<assigner> ^parent-receiver <pword>
+                    ^lt.constraint <con>)
    (<con> ^<att> <val>)
   -(<pword> ^constraint.<att> <val>)
 -->
-   (write (crlf) |Add constraint | <con> | to | <pword> | from lt-lexical-assigner.|)
+   (write (crlf) |Add constraint | <con> | to | <pword> | from lt.|)
    (<pword> ^constraint <con>)
 }
 
 sp {apply*merge*constraint*selector
    (state <s> ^operator <op>
-              ^segment.unfilled-receiver-item <receiver-item>)
+              ^segment.not-merged-receiver <receiver>)
    (<op> ^name merge
-         ^receiver <receiver-item>
-         ^assigner <assigner-item>)
-   (<assigner-item> ^parent-structure <pword>)
-   (<receiver-item> ^lt-lexical-item.selector <selector>)
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^parent-receiver <pword>)
+   (<receiver> ^lt.selector <selector>)
   -(<pword> ^constraint.selector <selector>)
 -->
    (<pword> ^constraint <c>)
@@ -357,12 +440,12 @@ sp {apply*merge*constraint*selector
 sp {apply*merge*constraint*features
    #:interrupt   
    (state <s> ^operator <op>
-              ^segment.unfilled-receiver-item <receiver-item>)
+              ^segment.not-merged-receiver <receiver>)
    (<op> ^name merge
-         ^receiver <receiver-item>
-         ^assigner <assigner-item>)
-   (<assigner-item> ^parent-structure <pword>)
-   (<receiver-item> ^lt-lexical-item <pli>)
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^parent-receiver <pword>)
+   (<receiver> ^lt <pli>)
    (<pli> ^perceptual-feature <pf>
           ^object-feature <of>)
   -(<pword> ^constraint.<of> <pf>)
@@ -372,31 +455,32 @@ sp {apply*merge*constraint*features
 }
 
 sp {apply*merge*constraint*preposition-right-conversion
-  # :interrupt
+   :interrupt
    (state <s> ^operator <op>)
    (<op> ^name merge
-         ^receiver <receiver-item>
-         ^assigner <assigner-item>)
-   (<assigner-item> ^parent-structure <pword>
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^parent-receiver <pword>
                     ^structure-type DP)
-   (<pword> ^lt-lexical-item <pll>)
-   (<receiver-item> ^structure-type DP
+   (<pword> ^lt <pll>)
+   (<receiver> ^structure-type DP
                     ^<< head noun >> <dp>)
-   (<dp> ^lt-lexical-item <xxi>
+   (<dp> ^lt <xxi>
          ^head.head <head>)
    (<head> ^referent <sg>)
    (<xxi> ^spatial-relation <sr>
           ^semantic-structure spatial-relation)
-   (<pll> ^converts-to-receiver-structure <ctrs>
+   (<pll> ^converts-to  <ctrs>
           ^spelling <spell>
           ^structure-type <st>)
 -->
+   (write (crlf) |apply*merge*constraint*preposition-right-conversion|)
    (<pword> ^head <head>
-            ^lt-lexical-item <new-lli>
-                             <pll> -)
+            ^lt <new-lli>
+                <pll> -)
    (<new-lli> ^spatial-relation <sr>
               ^semantic-structure spatial-relation
-              ^converts-to-receiver-structure <ctrs>
+              ^converts-to  <ctrs>
               ^directional false
               ^spelling <spell>
               ^structure-type <st>)
@@ -407,67 +491,153 @@ sp {apply*merge*constraint*preposition-noun
    (state <s> ^operator <op>
               ^segment <seg>)
    (<op> ^name merge
-         ^receiver <receiver-item>
-         ^assigner <assigner-item>)
-   (<assigner-item> ^parent-structure <pword>
-                    ^structure-type << to-PP PP >>)
-   (<pword> ^structure-type << DP >>)
-   (<receiver-item> ^structure-type << to-PP PP >>)
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^parent-receiver <pword>
+               ^structure-type << PP >>)
+   (<pword> ^structure-type << D DP >>)
+   (<receiver> ^structure-type << PP >>
+               ^lt.spatial-relation <sr>
+               ^head.referent.object <obj>)
 -->
    (<seg> ^new-constraint <nc>)
    (<nc> ^object <pword>
          ^constraint <c>)
    (<pword> ^constraint <c>)
-   (<c> ^preposition <receiver-item>)
-   (write (crlf) |Add new constraint to | <pword> | preposition: | <receiver-item>)
+   (<c> ^spatial-relation <srx>)
+   (<srx> ^object <obj>
+          ^relation <sr>)
+   (write (crlf) |Add new constraint to | <pword> | relation: | <sr> | object: | <obj>)
 }
 
-### ??????
+
+sp {apply*merge*constraint*preposition-noun*semantics
+ #  :interrupt
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<op> ^name merge
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^parent-receiver <pword>
+               ^structure-type << PP >>)
+   (<pword> ^structure-type << D DP >>)
+   (<receiver> ^structure-type << PP >>
+               ^semantics.spatial-relation <spr>)
+-->
+   (<seg> ^new-constraint <nc>)
+   (<nc> ^object <pword>
+         ^constraint <c>)
+   (<pword> ^constraint <c>)
+   (<c> ^spatial-relation <spr>)
+   (write (crlf) |Add new (semantic) constraint to | <pword> | relation: | <spr>)
+}
+
+
+
+### 
 sp {apply*merge*forward-grounding*to-preposition-verb
    (state <s> ^operator <op>)
    (<op> ^name merge
-         ^receiver <receiver-item>
-         ^assigner <assigner-item>)
-   (<assigner-item> ^parent-structure <pword>)
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^parent-receiver <pword>)
    (<pword> ^structure-type << VP >>)
-   (<receiver-item> ^structure-type PP
-                    ^lt-lexical-item.spatial-relation <sr>
+   (<receiver> ^structure-type PP
+                    ^lt.spatial-relation <sr>
                     ^head.referent.object <sg>)
 -->
    (<pword> ^<sr> <sg>
             ^spatial-relation <srr>)
    (<srr> ^object <sg>
           ^relation <sr>)}
-      
 
+###### MERGE syntactic-referent-type from  
 
-###### Remove exclusive assigner
-
-sp {apply*merge*remove-exclusive-assigner
+sp {apply*merge*assign-syntactic-referent-type-not-name
+ #  :interrupt
    (state <s> ^operator <op>
-              ^segment <seg>)
-   (<seg> ^unfilled-assigner-item <x-ass>)
+              ^smem.command <cmd>)
    (<op> ^name merge
-         ^assigner <assigner-item>)
-   (<assigner-item> ^exclusive <x-ass>)
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^lt <lla> 
+                    ^parent-receiver <pword>)
+   (<lla> ^structure-type U) 
+   (<pword> ^structure-type CP
+            ^head.head.lt <lt>)
+   (<lt> -^spelling |name|
+         ^syntactic-referent-type <srt>)
+   (<receiver> ^structure-type U
+                    ^lt <lli>)
 -->
-   (<seg> ^unfilled-assigner-item <x-ass> -)
-   (write (crlf) |Remove assigner sibing of | <assigner-item> |: | <x-ass>)
-}
+   (<cmd> ^store <lli>)
+   (<receiver> ^structure-type U - 
+                    <srt>)
+   (<lli> ^structure-type U - 
+                    <srt>)}
 
+sp {apply*merge*assign-syntactic-referent-type*name
+#   :interrupt
+   (state <s> ^operator <op>
+              ^smem.command <cmd>)
+   (<op> ^name merge
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^lt <lla> 
+                    ^parent-receiver <pword>)
+   (<lla> ^structure-type U) 
+   (<pword> ^structure-type CP
+            ^head <head>)
+   (<head> ^head.lt.spelling |name|
+           ^complement.head.head.lt.syntactic-referent-type <srt>) #of the action/game/color
+   (<receiver> ^structure-type U
+                    ^lt <lli>)
+-->
+   (<cmd> ^store <lli>)
+   (<receiver> ^structure-type U - 
+                    <srt>)
+   (<lli> ^structure-type U - 
+                    <srt>)}
+
+######
+
+sp {apply*merge*define-new-verb
+ #  :interrupt
+   (state <s> ^operator <op>
+              ^smem.command <cmd>)
+   (<op> ^name merge
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^lt <lla>)
+   (<lla> ^structure-type U
+          ^defines-new-structure-type V)
+   (<receiver> ^structure-type U
+                    ^lt <lli>)
+   (<lli> ^perceptual-feature <spell>)
+-->
+   (<cmd> ^store <lli>)
+   (<receiver> ^structure-type U - 
+                                    V)
+   (<lli> ^structure-type U - 
+                          V
+          ^object-feature unknown -
+          ^perceptual-feature <spell> -)}
+
+
+########################################
 ###### Clean-up retrieved-stack
 
 sp {apply*merge*clean-up-retrieved-stack1
    (state <s> ^operator <op>
               ^segment <seg>)
-   (<seg> ^unfilled-receiver-item <uri>
+   (<seg> ^not-merged-receiver <uri>
           ^retrieved-stack <rs>)
    (<rs> ^item <uri>
         -^prior.item <ps>)
    (<op> ^name merge
          ^receiver <uri>
          ^assigner <uai>)
-   (<uai> ^parent-structure <ps>)
+   (<uai> ^parent-receiver <ps>)
 -->
    (<rs> ^item <uri> -
                <ps>)
@@ -477,7 +647,7 @@ sp {apply*merge*clean-up-retrieved-stack1
 sp {apply*merge*clean-up-retrieved-stack1-2
    (state <s> ^operator <op>
               ^segment <seg>)
-   (<seg> ^unfilled-receiver-item <uri>
+   (<seg> ^not-merged-receiver <uri>
           ^retrieved-stack <rs>)
    (<rs> ^item <uri>
         ^prior <prior>)
@@ -485,7 +655,7 @@ sp {apply*merge*clean-up-retrieved-stack1-2
    (<op> ^name merge
          ^receiver <uri>
          ^assigner <uai>)
-   (<uai> ^parent-structure <ps>)
+   (<uai> ^parent-receiver <ps>)
 -->
    (<seg> ^retrieved-stack <rs> - <prior>)
    (write (crlf) |Pop item | <uri>)
@@ -494,7 +664,7 @@ sp {apply*merge*clean-up-retrieved-stack1-2
 sp {apply*merge*clean-up-retrieved-stack2
    (state <s> ^operator <op>
               ^segment <seg>)
-   (<seg> ^unfilled-receiver-item <uri>
+   (<seg> ^not-merged-receiver <uri>
           ^retrieved-stack <rs>)
    (<rs> ^prior <p>
         -^item <ps>)
@@ -503,7 +673,7 @@ sp {apply*merge*clean-up-retrieved-stack2
    (<op> ^name merge
          ^receiver <uri>
          ^assigner <uai>)
-   (<uai> ^parent-structure <ps>)
+   (<uai> ^parent-receiver <ps>)
   -->
    (<p> ^item <uri> -
                <ps>)
@@ -513,7 +683,7 @@ sp {apply*merge*clean-up-retrieved-stack2
 sp {apply*merge*clean-up-retrieved-stack2-5
    (state <s> ^operator <op>
               ^segment <seg>)
-   (<seg> ^unfilled-receiver-item <uri>
+   (<seg> ^not-merged-receiver <uri>
           ^retrieved-stack <rs>)
    (<rs> ^prior <p>
         -^item <ps>)
@@ -523,7 +693,7 @@ sp {apply*merge*clean-up-retrieved-stack2-5
    (<op> ^name merge
          ^receiver <uri>
          ^assigner <uai>)
-   (<uai> ^parent-structure <ps>)
+   (<uai> ^parent-receiver <ps>)
   -->
    (<rs> ^prior <p> -
                 <p2>)
@@ -534,7 +704,7 @@ sp {apply*merge*clean-up-retrieved-stack2-5
 sp {apply*merge*clean-up-retrieved-stack2*duplicate
    (state <s> ^operator <op>
               ^segment <seg>)
-   (<seg> ^unfilled-receiver-item <uri>
+   (<seg> ^not-merged-receiver <uri>
           ^retrieved-stack <rs>)
    (<rs> ^prior <p>
          ^item <ps>)
@@ -543,10 +713,27 @@ sp {apply*merge*clean-up-retrieved-stack2*duplicate
    (<op> ^name merge
          ^receiver <uri>
          ^assigner <uai>)
-   (<uai> ^parent-structure <ps>)
+   (<uai> ^parent-receiver <ps>)
 -->
    (<rs> ^prior <p> - <ppp>)
    (write (crlf) |Pop stack of item | <uri>)
+}
+
+###### Remove exclusive assigner
+
+sp {apply*merge*remove-exclusive-assigner
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<seg> ^not-merged-assigner <uai>)
+   (<uai> ^lt <x-ass>)
+   (<op> ^name merge
+         ^assigner.lt <assigner>)
+   (<assigner> ^exclusive <x-ass>
+               ^parent-receiver <pr>)
+-->
+   (<seg> ^not-merged-assigner <uai> -)
+   (<pr> ^removed-assigner <assinger>)
+   (write (crlf) |Remove assigner sibing of | <assigner> |: | <x-ass>)
 }
 
 
@@ -557,48 +744,83 @@ sp {apply*merge*clean-up-retrieved-stack2*duplicate
 sp {apply*merge*remove-stale-assigners*noun
    (state <s> ^operator <op>
               ^segment <seg>)
-   (<seg> ^unfilled-assigner-item <assigner-item>)
+   (<seg> ^not-merged-assigner <assigner>)
    (<op> ^name merge
          ^assigner <sit>)
    (<sit> ^structure-type N)
-   (<assigner-item> ^structure-type << ADJ D >>
-                    ^parent-structure <sit>)
+   (<assigner> ^structure-type << ADJ D >>
+               ^parent-receiver <sit>)
 -->
-   (<seg> ^unfilled-assigner-item <assigner-item> -)
-   (write (crlf) |Remove stale assigner: | <assigner-item>)
+   (<seg> ^not-merged-assigner <assigner> -)
+   (<sit> ^removed-assigner <assinger>)
+   (write (crlf) |Remove stale assigner: | <assigner>)
 }
 
 
+########
+## Remove failed construction
+
+
+sp {apply*merge*remove-failed-construction
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<seg> ^failed-construction true)
+   (<op> ^name merge)
+-->
+   (<seg> ^failed-construction true -)
+}
+
+sp {apply*merge*remove-processing-result-failure
+   (state <s> ^operator <op>
+              ^segment.original-sentence <is>)
+   (<is> ^processing-result failure)
+   (<op> ^name merge)
+-->
+   (<is> ^processing-result failure -)
+}
+
+########
+## Remove failed grounding for nil referent
+
+
+sp {apply*merge*remove-failed-construction
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<op> ^name merge
+         ^receiver <uri>
+         ^assigner.lt.referent nil)
+   (<uri> ^failed-grounding <fg>)
+-->
+   (<uri> ^failed-grounding <fg> -)
+   (write (crlf) |Removed failed grounded because referent nil: | <fg>)
+}
+
+sp {apply*merge*remove-failed-construction*literal
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<op> ^name merge
+         ^receiver <uri>
+         ^assigner.lt.referent-type literal)
+   (<uri> ^failed-grounding <fg>)
+-->
+   (<uri> ^failed-grounding <fg> -)
+   (write (crlf) |Removed failed grounded because referent nil: | <fg>)
+}
 
 #####################################################
 #### Monitor
-
-sp {comprehension*monitor*merge
-   (state <s> ^name comprehension
-              ^operator <op1>)
-   (<op1> ^name merge
-          ^receiver <receiver-item>
-          ^assigner <assigner-item>)
-   (<assigner-item> ^lt-lexical-assigner.syntactic-structure <stype>)
--->
-   (write (crlf) |Merging | <stype> | for | <receiver-item> | & | <assigner-item>)
-}
-
 sp {apply*merge*monitor
-   (state <s> ^operator <op>
-              ^segment <seg>)
-   (<seg> ^unfilled-receiver-item <receiver-item>
-          ^unfilled-assigner-item <assigner-item>)
+   (state <s> ^operator <op>)
    (<op> ^name merge
-         ^receiver <receiver-item>
-         ^assigner <assigner-item>)
-   (<receiver-item> ^lt-lexical-item.spelling <word2>)
-   (<assigner-item> ^parent-structure <wws>
-                    ^lt-lexical-assigner.syntactic-structure <ss>
-                    ^structure-type <stype>)
-   (<wws> ^spelling <word1>)
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<receiver> ^lt.<< construction spelling >> <word2>)
+   (<assigner> ^parent-receiver <wws>
+               ^lt.syntactic-structure <ss>
+               ^structure-type <stype>)
+   (<wws> ^current-word.<< construction spelling >> <word1>)
 -->
-   (write (crlf) |Merge: | <word2> | as a | <stype> | (| <wws> |) into | <word1> | as a | <ss>)
+   (write (crlf) |Merge: | <stype> |, assigner (| <assigner> |): | <word1> |, receiver (| <receiver> |): | <word2> |, structure: | <ss>)
 }
 
 

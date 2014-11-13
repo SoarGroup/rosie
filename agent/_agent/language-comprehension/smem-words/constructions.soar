@@ -7,19 +7,123 @@
 ###     structures that aren't constructions (they are retrieved only using spelling) should not
 ##      have assigners for those words, but constructions need assigners so they can "absorb"
 ##      any information in the receivers that will get merged with the assigners.
+##   3. If T is an assigner, then should be type S. Otherwise, should be CP (so can be embedded in 
+##      another construction at some point.
+
+### All assigners need a syntactic-structure
 
 
-## Normal DP-VP-T -
+## CP-T
 smem --add {
-           (<sentence> ^spelling |*-DP-VP-T|
+           (<CP-T> ^construction |CP-T|
+                   ^structure-type S #CP
+                   ^current-word T
+                   ^prior-word CP
+                   ^prior-word-first false   # by having both - means it doesn't matter whether first or not.
+                   ^prior-word-first true	
+                   ^assigners <ass1> <ass2>)
+           (<ass1> ^structure-type CP
+                   ^required true
+                   ^syntactic-structure sentence
+                   ^semantic-structure *copy*
+                   ^before-type T
+                   ^parent <VP-T>)
+           (<ass2> ^structure-type T
+                   ^after <ass1>
+                   ^after-type CP
+                   ^required true
+                   ^syntactic-structure terminator
+                   ^parent <VP-T>)
+}
+
+## Command *-VP-T - Store the red block.
+smem --add {
+           (<VP-T> ^construction |*-VP-T|
+                   ^structure-type S #CP
+                   ^current-word T
+                   ^prior-word VP
+                   ^prior-word-first true
+                   ^message-type command	
+                   ^assigners <ass1> <ass2>)
+           (<ass1> ^structure-type VP
+                   ^required true
+                   ^before-type T
+                   ^syntactic-structure predicate
+                   ^semantic-structure *copy*
+                   ^parent <VP-T>)
+           (<ass2> ^structure-type T
+                   ^after <ass1>
+                   ^after-type VP
+                   ^required true
+                   ^syntactic-structure terminator
+                   ^parent <VP-T>)
+}
+
+## Rosie Command *-Rosie-VP-T - Rosie store the red block.
+smem --add {
+           (<VP-T> ^construction |*-Rosie-VP|
+                   ^structure-type CP
+                   ^current-word V
+                   ^prior-word ROSIE
+                   ^prior-word-first true
+                   ^message-type command	
+                   ^assigners <ass0> <ass1>)# <ass2>)
+           (<ass0> ^structure-type ROSIE
+                   ^parent <VP-T>
+                   ^before <ass1>
+                   ^before-type V
+                   ^before-type VP
+                   ^syntactic-structure head
+                   ^semantic-structure agent
+                   ^required true)
+           (<ass1> ^structure-type VP
+                   ^required true
+                   ^syntactic-structure predicate
+                   ^semantic-structure *copy*
+                   ^parent <VP-T>)
+#           (<ass2> ^structure-type T
+#                   ^after <ass1>
+#                   ^after-type VP
+#                   ^required true
+#                   ^syntactic-structure terminator
+#                   ^parent <VP-T>)
+}
+
+## Normal DP-
+smem --add {
+           (<sentence> ^construction |*-DP-T|
+                       ^structure-type S
+                       ^current-word T
+                       ^prior-word DP
+                       ^prior-word-first true
+                       ^message-type object-definition
+                       ^assigners <ass0> <ass1>)
+           (<ass0> ^structure-type DP
+                   ^parent <sentence>
+                   ^before <ass1>
+                   ^before-type T
+                   ^syntactic-structure head
+                   ^semantic-structure object
+                   ^required true)
+           (<ass1> ^structure-type T
+                   ^after <ass0>
+                   ^after-type VP
+                   ^required true
+                   ^syntactic-structure terminator
+                   ^parent <sentence>)
+}
+
+## Normal *-DP-VP-T -
+smem --add {
+           (<sentence> ^construction |*-DP-VP|
                        ^structure-type CP
                        ^current-word V
                        ^prior-word DP
                        ^prior-word-first true
                        ^message-type object-action
-                       ^assigners <ass0> <ass1> <ass2>)
+                       ^assigners <ass0> <ass1>)#<ass2>)
            (<ass0> ^structure-type DP
-                   ^parent-lexical-item <sentence>
+                   ^parent <sentence>
                    ^relative-position after
                    ^before <ass1>
                    ^before-type V
@@ -31,21 +135,21 @@ smem --add {
                    ^after <ass0>
                    ^after-type DP
                    ^required true
-                   ^before-type T
+                   #^before-type T
                    ^syntactic-structure predicate
                    ^semantic-structure action
-                   ^parent-lexical-item <sentence>)
-           (<ass2> ^structure-type T
-                   ^after <ass1>
-                   ^after-type VP
-                   ^required true
-                   ^syntactic-structure terminator
-                   ^parent-lexical-item <sentence>)
+                   ^parent <sentence>)
+#           (<ass2> ^structure-type T
+#                   ^after <ass1>
+#                   ^after-type VP
+#                   ^required true
+#                   ^syntactic-structure terminator
+#                   ^parent <sentence>)
 }
 
 ## Proper-noun VP T
 smem --add {
-           (<sentence> ^spelling |*-PN-VP-T|
+           (<sentence> ^construction |*-PN-VP|
                        ^structure-type CP
                        ^current-word V
                        ^prior-word PN
@@ -53,7 +157,7 @@ smem --add {
                        ^message-type object-action
                        ^assigners <ass0> <ass1> <ass2>)
            (<ass0> ^structure-type DP
-                   ^parent-lexical-item <sentence>
+                   ^parent <sentence>
                    ^relative-position after
                    ^before <ass1>
                    ^before-type V
@@ -66,340 +170,15 @@ smem --add {
                    ^after <ass0>
                    ^after-type DP
                    ^required true
-                   ^before-type T
+                 #  ^before-type T
                    ^syntactic-structure predicate
                    ^semantic-structure action
-                   ^parent-lexical-item <sentence>)
-           (<ass2> ^structure-type T
-                   ^after <ass1>
-                   ^after-type VP
-                   ^required true
-                   ^syntactic-structure terminator
-                   ^parent-lexical-item <sentence>)
+                   ^parent <sentence>)
+#           (<ass2> ^structure-type T
+#                   ^after <ass1>
+#                   ^after-type VP
+#                   ^required true
+#                   ^syntactic-structure terminator
+#                   ^parent <sentence>)
 }
-
-## Command *-VP-T - Store the red block.
-smem --add {
-           (<VP-T> ^spelling |*-VP-T|
-                   ^structure-type CP
-                   ^current-word T
-                   ^prior-word VP
-                   ^prior-word-first true
-                   ^message-type command	
-                   ^assigners <ass1> <ass2>)
-           (<ass1> ^structure-type VP
-                   ^required true
-                   ^before-type T
-                   ^syntactic-structure predicate
-                   ^semantic-structure action
-                   ^parent-lexical-item <VP-T>)
-           (<ass2> ^structure-type T
-                   ^after <ass1>
-                   ^after-type VP
-                   ^required true
-                   ^syntactic-structure terminator
-                   ^parent-lexical-item <VP-T>)
-}
-
-## Rosie Command *-Rosie-VP-T - Rosie store the red block.
-smem --add {
-           (<VP-T> ^spelling |*-Rosie-VP-T|
-                   ^structure-type CP
-                   ^current-word V
-                   ^prior-word ROSIE
-                   ^prior-word-first true
-                   ^message-type command	
-                   ^assigners <ass0> <ass1> <ass2>)
-           (<ass0> ^structure-type ROSIE
-                   ^parent-lexical-item <VP-T>
-                   ^before <ass1>
-                   ^before-type V
-                   ^before-type VP
-                   ^syntactic-structure head
-                   ^semantic-structure agent
-                   ^required true)
-           (<ass1> ^structure-type VP
-                   ^required true
-                   ^before-type T
-                   ^syntactic-structure predicate
-                   ^semantic-structure action
-                   ^parent-lexical-item <VP-T>)
-           (<ass2> ^structure-type T
-                   ^after <ass1>
-                   ^after-type VP
-                   ^required true
-                   ^syntactic-structure terminator
-                   ^parent-lexical-item <VP-T>)
-}
-
-# The green block is {big} {a rabbit} {in the pantry}
-smem --add {
-           (<sentence> ^spelling |*-DP-is-ADJ/DP/PP-T|
-                       ^structure-type CP
-                       ^current-word IS-V
-                       ^message-type object-description
-                       ^prior-word DP
-                       ^prior-word-first true
-                       ^assigners <isa> <is-is> <isb> <isc> <isd> <ise> <isf>
-                       ^referent <iso1>)
-           (<isa> ^structure-type DP
-                  ^parent-lexical-item <sentence>
-                  ^relative-position before
-                  ^syntactic-structure head
-                  ^semantic-structure indicated-object
-                  ^required true)
-           (<iso1> ^id soar-assign)
-           (<is-is> ^structure-type IS-V
-                    ^lexical-item-spelling |is|
-                    ^parent-lexical-item <sentence>
-                    ^syntactic-structure predicate
-                    ^semantic-structure assignment
-                    ^before-type T
-                    ^required true)
-           (<isb> ^structure-type ADJ
-                  ^exclusive <isc> <isd> <ise>
-                  ^parent-lexical-item <sentence>
-                  ^relative-position after
-                  ^syntactic-structure predicate
-                  ^semantic-structure predicate
-                  ^optional true)
-           (<isc> ^structure-type DP
-                  ^exclusive <isb> <isd> <ise>
-                  ^parent-lexical-item <sentence>
-                  ^relative-position after
-                  ^syntactic-structure predicate
-                  ^semantic-structure predicate
-                  ^optional true)
-           (<isd> ^structure-type N   # In case just get |The red block is rabbit.|
-                  ^exclusive <isb> <isc> <ise>
-                  ^parent-lexical-item <sentence>
-                  ^relative-position after
-                  ^syntactic-structure predicate
-                  ^semantic-structure predicate
-                  ^optional true)
-           (<ise> ^structure-type PP
-                  ^exclusive <isb> <isc> <isd>
-                  ^parent-lexical-item <sentence>
-                  ^relative-position after
-                  ^syntactic-structure complement
-                  ^semantic-structure relation
-                  ^optional true)
-           (<isf> ^structure-type T
-                  ^required true
-                  ^syntactic-structure terminator
-                  ^parent-lexical-item <sentence>)
-}
-# Green is a color. - Already known
-smem --add {
-           (<sentence> ^spelling |*-ADJ-is-DP-T|
-                       ^structure-type CP
-                       ^current-word IS-V
-                       ^prior-word ADJ
-                       ^prior-word-first true
-                       ^message-type adjective-definition
-                       ^assigners <isa> <isb> <isc> <isd> <ise>
-                       ^referent <iso1>)
-           (<isa> ^structure-type ADJ
-                  ^before-type IS-V
-                  ^parent-lexical-item <sentence>
-                  ^syntactic-structure head
-                  ^semantic-structure object-feature-instance-head
-                  ^referent-type literal
-                  ^required true)
-           (<iso1> ^id soar-assign)
-           (<isb> ^structure-type IS-V
-                  ^after <isa>
-                  ^before <isb>
-                  ^lexical-item-spelling |is|
-                  ^parent-lexical-item <sentence>
-                  ^syntactic-structure predicate
-                  ^semantic-structure adj-assignment
-                  ^before-type T
-                  ^required true)
-           (<isc> ^structure-type DP
-                  ^exclusive <isd>
-                  ^parent-lexical-item <sentence>
-                  ^relative-position after
-                  ^syntactic-structure predicate
-                  ^semantic-structure predicate
-                  ^optional true)
-           (<isd> ^structure-type N   # In case get |Green is color.|
-                  ^exclusive <isc>
-                  ^parent-lexical-item <sentence>
-                  ^relative-position after
-                  ^syntactic-structure predicate
-                  ^semantic-structure predicate
-                  ^optional true)
-           (<ise> ^structure-type T
-                  ^required true
-                  ^syntactic-structure terminator
-                  ^parent-lexical-item <sentence>)
-}
-
-# Green is a color. - Unknown - could be proper noun
-smem --add {
-           (<sentence> ^spelling |*-U-is-DP-T|
-                       ^structure-type CP
-                       ^current-word IS-V
-                       ^prior-word U
-                       ^prior-word-first true
-                       ^message-type adjective-definition
-                       ^assigners <isa> <isb> <isc> <isd> <ise>
-                       ^referent <iso1>)
-           (<isa> ^structure-type U
-                  ^before-type IS-V
-                  ^parent-lexical-item <sentence>
-                  ^syntactic-structure head
-                  ^semantic-structure object-feature-instance
-                  ^referent-type literal
-                  ^required true)
-           (<iso1> ^id soar-assign)
-           (<isb> ^structure-type IS-V
-                  ^after <isa>
-                  ^before <isb>
-                  ^lexical-item-spelling |is|
-                  ^parent-lexical-item <sentence>
-                  ^syntactic-structure predicate
-                  ^semantic-structure assignment
-                  ^before-type T
-                  ^required true)
-           (<isc> ^structure-type DP
-                  ^exclusive <isd>
-                  ^parent-lexical-item <sentence>
-                  ^relative-position after
-                  ^syntactic-structure predicate
-                  ^semantic-structure predicate
-                  ^optional true)
-           (<isd> ^structure-type N   # In case get |Purple is color.|
-                  ^exclusive <isc>
-                  ^parent-lexical-item <sentence>
-                  ^relative-position after
-                  ^syntactic-structure predicate
-                  ^semantic-structure predicate
-                  ^optional true)
-           (<ise> ^structure-type T
-                  ^required true
-                  ^syntactic-structure terminator
-                  ^parent-lexical-item <sentence>)
-}
-
-# This is red / a block / in the pantry.
-smem --add {
-           (<sentence> ^spelling |*-This-is-DP/ADJ/PP-T|
-                       ^structure-type CP
-                       ^message-type object-description
-                       ^current-word IS-V
-                       ^prior-word THIS
-                       ^prior-word-first true
-                       ^assigners <isa> <isb> <isc> <isd> <ise> <isf>)
-            (<isa> ^structure-type THIS
-                  ^before-type IS-V
-                  ^parent-lexical-item <sentence>
-                  ^syntactic-structure head
-                  ^semantic-structure object
-                  ^referent-type demonstrative
-                  ^required true)
-           (<isb> ^structure-type IS-V
-                  ^before <isc> 
-                  ^before <isd>
-                  ^before <ise>
-                  ^parent-lexical-item <sentence>
-                  ^syntactic-structure predicate
-                  ^semantic-structure assignment
-                  ^before-type T
-                  ^required true
-                  ^referent <iso1>)
-           (<iso1> ^id soar-assign)
-           (<isc> ^structure-type DP
-                  ^after <isb>
-                  ^exclusive <isd> <ise>
-                  ^parent-lexical-item <sentence>
-                  ^relative-position after
-                  ^syntactic-structure predicate
-                  ^semantic-structure predicate
-                  ^optional true
-                  ^referent nil)
-           (<isd> ^structure-type ADJ
-                  ^after <isb>
-                  ^exclusive <isc> <ise>
-                  ^parent-lexical-item <sentence>
-                  ^relative-position after
-                  ^syntactic-structure predicate
-                  ^semantic-structure predicate
-                  ^optional true
-                  ^referent nil)
-           (<ise> ^structure-type PP
-                  ^after <isb>
-                  ^exclusive <isc> <isd>
-                  ^parent-lexical-item <sentence>
-                  ^relative-position after
-                  ^syntactic-structure complement
-                  ^semantic-structure location
-                  ^optional true)
-           (<isf> ^structure-type T
-                  ^required true
-                  ^syntactic-structure terminator
-                  ^parent-lexical-item <sentence>)
-}
-# What is in the pantry?
-smem --add {
-           (<sentence> ^spelling |*-What-is-PP-QT|
-                       ^current-word IS-V
-                       ^prior-word |what|
-                       ^prior-word-first true
-                       ^assigners <isb> <isc> <isd>
-                       ^message-type what-is-question
-                       ^structure-type CP)
-           (<isb> ^structure-type IS-V
-                  ^before <isb>
-                  ^lexical-item-spelling |is|
-                  ^parent-lexical-item <sentence>
-                  ^syntactic-structure predicate
-                  ^semantic-structure what-question
-                  ^before-type T
-                  ^required true)
-           (<isc> ^structure-type PP
-                  ^parent-lexical-item <sentence>
-                  ^relative-position after
-                  ^syntactic-structure complement2
-                  ^semantic-structure destination
-                  ^constraint <con2>
-                  ^required true)
-           (<con2> ^type location)
-           (<isd> ^structure-type QT
-                  ^required true
-                  ^syntactic-structure terminator
-                  ^parent-lexical-item <sentence>)
-}
-# Where is on the green block?
-smem --add {
-           (<sentence> ^spelling |*-Where-is-DP-QT|
-                       ^current-word IS-V
-                       ^prior-word |where|
-                       ^prior-word-first true
-                       ^message-type where-is-question
-                       ^assigners <isb> <isc> <isd>
-                       ^structure-type CP)
-           (<isb> ^structure-type IS-V
-                  ^before <isb>
-                  ^lexical-item-spelling |is|
-                  ^parent-lexical-item <sentence>
-                  ^syntactic-structure predicate
-                  ^semantic-structure where-question
-                  ^before-type T
-                  ^required true)
-           (<isc> ^structure-type DP
-                  ^parent-lexical-item <sentence>
-                  ^relative-position after
-                  ^syntactic-structure complement2
-                  ^semantic-structure object
-                  ^constraint <con2>
-                  ^required true)
-           (<con2> ^type object)
-           (<isd> ^structure-type QT
-                  ^required true
-                  ^syntactic-structure terminator
-                  ^parent-lexical-item <sentence>)
-}
-
 

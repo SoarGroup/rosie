@@ -2,7 +2,8 @@ sp {comprehend-word*propose*smem-lexical-retrieval-cw-pw
    (state <s> ^name comprehend-word
               ^current-word.spelling <up>
               ^segment <seg>)
-   (<s> -^retrieved-lexical-item)
+   (<s> -^retrieved-lexical-item
+        -^segment.retry)
   -{(<s> ^failed-retrieval <fr>)
     (<fr> ^current-word <up>
           ^prior-word <pick>)}
@@ -17,12 +18,13 @@ sp {comprehend-word*propose*smem-lexical-retrieval-cw-pw
 sp {comprehend-word*propose*smem-lexical-retrieval-cw-pw-type
    (state <s> ^name comprehend-word
               ^current-word.spelling <up>
-              ^segment <seg>)
-   (<s> -^retrieved-lexical-item)
+              ^segment <seg>
+             -^retrieved-lexical-item)
   -{(<s> ^failed-retrieval <fr>)
     (<fr> ^current-word <up>
           ^prior-word <pick-type>)}
-   (<seg> ^retrieved-stack.item.lt-lexical-item.structure-type <pick-type>)
+   (<seg> ^retrieved-stack.item.lt.structure-type <pick-type>
+         -^retry)
 -->
    (<s> ^operator <o> +, =)
    (<o> ^name smem-lexical-retrieval-cw-pw-type
@@ -82,9 +84,10 @@ sp {comprehend-word*apply*smem-lexical-retrieval-assigner-prior-word-stale
               ^smem.result.retrieved <rli>)
    (<o> ^prior-word <pw>
         ^prior-word-stale true)
-   (<seg> ^unfilled-assigner-item <uai>
+   (<seg> ^not-merged-assigner <uai>
           ^comprehension-structure <cs>)
-   (<uai> ^lt-lexical-assigner.parent-lexical-item.spelling <pw>)
+   (<uai> ^lt.parent.spelling <pw>)
+   (<rli> -^consumes-prior-word false)
 -->
    (write (crlf) |Remove assigner for prior word: | <pw>)
    (<cs> ^remove-assigner <uai>)}
@@ -95,9 +98,25 @@ sp {comprehend-word*apply*smem-lexical-retrieval-receiver-prior-word-stale
               ^smem.result.retrieved <rli>)
    (<o> ^prior-word <pw>
         ^prior-word-stale true)
-   (<seg> ^unfilled-receiver-item <uai>
+   (<seg> ^not-merged-receiver <uai>
           ^comprehension-structure <cs>)
-   (<uai> ^lt-lexical-item.spelling <pw>)
+   (<uai> ^lt.spelling <pw>)
+   (<rli> -^consumes-prior-word false)
 -->
    (write (crlf) |Remove receiver for prior word: | <pw>)
    (<cs> ^remove-receiver <uai>)}
+
+############@@@@@@@@@@@@@@@@@##########
+
+sp {comprehend-word*apply*smem-lexical-retrieval-proprogate-first-word
+   (state <s> ^operator <o>
+              ^segment <seg>
+              ^smem.result.retrieved <rli>)
+   (<o> ^name smem-lexical-retrieval-cw-pw
+        ^prior-word-stale true)
+   (<seg> ^comprehension-structure <cs>
+          ^prior-word <pick>)
+   (<pick> ^first-word true)
+-->
+   (write (crlf) |Current-word becomes a first word.|)
+   (<cs> ^first-word true)}

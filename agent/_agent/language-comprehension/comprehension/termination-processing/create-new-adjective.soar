@@ -1,18 +1,20 @@
 sp {termination-processing*propose*create-new-adjective
- #  :interrupt
+   #:interrupt
    (state <s> ^name termination-processing
              -^stored-message <sem>
               ^segment.semantics <sem>)
    (<sem> ^message-type adjective-definition
-          ^object-feature-instance.spelling <spell>)
-   (<sem> ^predicate { <> shape <pred> })
+          ^new-word <nw>
+          ^object-feature <spell>
+          ^predicate { <> shape <> name })
+   (<nw> ^structure-type U
+         ^id <id>)
 -->
    (<s> ^operator <op> + =, >)
    (<op> ^name create-new-adjective
-         ^semantic-structure <new>
-         ^perceptual-feature (make-constant-symbol <spell>))
-   (<new> ^spelling <spell>
-          ^structure-type ADJ)
+         ^perceptual-feature (make-constant-symbol <spell>)
+         ^spelling <spell>
+         ^structure-type ADJ)
 }
 
 sp {termination-processing*propose*create-new-noun
@@ -21,37 +23,42 @@ sp {termination-processing*propose*create-new-noun
              -^stored-message <sem>
               ^segment.semantics <sem>)
    (<sem> ^message-type adjective-definition
-          ^object-feature-instance.spelling <spell>)
-   (<sem> ^predicate shape)
+          ^new-word <nw>
+          ^object-feature <spell>)
+   (<sem> ^predicate << name shape >>)
+   (<nw> ^structure-type U
+         ^id <id>)
 -->
    (<s> ^operator <op> + =, >)
    (<op> ^name create-new-adjective
-         ^semantic-structure <new>
-         ^perceptual-feature (make-constant-symbol <spell>))
-   (<new> ^spelling <spell>
-          ^structure-type N)
+         ^perceptual-feature (make-constant-symbol <spell>)
+         ^spelling <spell>
+         ^structure-type N) 
 }
 
 sp {termination-processing*propose*create-new-adjective*seen-word-before-but-not-defined
- #  :interrupt
+  #:interrupt
    (state <s> ^name termination-processing
              -^stored-message <sem>
               ^segment.semantics <sem>)
    (<sem> ^message-type adjective-definition
-          ^object-feature-instance-head <ofih>)
+          ^new-word.id <id> 
+          ^object-feature <ofih>)
    (<ofih> ^spelling <spell>
           -^object-feature
-          -^perceptual-feature)
+          -^perceptual-feature
+           ^structure-type <stype>)
  -->
    (<s> ^operator <op> + =, >)
    (<op> ^name create-new-adjective
-         ^semantic-structure <ofih>
-         ^perceptual-feature (make-constant-symbol <spell>))  
+         ^perceptual-feature <id> # (make-constant-symbol <spell>)
+         ^spelling <spell>
+         ^structure-type <stype>)  
 }
 
 sp {termination-processing*compare*create-new-adjective
    (state <s> ^name termination-processing
-              ^operator <op1> +s
+              ^operator <op1> +
                         <op2> +)
    (<op1> ^name create-new-adjective)
    (<op2> ^name print-semantics)
@@ -60,35 +67,74 @@ sp {termination-processing*compare*create-new-adjective
 }
 
 
-sp {termination-processing*apply*create-new-adjective
+sp {termination-processing*apply*create-new-structure
    (state <s> ^operator <op>
               ^segment.semantics <sem>
-              ^smem.command <cmd>)
+              ^superstate.smem.command <cmd>)
    (<op> ^name create-new-adjective
-         ^semantic-structure <new>
-         ^perceptual-feature <pf>)
-   (<sem> ^predicate <pred>)
-   (<new> ^structure-type <type>)
+         ^perceptual-feature <pf>         
+         ^spelling <spell>
+         ^structure-type <type>)
+   (<sem> ^predicate <pred>
+         -^new-word.structure-type U)
 -->
    (<sem> ^feature-value <pf>
           ^feature-type <pred>)
    (<s> ^stored-message <sem>)
    (<cmd> ^store <new>)
    (<new> ^object-feature <pred>
-          ^perceptual-feature <pf>)
+          ^perceptual-feature <pf>
+          ^structure-type <type>
+          ^spelling <spell>)
    (write (crlf) |Create new | <type> |: | <pf> | of type | <pred>)
+}
+
+sp {termination-processing*apply*create-new-adjective*update-semantic-structure
+   (state <s> ^operator <op>
+              ^superstate.smem.command <cmd>
+              ^segment.semantics <sem>)
+   (<sem> ^new-word <nw>
+          ^predicate <pred>)
+   (<op> ^name create-new-adjective
+         ^structure-type <type>)
+   (<nw> ^structure-type U
+         ^object-feature unknown)
+-->
+   (<nw> ^structure-type U -
+                         <type>
+         ^object-feature unknown -
+                         <pred>)
+  (<cmd> ^store <nw>)
 }
 
 sp {termination-processing*apply*create-new-adjective*update-semantic-memory
    (state <s> ^operator <op>
-              ^segment.semantics.new-word <nw>)
+              ^superstate.smem.command <cmd>
+              ^segment.semantics <sem>)
+   (<sem> ^predicate <pred>
+          ^object-feature <nw>)
    (<op> ^name create-new-adjective
-         ^semantic-structure <new>)
-   (<nw> ^structure-type U)
-   (<new> ^structure-type <type>)
+         ^structure-type <type>)
+   (<nw> ^structure-type U
+         ^object-feature unknown)
 -->
    (<nw> ^structure-type U -
-                          <type>)
+                         <type>
+         ^object-feature unknown -
+                         <pred>)
+   (<cmd> ^store <nw>)
+}
+
+### Remove index-word-failure because this sentence is defining it.
+sp {termination-processing*apply*remove-interaction-status
+ #  :interrupt
+   (state <s> ^operator <op>
+              ^segment.semantics <sem>)
+   (<op> ^name create-new-adjective)
+   (<sem> ^interaction-status <status>)
+   (<status> ^type index-word-failure)
+-->
+   (<sem> ^interaction-status <status> -)
 }
 
 

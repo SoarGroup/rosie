@@ -1,4 +1,4 @@
-213
+244
 SOAR_ID 0
 SOAR_ID 1
 SOAR_ID 2
@@ -57,7 +57,7 @@ ENUMERATION 53 1 join-assigner-receiver
 SOAR_ID 52
 SOAR_ID 59
 SOAR_ID 58
-ENUMERATION 57 1 create-receiver-item
+ENUMERATION 57 1 create-receiver
 ENUMERATION 56 1 merge
 ENUMERATION 63 1 termination-processing
 ENUMERATION 62 1 state
@@ -67,9 +67,9 @@ ENUMERATION 68 1 check-failure
 SOAR_ID 69
 SOAR_ID 70
 ENUMERATION 71 1 select-semantic-soar-operator
-ENUMERATION 64 1 check-unfilled-assigners
+ENUMERATION 64 1 check-not-merged-assigners
 SOAR_ID 65
-ENUMERATION 66 1 check-unfilled-receivers
+ENUMERATION 66 1 check-not-merged-receivers
 SOAR_ID 67
 SOAR_ID 76
 ENUMERATION 77 1 ground-object
@@ -80,7 +80,7 @@ ENUMERATION 73 1 select-semantic-direct-object
 ENUMERATION 74 1 retrieve-assigner-constraints
 SOAR_ID 75
 SOAR_ID 85
-ENUMERATION 84 1 create-assigner-item
+ENUMERATION 84 1 create-assigner
 ENUMERATION 87 1 no-viable-groundings--restart-parse
 SOAR_ID 86
 ENUMERATION 81 1 ground-new-constraint
@@ -176,7 +176,7 @@ ENUMERATION 166 1 satisfy-relation-constraint
 SOAR_ID 165
 ENUMERATION 164 1 find-relations
 ENUMERATION 186 1 smem-store
-ENUMERATION 187 1 detect-unlikely-property-unknown-adjective
+ENUMERATION 187 2 detect-unlikely-property-unknown-adjective clean-up-retrieved-stack
 SOAR_ID 184
 SOAR_ID 185
 SOAR_ID 190
@@ -207,240 +207,301 @@ ENUMERATION 193 1 comprehend-construction
 ENUMERATION 192 1 state
 SOAR_ID 195
 ENUMERATION 194 1 smem-construction-retrieval
+SOAR_ID 220
+SOAR_ID 221
+ENUMERATION 222 2 true true
+SOAR_ID 223
+SOAR_ID 216
+SOAR_ID 217
+SOAR_ID 218
+SOAR_ID 219
 ENUMERATION 212 1 t
+ENUMERATION 213 2 internal external
+SOAR_ID 214
+SOAR_ID 215
 ENUMERATION 208 1 next-retrieved-stack
 SOAR_ID 209
 SOAR_ID 210
 SOAR_ID 211
-231
-142 type 143
-146 name 145
-0 semantics 22
-170 operator 176
-17 two-level-attributes 18
-0 operator 72
-170 name 172
-139 name 138
-17 one-level-attributes 21
-97 superstate 92
-147 topstate 211
-147 operator 151
-32 value 33
-97 type 98
-101 name 100
-34 operator 52
-147 operator 153
-0 operator 110
-61 name 63
-191 name 193
-34 operator 207
-118 operator 122
-88 name 89
-165 name 164
-61 type 62
-190 name 189
-13 next 13
-48 name 47
-52 name 51
-31 reward 32
-85 name 84
-207 name 206
-142 operator 190
-0 operator 112
-58 name 57
-0 input-sentence 13
-0 operator 76
-70 name 71
-92 top-state 0
-97 top-state 0
-153 name 152
-65 name 64
-203 name 202
-17 default-state-copy 19
-34 operator 54
-118 operator 197
-161 operator 165
-1 input-link 2
-92 type 93
-34 operator 85
-161 type 162
-155 name 154
-34 operator 75
-118 superstate 0
-161 operator 184
-0 reward-link 31
-103 name 102
-0 operator 185
-80 name 81
-122 name 121
-140 name 141
-125 name 127
-191 type 192
-180 name 179
-142 name 144
-125 operator 133
-96 name 95
-161 superstate 147
-195 name 194
-0 operator 90
-199 name 198
-39 result 44
-13 retrieved-lexical-item 43
-174 name 173
-191 operator 201
-0 problem-space 17
-9 name 10
-90 name 91
-147 operator 188
-137 name 136
-178 name 177
-156 operator 160
-167 name 166
-38 name 37
-0 operator 86
-0 top-state 0
+ENUMERATION 239 0
+SOAR_ID 238
+ENUMERATION 237 1 true
+ENUMERATION 236 2 true true
+ENUMERATION 235 2 prior-word prior-word
+SOAR_ID 234
+ENUMERATION 233 2 word word
+ENUMERATION 232 1 nil
+ENUMERATION 231 1 nil
+SOAR_ID 230
+SOAR_ID 229
+SOAR_ID 228
+SOAR_ID 227
+SOAR_ID 226
+SOAR_ID 225
+SOAR_ID 224
+SOAR_ID 242
+SOAR_ID 243
+ENUMERATION 240 0
+SOAR_ID 241
+261
 0 type 5
-61 operator 69
-109 name 108
-135 name 134
-34 operator 124
-191 operator 195
-0 operator 82
-151 name 150
-142 top-state 0
-82 name 83
-184 name 183
-34 operator 58
-34 operator 109
-129 name 128
-0 operator 9
-44 failure 46
-191 operator 199
-156 top-state 0
-161 operator 178
-11 name 12
-76 name 77
-185 name 186
-92 superstate 142
-131 name 130
-0 operator 59
-124 name 123
-34 superstate 142
-142 operator 203
-105 name 104
-107 name 106
-34 operator 107
-118 name 120
-170 operator 174
-0 operator 70
-170 quiescence 212
-156 name 158
-161 operator 167
-0 input-sentence 28
-160 name 159
-0 operator 114
-142 operator 209
-0 operator 140
-161 operator 180
-125 type 126
-34 operator 48
-147 name 149
-0 desired 16
-133 name 132
-169 name 168
-118 type 119
-61 top-state 0
-0 operator 11
-161 operator 182
-170 top-state 0
-209 name 208
-147 superstate 142
-191 superstate 142
-79 name 78
-24 current-word 13
-41 spelling 42
-142 operator 146
-24 name 25
-0 success 30
-116 name 117
-118 top-state 0
-72 next-sentence-number 210
-147 operator 155
-142 superstate 0
-97 operator 103
-110 name 111
-75 name 74
-125 top-state 0
-0 operator 116
-147 operator 169
-125 operator 139
-170 type 171
-92 operator 105
-50 name 49
-72 name 73
-97 operator 101
-176 name 175
-156 type 157
-0 operator 55
-125 operator 129
-69 name 68
-92 name 94
-92 operator 96
-97 name 99
-147 type 148
-86 name 87
-34 operator 50
-170 superstate 147
-125 operator 137
-44 retrieved 45
-34 name 36
-39 command 40
-13 next 15
-0 required-success 29
-0 operator 88
-55 name 56
-147 top-state 0
-61 operator 79
-13 processed 26
-205 name 204
-197 name 196
-188 name 187
-0 current-word 27
-156 superstate 147
-38 word 13
-125 operator 135
-114 name 115
-0 superstate 6
-0 operator 4
-0 operator 24
-61 operator 65
-40 query 41
-17 name 20
-54 name 53
-161 top-state 0
-0 current-word 13
-34 retrieved-lexical-item 43
-4 name 8
-0 name 7
-1 output-link 3
-191 top-state 0
-0 io 1
-125 superstate 61
-34 operator 38
-67 name 66
-142 operator 205
-34 current-word 13
-201 name 200
+88 name 89
 34 smem 39
-182 name 181
-61 superstate 142
-0 operator 80
-61 operator 67
-112 name 113
-34 top-state 0
-34 type 35
-59 name 60
+139 name 138
+161 superstate 147
+0 success 30
+13 next 13
+214 retrieved-stack 215
+125 operator 137
+201 name 200
+0 segment 214
+161 operator 178
+34 operator 207
+34 operator 75
 125 operator 131
-0 syntax 23
-161 name 163
+50 name 49
+147 operator 188
+170 name 172
+61 operator 79
+125 name 127
+185 name 186
+125 operator 139
+34 operator 109
+69 name 68
+205 name 204
+75 name 74
+34 operator 85
+180 name 179
+170 quiescence 212
+170 operator 176
+142 operator 203
+61 operator 69
+161 operator 167
+160 name 159
+67 name 66
+97 name 99
+207 name 206
+0 io 1
+72 name 73
+52 name 51
+34 operator 50
+34 current-word 13
+147 name 149
+34 operator 124
+0 operator 88
+0 operator 80
+161 operator 180
+34 operator 54
+142 type 143
+34 operator 52
+215 prior 217
+13 next 15
+0 operator 114
+11 name 12
+156 name 158
+0 input-sentence 13
+147 top-state 0
+114 name 115
+17 name 20
+0 operator 185
+0 operator 11
+0 current-word 27
+118 superstate 0
+76 name 77
+203 name 202
+214 comprehension-structure 219
+116 name 117
+214 failed-construction 237
+125 operator 135
+124 name 123
+191 superstate 142
+103 name 102
+118 name 120
+182 name 181
+147 superstate 142
+214 merged-receiver 243
+147 operator 153
+191 name 193
+142 top-state 0
+0 operator 24
+0 world-usage 213
+92 superstate 142
+125 operator 129
+0 input-sentence 28
+118 type 119
+61 name 63
+0 operator 82
+170 operator 174
+223 structure-type 240
+156 top-state 0
+219 not-merged-receiver 220
+161 type 162
+167 name 166
+54 name 53
+197 name 196
+133 name 132
+215 prior 231
+214 not-merged-receiver 221
+170 type 171
+34 superstate 142
+90 name 91
+0 operator 112
+38 word 13
+214 not-merged-assigner 223
+92 operator 105
+44 retrieved 45
+223 structure-type 239
+146 name 145
+0 problem-space 17
+142 superstate 0
+80 name 81
+96 name 95
+225 new-word 228
+135 name 134
+0 semantics 22
+188 name 187
+0 desired 16
+137 name 136
+161 operator 184
+82 name 83
+24 name 25
+0 reward-link 31
+147 topstate 211
+219 new-word 227
+142 operator 146
+161 top-state 0
+38 name 37
+1 input-link 2
+44 failure 46
+0 superstate 6
+125 operator 133
+34 operator 48
+219 words 235
+65 name 64
+61 operator 65
+142 operator 209
+214 merged-assigner 242
+0 operator 110
+107 name 106
+13 processed 26
+217 prior 234
+59 name 60
+178 name 177
+110 name 111
+9 name 10
+191 operator 201
+131 name 130
+147 operator 169
+195 name 194
+32 value 33
+122 name 121
+48 name 47
+92 operator 96
+86 name 87
+153 name 152
+0 operator 86
+72 next-sentence-number 210
+34 type 35
+0 operator 116
+219 remove-receiver 229
+0 operator 4
+55 name 56
+34 operator 38
 13 spelling 14
+217 item 218
+17 default-state-copy 19
+0 operator 90
+0 operator 76
+191 top-state 0
+17 one-level-attributes 21
+161 operator 182
+92 top-state 0
+105 name 104
+34 operator 107
+161 operator 165
+219 processed 222
+214 current-word 238
+31 reward 32
+129 name 128
+219 remove-assigner 230
+92 name 94
+118 operator 197
+219 not-merged-assigner 224
+92 type 93
+184 name 183
+0 operator 140
+155 name 154
+156 superstate 147
+151 name 150
+34 operator 58
+79 name 78
+147 operator 155
+24 current-word 13
+125 type 126
+170 superstate 147
+97 operator 101
+0 operator 72
+147 type 148
+41 spelling 42
+219 type 233
+0 assigner 241
+156 operator 160
+109 name 108
+161 name 163
+0 operator 59
+156 type 157
+70 name 71
+40 query 41
+191 operator 199
+0 name 7
+17 two-level-attributes 18
+125 top-state 0
+97 top-state 0
+0 operator 55
+0 operator 9
+190 name 189
+112 name 113
+169 name 168
+176 name 175
+118 operator 122
+0 syntax 23
+61 top-state 0
+214 semantics 225
+34 name 36
+191 type 192
+34 top-state 0
+13 retrieved-lexical-item 43
+0 required-success 29
+4 name 8
+215 item 216
+97 operator 103
+125 superstate 61
+142 operator 190
+0 current-word 13
+58 name 57
+191 operator 195
+97 type 98
+142 name 144
+209 name 208
+0 operator 70
+219 failed 236
+97 superstate 92
+61 operator 67
+174 name 173
+0 top-state 0
+118 top-state 0
+140 name 141
+85 name 84
+34 retrieved-lexical-item 43
+147 operator 151
+39 result 44
+39 command 40
+165 name 164
+219 new-word 226
+61 superstate 142
+170 top-state 0
+142 operator 205
+61 type 62
+101 name 100
+199 name 198
+1 output-link 3

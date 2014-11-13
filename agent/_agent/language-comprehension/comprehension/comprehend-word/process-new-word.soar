@@ -5,32 +5,77 @@
 
 sp {comprehend-word*propose*process-new-word
    (state <s> ^name comprehend-word
+              ^quiescence t   # Don't chunk because this is going to get updated in smem.
               ^segment <seg>
               ^failed-retrieval true
              -^retrieved-lexical-item.spelling <spell>)
    (<seg> ^current-word <cw>
-          ^unfilled-assigner-item <uai>)
+          ^not-merged-assigner <uai>)
    (<cw> ^spelling <spell>)
 -->
-   (<s> ^operator <op> + =)
+   (<s> ^operator <op> +)
    (<op> ^name process-new-word
+         ^type single
          ^assigner <uai>
-         ^word <cw>)
+         ^word <cw>
+		 ^id (make-constant-symbol <spell>))
 }
 
 sp {comprehend-word*propose*process-new-word*no-assigner
    (state <s> ^name comprehend-word
+              ^quiescence t  # Don't chunk because this is going to get updated in smem.
               ^segment <seg>
               ^failed-retrieval true
              -^retrieved-lexical-item.spelling <spell>)
    (<seg> ^current-word <cw>
-         -^unfilled-assigner-item <uai>)
+         -^not-merged-assigner <uai>)
    (<cw> ^spelling <spell>)
 -->
-   (<s> ^operator <op> + =)
+   (<s> ^operator <op> +)
    (<op> ^name process-new-word
-         ^assigner nil
-         ^word <cw>)
+         ^type none
+         ^word <cw>
+		 ^id (make-constant-symbol <spell>))
+}
+#### If tie for selection betweeen different types, propose best for multiple - avoid committing just yet.
+
+sp {comprehend-word*propose*process-new-word*tie
+#   :interrupt
+   (state <ss> ^superstate <s>
+               ^quiescence t  # Don't chunk because this is going to get updated in smem.
+               ^impasse tie 
+               ^item <o1>
+               ^item > <o1>)  # only one match
+   (<o1> ^name process-new-word)
+   (<s> ^name comprehend-word
+        ^segment <seg>
+       -^retrieved-lexical-item.spelling <spell>)
+   (<seg> ^current-word <cw>)
+   (<cw> ^spelling <spell>)
+-->
+   (<s> ^operator <op> +, =)
+   (<op> ^name process-new-word
+         ^type multiple 
+         ^word <cw>
+         ^possible-assigners <ass>
+		 ^id (make-constant-symbol <spell>))
+}
+
+sp {comprehend-word*propose*process-new-word*elaborate-operator
+   (state <ss> ^superstate <s>
+               ^impasse tie
+               ^item <o1>)
+   (<o1> ^name process-new-word
+         ^assigner <ass1>
+         ^type single)
+   (<s> ^name comprehend-word
+        ^operator <so> +)
+   (<so> ^name process-new-word
+         ^type multiple
+         ^possible-assigners <ass>)
+-->
+   (<s> ^operator <so> >)
+   (<ass> ^assigner <ass1>)
 }
 
 ##################
@@ -40,9 +85,11 @@ sp {comprehend-word*compare*process-new-word*before
               ^operator <op1> +
                         {<> <op1> <op2> } +)
    (<op1> ^name process-new-word
-          ^assigner.lt-lexical-assigner.before <lla>)
+          ^assigner.lt <lla>)
+   (<lla> ^before <llb>
+          ^required true)
    (<op2> ^name process-new-word
-          ^assigner.lt-lexical-assigner <lla>)
+          ^assigner.lt <llb>)
 -->
    (<s> ^operator <op1> > <op2>)
 }
@@ -52,7 +99,9 @@ sp {comprehend-word*compare*process-new-word*before-type
               ^operator <op1> +
                         {<> <op1> <op2> } +)
    (<op1> ^name process-new-word
-          ^assigner.lt-lexical-assigner.before-type <type>)
+          ^assigner.lt <lla>)
+   (<lla> ^before-type <type>
+          ^required true)
    (<op2> ^name process-new-word
           ^assigner.structure-type <type>)
 -->
@@ -71,12 +120,24 @@ sp {comprehend-word*compare*process-new-word*prefer-primitive
    (<s> ^operator <op1> > <op2>)
 }
 
+sp {comprehend-word*compare*process-new-word*prefer-unknown
+   (state <s> ^name comprehend-word
+              ^operator <op1> +
+                        {<> <op1> <op2> } +)
+   (<op1> ^name process-new-word
+          ^assigner.structure-type U)
+   (<op2> ^name process-new-word
+          ^assigner.structure-type <> U)
+-->
+   (<s> ^operator <op1> > <op2>)
+}
+
 ## Should already know all of these
 sp {comprehend-word*reject*process-new-word*fixed-primitive-sets
    (state <s> ^name comprehend-word
               ^operator <op1> +)
    (<op1> ^name process-new-word
-          ^assigner.structure-type << D QT P T Q >>)
+          ^assigner.structure-type << D QT P T Q RP >>)
 -->
    (<s> ^operator <op1> -)
 }
@@ -84,43 +145,46 @@ sp {comprehend-word*reject*process-new-word*fixed-primitive-sets
 ########## Elaborate assigner with primitive or not
 
 sp {apply*process-new-word*elaborate*primitive-structure
-   :interrupt
+#   :interrupt
    (state <s> ^operator <op> +)
    (<op> ^name process-new-word
          ^assigner <ass>)
-   (<ass> ^structure-type { <st> << V ADJ N ADV >> })
+   (<ass> ^structure-type { <st> << V ADJ N ADV PN U >> })
 -->
    (<ass> ^primitive-structure true)
 }
 
 sp {apply*process-new-word*elaborate*primitive-structure*false
-   :interrupt
+ #  :interrupt
    (state <s> ^operator <op> +)
    (<op> ^name process-new-word
          ^assigner <ass>)
-   (<ass> ^structure-type { <st> << DP VP NP PP >> })
+   (<ass> ^structure-type { <st> << DP VP NP PP CP >> })
 -->
    (<ass> ^primitive-structure false)
 }
 
-### For now, use primitive assigner to set structure type
-## Could be random if multiple assigners available
+### For now, only use primitive assigner to set structure type
 
 sp {apply*process-new-word*assign*primitive
    (state <s> ^operator <op>
               ^segment.comprehension-structure <cs>
               ^smem.command <cmd>)
    (<op> ^name process-new-word
+         ^type single
          ^word <cw>
-         ^assigner <as>)
+         ^assigner <as>
+         ^id <id>)
    (<as> ^structure-type <st>
          ^primitive-structure true)
    (<cw> ^spelling <spell>)
 -->
-   (<s> ^retrieved-lexical-item <nw>)
+   (<s> ^new-word true
+        ^retrieved-lexical-item <nw>)
    (<cmd> ^store <nw>)
    (<nw> ^spelling <spell>
-         ^structure-type <st>)
+         ^structure-type <st>
+         ^id <id>)
    (<cs> ^retrieved-lexical-item <nw>
          ^new-word <nw>)
    (write (crlf) |I guess | <spell> | is a | <st>)
@@ -131,17 +195,21 @@ sp {apply*process-new-word*assign*DP*after*D*after*D
               ^segment <seg>
               ^smem.command <cmd>)
    (<seg> ^comprehension-structure <cs>
-          ^unfilled-receiver-item.structure-type D)
+          ^not-merged-receiver.structure-type D)
    (<op> ^name process-new-word
+         ^type single
          ^word <cw>
-         ^assigner <as>)
+         ^assigner <as>
+         ^id <id>)
    (<as> ^structure-type DP)
    (<cw> ^spelling <spell>)
 -->
-   (<s> ^retrieved-lexical-item <nw>)
+   (<s> ^new-word true
+        ^retrieved-lexical-item <nw>)
    (<cmd> ^store <nw>)
    (<nw> ^spelling <spell>
-         ^structure-type N) # could be an adjective
+         ^structure-type N
+         ^id <id>) # could be an adjective
    (<cs> ^retrieved-lexical-item <nw>
          ^new-word <nw>)
    (write (crlf) |I guess | <spell> | is a N|)
@@ -152,17 +220,21 @@ sp {apply*process-new-word*assign*DP*not-after*D
               ^segment <seg>
               ^smem.command <cmd>)
    (<seg> ^comprehension-structure <cs>
-         -^unfilled-receiver-item.structure-type D)
+         -^not-merged-receiver.structure-type D)
    (<op> ^name process-new-word
+         ^type single
          ^word <cw>
-         ^assigner <as>)
+         ^assigner <as>
+         ^id <id>)
    (<as> ^structure-type DP)
    (<cw> ^spelling <spell>)
 -->
-   (<s> ^retrieved-lexical-item <nw>)
+   (<s> ^new-word true
+        ^retrieved-lexical-item <nw>)
    (<cmd> ^store <nw>)
    (<nw> ^spelling <spell>
-         ^structure-type ADJ) # could be a proper noun
+         ^structure-type ADJ
+         ^id <id>) # could be a proper noun
    (<cs> ^retrieved-lexical-item <nw>
          ^new-word <nw>)
    (write (crlf) |I guess | <spell> | is a  ADJ|)
@@ -173,17 +245,21 @@ sp {apply*process-new-word*assign*VP*no*V
               ^segment <seg>
               ^smem.command <cmd>)
    (<seg> ^comprehension-structure <cs>
-         -^unfilled-receiver-item.structure-type V)
+         -^not-merged-receiver.structure-type V)
    (<op> ^name process-new-word
+         ^type single
          ^word <cw>
-         ^assigner <as>)
+         ^assigner <as>
+         ^id <id>)
    (<as> ^structure-type VP)
    (<cw> ^spelling <spell>)
 -->
-   (<s> ^retrieved-lexical-item <nw>)
+   (<s> ^new-word true
+        ^retrieved-lexical-item <nw>)
    (<cmd> ^store <nw>)
    (<nw> ^spelling <spell>
-         ^structure-type V) # could be a proper noun
+         ^structure-type V
+         ^id <id>) # could be a proper noun
    (<cs> ^retrieved-lexical-item <nw>
          ^new-word <nw>)
    (write (crlf) |I guess | <spell> | is a V|)
@@ -198,19 +274,49 @@ sp {apply*process-new-word*assign*no-assigner
               ^smem.command <cmd>)
    (<op> ^name process-new-word
          ^word <cw>
-         ^assigner nil)
+         ^type none
+         ^id <id>)
    (<cw> ^spelling <spell>)
 -->
-   (<s> ^retrieved-lexical-item <nw>)
+   (<s> ^new-word true
+        ^retrieved-lexical-item <nw>)
    (<cmd> ^store <nw>)
    (<nw> ^spelling <spell>
          ^structure-type U
          ^object-feature unknown
-         ^perceptual-feature <spell>)
+         ^perceptual-feature <id>
+         ^id <id>)
    (<cs> ^retrieved-lexical-item <nw>
          ^new-word <nw>)
-   (write (crlf) |I guess | <spell> | is a unknown (U).|)
+   (write (crlf) |No assigners. I guess | <spell> | is a unknown (U).|)
 }
+
+### Multiple possibilities (2)
+
+sp {apply*process-new-word*assign*multiples
+   (state <s> ^operator <op>
+              ^segment.comprehension-structure <cs>
+              ^smem.command <cmd>)
+   (<op> ^name process-new-word
+         ^word <cw>
+         ^type multiple
+         ^possible-assigners <as>
+         ^id <id>)
+   (<cw> ^spelling <spell>)
+-->
+   (<s> ^new-word true
+        ^retrieved-lexical-item <nw>)
+   (<cmd> ^store <nw>)
+   (<nw> ^spelling <spell>
+         ^structure-type U
+         ^object-feature unknown
+         ^possible-assigners <as>
+         ^id <id>)
+   (<cs> ^new-word <nw>)
+   (write (crlf) |Multiple possible assigners. Going with U for now.|)
+}
+
+#### 
 
 
 sp {apply*process-new-word*clean-up
@@ -222,3 +328,6 @@ sp {apply*process-new-word*clean-up
 -->
    (<cmd> ^query <q> -)
 }
+
+
+

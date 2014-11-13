@@ -1,0 +1,65 @@
+### Should handle more than 2 
+###  When only one possibility is left.
+sp {comprehension*propose*reprocess-unknown-word
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^not-merged-receiver <uri>
+          ^not-merged-assigner <as1>)
+   (<uri> ^structure-type U
+          ^lt <lti>)
+   (<lti> ^possible-assigners.assigner <as1>)
+ -{(<seg> ^not-merged-assigner <as2>)
+   (<lti> ^possible-assigners.assigner { <> <as1> <as2> })}
+-->
+   (<s> ^operator <op> + =, >)
+   (<op> ^name reprocess-unknown-word
+         ^not-merged-receiver <uri>
+         ^not-merged-assigner <as1>)
+}
+
+###  When reach a phrase end and a required assigner is missing.
+###  Assume unknown is that type
+sp {comprehension*propose*reprocess-unknown-word*no-prior-merge
+#   :interrupt
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^not-merged-receiver <uri>
+         -^not-merged-receiver.structure-type <sstruct>
+          ^not-merged-assigner <as1>
+          ^retrieved-stack.item { <> <uri> <item> }
+          ^last-merge.assigner nil)
+   (<as1> ^lt.required true
+          ^parent-receiver <ps>)
+   (<ps> ^lt.converts-to  <nstruct>
+         ^structure-type { <> <nstruct> <sstruct> })
+   (<uri> ^structure-type U
+          ^lt <lti>)
+   (<lti> ^possible-assigners.assigner <as1>)
+   (<item> ^structure-type { <> <nstruct> <> <sstruct> })
+ 
+-->
+   (<s> ^operator <op> + =, >)
+   (<op> ^name reprocess-unknown-word
+         ^not-merged-receiver <uri>
+         ^not-merged-assigner <as1>)
+}
+
+sp {comprehension*apply*reprocess-unknown-word
+   (state <s> ^operator <op>
+              ^smem.command <cmd>)
+   (<op> ^name reprocess-unknown-word
+         ^not-merged-receiver <uri>
+         ^not-merged-assigner <uai>)
+   (<uai> ^structure-type <new>)
+   (<uri> ^lt <lli>)
+   (<lli> ^structure-type U)
+-->   
+   (<cmd> ^store <lli>)
+   (write (crlf) |Guess that unknown receiver | <uri> | must be: | 
+                  <new> | because at phrase end and that was not found and is required.|)
+   (<uri> ^structure-type U -
+                          <new>)
+   (<lli> ^structure-type U -
+                          <new>)
+}
+
