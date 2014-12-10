@@ -1,6 +1,7 @@
 package edu.umich.insoar.world;
 
 import java.util.*;
+
 import probcog.lcmtypes.*;
 import sml.*;
 
@@ -27,6 +28,24 @@ public class PerceptualProperty
 		return propertyNames.get(propertyID);
 	}
 	
+	public static final String VISUAL_TYPE = "visual";
+	public static final String LINGUISTIC_TYPE = "linguistic";
+	public static final String MEASURABLE_TYPE = "measurable";
+	public static final String STATE_TYPE = "state";
+	protected static HashMap<Integer, String> propertyTypes = null;
+	public static String getPropertyType(Integer propertyCategory){
+		if(propertyTypes == null){
+			propertyTypes = new HashMap<Integer, String>();
+			propertyTypes.put(category_t.CAT_COLOR, VISUAL_TYPE);
+			propertyTypes.put(category_t.CAT_SHAPE, VISUAL_TYPE);
+			propertyTypes.put(category_t.CAT_SIZE, VISUAL_TYPE);
+			propertyTypes.put(category_t.CAT_LOCATION, LINGUISTIC_TYPE);
+			propertyTypes.put(category_t.CAT_WEIGHT, MEASURABLE_TYPE);
+			propertyTypes.put(category_t.CAT_TEMPERATURE, MEASURABLE_TYPE);
+		}
+		return propertyTypes.get(propertyCategory);
+	}
+	
 	public static Integer getPropertyID(String propertyName){
 		if(propertyName.equals("color")){
 			return category_t.CAT_COLOR;
@@ -45,101 +64,95 @@ public class PerceptualProperty
 		}
 	}
 	
-	public static boolean isVisualProperty(int propID){
-		switch(propID){
-		case category_t.CAT_COLOR:
-		case category_t.CAT_SHAPE:
-		case category_t.CAT_SIZE:
-			return true;
-		default:
-			return false;
-		}
-	}
+	protected Identifier propId;
     
-    protected String parentName;
+    protected String name;
+    protected StringElement nameWme;
     
-    protected String propName;
+    protected String type;
+    protected StringElement typeWme;
     
-    protected Integer propId;
-    
+    protected Identifier valuesId;
     protected HashMap<String, Double> values;
+    protected HashMap<String, FloatElement> valueWmes;
     
-    protected StringBuilder svsCommands;
-
-    public PerceptualProperty(String parentName, categorized_data_t category){
-    	this.parentName = parentName;
-    	this.propName = getPropertyName(category.cat.cat);
-    	this.propId = category.cat.cat;
-    	this.values = new HashMap<String, Double>();
-    	this.svsCommands = new StringBuilder();
+    protected FloatElement featureValWme;
+    
+    public PerceptualProperty(Identifier parentId, categorized_data_t catDat){
+    	name = getPropertyName(catDat.cat.cat);
+    	nameWme = null;
     	
-    	if(isVisualProperty(this.propId)){
-    		svsCommands.append(SVSCommands.addProperty(parentName, propName + ".type", "visual"));
-    	} else {
-    		svsCommands.append(SVSCommands.addProperty(parentName, propName + ".type", "measurable"));
-    		svsCommands.append(SVSCommands.addProperty(parentName, propName + ".feature-val", "0"));
-   		}
+    	type = getPropertyType(catDat.cat.cat);
+    	typeWme = null;
 
-    	updateProperty(category);
+    	valuesId = null;
+    	values = new HashMap<String, Double>();
+    	valueWmes = new HashMap<String, FloatElement>();
+
+    	featureValWme = null;
+
+    	updateProperty(parentId, catDat);
     }
     
     public String getPropertyName(){
-    	return propName;
+    	return name;
     }
     
-    public Integer getPropertyID(){
-    	return propId;
-    }
-    
-    public void updateSVS(StringBuilder svsCommands){
-    	svsCommands.append(this.svsCommands.toString());
-    	this.svsCommands = new StringBuilder();
-    }
-    
-    public void updateProperty(categorized_data_t data){
-    	HashSet<String> valuesToRemove = new HashSet<String>(values.keySet());
-    	
-    	if(!isVisualProperty(propId) && data.num_features > 0){
-    		String featureValStr = propName + ".feature-val";
-    		svsCommands.append(SVSCommands.changeProperty(parentName, featureValStr, 
-    				Double.toString(data.features[0])));
+    public void updateProperty(Identifier parentId, categorized_data_t catDat){
+    	if(propId == null){
+    		propId = parentId.CreateIdWME("property");
+    		nameWme = propId.CreateStringWME("name", name);
+    		typeWme = propId.CreateStringWME("type", type);
+    		valuesId = propId.CreateIdWME("values");
+    		if(type.equals(MEASURABLE_TYPE)){
+    			featureValWme = propId.CreateFloatWME("feature-val", 0.0);
+    		}
     	}
     	
-    	for(int i = 0; i < data.len; i++){
-    		String valueName = data.label[i];
-    		Double conf = data.confidence[i];
-    		String fullName = propName + "." + valueName;
-    		
-    		if(values.containsKey(valueName)){
-    			valuesToRemove.remove(valueName);
-    			svsCommands.append(SVSCommands.changeProperty(parentName, fullName, conf.toString()));
-    		} else {
-    			svsCommands.append(SVSCommands.addProperty(parentName, fullName, conf.toString()));
+    	if(type.equals(MEASURABLE_TYPE)){
+    		if(Math.abs(featureValWme.GetValue() - catDat.features[0]) > 0){
+    			featureValWme.Update(catDat.features[0]);
     		}
-    		values.put(valueName, conf);
+    	}
+
+    	HashSet<String> valuesToRemove = new HashSet<String>(valueWmes.keySet());
+
+    	for(int i = 0; i < catDat.len; i++){
+    		String valueName = catDat.label[i];
+    		Double conf = catDat.confidence[i];
+    		
+    		if(valueWmes.containsKey(valueName)){
+    			valuesToRemove.remove(valueName);
+    			FloatElement el = valueWmes.get(valueName);
+    			if(Math.abs(el.GetValue() - conf) > .01){
+    				el.Update(conf);
+    			}
+    		} else {
+    			valueWmes.put(valueName, valuesId.CreateFloatWME(valueName, conf));
+    		}
+   			values.put(valueName, conf);
     	}
     	
     	for(String valueName : valuesToRemove){
-    		String fullName = propName + "." + valueName;
-    		svsCommands.append(SVSCommands.deleteProperty(parentName, fullName));
+    		valueWmes.get(valueName).DestroyWME();
+    		valueWmes.remove(valueName);
+    		values.remove(valueName);
     	}
     }
     
-    public void deleteProperty(){
-    	for(String valueName : values.keySet()){
-    		String fullName = propName + "." + valueName;
-    		svsCommands.append(SVSCommands.deleteProperty(parentName, fullName));
+    public void destroy(){
+    	if(propId != null){
+    		propId.DestroyWME();
+    		propId = null;
+    		nameWme = null;
+    		typeWme = null;
+    		valuesId = null;
+    		valueWmes.clear();
     	}
-    	values.clear();
-    	svsCommands.append(SVSCommands.deleteProperty(parentName, propName + ".type"));
-    	if(!isVisualProperty(propId)){
-    		svsCommands.append(SVSCommands.deleteProperty(parentName, propName + ".feature-val"));
-    	}
-    	svsCommands.append(SVSCommands.deleteProperty(parentName, propName));
     }
     
     public categorized_data_t getCatDat(){
-    	return getCatDat(propName, values);
+    	return getCatDat(name, values);
     }
     
     public static categorized_data_t getCatDat(String propName, HashMap<String, Double> values){

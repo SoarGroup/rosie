@@ -1,36 +1,104 @@
 sp {clear-object*elaborate*object-to-clear
    (state <s> ^name clear-object
-              ^superstate.operator.object <obj>)
+              ^current-action.object <obj>)
 -->
    (<s> ^object-to-clear <obj>)
 }
 
+sp {clear-object*elaborate*above-prep
+   (state <s> ^name clear-object
+              ^topstate.prepositions.prep <above>)
+   (<above> ^name above)
+-->
+   (<s> ^above-prep <above>)
+}
+
+sp {clear-object*elaborate*higher-than-prep
+   (state <s> ^name clear-object
+              ^topstate.prepositions.prep <h>)
+   (<h> ^name higher-than)
+-->
+   (<s> ^higher-than-prep <h>)
+}
+
 sp {clear-object*elaborate*current-bin
    (state <s> ^name clear-object
-              ^object-to-clear.id <id>
+              ^object-to-clear.id <oid>
               ^topstate.object <bin>
-              ^topstate.prepositions.prep <on>)
-   (<bin> ^id <bin-id>
-          ^is-bin true)
-   (<on> ^name on
-         ^pair <p>)
-   (<p>  ^a <id>
-         ^b <bin-id>)
+              ^above-prep.pair <p>)
+   (<bin> ^category bin
+          ^id <bid>)
+   (<p> ^a <oid> ^b <bid>)
 -->
    (<s> ^current-bin <bin>)
 }
 
-sp {clear-object*elaborate*blocking-object
+sp {clear-object*elaborate*stash-object*exclude-bin
    (state <s> ^name clear-object
-              ^object-to-clear.id <id>
-              ^topstate.object <blocker>
-              ^topstate.prepositions.prep <on>)
-   (<blocker> ^id <blocker-id>)
-   (<on> ^name on
-         ^pair <p>)
-   (<p>  ^a <blocker-id>
-         ^b <id>)
+              ^operator <o>
+              ^current-bin <bin>)
+   (<o> ^name stash-object
+        ^subaction <sub>)
 -->
-   (<s> ^blocking-object <blocker>)
+   (<sub> ^exclude-bin <bin>)
+}
+
+sp {clear-object*elaborate*object-in-bin
+   (state <s> ^name clear-object
+              ^object-to-clear <otc>
+              ^current-bin.id <bid>
+              ^topstate.object {<obj> <> <otc>}
+              ^above-prep.pair <p>)
+   (<obj> ^category block
+          ^id <oid>
+          ^perception-obj)
+   (<p> ^a <oid> ^b <bid>)
+-->
+   (<s> ^object-in-bin <obj>)
+}
+
+sp {clear-object*elaborate*higher-object
+   (state <s> ^name clear-object
+              ^object-to-clear.id <clearid>
+              ^object-in-bin <higher>
+              ^higher-than-prep.pair <p>)
+   (<higher> ^id <hid>)
+   (<p> ^a <hid> ^b <clearid>)
+-->
+   (<s> ^higher-object <higher>)
 }
    
+#sp {clear-object*elaborate*blocking-object
+#   (state <s> ^name clear-object
+#              ^object-to-clear.id <clearid>
+#              ^topstate.object <blocker>
+#              ^above-prep.pair <p>)
+#   (<blocker> ^id <bid>
+#              ^perception-obj) # Has to be live
+#   (<p> ^a <bid> ^b <clearid>)
+#-->
+#   (<s> ^blocking-object <blocker>)
+#}
+#
+#sp {clear-object*elaborate*blocking-object
+#   (state <s> ^name clear-object
+#              ^object-to-clear.id <clearid>
+#              ^topstate.object <blocker>
+#              ^above-prep.pair <above>
+#              ^higher-than-prep.pair <higher>
+#              ^current-bin.id <bin>)
+#   (<blocker> ^id <bid>
+#              ^perception-obj) # Has to be live
+#   (<above> ^a <bid> ^b <bin>)
+#   (<higher> ^a <bid> ^b <clearid>)
+#-->
+#   (<s> ^blocking-object <blocker>)
+#}
+#
+#sp {clear-object*elaborate*clear-blocker
+#   (state <s> ^name clear-object
+#              ^blocking-object <blocker>
+#             -^above-prep.pair.b <blocker>)
+#-->
+#   (<s> ^clear-blocker <blocker>)
+#}

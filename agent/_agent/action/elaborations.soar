@@ -1,21 +1,90 @@
-## elaborate indexed-action from operator
-sp {action*elaborate*indexed-action*operator
+################### elaborate problemspace
+sp {action*elaborate*problem-space
    (state <s> ^name action
-   	      ^superstate.operator.indexed-action <ia>)
+   	      ^problemspace <ps>
+	      ^superstate <ss>
+	      ^topstate <ss>)
+   (<ss> ^operator.name action)
 -->
-   (<s> ^indexed-action <ia>
-   	^action-matches <am>)
+   (<s> ^monitor-scene-changes true)
+   (<ps> ^action <act>
+   	 ^state <st>
+	 ^learning <l>)
+   (<act> ^type execute)
+   (<st> ^type current
+   	 ^elaborate closed-world)
+   (<l> ^type exploration)
 }
 
 ## elaborate indexed-action from purpose
-sp {action*elaborate*indexed-action
+sp {action*elaborate*state
    (state <s> ^name action
-   	      ^superstate.operator.purpose.parameters.indexable.result <iop>)
+   	      ^superstate.operator.purpose.parameters.indexable.result <iop>
+	      ^problemspace.action.type execute)
 -->
-   (<s> ^indexed-action <iop>
+   (<s> ^superstate-indexed-action <iop>
    	^action-matches <am>)
+#	^indexed-action <ia>)
 }
 
+sp {action*elaborate*indexed-action*one-argument
+   (state <s> ^name action
+   	      ^superstate-indexed-action <iop>
+	      ^problemspace.action.type execute)
+   (<iop> ^_metadata <met>
+   	  ^name <name>
+	  ^<arg1> <val>)
+   (<met> ^argument-attributes <attr>)
+   (<attr> ^<arg1>)
+  -{(<iop> ^{<arg2> <> <arg1>} <val2>)
+    (<attr> ^<arg2>)}
+-->
+   (<s> ^indexed-action <ia>)
+   (<ia> ^_metadata <met>
+   	 ^name <name>
+	 ^<arg1> <val>)
+}
+
+sp {action*elaborate*indexed-action*two-arguments
+   (state <s> ^name action
+   	      ^superstate-indexed-action <iop>
+	      ^problemspace.action.type execute)
+   (<iop> ^_metadata <met>
+   	  ^name <name>
+	  ^<arg1> <val1>
+	  ^{<arg2> > <arg1>} <val2>)
+   (<met> ^argument-attributes <attr>)
+   (<attr> ^<arg1>
+   	   ^<arg2>)
+  -{(<iop> ^{<arg3> <> <arg1> <> <arg2>} <val3>)
+    (<attr> ^<arg3>)}
+-->
+   (<s> ^indexed-action <ia>)
+   (<ia> ^_metadata <met>
+   	 ^name <name>
+	 ^<arg1> <val1>
+	 ^<arg2> <val2>)
+}
+
+
+
+# sp {action*elaborate*indexed-action
+#    (state <s> ^name action
+#    	      ^superstate-indexed-action <iop>
+# 	      ^indexed-action <ia>
+# 	      ^problemspace.action.type execute)
+#    (<iop> ^{<arg> <> applied} <val>)
+# --> 
+#    (<ia> ^<arg> <val>)
+# }
+
+sp {action*elaborate*indexed-action*composite
+   (state <s> ^name action
+   	      ^indexed-action <ia>)
+   (<ia> ^desired)
+-->
+   (<ia> ^action-type composite)
+}
 
 sp {action*elaborate*action-matches*operators
    (state <s> ^name action
@@ -35,69 +104,12 @@ sp {action*elaborate*lexical-information
 }
 
 
-## elaborate problemspace
-sp {action*elaborate*problem-space
-   (state <s> ^name action)
--->
-   (<s> ^problemspace action
-   	^monitor-scene-changes true)
-}
-
-## copy action problemspace
-sp {action*copy*problem-space
-   (state <s> ^superstate <ss>
-   	      -^name assign-goal
-	      -^name multiple-argument-instantiations)
-   (<ss> ^problemspace action)
--->
-   (<s> ^problemspace action)
-}
-
-## elaborate action-type
-sp {composite-action*elaborate*composite
-   (state <s> ^superstate.operator.action-type <any>)
--->
-   (<s> ^action-type <any>)
-}
-
-sp {composite-action*copy*action-type
-   (state <s> ^superstate.action-type <any>)
--->
-   (<s> ^action-type <any>)
-}
-
-
-### 
-sp {action*elaborate*ignore-set
-   (state <s> ^problemspace action)
--->
-   (<s> ^ignore-set <nm>)
-   (<nm> ^attribute applied
-   	 ^attribute information
-	 ^attribute _relation
-	 ^attribute _metadata
-	 ^attribute actions
-	 ^attribute action-type
-	 ^attribute matched
-	 ^attribute _instantiation-of)
-}
-
-
-### if an action-operator is selected, mark purpose
-sp {action*operator-selection*mark-purpose
-   (state <s> ^problemspace action
-   	      ^operator <op>
-	      ^superstate.operator.purpose <p>)
-   (<op> ^action-type <type>)
--->
-   (<p> ^executing action)
-}
 
 
 ### if an action is selected, delete all other object argumentation on indexed operator 
 
 sp {action*operator-selection*delete-argument*direct-object
-   (state <s> ^problemspace action
+   (state <s> ^problemspace.name action
    	      ^operator <op>
 	      ^indexed-action <ia>)
    (<op> ^<arg> <val>
@@ -109,7 +121,7 @@ sp {action*operator-selection*delete-argument*direct-object
 }
 
 sp {action*operator-selection*delete-argument*pp-object
-   (state <s> ^problemspace action
+   (state <s> ^problemspace.name action
    	      ^operator <op>
 	      ^indexed-action <ia>)
    (<op> ^<arg> <val>
@@ -120,3 +132,4 @@ sp {action*operator-selection*delete-argument*pp-object
 -->
    (<ia> ^<arg> <nval> -)
 }
+

@@ -1,12 +1,13 @@
-## find the projected location using spatial-reasoning system
 
+
+## find the projected location using spatial-reasoning system
 sp {propose*find-projection*put-down
    (state <s> ^name op_put-down-object-location
    	      ^io
-	      ^argument1 <obj1>
+	      ^argument1.belief-obj <obj1>
 	      ^argument2 <nval>
 	      -^projection-result)
-   (<nval> ^argument <obj2>
+   (<nval> ^argument.perception-obj <obj2>
   	   ^relation.smem-rep <rel>)
 -->
    (<s> ^operator <op> + >, =)
@@ -17,57 +18,40 @@ sp {propose*find-projection*put-down
 	^predicate <rel>)
 }
 
-### if equal 
-
-## setup tracking 
-sp {tracking*put-down
+sp {propose*find-projection*put-down*no*perc-obj
    (state <s> ^name op_put-down-object-location
-   	      ^projection-result <res>
-	      ^io
-	      ^argument1 <obj1>
+   	      ^io
+	      ^argument1.belief-obj <obj1>
 	      ^argument2 <nval>
-	      ^topstate <ts>)
-   (<nval> ^argument <loc>
-   	   ^relation <rel>)
-   (<rel> ^smem-rep <srel>)
+	      -^projection-result)
+   (<nval> ^argument <arg>
+  	   ^relation.smem-rep <rel>)
+   (<arg> -^perception-obj
+           ^belief-obj <obj2>)
 -->
-   (<ts> ^track-relation <relation>)
-   (<relation> ^object1 <obj1>
-   	       ^object2 <loc>
-	       ^predicate <srel>
-	       ^vpredicate <rel>)
-}
-
-
-# delete tracking 
-sp {tracking*put-down*delete
-   (state <s> ^track-relation <rel>
-   	      ^operator <op>
-	      ^topstate <s>)
-   (<op> -^name action)
--->
-   (<s> ^track-relation <rel> -)
+   (<s> ^operator <op> + >, =)
+   (<op> ^name find-projection
+   	^interaction true
+	^a <obj1>
+	^b <obj2>
+	^predicate <rel>)
 }
 
 ## AM: Used to track an object after a place
 sp {action*put-down*object*move*svs*object
    (state <s> ^name << op_put-down-object-location op_put-down-object-object >>
+              ^topstate.agent-params.eval-params.action-model-knowledge true
               ^argument1.belief-obj.id <id>
 	          ^projection-result <res>
-              ^io.input-link.self.action drop
+           	  ^robot-state.arm.action drop
               ^topstate.svs.command <cmd>)
    (<res> ^x <x> ^y <y> ^z <z>)
 -->
-   (<cmd> ^property <xp> <yp> <zp>)
-   (<xp> ^id <id>
-         ^property px
-         ^value <x>)
-   (<yp> ^id <id>
-         ^property py
-         ^value <y>)
-   (<zp> ^id <id>
-         ^property pz
-         ^value <z>)
+   (write |Moving object to tracked location| (crlf))
+   (<cmd> ^set_transform <setxform>)
+   (<setxform> ^id <id>
+               ^position <pos>)
+   (<pos> ^x <x> ^y <y> ^z <z>)
 }
 
 #sp {put-down*apply*remove*grabbed

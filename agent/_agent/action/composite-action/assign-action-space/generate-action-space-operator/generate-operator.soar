@@ -1,71 +1,161 @@
-# sp {elaborate*possible-operators*no-subarg
-#    (state <s> ^name generate-action-space-operator
-#    	      ^operator-template <op-id>
-# 	      ^candidate-object <obj1>)
-#    (<op-id> ^<arg1> <val1>
-# 	    ^op_name <op-name>)
-#  -{(<op-id> ^{<arg2> <> <arg1>})}
-#    (<val1> -^<subarg>)
-# -->
-#    (<s> ^candidate-operator <cand-op>)
-#    (<cand-op> ^op_name <op-name>
-#    	      ^<arg1> <obj1>
-# 	      ^<arg2> <nval>
-# 	      ^_instantiation-of <op-id>)
-#    (<nval> ^relation <rel>	
-#    	   ^argument <obj2>)
-# }
-
-sp {elaborate*possible-operators*relation
+sp {elaborate*new*candidate*operator*argument*single-level
    (state <s> ^name generate-action-space-operator
-   	      ^operator-template <op-id>
-	      ^candidate-object <obj1>
-	      ^candidate-object {<obj2> <> <obj1>})
-   (<op-id> ^{<arg1> <> op_name} <val1>
-   	    ^{<arg2> <> op_name <> <arg1>} <val2>
-	    ^op_name <op-name>)
-   (<val1> -^<subarg>)
-   (<val2> ^relation <rel>
-   	   ^argument <val3>)
+   	      ^operator-template <act>
+	      ^object <co>
+	      -^ignore-set.attribute <arg1>)
+   (<act> ^<arg1> <val1>)
+   (<val1> -^argument)
 -->
-   (<s> ^candidate-operator <cand-op>)
-   (<cand-op> ^name <op-name>
-   	      ^<arg1> <obj1>
-	      ^<arg2> <nval>
-	      ^_instantiation-of <op-id>
-	      ^action-type composite
-	      ^_metadata.procedural <op-id>)
-   (<nval> ^relation <rel>	
-   	   ^argument <obj2>)
+   (<s> ^<arg1> <co>)
 }
 
-sp {elaborate*possible-operators*no-relation
+sp {elaborate*new*candidate*operator*argument*second*level
    (state <s> ^name generate-action-space-operator
-   	      ^operator-template <op-id>
-	      ^candidate-object <obj1>
-	      ^candidate-object {<obj2> <> <obj1>})
-   (<op-id> ^{<arg1> <> op_name} <val1>
-   	    ^{<arg2> <> op_name <> <arg1>} <val2>
-	    ^op_name <op-name>)
-   (<val1> -^<subarg>)
-   (<val2> -^relation <rel>
-   	   ^argument <val3>)
+   	      ^operator-template <act>
+	      ^object <co>
+	      ^relation <rel>)
+   (<act> ^<arg1> <arg1-val>)
+   (<arg1-val> ^argument <val1>
+   	       ^relation <rel1>)
 -->
-   (<s> ^candidate-operator <cand-op>)
-   (<cand-op> ^name <op-name>
-   	      ^<arg1> <obj1>
-	      ^<arg2> <nval>
-	      ^_instantiation-of <op-id>
-	      ^action-type composite
-	      ^_metadata.procedural <op-id>)
-   (<nval> ^argument <obj2>)
+   (<s> ^<arg1> <argvalnew>)
+   (<argvalnew> ^argument <co>
+   		^relation <rel>)
 }
 
-sp {write-to-superstate*candidate-operators
+sp {elaborate*new*candidate*operator*argument*second*level*no-relation
    (state <s> ^name generate-action-space-operator
-   	      ^candidate-operator <cand-op>
-	      ^superstate <ss>)
+   	      ^operator-template <act>
+	      ^object <co>
+	      ^relation <rel>)
+   (<act> ^<arg1> <arg1-val>)
+   (<arg1-val> ^argument <val1>
+   	       -^relation <rel1>)
 -->
-   (<ss> ^action-space-operator <cand-op>)
+   (<s> ^<arg1> <argvalnew>)
+   (<argvalnew> ^argument <co>)
 }
-   
+
+
+### operator with one argument
+sp {generate-action-space-operator*create*operator*one-argument
+   (state <s> ^name generate-action-space-operator  
+	      ^operator-template <act>
+	      ^<arg1> <val1>
+	      ^map-id <map>) 
+   (<act> ^{<arg1> <> op_name} <id1>
+   	  -^{<arg2> <> <arg1>}
+	  ^op_name <name>)
+   (<map> ^procedural <proc>)
+-->
+   (<s> ^candidate-operator <cop>
+   	^match <match>)
+   (<cop> ^<arg1> <val1>
+   	  ^name <name>
+	  ^_metadata <met>
+	  ^action-type composite
+	  ^_instantiation-of <proc>)
+   (<match> ^action-operator <cop>)
+   (<met> ^map-id <map>
+   	  ^argument-count 1)
+}
+
+### operator with two arguments
+sp {generate-action-space-operator*create*operator*two-argument
+   (state <s> ^name generate-action-space-operator  
+	      ^operator-template <act>
+	      ^<arg1> <val1>
+	      ^<arg2> <val2>
+	      ^map-id <map>)
+   (<act> ^{<arg1> <> op_name} <id1>
+   	  ^{<arg2> > <arg1> <> op_name} <id2>
+	  ^op_name <name>)
+   (<val2> ^argument {<arg> <> <val1>})
+   (<map> ^procedural <proc>)
+-->
+   (<s> ^candidate-operator <cop>
+   	^match <match>)
+   (<cop> ^<arg1> <val1>
+   	  ^<arg2> <val2>
+   	  ^name <name>
+	  ^_metadata <met>
+	  ^action-type composite
+	  ^_instantiation-of <proc>)
+   (<match> ^action-operator <cop>)
+   (<met> ^map-id <map>
+   	  ^argument-count 2)
+}
+
+
+#### elaborate matches
+sp {generate-action-space-operator*match*name
+   (state <s> ^candidate-operator <cop>
+   	      ^retrieved-actions.action <act>
+	      ^match <match>)
+   (<cop> ^<arg> <val>) 
+   (<act> ^<arg> <val>)
+   (<match> ^action-operator <cop>)
+-->
+   (<match> ^matched <arg>)
+}
+
+sp {generate-action-space-operator*match*single-level*arguments
+   (state <s> ^candidate-operator <cop>
+   	      ^retrieved-actions.action <act>
+	      ^match <match>)
+   (<cop> ^<arg> <val>) 
+   (<val> ^id <id>)
+   (<act> ^<arg> <val1>)
+   (<val1> ^id <id>)
+   (<match> ^action-operator <cop>)
+-->
+   (<match> ^matched <arg>
+   	    ^matched-with <act>)
+}
+
+sp {generate-action-space-operator*match*two-level*arguments
+   (state <s> ^candidate-operator <cop>
+   	      ^retrieved-actions.action <act>
+	      ^match <match>)
+   (<cop> ^<arg> <varg>)
+   (<varg> ^argument <val>
+   	   -^relation) 
+   (<val> ^id <id>)
+   (<act> ^<arg> <varg1>)
+   (<varg1> ^argument <val1>
+   	    -^relation)
+   (<val1> ^id <id>)
+   (<match> ^action-operator <cop>)
+-->
+   (<match> ^matched <arg>
+   	    ^matched-with <act>)
+}
+
+sp {generate-action-space-operator*match*two-level*relation
+   (state <s> ^candidate-operator <cop>
+   	      ^retrieved-actions.action <act>
+	      ^match <match>)
+   (<cop> ^<arg> <varg>)
+   (<varg> ^argument <val>
+   	   ^relation.smem-rep <rep>) 
+   (<val> ^id <id>)
+   (<act> ^<arg> <varg1>)
+   (<varg1> ^argument <val1>
+   	    ^relation.smem-rep <rep>)
+   (<val1> ^id <id>)
+   (<match> ^action-operator <cop>)
+-->
+   (<match> ^matched <arg>
+   	    ^matched-with <act>)
+}
+
+sp {generate-action-space-operator*elaborate*operator*no-match
+   (state <s> ^candidate-operator <cop>
+   	      ^match <match>
+	      -^ignore-set.attribute <arg>)
+   (<match> ^action-operator <cop>
+   	    -^matched <arg>)
+   (<cop> ^<arg> <val>)
+-->
+   (<match> ^not-matched <arg>)
+}

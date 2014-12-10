@@ -1,11 +1,12 @@
 ####### propose pick-up for objects #########################################
 sp {propose*pickup*object
-   (state <s> ^problemspace action
-             -^problemspace perception # AM: Hack for now so they don't get proposed while attending to the scene
-   	      -^action-type primitive
+   (state <s> ^problemspace.action <act>
    	      ^object <obj>
-	      -^grabbed <any>)
-   (<obj> -^category location)
+	      ^environment <env>)
+   (<env> -^grabbed <any>
+	   ^clear <obj>)
+   (<act> -^type none)
+   (<obj> -^category << location bin blocker >>)
 -->
    (<s> ^operator <op> +)
    (<op> ^name op_pick-up-object
@@ -15,11 +16,11 @@ sp {propose*pickup*object
 
 ######## propose put an object in a position #################################
 sp {propose*put-down
-   (state <s> ^problemspace action
-             -^problemspace perception # AM: Hack for now so they don't get proposed while attending to the scene
-   	      -^action-type primitive
-   	      ^grabbed <gobj>
-   	      ^object {<obj> <> <gobj>})
+   (state <s> ^problemspace.action <act>
+   	      ^object {<obj> <> <gobj>}
+	      ^environment <env>)
+   (<env> ^grabbed <gobj>)
+   (<act> -^type none)
 -->
    (<s> ^operator <op> +)
    (<op> ^name op_put-down-object-location
@@ -29,13 +30,23 @@ sp {propose*put-down
    (<new> ^argument <obj>)
 }
 
+## SM: put here to avoid learning specific chunks in task learning. as a rule, temporary elaborations on objects should be avoided to get chunking to work correctly. 
+
+sp {propose*put-down*moving-object
+   (state <s> ^operator <op> +
+   	      ^quiescence t)
+   (<op> ^name op_put-down-object-location
+   	 ^argument1 <gobj>)
+-->
+   (<gobj> ^moving-object true)
+}
+
 ###################### propose open location #################################
 sp {propose*open*location
-   (state <s> ^problemspace action
-             -^problemspace perception # AM: Hack for now so they don't get proposed while attending to the scene
-   	      -^action-type primitive
+   (state <s> ^problemspace.action <act>
    	      ^object <obj>
-	      ^closed <obj>)
+	      ^environment.closed <obj>)
+   (<act> -^type none)
  -->
    (<s> ^operator <op> +)
    (<op> ^name op_open-location
@@ -45,11 +56,10 @@ sp {propose*open*location
 
 ###################### propose close location ##################################
 sp {propose*close*location
-   (state <s> ^problemspace action
-             -^problemspace perception # AM: Hack for now so they don't get proposed while attending to the scene
-   	      -^action-type primitive
+   (state <s> ^problemspace.action <act>
    	      ^object <obj>
-	      ^open <obj>)
+	      ^environment.open <obj>)
+   (<act> -^type none)
  -->
    (<s> ^operator <op> +)
    (<op> ^name op_close-location
@@ -59,9 +69,8 @@ sp {propose*close*location
 
 ######################### propose wait ########################################
 sp {propose*op_wait*operator
-   (state <s> ^problemspace action
-   	      -^action-type primitive
-	      -^name selection)
+   (state <s> ^problemspace.action <act>)
+   (<act> -^type none)
 -->
    (<s> ^operator <op> +)
    (<op> ^name op_wait
@@ -71,27 +80,27 @@ sp {propose*op_wait*operator
 
 #################### point #######################################	    	     
  
-sp {propose*point*object
-   (state <s> ^problemspace action
-             -^problemspace perception # AM: Hack for now so they don't get proposed while attending to the scene
-   	      -^action-type primitive
-   	      ^object <obj>)
--->
-   (<s> ^operator <op> +)
-   (<op> ^name op_point-to-object
-   	 ^argument1 <nobj>
-	 ^action-type primitive)
-   (<nobj> ^argument <obj>)
-}
+# sp {propose*point*object
+#    (state <s> ^problemspace.action <act>
+#     	      ^object <obj>)
+#    (<act> -^type none)
+# -->
+#    (<s> ^operator <op> +)
+#    (<op> ^name op_point-to-object
+#    	 ^argument1 <nobj>
+# 	 ^action-type primitive)
+#    (<nobj> ^argument <obj>)
+# }
    
 
 #################### activate #################################
 sp {propose*activate*stove
-   (state <s> ^problemspace action
-   	      -^problemspace perception
-	      -^action-type primitive
-	      ^object <obj>
-	      ^off <obj>)
+   (state <s> ^problemspace.action <act>
+ 	      ^object <obj>
+	      ^environment <env>)
+   (<env> ^off <obj>
+   	 ^closed <obj>)
+   (<act> -^type none)
 -->
    (<s> ^operator <op> +)
    (<op> ^name op_activate
@@ -101,11 +110,10 @@ sp {propose*activate*stove
 
 #################### stop #################################
 sp {propose*stop*stove
-   (state <s> ^problemspace action
-   	      -^problemspace perception
-	      -^action-type primitive
-	      ^object <obj>
-	      ^on <obj>)
+   (state <s> ^problemspace.action <act>
+ 	      ^object <obj>
+	      ^environment.on <obj>)
+   (<act> -^type none)
 -->
    (<s> ^operator <op> +)
    (<op> ^name op_stop

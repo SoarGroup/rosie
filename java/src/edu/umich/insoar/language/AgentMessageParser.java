@@ -1,21 +1,28 @@
 package edu.umich.insoar.language;
 
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import sml.Identifier;
+import sml.WMElement;
 import edu.umich.insoar.language.Patterns.LingObject;
+import edu.umich.insoar.language.Patterns.ObjectRelation;
 import edu.umich.insoar.world.WMUtil;
 
 public class AgentMessageParser
 {
+	static int counter = 0;
     public static String translateAgentMessage(Identifier id){
         String message = null;
+        
+        
         String type = WMUtil.getValueOfAttribute(id, "type");
         System.out.println(type);
         Identifier fieldsId = WMUtil.getIdentifierOfAttribute(id, "fields");
         if(type == null){
-            return null;
+            return null; 
         } else if(type.equals("different-attribute-question")){
             message = translateDifferentAttributeQuestion(fieldsId);
         } else if(type.equals("value-question")){
@@ -25,6 +32,7 @@ public class AgentMessageParser
         } else if(type.equals("attribute-presence-question")){
             message = translateAttributePresenceQuestion(fieldsId);
         } else if(type.equals("ask-property-name")){
+        	
             message = translateCategoryQuestion(fieldsId);
         } else if(type.equals("category-of-property")){
             message = translateCategoryPropertyQuestion(fieldsId);
@@ -40,6 +48,8 @@ public class AgentMessageParser
             message = "I don't know that preposition.";
         } else if(type.equals("single-word-response")){
         	message = WMUtil.getValueOfAttribute(fieldsId, "word");
+        	if(message.equals("dontknow")){
+        		message = "I don't know";}
         } else if(type.equals("no-object")){
         	message = "I do not see the object you are talking about";
         } else if(type.equals("count-response")){
@@ -51,66 +61,103 @@ public class AgentMessageParser
         	message = translateTeachingRequest(fieldsId);
         } else if(type.equals("which-question")){
         	message = translateWhichQuestion(fieldsId);
+        } else if(type.equals("missing-object")){
+        	message = translateMissingObjectQuestion(fieldsId);
+// ---------------------- task related queries ---------------------------------
         } else if(type.equals("get-next-task")){
-        	message = "Waiting for next command...";
+        	message = translateNextTaskPrompt();
         } else if(type.equals("get-next-subaction")){
-        	message = "What action should I take next?";
+        	message = translateNextSubtaskQuery();
         } else if(type.equals("confirmation")){
         	message = "Okay.";
         } else if (type.equals("get-goal")){
-        	message = "What is the goal of the action?";
+        	message = translateGoalQuery();
         } else if (type.equals("restart-task-instruction")){
-        	message = "The provided instruction sequence does not lead to the provided goal. Please give the instructions again.";
-        } else if(type.equals("request-index-confirmation")){
+        	message = "These actions do not lead to the goal you described. Please teach me again.";
+        } else if (type.equals("successful-task-learning")){
+        	message = "I got it";
+        } else if (type.equals("failure-exploration")){
+        	message = "I cannot figure it out.";
+        } else if (type.equals(("begin-exploration"))){
+        	//message = "Let me see.";
+        } 
+// ----------------------------------------------------------------------------------
+        else if(type.equals("request-index-confirmation")){
         	message = translateRequestIndexConfirmation(fieldsId);
         } else if(type.equals("describe-scene")){
             message = translateSceneQuestion(fieldsId);
         } else if(type.equals("describe-scene-objects")){
             message = translateSceneObjectsQuestion(fieldsId);
+            
         } else if(type.equals("list-objects")){
             message = translateObjectsQuestion(fieldsId);
+        } else if(type.equals("describe-goal-params")){
+            message = translateGoalDemoQuestion(fieldsId);
+        } else if(type.equals("goal-demo-done")){
+            message = "Ok I understand the goal.";
         } else if(type.equals("location-unknown")){
             message = "Relative location of object unknown";
         } else if(type.equals("play-game")){
             message = "Shall we play a game?";
         } else if(type.equals("game-start")){
             message = "Ok I know that game.  Tell me \"your turn\" when it's my turn.";
+        } else if(type.equals("game-new-params")){
+            message = "Tell me the name of an action, failure state, or goal.";
         } else if(type.equals("game-new-action2")){
-            message = "Ok tell me the name of a legal action in this game, or finished.";
+            message = "Ok tell me the name of a legal action in this game.";
         } else if(type.equals("game-new-action")){
             String gameName = WMUtil.getValueOfAttribute(fieldsId, "game-name");
-            message = "I do not know how to play " + gameName + 
-                    ". Is it a multiplayer game (true/false)?";
+            message = "I don't know how to play " + gameName + 
+                    ". Is it a multiplayer game?";
         } else if(type.equals("game-new-verb")){
-            message = "What is the associated verb for this action. (ex: move 2 on 3)";
+            message = "What is an associated verb for this action?";
         } else if(type.equals("game-new-goal")){
             message = "Ok tell me the name of the goal in the game.";
         } else if(type.equals("game-new-failure")){
             message = "Ok tell me the name of a failure state in the game. (or none)";
         } else if(type.equals("game-new-parameter1")){
-            message = "Ok list a parameter (block/location/either) for this action.\n";
+            message = "Ok describe an object for this action.\n";
         } else if(type.equals("game-new-parameter")){
-            message = "Ok list a parameter (block/location/either), or finished.";
+        	String stateType = WMUtil.getValueOfAttribute(fieldsId, "state-type");
+            message = "Ok describe an object for this " + stateType + " state.";
         } else if(type.equals("game-new-condition")){
-            message = "Ok list a condition for this parameter, or finished.";
+        	String obj = WMUtil.getValueOfAttribute(fieldsId, "type");
+            message = "Ok list a condition for the " + obj + ", or another object.";
+        } else if(type.equals("game-new-heuristic")){
+            message = "Are there any heuristics you can teach me? (or finished)";
+        } else if(type.equals("game-final-state")){
+            message = "Please demonstrate the final goal state.";
         } else if(type.equals("game-learned")){
             message = "Ok I have now learned the basics of the game.";
         } else if(type.equals("game-over")){
             message = "Game Over. Shall we play another?";
-        }
-        
+        } 
         return message;
     }
     
-    private static String translateTeachingRequest(Identifier id){
+    private static String translateGoalQuery() {
+    	return "This is a new task for me. What is the goal of this task?";
+	}
+
+	private static String translateNextSubtaskQuery() {
+		return "How do I proceed?";
+	}
+
+	private static String translateNextTaskPrompt() {
+		counter++;
+		if (counter == 1)
+			return "Give me a task.";
+		else 
+			return "Test me or give me another task.";
+	}
+
+	private static String translateTeachingRequest(Identifier id){
     	LingObject obj = LingObject.createFromSoarSpeak(id, "description");
     	String prep = WMUtil.getValueOfAttribute(id, "preposition");
     	if (prep != null)
     	    return "I don't know the preposition " + prep + ". Please teach me with examples";
     	else {
     	    return "I don't see " + obj.toString() + ". Please teach me to recognize one";
-    		
-    		
     	}
     }
     
@@ -201,6 +248,22 @@ public class AgentMessageParser
         return message;
     }
     
+    private static String translateGoalDemoQuestion(Identifier id){
+        Identifier description = WMUtil.getIdentifierOfAttribute(id, "description");
+        
+        List<ObjectRelation> sentence = ObjectRelation.createAllFromSoarSpeak(description, "sentence");
+        String message = "The goal state is:\n";
+        
+        Iterator<ObjectRelation> it = sentence.iterator();
+        if (sentence.isEmpty())
+            return "I did not understand that.";
+        while(it.hasNext())
+        {
+            String sent = it.next().toString();
+            message += sent + "\n";
+        }
+        return message;
+    }
     private static String translateObjectsQuestion(Identifier id){
         Identifier objects = WMUtil.getIdentifierOfAttribute(id, "objects");
         
@@ -280,6 +343,12 @@ public class AgentMessageParser
         return ret;
     }
     
+    private static String translateMissingObjectQuestion(Identifier id){
+    	Identifier objectId = WMUtil.getIdentifierOfAttribute(id, "description");
+    	if (objectId == null)
+    		return "Can you help me find the object I just lost?";
+        return "I can't find " + LingObject.createFromSoarSpeak(id, "description") + ". Can you help?";
+    }
     
     private static String translateWhichQuestion(Identifier id){
     	Identifier objectId = WMUtil.getIdentifierOfAttribute(id, "description");

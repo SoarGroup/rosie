@@ -7,19 +7,20 @@
 
 sp {topstate*elaborate*scene-monitor*property
    (state <s> ^topstate <s>
-              ^scene-monitor.object <obj>)
-   (<obj> ^perception-obj.<prop-name> <prop>)
-   (<prop> ^type {<type> << visual state measurable >>})
+              ^scene-monitor.<obj-type> <obj>)
+   (<obj> ^il-obj.property <prop>)
+   (<prop> ^name <prop-name>
+           ^type {<type> << visual state measurable >>})
 -->
    (<obj> ^property <p>)
    (<p> ^name <prop-name>
         ^type <type>
-        ^svs-prop <prop>)
+        ^il-prop <prop>)
 }
 
 sp {topstate*elaborate*scene-monitor*wm-prop
    (state <s> ^topstate <s>
-              ^scene-monitor.object <obj>)
+              ^scene-monitor.<obj-type> <obj>)
    (<obj> ^property <prop>
           ^wm-obj.property <wm-prop>)
    (<prop> ^name <prop-name>)
@@ -28,22 +29,39 @@ sp {topstate*elaborate*scene-monitor*wm-prop
    (<prop> ^wm-prop <wm-prop>)
 }
 
-sp {topstate*elaborate*scene-monitor*hypothesis*visual
+sp {topstate*elaborate*scene-monitor*hypothesis*valid-label
    (state <s> ^topstate <s>
-              ^scene-monitor.object.property <prop>)
+              ^scene-monitor.<obj-type>.property <prop>)
    (<prop> ^type << visual measurable >>
-           ^svs-prop.{<label> <> type <> feature-val} {<conf> > .1})
+           ^il-prop.values.<label> {<conf> > .1})
+-->
+   (<prop> ^valid-label <label>)
+}
+
+sp {topstate*elaborate*scene-monitor*hypothesis
+   (state <s> ^topstate <s>
+              ^scene-monitor.<obj-type>.property <prop>)
+   (<prop> ^valid-label <label>)
 -->
    (<prop> ^hypothesis <h>)
-   (<h> ^label <label>
-        ^conf <conf>)
+   (<h> ^label <label>)
+}
+
+sp {topstate*elaborate*scene-monitor*confidence
+   (state <s> ^topstate <s>
+              ^scene-monitor.<obj-type>.property <prop>)
+   (<prop> ^il-prop.values.<label> <conf>
+           ^hypothesis <h>)
+   (<h> ^label <label>)
+-->
+   (<h> ^conf <conf>)
 }
 
 sp {topstate*elaborate*scene-monitor*hypothesis*state
    (state <s> ^topstate <s>
-              ^scene-monitor.object.property <prop>)
+              ^scene-monitor.<obj-type>.property <prop>)
    (<prop> ^type state
-           ^svs-prop.value <label>)
+           ^il-prop.value <label>)
 -->
    (<prop> ^hypothesis <h>)
    (<h> ^label <label>
@@ -52,7 +70,7 @@ sp {topstate*elaborate*scene-monitor*hypothesis*state
 
 sp {topstate*elaborate*scene-monitor*hypothesis*best
    (state <s> ^topstate <s>
-              ^scene-monitor.object.property <prop>)
+              ^scene-monitor.<obj-type>.property <prop>)
    (<prop> ^hypothesis <h1>
           -^hypothesis.conf > <best>)
    (<h1> ^conf <best>)
@@ -62,7 +80,7 @@ sp {topstate*elaborate*scene-monitor*hypothesis*best
 
 sp {topstate*elaborate*scene-monitor*hypothesis*lower-threshold
    (state <s> ^topstate <s>
-              ^scene-monitor.object.property <prop>)
+              ^scene-monitor.<obj-type>.property <prop>)
    (<prop> ^hypothesis <h>)
    (<h> ^best true
         ^conf <conf>)
@@ -72,7 +90,7 @@ sp {topstate*elaborate*scene-monitor*hypothesis*lower-threshold
 
 sp {topstate*elaborate*scene-monitor*hypothesis*upper-threshold
    (state <s> ^topstate <s>
-              ^scene-monitor.object.property <prop>)
+              ^scene-monitor.<obj-type>.property <prop>)
    (<prop> ^hypothesis <h>)
    (<h> ^best true
         ^conf <conf>)
@@ -82,7 +100,7 @@ sp {topstate*elaborate*scene-monitor*hypothesis*upper-threshold
 
 sp {topstate*elaborate*scene-monitory*case*none*no-hypothesis
    (state <s> ^topstate <s>
-              ^scene-monitor.object.property <prop>)
+              ^scene-monitor.<obj-type>.property <prop>)
    (<prop> -^hypothesis)
 -->
    (<prop> ^case none)
@@ -100,7 +118,7 @@ sp {topstate*elaborate*scene-monitory*case*none*no-hypothesis
 
 sp {topstate*elaborate*scene-monitor*case*uncertain
    (state <s> ^topstate <s>
-              ^scene-monitor.object.property <prop>)
+              ^scene-monitor.<obj-type>.property <prop>)
    (<prop> ^hypothesis <h1>
            ^hypothesis {<h2> <> <h1>})
    (<h1> ^best true
@@ -112,7 +130,7 @@ sp {topstate*elaborate*scene-monitor*case*uncertain
 
 sp {topstate*elaborate*scene-monitor*case*certain
    (state <s> ^topstate <s>
-              ^scene-monitor.object.property <prop>)
+              ^scene-monitor.<obj-type>.property <prop>)
    (<prop> ^hypothesis <h1>)
    (<h1> ^best true
          ^lower-threshold <thresh>)
@@ -120,6 +138,17 @@ sp {topstate*elaborate*scene-monitor*case*certain
      (<h2> ^conf > <thresh>)}
 -->
    (<prop> ^case certain)
+}
+
+sp {topstate*elaborate*scene-monitor*different-feature-val
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes <sc>
+              ^scene-monitor.object.property <prop>)
+   (<prop> ^type measurable
+           ^il-prop.feature-val <val>
+          -^wm-prop.feature-val <val>)
+-->
+   (<prop> ^different-feature-val true)
 }
 
 ############################################################################################
@@ -156,7 +185,24 @@ sp {monitor-scene-changes*elaborate*scene-changes*changed-property
           ^differences.is-occluded false)
    (<prop> ^wm-prop <wm-prop>
            ^case <> <case-type>)
-   (<wm-prop> ^prev-case <case-type>)
+   (<wm-prop> ^prev-case { <case-type> <> certain })
+-->
+   (<sc> ^change <change>)
+   (<change> ^type changed-property
+             ^object <obj>
+             ^property <prop>)
+}
+
+sp {monitor-scene-changes*elaborate*scene-changes*changed-property*color
+   (state <s> ^topstate <s>
+              ^scene-monitor.object <obj>
+              ^scene-monitor.scene-changes <sc>)
+   (<obj> ^property <prop>
+          ^differences.is-occluded true)
+   (<prop> ^name color
+           ^wm-prop <wm-prop>
+           ^case <> <case-type>)
+   (<wm-prop> ^prev-case { <case-type> <> certain })
 -->
    (<sc> ^change <change>)
    (<change> ^type changed-property
@@ -193,6 +239,29 @@ sp {monitor-scene-changes*elaborate*scene-changes*higher-confidence
              ^new-confidence <new-conf>)
 }
 
+sp {monitor-scene-changes*elaborate*scene-changes*higher-confidence*color
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes <sc>
+              ^scene-monitor.object <obj>)
+   (<obj> ^property <prop>
+          ^differences.is-occluded true)
+   (<prop> ^name color
+           ^wm-prop <wm-prop>
+           ^case certain
+           ^hypothesis <h>)
+   (<wm-prop> ^value.confidence <conf>
+              ^value.label <label>)
+   (<h> ^label <label>
+        ^update-when-below {<low> > <conf>}
+        ^conf <new-conf>)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type higher-confidence
+             ^object <obj>
+             ^property <prop>
+             ^new-confidence <new-conf>)
+}
+
 ###########################################################################
 #
 # Change: different-best
@@ -208,7 +277,30 @@ sp {monitor-scene-changes*elaborate*scene-changes*different-best
           ^differences.is-occluded false)
    (<prop> ^wm-prop <wm-prop>
            ^hypothesis <h>
-           ^svs-prop <svs-prop>
+           ^il-prop <il-prop>
+           ^case certain)
+   (<wm-prop> ^prev-case certain
+              ^value.label <label>)
+   (<h> ^best true
+        ^label <> <label>)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type different-best
+             ^object <obj>
+             ^property <prop>
+             ^best-hyp <h>)
+}
+
+sp {monitor-scene-changes*elaborate*scene-changes*different-best*color
+   (state <s> ^topstate <s>
+              ^scene-monitor.scene-changes <sc>
+              ^scene-monitor.object <obj>)
+   (<obj> ^property <prop>
+          ^differences.is-occluded true)
+   (<prop> ^name color
+           ^wm-prop <wm-prop>
+           ^hypothesis <h>
+           ^il-prop <il-prop>
            ^case certain)
    (<wm-prop> ^prev-case certain
               ^value.label <label>)
@@ -233,9 +325,8 @@ sp {monitor-scene-changes*elaborate*scene-changes*new-property
    (state <s> ^topstate <s>
               ^scene-monitor.scene-changes <sc>
               ^scene-monitor.object <obj>)
-   (<obj> ^property <prop>
-          ^differences.is-occluded false)
-   (<prop> ^svs-prop <svs-prop>
+   (<obj> ^property <prop>)
+   (<prop> ^il-prop <il-prop>
           -^wm-prop <wm-prop>)
 -->
    (<sc> ^change <change>)
@@ -259,8 +350,7 @@ sp {monitor-scene-changes*elaborate*scene-change*different-feature-val
    (<obj> ^property <prop>
           ^differences.is-occluded false)
    (<prop> ^type measurable
-           ^svs-prop.feature-val <val>
-          -^wm-prop.feature-val <val>)
+           ^different-feature-val true)
 -->
    (<sc> ^change <change>)
    (<change> ^type different-feature-val

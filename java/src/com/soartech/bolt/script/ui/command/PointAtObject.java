@@ -16,7 +16,7 @@ public class PointAtObject implements UiCommand {
 	@Override
 	public void execute() {
 		perception_command_t command = new perception_command_t();
-		command.utime = InSoar.GetSoarTime();
+		command.utime = TimeUtil.utime();
 		command.command = "select=" + objectId;
 		LCM.getSingleton().publish("GUI_COMMAND", command);
 		// XXX: Fix

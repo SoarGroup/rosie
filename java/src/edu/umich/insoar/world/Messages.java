@@ -1,5 +1,8 @@
 package edu.umich.insoar.world;
 
+import com.soartech.bolt.testing.ActionType;
+
+import edu.umich.insoar.ChatFrame;
 import edu.umich.insoar.language.BOLTDictionary;
 import edu.umich.insoar.language.Parser;
 import sml.Identifier;
@@ -59,6 +62,7 @@ public class Messages implements IInputLinkElement
         
         messageId = parentIdentifier.CreateIdWME("sentence");
         messageNumber = latestMessageId;
+<<<<<<< HEAD
         messageId.CreateIntWME("sentence-number", messageNumber);
         messageId.CreateStringWME("complete-sentence", latestMessage);
         messageId.CreateStringWME("spelling", "*");
@@ -68,6 +72,14 @@ public class Messages implements IInputLinkElement
         if(lastChar == '.' || lastChar == '!' || lastChar == '?'){
         	latestMessage = latestMessage.substring(0, latestMessage.length()-1);
         	punct = lastChar;
+=======
+        messageId.CreateIntWME("id", latestMessageId);
+        //messageId.CreateStringWME("type", latestMessage);
+        if(!parser.getSoarSpeak(latestMessage, messageId)){
+        	messageId.DestroyWME();
+        	messageId = null;
+        	ChatFrame.Singleton().addMessage("Can you repeat that?", ActionType.Agent);
+>>>>>>> origin/AM-merge
         }
         
         Identifier nextID = messageId.CreateIdWME("next");

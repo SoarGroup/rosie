@@ -39,24 +39,77 @@
 #         ^proj-failure-reason no-prep)
 #}
 
+sp {find-projection*propose*calculate-placement
+   (state <s> ^name find-projection
+              ^predicate.relation <rx> <ry> <rz>)
+   (<rx> ^axis x ^type <xtype>)
+   (<ry> ^axis y ^type <ytype>)
+   (<rz> ^axis z ^type <ztype>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name calculate-placement
+        ^types <types>
+        ^distances <dists>)
+   (<types> ^x <xtype> ^y <ytype> ^z <ztype>)
+}
+
+sp {find-projection*elaborate*axis*distance*greater
+   (state <s> ^name find-projection
+              ^operator <o> +
+              ^predicate.relation <rel>)
+   (<rel> ^axis <axis>
+          ^avg <dist>)
+   (<o> ^name calculate-placement
+        ^types.<axis> greater
+        ^distances <dists>)
+-->
+   (<dists> ^<axis> <dist>)
+}
+
+sp {find-projection*elaborate*axis*distance*aligned
+   (state <s> ^name find-projection
+              ^operator <o> +)
+   (<o> ^name calculate-placement
+        ^types.<axis> aligned
+        ^distances <dists>)
+-->
+   (<dists> ^<axis> 0.0)
+}
+
+sp {find-projection*elaborate*axis*distance*less
+   (state <s> ^name find-projection
+              ^operator <o> +
+              ^predicate.relation <rel>)
+   (<rel> ^axis <axis>
+          ^avg <dist>)
+   (<o> ^name calculate-placement
+        ^types.<axis> less
+        ^distances <dists>)
+-->
+   (<dists> ^<axis> (- <dist>))
+}
+
 sp {find-projection*project*svs*failure*obja-exist
    (state <s> ^name find-projection
+              ^operator.name calculate-placement
               ^superstate <ss>
               ^a <ida>
               ^result <res>
               ^svs-link.spatial-scene <sp>)
-   (<sp> -^child.id-int <ida>)
+   (<sp> -^child.id <ida>)
 -->
    (<ss> ^projection-result failure
          ^proj-failure-reason no-object)
 }
+
 sp {find-projection*project*svs*failure*objb-exist
    (state <s> ^name find-projection
+              ^operator.name calculate-placement
               ^superstate <ss>
               ^b <idb>
               ^result <res>
               ^svs-link.spatial-scene <sp>)
-   (<sp> -^child.id-int <idb>)
+   (<sp> -^child.id <idb>)
 -->
    (<ss> ^projection-result failure
          ^proj-failure-reason no-object)
@@ -64,85 +117,76 @@ sp {find-projection*project*svs*failure*objb-exist
 
 sp {find-projection*project*svs*create-projection
    (state <s> ^name find-projection
+              ^operator <o>
               ^a <ida>
               ^b <idb>
               ^result <res>
               ^predicate <p1>
-              ^svs-link.command <cmd>
-              ^svs-link.spatial-scene <sp>)
-   (<p1> ^all-aligned <val>)
-   (<sp> ^child <c1> ^child <c2>)
-   (<c1> ^id-int <ida> ^id <obja>)
-   (<c2> ^id-int <idb> ^id <objb>)
+              ^svs-link.command <cmd>)
+   (<o> ^name calculate-placement
+        ^distances <d>)
+   (<d> ^x <dx> ^y <dy> ^z <dz>)
 -->
-   (<cmd> ^project <P11>)
-   (<P11> ^a <N7> ^b <N8> ^aligned <val>)
-   (<N7> ^type node ^name <obja>)
-   (<N8> ^type node ^name <objb>)
+	(<cmd> ^extract_once <e>)
+	(<e> ^type calculate_placement 
+			 ^a <nodea> ^b <nodeb>
+             ^x_axis_separation <dx> 
+             ^y_axis_separation <dy> 
+             ^z_axis_separation <dz>)
+   (<nodea> ^type node ^id <ida>)
+   (<nodeb> ^type node ^id <idb>)
 }
 
-sp {find-projection*project*svs*create-projection*add-axis
-   (state <s> ^name find-projection
-              ^a <ida>
-              ^b <idb>
-              ^result <res>
-              ^svs-link.command <cmd>
-              ^predicate <p1>
-              ^svs-link.spatial-scene <sp>)
-   (<p1> ^name <prep>
-         ^relation <r>)
-   (<r> ^avg <avg> ^axis <axis>)
-   (<sp> ^child <c1> ^child <c2>)
-   (<c1> ^id-int <ida> ^id <obja>)
-   (<c2> ^id-int <idb> ^id <objb>)
-   (<cmd> ^project <P11>)
-   (<P11> ^a <N7> ^b <N8>)
-   (<N7> ^type node ^name <obja>)
-   (<N8> ^type node ^name <objb>)
--->
-   (<P11> ^rel <rel>)
-   (<rel> ^axis <axis> ^avg <avg>)
-}
+#sp {find-projection*project*svs*create-projection*add-axis
+#   (state <s> ^name find-projection
+#              ^a <ida>
+#              ^b <idb>
+#              ^result <res>
+#              ^svs-link.command <cmd>
+#              ^predicate <p1>)
+#   (<p1> ^name <prep>
+#         ^relation <r>)
+#   (<r> ^separation-axis <axis>
+#        ^separation-value <value>)
+#   (<cmd> ^extract_once <P11>)
+#   (<P11> ^type calculate_placement
+#		  ^a.id <ida> ^b.id <idb>)
+#-->
+#   (<P11> ^<axis> <value>)
+#}
 
-sp {find-projection*project*svs*create-projection*add-primitives
-   (state <s> ^name find-projection
-              ^a <ida>
-              ^b <idb>
-              ^result <res>
-              ^svs-link.command <cmd>
-              ^predicate <p1>
-              ^svs-link.spatial-scene <sp>)
-   (<p1> ^name <prep>
-         ^relation <r>)
-   (<r> ^type <ptype> ^axis <axis>)
-   (<sp> ^child <c1> ^child <c2>)
-   (<c1> ^id-int <ida> ^id <obja>)
-   (<c2> ^id-int <idb> ^id <objb>)
-   (<cmd> ^project <P11>)
-   (<P11> ^a <N7> ^b <N8> ^rel <rel>)
-   (<rel> ^axis <axis>)
-   (<N7> ^type node ^name <obja>)
-   (<N8> ^type node ^name <objb>)
--->
-   (<rel> ^type <ptype>)
-}
+#sp {find-projection*project*svs*create-projection*add-primitives
+#   (state <s> ^name find-projection
+#              ^a <ida>
+#              ^b <idb>
+#              ^result <res>
+#              ^svs-link.command <cmd>
+#              ^predicate <p1>)
+#   (<p1> ^name <prep>
+#         ^relation <r>)
+#   (<r> ^type <ptype> ^axis <axis>)
+#   (<cmd> ^project <P11>)
+#   (<P11> ^a <N7> ^b <N8> ^rel <rel>)
+#   (<rel> ^axis <axis>)
+#   (<N7> ^type node ^name <ida>)
+#   (<N8> ^type node ^name <idb>)
+#-->
+#   (<rel> ^type <ptype>)
+#}
 
 sp {find-projection*project*svs*complete-projection
    (state <s> ^name find-projection
+              ^operator.name calculate-placement
               ^a <ida>
               ^b <idb>
               ^result <res>
               ^superstate <ss>
-              ^svs-link.spatial-scene <sp>
               ^svs-link.command <cmd>)
-   (<cmd> ^project <P11>)
-   (<P11> ^a <N7> ^b <N8> ^result <r>)
-   (<r> ^x <x> ^y <y> ^z <z>)
-   (<sp> ^child <c1> ^child <c2>)
-   (<c1> ^id-int <ida> ^id <obja>)
-   (<c2> ^id-int <idb> ^id <objb>)
-   (<N7> ^type node ^name <obja>)
-   (<N8> ^type node ^name <objb>)
+	(<cmd> ^extract_once <e>)
+	(<e> ^type calculate_placement
+			 ^a.id <ida> ^b.id <idb>
+			 ^result.record.value <pos>)
+	(<pos> ^x <x> ^y <y> ^z <z>)
 -->
    (<ss> ^projection-result <result>)
    (<result> ^x <x> ^y <y> ^z <z> ^a <ida> ^b <idb>)

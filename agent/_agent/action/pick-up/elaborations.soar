@@ -1,0 +1,77 @@
+sp {elaborate*pickup*object*action
+   (state <s> ^problemspace.action.type execute
+   	      ^operator <op> +)
+   (<op> ^name op_pick-up-object
+   	 ^argument1 <obj>)
+   (<obj> ^id <id>)
+-->
+   (<op> #^actions.pick-up.object-id <id>
+   	 ^category primitive-action
+	 ^kind non-atomic)
+}
+
+
+sp {pick-up*elaborate*target-object
+   (state <s> ^name op_pick-up-object
+              ^superstate.operator.argument1 <obj>
+	      ^superstate.problemspace.action.type execute)
+-->
+   (<s> ^target-object <obj>)
+}
+
+sp {elaborate*pickup*attend-to-all-scene-changes
+   (state <s> ^name op_pick-up-object
+   	      ^superstate.problemspace.action.type execute)
+-->
+   (<s> ^attend-to-all-scene-changes true)
+}
+
+#sp {pick-up*elaborate*target-object*moving-object*true
+#   :o-support
+#   (state <s> ^name op_pick-up-object
+#              ^robot-state.arm.action grab
+#              ^target-object <obj>)
+#-->
+#   (<obj> ^moving-object true)
+#}
+#
+#sp {topstate*object*remove*moving-object*false
+#   :o-support
+#   (state <s> ^topstate <s>
+#              ^object <obj>
+#              ^robot-state.arm.action << wait failure >>)
+#   (<obj> ^moving-object true)
+#-->
+#   (<obj> ^moving-object true -)
+#}
+
+#
+#sp {pick-up*elaborate*dont-attend-to-object*still*grabbing
+#   (state <s> ^name op_pick-up-object
+#              ^target-object <obj>
+#              ^robot-state.arm.action grab)
+#-->
+#   (<s> ^dont-attend-to-object <obj>)
+#}
+#
+#sp {pick-up*elaborate*dont-attend-to-object*still*candidates
+#   (state <s> ^name op_pick-up-object
+#              ^target-object <obj>
+#              ^topstate.scene-monitor.new-object.candidate-for-missing-object <obj>)
+#-->
+#   (<s> ^dont-attend-to-object <obj>)
+#}
+
+#
+#sp {pick-up*elaborate*attend-to-missing-object
+#   (state <s> ^name op_pick-up-object
+#              ^target-object <obj>
+#              ^operator <o> +)
+#   (<o> ^name attend-to-scene-change
+#        ^change <c>)
+#   (<c> ^type stale-object
+#        ^object.wm-obj <obj>)
+#-->
+#   (<o> ^aggressive-match true)
+#   (interrupt)
+#}

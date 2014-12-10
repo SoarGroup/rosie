@@ -24,6 +24,9 @@ public class LingObject extends LinguisticEntity {
 	public String getDeterminer(){
 	    return determiner;
 	}
+	public void setDeterminer(String det){
+	    determiner = det;
+	}
 	
 	public Set<String> getAdjectives(){
 	    return adjective;
@@ -175,5 +178,9 @@ public class LingObject extends LinguisticEntity {
             adjString += i.next() + " ";
         }        
         return String.format("%s %s%s", determiner, adjString, noun);
+    }
+    
+    public void setValue(String attr, String val){
+    	rootId.CreateStringWME(attr, val);
     }
 }

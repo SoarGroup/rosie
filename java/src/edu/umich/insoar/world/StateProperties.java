@@ -4,36 +4,52 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import sml.Identifier;
+import sml.StringElement;
 
 public class StateProperties {
-	private HashMap<String, String> properties;
+	protected class WMStructure{
+		public Identifier propId;
+
+		public StringElement valueWme;
+		public String value;
+		
+		public WMStructure(Identifier parentId, String name, String value){
+			propId = parentId.CreateIdWME("property");
+			propId.CreateStringWME("name", name);
+			propId.CreateStringWME("type", PerceptualProperty.STATE_TYPE);
+			
+			this.value = value;
+			valueWme = propId.CreateStringWME("value", value);
+		}
+		public void update(String value){
+			if(!value.equals(this.value)){
+				this.value = value;
+				valueWme.Update(value);
+			}
+		}
+		public void destroy(){
+			propId.DestroyWME();
+			propId = null;
+			valueWme = null;
+		}
+	}
+
+	private HashMap<String, WMStructure> stateProperties;
 	
-	private StringBuilder svsCommands;
-	
-	private String parentName;
-    
-    public StateProperties(String parentName){
-    	this.parentName = parentName;
-    	
-    	this.properties = new HashMap<String, String>();
-    	this.svsCommands = new StringBuilder();
+    public StateProperties(){
+    	stateProperties = new HashMap<String, WMStructure>();
     }
 
     public String getProperty(String propName){
-    	if(properties.containsKey(propName)){
-    		return properties.get(propName);
+    	if(stateProperties.containsKey(propName)){
+    		return stateProperties.get(propName).value;
     	} else {
     		return null;
     	}
     }   
     
-    public void updateSVS(StringBuilder svsCommands){
-    	svsCommands.append(this.svsCommands.toString());
-    	this.svsCommands = new StringBuilder();
-    }
-    
-    public void updateProperties(String[] stateInfo){
-		HashSet<String> propsToRemove = new HashSet<String>(properties.keySet());
+    public void updateProperties(Identifier parentId, String[] stateInfo){
+		HashSet<String> propsToRemove = new HashSet<String>(stateProperties.keySet());
 		
     	for(String nameValPair : stateInfo){
     		String[] nameValSplit = nameValPair.split("=");
@@ -43,28 +59,24 @@ public class StateProperties {
     		String propName = nameValSplit[0].toLowerCase();
     		String propVal = nameValSplit[1].toLowerCase();
     		
-    		if(properties.containsKey(propName)){
-        		propsToRemove.remove(propName);
-        		if(!properties.get(propName).equals(propVal)){
-            		svsCommands.append(SVSCommands.changeProperty(parentName, propName + ".value", propVal));
-        		}
+    		if(stateProperties.containsKey(propName)){
+    			propsToRemove.remove(propName);
+    			stateProperties.get(propName).update(propVal);
     		} else {
-    			svsCommands.append(SVSCommands.addProperty(parentName, propName + ".type", "state"));
-    			svsCommands.append(SVSCommands.addProperty(parentName, propName + ".value", propVal));
+    			stateProperties.put(propName, new WMStructure(parentId, propName, propVal));
     		}
-    		properties.put(propName, propVal);
     	}
     	
     	for(String propName : propsToRemove){
-    		svsCommands.append(SVSCommands.deleteProperty(parentName, propName));
-    		properties.remove(propName);
+    		stateProperties.get(propName).destroy();
+    		stateProperties.remove(propName);
     	}
     }
     
-    public void deleteProperties(){
-    	for(String propName : properties.keySet()){
-    		svsCommands.append(SVSCommands.deleteProperty(parentName, propName));
+    public void destroy(){
+    	for(WMStructure propStruct : stateProperties.values()){
+    		propStruct.destroy();
     	}
-    	properties.clear();
+    	stateProperties.clear();
     }
 }

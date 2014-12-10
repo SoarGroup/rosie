@@ -1,0 +1,176 @@
+sp {expand-compositions*elaborate*operator*condition
+   (state <s> ^name expand-compositions
+              ^superstate.operator.nlp-set.nlp <nlp>)
+-->
+   (<s> ^condition <nlp>)
+}
+
+sp {expand-compositions*elaborate*sub-conditions
+   (state <s> ^name expand-compositions
+              ^condition <co>)
+   (<co> ^args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <cond>)
+   (<cond> ^name <name>)
+-->
+   (<s> ^condition <cond>)
+}
+
+sp {expand-compositions*propose*lookup-condition-composition
+   (state <s> ^name expand-compositions
+             -^expanded <co>
+              ^condition <co>)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name lookup-condition-composition
+         ^condition <co>)
+}
+
+sp {lookup-condition-composition*propose*smem-retrieve-full
+   (state <s> ^name lookup-condition-composition
+              ^superstate.operator.condition <co>
+             -^smem-result <sr>)
+           #  ^smem.command <sc>)
+   (<co> ^name <name>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name smem-retrieve-full
+        ^query <q>)
+   (<q> ^name <name> ^type composition)
+}
+
+sp {lookup-condition-composition*query*smem*failure
+   (state <s> ^name lookup-condition-composition
+              ^superstate.operator.condition <co>
+              ^superstate <ss>
+              ^smem-result none)
+-->
+   (<ss> ^expanded <co>)
+}
+
+sp {lookup-condition-composition*query*success
+   (state <s> ^name lookup-condition-composition
+              ^smem-result <res>)
+-->
+   (<s> ^result <res>)
+}
+
+sp {lookup-condition-composition*propose*expand
+   (state <s> ^name lookup-condition-composition
+              ^superstate.operator.condition <co>
+              ^result <res>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name expand
+        ^condition <co>
+        ^composition <res>)
+}
+
+sp {expand*propose*calculate1
+   (state <s> ^name expand
+             -^tested calculate1)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name calculate1)
+}
+sp {expand*propose*calculate2
+   (state <s> ^name expand
+             -^tested calculate2
+              ^tested calculate1)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name calculate2)
+}
+sp {expand*apply*calculate2*newname
+   (state <s> ^name expand
+              ^superstate.operator.condition <co>
+              ^superstate.operator.composition.condition <cond>
+              ^operator.name calculate2)
+   (<cond> ^name {<name> <> <name2>})
+   (<co> ^name <name2>)
+-->
+   (<co> ^name <name>
+         ^name <name2> -)
+}
+sp {expand*apply*calculate1*negative #should work for neg neg too
+   (state <s> ^name expand
+              ^superstate.operator.condition <co>
+              ^superstate.operator.composition.condition <cond>
+              ^operator.name calculate1)
+   (<cond> ^negative <neg>)
+   (<co> -^negative <neg>)
+-->
+   (<co> ^negative <neg>)
+}
+sp {expand*apply*calculate1*args #should work for neg neg too
+   (state <s> ^name expand
+              ^superstate.operator.condition <co>
+              ^superstate.operator.composition.condition <cond>
+              ^operator.name calculate1)
+   (<cond> ^args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>)
+   (<co> ^args <args>)
+   (<args> -^<arg>)
+-->
+   (<args> ^<arg> <az>)
+}
+sp {expand*apply*calculate1*args*attributes #should work for neg neg too
+   (state <s> ^name expand
+              ^superstate.operator.condition <co>
+              ^superstate.operator.composition.condition <cond>
+              ^operator.name calculate2)
+   (<cond> ^args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a>)
+   (<a> ^<attr> <val>)
+   (<co> ^args.<arg> <az>)
+-->
+   (<az> ^<attr> <val>)
+}
+
+sp {expand*propose*complete
+   (state <s> ^name expand
+              ^tested calculate1
+              ^tested calculate2)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name complete)
+}
+sp {expand*apply*complete
+   (state <s> ^name expand
+              ^superstate.superstate <ss>
+              ^superstate.operator.condition <co>
+              ^operator.name complete)
+-->
+   (<ss> ^expanded <co>)
+}
+sp {expand-compositions*propose*complete
+   (state <s> ^name expand-compositions)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name complete)
+}
+sp {expand-compositions*apply*complete
+   (state <s> ^name expand-compositions
+              ^superstate <ss>
+              ^operator.name complete)
+-->
+   (<ss> ^expanded true)
+}
+sp {expand-compositions*prefer*lookup-condition-composition*over*complete
+   (state <s> ^name expand-compositions
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name lookup-condition-composition)
+   (<o2> ^name complete)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {expand*apply*calculate1*default
+   (state <s> ^name expand
+              ^operator.name calculate1)
+-->
+   (<s> ^tested calculate1)
+}
+sp {expand*apply*calculate2*default
+   (state <s> ^name expand
+              ^operator.name calculate2)
+-->
+   (<s> ^tested calculate2)
+}

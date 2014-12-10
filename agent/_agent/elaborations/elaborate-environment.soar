@@ -1,0 +1,290 @@
+### elaborate symbolic environmental state
+
+##### elaborate perceptual state ####################################
+## elaborate closed/open
+sp {elaborate*object*state-property*open*closed
+   (state <s> ^topstate <s>
+   	      ^object <obj>
+	      ^environment <env>)
+   (<obj> ^property <prop>)
+   (<prop> ^name door
+   	   ^label <val>)
+-->
+   (<env> ^<val> <obj>)
+}
+
+### elaborate on/off
+sp {elaborate*object*state-property*on*off
+   (state <s> ^topstate <s>
+   	      ^object <obj>
+	      ^environment <env>)
+   (<obj> ^property <prop>)
+   (<prop> ^name heat
+   	   ^label <val>)
+-->
+   (<env> ^<val> <obj>)
+}
+
+### elaborate cooked
+sp {elaborate*object*cooked
+   (state <s> ^topstate <s>
+   	      ^object <obj>
+	      ^environment <env>)
+   (<obj> ^property <prop>)
+   (<prop> ^name cooked
+   	   ^label true)
+-->
+   (<env> ^cooked <obj>)
+}
+
+sp {elaborate*object*not-cooked
+   (state <s> ^environment <env>
+   	      ^indexed-action.desired <des>
+	      ^problemspace.state.elaborate closed-world
+	      ^in-focus.<id> <obj>)
+  (<des> ^achieve-state <a>
+  	 ^in-focus.<id> <dobj>)
+  (<a> ^state cooked
+       ^p1 <dobj>)
+  (<env> -^cooked <obj>)
+-->
+  (<env> ^not-cooked <obj>)
+}
+
+
+#### elaborate if an object is clear to be picked up
+
+sp {elaborate*not-clear*object
+   (state <s> ^name action
+   	      ^object <obj1>
+	      ^object <obj2>
+	      ^prepositions.prep <prep>
+	      ^environment <env>)
+   (<env> ^intermediate <int>)
+   (<obj1> ^category block
+   	  ^id <id1>) 
+   (<obj2> ^id <id2>)
+   (<prep> ^name on
+   	   ^pair <pair>)
+   (<pair> ^a <id2>
+   	   ^b <id1>)
+-->
+   (<int> ^not-clear <obj1>)
+}
+
+sp {elaborate*clear*object
+   (state <s> ^name action
+   	      ^object <obj1>
+	      ^environment <env>)
+   (<env> -^intermediate.not-clear <obj1>)
+   (<obj1> ^category block)
+-->
+   (<env> ^clear <obj1>)
+}
+
+
+### elaborate predicates for objects and relations in focus
+sp {elaborate*relations*objects*from*prepositon
+   (state <s> ^topstate <s>
+   	      ^environment <env>
+	      ^object <obj1>
+	      ^object <obj2>
+	      ^prepositions.prep <prep>
+	      ^found-prep <fp>)
+   (<fp> ^predicate <rel-id>)
+   (<rel-id> ^name <rel-name>)
+   (<prep> ^name <rel-name>
+   	   ^pair <pair>)
+   (<obj1> ^id <obj-id>
+   	   ^perception-obj)
+   (<obj2> ^id <obj-id2>)
+   (<pair> ^<attr> <obj-id>
+   	   ^{<attr2> > <attr>} <obj-id2>)
+   (<env> -^grabbed <obj1>)
+   	  
+-->
+   (<env> ^predicate <relation>)
+   (<relation> ^relation <fp>)
+   (<relation> ^<attr> <obj1>
+   	       ^<attr2> <obj2>)
+}
+
+sp {elaborate*found-prep*smem-rep
+   (state <s> ^topstate <s>
+	      ^found-prep <fp>)
+   (<fp> ^predicate <rel-id>)
+-->
+   (<fp> ^smem-rep <rel-id>)
+}
+
+### elaborate grabbed object
+sp {elaborate*grabbed-object*from*robot-state
+   (state <s> ^topstate <s>
+   	      ^environment <env>
+   	      ^robot-state.arm.grabbed <obj>)
+-->
+   (<env> ^grabbed <obj>)
+}
+
+
+### if there is a desired goal, go from open-world state description to closed-world state description. this is required to learn a good policy representation. this is required only for relation predicates as we have closed world representation for state predicates. eg open <o> /close <o>
+sp {elaborate*closed-world*relation*intermediate*not-current
+   (state <s> ^environment <env>
+   	      ^indexed-action.desired <des>
+	      ^problemspace.state <st>
+	      ^in-focus <sif>)
+   (<st> ^elaborate closed-world
+   	 -^type current)
+   (<env> ^predicate <env-rel>
+   	  ^intermediate <i>)
+   (<des> ^track-relation <rel-state>
+   	  ^in-focus <dif>)
+   (<rel-state> ^relation <rel>
+   		^p1 <dobj1>
+		^p2 <dobj2>)
+   (<env-rel> ^relation <rel>
+   	  ^a <obj1>
+	  ^b <obj2>)
+   (<sif> ^<id1> <obj1>
+   	  ^<id2> <obj2>)
+   (<dif> ^<id1> <dobj1>
+   	  ^<id2> <obj2>)
+-->
+   (<i> ^exists <rel-state>)
+}
+
+sp {elaborate*closed-world*relation*intermediate*current
+   (state <s> ^environment <env>
+   	      ^indexed-action.desired <des>
+	      ^problemspace.state <st>
+	      ^in-focus <sif>)
+   (<st> ^elaborate closed-world
+   	 ^type current)
+   (<env> ^predicate <env-rel>
+   	  ^intermediate <i>)
+   (<des> ^track-relation <rel-state>)
+   (<rel-state> ^relation <rel>
+   		^p1 <obj1>
+		^p2 <obj2>)
+   (<env-rel> ^relation <rel>
+   	  ^a <obj1>
+	  ^b <obj2>)
+-->
+   (<i> ^exists <rel-state>)
+}
+
+sp {elaborate*closed-world*relation*intermediate*already*elaborated*not-current
+   (state <s> ^environment <env>
+   	      ^indexed-action.desired <des>
+	      ^problemspace.state <st>
+	      ^in-focus <sif>)
+   (<st> ^elaborate closed-world
+   	 -^type current)
+   (<env> ^not-predicate <env-rel>
+   	  ^intermediate <i>)
+   (<des> ^track-relation <rel-state>
+   	  ^in-focus <dif>)
+   (<rel-state> ^relation <rel>
+   		^p1 <dobj1>
+		^p2 <dobj2>)
+   (<env-rel> ^relation <rel>
+   	  ^a <obj1>
+	  ^b <obj2>)
+   (<sif> ^<id1> <obj1>
+   	  ^<id2> <obj2>)
+   (<dif> ^<id1> <dobj1>
+   	  ^<id2> <obj2>)
+   (<i> -^<rel-state> <env-rel>)
+-->
+   (<i> ^exists <rel-state>)
+}
+
+sp {elaborate*closed-world*relation*intermediate*already*elaborated*current
+   (state <s> ^environment <env>
+   	      ^indexed-action.desired <des>
+	      ^problemspace.state <st>)
+   (<st> ^elaborate closed-world
+   	 ^type current)
+   (<env> ^not-predicate <env-rel>
+   	  ^intermediate <i>)
+   (<des> ^track-relation <rel-state>)
+   (<rel-state> ^relation <rel>
+   		^p1 <obj1>
+		^p2 <obj2>)
+   (<env-rel> ^relation <rel>
+   	  ^a <obj1>
+	  ^b <obj2>)
+   (<i> -^<rel-state> <env-rel>)
+-->
+   (<i> ^exists <rel-state>)
+}
+
+sp {elaborate*closed-world*relation
+   (state <s> ^environment <env>
+   	      ^indexed-action.desired <des>
+	      ^problemspace.state.elaborate closed-world)
+   (<env> ^intermediate <int>)
+   (<int> -^exists <rel-state>)
+   (<des> ^track-relation <rel-state>)
+   (<rel-state> ^relation <rel>)
+-->
+   (<env> ^not-predicate <npred>)
+   (<npred> ^relation <rel>)
+   (<int> ^<rel-state> <npred>)
+}
+sp {elaborate*closed-word*relation*object*not-current
+   (state <s> ^environment <env>
+   	      ^indexed-action.desired <des>
+	      ^object <obj1>
+	      ^object <obj2>
+	      ^problemspace.state <st>
+	      ^in-focus <sif>)
+   (<st> ^elaborate closed-world
+   	 -^type current)
+   (<env> ^intermediate.<rel-state> <npred>)
+   (<des> ^track-relation <rel-state>
+   	  ^in-focus <dif>)
+   (<rel-state> ^p1 <dobj1>
+		^p2 <dobj2>)
+   (<sif> ^<id1> <obj1>
+   	  ^<id2> <obj2>)
+   (<dif> ^<id1> <dobj1>
+   	  ^<id2> <dobj2>)
+-->
+   (<npred> ^a <obj1>
+   	    ^b <obj2>)
+}
+
+sp {elaborate*closed-word*relation*object*current
+   (state <s> ^environment <env>
+   	      ^indexed-action.desired <des>
+	      ^problemspace.state <st>)
+   (<st> ^elaborate closed-world
+   	 ^type current)
+   (<env> ^intermediate.<rel-state> <npred>)
+   (<des> ^track-relation <rel-state>)
+   (<rel-state> ^p1 <obj1>
+		^p2 <obj2>)
+-->
+   (<npred> ^a <obj1>
+   	    ^b <obj2>)
+}
+
+
+### copy environment
+sp {copy*environment-state*superstate*attributes
+   (state <s> ^superstate.environment <env>
+   	      -^problemspace.state.dont-copy environment
+	      ^environment <senv>)
+   (<env> ^{<> intermediate <attr>} <val>)
+--> 
+   (<senv> ^<attr> <val>)
+}
+
+### 
+sp {HACK*for*magical*missing*LTIunicorns
+   (state <s> ^topstate <s>)
+-->
+   (<s> ^LTIstore <st>)
+}
+   	  
