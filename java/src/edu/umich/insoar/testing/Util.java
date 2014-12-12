@@ -1,4 +1,4 @@
-package com.soartech.bolt.testing;
+package edu.umich.insoar.testing;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -9,11 +9,11 @@ import java.util.List;
 
 import javax.swing.JFileChooser;
 
-import com.soartech.bolt.script.ui.command.PointAtObject;
-import com.soartech.bolt.script.ui.command.ResetEnvironmentState;
 import edu.umich.insoar.Environment;
 
 import edu.umich.insoar.ChatFrame;
+import edu.umich.insoar.scripting.PointAtObject;
+import edu.umich.insoar.scripting.ResetEnvironmentState;
 
 public class Util {
 	

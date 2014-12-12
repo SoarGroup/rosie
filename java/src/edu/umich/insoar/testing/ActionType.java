@@ -1,4 +1,4 @@
-package com.soartech.bolt.testing;
+package edu.umich.insoar.testing;
 
 public enum ActionType {
 	Mentor,

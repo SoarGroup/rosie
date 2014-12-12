@@ -14,7 +14,7 @@ import probcog.lcmtypes.robot_command_t;
 
 import april.util.TimeUtil;
 
-import com.soartech.bolt.script.ui.command.ResetEnvironmentState;
+import edu.umich.insoar.scripting.ResetEnvironmentState;
 
 public class Environment {
 	 private static MotorSystemConnector motor;

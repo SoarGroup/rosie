@@ -1,6 +1,6 @@
-package com.soartech.bolt.script.ui.command;
+package edu.umich.insoar.scripting;
 
-import com.soartech.bolt.testing.Settings;
+import edu.umich.insoar.testing.Settings;
 
 public class AutomateScript implements UiCommand {
 	boolean automated;

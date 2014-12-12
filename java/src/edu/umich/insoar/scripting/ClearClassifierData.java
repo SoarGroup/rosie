@@ -1,4 +1,4 @@
-package com.soartech.bolt.script.ui.command;
+package edu.umich.insoar.scripting;
 
 import probcog.lcmtypes.robot_command_t;
 import april.util.TimeUtil;

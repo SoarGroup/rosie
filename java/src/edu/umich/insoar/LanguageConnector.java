@@ -9,10 +9,10 @@ import sml.smlRunEventId;
 
 import april.util.TimeUtil;
 
-import com.soartech.bolt.testing.ActionType;
 
 import edu.umich.insoar.language.AgentMessageParser;
 import edu.umich.insoar.language.LingObject;
+import edu.umich.insoar.testing.ActionType;
 import edu.umich.insoar.world.Messages;
 import edu.umich.insoar.world.WMUtil;
 

@@ -1,4 +1,4 @@
-package com.soartech.bolt.script.ui.command;
+package edu.umich.insoar.scripting;
 
 import java.io.IOException;
 import java.util.Random;

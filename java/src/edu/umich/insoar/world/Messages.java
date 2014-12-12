@@ -1,8 +1,8 @@
 package edu.umich.insoar.world;
 
-import com.soartech.bolt.testing.ActionType;
 
 import edu.umich.insoar.ChatFrame;
+import edu.umich.insoar.testing.ActionType;
 import sml.Identifier;
 /**
  * Represents the latest message from the user on the input link

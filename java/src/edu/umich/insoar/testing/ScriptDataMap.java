@@ -1,12 +1,12 @@
-package com.soartech.bolt.testing;
+package edu.umich.insoar.testing;
 
-import com.soartech.bolt.script.ui.command.AutomateScript;
-import com.soartech.bolt.script.ui.command.ClearClassifierData;
-import com.soartech.bolt.script.ui.command.LoadClassifierData;
-import com.soartech.bolt.script.ui.command.PointAtObject;
-import com.soartech.bolt.script.ui.command.ResetRobotArm;
-import com.soartech.bolt.script.ui.command.UiCommand;
-import com.soartech.bolt.script.ui.command.ResetEnvironmentState;
+import edu.umich.insoar.scripting.AutomateScript;
+import edu.umich.insoar.scripting.ClearClassifierData;
+import edu.umich.insoar.scripting.LoadClassifierData;
+import edu.umich.insoar.scripting.PointAtObject;
+import edu.umich.insoar.scripting.ResetEnvironmentState;
+import edu.umich.insoar.scripting.ResetRobotArm;
+import edu.umich.insoar.scripting.UiCommand;
 
 public class ScriptDataMap {
 	private static final ScriptDataMap instance = new ScriptDataMap();

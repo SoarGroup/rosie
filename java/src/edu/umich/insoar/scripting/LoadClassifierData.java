@@ -1,4 +1,4 @@
-package com.soartech.bolt.script.ui.command;
+package edu.umich.insoar.scripting;
 
 import lcm.lcm.LCM;
 import probcog.lcmtypes.perception_command_t;
