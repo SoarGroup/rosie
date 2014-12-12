@@ -7,8 +7,8 @@ import java.util.Set;
 
 import sml.Identifier;
 import sml.WMElement;
-import edu.umich.insoar.language.Patterns.LingObject;
-import edu.umich.insoar.language.Patterns.ObjectRelation;
+import edu.umich.insoar.language.LingObject;
+import edu.umich.insoar.language.ObjectRelation;
 import edu.umich.insoar.world.WMUtil;
 
 public class AgentMessageParser

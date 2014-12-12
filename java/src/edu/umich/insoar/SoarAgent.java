@@ -24,8 +24,6 @@ public class SoarAgent implements RunEventInterface{
     
     private String agentSource = null;
     
-    private String lgSoarSource = null;
-    
     private String smemSource = null;
     
     private boolean isRunning = false;
@@ -57,7 +55,6 @@ public class SoarAgent implements RunEventInterface{
     	System.out.println("Spawn Debugger: " + agent.SpawnDebugger(kernel.GetListenerPort()));
     	this.agentSource = agentSource;
     	this.smemSource = null;
-    	this.lgSoarSource = null;
     	
         // Source the agent
         sourceAgent(true);
@@ -65,7 +62,7 @@ public class SoarAgent implements RunEventInterface{
         agent.RegisterForRunEvent(smlRunEventId.smlEVENT_BEFORE_INPUT_PHASE, this, null);
     }
 	
-	public SoarAgent(String agentName, Properties props, boolean useLG, boolean headless){
+	public SoarAgent(String agentName, Properties props, boolean headless){
 		if(headless){
 			kernel = Kernel.CreateKernelInCurrentThread();
 		} else {
@@ -94,11 +91,6 @@ public class SoarAgent implements RunEventInterface{
         // Get the various sources
         agentSource = props.getProperty("agent");
         smemSource = props.getProperty("smem-source");
-        if(useLG){
-        	lgSoarSource = props.getProperty("language-productions");
-        } else {
-        	lgSoarSource = null;
-        }
         
         armConfig = props.getProperty("arm-config");
         System.out.println("Getting Arm Config: " + armConfig);
@@ -188,10 +180,6 @@ public class SoarAgent implements RunEventInterface{
     	}
     	if(agentSource != null){
     		String ret = agent.ExecuteCommandLine("source -v " + agentSource);
-    		System.out.println(ret);
-    	}
-    	if(lgSoarSource != null){
-    		String ret = agent.ExecuteCommandLine("source " + lgSoarSource);
     		System.out.println(ret);
     	}
     	System.out.println("Agent re-initialized");
