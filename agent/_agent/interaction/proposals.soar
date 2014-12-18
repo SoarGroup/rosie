@@ -1,40 +1,49 @@
-# AM: IFIX: New versions of all the proposal rules based on the new elaborations 
+####################################################
+# NEW MESSAGE
+# 
+# ^status-type new-message -> interpret-message
+# ^status-info <message>
 
-####################################################
-#
-# new-message -> interpret-message
-#
-####################################################
+# Indicates a new message has been put onto interaction.status
+# Propose interpret-message to handle it
+
 sp {interaction*propose*interpret-message
    (state <s> ^name interaction
-   	      ^incoming-message <msg>)
+              ^status-type new-message
+              ^status-info <msg>)
 -->
-   (interrupt)
    (<s> ^operator <o> + =)
    (<o> ^name interpret-message
         ^message <msg>)
 }
 
 ####################################################
+# FAILURE 
 #
-# other status -> interpret-status
-#
-####################################################
+# status-type failure -> interpret-failure
+# status-info <failure>
 
-sp {interaction*propose*interpret-status
+# Indicates there was some failure in what the agent was doing
+#   And the agent may need to initiate a new interaction to resolve the issue
+
+
+sp {interaction*propose*interpret-failure
    (state <s> ^name interaction
-              ^interaction-status <status>)
+              ^status-type failure
+              ^status-info <failure>)
 -->
    (<s> ^operator <o> +)
-   (<o> ^name interpret-status
-        ^status <status>)
+   (<o> ^name interpret-failure
+        ^failure <failure>)
 }
 
 ####################################################
+# OUTGOING MESSAGE
 #
-# outgoing-message -> send-message
-#
-####################################################
+# ^change-type outgoing-message -> send-message
+# ^change-info <message>
+
+# Indicate the agent wants to send a message to the instructor
 
 sp {interaction*propose*send-message
    (state <s> ^name interaction
@@ -47,27 +56,18 @@ sp {interaction*propose*send-message
 }
 
 ####################################################
+# NEW SEGMENT INFO
 #
-# report-interaction
-#
-####################################################
+# ^change-type new-segment-info -> push-segment
+# ^change-info <segment-info>
 
-# AM: IFIX: Moved from report-interaction.soar
-sp {interaction*propose*report-interaction
-   (state <s> ^name interaction
-              ^change-type report-interaction
-              ^change-info <rep>)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name report-interaction
-        ^report <rep>)
-}
+# Indicates a new segment in the current interaction
 
-####################################################
-#
-# new-segment-info -> push-segment
-#
-####################################################
+# (<s> ^new-segment-info <info>)
+# (<info> ^purpose <p>)
+# (<p> ^type [purpose-type]
+#      ^parameters <params> # Parameters used when satisfying the purpose
+#      ^satisfaction <sat>) # The satisfaction condition for the segment (when to pop)
 
 sp {interaction*propose*push-segment
    (state <s> ^name interaction
@@ -80,20 +80,30 @@ sp {interaction*propose*push-segment
 }
 
 ####################################################
+# TERMINATE SEGMENT
 #
-# terminate-segment -> pop-segment
-#interaction
-####################################################
+# ^change-type terminate-segment -> pop-segment
+# ^change-info true
+
+# Indicates that the agent should terminate the current segment
 
 sp {interaction*propose*pop-segment
    (state <s> ^name interaction
               ^change-type terminate-segment
-              ^change-info <seg>)
+              ^topstate.interaction.stack.segment <seg>)
 -->
    (<s> ^operator <o> +)
    (<o> ^name pop-segment
         ^segment <seg>)
 }
+
+####################################################
+# CLEAR INTERACTION STACK
+#
+# ^change-type clear-interaction-stack -> pop-segment
+# ^change-info true
+
+# Indicates the agent should clear the current interaction and start over
 
 sp {interaction*propose*pop-segment*clear-stack
    (state <s> ^name interaction
@@ -106,10 +116,12 @@ sp {interaction*propose*pop-segment*clear-stack
 }
 
 ####################################################
+# MODIFY SEGMENT
 #
-# modify-segment
-#interaction
-####################################################
+# ^change-type modify-segment-info -> modify-segment
+# ^change-info <info>
+
+# Indicates the agent should modify the current segment
 
 sp {interaction*propose*modify-segment
    (state <s> ^name interaction
@@ -121,102 +133,20 @@ sp {interaction*propose*modify-segment
    	^modify-segment-info <info>)
 }
 
-# AM: IFIX: Commented everything below
-#     This was the previous version where multiple things were handled in the same subspace
+###################################################
+# PERFORMED EVENT
+#
+# ^status-type performed -> performed-event
+# ^status-info <info>
 
-#####################################################
-##
-## new-message -> interpret-message
-##
-#####################################################
-#sp {interaction*propose*interpret-message
-#   (state <s> ^name interaction
-#   	      ^message <msg>
-#	      -^interpreted <msg>)
-#-->
-#   (<s> ^operator <o> + =)
-#   (<o> ^name interpret-message
-#        ^message <msg>)
-#}
-#
-#####################################################
-##
-## other status -> interpret-status
-##
-#####################################################
-#
-#sp {interaction*propose*interpret-status
-#   (state <s> ^name interaction
-#   	      ^status.<any> <status>
-#             -^interpreted <status>)
-#-->
-#   (<s> ^operator <o> +)
-#   (<o> ^name interpret-status
-#        ^status <status>)
-#}
-#
-#####################################################
-##
-## outgoing-message -> send-message
-##
-#####################################################
-#
-#sp {interaction*propose*send-message
-#   (state <s> ^name interaction
-#              ^outgoing-message <msg>)
-#-->
-#   (<s> ^operator <o> + =)
-#   (<o> ^name send-message
-#        ^message <msg>)
-#}
-#
-#####################################################
-##
-## new-segment-info -> push-segment
-##
-#####################################################
-#
-#sp {interaction*propose*push-segment
-#   (state <s> ^name interaction
-#              ^new-segment-info <info>)
-#-->
-#   (<s> ^operator <o> +)
-#   (<o> ^name push-segment
-#        ^new-segment-info <info>)
-#}
-#
-#####################################################
-##
-## terminate-segment -> pop-segment
-##
-#####################################################
-#
-#sp {interaction*propose*pop-segment
-#   (state <s> ^name interaction
-#   	      ^topstate.interaction.changes.terminate-segment <seg>
-#              ^topstate.interaction.stack.segment <seg>)
-#-->
-#   (<s> ^operator <o> +)
-#   (<o> ^name pop-segment
-#        ^segment <seg>)
-#}
-#
-#sp {interaction*propose*pop-segment*clear-stack
-#   (state <s> ^name interaction
-#              ^clear-interaction-stack true
-#              ^topstate.interaction.stack.segment <seg>
-#              ^topstate.interaction.changes <chg>)
-#   (<seg> -^id 0)
-#-->
-#   (<chg> ^terminate-segment <seg>)
-#}
-#
-#sp {interaction*propose*modify-segment
-#   (state <s> ^name interaction
-#   	      ^modify-segment-info <seg>)
-#-->
-#   (<s> ^operator <o> +)
-#   (<o> ^name modify-segment
-#   	^modify-segment-info <seg>)
-#}
+# Indicates the agent performed something which might change the interaction state
 
+sp {interaction*propose*performed-event
+   (state <s> ^name interaction
+              ^status-type performed
+              ^status-info <event>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name performed-event
+        ^event <event>)
+}
