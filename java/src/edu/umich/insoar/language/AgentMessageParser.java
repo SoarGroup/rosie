@@ -25,11 +25,33 @@ public class AgentMessageParser
 			return null;
 		} else if(type.equals("get-next-task")){
 			message = translateNextTaskPrompt();
+		} else if(type.equals("get-predicate-info")){
+			message = translateGetPredicateInfo(fieldsId);
 		} else if(type.equals("report-successful-training")){
-			message = "Ok";
+			message = translateReportSuccessfulTraining(fieldsId);
+		} else if(type.equals("unable-to-satisfy")){
+			message = "I was unable to carry out that instruction";
 		}
 		return message;
 	}
+	
+	public static String translateGetPredicateInfo(Identifier fieldsId){
+		String predicateName = WMUtil.getValueOfAttribute(fieldsId, "predicate-name");
+		if (predicateName == null){
+			return "I encountered a new word describing an object, can you help?";
+		} else {
+			return "Can you tell me what the word '" + predicateName + "' is?";
+		}
+	}
+	
+	public static String translateReportSuccessfulTraining(Identifier fields){
+		return "Ok";
+	}
+	
+	public static String translateUnableToSatisfy(Identifier fields){
+		return "I was unable to carry out that instruction";
+	}
+	
 //    public static String translateAgentMessage(Identifier id){
 //        String message = null;
 //        

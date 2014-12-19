@@ -1,0 +1,88 @@
+###################################################################
+#
+# interpret-adjective-definition
+#   Occurs when the intructor wishes to give additional information about an adjective (predicate)
+#   Construction: *-ADJ-is-DP-T
+#   	E.g. 'Red is a color', 'Square is a shape'
+#
+###################################################################
+
+#######
+# OPERATOR PROPOSAL
+#######
+sp {interpret-message*propose*interpret-adjective-definition
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>)
+   (<msg> ^message-type adjective-definition
+         -^interpreted true)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name interpret-adjective-definition
+        ^message <msg>)
+}
+
+######
+# OPERATOR ELABORATIONS
+######
+
+# Elaborate useful information from the message onto the operator
+
+# arg1 -> predicate-id: REQUIRED - the predicate being described
+sp {interpret-message*elaborate*interpret-adjective-definition*object
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-adjective-definition
+        ^message.arg1 <pred>)
+-->
+   (<o> ^predicate-id <pred>)
+}
+
+# predicate.id -> property-id: REQUIRED - information about the predicate's property
+sp {interpret-message*elaborate*interpret-adjective-definition*property
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-adjective-definition
+        ^message.predicate.id <prop>)
+-->
+   (<o> ^property-id <prop>)
+}
+
+#####
+# OPERATOR APPLICATION
+#####
+
+# Mark the message as interpreted (retracts operator)
+sp {interpret-message*apply*interpret-adjective-definition*mark*interpreted
+   (state <s> ^name interpret-message
+              ^operator <o>)
+   (<o> ^name interpret-adjective-definition
+        ^message <msg>)
+-->
+   (<s> ^mark-interpreted <msg>)
+}
+
+# Normal occurence of adjective-definition
+#   Purpose is to learn about a predicate for an example object
+sp {interpret-message*apply*interpret-adjective-definition*create*segment*learn-predicate-info
+   (state <s> ^name interpret-message
+              ^operator <o>)
+   (<o> ^name interpret-adjective-definition
+        ^predicate-id <pred-id>
+        ^property-id <prop-id>)
+-->
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type learn-predicate-info
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<sat> ^learning-event.type predicate)
+   (<params> ^predicate-id <pred-id>
+             ^property-id <prop-id>
+             ^lti-info <info>)
+   (<info> ^item <item1> <item2>)
+   (<item1> ^type predicate
+            ^id <pred-id>)
+   (<item2> ^type property
+            ^id <prop-id>)
+}
