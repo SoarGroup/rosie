@@ -31,6 +31,8 @@ public class AgentMessageParser
 			message = translateReportSuccessfulTraining(fieldsId);
 		} else if(type.equals("unable-to-satisfy")){
 			message = "I was unable to carry out that instruction";
+		} else if(type.equals("unable-to-interpret-message")){
+			message = "I was unable to interpret that last message";
 		}
 		return message;
 	}
