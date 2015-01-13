@@ -80,10 +80,10 @@ sp {comprehension*reject*merge*for-failed-grounding
           ^assigner <ur>)
    (<fg> ^structure-type <pos>
          ^receiver-word <rw>
-         ^spatial-relation <sr>
+         ^relation <sr>
          ^lost-grounding <lg>)
    (<ai> ^structure-type <pos>
-         ^spatial-relation <sr>)
+         ^relation <sr>)
    (<ur> ^parent-receiver.referent <lg>)
 -->
    (<s> ^operator <op1> -)
@@ -397,10 +397,10 @@ sp {apply*merge*relation-value
                     ^lt <rv>)
    (<pword> ^lt <lla>)
    (<lla> ^relation-source <rv>)
-   (<receiver> ^lt. { << relation spatial-relation >> <sr> } <relation>)
+   (<receiver> ^lt.relation <relation>)
 -->
    (write (crlf) |Inherited relation-source | <relation> | usually for THAT IS.|)
-   (<lla> ^<sr> <relation>)
+   (<lla> ^relation <relation>)
 }
 
 ######Add Constraints
@@ -468,8 +468,8 @@ sp {apply*merge*constraint*preposition-right-conversion
    (<dp> ^lt <xxi>
          ^head.head <head>)
    (<head> ^referent <sg>)
-   (<xxi> ^spatial-relation <sr>
-          ^semantic-structure spatial-relation)
+   (<xxi> ^relation <sr>
+          ^semantic-structure relation)
    (<pll> ^converts-to  <ctrs>
           ^spelling <spell>
           ^structure-type <st>)
@@ -478,8 +478,8 @@ sp {apply*merge*constraint*preposition-right-conversion
    (<pword> ^head <head>
             ^lt <new-lli>
                 <pll> -)
-   (<new-lli> ^spatial-relation <sr>
-              ^semantic-structure spatial-relation
+   (<new-lli> ^relation <sr>
+              ^semantic-structure relation
               ^converts-to  <ctrs>
               ^directional false
               ^spelling <spell>
@@ -487,7 +487,7 @@ sp {apply*merge*constraint*preposition-right-conversion
 }
 
 sp {apply*merge*constraint*preposition-noun
- #  :interrupt
+  :interrupt
    (state <s> ^operator <op>
               ^segment <seg>)
    (<op> ^name merge
@@ -495,16 +495,17 @@ sp {apply*merge*constraint*preposition-noun
          ^assigner <assigner>)
    (<assigner> ^parent-receiver <pword>
                ^structure-type << PP >>)
-   (<pword> ^structure-type << D DP >>)
+   (<pword> ^structure-type << D DP >>
+           -^head.lt.semantic-structure relation) # don't do this if part of 'to the left of'
    (<receiver> ^structure-type << PP >>
-               ^lt.spatial-relation <sr>
-               ^head.referent.object <obj>)
+               ^lt.relation <sr>
+               ^head.referent <obj>)
 -->
    (<seg> ^new-constraint <nc>)
    (<nc> ^object <pword>
          ^constraint <c>)
    (<pword> ^constraint <c>)
-   (<c> ^spatial-relation <srx>)
+   (<c> ^relation <srx>)
    (<srx> ^object <obj>
           ^relation <sr>)
    (write (crlf) |Add new constraint to | <pword> | relation: | <sr> | object: | <obj>)
@@ -512,7 +513,7 @@ sp {apply*merge*constraint*preposition-noun
 
 
 sp {apply*merge*constraint*preposition-noun*semantics
- #  :interrupt
+   :interrupt
    (state <s> ^operator <op>
               ^segment <seg>)
    (<op> ^name merge
@@ -522,17 +523,15 @@ sp {apply*merge*constraint*preposition-noun*semantics
                ^structure-type << PP >>)
    (<pword> ^structure-type << D DP >>)
    (<receiver> ^structure-type << PP >>
-               ^semantics.spatial-relation <spr>)
+               ^semantics.relation <spr>)
 -->
    (<seg> ^new-constraint <nc>)
    (<nc> ^object <pword>
          ^constraint <c>)
    (<pword> ^constraint <c>)
-   (<c> ^spatial-relation <spr>)
+   (<c> ^relation <spr>)
    (write (crlf) |Add new (semantic) constraint to | <pword> | relation: | <spr>)
 }
-
-
 
 ### 
 sp {apply*merge*forward-grounding*to-preposition-verb
@@ -543,11 +542,11 @@ sp {apply*merge*forward-grounding*to-preposition-verb
    (<assigner> ^parent-receiver <pword>)
    (<pword> ^structure-type << VP >>)
    (<receiver> ^structure-type PP
-                    ^lt.spatial-relation <sr>
-                    ^head.referent.object <sg>)
+                    ^lt.relation <sr>
+                    ^head.referent <sg>)
 -->
    (<pword> ^<sr> <sg>
-            ^spatial-relation <srr>)
+            ^relation <srr>)
    (<srr> ^object <sg>
           ^relation <sr>)}
 
@@ -577,27 +576,27 @@ sp {apply*merge*assign-syntactic-referent-type-not-name
                     <srt>)}
 
 sp {apply*merge*assign-syntactic-referent-type*name
-#   :interrupt
+ # :interrupt
    (state <s> ^operator <op>
               ^smem.command <cmd>)
    (<op> ^name merge
          ^receiver <receiver>
          ^assigner <assigner>)
    (<assigner> ^lt <lla> 
-                    ^parent-receiver <pword>)
+               ^parent-receiver <pword>)
    (<lla> ^structure-type U) 
    (<pword> ^structure-type CP
             ^head <head>)
    (<head> ^head.lt.spelling |name|
            ^complement.head.head.lt.syntactic-referent-type <srt>) #of the action/game/color
    (<receiver> ^structure-type U
-                    ^lt <lli>)
+               ^lt <lli>)
 -->
    (<cmd> ^store <lli>)
    (<receiver> ^structure-type U - 
-                    <srt>)
+                               <srt>)
    (<lli> ^structure-type U - 
-                    <srt>)}
+                          <srt>)}
 
 ######
 
@@ -783,7 +782,7 @@ sp {apply*merge*remove-processing-result-failure
 ## Remove failed grounding for nil referent
 
 
-sp {apply*merge*remove-failed-construction
+sp {apply*merge*remove-failed-construction*referent-nil
    (state <s> ^operator <op>
               ^segment <seg>)
    (<op> ^name merge
