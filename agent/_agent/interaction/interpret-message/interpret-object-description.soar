@@ -29,14 +29,14 @@ sp {interpret-message*propose*interpret-object-description
 
 # Elaborate useful information from the message onto the operator
 
-# indicated-object: REQUIRED - the object being described
-sp {interpret-message*elaborate*interpret-object-description*indicated-object
+# object: REQUIRED - the object being described
+sp {interpret-message*elaborate*interpret-object-description*object
    (state <s> ^name interpret-message
               ^operator <o> +)
    (<o> ^name interpret-object-description
-        ^message.object <obj>)
+        ^message.arg1 <obj>)
 -->
-   (<o> ^indicated-object <obj>)
+   (<o> ^object <obj>)
 }
 
 # predicate: OPTIONAL - tells something that is true about the object (e.g. color=red)
@@ -63,55 +63,53 @@ sp {interpret-message*elaborate*interpret-object-description*relation
 # OPERATOR APPLICATION
 #####
 
-# Mark the message as interpreted (retracts operator)
-sp {interpret-message*apply*interpret-object-description*mark*interpreted
-   (state <s> ^name interpret-message
-              ^operator <o>)
-   (<o> ^name interpret-object-description
-        ^message <msg>)
--->
-   (<s> ^mark-interpreted <msg>)
-}
-
 # Normal occurence of object-description
-#   Purpose is to learn someting about an object
-#   Could be a predicate (color=red) or a relation (on the pantry)
-sp {interpret-message*apply*interpret-object-description*create*segment
+#   Purpose is to learn about a predicate for an example object
+sp {interpret-message*apply*interpret-object-description*create*segment*train-on-object
    (state <s> ^name interpret-message
               ^operator <o>)
    (<o> ^name interpret-object-description
-        ^indicated-object <obj>)
+        ^message <msg>
+        ^object <obj>
+       -^relation
+        ^predicate <pred>)
+   (<pred> ^id <pred-id>)
 -->
-   (<s> ^new-segment-info <info>)
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
    (<info> ^purpose <p>
            ^originator instructor)
    (<p> ^type train-on-object 
         ^parameters <params>
         ^satisfaction <sat>)
    (<sat> ^learning-event.type object)
-   (<params> ^indicated-object <obj>)
-
+   (<params> ^object <obj>
+             ^predicate <pred>
+             ^lti-info <info>)
+   (<info> ^item <item1>)
+   (<item1> ^type predicate
+            ^id <pred-id>)
 }
 
-# Copy any predicates to the new segment
-sp {interpret-message*apply*interpret-object-description*copy*predicate
+# Object description is a relationship (preposition) example between two objects
+sp {interpret-message*apply*interpret-object-description*create*segment*teach-relation
    (state <s> ^name interpret-message
-              ^operator <o>
-              ^new-segment-info.purpose.parameters <params>)
+              ^operator <o>)
    (<o> ^name interpret-object-description
-	    ^predicate <pred>)
--->
-	(<params> ^predicate <pred>)
-}
-
-# Copy any relations to the new segment
-sp {interpret-message*apply*interpret-object-description*copy*relation
-   (state <s> ^name interpret-message
-              ^operator <o>
-              ^new-segment-info.purpose.parameters <params>)
-   (<o> ^name interpret-object-description
+        ^message <msg>
+        ^object <obj>
+       -^predicate #only handle single for now
         ^relation <rel>)
 -->
-	(<params> ^relation <rel>)
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type teach-relation
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<sat> ^learning-event.type relation)
+   (<params> ^object <obj>
+             ^relation <rel>)
+
 }
-              

@@ -1,37 +1,44 @@
+# Check if lti that points to relation is new
 
-sp {learn-preposition*extract-relations*propose*lookup-preposition
+sp {learn-preposition*propose*smem-retrieve-full
    (state <s> ^name learn-preposition
-             -^found-prep
-              ^superstate.operator.message.fields.objects <objs>)
-   (<objs> ^type <type>)
+             -^predicate
+             -^smem-result
+              ^relation-lti <r>)
 -->
-   (<s> ^operator <o> + >)
-   (<o> ^name lookup-preposition
-        ^category svs
-        ^type <type>)
+   (<s> ^operator <o> + =)
+   (<o> ^name smem-retrieve-full
+        ^lti <r>)
+}
+sp {learn-preposition*propose*check-new-relation
+   (state <s> ^name learn-preposition
+             -^predicate
+              ^smem-result
+              ^relation-lti <r>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name check-new-relation
+        ^relation <r>)
 }
 
-sp {learn-preposition*lookup-preposition*success*copy*predicate
+sp {learn-preposition*check-new-relation*true*create*predicate
    (state <s> ^name learn-preposition
-              ^found-prep <fprep>)
-   (<fprep> ^stat old
-            ^predicate <p>)
+              ^operator.name check-new-relation
+              ^relation-lti <rlti>)
+   (<rlti> -^relation)
 -->
-   (<s> ^predicate <p>
-        ^new-prep false)
-}
-
-sp {learn-preposition*lookup-preposition*failure*create*predicate
-   (state <s> ^name learn-preposition
-              ^found-prep.stat default
-              ^prep-name <name>)
--->
-   (<s> ^predicate <p>
-        ^new-prep true)
-   (<p> ^name <name>
-        ^prep-name <name>
-        ^relation <px> <py> <pz>)
+   (<s> ^predicate <rlti>)
+   (<rlti> ^relation <px> <py> <pz>)
    (<px> ^axis x ^count 0)
    (<py> ^axis y ^count 0)
    (<pz> ^axis z ^count 0)
+}
+
+sp {learn-preposition*apply*check-new-relation*false*copy*predicate
+   (state <s> ^name learn-preposition
+              ^operator.name check-new-relation
+              ^relation-lti <rlti>)
+   (<rlti> ^relation.axis z)
+-->
+   (<s> ^predicate <rlti>)
 }

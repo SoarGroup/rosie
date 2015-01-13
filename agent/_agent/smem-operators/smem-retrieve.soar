@@ -4,71 +4,51 @@
 #   of the substructure for epmem
 # Will add a ^retrieved-lti <lti> to the state when done
 
-sp {anystate*propose*smem-retrieve*create-cue
+sp {new*anystate*propose*smem-retrieve*create-cue
    (state <s> ^retrieve-lti <lti>
-              ^smem.command <cmd>
-             -^retrieved-lti <lti>)
-   (<cmd> -^retrieve <lti>)
+	      -^retrieved <lti>)
 -->
-   (<s> ^operator <o> + =)
-   (<o> ^name smem-retrieve
-        ^type create-cue
-        ^category smem
+   (<s> ^operator <o> + > =)
+   (<o> ^name smem-retrieve-new
         ^identifier <lti>)
+}
+
+sp {new*anystate*apply*smem-retrieve*create-cue
+   (state <s> ^smem.command <cmd>
+	      ^operator <op>)
+   (<op> ^name smem-retrieve-new
+   	 ^identifier <lti>)
+-->
+   (<cmd> ^retrieve <lti>)
+}
+
+sp {new*anystate*apply*smem-retrieve*create-cue*clear
+   (state <s> ^smem.command <cmd>
+	      ^operator <op>)
+   (<op> ^name smem-retrieve-new
+   	 ^identifier <lti>)
+   (<cmd> ^{<command> << retrieve store query >>} {<olti> <> <lti>})
+-->
+   (<cmd> ^<command> <olti> -)
 }
    
-sp {anystate*apply*smem-retrieve*create-cue
-   (state <s> ^operator <o>
-              ^smem.command <cmd>)
-   (<o> ^name smem-retrieve
-        ^type create-cue
-        ^identifier <lti>)
--->
-   (<cmd> ^retrieve <lti>)
-}
-
-sp {anystate*propose*smem-retrieve*copy-result
-   (state <s> ^retrieve-lti <lti>
-              ^smem.result.{<< success failure >>} <lti>
-             -^retrieved-lti <lti>)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name smem-retrieve
-        ^type copy-result
-        ^category smem
-        ^identifier <lti>)
-}
-
-
-sp {anystate*apply*smem-retrieve-copy-result*remove*command
-   (state <s> ^operator <o>
-              ^smem <smem>)
-   (<o> ^name smem-retrieve
-        ^type copy-result
-        ^identifier <lti>)
-   (<smem> ^command <cmd>)
-   (<cmd> ^retrieve <lti>)
--->
-   (<cmd> ^retrieve <lti> -)
-}
-
-sp {anystate*apply*smem-retrieve*copy-result*copy
+sp {new*anystate*apply*smem-retrieve*copy-result*copy
    (state <s> ^operator <o>
               ^smem.result.{ << success failure >>}  <lti>)
-   (<o> ^name smem-retrieve
-        ^type copy-result
+   (<o> ^name smem-retrieve-new
         ^identifier <lti>)
 -->
    (<s> ^retrieved-lti <lti>)
 }
 
-sp {prefer*copy-result*over*create-cue
-   (state <s> ^operator <o1> +
-              ^operator <o2> +)
-   (<o1> ^name smem-retrieve
-         ^type copy-result)
-   (<o2> ^name smem-retrieve
-         ^type create-cue)
+sp {new*anystate*apply*smem-retrieve*copy-result*delete
+   (state <s> ^operator <o>
+              ^smem.result.{ << success failure >> }  <lti>
+	      ^smem.command <scomm>)
+   (<o> ^name smem-retrieve-new
+        ^identifier <lti>)
+   (<scomm> ^retrieve <lti>)
 -->
-   (<s> ^operator <o1> > <o2>)
+   (<scomm> ^retrieve <lti> -)
 }
+
