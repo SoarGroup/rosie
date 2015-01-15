@@ -33,6 +33,8 @@ public class AgentMessageParser
 			message = "I was unable to carry out that instruction";
 		} else if(type.equals("unable-to-interpret-message")){
 			message = "I was unable to interpret that last message";
+		} else if(type.equals("ok")){
+			message = "Ok";
 		}
 		return message;
 	}
