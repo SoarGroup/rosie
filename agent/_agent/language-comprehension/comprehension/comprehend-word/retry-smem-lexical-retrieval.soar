@@ -3,9 +3,11 @@ sp {comprehend-word*propose*retry-smem-lexical-retrieval
               ^current-word <cw>)
    (<s> -^retrieved-lexical-item
         -^failed-retrieval true
-         ^segment.retry <retry>)
--->
-   (<s> ^operator <o>)
+         ^segment <seg>)
+   (<seg> ^retry <retry>
+         -^retried-sentence true)
+   -->
+   (<s> ^operator <o> + =)
    (<o> ^name retry-smem-lexical-retrieval
         ^word <cw>
         ^retry <retry>)}
@@ -23,6 +25,35 @@ sp {comprehend-word*apply*retry-smem-lexical-retrieval
         ^structure-type <as>)
 }
 
+### SENTENCE RETRY
+sp {comprehend-word*propose*retry-smem-lexical-retrieval*sentence
+   (state <s> ^name comprehend-word
+              ^current-word <cw>)
+   (<cw> ^spelling <spell>)
+   (<s> -^retrieved-lexical-item
+        -^failed-retrieval true
+         ^segment <seg>)
+   (<seg> ^retry-sentence <retry>)
+   (<retry> ^lt.spelling <spell>)
+   -->
+   (<s> ^operator <o> + =, >)
+   (<o> ^name retry-smem-lexical-retrieval
+        ^word <cw>
+        ^retry-sentence <retry>)}
+
+sp {comprehend-word*apply*retry-smem-lexical-retrieval*sentence
+   (state <s> ^operator <o>
+              ^smem.command <cmd>)
+   (<o> ^name retry-smem-lexical-retrieval
+        ^word.spelling <x>
+        ^retry-sentence.lt.structure-type <as>)
+-->   
+   (write (crlf) |Attempt retrieval for: | <x> | as a | <as>)
+   (<cmd> ^query <q>)
+   (<q> ^spelling <x>
+        ^structure-type <as>)
+}
+####
 sp {comprehend-word*apply*retry-smem-lexical-retrieval*success
    (state <s> ^operator.name retry-smem-lexical-retrieval 
               ^segment.comprehension-structure <cs>
