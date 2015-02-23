@@ -20,8 +20,8 @@ public class sphinxJNI {
 	   */
 	   // Test Driver
 	   public static void main(String[] args) {
-		   String lmFile = "/home/aaron/demo/speech/sample.lm";
-		   String dicFile = "/home/aaron/demo/speech/sample.dic";
+		   String lmFile = "/home/bolt/demo/speech/sample.lm";
+		   String dicFile = "/home/bolt/demo/speech/sample.dic";
 	      new sphinxJNI().decodeAudio(lmFile, dicFile);  // invoke the native method
 	   }
 	}

@@ -136,7 +136,7 @@ public class InSoar implements RunEventInterface
 		
 		String speechFile = props.getProperty("speech-file");
 		if(speechFile == null){
-			speechFile = "/home/aaron/demo/speech/sample";
+			speechFile = "/home/bolt/demo/speech/sample";
 		}
 		
 		language = new LanguageConnector(soarAgent, lgSupport, dictionaryFile, grammarFile);
