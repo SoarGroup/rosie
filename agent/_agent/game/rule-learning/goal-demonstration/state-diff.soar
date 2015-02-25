@@ -2,11 +2,19 @@
 #ignore relationships that are in ignore list                                
 sp {state-diff*propose*copy-new-relationships
    (state <s> ^name state-diff
-             -^relationships.relations)
+             -^copied-relationships)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name copy-new-relationships)
 }
+
+sp {state-diff*apply*copy-new-relationships*mark*copied-relatioships
+   (state <s> ^name state-diff
+              ^operator.name copy-new-relationships)
+-->
+   (<s> ^copied-relationships true)
+}
+
 sp {state-diff*apply*copy-new-relationships*attend
    (state <s> ^name state-diff
               ^relationships <r>
@@ -78,12 +86,20 @@ sp {state-diff*apply*copy-new-relationships*3arg
 #or are in attend list, ignore objects from ignore list
 sp {state-diff*propose*copy-objects
    (state <s> ^name state-diff
-             -^object-set.object)
+             -^copied-objects)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name copy-objects)
 }
-sp {state-diff*apply*copy-objects
+
+sp {state-diff*apply*copy-objects*mark*copied
+   (state <s> ^name state-diff
+              ^operator.name copy-objects)
+-->
+   (<s> ^copied-objects true)
+}
+
+sp {state-diff*apply*copy-objects*copy*object
    (state <s> ^name state-diff
               ^relationships.relations <p>
               ^object-set <os>
@@ -116,6 +132,51 @@ sp {state-diff*apply*copy-objects*attend-object
    (<os> ^object <obj>)
    (<ods> ^obj-desc <desc>)
 }
+
+# copy object predicates that changed (e.g. open to closed, raw to cooked)
+sp {state-diff*elaborate*predicate-diff
+   (state <s> ^name state-diff)
+-->
+   (<s> ^predicate-diff <pd>)
+}
+                                 
+sp {state-diff*propose*compute-predicate-diff
+   (state <s> ^name state-diff
+             -^predicate-diff.done)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name compute-predicate-diff)
+}
+
+sp {state-diff*apply*compute-predicate-diff*mark*done
+   (state <s> ^name state-diff
+              ^operator.name compute-predicate-diff
+              ^predicate-diff <pd>)
+-->
+   (<pd> ^done true)
+}
+
+sp {state-diff*apply*compute-predicate-diff*create*diff*changed
+   (state <s> ^name state-diff
+              ^operator.name compute-predicate-diff
+              ^predicate-diff <pd>
+              ^initial.object-predicates.object <initial-obj>
+              ^final.object-predicates.object <final-obj>
+             -^ignore.object <ts-obj>
+             -^ignore.predicate <pred>)
+   (<initial-obj> ^topstate-object <ts-obj>
+                  ^<pred> <val>)
+   (<final-obj> ^topstate-object <ts-obj>
+                ^<pred> {<val2> <> <val>})
+-->
+   (<pd> ^predicate <diff>)
+   (<diff> ^object <ts-obj>
+           ^predicate <pred>
+           ^initial-value <val>
+           ^final-value <val2>)
+}
+   
+              
 
 #copy non-new relationships that exist between objects in the new state
 #TODO also copy  non-new relationships that are on attend list and involve atle
@@ -202,6 +263,7 @@ sp {state-diff*apply*complete
               ^object-set <os>
               ^relationships <rels>
               ^object-desc-set <ods>
+              ^predicate-diff <preds>
               ^extra-relationships <rels2>
               ^superstate.operator <op>
               ^operator.name complete
@@ -211,5 +273,5 @@ sp {state-diff*apply*complete
     -{(<rels> ^relations.pair <pair>)}}
 -->
    (<ss> ^diff-result <res>)
-   (<res> ^relationships <rels> ^objects <os> ^object-desc-set <ods>)
+   (<res> ^relationships <rels> ^objects <os> ^object-desc-set <ods> ^predicates <preds>)
 }
