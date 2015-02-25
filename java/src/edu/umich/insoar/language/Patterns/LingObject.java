@@ -20,6 +20,7 @@ public class LingObject extends LinguisticEntity {
 	private String pronoun = null;
 	private String noun;
 	private Identifier rootId;
+	private String plural = null;
 	
 	public String getDeterminer(){
 	    return determiner;
@@ -62,6 +63,15 @@ public class LingObject extends LinguisticEntity {
 		m = p.matcher(string);
 		while(m.find()){
 			noun = tagsToWords.get(m.group()).toString();
+			if (noun.endsWith("s"))
+			{
+				noun = noun.substring(0, noun.length()-1);
+				plural = "true";
+			}
+			else
+			{
+				plural = null;
+			}
 		}
 		
 		p = Pattern.compile("PR\\d*");
@@ -98,6 +108,9 @@ public class LingObject extends LinguisticEntity {
 			while (itr.hasNext()){
 				objectId.CreateStringWME("word", itr.next().toString());
 			}
+		}
+		if (plural != null){
+			objectId.CreateStringWME("plural", plural);
 		}
 		if (pronoun != null){
 			objectId.CreateStringWME("specifier", pronoun);
