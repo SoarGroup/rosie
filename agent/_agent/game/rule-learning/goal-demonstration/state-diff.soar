@@ -1,5 +1,101 @@
-#copy relationships that are new (in final state and not initial)
-#ignore relationships that are in ignore list                                
+###
+# valid-objects: objects that may appear in the diff
+
+sp {state-diff*elaborate*valid-objects
+   (state <s> ^name state-diff)
+-->
+   (<s> ^valid-objects <objs>)
+}
+
+sp {state-diff*elaborate*valid-object*from-final
+   (state <s> ^name state-diff
+              ^valid-objects <objs>
+              ^final.objects.object <obj>
+             -^ignore.object <obj>
+             -^attend-only.objects.object <any>)
+-->
+   (<objs> ^object <obj>)
+}
+
+sp {state-diff*elaborate*valid-object*attend
+   (state <s> ^name state-diff
+              ^valid-objects <objs>
+              ^attend.object <obj>)
+-->
+   (<objs> ^object <obj>)
+}
+
+sp {state-diff*elaborate*valid-object*attend-only
+   (state <s> ^name state-diff
+              ^valid-objects <objs>
+              ^attend-only.objects.object <obj>)
+-->
+   (<objs> ^object <obj>)
+}
+
+###
+# valid-relationships: relations that may appear in the diff
+
+sp {state-diff*elaborate*valid-relations
+   (state <s> ^name state-diff)
+-->
+   (<s> ^valid-relations <rels>)
+}
+
+sp {state-diff*elaborate*valid-relation*from-final
+   (state <s> ^name state-diff
+              ^valid-relations <rels>
+              ^final.relationships.relations.name <rel>
+             -^ignore.relation <rel>
+             -^attend-only.relationships.relation <any>)
+-->
+   (<rels> ^relation <rel>)
+}
+
+sp {state-diff*elaborate*valid-relation*attend-only
+   (state <s> ^name state-diff
+              ^valid-relations <rels>
+              ^attend-only.relationships.relation <rel>)
+-->
+   (<rels> ^relation <rel>)
+}
+
+###
+# valid-predicates: predicates that may appear in the diff
+
+sp {state-diff*elaborate*valid-predicates
+   (state <s> ^name state-diff)
+-->
+   (<s> ^valid-predicates <preds>)
+}
+
+sp {state-diff*elaborate*valid-predicate*from-final
+   (state <s> ^name state-diff
+              ^valid-predicates <preds>
+              ^final.predicate-set.predicate.name <pred>
+             -^ignore.predicate <pred>
+             -^attend-only.predicates.predicate <any>)
+-->
+   (<preds> ^predicate <pred>)
+}
+
+sp {state-diff*elaborate*valid-predicate*attend-only
+   (state <s> ^name state-diff
+              ^valid-predicates <preds>
+              ^attend-only.predicates.predicate <pred>)
+-->
+   (<preds> ^predicate <pred>)
+}
+
+# copy new relationships
+# copy relationships that are in the final state and not the initial
+
+sp {state-diff*elaborate*copied-relations
+   (state <s> ^name state-diff)
+-->
+   (<s> ^copied-relations <rels>)
+}
+
 sp {state-diff*propose*copy-new-relationships
    (state <s> ^name state-diff
              -^copied-relationships)
@@ -15,77 +111,156 @@ sp {state-diff*apply*copy-new-relationships*mark*copied-relatioships
    (<s> ^copied-relationships true)
 }
 
-sp {state-diff*apply*copy-new-relationships*attend
+# If the relation is in the attend set, 
+# Copy all with all objects valid, without doing a diff
+sp {state-diff*apply*copy-new-relationships*copy*attend*relation
    (state <s> ^name state-diff
-              ^relationships <r>
-              ^attend.relation <name>
               ^operator.name copy-new-relationships
-              ^final.relationships.relations <rel2>)
-   (<rel2> ^name <name> ^pair <pair>)
-   -{(<s> ^ignore.object.id <id>)
-     (<pair> ^<< a b c >> <id>)}
-   -{(<s> ^attend-only.relationships <ar>)
-     (<ar> -^relation <name>)}
-   -{(<s> ^attend-only.objects <ao>)
-     (<pair> ^<< a b c >> <id>)
-     (<ao> -^object.id <id>)}
--->
-   (<r> ^relations <r1>)
-   (<r1> ^name <name> ^pair <pair>)
-}
-sp {state-diff*apply*copy-new-relationships
-   (state <s> ^name state-diff
               ^relationships <r>
-             -^ignore.relation <name>
-              ^operator.name copy-new-relationships
-              ^initial.relationships <rels>
-              ^final.relationships.relations <rel2>)
-   (<rel2> ^name <name> ^pair <pair>)
-   (<pair> ^a <ida> ^b <idb> -^c)
-  -{(<rels> ^relations <rel>)
-    (<rel> ^name <name> ^pair <pair2>)
-    (<pair2> ^a <ida> ^b <idb>)}
-   -{(<s> ^ignore.object.id <id>)
-     (<pair> ^<< a b c >> <id>)}
-   -{(<s> ^attend-only.relationships <ar>)
-     (<ar> -^relation <name>)}
-   -{(<s> ^attend-only.objects <ao>)
-     (<pair> ^<< a b c >> <id>)
-     (<ao> -^object.id <id>)}
+              ^attend.relation <rel-name>
+              ^final.relationships.relations <final-rel>
+              ^valid-objects <objs>
+              ^copied-relations <copied>)
+   (<final-rel> ^name <rel-name>
+                ^pair <pair>)
+   # All objects on the pair are valid
+   -{(<pair> ^{ << a b c >> } <obj>)
+     (<objs> -^object <obj>)}
 -->
-   (<r> ^relations <r1>)
-   (<r1> ^name <name> ^pair <pair>)
+   (<r> ^relations <new-rel>)
+   (<new-rel> ^name <rel-name> 
+              ^pair <pair>)
+   (<copied> ^<rel-name> <pair>)
 }
 
-sp {state-diff*apply*copy-new-relationships*3arg
+# If the relation is not in the attend set, 
+#   Add if all objects are valid, and it is not in the intial set
+sp {state-diff*apply*copy-new-relationships*copy*2arg
    (state <s> ^name state-diff
-              ^relationships <r>
-             -^ignore.relation <name>
               ^operator.name copy-new-relationships
-              ^initial.relationships <rels>
-              ^final.relationships.relations <rel2>)
-   (<rel2> ^name <name> ^pair <pair>)
-   (<pair> ^a <ida> ^b <idb> ^c <idc>)
-  -{(<rels> ^relations <rel>)
-    (<rel> ^name <name> ^pair <pair2>)
-    (<pair2> ^a <ida> ^b <idb> ^c <idc>)}
-   -{(<s> ^ignore.object.id <id>)
-     (<pair> ^<< a b c >> <id>)}
-   -{(<s> ^attend-only.relationships <ar>)
-     (<ar> -^relation <name>)}
-   -{(<s> ^attend-only.objects <ao>)
-     (<pair> ^<< a b c >> <id>)
-     (<ao> -^object.id <id>)}
+              ^relationships <r>
+             -^attend.relation <rel-name>
+              ^initial.relationships <initial-rels>
+              ^final.relationships.relations <final-rel>
+              ^valid-objects.object.id <ida>
+              ^valid-objects.object.id <idb>
+              ^valid-relations.relation <rel-name>
+              ^copied-relations <copied>)
+   (<final-rel> ^name <rel-name>
+                ^pair <pair>)
+   (<pair> ^a <ida> ^b <idb> -^c)
+   -{(<initial-rels> ^relations <initial-rel>)
+     (<initial-rel> ^name <rel-name>
+                    ^pair <initial-pair>)
+     (<initial-pair> ^a <ida> ^b <idb>)}
 -->
-   (<r> ^relations <r1>)
-   (<r1> ^name <name> ^pair <pair>)
+   (<r> ^relations <new-rel>)
+   (<new-rel> ^name <rel-name> 
+              ^pair <pair>)
+   (<copied> ^<rel-name> <pair>)
 }
+  
+# If the relation is not in the attend set, 
+#   Add if all objects are valid, and it is not in the intial set
+sp {state-diff*apply*copy-new-relationships*copy*3arg
+   (state <s> ^name state-diff
+              ^operator.name copy-new-relationships
+              ^relationships <r>
+             -^attend.relation <rel-name>
+              ^initial.relationships <initial-rels>
+              ^final.relationships.relations <final-rel>
+              ^valid-objects.object.id <ida>
+              ^valid-objects.object.id <idb>
+              ^valid-objects.object.id <idc>
+              ^valid-relations.relation <rel-name>
+              ^copied-relations <copied>)
+   (<final-rel> ^name <rel-name>
+                ^pair <pair>)
+   (<pair> ^a <ida> ^b <idb> ^c <idc>)
+   -{(<initial-rels> ^relations <initial-rel>)
+     (<initial-rel> ^name <rel-name>
+                    ^pair <initial-pair>)
+     (<initial-pair> ^a <ida> ^b <idb> ^c <idc>)}
+-->
+   (<r> ^relations <new-rel>)
+   (<new-rel> ^name <rel-name> 
+              ^pair <pair>)
+   (<copied> ^<rel-name> <pair>)
+}
+    
+
+#sp {state-diff*apply*copy-new-relationships*attend
+#   (state <s> ^name state-diff
+#              ^relationships <r>
+#              ^attend.relation <name>
+#              ^operator.name copy-new-relationships
+#              ^final.relationships.relations <rel2>)
+#   (<rel2> ^name <name> ^pair <pair>)
+#   -{(<s> ^ignore.object.id <id>)
+#     (<pair> ^<< a b c >> <id>)}
+#   -{(<s> ^attend-only.relationships <ar>)
+#     (<ar> -^relation <name>)}
+#   -{(<s> ^attend-only.objects <ao>)
+#     (<pair> ^<< a b c >> <id>)
+#     (<ao> -^object.id <id>)}
+#-->
+#   (<r> ^relations <r1>)
+#   (<r1> ^name <name> ^pair <pair>)
+#}
+#sp {state-diff*apply*copy-new-relationships
+#   (state <s> ^name state-diff
+#              ^relationships <r>
+#             -^ignore.relation <name>
+#              ^operator.name copy-new-relationships
+#              ^initial.relationships <rels>
+#              ^final.relationships.relations <rel2>)
+#   (<rel2> ^name <name> ^pair <pair>)
+#   (<pair> ^a <ida> ^b <idb> -^c)
+#  -{(<rels> ^relations <rel>)
+#    (<rel> ^name <name> ^pair <pair2>)
+#    (<pair2> ^a <ida> ^b <idb>)}
+#   -{(<s> ^ignore.object.id <id>)
+#     (<pair> ^<< a b c >> <id>)}
+#   -{(<s> ^attend-only.relationships <ar>)
+#     (<ar> -^relation <name>)}
+#   -{(<s> ^attend-only.objects <ao>)
+#     (<pair> ^<< a b c >> <id>)
+#     (<ao> -^object.id <id>)}
+#-->
+#   (<r> ^relations <r1>)
+#   (<r1> ^name <name> ^pair <pair>)
+#}
+#
+#sp {state-diff*apply*copy-new-relationships*3arg
+#   (state <s> ^name state-diff
+#              ^relationships <r>
+#             -^ignore.relation <name>
+#              ^operator.name copy-new-relationships
+#              ^initial.relationships <rels>
+#              ^final.relationships.relations <rel2>)
+#   (<rel2> ^name <name> ^pair <pair>)
+#   (<pair> ^a <ida> ^b <idb> ^c <idc>)
+#  -{(<rels> ^relations <rel>)
+#    (<rel> ^name <name> ^pair <pair2>)
+#    (<pair2> ^a <ida> ^b <idb> ^c <idc>)}
+#   -{(<s> ^ignore.object.id <id>)
+#     (<pair> ^<< a b c >> <id>)}
+#   -{(<s> ^attend-only.relationships <ar>)
+#     (<ar> -^relation <name>)}
+#   -{(<s> ^attend-only.objects <ao>)
+#     (<pair> ^<< a b c >> <id>)
+#     (<ao> -^object.id <id>)}
+#-->
+#   (<r> ^relations <r1>)
+#   (<r1> ^name <name> ^pair <pair>)
+#}
 
 
 #copy objects that appear in the new relationships
 #or are in attend list, ignore objects from ignore list
 sp {state-diff*propose*copy-objects
    (state <s> ^name state-diff
+              ^copied-relationships true
              -^copied-objects)
 -->
    (<s> ^operator <o> + =)
@@ -99,144 +274,190 @@ sp {state-diff*apply*copy-objects*mark*copied
    (<s> ^copied-objects true)
 }
 
-sp {state-diff*apply*copy-objects*copy*object
+# Copy an object if in the attend set
+sp {state-diff*apply*copy-objects*copy*object*in*attend
    (state <s> ^name state-diff
-              ^relationships.relations <p>
-              ^object-set <os>
-             -^ignore.object <obj>
-              ^object-desc-set <ods>
-              ^final.object-desc-set.obj-desc <desc>
-              ^final.objects.object <obj>
               ^operator.name copy-objects
-              ^relationships <rels>)
-   (<p> ^name <name> ^pair <pair>)
-   (<pair> ^<< a b c >> <id>)
-   (<obj> ^id <id>)
-   (<desc> ^id <id>)
--->
-   (<os> ^object <obj>)
-   (<ods> ^obj-desc <desc>)
-}
-sp {state-diff*apply*copy-objects*attend-object
-   (state <s> ^name state-diff
-              ^object-set <os>
               ^attend.object <obj>
-              ^object-desc-set <ods>
               ^final.object-desc-set.obj-desc <desc>
-              ^final.objects.object <obj>
-              ^operator.name copy-objects)
+              ^object-set <obj-set>
+              ^object-desc-set <desc-set>)
    (<obj> ^id <id>)
    (<desc> ^id <id>)
-   (<os> -^object <obj>)
 -->
-   (<os> ^object <obj>)
-   (<ods> ^obj-desc <desc>)
+   (<obj-set> ^object <obj>)
+   (<desc-set> ^obj-desc <desc>)
 }
 
-# copy object predicates that changed (e.g. open to closed, raw to cooked)
-sp {state-diff*elaborate*predicate-diff
-   (state <s> ^name state-diff)
--->
-   (<s> ^predicate-diff <pd>)
-}
-                                 
-sp {state-diff*propose*compute-predicate-diff
+# Copy an object if it was in a copied-relation
+sp {state-diff*apply*copy-objects*copy*object*from*relationship
    (state <s> ^name state-diff
-             -^predicate-diff.done)
+              ^operator.name copy-objects
+              ^object-set <obj-set>
+              ^object-desc-set <desc-set>
+              ^copied-relations.<rel-name>.{<< a b c >>} <id>
+              ^final.objects.object <obj>
+              ^final.object-desc-set.obj-desc <desc>)
+   (<obj> ^id <id>)
+   (<desc> ^id <id>)
 -->
-   (<s> ^operator <o> + =)
-   (<o> ^name compute-predicate-diff)
-}
-
-sp {state-diff*apply*compute-predicate-diff*mark*done
-   (state <s> ^name state-diff
-              ^operator.name compute-predicate-diff
-              ^predicate-diff <pd>)
--->
-   (<pd> ^done true)
-}
-
-sp {state-diff*apply*compute-predicate-diff*create*diff*changed
-   (state <s> ^name state-diff
-              ^operator.name compute-predicate-diff
-              ^predicate-diff <pd>
-              ^initial.object-predicates.object <initial-obj>
-              ^final.object-predicates.object <final-obj>
-             -^ignore.object <ts-obj>
-             -^ignore.predicate <pred>)
-   (<initial-obj> ^topstate-object <ts-obj>
-                  ^<pred> <val>)
-   (<final-obj> ^topstate-object <ts-obj>
-                ^<pred> {<val2> <> <val>})
--->
-   (<pd> ^predicate <diff>)
-   (<diff> ^object <ts-obj>
-           ^predicate <pred>
-           ^initial-value <val>
-           ^final-value <val2>)
+   (<obj-set> ^object <obj>)
+   (<desc-set> ^obj-desc <desc>)
 }
    
+#
+#sp {state-diff*apply*copy-objects*copy*object
+#   (state <s> ^name state-diff
+#              ^relationships.relations <p>
+#              ^object-set <os>
+#             -^ignore.object <obj>
+#              ^object-desc-set <ods>
+#              ^final.object-desc-set.obj-desc <desc>
+#              ^final.objects.object <obj>
+#              ^operator.name copy-objects
+#              ^relationships <rels>)
+#   (<p> ^name <name> ^pair <pair>)
+#   (<pair> ^<< a b c >> <id>)
+#   (<obj> ^id <id>)
+#   (<desc> ^id <id>)
+#-->
+#   (<os> ^object <obj>)
+#   (<ods> ^obj-desc <desc>)
+#}
+#sp {state-diff*apply*copy-objects*attend-object
+#   (state <s> ^name state-diff
+#              ^object-set <os>
+#              ^attend.object <obj>
+#              ^object-desc-set <ods>
+#              ^final.object-desc-set.obj-desc <desc>
+#              ^final.objects.object <obj>
+#              ^operator.name copy-objects)
+#   (<obj> ^id <id>)
+#   (<desc> ^id <id>)
+#   (<os> -^object <obj>)
+#-->
+#   (<os> ^object <obj>)
+#   (<ods> ^obj-desc <desc>)
+#}
+
+# copy object predicates that changed (e.g. open to closed, raw to cooked)
+sp {state-diff*propose*copy-predicates
+   (state <s> ^name state-diff
+             -^copied-predicates)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name copy-predicates)
+}
+
+sp {state-diff*apply*copy-predicates*mark*done
+   (state <s> ^name state-diff
+              ^operator.name copy-predicates)
+-->
+   (<s> ^copied-predicates true)
+}
+
+# Copy a predicate if it has changed between initial and final
+sp {state-diff*apply*copy-predicates*create*diff*changed
+   (state <s> ^name state-diff
+              ^operator.name copy-predicates
+              ^initial.predicate-set.predicate <initial-pred>
+              ^final.predicate-set.predicate <final-pred>
+              ^predicate-set <preds>
+              ^valid-predicates.predicate <name>
+              ^valid-objects.object <obj>)
+   (<initial-pred> ^object <obj> ^name <name> ^value <val>)
+   (<final-pred> ^object <obj> ^name <name> ^value {<val2> <> <val>})
+-->
+   (<preds> ^predicate <new-pred>)
+   (<new-pred> ^object <obj> ^name <name> ^value <val2>)
+}
+
+# The predicate does not exist in the initial state
+sp {state-diff*apply*copy-predicates*create*diff*new
+   (state <s> ^name state-diff
+              ^operator.name copy-predicates
+              ^initial.predicate-set <initial-set>
+              ^final.predicate-set.predicate <final-pred>
+              ^predicate-set <preds>
+              ^valid-predicates.predicate <name>
+              ^valid-objects.object <obj>)
+   -{(<initial-set> ^predicate <initial-pred>)
+     (<initial-pred> ^object <obj> ^name <name>)}
+   (<final-pred> ^object <obj> ^name <name> ^value <val>)
+-->
+   (<preds> ^predicate <new-pred>)
+   (<new-pred> ^object <obj> ^name <name> ^value <val>)
+}
+ 
+# The predicate is in the attend list
+sp {state-diff*apply*copy-predicates*create*in*attend
+   (state <s> ^name state-diff
+              ^operator.name copy-predicates
+              ^attend.predicate <name>
+              ^final.predicate-set.predicate <final-pred>
+              ^predicate-set <preds>
+              ^valid-objects.object <obj>)
+   (<final-pred> ^object <obj> ^name <name> ^value <val>)
+-->
+   (<preds> ^predicate <new-pred>)
+   (<new-pred> ^object <obj> ^name <name> ^value <val>)
+}
+    
               
 
 #copy non-new relationships that exist between objects in the new state
 #TODO also copy  non-new relationships that are on attend list and involve atle
 sp {state-diff*propose*copy-extra-relationships
    (state <s> ^name state-diff
-             -^extra-relationships.done)
+              ^copied-objects true
+             -^copied-extra-relationships)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name copy-extra-relationships)
 }
+
 sp {state-diff*apply*copy-extra-relationships*default
    (state <s> ^name state-diff
-              ^extra-relationships <r>
-              ^relationships <rels>
               ^operator.name copy-extra-relationships)
 -->
-   (<r> ^done true)
+   (<s> ^copied-extra-relationships true)
 }
-   
-sp {state-diff*apply*copy-extra-relationships
+
+sp {state-diff*apply*copy-extra-relationships*2args
    (state <s> ^name state-diff
-              ^extra-relationships <r>
+              ^operator.name copy-extra-relationships
+              ^relationships <rels>
+              ^final.relationships.relations <final-rel>
+              ^valid-relations.relation <rel-name>
               ^object-set.object.id <ida>
               ^object-set.object.id <idb>
-             -^ignore.relation <name>
-              ^relationships <rels>
-              ^operator.name copy-extra-relationships
-              ^final.relationships.relations <rel2>)
-   (<rel2> ^name <name> ^pair <pair>)
+              ^copied-relations <copied>)
+   (<final-rel> ^name <rel-name> ^pair <pair>)
    (<pair> ^a <ida> ^b <idb> -^c)
-  -{(<rels> ^relations <rel>)
-    (<rel> ^name <name> ^pair <pair2>)
-    (<pair2> ^a <ida> ^b <idb>)}
-   -{(<s> ^attend-only.relationships <ar>)
-     (<ar> -^relation <name>)}
+	(<copied> -^<rel-name> <pair>)
 -->
-   (<r> ^relations <r1>)
-   (<r1> ^name <name> ^pair <pair>)
+   (<rels> ^relations <new-rel>)
+   (<new-rel> ^name <name> ^pair <pair>)
+   (<copied> ^<rel-name> <pair>)
 }
 
 sp {state-diff*apply*copy-extra-relationships*3args
    (state <s> ^name state-diff
-              ^extra-relationships <r>
+              ^operator.name copy-extra-relationships
+              ^relationships <rels>
+              ^final.relationships.relations <final-rel>
+              ^valid-relations.relation <rel-name>
               ^object-set.object.id <ida>
               ^object-set.object.id <idb>
-             -^ignore.relation <name>
               ^object-set.object.id <idc>
-              ^relationships <rels>
-              ^operator.name copy-extra-relationships
-              ^final.relationships.relations <rel2>)
+              ^copied-relations <copied>)
    (<rel2> ^name <name> ^pair <pair>)
    (<pair> ^a <ida> ^b <idb> ^c <idc>)
-  -{(<rels> ^relations <rel>)
-    (<rel> ^name <name> ^pair <pair2>)
-    (<pair2> ^a <ida> ^b <idb> ^c <idc>)}
-   -{(<s> ^attend-only.relationships <ar>)
-     (<ar> -^relation <name>)}
+   (<copied> -^<rel-name> <pair>)
 -->
-   (<r> ^relations <r1>)
-   (<r1> ^name <name> ^pair <pair>)
+   (<rels> ^relations <new-rel>)
+   (<new-rel> ^name <name> ^pair <pair>)
+   (<copied> ^<rel-name> <pair>)
 }
 
 
@@ -247,30 +468,30 @@ sp {state-diff*propose*complete
    (<s> ^operator <o> + =)
    (<o> ^name complete)
 }
-
-sp {state-diff*apply*complete*copy-rels-from-extra
-   (state <s> ^name state-diff
-              ^object-set <os>
-              ^extra-relationships.relations <rel>
-              ^relationships <rels>
-              ^operator.name complete)
--->
-   (<rels> ^relations <rel>)
-}
+#
+#sp {state-diff*apply*complete*copy-rels-from-extra
+#   (state <s> ^name state-diff
+#              ^object-set <os>
+#              ^extra-relationships.relations <rel>
+#              ^relationships <rels>
+#              ^operator.name complete)
+#-->
+#   (<rels> ^relations <rel>)
+#}
 
 sp {state-diff*apply*complete
    (state <s> ^name state-diff
+              ^operator.name complete
               ^object-set <os>
               ^relationships <rels>
               ^object-desc-set <ods>
-              ^predicate-diff <preds>
-              ^extra-relationships <rels2>
+              ^predicate-set <preds>
+#              ^extra-relationships <rels2>
               ^superstate.operator <op>
-              ^operator.name complete
               ^superstate <ss>)
-  -{(<rels2> ^relations <rr>)
-    (<rr> ^name <name> ^pair <pair>)
-    -{(<rels> ^relations.pair <pair>)}}
+#  -{(<rels2> ^relations <rr>)
+#    (<rr> ^name <name> ^pair <pair>)
+#    -{(<rels> ^relations.pair <pair>)}}
 -->
    (<ss> ^diff-result <res>)
    (<res> ^relationships <rels> ^objects <os> ^object-desc-set <ods> ^predicates <preds>)

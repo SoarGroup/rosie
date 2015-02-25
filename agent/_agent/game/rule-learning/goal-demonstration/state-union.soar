@@ -2,10 +2,17 @@
 #ignore relationships that are in ignore list                                
 sp {state-union*propose*copy-relationships
    (state <s> ^name state-union
-             -^relationships.relations)
+             -^copied-relationships)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name copy-relationships)
+}
+
+sp {state-union*apply*copy-relationships*mark*copied
+   (state <s> ^name state-union
+              ^operator.name copy-relationships)
+-->
+   (<s> ^copied-relationships true)
 }
 
 sp {state-union*apply*copy-relationships
@@ -47,11 +54,19 @@ sp {state-union*apply*copy-relationships*3-args
 #ignore objects from ignore list
 sp {state-union*propose*copy-objects
    (state <s> ^name state-union
-             -^object-set.object)
+             -^copied-objects)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name copy-objects)
 }
+
+sp {state-union*apply*copy-objects*mark*copied
+   (state <s> ^name state-union
+              ^operator.name copy-objects)
+-->
+   (<s> ^copied-objects true)
+}
+
 sp {state-union*apply*copy-objects
    (state <s> ^name state-union
               ^relationships.relations <p>
@@ -72,24 +87,54 @@ sp {state-union*apply*copy-objects
    (<ods> ^obj-desc <desc>)
 }
 
+# predicates
+sp {state-union*propose*copy-predicates
+   (state <s> ^name state-union
+             -^copied-predicates)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name copy-predicates)
+}
+
+sp {state-union*apply*copy-predicates*mark*copied
+   (state <s> ^name state-union
+              ^operator.name copy-predicates)
+-->
+   (<s> ^copied-predicates true)
+}
+
+sp {state-union*apply*copy-predicates*copy
+   (state <s> ^name state-union
+              ^operator.name copy-predicates
+              ^initial.predicate-set.predicate <initial-pred>
+              ^final.predicate-set.predicate <final-pred>
+              ^predicate-set <preds>)
+   (<initial-pred> ^object <obj> ^name <pred-name> ^value <pred-value>)
+   (<final-pred> ^object <obj> ^name <pred-name> ^value <pred-value>)
+-->
+   (<preds> ^predicate <new-pred>)
+   (<new-pred> ^object <obj> ^name <pred-name> ^value <pred-value>)
+}
 
 #complete, copy to output state-result
 sp {state-union*propose*complete
    (state <s> ^name state-union)
 -->
-   (<s> ^operator <o> + =)
+   (<s> ^operator <o> + = <)
    (<o> ^name complete)
+   (interrupt)
 }
 
 sp {state-union*apply*complete
    (state <s> ^name state-union
+              ^operator.name complete
               ^object-set <os>
               ^relationships <rels>
               ^object-desc-set <ods>
-              ^superstate.operator <op>
-              ^operator.name complete)
+              ^predicate-set <preds>
+              ^superstate <ss>)
 -->
-   (interrupt)
-   (<op> ^state-result <res>)
-   (<res> ^relationships <rels> ^objects <os> ^object-desc-set <ods>)
+   (<ss> ^state-result <res>)
+   (<res> ^relationships <rels> ^objects <os> ^object-desc-set <ods>
+          ^predicate-set <preds>)
 }
