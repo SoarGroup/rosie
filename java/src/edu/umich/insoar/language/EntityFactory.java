@@ -29,6 +29,8 @@ public class EntityFactory
             return new DescriptionRequest();
         } else if(entityType.equals(IgnoreStateFeature.TYPE)){
             return new IgnoreStateFeature();
+        } else if(entityType.equals(AttendStateFeature.TYPE)){
+            return new AttendStateFeature();
         } else if(entityType.equals(PropertyRequest.TYPE)){
         	return new PropertyRequest();
         } else if(entityType.equals(CountRequest.TYPE)){
