@@ -131,6 +131,8 @@ public class AgentMessageParser
             message = "Ok I have now learned the basics of the game.";
         } else if(type.equals("game-over")){
             message = "Game Over. Shall we play another?";
+        } else if(type.equals("puzzle-solved")){
+            message = "That was easy!";
         } 
         return message;
     }
