@@ -79,10 +79,12 @@ sp {game-search*elaborate*prepositions*pair
 
 sp {game-search*apply*simulate
    (state <s> ^name game-search
-              ^action.parameter-set.verbs <v>
+              ^action <act>
               ^prepositions <p2>
               ^operator <o>)
+   (<act> ^parameter-set.verbs <v> ^name <cname>)
    (<o> ^name action
+        ^cname <cname>
      #   ^game << towers-of-hanoi tic-tac-toe eight-puzzle tic-tac-toe-stored >>
         ^parameters <p>)
    (<p2> ^prep <prep> ^prep <prep2>)
@@ -104,10 +106,12 @@ sp {game-search*apply*simulate
 }
 sp {game-search*apply*simulate2
    (state <s> ^name game-search
-              ^action.parameter-set.verbs <v>
+              ^action <act>
               ^prepositions <p2>
               ^operator <o>)
+   (<act> ^parameter-set.verbs <v> ^name <cname>)
    (<o> ^name action
+        ^cname <cname>
      #   ^game << towers-of-hanoi tic-tac-toe eight-puzzle tic-tac-toe-stored >>
         ^parameters <p>)
    (<p2> ^prep <prep> ^prep <prep2>)
@@ -219,19 +223,35 @@ sp {game-search*elaborate*condition*noargs
    (<c> ^args <args3> ^result.<s1>.<i2> <i>)
 }
 
+
 sp {game-search*elaborate*parameter-set*argnum
    (state <s> ^name game-search
               ^gtype <type>
-              ^superstate.superstate.<type>.parameter-set.argnum <num>
-              ^<type>.parameter-set <ps>)
+              ^superstate.superstate.<type> <t2> 
+              ^<type> <t> )
+    (<t2> ^parameter-set.argnum <num>)
+	(<t> ^parameter-set <ps> ^copy-of <t2>)
 -->
    (<ps> ^argnum <num>)
+}
+
+sp {game-search*elaborate*parameter-set*name
+   (state <s> ^name game-search
+              ^gtype <type>
+              ^superstate.superstate.<type> <t2> 
+              ^<type> <t> )
+    (<t2> ^name <name>)
+	(<t> ^copy-of <t2>)
+-->
+   (<t> ^name <name>)
 }
 sp {game-search*elaborate*parameter-set*verbs
    (state <s> ^name game-search
               ^gtype <type>
-              ^superstate.superstate.<type>.parameter-set.verbs <v>
-              ^<type>.parameter-set <ps>)
+              ^superstate.superstate.<type> <t2> 
+              ^<type> <t> )
+    (<t2> ^parameter-set.verbs <v>)
+	(<t> ^parameter-set <ps> ^copy-of <t2>)
 -->
    (<ps> ^verbs <v>)
 }
@@ -249,9 +269,10 @@ sp {game-search*apply*action*flound-action
               ^dcount <dc>
              -^multiplayer true
              -^dcount 0
-              ^action.parameter-set.verbs <v>
+              ^action <act>
               ^operator <o>)
-   (<o> ^name action -^duplicate-of ^parameters <p>)
+   (<o> ^name action -^duplicate-of ^parameters <p> ^cname <cname>)
+   (<act> ^parameter-set.verbs <v> ^name <cname>)
    (<p> ^<i1> <o1> ^<i2> <o2>)
    (<o1> ^id <oa>)
    (<o2> ^id <ob>)
@@ -267,9 +288,10 @@ sp {game-search*apply*action*flound-action*top
               ^topstate <ts>
               ^superstate.superstate.superstate <sss>
               ^dcount 0
-              ^action.parameter-set.verbs <v>
+              ^action <act>
               ^operator <o>)
-   (<o> ^name action -^duplicate-of ^parameters <p>)
+   (<o> ^name action -^duplicate-of ^parameters <p> ^cname <cname>)
+   (<act> ^parameter-set.verbs <v> ^name <cname>)
    (<p> ^<i1> <o1> ^<i2> <o2>)
    (<o1> ^id <oa>)
    (<o2> ^id <ob>)
@@ -297,10 +319,11 @@ sp {game-search*depth-limit
               ^desired <d>
               ^operator <o> +
              -^goal.parameter-set.set
-              ^action.parameter-set.set
+              ^action <act>
               ^dcount <dc>
               ^depth-limit <dc>)
-   (<o> -^duplicate-of ^name action)
+   (<o> -^duplicate-of ^name action ^cname <cname>)
+   (<act> ^parameter-set.set ^name <cname>)
  -{(<s> ^operator <o2> +)
    (<o2> ^name goal)}
 -->
@@ -316,16 +339,19 @@ sp {game-search*prefer*goal
 sp {game-search*heuristic*reject
    (state <s> ^name game-search
               ^superstate.operator.superoperator.parameters <p2>
+              ^action <act>
               ^operator <o> +)
-   (<o> ^name action -^duplicate-of ^parameters <p>)
-   (<p> ^{<ind> << 1 2 >>} <obj1>)
+   (<act> ^name <cname> ^parameter-set.verbs.{1}.{1} <ind>)
+   (<o> ^name action -^duplicate-of ^parameters <p> ^cname <cname>)
+   (<p> ^<ind> <obj1>)
    (<p2> ^<ind> <obj1>)
 -->
    (<s> ^operator <o> -)
 }
 sp {game-search*propose*default
-   (state <s> ^name game-search
-              ^action.parameter-set.argnum)
+   (state <s> ^name game-search)
+   -{(<s> ^action <a>)
+     (<a> -^parameter-set.argnum)}
 -->
    (<s> ^operator <o1> +)
    (<o1> ^name default)
@@ -339,6 +365,8 @@ sp {game-search*apply*default
 -->
    (<s> ^partial-failure <d>)
 }
+
+##here should bump depth-limit if puzzle
 sp {game-search*apply*default*top-select-random-action
    (state <s> ^name game-search
               ^operator <o> +
@@ -347,6 +375,7 @@ sp {game-search*apply*default*top-select-random-action
    (<o> ^name action)
  #  -{(<s> ^operator {<o2> > <o>})}
 -->
+   (interrupt)
    (<s> ^operator <o> > =)
 }
 
