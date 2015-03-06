@@ -34,24 +34,10 @@ sp {comprehension*apply*failed-comprehension*failed-parse
    (<op> ^name failed-comprehension)
    (<sem> -^interaction-status)
 -->
-   (<sem> ^interaction-status.failure.type failed-parse)
-   (write (crlf) <sem> | ^interaction.status.failure.type failed-parse|)
+   (<sem> ^interaction-status.failure.type failed-to-interpret-message)
+   (write (crlf) <sem> | ^interaction-status.failure.type failed-to-interpret-message|)
 }
 
-sp {comprehension*apply*copy-interaction-status
-   (state <s> ^name comprehension
-              ^operator <op>
-              ^top-state.interaction.status <status>
-              ^segment <seg>)
-   (<seg> ^original-sentence <is>
-          ^semantics <sem>)
-   (<op> ^name failed-comprehension)
-   (<sem> ^interaction-status.<att> <value>)
-   (<value> ^<att2> <value2>)
--->
-   (<status> ^<att> <value>)
- #  (write (crlf) <att> | | <att2> | | <value2>)
-}
 
 sp {comprehension*apply*failed-comprehension*no-new-word
    (state <s> ^name comprehension
@@ -79,6 +65,16 @@ sp {comprehension*apply*failed-comprehension*new-word
    (<sem> ^interaction-status.type unknown-word)
 -->
    (<sem> ^message-type unknown-word)
+}
+
+sp {apply*failed-comprehension*external
+   (state <s> ^operator.name failed-comprehension
+              ^segment <seg> 
+              ^top-state.world-usage external)
+   (<seg> ^original-sentence <os>)
+-->
+   (<os> ^processed-sentence true
+         ^processing-result failure)
 }
 
 sp {apply*failed-comprehension*failure*internal
@@ -132,8 +128,35 @@ sp {apply*failed-comprehension2
    (state <s> ^name comprehension
               ^operator.name failed-comprehension
               ^segment.semantics <sem>
-              ^top-state.interaction.status <status>)
-   (<sem> ^message-type <message>)
+              ^top-state.interaction.status <status>
+             -^top-state.world-usage internal)
+  (<sem> ^message-type <message>)
 -->   
   (<status> ^new-message <sem>)
 }
+
+sp {apply*failed-comprehension-interaction-status
+   (state <s> ^operator.name failed-comprehension
+             -^top-state.world-usage internal
+              ^segment.semantics <sem>
+              ^top-state.interaction.status <status>)
+   (<sem> ^interaction-status.<att> <value>)
+-->
+   (<status> ^<att> <value>)
+}
+
+## Duplicates previous rule - JEL 2/28/2015
+#sp {comprehension*apply*copy-interaction-status
+#   (state <s> ^name comprehension
+#             -^top-state.world-usage internal
+#              ^operator.name failed-comprehension
+#              ^top-state.interaction.status <status>
+#              ^segment <seg>)
+#   (<seg> ^semantics <sem>)
+#   (<sem> ^interaction-status.<att> <value>)
+#   (<value> ^<att2> <value2>)
+#-->
+#   (<status> ^<att> <value>)
+# #  (write (crlf) <att> | | <att2> | | <value2>)
+#}
+
