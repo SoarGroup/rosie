@@ -20,9 +20,10 @@ public class Environment {
 	    	JButton environmentResetButton  = new JButton("Reset State");
 	    	environmentResetButton.addActionListener(new ActionListener(){
 	    		public void actionPerformed(ActionEvent arg0){
-	    			String input =  JOptionPane.showInputDialog("Input object id:");
-	    			Integer id = Integer.parseInt(input);
-	    			(new ResetEnvironmentState(id, motor.getHeldObject())).execute();
+	    			//String input =  JOptionPane.showInputDialog("Input object id:");
+	    			//Integer id = Integer.parseInt(input);
+	    			//(new ResetEnvironmentState(id, motor.getHeldObject())).execute();
+	    			(new ResetEnvironmentState()).execute();
 	    		}
 	    	});
 	    	environmentMenu.add(environmentResetButton);
