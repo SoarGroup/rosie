@@ -95,7 +95,8 @@ public class Util {
     		}
     		else if (action.contains("reset")){
     			Integer id = Integer.parseInt(action.split(" ")[1]);
-    			(new ResetEnvironmentState(id, Environment.getHeldObject())).execute();
+    			(new ResetEnvironmentState()).execute();
+    			//(new ResetEnvironmentState(id, Environment.getHeldObject())).execute();
     		}		
     		else {
     			ScriptDataMap.getInstance().getUiCommand(action).execute();
