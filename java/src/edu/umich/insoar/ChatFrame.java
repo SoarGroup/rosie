@@ -43,12 +43,12 @@ import javax.swing.text.StyledDocument;
 import lcm.lcm.LCM;
 import april.util.TimeUtil;
 
-import com.soartech.bolt.testing.ActionType;
-import com.soartech.bolt.testing.ISpyScriptGenerator;
-import com.soartech.bolt.testing.Script;
-import com.soartech.bolt.testing.ScriptDataMap;
-import com.soartech.bolt.testing.Settings;
-import com.soartech.bolt.testing.Util;
+import edu.umich.insoar.testing.ActionType;
+import edu.umich.insoar.testing.ISpyScriptGenerator;
+import edu.umich.insoar.testing.Script;
+import edu.umich.insoar.testing.ScriptDataMap;
+import edu.umich.insoar.testing.Settings;
+import edu.umich.insoar.testing.Util;
 
 import probcog.lcmtypes.chat_message_t;
 

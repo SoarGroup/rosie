@@ -16,11 +16,11 @@ import javax.swing.JOptionPane;
 
 import probcog.lcmtypes.perception_command_t;
 
-import com.soartech.bolt.testing.ActionType;
-import com.soartech.bolt.testing.ISpyScriptGenerator;
-import com.soartech.bolt.testing.ParseScript;
-import com.soartech.bolt.testing.Script;
 
+import edu.umich.insoar.testing.ActionType;
+import edu.umich.insoar.testing.ISpyScriptGenerator;
+import edu.umich.insoar.testing.ParseScript;
+import edu.umich.insoar.testing.Script;
 import edu.umich.insoar.world.WMUtil;
 import april.util.TimeUtil;
 import lcm.lcm.LCM;

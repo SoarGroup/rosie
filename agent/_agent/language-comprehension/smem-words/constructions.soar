@@ -1,0 +1,185 @@
+### Rules on constructions
+###  1. The current-word cannot be a phrase (DP, CP, VP) - the system doesn't know if
+###     something is a phrase until it has processed the next word. Thus, a phrase 
+###     can only appear in the prior-word slot.
+###  2. Both the current-word and prior word should have associated assigners except for when 
+###     the literal word such as |this| is used. Those 
+###     structures that aren't constructions (they are retrieved only using spelling) should not
+##      have assigners for those words, but constructions need assigners so they can "absorb"
+##      any information in the receivers that will get merged with the assigners.
+##   3. If T is an assigner, then should be type S. Otherwise, should be CP (so can be embedded in 
+##      another construction at some point.
+
+### All assigners need a syntactic-structure
+
+
+## CP-T
+smem --add {
+           (<CP-T> ^construction |CP-T|
+                   ^structure-type S #CP
+                   ^current-word T
+                   ^prior-word CP
+                   ^prior-word-first false   # by having both - means it doesn't matter whether first or not.
+                   ^prior-word-first true	
+                   ^assigners <ass1> <ass2>)
+           (<ass1> ^structure-type CP
+                   ^required true
+                   ^syntactic-structure sentence
+                   ^semantic-structure *copy*
+                   ^before-type T
+                   ^parent <VP-T>)
+           (<ass2> ^structure-type T
+                   ^after <ass1>
+                   ^after-type CP
+                   ^required true
+                   ^syntactic-structure terminator
+                   ^parent <VP-T>)
+}
+
+## Command *-VP-T - Store the red block.
+smem --add {
+           (<VP-T> ^construction |*-VP-T|
+                   ^structure-type S #CP
+                   ^current-word T
+                   ^prior-word VP
+                   ^prior-word-first true	
+                   ^message-type command	
+                   ^assigners <ass1> <ass2>)
+           (<ass1> ^structure-type VP
+                   ^required true
+                   ^before-type T
+                   ^syntactic-structure predicate
+                   ^semantic-structure *copy*
+                   ^parent <VP-T>)
+           (<ass2> ^structure-type T
+                   ^after <ass1>
+                   ^after-type VP
+                   ^required true
+                   ^syntactic-structure terminator
+                   ^parent <VP-T>)
+}
+
+
+## Rosie Command *-Rosie-VP-T - Rosie store the red block.
+smem --add {
+           (<VP-T> ^construction |*-Rosie-VP|
+                   ^structure-type CP
+                   ^current-word V
+                   ^prior-word ROSIE
+                   ^prior-word-first true
+                   ^message-type command	
+                   ^assigners <ass0> <ass1>)# <ass2>)
+           (<ass0> ^structure-type ROSIE
+                   ^parent <VP-T>
+                   ^before <ass1>
+                   ^before-type V
+                   ^before-type VP
+                   ^syntactic-structure head
+                   ^semantic-structure agent
+                   ^required true)
+           (<ass1> ^structure-type VP
+                   ^required true
+                   ^syntactic-structure predicate
+                   ^semantic-structure *copy*
+                   ^parent <VP-T>)
+#           (<ass2> ^structure-type T
+#                   ^after <ass1>
+#                   ^after-type VP
+#                   ^required true
+#                   ^syntactic-structure terminator
+#                   ^parent <VP-T>)
+}
+
+## Normal DP-
+smem --add {
+           (<sentence> ^construction |*-DP-T|
+                       ^structure-type S
+                       ^current-word T
+                       ^prior-word DP
+                       ^prior-word-first true
+                       ^message-type object-definition
+                       ^assigners <ass0> <ass1>)
+           (<ass0> ^structure-type DP
+                   ^parent <sentence>
+                   ^before <ass1>
+                   ^before-type T
+                   ^syntactic-structure head
+                   ^semantic-structure arg1
+                   ^required true)
+           (<ass1> ^structure-type T
+                   ^after <ass0>
+                   ^after-type VP
+                   ^required true
+                   ^syntactic-structure terminator
+                   ^parent <sentence>)
+}
+
+## Normal *-DP-VP-T -
+smem --add {
+           (<sentence> ^construction |*-DP-VP|
+                       ^structure-type CP
+                       ^current-word V
+                       ^prior-word DP
+                       ^prior-word-first true
+                       ^message-type object-action
+                       ^assigners <ass0> <ass1>)#<ass2>)
+           (<ass0> ^structure-type DP
+                   ^parent <sentence>
+                   ^relative-position after
+                   ^before <ass1>
+                   ^before-type V
+                   ^before-type VP
+                   ^syntactic-structure head
+                   ^semantic-structure agent
+                   ^required true)
+           (<ass1> ^structure-type VP
+                   ^after <ass0>
+                   ^after-type DP
+                   ^required true
+                   #^before-type T
+                   ^syntactic-structure predicate
+                   ^semantic-structure action
+                   ^parent <sentence>)
+#           (<ass2> ^structure-type T
+#                   ^after <ass1>
+#                   ^after-type VP
+#                   ^required true
+#                   ^syntactic-structure terminator
+#                   ^parent <sentence>)
+}
+
+## Proper-noun VP T
+smem --add {
+           (<sentence> ^construction |*-PN-VP|
+                       ^structure-type CP
+                       ^current-word V
+                       ^prior-word PN
+                       ^prior-word-first true
+                       ^message-type object-action
+                       ^assigners <ass0> <ass1> <ass2>)
+           (<ass0> ^structure-type NP
+                   ^parent <sentence>
+                   ^relative-position after
+                   ^before <ass1>
+                   ^before-type V
+                   ^before-type VP
+                   ^syntactic-structure head
+                   ^semantic-structure agent
+                   ^default.id self
+                   ^required true)
+           (<ass1> ^structure-type VP
+                   ^after <ass0>
+                   ^after-type DP
+                   ^required true
+                 #  ^before-type T
+                   ^syntactic-structure predicate
+                   ^semantic-structure action
+                   ^parent <sentence>)
+#           (<ass2> ^structure-type T
+#                   ^after <ass1>
+#                   ^after-type VP
+#                   ^required true
+#                   ^syntactic-structure terminator
+#                   ^parent <sentence>)
+}
+

@@ -1,0 +1,100 @@
+sp {comprehension*elaborate*possible-future-merge
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^not-merged-receiver <receiver>
+          ^not-merged-assigner <assigner>)
+   (<assigner> ^structure-type <stype>
+               ^decision-count <da-dc>
+              -^lt.lexical-item-spelling)
+   (<receiver> ^lt.converts-to <stype>
+               ^decision-count > <da-dc>)
+  -(<assigner> ^parent-receiver <receiver>) # Cannot fulfill itself
+ -{(<assigner> ^lt.after <after>)           # enforce after
+   (<seg> ^not-merged-assigner.lt <after>)}
+ -{(<receiver> ^decision-count > <dl-dc>)   # enforce before
+   (<assigner> ^lt.relative-position before
+               ^decision-count <dl-dc>)}
+ -{(<receiver> ^decision-count < <dl-dc2>)   # enforce after on DC
+   (<assigner> ^lt.relative-position after
+               ^decision-count <dl-dc2>)}
+-->
+   (<s> ^possible-future-merge <pm>)
+   (<pm> ^receiver <receiver>
+         ^assigner <assigner>
+         ^type normal)
+   (write (crlf) |Possible Future (converted) Merge R: | <receiver> |, A : | <assigner> |, structure type: | <stype>)
+}
+
+sp {comprehension*propose*process-phrase-end
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^retrieved-stack.item { <> <ps> <item> }
+          ^merged-assigner <p>)
+   (<p> ^parent-receiver <ps>
+        ^merged-receiver <> <item>)
+   (<ps> ^lt.converts-to <nstruct>  # Receiver that will get converted
+        -^structure-type <nstruct>) # Not yet converted
+   (<item> ^structure-type <s-type>) # why do we care? This doesn't match anything else
+  -{(<seg> ^not-merged-assigner <uai>)  # There is not a required assigner in the phrase that hasn't matched yet
+    (<uai> ^parent-receiver <ps>
+           ^lt.required true)}
+ -{(<s> ^possible-merge <pm>)            # there is not a possible merge
+  (<pm> ^receiver { <> <ps> <nmr> }
+        ^assigner.parent-receiver <ps>)} ## Tests that there is no merge of a sister assigner
+-{(<s> ^possible-future-merge <pm2>)
+  (<pm2> ^receiver { <> <ps> <nmr> }
+        ^assigner.parent-receiver <ps>)}  # Tests that there is no potential future merge of a sister assigner
+-->
+   (<s> ^operator <op> + =, >)
+   (<op> ^name process-phrase-end
+         ^assigner-parent <ps>)
+}
+
+sp {apply*process-phrase-end
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<op> ^name process-phrase-end
+         ^assigner-parent <ps>)
+   (<ps> ^structure-type { <> <nstruct> <oldstruct> }
+         ^lt.converts-to  <nstruct>)
+-->
+   (write (crlf) |Convert | <ps> | from | <oldstruct> | to | <nstruct>)
+   (<ps> ^structure-type <nstruct>
+                         <oldstruct> -)
+   (<seg> ^not-merged-receiver <ps>) #probably unnecessary
+}
+
+sp {comprehension*compare*process-phrase-end*prefer-merge-before-process-end
+   (state <s> ^name comprehension
+              ^operator <op1> +
+                        <op2> +)
+   (<op1> ^name process-phrase-end
+          ^assigner-parent <ap>)
+   (<op2> ^name merge
+          ^assigner.parent-receiver <ap>)
+-->
+   (<s> ^operator <op1> < <op2>)
+}
+
+sp {comprehension*compare*process-phrase-end*ground-new-constraint
+   (state <s> ^name comprehension
+              ^operator <op1> +
+                        <op2> +)
+   (<op1> ^name process-phrase-end)
+   (<op2> ^name ground-new-constraint)
+-->
+   (<s> ^operator <op1> > <op2>)
+}
+
+sp {comprehension*compare*process-phrase-end*prefer-merge-before-process-end*not
+   (state <s> ^name comprehension
+              ^operator <op1> +
+                        <op2> +)
+   (<op1> ^name process-phrase-end
+          ^assigner-parent <ap>)
+   (<op2> ^name merge
+         -^assigner.parent-receiver <ap>)
+-->
+   (<s> ^operator <op1> > <op2>)
+}
+

@@ -9,29 +9,28 @@ import sml.smlRunEventId;
 
 import april.util.TimeUtil;
 
-import com.soartech.bolt.BOLTLGSupport;
-import com.soartech.bolt.testing.ActionType;
 
 import edu.umich.insoar.language.AgentMessageParser;
-import edu.umich.insoar.language.Patterns.LingObject;
+import edu.umich.insoar.language.LingObject;
+import edu.umich.insoar.testing.ActionType;
 import edu.umich.insoar.world.Messages;
 import edu.umich.insoar.world.WMUtil;
 
 public class LanguageConnector implements OutputEventInterface, RunEventInterface {
 	private SoarAgent soarAgent;
-	private BOLTLGSupport lgsupport;
 	
 	private Messages messages;
+	
+	Identifier languageId = null;
 	
 	private int totalIndexes = 0;
 	private int indexFailures = 0;
 	
-    public LanguageConnector(SoarAgent soarAgent, BOLTLGSupport lgsupport, String dictionaryFile, String grammarFile)
+    public LanguageConnector(SoarAgent soarAgent)
     {
     	this.soarAgent = soarAgent;
-    	this.lgsupport = lgsupport;
     	
-    	messages = new Messages(dictionaryFile, grammarFile);
+    	messages = new Messages();
     	
         String[] outputHandlerStrings = { "send-message", "remove-message", "push-segment", 
         		"pop-segment", "report-interaction", "indexing-report" };
@@ -47,31 +46,14 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
     
     public void clear(){
     	messages.destroy();
-    	clearLGMessages();
-    }
-
-    public void clearLGMessages(){
-    	lgsupport.clear();
-    	soarAgent.commitChanges();
     }
     
     public void destroyMessage(int id){
-    	if(messages.getIdNumber() == id){
-    		messages.destroy();
-    	} 
+    	messages.destroy();
     }
     
     public void newMessage(String message){
-    	if (lgsupport == null) {
-    		messages.addMessage(message);
-    	} else if(message.length() > 0){
-    		if(message.charAt(0) == ':'){
-    			messages.addMessage(message.substring(1));
-    		} else {
-        		// LGSupport has access to the agent object and handles all WM interaction from here
-        		lgsupport.handleInput(message);
-    		}
-    	}
+    	messages.addMessage(message);
     }
     
     public void runEventHandler(int eventID, Object data, Agent agent, int phase)
@@ -87,8 +69,11 @@ public class LanguageConnector implements OutputEventInterface, RunEventInterfac
         	ChatFrame.Singleton().setReady(waitingWME != null);
     	}
     	Identifier inputLink = agent.GetInputLink();
-    	if(inputLink != null){
-    		messages.updateInputLink(inputLink);
+    	if(languageId == null){
+    		languageId = inputLink.CreateIdWME("language");
+    	}
+    	if(languageId != null){
+    		messages.updateInputLink(languageId);
     	}
     	
     	if(InSoar.DEBUG_TRACE){

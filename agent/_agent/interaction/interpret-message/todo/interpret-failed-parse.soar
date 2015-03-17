@@ -1,0 +1,53 @@
+###################################################################
+#
+# interpret-failed-parse
+# - Description of message here
+#
+###################################################################
+
+#######
+# OPERATOR PROPOSAL
+#######
+sp {interpret-message*propose*interpret-failed-parse
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>)
+   (<msg> ^message-type failed-parse
+         -^interpreted true)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name interpret-failed-parse
+        ^message <msg>)
+}
+
+#####
+# OPERATOR APPLICATION
+#####
+
+# Mark the message as interpreted (retracts operator)
+sp {interpret-message*apply*interpret-failed-parse*mark*interpreted
+   (state <s> ^name interpret-message
+              ^operator <o>)
+   (<o> ^name interpret-failed-parse
+        ^message <msg>)
+-->
+   (<s> ^mark-interpreted <msg>)
+}
+
+sp {interpret-message*apply*interpret-failed-parse*add*purpose
+   (state <s> ^name interpret-message
+              ^top-state.io.output-link <out>
+              ^operator <o>)
+   (<o> ^name interpret-failed-parse
+        ^message <msg>)
+-->
+#   (<out> ^send-message <msg>)
+#   (<msg> ^type single-word-response
+#          ^fields.word |Comprehension failed. Please rephrase your entry.|)
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type failed-parse
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<sat> ^dialog-event.type parse-failure-response)
+}

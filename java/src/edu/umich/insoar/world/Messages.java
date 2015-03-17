@@ -1,10 +1,8 @@
 package edu.umich.insoar.world;
 
-import com.soartech.bolt.testing.ActionType;
 
 import edu.umich.insoar.ChatFrame;
-import edu.umich.insoar.language.BOLTDictionary;
-import edu.umich.insoar.language.Parser;
+import edu.umich.insoar.testing.ActionType;
 import sml.Identifier;
 /**
  * Represents the latest message from the user on the input link
@@ -26,23 +24,13 @@ public class Messages implements IInputLinkElement
     // True if a new message was received since the last update
     private Boolean messageChanged;
     
-    // Represents an invalid id, or that no message is on the input-link
-    private final Integer INVALID_ID = -1;
-    
-
-    private BOLTDictionary dictionary;
-    
 
     private int messageNumber;
 
-    private Parser parser;
-
-    public Messages(String dictionaryFile, String grammarFile){
+    public Messages(){
         latestMessage = "";
-        latestMessageId = INVALID_ID;   
+        latestMessageId = 0;   
         messageChanged = false;
-        dictionary = new BOLTDictionary(dictionaryFile); 
-        parser = new Parser(dictionary, grammarFile);
     }
 
 
@@ -53,19 +41,41 @@ public class Messages implements IInputLinkElement
             return;
         }
         
+        latestMessage = latestMessage.trim().toLowerCase();
+        if(latestMessage.length() == 0){
+        	messageChanged = false;
+        	return;
+        }
+        
         if(messageId != null){
             messageId.DestroyWME();
         }
         
-        messageId = parentIdentifier.CreateIdWME("message");
+        messageId = parentIdentifier.CreateIdWME("sentence");
         messageNumber = latestMessageId;
-        messageId.CreateIntWME("id", latestMessageId);
-        //messageId.CreateStringWME("type", latestMessage);
-        if(!parser.getSoarSpeak(latestMessage, messageId)){
-        	messageId.DestroyWME();
-        	messageId = null;
-        	ChatFrame.Singleton().addMessage("Can you repeat that?", ActionType.Agent);
+        messageId.CreateIntWME("sentence-number", messageNumber);
+        messageId.CreateStringWME("complete-sentence", latestMessage);
+        messageId.CreateStringWME("spelling", "*");
+        
+        char lastChar = latestMessage.charAt(latestMessage.length()-1);
+        char punct = '.';
+        if(lastChar == '.' || lastChar == '!' || lastChar == '?'){
+        	latestMessage = latestMessage.substring(0, latestMessage.length()-1);
+        	punct = lastChar;
         }
+        
+        Identifier nextID = messageId.CreateIdWME("next");
+        String[] words = latestMessage.split(" ");
+        for(String word : words){
+        	if(word.isEmpty()){
+        		continue;
+        	}
+        	nextID.CreateStringWME("spelling", word);
+        	nextID = nextID.CreateIdWME("next");
+        }
+        nextID.CreateStringWME("spelling", Character.toString(punct));
+        nextID.CreateStringWME("next", "nil");
+
         messageChanged = false;
     }
 

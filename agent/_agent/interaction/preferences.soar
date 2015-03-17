@@ -1,131 +1,102 @@
-sp {interaction*better-preferences*interpret-message
+# Interaction ordering
+# 1. status-type new-message
+# 2. status-type failure
+# 3. change-type outgoing-message
+# 4. status-type performed-event
+# 5. change-type clear-interaction-stack
+# 6. change-type terminate-segment 
+# 7. change-type modify-segment-info
+# 8. change-type new-segment-info
+
+# 1. new-message
+sp {interaction*better-preferences*new-message
    (state <s> ^topstate <s>
               ^operator <o1> +
               ^operator <o2> +)
    (<o1> ^name interaction
-         ^type incoming-message)
+         ^status-type new-message)
    (<o2> ^name interaction
-         ^type << status-change interaction-change >>)
+         ^<type> << failure outgoing-message performed clear-interaction-stack terminate-segment modify-segment-info new-segment-info >> )
 -->
    (<s> ^operator <o1> > <o2>)
 }
 
-sp {interaction*better-preferences*interpret-status
+# 2. failure
+sp {interaction*better-preferences*failure
    (state <s> ^topstate <s>
               ^operator <o1> +
               ^operator <o2> +)
    (<o1> ^name interaction
-         ^type status-change)
+         ^status-type failure)
    (<o2> ^name interaction
-         ^type interaction-change)
+         ^<type> << outgoing-message performed clear-interaction-stack terminate-segment modify-segment-info new-segment-info >> )
 -->
    (<s> ^operator <o1> > <o2>)
 }
 
+# 3. outgoing-message
 sp {interaction*better-preferences*outgoing-message
    (state <s> ^topstate <s>
               ^operator <o1> +
               ^operator <o2> +)
    (<o1> ^name interaction
-         ^type interaction-change
          ^change-type outgoing-message)
    (<o2> ^name interaction
-         ^type interaction-change
-         ^change-type << terminate-segment report-interaction new-segment-info modify-segment-info >> )
+         ^<type> << performed clear-interaction-stack terminate-segment modify-segment-info new-segment-info >> )
 -->
    (<s> ^operator <o1> > <o2>)
 }
 
-sp {interaction*better-preferences*terminate-segment
+# 4. performed
+sp {interaction*better-preferences*performed
    (state <s> ^topstate <s>
               ^operator <o1> +
               ^operator <o2> +)
    (<o1> ^name interaction
-         ^type interaction-change
+         ^status-type performed)
+   (<o2> ^name interaction
+         ^<type> << clear-interaction-stack terminate-segment modify-segment-info new-segment-info >> )
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+# 5. clear-interaction-stack
+sp {interaction*better-preferences*clear-interaction-stack
+   (state <s> ^topstate <s>
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name interaction
+         ^change-type clear-interaction-stack)
+   (<o2> ^name interaction
+         ^<type> << terminate-segment new-segment-info modify-segment-info >> )
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+# 6. terminate-segment
+sp {interaction*better-preferences*clear-interaction-stack
+   (state <s> ^topstate <s>
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name interaction
          ^change-type terminate-segment)
    (<o2> ^name interaction
-         ^type interaction-change
-         ^change-type <<  report-interaction new-segment-info modify-segment-info >> )
+         ^<type> << new-segment-info modify-segment-info >> )
 -->
    (<s> ^operator <o1> > <o2>)
 }
 
-sp {interaction*better-preferences*report-interaction
-   (state <s> ^topstate <s>
-              ^operator <o1> +
-              ^operator <o2> +)
-   (<o1> ^name interaction
-         ^type interaction-change
-         ^change-type report-interaction)
-   (<o2> ^name interaction
-         ^type interaction-change
-         ^change-type << new-segment-info modify-segment-info >> )
--->
-   (<s> ^operator <o1> > <o2>)
-}
-
+# 7. new-segment-info
 sp {interaction*better-preferences*new-segment-info
    (state <s> ^topstate <s>
               ^operator <o1> +
               ^operator <o2> +)
    (<o1> ^name interaction
-         ^type interaction-change
          ^change-type new-segment-info)
    (<o2> ^name interaction
-         ^type interaction-change
-         ^change-type << modify-segment-info >> )
+         ^<type> << modify-segment-info >> )
 -->
    (<s> ^operator <o1> > <o2>)
 }
 
-# AM: IFIX: preferences used to be on the interaction substate
-
-#sp {interaction*better-preferences*interpret-message
-#   (state <s> ^name interaction
-#              ^operator <o1> +
-#              ^operator <o2> +)
-#   (<o1> ^name interpret-message)
-#   (<o2> ^name << interpret-status send-message pop-segment report-interaction push-segment modify-segment >>)
-#-->
-#   (<s> ^operator <o1> > <o2>)
-#}
-#
-#sp {interaction*better-preferences*interpret-status
-#   (state <s> ^name interaction
-#              ^operator <o1> +
-#              ^operator <o2> +)
-#   (<o1> ^name interpret-status)
-#   (<o2> ^name << send-message pop-segment report-interaction push-segment modify-segment >>)
-#-->
-#   (<s> ^operator <o1> > <o2>)
-#}
-#
-#sp {interaction*better-preferences*send-message
-#   (state <s> ^name interaction
-#              ^operator <o1> +
-#              ^operator <o2> +)
-#   (<o1> ^name send-message)
-#   (<o2> ^name << pop-segment report-interaction push-segment modify-segment >>)
-#-->
-#   (<s> ^operator <o1> > <o2>)
-#}
-#
-#sp {interaction*better-preferences*pop-segment
-#   (state <s> ^name interaction
-#              ^operator <o1> +
-#              ^operator <o2> +)
-#   (<o1> ^name pop-segment)
-#   (<o2> ^name << report-interaction push-segment modify-segment >>)
-#-->
-#   (<s> ^operator <o1> > <o2>)
-#}
-#
-#sp {interaction*better-preferences*report-interaction
-#   (state <s> ^name interaction
-#              ^operator <o1> +
-#              ^operator <o2> +)
-#   (<o1> ^name report-interaction)
-#   (<o2> ^name << push-segment modify-segment  >>)
-#-->
-#   (<s> ^operator <o1> > <o2>)
-#}
+# 8. modify-segment-info

@@ -27,8 +27,8 @@ import april.jmat.LinAlg;
 import april.jmat.MathUtil;
 import april.util.TimeUtil;
 
-import com.soartech.bolt.script.ui.command.ResetRobotArm;
 
+import edu.umich.insoar.scripting.ResetRobotArm;
 import edu.umich.insoar.world.Pose;
 import edu.umich.insoar.world.SVSCommands;
 import edu.umich.insoar.world.WMUtil;

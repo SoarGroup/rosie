@@ -21,8 +21,6 @@ import sml.smlRunEventId;
 import probcog.lcmtypes.*;
 import april.util.TimeUtil;
 
-import com.soartech.bolt.BOLTLGSupport;
-
 import edu.umich.insoar.world.WorldModel;
 
 public class InSoar implements RunEventInterface
@@ -38,12 +36,8 @@ public class InSoar implements RunEventInterface
 	
 	public static final boolean DEBUG_TRACE = false;
     
-    private Kernel kernel;
-    
     private SoarAgent soarAgent;
    
-    private PrintWriter logWriter;
-
     private ChatFrame chatFrame;
     
     private LanguageConnector language;
@@ -72,38 +66,8 @@ public class InSoar implements RunEventInterface
 			e.printStackTrace();
 		}
         
-        String useLGProp = props.getProperty("enable-lgsoar");
-        
-        boolean useLG = false;
-        String lgSoarDictionary = "";
-        if (useLGProp != null && useLGProp.trim().equals("true")) {
-        	lgSoarDictionary = props.getProperty("lgsoar-dictionary");
-        	String lgSoarSource = props.getProperty("language-productions").trim();
-        	if (lgSoarSource != null && lgSoarDictionary != null) {
-        		useLG = true;
-        	}
-        	else {
-        		System.out.println("ERROR: LGSoar misconfigured, not enabled.");
-        	}
-        }
-        
-        soarAgent = new SoarAgent(agentName, props, useLG, headless);
+        soarAgent = new SoarAgent(agentName, props, headless);
 
-        BOLTLGSupport lgSupport = null;
-        
-        if (useLG) {
-        	try{
-        	lgSupport = new BOLTLGSupport(soarAgent.getAgent(), lgSoarDictionary);
-        	} catch (RuntimeException e){
-        		System.err.println("Couldn't open lg dictionary");
-        		useLG = false;
-        		lgSupport = null;
-        	}
-        }
-
-	
-		
-		
 		String watchLevel = props.getProperty("watch-level");
 		if (watchLevel != null) {
 			soarAgent.getAgent().ExecuteCommandLine("watch " + watchLevel);
@@ -113,20 +77,6 @@ public class InSoar implements RunEventInterface
 		if (throttleMSString != null) {
 			throttleMS = Integer.parseInt(throttleMSString.trim());
 			soarAgent.getAgent().RegisterForRunEvent(smlRunEventId.smlEVENT_AFTER_DECISION_CYCLE, this, this);
-		}
-
-		String dictionaryFile = props.getProperty("dictionary-file");
-		if(dictionaryFile == null){
-			System.err.println("ERROR: No dictionary-file specified in sbolt.props");
-			soarAgent.kill();
-			return;
-		}
-		
-		String grammarFile = props.getProperty("grammar-file");
-		if(grammarFile == null){
-			System.err.println("ERROR: No grammar-file specified in sbolt.props");
-			soarAgent.kill();
-			return;
 		}
 		
 		String classifiersFile = props.getProperty("classifiers-file");
@@ -139,7 +89,7 @@ public class InSoar implements RunEventInterface
 			speechFile = "audio_files/sample";
 		}
 		
-		language = new LanguageConnector(soarAgent, lgSupport, dictionaryFile, grammarFile);
+		language = new LanguageConnector(soarAgent);
         perception = new PerceptionConnector(soarAgent, classifiersFile);   
         environment = new Environment(motorSystem);
         motorSystem = new MotorSystemConnector(soarAgent, perception);

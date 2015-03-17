@@ -1,0 +1,92 @@
+sp {comprehend-word*propose*create-assigner
+   (state <s> ^name comprehend-word
+              ^current-word <cw>
+              ^segment.comprehension-structure.not-merged-receiver <r-item>
+              ^retrieved-lexical-item <a-lt>)
+   (<a-lt> ^assigners <id>)
+  -{(<s> ^segment.comprehension-structure.not-merged-assigner <item>)
+    (<item> ^decision-count
+            ^current-word <cw>
+            ^parent-receiver <r-item>
+            ^lt <id>)}
+   (<r-item> ^lt <a-lt>
+             ^current-word <cw>)
+   (<id> ^structure-type <stype>)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name create-assigner
+         ^lt <id>
+         ^parent-receiver <r-item>)
+}
+
+sp {apply*create-assigner*create-item
+   (state <s> ^operator <op>
+              ^current-word <cw>
+              ^segment <ss>
+             -^name comprehend-construction
+              ^created-assigners <cax>)
+   (<ss> ^comprehension-structure <cs>)
+   (<op> ^name create-assigner
+         ^lt <lt>
+         ^parent-receiver <r-item>)
+   (<lt> ^structure-type <stype>)
+-->
+   (<s> ^created-assigners <cax> - (+ 1 <cax>))
+   (write (crlf) | parent-receiver | <r-item> | for | <new-assigner> )
+   (<cs> ^not-merged-assigner <new-assigner>)
+   (<new-assigner> ^current-word <cw>
+                   ^lt <lt>
+                   ^parent-receiver <r-item>
+                   ^structure-type <stype>
+                   ^decision-count (int (cmd stats -d)))}
+
+####
+sp {apply*create-assigner*create-item*no-remove
+   (state <s> ^operator <op>
+              ^current-word <cw>
+              ^segment <ss>
+              ^name comprehend-construction
+              ^created-assigners <cax>)
+   (<ss> ^comprehension-structure <cs>)
+   (<op> ^name create-assigner
+         ^lt <lt>
+         ^parent-receiver <r-item>)
+   (<lt> ^structure-type <stype>)
+   (<cs> -^remove-assigner)
+-->   
+   (<s> ^created-assigners <cax> - (+ 1 <cax>))
+   (write (crlf) | parent-receiver | <r-item> | for | <new-assigner> )
+   (<cs> ^not-merged-assigner <new-assigner>)
+   (<new-assigner> ^current-word <cw>
+                   ^lt <lt>
+                   ^parent-receiver <r-item>
+                   ^structure-type <stype>
+                   ^decision-count (int (cmd stats -d)))}
+
+####
+## Use old decision count so it stays older than others that
+                           ##  have been created in the mean time
+sp {apply*create-assigner*create-item*use-old-time
+   (state <s> ^operator <op>
+              ^current-word <cw>
+              ^segment <ss>
+              ^name comprehend-construction
+              ^created-assigners <cax>)
+   (<ss> ^comprehension-structure <cs>)
+   (<op> ^name create-assigner
+         ^lt <lt>
+         ^parent-receiver <r-item>)
+   (<lt> ^structure-type <stype>)
+   (<cs> ^remove-assigner.decision-count <dc>
+        -^remove-assigner.decision-count < <dc>)
+-->
+   (<s> ^created-assigners <cax> - (+ 1 <cax>))
+   (write (crlf) | parent-receiver | <r-item> | for | <new-assigner> )
+   (write (crlf) | use old decision-count | <dc>)
+   (<cs> ^not-merged-assigner <new-assigner>)
+   (<new-assigner> ^current-word <cw>
+                   ^lt <lt>
+                   ^parent-receiver <r-item>
+                   ^structure-type <stype>
+                   ^decision-count <dc>)}
+

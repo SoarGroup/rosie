@@ -1,0 +1,125 @@
+sp {comprehend-word*propose*smem-lexical-retrieval-cw-pw
+   (state <s> ^name comprehend-word
+              ^current-word.spelling <up>
+              ^segment <seg>)
+   (<s> -^retrieved-lexical-item
+        -^segment.retry)
+  -{(<s> ^failed-retrieval <fr>)
+    (<fr> ^current-word <up>
+          ^prior-word <pick>)}
+   (<seg> ^prior-word.spelling <pick>)
+-->
+   (<s> ^operator <o> +, =)
+   (<o> ^name smem-lexical-retrieval-cw-pw
+        ^current-word <up>
+        ^prior-word <pick>
+        ^prior-word-stale true)}
+
+sp {comprehend-word*propose*smem-lexical-retrieval-cw-pw-type
+   (state <s> ^name comprehend-word
+              ^current-word.spelling <up>
+              ^segment <seg>
+             -^retrieved-lexical-item)
+  -{(<s> ^failed-retrieval <fr>)
+    (<fr> ^current-word <up>
+          ^prior-word <pick-type>)}
+   (<seg> ^retrieved-stack.item.lt.structure-type <pick-type>
+         -^retry)
+-->
+   (<s> ^operator <o> +, =)
+   (<o> ^name smem-lexical-retrieval-cw-pw-type
+        ^current-word <up>
+        ^prior-word <pick-type>)}
+
+sp {comprehend-word*compare*smem-lexical-retrieval-cw-pw*smem-lexical-retrieval
+   (state <s> ^name comprehend-word
+              ^operator <op1> +
+                        <op2> +)
+   (<op1> ^name << smem-lexical-retrieval-cw-pw smem-lexical-retrieval-cw-pw-type >>)
+   (<op2> ^name smem-lexical-retrieval)
+-->
+   (<s> ^operator <op1> > <op2>)
+}
+
+sp {comprehend-word*compare*smem-lexical-retrieval-cw-pw*smem-lexical-retrieval-cw-pw-type
+   (state <s> ^name comprehend-word
+              ^operator <op1> +
+                        <op2> +)
+   (<op1> ^name smem-lexical-retrieval-cw-pw)
+   (<op2> ^name smem-lexical-retrieval-cw-pw-type)
+-->
+   (<s> ^operator <op1> > <op2>)
+}
+
+##### Apply
+
+sp {comprehend-construction*apply*smem-lexical-retrieval-cw-pw
+   (state <s> ^operator <o>
+              ^smem.command <cmd>)
+   (<o> ^name << smem-lexical-retrieval-cw-pw smem-lexical-retrieval-cw-pw-type >>
+        ^current-word <up>
+        ^prior-word <pick>)
+-->   
+   (write (crlf) |Attempt retrieval for: | <up> |, | <pick>)
+   (<cmd> ^query <x>)
+   (<x> ^current-word <up>
+        ^prior-word <pick>)
+}
+
+sp {comprehend-word*apply*smem-lexical-retrieval-cw-pw*success*monitor
+   (state <s> ^operator.name smem-lexical-retrieval-cw-pw
+              ^smem <smem>)
+   (<smem> ^result.retrieved.spelling <x>
+           ^command <c>)
+   (<c> ^query <q>)
+   (<q> ^current-word <cw>
+        ^prior-word <pw>)
+-->
+   (write (crlf) |Retrieval Success for | <cw> | | <pw> | => | <x>)
+}
+############@@@@@@@@@@@@@@@@@##########
+sp {comprehend-word*apply*smem-lexical-retrieval-assigner-prior-word-stale
+   (state <s> ^operator <o>
+              ^segment <seg>
+              ^smem.result.retrieved <rli>)
+   (<o> ^prior-word <pw>
+        ^prior-word-stale true)
+   (<seg> ^not-merged-assigner <uai>
+          ^retrieved-stack.item <prior-receiver>
+          ^comprehension-structure <cs>)
+ # (<uai> ^lt.parent.spelling <pw>)
+   (<rli> -^consumes-prior-word false)
+   (<uai> ^parent-receiver <prior-receiver>)
+-->
+   (write (crlf) |Remove assigner for prior word: | <pw>)
+   (<cs> ^remove-assigner <uai>)}
+
+sp {comprehend-word*apply*smem-lexical-retrieval-receiver-prior-word-stale
+   (state <s> ^operator <o>
+              ^segment <seg>
+              ^smem.result.retrieved <rli>)
+   (<o> ^prior-word <pw>
+        ^prior-word-stale true)
+   (<seg> ^not-merged-receiver <uai>
+          ^retrieved-stack.item <uai>
+          ^comprehension-structure <cs>)
+#   (<uai> ^lt.spelling <pw>)
+   (<rli> -^consumes-prior-word false)
+-->
+   (write (crlf) |Remove receiver for prior word: | <pw>)
+   (<cs> ^remove-receiver <uai>)}
+
+############@@@@@@@@@@@@@@@@@##########
+
+sp {comprehend-word*apply*smem-lexical-retrieval-proprogate-first-word
+   (state <s> ^operator <o>
+              ^segment <seg>
+              ^smem.result.retrieved <rli>)
+   (<o> ^name smem-lexical-retrieval-cw-pw
+        ^prior-word-stale true)
+   (<seg> ^comprehension-structure <cs>
+          ^prior-word <pick>)
+   (<pick> ^first-word true)
+-->
+   (write (crlf) |Current-word becomes a first word.|)
+   (<cs> ^first-word true)}

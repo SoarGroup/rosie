@@ -1,0 +1,86 @@
+## When fail because of not-merged receiver and the wrong word sense was retreived for an receiver
+##   Many cases this won't handle, but this is the simplest.
+##   Need to add handling unmerged assigners and assigners without alternative structures
+## 1. Find a receiver that has right alternative structure if possible
+##    otherwise pick most recent receiver (alternative-structure)
+## 2. Undo 
+#  ^parse-failed end-of-sentence
+
+
+sp {comprehension*propose*failed-receiver-alternative-structure
+#   :interrupt
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^parse-failed-receiver <nmr>
+          ^not-merged-assigner <nma>
+         -^retried-once <nmr>)                               # Only try once for the same receiver
+   (<nmr> ^lt.alternative-structure <structure-new>)  # must be an alternative structure that can be used...
+-->
+   (<s> ^operator <op> + =, >)
+   (<op> ^name failed-receiver-alternative-structure
+         ^not-merged-receiver <nmr>
+         ^not-merged-assigner <nma>)
+}
+
+
+sp {comprehension*propose*failed-receiver-alternative-structure2
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^parse-failed-receiver <nmr>
+          ^alternative-structure-receiver <asr>
+          ^not-merged-assigner <nma>
+         -^retried-once <nmr> 
+         -^retried-once <asr>)                         # Only try once for the same receiver
+   (<nmr> -^lt.alternative-structure <structure-new>)  # must be an alternative structure that can be used...
+-->
+   (<s> ^operator <op> + =, >)
+   (<op> ^name failed-receiver-alternative-structure
+         ^not-merged-receiver <asr>
+         ^not-merged-assigner <nma>)
+}
+
+## Prefer failed assigner that does have right alternative structure
+sp {comprehension*compare*failed-receiver-alternative-structure*prefer-matched-type
+   (state <s> ^name comprehension
+              ^operator <op1> +
+                        <op2> +)
+   (<op1> ^name failed-receiver-alternative-structure)
+   (<op2> ^name failed-receiver-alternative-structure)
+ -{(<op2> ^not-merged-receiver.lt.alternative-structure <structure>
+          ^not-merged-assigner.lt.structure-type <structure>)}
+   (<op1> ^not-merged-receiver.lt.alternative-structure <structure>
+          ^not-merged-assigner.lt.structure-type <structure>)
+-->
+   (<s> ^operator <op1> > <op2>)
+}
+
+## Prefer latest failed assigner to another one that also has right alternative structure
+sp {comprehension*compare*failed-receiver-alternative-structure*prefer-most-recent2
+   (state <s> ^name comprehension
+              ^operator <op1> +
+                        <op2> +)
+   (<op1> ^name failed-receiver-alternative-structure
+          ^not-merged-receiver.decision-count > <dc>
+          ^not-merged-receiver.lt.alternative-structure <structure1>
+          ^not-merged-assigner.lt.structure-type <structure1>)
+   (<op2> ^name failed-receiver-alternative-structure
+          ^not-merged-receiver.decision-count <dc>
+          ^not-merged-receiver.lt.alternative-structure <structure2>
+          ^not-merged-assigner.lt.structure-type <structure2>)
+   -->
+   (<s> ^operator <op1> > <op2>)
+}
+
+sp {comprehension*apply*failed-receiver-alternative-structure
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<op> ^name failed-receiver-alternative-structure
+         ^not-merged-receiver <nmr>)
+   (<nmr> ^lt <lt>)
+   (<lt> ^structure-type <structure-old>
+         ^alternative-structure <structure-new>)
+-->
+   (write (crlf) |Will retry, and see if can retrieve new version of | <nmr> | from | <structure-old> | to | <structure-new>)
+   (<seg> ^retry <nmr>
+          ^retried-once <nmr>)}
+
