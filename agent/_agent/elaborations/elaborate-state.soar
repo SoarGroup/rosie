@@ -1,0 +1,107 @@
+# Elaborations for topstate and substates
+
+# name
+# Name a state using the selected superstate operator's name
+sp {all*elaborate*name
+   (state <s> ^superstate.operator.name <name>)
+-->
+   (<s> ^name <name>)
+}
+
+sp {topstate*elaborate*intermediate
+   (state <s> ^superstate nil)
+-->
+   (<s> ^intermediate <int>)
+}
+
+
+# problemspace
+# every state has a problemspace
+sp {all*elaborate*problemspace
+   (state <s> ^topstate <ts>)
+-->
+   (<s> ^problemspace <ps>)
+}
+
+sp {all*elaborate*in-focus
+   (state <s> ^topstate <ts>
+              -^problemspace games)
+-->
+   (<s> ^in-focus <if>)
+}
+
+
+### all states have environments
+sp {all*elaborate*environment
+   (state <s> ^topstate <ts>
+             -^problemspace games)
+-->
+   (<s> ^environment <env>)
+   (<env> ^intermediate <int>)
+}
+
+# topstate/top-state
+# Copy direct top-state link to all substates
+# (yes, having both is dumb)
+sp {topstate*elaborate*topstate
+   (state <s> ^superstate nil)
+-->
+   (<s> ^topstate <s>
+        ^top-state <s>)  
+}
+
+sp {all*elaborate*top-state*topstate
+   (state <s> ^superstate <ss>)
+   (<ss> ^topstate <ts>
+        -^operator.name evaluate-operator)
+-->
+   (<s> ^topstate <ts>
+   	^top-state <ts>)
+}
+
+# io
+# Copy the io link to all substates
+sp {all*elaborate*io
+   (state <s> ^superstate.io <io>
+	      -^name selection
+	      -^problemspace.state.dont-copy io
+             -^name learn-param
+             -^name setup-search
+   	      -^name action-policy)
+-->
+   (<s> ^io <io>)
+}
+
+# object
+# Copy objects to substate, if not in language problem-space
+#sp {all*elaborate*object
+#   (state <s> ^superstate <ss>
+#      	  -^problem-space << lgsoar message-interpretation >>
+#	  -^problemspace.state.dont-copy object
+#          -^name learn-param
+#          -^name setup-search
+#	  -^name selection)
+#   (<ss> -^problem-space << lgsoar message-interpretation >>
+#   	 ^object <obj>)
+#-->
+#  (<s> ^object <obj>)
+#}
+
+### SM: elaborate ignore-set - useful for matching and prefering actions 
+
+sp {all*elaborate*ignore-set
+   (state <s> ^problemspace <ps>
+             -^problemspace games)
+-->
+   (<s> ^ignore-set <nm>)
+   (<nm> ^attribute applied
+         ^attribute phase
+   	 ^attribute information
+	 ^attribute _relation
+	 ^attribute _metadata
+	 ^attribute actions
+	 ^attribute action-type
+	 ^attribute matched
+	 ^attribute _instantiation-of
+	 ^attribute op_name)
+}
