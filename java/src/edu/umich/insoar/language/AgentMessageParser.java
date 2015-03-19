@@ -77,7 +77,8 @@ public class AgentMessageParser
         } else if (type.equals("successful-task-learning")){
         	message = "I got it";
         } else if (type.equals("failure-exploration")){
-        	message = "I cannot figure it out.";
+					message = "";
+//message = "I cannot figure it out.";
         } else if (type.equals(("begin-exploration"))){
         	//message = "Let me see.";
         } 
