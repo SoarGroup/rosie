@@ -86,3 +86,94 @@ sp {anystate*reject*attend-to-scene-change*grabbed-object
    (<c> ^rejected true)
 }
 
+## moving-object - a flag placed onto an object when we start moving it so it won't get deleted (only while arm is moving)
+# LOOKAT
+#sp {attend-to-scene-change*apply*attend-to-arm*mark*moving-object
+#   (state <s> ^name attend-to-scene-change
+#              ^operator.name attend-to-arm
+#              ^current-action << grab move drop point >>
+#              ^previous-action << wait >>
+#              ^topstate.robot-state.arm <arm>
+#              ^topstate.scene-monitor.object <obj>)
+#   (<arm> ^moving-object <id>)
+#   (<obj> ^id <id>)
+#-->
+#   (<obj> ^moving-object true)
+#   (<arm> ^moving-object <id> -)
+#}
+#
+#sp {attend-to-scene-change*apply*attend-to-arm*remove*moving-object
+#   (state <s> ^name attend-to-scene-change
+#              ^operator.name attend-to-arm
+#              ^current-action << wait failure >>
+#              ^previous-action << grab move drop point >>
+#              ^topstate.scene-monitor.object <obj>)
+#   (<obj> ^moving-object true)
+#-->
+#   (<obj> ^moving-object true -)
+#}
+#
+## grabbed - mark the object as grabbed when it is currently held
+#sp {attend-to-scene-change*apply*attend-to-arm*mark*grabbed
+#   (state <s> ^name attend-to-scene-change
+#              ^operator.name attend-to-arm
+#              ^grabbed-id <> -1
+#              ^topstate.scene-monitor.object <obj>
+#              ^topstate.robot-state.arm <arm>)
+#   (<obj> ^moving-object true)
+#-->
+#   (<arm> ^grabbed <obj>)
+#}
+#
+#sp {attend-to-scene-change*apply*attend-to-arm*remove*grabbed
+#   (state <s> ^name attend-to-scene-change
+#              ^operator.name attend-to-arm
+#              ^grabbed-id -1
+#              ^topstate.robot-state.arm <arm>)
+#   (<arm> ^grabbed <obj>)
+#-->
+#   (<arm> ^grabbed <obj> -)
+#}
+#
+#sp {attend-to-scene-change*apply*attend-to-arm*remove*grabbed*not-moving
+#   (state <s> ^name attend-to-scene-change
+#              ^operator.name attend-to-arm
+#              ^topstate.robot-state.arm <arm>)
+#   (<arm> ^grabbed <obj>
+#         -^moving-object <id>)
+#   (<obj> -^moving-object true
+#           ^id <id>)
+#-->
+#   (<arm> ^grabbed <obj> -)
+#}
+
+#sp {attend-to-scene-change*apply*attend-to-arm*copy*dropped*object
+#   (state <s> ^name attend-to-scene-change
+#              ^topstate.scene-monitor.object <obj>
+#              ^operator.name attend-to-arm
+#              ^grabbed-id -1
+#              ^topstate.robot-state.arm.grabbed.id <id>)
+#   (<obj> ^id <id>)
+#-->
+#   (<obj> ^mark-for-copying true)
+#}
+#
+#sp {attend-to-scene-change*apply*attend-to-arm*grab*move*belief*object
+#   (state <s> ^name attend-to-scene-change
+#              ^operator <o>
+#              ^io.input-link.self.pose <pose>
+#              ^grabbed-id <> -1
+#              ^topstate <top>)
+#   (<pose> ^x <x> ^y <y> ^z <z>)
+#   (<top> ^svs.command <cmd>
+#          ^robot-state.arm <arm>
+#          ^object <obj>)
+#   (<obj> ^moving-object true
+#          ^belief-obj.id <bel-id>)
+#   (<arm> -^grabbed)
+#-->
+#   (<cmd> ^set_transform <xform>)
+#   (<xform> ^id <bel-id>
+#            ^position <pos>)
+#   (<pos> ^x <x> ^y <y> ^z <z>)
+#}
