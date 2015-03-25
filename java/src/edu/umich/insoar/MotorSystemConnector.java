@@ -57,6 +57,8 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     
     private robot_command_t sentCommand = null;
     private long sentTime = 0;
+    
+    private Identifier waitingCommand = null;
 
     
     PerceptionConnector perception;
@@ -133,8 +135,10 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
 		if(selfId == null){
 			initIL();
 		} else if(gotUpdate){
+			updateOL();
 			updateIL();
 			gotUpdate = false;
+			prevStatus = curStatus;
 		}
 		if(armStatus != null){
 			updateArmInfo();
@@ -163,6 +167,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     		    	lcm.publish("ROBOT_COMMAND", sentCommand);
     		    	sentTime = TimeUtil.utime();
     			}
+    			
     		}
     	}
 	}
@@ -202,7 +207,22 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     }
     
 
-    
+    private void updateOL(){
+    	if(curStatus == null || prevStatus == null || waitingCommand == null){
+    		return;
+    	}
+    	String curAction = curStatus.action.toLowerCase();
+    	String prevAction = prevStatus.action.toLowerCase();
+    	if(!prevAction.contains("wait") && !prevAction.contains("failure")){
+    		if(curAction.contains("wait")){
+    			waitingCommand.CreateStringWME("status", "complete");
+    			waitingCommand = null;
+    		} else if(curAction.contains("failure")){
+    			waitingCommand.CreateStringWME("status", "failure");
+    			waitingCommand = null;
+    		}
+    	}
+    }
     
     private void updateIL(){   	
     	heldObject = curStatus.obj_id;
@@ -216,7 +236,6 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     	WMUtil.updateIntWME(selfId, "grabbed-object", perception.world.getSoarId(curStatus.obj_id));
     	pose.updateWithArray(curStatus.xyz);
     	pose.updateInputLink(selfId);
-    	prevStatus = curStatus;
     }
     
     private void updateArmInfo(){
@@ -314,9 +333,9 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         command.dest = new double[6];
         System.out.println("PICK UP: " + id + " (" + objectIdStr + ")");
     	lcm.publish("ROBOT_COMMAND", command);
-        pickUpId.CreateStringWME("status", "complete");
         sentCommand = command;
         sentTime = TimeUtil.utime();
+        waitingCommand = pickUpId;
     }
 
     /**
@@ -341,10 +360,10 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         command.action = "DROP";
         command.dest = new double[]{x, y, z, 0, 0, 0};
     	lcm.publish("ROBOT_COMMAND", command);
-        putDownId.CreateStringWME("status", "complete");
         sentCommand = command;
         sentTime = TimeUtil.utime();
         System.out.println("Put down at " + x + ", " + y + ", " + z);
+        waitingCommand = putDownId;
     }
 
     /**

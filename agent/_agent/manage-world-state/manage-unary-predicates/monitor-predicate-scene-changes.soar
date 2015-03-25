@@ -6,11 +6,13 @@ sp {topstate*elaborate*scene-changes*change-info*properties
    (state <s> ^topstate <s>
               ^scene-monitor.scene-changes.change-info <info>)
 -->
-   (<info> ^change <new-pred> <changed-pred>)
+   (<info> ^change <new-pred> <changed-pred> <status-change>)
    (<new-pred> ^name new-predicate
                ^op-name attend-to-new-predicate)
    (<changed-pred> ^name changed-predicate
                   ^op-name attend-to-changed-predicate)
+   (<status-change> ^name status-change
+                    ^op-name attend-to-status-change)
 }
 
 
@@ -74,3 +76,39 @@ sp {monitor-scene-changes*elaborate*scene-changes*changed-predicate*state
              ^object <obj>
              ^predicate <pred>)
 }
+
+############################################################################################
+# Change: status-change
+#    When an object becomes live/stale
+#############################################################################################
+
+sp {monitor-scene-changes*elaborate*scene-changes*status-change*stale
+   (state <s> ^topstate <s>
+              ^scene-monitor.object <obj>
+              ^scene-monitor.scene-changes <sc>)
+   (<obj> ^differences.is-stale true
+          ^wm-obj.predicates <preds>)
+   (<preds> -^status stale)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type status-change
+             ^object <obj>
+             ^old-status live
+             ^new-status stale)
+}
+
+sp {monitor-scene-changes*elaborate*scene-changes*status-change*live
+   (state <s> ^topstate <s>
+              ^scene-monitor.object <obj>
+              ^scene-monitor.scene-changes <sc>)
+   (<obj> ^differences.is-stale false
+          ^wm-obj.predicates <preds>)
+   (<preds> -^status live)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type status-change
+             ^object <obj>
+             ^old-status stale
+             ^new-status live)
+}
+

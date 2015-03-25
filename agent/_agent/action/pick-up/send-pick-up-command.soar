@@ -1,0 +1,61 @@
+###############################################################################
+#
+# Inside the execute-pick-up substate, this will put a grab command on the output link
+# If the pick-up fails and needs to be re-issued, this will cause that to occur
+#
+###############################################################################
+
+sp {execute-pick-up*propose*send-pick-up-command
+   (state <s> ^name execute-pick-up
+              ^target-object <obj>
+              -^world.robot.arm.action failure
+             -^current-action.command-status)
+   (<obj> ^predicates.status live)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name send-pick-up-command
+        ^object <obj>)
+}
+
+sp {execute-pick-up*apply*send-pick-up-command*send
+   (state <s> ^name execute-pick-up
+              ^operator <o>
+              ^io.output-link <ol>)
+   (<o> ^name send-pick-up-command
+        ^object.id <id>)
+-->
+   (<ol> ^pick-up <cmd>)
+   (<cmd> ^object-id <id>)
+   (<s> ^sent-command <cmd>)
+}
+
+sp {execute-pick-up*apply*send-pick-up-command*copy*command-status
+   (state <s> ^name execute-pick-up
+              ^operator.name send-pick-up-command
+              ^sent-command <cmd>
+              ^current-action <a>)
+   (<cmd> ^status <status>)
+-->
+   (<a> ^command-status <status>)
+}
+
+sp {execute-pick-up*apply*send-pick-up-command*mark*object*moving
+   (state <s> ^name execute-pick-up
+              ^operator <o>)
+   (<o> ^name send-pick-up-command
+        ^object.predicates <preds>)
+-->
+   (<preds> ^arm-status moving)
+}
+
+sp {send-pick-up-command*elaborate*attend-to-all-scene-changes*true
+   (state <s> ^name send-pick-up-command)
+-->
+   (<s> ^attend-to-all-scene-changes true)
+}
+
+sp {send-pick-up-command*elaborate*allow-wait*true
+   (state <s> ^name send-pick-up-command)
+-->
+   (<s> ^allow-wait true)
+}

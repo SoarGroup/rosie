@@ -1,0 +1,30 @@
+###############################################################################
+#
+# Inside the execute-pick-up substate, this will put a reset command on the output link
+# If the pick-up fails this will reset the arm
+#
+###############################################################################
+
+sp {execute-pick-up*propose*send-reset-command
+   (state <s> ^name execute-pick-up
+             -^current-action.command-status
+              ^world.robot.arm.action failure)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name send-reset-command
+        ^actions.reset <r>)
+}
+
+sp {execute-pickup*apply*send-reset-command
+   (state <s> ^name execute-pick-up
+              ^operator.name send-reset-command
+              ^io.output-link <ol>)
+-->
+   (<ol> ^reset <r>)
+}
+
+sp {send-reset-command*elaborate*attend-to-all-scene-changes*true
+   (state <s> ^name send-reset-command)
+-->
+   (<s> ^attend-to-all-scene-changes true)
+}
