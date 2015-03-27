@@ -50,6 +50,60 @@ sp {comprehension*elaborate*possible-merge*lexical-item*match*required
          ^type lexical)
    (write (crlf) |Propose lexical-item match merging: | <lex-item-spell>)
 }
+#####
+sp {comprehension*elaborate*possible-merge*unknown
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^not-merged-receiver <receiver>
+          ^not-merged-assigner <assigner>)
+   (<assigner> ^structure-type U
+              -^lt.lexical-item-spelling)
+   (<receiver> -^structure-type)
+  -(<assigner> ^parent-receiver <receiver>) # Cannot fulfill itself
+ -{(<assigner> ^lt.after <after>)           # enforce after
+   (<seg> ^not-merged-assigner.lt <after>)}
+ -{(<receiver> ^decision-count > <dl-dc>)   # enforce before
+   (<assigner> ^lt.relative-position before
+               ^decision-count <dl-dc>)}
+ -{(<receiver> ^decision-count < <dl-dc2>)   # enforce after on DC
+   (<assigner> ^lt.relative-position after
+               ^decision-count <dl-dc2>)}
+-->
+   (<s> ^possible-merge <pm>)
+   (<pm> ^receiver <receiver>
+         ^assigner <assigner>
+         ^type normal)
+   (write (crlf) |Possible Merge: UNKNOWN|)
+}
+
+sp {comprehension*elaborate*possible-merge*lexical-item*match*required*unknown
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^not-merged-receiver <receiver>
+          ^not-merged-assigner <assigner>)
+   (<assigner> ^structure-type U
+               ^lt.lexical-item-spelling <lex-item-spell>)
+   (<receiver> -^structure-type
+               ^lt.spelling <lex-item-spell>)
+  -(<assigner> ^parent-receiver <receiver>) # Cannot fulfill itself
+ -{(<assigner> ^parent-receiver <parent>)
+   (<receiver> ^ << DP VP PP CP CONJP >> <parent>)}
+ -{(<assigner> ^lt.after <after>)           # enforce after
+   (<seg> ^not-merged-assigner.lt <after>)}
+ -{(<receiver> ^decision-count > <dl-dc>)   # enforce before
+   (<assigner> ^lt.relative-position before
+               ^decision-count <dl-dc>)}
+ -{(<receiver> ^decision-count < <dl-dc>)   # enforce after on DC
+   (<assigner> ^lt.relative-position after
+               ^decision-count <dl-dc>)}
+-->
+   (<s> ^possible-merge <pm>)
+   (<pm> ^receiver <receiver>
+         ^assigner <assigner>
+         ^type lexical)
+   (write (crlf) |Propose lexical-item match merging: | <lex-item-spell>)
+}
+#####
 
 sp {comprehension*propose*merge
    (state <s> ^name comprehension
@@ -453,13 +507,15 @@ sp {apply*merge*constraint*features*name
          ^assigner <assigner>)
    (<assigner> ^parent-receiver <pword>)
    (<receiver> ^lt.id <id>)
-   (<id> ^name <value>
+   (<id> #^name <value>
         -^property)
-  -(<pword> ^constraint.name <value>)
+  -(<pword> ^constraint <id>)
+ # -(<pword> ^constraint.name <value>)
 -->
-   (write (crlf) |*********Add constraint name | <value> | to | <pword> | from lt.|)
-   (<pword> ^constraint <c>)
-   (<c> ^name <value>)
+   (write (crlf) |*********Add constraint name | <id> | to | <pword> | from lt.|)
+#   (<pword> ^constraint <c>)
+#   (<c> ^name <value>)
+    (<pword> ^constraint <id>)
 }
 
 ## JEL - 2/28/2015  - I think this rule is no longer used DEAD
@@ -613,19 +669,17 @@ sp {apply*merge*assign-syntactic-referent-type-not-name
          ^assigner <assigner>)
    (<assigner> ^lt <lla> 
                     ^parent-receiver <pword>)
-   (<lla> ^structure-type U) 
+   (<lla> -^structure-type) 
    (<pword> ^structure-type CP
             ^head.head.lt <lt>)
    (<lt> -^spelling |name|
          ^syntactic-referent-type <srt>)
-   (<receiver> ^structure-type U
+   (<receiver> -^structure-type
                     ^lt <lli>)
 -->
    (<cmd> ^store <lli>)
-   (<receiver> ^structure-type U - 
-                    <srt>)
-   (<lli> ^structure-type U - 
-                    <srt>)}
+   (<receiver> ^structure-type <srt>)
+   (<lli> ^structure-type <srt>)}
 
 sp {apply*merge*assign-syntactic-referent-type*name
  # :interrupt
@@ -636,19 +690,17 @@ sp {apply*merge*assign-syntactic-referent-type*name
          ^assigner <assigner>)
    (<assigner> ^lt <lla> 
                ^parent-receiver <pword>)
-   (<lla> ^structure-type U) 
+   (<lla> -^structure-type) 
    (<pword> ^structure-type CP
             ^head <head>)
    (<head> ^head.lt.spelling |name|
            ^complement.head.head.lt.syntactic-referent-type <srt>) #of the action/game/color
-   (<receiver> ^structure-type U
+   (<receiver> -^structure-type
                ^lt <lli>)
 -->
    (<cmd> ^store <lli>)
-   (<receiver> ^structure-type U - 
-                               <srt>)
-   (<lli> ^structure-type U - 
-                          <srt>)}
+   (<receiver> ^structure-type <srt>)
+   (<lli> ^structure-type <srt>)}
 
 ######
 
@@ -660,17 +712,15 @@ sp {apply*merge*define-new-verb
          ^receiver <receiver>
          ^assigner <assigner>)
    (<assigner> ^lt <lla>)
-   (<lla> ^structure-type U
+   (<lla> -^structure-type
           ^predicted-structure-type V)
-   (<receiver> ^structure-type U
+   (<receiver> -^structure-type
                     ^lt <lli>)
    (<lli> ^name <spell>)
 -->
    (<cmd> ^store <lli>)
-   (<receiver> ^structure-type U - 
-                                    V)
-   (<lli> ^structure-type U - 
-                          V
+   (<receiver> ^structure-type V)
+   (<lli> ^structure-type V
           ^object-feature unknown -
           ^name <spell> -)}
 

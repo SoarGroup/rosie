@@ -1,11 +1,12 @@
 sp {comprehend-word*propose*create-assigner
-   (state <s> ^name comprehend-word
+   (state <s> ^name << comprehend-word comprehend-construction >>
               ^current-word <cw>
               ^segment.comprehension-structure.not-merged-receiver <r-item>
               ^retrieved-lexical-item <a-lt>)
-   (<a-lt> ^assigners <id>)
+   (<a-lt> ^assigners <id>
+          -^super-type)
   -{(<s> ^segment.comprehension-structure.not-merged-assigner <item>)
-    (<item> ^decision-count
+    (<item> #^decision-count
             ^current-word <cw>
             ^parent-receiver <r-item>
             ^lt <id>)}
@@ -18,6 +19,35 @@ sp {comprehend-word*propose*create-assigner
          ^lt <id>
          ^parent-receiver <r-item>)
 }
+
+
+
+# For cases where inherent common structure from a super-type for non-constructions
+# such as different types of verbs (VI, VT, VDT), and determiners that share
+# common structure. Makes the smem structures much simplier.
+
+sp {comprehend-word*propose*create-assigner*super-type
+   (state <s> ^name comprehend-word
+              ^current-word <cw>
+              ^segment.comprehension-structure.not-merged-receiver <r-item>
+              ^retrieved-lexical-item.super-type <super-t>)
+   (<super-t> ^assigners <id>)
+  -{(<s> ^segment.comprehension-structure.not-merged-assigner <item>)
+    (<item> #^decision-count
+            ^current-word <cw>
+            ^parent-receiver <r-item>
+            ^lt <id>)}
+   (<r-item> ^super-type <super-t>  
+             ^current-word <cw>)
+   (<id> ^structure-type <stype>)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name create-assigner
+         ^lt <id>
+         ^parent-receiver <r-item>)
+}
+
+##################### APPLY ########################3
 
 sp {apply*create-assigner*create-item
    (state <s> ^operator <op>
@@ -37,8 +67,9 @@ sp {apply*create-assigner*create-item
    (<new-assigner> ^current-word <cw>
                    ^lt <lt>
                    ^parent-receiver <r-item>
-                   ^structure-type <stype>
-                   ^decision-count (int (cmd stats -d)))}
+                   ^structure-type <stype>)}
+#                   ^decision-count (int (cmd stats -d)))}
+
 
 ####
 sp {apply*create-assigner*create-item*no-remove
@@ -60,13 +91,16 @@ sp {apply*create-assigner*create-item*no-remove
    (<new-assigner> ^current-word <cw>
                    ^lt <lt>
                    ^parent-receiver <r-item>
-                   ^structure-type <stype>
-                   ^decision-count (int (cmd stats -d)))}
+                   ^structure-type <stype>)}
+#                   ^decision-count (int (cmd stats -d)))}
 
 ####
-## Use old decision count so it stays older than others that
-                           ##  have been created in the mean time
+## Use old decision count so it stays older (keeps its place in the sentence)
+## than other assigners that
+##  have been created in the mean time
+### This is after a correction - 
 sp {apply*create-assigner*create-item*use-old-time
+   :interrupt
    (state <s> ^operator <op>
               ^current-word <cw>
               ^segment <ss>
