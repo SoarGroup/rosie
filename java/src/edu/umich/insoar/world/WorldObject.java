@@ -165,7 +165,7 @@ public class WorldObject
     
     private synchronized void create(Identifier parentId, Integer id, ArrayList<object_data_t> objDatas){ 
     	objId = parentId.CreateIdWME("object");
-    	objId.CreateStringWME("id", getIdString());
+    	objId.CreateIntWME("id", id);
     	lastData = objDatas;
     	
     	svsCommands.append(SVSCommands.add(getIdString()));

@@ -37,28 +37,11 @@ sp {interpret-message*elaborate*action-id
 sp {interpret-message*elaborate*arguments
    (state <s> ^name interpret-message
               ^operator <o> +)
-   (<o> ^name interpret-message
+   (<o> ^name interpret-command
         ^message.{<arg> << arg1 arg2 arg3 arg4 >>} <val>)
 -->
-   (<o> ^<arg> <val>)
-}
-
-sp {interpret-message*elaborate*predicate
-   (state <s> ^name interpret-message
-              ^operator <o> +)
-   (<o> ^name interpret-message
-        ^message.predicate <pred>)
--->
-   (<o> ^predicate <pred>)
-}
-
-sp {interpret-message*elaborate*relation
-   (state <s> ^name interpret-message
-              ^operator <o> +)
-   (<o> ^name interpret-message
-        ^message.relation <rel>)
--->
-   (<o> ^relation <rel>)
+   (<o> ^<arg> <val>
+        ^has-arguments true)
 }
 
 #####
@@ -71,23 +54,38 @@ sp {interpret-message*apply*interpret-command*create*segment
               ^operator <o>)
    (<o> ^name interpret-command
         ^action-id <action>)
+ # (<action> ^name <action-name>)
 -->
-   (<s> ^new-segment-info <info>
-        ^mark-interpreted <msg>)
+   (<s> ^new-segment-info <info>)
    (<info> ^purpose <p>
            ^originator instructor)
    (<p> ^type action
         ^parameters <params>
         ^satisfaction <sat>)
    (<sat> ^action-event.type <action>)
-   (<params> ^action-id <action>)
+   #(<sat> ^action-event.type <action-name>)
+   (<params> ^action-command <cmd>)
+   (<cmd> ^id <action>)
 }
 
 sp {interpret-message*apply*interpret-command*copy*arguments
    (state <s> ^name interpret-message
               ^operator <o>
-              ^new-segment-info.parameters <p>)
-   (<o> ^{<arg> << arg1 arg2 arg3 arg4 relation predicate >>} <val>)
+              ^new-segment-info.purpose.parameters.action-command <cmd>)
+   (<o> ^name interpret-command
+        ^message <msg>
+        ^{<arg> << arg1 arg2 arg3 arg4 relation predicate >>} <val>)
 -->
-   (<p> ^<arg> <val>)
+   (<cmd> ^<arg> <val>)
+   (<s> ^mark-interpreted <msg>)
+}
+
+sp {interpret-message*apply*interpret-command*mark*interpreted*no*args
+   (state <s> ^name interpret-message
+              ^operator <o>)
+   (<o> ^name interpret-command
+       -^has-arguments true
+        ^message <msg>)
+-->
+   (<s> ^mark-interpreted <msg>)
 }
