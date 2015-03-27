@@ -21,6 +21,43 @@ sp {anystate*apply*attend-to-arm*remove*old*action
    (<arm> ^action <old-action> -)
 }
 
+# When we move an object, remove all internal links associated with it
+sp {anystate*apply*attend-to-arm*stopped*remove*moved-object*internal-links
+   (state <s> ^operator <o>
+              ^topstate.world.robot.arm <arm>
+              ^topstate.scene-monitor.object <obj>)
+   (<o> ^name attend-to-scene-change
+        ^change.type arm-status-change
+        ^change.self-info.action wait)
+   (<arm> ^moving <id>)
+   (<obj> ^id <id>
+          ^internal-link <id2>)
+-->
+   (<obj> ^internal-link <id2> -)
+   (write |Moved object | <id> | and removed link to | <id2> (crlf))
+}
+
+sp {anystate*apply*attend-to-arm*stopped*remove*other*internal-links
+   (state <s> ^operator <o>
+              ^topstate.world.robot.arm <arm>
+              ^topstate.scene-monitor <mon>)
+   (<o> ^name attend-to-scene-change
+        ^change.type arm-status-change
+        ^change.self-info.action wait)
+   (<arm> ^moving <id>)
+   (<mon> ^object <src-obj>
+          ^object <dest-obj>)
+   (<src-obj> ^id <id>)
+   (<dest-obj> ^id <id2>
+               ^internal-link <id>)
+   (<obj> ^id <id>
+          ^internal-link <id2>)
+-->
+   (<dest-obj> ^internal-link <id> -)
+   (write |Moved object | <id> | and removed link from | <id2> (crlf))
+}
+
+
 # Update world.robot.arm.grabbed
 
 #sp {anystate*apply*attend-to-arm*add*grabbed
