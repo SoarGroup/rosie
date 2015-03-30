@@ -1,0 +1,148 @@
+####################################################################
+#
+# Extracting relations on a state
+# Given an object id and a relation, 
+#   This code will take care of creating the svs filters needed
+#   to extract the relation
+# It will return all objects that are in the given relation
+#   with the given object
+# (E.G. given obj7 and relation 'on', returns all objects on obj7)
+# 
+# To use, simply create the following structure on any state
+# (state <s> ^extract-relations <e>)
+#   (<e> ^extract-info <i>)
+#     (<i> ^object-id <id>  # id of an svs object to check against
+#          ^prep <p>)       # The LTI for the relation
+# 
+# Result: creates a ^result structure under the extract info
+#         With pairs of objects satisfying the relation
+# (<e> ^extract-info <i>)
+#   (<i> ^result <r>)
+#     (<r> ^pair <p1> <p2> ...)
+#       (<p1> ^a IDA ^b IDB)   # such that ^a is REL to ^b (e.g. a is on b)
+# 
+####################################################################
+
+sp {topstate*predicates*elaborate*retrieve-lti*relation
+   (state <s> ^topstate <s>
+              ^world.predicates.predicate <pred>
+             -^retrieved-lti <rel>)
+   (<pred> ^predicate-info.type relation
+           ^predicate-info.relation <rel>)
+   (<rel> -^type)
+-->
+   (<s> ^retrieve-lti <rel>)
+}
+
+sp {anystate*extract-relations*extract-axis*initial
+   (state <s> ^extract-relations.extract-info <e>)
+   (<e> ^object.svs-obj.id <id>
+        ^relation.predicate-info.relation <r>)
+   (<r> ^axis <axis>)
+-->
+   (<e> ^<axis> <axis-filter>)
+   (<axis-filter> ^type axis_relation_select
+                  ^axis <axis>
+                  ^a <a>)
+   (<a> ^type node
+        ^id <id>
+        ^base a)
+}
+
+sp {anystate*extract-relations*extract-axis*copy*relation*types
+   (state <s> ^extract-relations.extract-info <e>)
+   (<e> ^relation.predicate-info.relation <r>
+        ^<axis> <axis-filter>)
+   (<r> ^axis <axis>
+        ^type <type>)
+-->
+   (<axis-filter> ^<type> true )
+}
+
+sp {anystate*extract-relations*extract-axis*copy*top*bottom
+   (state <s> ^extract-relations.extract-info <e>)
+   (<e> ^relation.predicate-info.relation <r>
+        ^<axis> <axis-filter>)
+   (<r> ^axis <axis>
+        ^bottom <bot> ^top <top>)
+-->
+   (<axis-filter> ^bottom <bot> ^top <top>)
+}
+
+# Link together the individual axis filters
+
+# link outputs of y filter to inputs of x
+sp {anystate*extract-relations*connect*xy
+   (state <s> ^extract-relations.extract-info <e>)
+   (<e> ^x <x> ^y <y>)
+-->
+   (<x> ^b <y>)
+}
+
+# link outputs of z filter to inputs of y
+sp {anystate*extract-relations*connect*yz
+   (state <s> ^extract-relations.extract-info <e>)
+   (<e> ^y <y> ^z <z>)
+-->
+   (<y> ^b <z>)
+}
+
+# Feed in belief objects to inputs of z
+sp {anystate*extract-relations*connect*z*belief-nodes
+   (state <s> ^extract-relations.extract-info <e>)
+   (<e> ^z <z>)
+-->
+   (<z> ^b <belief-nodes>)
+   (<belief-nodes> ^type tag_select
+                   ^a.type all_nodes
+                   ^tag_name object-source
+                   ^tag_value belief)
+}
+
+# Copy the extract command onto the svs.command link
+sp {anystate*extract-relations*put*on*svs*command
+   (state <s> ^extract-relations.extract-info <e>
+              ^svs.command <cmd>)
+   (<e> ^x <filter>)
+-->
+   (<cmd> ^extract <filter>)
+   (<filter> ^mark test)
+}
+
+##############################################################
+# 
+# Extract on topstate
+#
+##############################################################
+
+sp {topstate*elaborate*extract-relations
+   (state <s> ^topstate <s>)
+-->
+   (<s> ^extract-relations <rels>)
+}
+
+sp {topstate*elaborate*extract-relations*extract-info
+   (state <s> ^topstate <s>
+              ^world.predicates.predicate <pred>
+              ^world.objects.object <obj>
+              ^extract-relations <rels>)
+   (<pred> ^predicate-info.type relation)
+-->
+   (<rels> ^extract-info <i>)
+   (<i> ^object <obj>
+        ^relation <pred>)
+}
+
+sp {topstate*elaborate*extract-relations*result*predicate*instance
+   (state <s> ^topstate <s>
+              ^extract-relations.extract-info <info>
+              ^world.objects.object <obj2>)
+   (<info> ^relation <rel>
+           ^object <obj1>
+           ^x.result.record.params <p>)
+   (<p> ^b <id2>)
+   (<obj2> ^svs-obj.id <id2>)
+-->
+   (<rel> ^instance <args>)
+   (<args> ^1 <obj1> ^2 <obj2>)
+}
