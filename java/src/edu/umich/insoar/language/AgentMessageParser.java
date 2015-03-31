@@ -37,6 +37,12 @@ public class AgentMessageParser
 			message = "Ok";
 		} else if(type.equals("missing-object")){
 			message = "I lost the object I was using";
+		} else if(type.equals("index-object-failure")){
+			message = "I couldn't find the referenced object";
+		} else if(type.equals("no-proposed-action")){
+			message = "I couldn't perform the requested action";
+		} else if(type.equals("action-tie")){
+			message = "Could you be more specific?";
 		}
 		return message;
 	}
