@@ -9,6 +9,43 @@ sp {execute-put-down*propose*send-put-down-command
         ^destination <res>)
 }
 
+# Elaborations in the substate
+
+sp {send-put-down-command*elaborate*allow-wait*true
+   (state <s> ^name send-put-down-command)
+-->
+   (<s> ^allow-wait true)
+}
+   
+sp {send-put-down-command*elaborate*attend-to-all-scene-changes*true
+   (state <s> ^name send-put-down-command)
+-->
+   (<s> ^attend-to-all-scene-changes true)
+}
+
+sp {send-put-down-command*reject*attending*destination
+   (state <s> ^name send-put-down-command
+              ^operator <o> +
+              ^superstate.destination.id <id>)
+   (<o> ^name attend-to-scene-change
+        ^change.object.id <id>)
+-->
+   (<s> ^operator <o> -)
+}
+
+sp {send-put-down-command*reject*attend*new-stable-object
+   (state <s> ^name send-put-down-command
+              ^operator <o> +
+              ^superstate.destination.id <id>)
+   (<o> ^name attend-to-scene-change
+        ^change.type new-stable-object)
+-->
+   (<s> ^operator <o> -)
+}
+
+#### Application
+
+# Put the command on the output link
 sp {execute-put-down*apply*send-put-down-command*send
    (state <s> ^name execute-put-down
               ^operator <o>
@@ -24,6 +61,7 @@ sp {execute-put-down*apply*send-put-down-command*send
    (<a> ^put-down-command <cmd>)
 }
 
+# Relocate the belief object in svs
 sp {execute-put-down*apply*send-put-down-command*relocate*object
    (state <s> ^name execute-put-down
               ^operator <o>
@@ -39,39 +77,10 @@ sp {execute-put-down*apply*send-put-down-command*relocate*object
                ^position <pos>)
    (<pos> ^x <x> ^y <y> ^z <z>)
 }
-   
-sp {send-put-down-command*elaborate*attend-to-all-scene-changes*true
-   (state <s> ^name send-put-down-command)
--->
-   (<s> ^attend-to-all-scene-changes true)
-}
 
-sp {send-put-down-command*reject*attending*held*object
-   (state <s> ^name send-put-down-command
-              ^operator <o> +
-              ^superstate.held-object.id <id>)
-   (<o> ^name attend-to-scene-change
-        ^change.object.id <id>)
--->
-   (<s> ^operator <o> -)
-}
-   
-sp {send-put-down-command*reject*attending*destination
-   (state <s> ^name send-put-down-command
-              ^operator <o> +
-              ^superstate.destination.id <id>)
-   (<o> ^name attend-to-scene-change
-        ^change.object.id <id>)
--->
-   (<s> ^operator <o> -)
-}
+##### When finished
 
-sp {send-put-down-command*elaborate*allow-wait*true
-   (state <s> ^name send-put-down-command)
--->
-   (<s> ^allow-wait true)
-}
-
+# copy the command-status onto current-action
 sp {exeucte-put-down*apply*send-put-down-command*copy*status
    (state <s> ^name execute-put-down
               ^operator.name send-put-down-command
@@ -81,6 +90,7 @@ sp {exeucte-put-down*apply*send-put-down-command*copy*status
    (<a> ^command-status <status>)
 }
 
+# Remove the grabbed predicate from the object being put down
 sp {execute-put-down*apply*send-put-down-command*remove*grabbed
    (state <s> ^name execute-put-down
               ^operator.name send-put-down-command

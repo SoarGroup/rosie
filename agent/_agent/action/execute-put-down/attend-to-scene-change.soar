@@ -1,0 +1,60 @@
+# Attend to the robot
+sp {execute-put-down*elaborate*attend-to-robot*true
+   (state <s> ^name execute-put-down)
+-->
+   (<s> ^attend-to-robot true)
+}
+
+# When the action is finished, try attending to the held object
+sp {execute-put-down*elaborate*attend-to-object*complete
+   (state <s> ^name execute-put-down
+              ^current-action.command-status <status>
+              ^held-object.id <id>)
+-->
+   (<s> ^attend-to-object <id>)
+}
+
+# If the object is missing (stale), then do additional attending
+sp {execute-put-down*elaborate*attend-to-all-scene-changes*true*stale*object
+   (state <s> ^name execute-put-down
+              ^current-action.command-status <status>
+              ^held-object.predicates.status stale)
+-->
+   (<s> ^attend-to-all-scene-changes true)
+}
+
+# Don't attend to stale-object on the object being grabbed
+sp {execute-put-down*reject*attend-to-stale-object*held*object
+   (state <s> ^name execute-put-down
+              ^operator <o> +
+              ^held-object.id <id>)
+   (<o> ^name attend-to-scene-change
+        ^change.type stale-object
+        ^change.object.id <id>)
+-->
+   (<s> ^operator <o> -)
+}
+
+# Don't attend to new objects 
+# (only evaluate those that were added during the put down as candidates for missing)
+sp {execute-put-down*reject*attend-to-new-object
+   (state <s> ^name execute-put-down
+              ^operator <o> +)
+   (<o> ^name attend-to-scene-change
+        ^change.type new-object)
+-->
+   (<s> ^operator <o> -)
+}
+
+sp {execute-put-down*elaborate*evaluate-new-object*candidate-for-missing-object
+   (state <s> ^name execute-put-down
+              ^operator <o> +
+              ^held-object.id <id>
+              ^topstate.scene-monitor.object <obj>)
+   (<o> ^name attend-to-scene-change
+        ^change.type new-stable-object
+        ^change.object <cand>)
+   (<obj> ^id <id>)
+-->
+   (<cand> ^candidate-for-missing-object <obj>)
+}

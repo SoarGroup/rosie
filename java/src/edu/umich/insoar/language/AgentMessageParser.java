@@ -35,6 +35,8 @@ public class AgentMessageParser
 			message = "I was unable to interpret that last message";
 		} else if(type.equals("ok")){
 			message = "Ok";
+		} else if(type.equals("missing-object")){
+			message = "I lost the object I was using";
 		}
 		return message;
 	}

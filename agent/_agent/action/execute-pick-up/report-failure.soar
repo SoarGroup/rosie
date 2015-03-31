@@ -1,0 +1,33 @@
+# Report failure if there are no more candidates for the missing object
+sp {execute-pick-up*propose*report-failure
+   (state <s> ^name execute-pick-up
+              ^current-action.command-status failure
+             -^topstate.scene-monitor.new-object.status
+              ^target-object.predicates.status stale)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name report-failure)
+}
+
+# Report a failure, may lead to more interactions
+sp {execute-pick-up*apply*report-failure*report*failure
+   (state <s> ^name execute-pick-up
+              ^operator.name report-failure
+              ^target-object <obj>
+              ^topstate.interaction.status <status>)
+-->
+   (<status> ^failure <f>)
+   (<f> ^type missing-object
+        ^missing-object <obj>)
+}
+
+# Remove the command-status so that if we come back and try it again later, 
+#   we can start fresh
+sp {execute-pick-up*apply*report-failure*remove*status
+   (state <s> ^name execute-pick-up
+              ^current-action <a>
+              ^operator.name report-failure)
+   (<a> ^command-status <status>)
+-->
+   (<a> ^command-status <status> -)
+}
