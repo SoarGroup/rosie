@@ -1,5 +1,6 @@
 package edu.umich.insoar.language;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -41,8 +42,10 @@ public class AgentMessageParser
 			message = "I couldn't find the referenced object";
 		} else if(type.equals("no-proposed-action")){
 			message = "I couldn't perform the requested action";
-		} else if(type.equals("action-tie")){
+		} else if(type.equals("multiple-arguments")){
 			message = "Could you be more specific?";
+		} else if (type.equals("object-description")){
+			message = translateObjectDescription(fieldsId);
 		}
 		return message;
 	}
@@ -62,6 +65,21 @@ public class AgentMessageParser
 	
 	public static String translateUnableToSatisfy(Identifier fields){
 		return "I was unable to carry out that instruction";
+	}
+	
+	public static String translateObjectDescription(Identifier fields){
+		Identifier descId = WMUtil.getIdentifierOfAttribute(fields, "object");
+		if(descId == null){
+			return "An object";
+		}
+		String desc = generateObjectDescription(descId);
+		if(desc.charAt(0) == 'a' || desc.charAt(0) == 'e' || desc.charAt(0) == 'i' || 
+				desc.charAt(0) == 'o' || desc.charAt(0) == 'u'){
+			return "An " + desc + ".";
+		} else {
+			return "A " + desc + ".";
+		}
+		
 	}
 	
 //    public static String translateAgentMessage(Identifier id){
@@ -200,6 +218,37 @@ public class AgentMessageParser
 			return "Give me a task.";
 		else 
 			return "Test me or give me another task.";
+	}
+	
+	public static String generateObjectDescription(Identifier descId){
+		String root = "block";
+		ArrayList<String> adjectives = new ArrayList<String>();
+		for(int c = 0; c < descId.GetNumberChildren(); c++){
+			WMElement el = descId.GetChild(c);
+			String att = el.GetAttribute().toLowerCase();
+			String val = el.GetValueAsString().toLowerCase();
+			if(att.equals("name")){
+				if (!root.equals("block")){
+					adjectives.add(root);
+				}
+				root = val;
+			} else if(att.equals("shape")){
+				if (root.equals("block")){
+					root = val;
+				} else {
+					adjectives.add(val);
+				}
+			} else {
+				adjectives.add(val);
+			}
+		}
+		
+		String desc = root;
+		for(String adj : adjectives){
+			desc = adj + " " + root;
+		}
+		
+		return desc;
 	}
 //
 //	private static String translateTeachingRequest(Identifier id){

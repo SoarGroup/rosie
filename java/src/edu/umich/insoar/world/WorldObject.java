@@ -157,7 +157,6 @@ public class WorldObject
     
     public synchronized void updateSVS(Agent agent){
     	if(svsCommands.length() > 0){
-	    //System.out.println(svsCommands.toString());
         	agent.SendSVSInput(svsCommands.toString());
         	svsCommands = new StringBuilder();
     	}

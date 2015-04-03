@@ -148,10 +148,6 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
 			//System.out.println(svsCommands.toString());
 			svsCommands = new StringBuilder();
 		}
-		this.agent.commitChanges();
-    	if(InSoar.DEBUG_TRACE){
-			System.out.println(String.format("%-20s : %d", "MOTOR CONNECTOR", (TimeUtil.utime() - time)/1000));
-    	}
     	if(sentCommand != null && curStatus != null){
     		if(sentCommand.action.toLowerCase().contains("drop")){
     			if(curStatus.action.toLowerCase().equals("drop")){
@@ -169,6 +165,10 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     			}
     			
     		}
+    	}
+		this.agent.commitChanges();
+    	if(InSoar.DEBUG_TRACE){
+			System.out.println(String.format("%-20s : %d", "MOTOR CONNECTOR", (TimeUtil.utime() - time)/1000));
     	}
 	}
     
