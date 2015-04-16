@@ -173,7 +173,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         WMUtil.updateIntWME(timeId, "seconds", InSoar.GetSoarTime() / 1000000);
         
         // Update pointed object
-        WMUtil.updateIntWME(inputLinkId, "pointed-object", pointedId);
+        WMUtil.updateIntWME(inputLinkId, "pointed-object", world.getSoarId(pointedId));
     	
     	if(currentTimer <= -10){
     		WMUtil.updateStringWME(timeId, "timer-status", "waiting");
