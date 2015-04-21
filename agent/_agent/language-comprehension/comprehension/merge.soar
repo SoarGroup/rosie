@@ -237,7 +237,7 @@ sp {comprehension*compare*merge*prefer*most-recent*same-parent
           ^assigner <ass1>
           ^receiver <rec>)
    (<ass1> ^parent-receiver <ps>
-           ^lt.before-type <bt>)
+           ^lt.before <ass2>)
    (<op2> ^name merge
           ^assigner <ass2>
           ^receiver <> <rec>)
@@ -247,6 +247,7 @@ sp {comprehension*compare*merge*prefer*most-recent*same-parent
    (<s> ^operator <op1> > <op2>)
 }
 
+### Why?
 sp {comprehension*compare*merge*prefer*most-recent*not-pp
    (state <s> ^name comprehension
               ^operator <op1> +
@@ -261,6 +262,21 @@ sp {comprehension*compare*merge*prefer*most-recent*not-pp
 -->
    (<s> ^operator <op1> -)
 }
+#
+#sp {comprehension*compare*merge*prefer*older*dp
+#   (state <s> ^name comprehension
+#              ^operator <op1> +
+#              ^operator <op2> +)
+#   (<op1> ^name merge
+#          ^assigner.decision-count <dc>
+#          ^receiver <rec>)
+#   (<op2> ^name merge
+#          ^assigner.decision-count > <dc>
+#          ^receiver <rec>)
+#  (<rec> ^structure-type DP)
+#-->
+#   (<s> ^operator <op2> -)
+#}
 
 sp {comprehension*compare*merge*prefer*most-recent*attachment-immediate
    (state <s> ^name comprehension
@@ -460,25 +476,37 @@ sp {apply*merge*relation-value
 ######Add Constraints
 ## Copy constraints from assigner to parent-receiver
 ##
-## Changed to move to parent structure instead of receiver.
+## Changed to move to parent.-receiver.head structure which is where the
+##  appropriate referent should be. Also remove 
 
 
 ### MUST UPDATE
 sp {apply*merge*push-constraint
   #:interrupt
    (state <s> ^operator <op>
-              ^segment.not-merged-assigner <assigner>)
+              ^segment.not-merged-receiver <receiver>)
    (<op> ^name merge
-         ^assigner <assigner>)
-   (<assigner> ^parent-receiver <pword>
-                    ^lt.constraint <con>)
-   -(<pword> ^constraint <con>)
- #  (<con> ^<att> <val>)
- # -(<pword> ^constraint.<att> <val>)
+         ^receiver <receiver>
+         ^assigner.lt.constraint <con>)
+   -(<receiver> ^constraint <con>)
 -->
-   (write (crlf) |Add constraint | <con> | to | <pword> | from lt.|)
-   (<pword> ^constraint <con>)
+   (write (crlf) |Add constraint | <con> | to | <receiver> | from lt.|)
+   (<receiver> ^constraint <con>)
 }
+
+sp {apply*merge*push-constraint*clear-ground-tested
+  #:interrupt
+   (state <s> ^operator <op>
+               ^segment.not-merged-receiver <receiver>)
+   (<op> ^name merge
+         ^receiver <receiver>
+         ^assigner.lt.constraint <con>)
+   (<receiver> ^ground-tested <gt>)
+-->
+   (write (crlf) |Remove ground tested | <gt>)
+   (<receiver> ^ground-tested <gt> -)
+}
+
 
 ## Doesn't seem to be used at all.  Removed 3/1/2015 JEL
 #sp {apply*merge*constraint*selector
@@ -694,7 +722,7 @@ sp {apply*merge*assign-syntactic-referent-type*name
    (<pword> ^structure-type CP
             ^head <head>)
    (<head> ^head.lt.spelling |name|
-           ^complement.head.head.lt.syntactic-referent-type <srt>) #of the action/game/color
+           ^complement.head.head.lt.syntactic-referent-type <srt>) #of the action/game/color/relation
    (<receiver> -^structure-type
                ^lt <lli>)
 -->
