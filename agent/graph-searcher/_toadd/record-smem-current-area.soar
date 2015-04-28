@@ -1,0 +1,355 @@
+sp {clean-house*propose*record-smem-current-area
+ # :interrupt
+   (state <s> ^name robot
+              ^parameters.areas-held-in smem
+             -^current-location.id <area-id>
+              ^io.input-link.self.area { <> -1 <area-id> })
+-->
+   (<s> ^operator <op> + =, >)
+   (<op> ^name record-smem-current-area
+         ^area <area>)
+}
+#(<area> -^visited yes
+
+sp {apply*record-smem-current-area*remove-old-area
+   (state <s> ^operator.name record-smem-current-area
+              ^io.input-link.area-description.id <area-id>
+              ^smem <smem>
+              ^current-location <area>)
+  -(<area> ^id <area-id>)
+   (<smem> ^command.query.id <area-id>
+           ^result.<< failure success >>)  ## JEL Avoid removing too
+-->
+   (<s> ^current-location <area> -)
+}
+  
+## Do we have this area already stored?
+
+sp {apply*record-smem-current-area*query
+   (state <s> ^smem.command <cmd>
+              ^io.input-link.area-description <area-d>
+              ^operator <o>)
+   (<o> ^name record-smem-current-area)
+   (<area-d> ^id <id>
+             ^type <type>)
+-->
+   (<cmd> ^query <q>)
+   (<q> ^type <type>
+        ^id <id>)
+}
+
+## Found it.
+
+sp {apply*record-smem-current-area*retrieve
+   (state <s> ^operator.name record-smem-current-area
+              ^smem <smem>)
+   (<smem> ^command <cmd>
+           ^result <res>)
+   (<cmd> ^query <q>)
+   (<res> ^retrieved <cp>
+          ^success <q>)
+   (<q> ^id <area-id>
+        ^type << room door >>)
+-->
+###(write (crlf) |Record SMEM current Area Retrieved area | <cp> | id | <area-id> |: | (cmd stats -d))
+   (<s> ^current-location <cp>)
+   (<cp> ^visited no -
+                  yes)}
+
+# Did not find it. Mark it for storage
+
+sp {apply*record-smem-current-area*return
+ #interrupt
+   (state <s> ^operator <op>
+              ^io.input-link.area-description <area-d>
+              ^smem <smem>)
+   (<area-d> ^id <id>
+             ^type <type>)
+   (<smem> ^result.failure <q>
+           ^command <cmd>)
+   (<cmd> ^query <q>)
+   (<q> ^type << door room >>)
+   (<op> ^name record-smem-current-area
+         ^area <area>)
+-->
+   (<s> ^current-location <area>)
+   (<cmd> ^store <area>)
+###(write (crlf) |Record SMEM current Area Store area: | <area> | id | <id> | Return|)
+   (<area> ^id <id>
+           ^type <type>
+           ^cleaned no
+           ^visited yes)
+}
+##JELJELEJLLL
+sp {apply*record-smem-current-area*retrieve*monitor
+   (state <s> ^operator.name record-smem-current-area
+              ^smem <smem>)
+   (<smem> ^command <cmd>
+           ^result <res>)
+   (<cmd> ^query <q>)
+   (<res> ^retrieved <cp>
+          ^success <q>)
+   (<cp> ^type << door room >>)
+   (<q> ^id <area-id>
+        ^type <type>)
+-->
+###(write (crlf) |Record SMEM current Retrieved area | <cp> | id | <area-id> | type: |<type> |: | (cmd stats -d))
+   (<s> ^current-location <cp>)
+   (<cp> ^visited no -
+                  yes)}
+
+###### Success but not filled in
+sp {apply*record-smem-current-area*store-walls*empty
+   (state <s> ^operator <op>
+              ^smem <smem>
+              ^io.input-link.area-description.wall <w1>)
+   (<smem> ^result <r>
+           ^command <cmd>)
+   (<r> ^success <q>
+        ^retrieved <res>)
+   (<cmd> ^query <q>)
+   (<q> ^id <id>
+        ^type << room door >>)
+   (<op> ^name record-smem-current-area)
+   (<w1> -^open true
+          ^x <x>
+          ^y <y>
+          ^direction <dir>)
+   (<res> -^wall)
+-->
+###(write (crlf) | Record SMEM current Area Store area: | <res> | id: | <id> |, wall | <nw1> |, empty: | (cmd stats -d))
+   (<cmd> ^store <res> <nw1>)
+   (<res> ^wall <nw1>)
+   (<nw1>  ^type wall
+           ^x <x>
+           ^y <y>
+           ^direction <dir> )
+}
+
+sp {apply*record-smem-current-area*store-walls*empty*wall-connection
+   (state <s> ^operator <op>
+              ^smem <smem>
+              ^io.input-link.area-description.wall <w1>)
+   (<smem> ^result <r>
+           ^command <cmd>)
+   (<r> ^success <q>
+        ^retrieved <res>)
+   (<q> ^type room)
+   (<cmd> ^query <q>)
+   (<op> ^name record-smem-current-area)
+   (<w1> ^open true
+         ^x <x>
+         ^y <y>
+         ^to <to>
+         ^direction <dir> )
+   (<res> -^wall)
+-->
+###(write (crlf) | Record SMEM current AreaStore area: | <res> | wall | <nw1> | conection: | (cmd stats -d))
+   (<cmd> ^store <res> <nw1>)
+   (<res> ^wall <nw1>)
+   (<nw1>  ^type wall
+           ^open true
+           ^to <to>
+           ^x <x>
+           ^y <y>
+           ^direction <dir>
+           ^connected no)
+}
+      
+sp {apply*record-smem-current-area-gateway*empty
+   (state <s> ^operator <op>
+              ^smem <smem>
+              ^io.input-link.area-description <area-d>)
+   (<area-d> ^id <aid> ^gateway <gateway>)
+   (<smem> ^result <r>
+           ^command <cmd>)
+   (<r> ^success <q>
+        ^retrieved <res>)
+   (<q> ^type << room door >>)
+   (<cmd> ^query <q>)
+   (<op> ^name record-smem-current-area)
+   (<gateway> ^x <x> ^y <y> ^direction <dir> ^id <wid1> ^to { <> <wid1> <> <aid> <tid> })
+   (<res> -^wall)
+-->
+###(write (crlf) | Record SMEM current Area Store area: | <res> | gateway | <ngateway> | empty|)
+   (<cmd> ^store <res> <ngateway>)
+   (<res> ^gateway <ngateway>)
+   (<ngateway> ^type gateway
+               ^x <x>
+               ^y <y>
+               ^direction <dir>
+               ^id <wid1>
+               ^to <tid>
+               ^connected no)
+}
+
+########## Failure
+sp {apply*record-smem-current-area*store-walls
+   (state <s> ^operator <op>
+              ^smem <smem>
+              ^io.input-link.area-description.wall <w1>)
+   (<smem> ^result.failure <q>
+           ^command <cmd>)
+   (<cmd> ^query <q>)
+   (<q> ^type << door room >>)
+   (<op> ^name record-smem-current-area
+         ^area <area>)
+   (<w1> -^open true
+          ^x <x>
+          ^y <y>
+          ^direction <dir>)
+-->
+###(write (crlf) |Record SMEM current Area Store area: | <area> | wall | <nw1> | Store-walls|)
+   (<cmd> ^store <area> <nw1>)
+   (<area> ^wall <nw1>)
+   (<nw1>  ^type wall ^x <x> ^y <y> ^direction <dir> )
+}
+
+sp {apply*record-smem-current-area*store-walls*wall-connector
+   (state <s> ^operator <op>
+              ^smem <smem>
+              ^io.input-link.area-description.wall <w1>)
+   (<smem> ^result.failure <q>
+           ^command <cmd>)
+   (<cmd> ^query <q>)
+   (<q> ^type room)
+   (<op> ^name record-smem-current-area
+         ^area <area>)
+   (<w1> ^open true
+         ^x <x> ^y <y> ^to <to> ^direction <dir> )
+-->
+###(write (crlf) |Record SMEM current Area Store area: | <area> | wall | <nw1> | wall connector|)
+   (<cmd> ^store <area> <nw1>)
+   (<area> ^wall <nw1>)
+   (<nw1> ^open true
+          ^type wall
+          ^x <x>
+          ^y <y>
+          ^to <to>
+          ^direction <dir>
+          ^connected no)
+}
+      
+sp {apply*record-smem-current-area-gateway
+   (state <s> ^operator <op>
+              ^smem <smem>
+              ^io.input-link.area-description <area-d>)
+   (<area-d> ^id <aid> ^gateway <gateway>)
+   (<smem> ^result.failure <q>
+           ^command <cmd>)
+   (<cmd> ^query <q>)
+   (<q> ^type << door room >>)
+   (<op> ^name record-smem-current-area
+         ^area <area>)
+   (<gateway> ^x <x> ^y <y> ^direction <dir> ^id <wid1> ^to { <> <wid1> <> <aid> <tid> })
+-->
+##(write (crlf) |Record SMEM current Area Store area: | <area> | gateway | <ngateway> | gateway|)
+   (<cmd> ^store <area> <ngateway>)
+   (<area> ^gateway <ngateway>)
+   (<ngateway> ^type gateway
+               ^x <x> ^y <y>
+               ^direction <dir>
+               ^id <wid1>
+               ^to <tid>
+               ^connected no)
+}
+
+############
+sp {apply*record-smem-current-remove-retrieved-object
+   :o-support
+   (state <s> ^name robot
+              ^parameters.objects-held-in smem
+              ^retrieved-object <obj>
+              ^current-location <cl>)
+   (<obj> ^area <cl>)
+-->
+   (<s> ^retrieved-object <obj> -)
+}
+
+####################
+
+#
+sp {clean-house-new*remove-next-next*destination
+   :o-support
+   (state <s>  #-^operator.name get-object
+        ^name robot
+        ^superstate nil
+        ^parameters.areas-held-in smem
+        ^current-location <ca>
+        ^destination-area <ca>)
+   (<ca> ^next <next>)
+   (<next> ^next { <next2> <> <ca> })
+   (<next2> ^<att> <next3>)
+  -(<ss> ^impasse tie)
+-->
+###(write (crlf) | Remove distance object when achieve destination: | <next2> | ^| <att> | | <next3>)
+   (<next2> ^<att> <next3> -)
+}
+#
+sp {clean-house-new*remove-next-next*destination*neighbor
+   :o-support
+   (state <s> # -^operator.name get-object
+            ^name robot
+            ^superstate nil
+            ^parameters.areas-held-in smem
+            ^current-location <ca>
+            ^destination-area <ca>)
+   (<ca> ^neighbor-area.neighbor-area { <> <ca> <next> })
+   (<next> ^next { <next2> <> <ca> })
+   (<next2> ^<att> <next3>)
+  -(<ss> ^impasse tie)
+-->
+ ###(write (crlf) | Remove distance object when achieve destination: | <next2> | ^| <att> | | <next3>)
+   (<next2> ^<att> <next3> -)
+}
+
+sp {clean-house-new*remove-next-next*storage
+   :o-support
+   (state <s> # -^operator.name get-object
+            ^name robot
+            ^superstate nil
+            ^parameters.areas-held-in smem
+            ^current-location <ca>
+           -^destination-area)
+   (<ca> ^next <next>
+               )#  ^storage-area yes)  ## Why only in storage area???
+                                 (<next> ^next { <next2> <> <ca> })
+                                 (<next2> ^<att> <next3>)
+                                -(<ss> ^impasse tie)
+-->
+###(write (crlf) | Remove distance object when not destination: | <next2> | ^| <att> | | <next3>)
+   (<next2> ^<att> <next3> -)
+}
+
+sp {clean-house-new*remove-next-next*storage*no-planning
+   :o-support
+   (state <s> # -^operator.name get-object
+            ^name robot
+            ^superstate nil
+            ^parameters.areas-held-in smem
+            ^parameters.look-ahead-planning no
+            ^current-location <ca>)
+   (<ca> ^next <next>
+         ^storage-area yes)
+   (<next> ^next { <next2> <> <ca> })
+   (<next2> ^<att> <next3>)
+-->
+###(write (crlf) | Remove distance object when no planning: | <next2> | ^| <att> | | <next3>)
+   (<next2> ^<att> <next3> -)
+}
+#
+sp {clean-house-new*remove-destination-area
+   :o-support
+ #  :interrupt
+   (state <s> # -^operator.name get-object
+            ^name robot
+            ^superstate nil  # Only top-state
+      #        ^operator.name record-smem-current-area
+            ^parameters.areas-held-in smem
+            ^current-location <ca>
+            ^destination-area <ca>)
+-->
+ ###(write (crlf) | Remove destination area when achieve it:| <ca>)
+   (<s> ^destination-area <ca> -)
+}
+
