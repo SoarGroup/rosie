@@ -366,7 +366,7 @@ SOAR_ID 241
 82 name 83
 24 name 25
 0 reward-link 31
-147 topstate 211
+147 top-state 211
 219 new-word 227
 142 operator 146
 161 top-state 0
