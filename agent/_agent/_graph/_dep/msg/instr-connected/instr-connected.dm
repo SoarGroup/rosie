@@ -1,0 +1,15 @@
+7
+SOAR_ID 423
+ENUMERATION 418 1 connected-do
+ENUMERATION 416 1 state
+ENUMERATION 422 1 connected-done
+SOAR_ID 415
+SOAR_ID 419
+ENUMERATION 417 1 instr-connected
+6
+415 type 416
+415 name 417
+419 name 418
+415 operator 423
+423 name 422
+415 operator 419

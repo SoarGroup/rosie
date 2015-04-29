@@ -1,0 +1,259 @@
+## If don't have any objects in wm that need to be picked up - do a query to see if any exist
+##
+
+sp {get-object*propose*retrieve-objects
+ #  :interrupt
+   (state <s> ^name get-object
+             -^retrieved-objects
+             -^object
+              ^top-state.parameters.objects-held-in smem
+              ^current-location.cleaned yes)
+-->
+###(write (crlf) |Attempt retrieve-objects - smem.|)
+   (<s> ^operator <op> + =, >)
+   (<op> ^name retrieve-objects)
+}
+
+sp {apply*retrieve-block*stop
+   (state <s> ^operator.name retrieve-objects
+             -^top-state.io.input-link.self.stopped yes
+              ^top-state.io.output-link <out>)
+-->
+   (<out> ^stop <x>)
+}
+
+## Test to see if already know block exists
+sp {apply*retrieve-block*smem*query
+   (state <s> ^name get-object
+              ^smem.command <cmd>
+              ^top-state <ts>
+              ^operator <op>)
+   (<op> ^name retrieve-objects)
+   (<ts> ^parameters.objects-held-in smem
+         ^missions.mission.object <obj>)
+   (<obj> ^type <type>
+          ^color <color>)
+-->
+   (<cmd> ^query <q>)
+   (<q> ^class object
+        ^type <type>
+        ^color <color>
+        ^in-storage-room no)
+}
+
+sp {apply*retrieve-block*smem*retrieved
+   (state <s> ^name get-object
+              ^top-state.parameters.objects-held-in smem
+              ^top-state <ts>
+              ^smem <smem>
+              ^operator <op>)
+   (<op> ^name retrieve-objects)
+   (<smem> ^command <cmd>
+           ^result <res>)
+   (<cmd> ^query <q>)
+   (<res> ^retrieved <cp>
+          ^success <q>)
+   (<q> ^class object)
+-->
+###(write (crlf) |Retrieved object success | <cp> | :| (cmd stats -d ))
+   (<s> ^retrieved-objects success
+        ^object <cp>)
+   (<ts> ^retrieved-object <cp>)}
+
+sp {apply*record-object*return
+   (state <s> ^operator <op>
+              ^top-state <ts>
+              ^top-state.parameters.objects-held-in smem
+              ^smem <smem>)
+   (<op> ^name retrieve-objects)
+   (<smem> ^result.failure <q>
+           ^command <cmd>)
+   (<cmd> ^query <q>)
+   (<q> ^class object)
+-->
+###(write (crlf) |Retrieved smem object failed. | (cmd stats -d ))
+   (<s> ^retrieved-objects failed)
+   (<ts> ^retrieved-objects failed)
+}
+
+sp {apply*record-object*return*top-state*smem
+   (state <s> ^operator <op>
+              ^top-state <ts>
+              ^top-state.parameters.objects-held-in smem
+              ^smem <smem>)
+   (<ts> ^all-visited true)
+   (<op> ^name retrieve-objects)
+   (<smem> ^result.failure <q>
+           ^command <cmd>)
+   (<cmd> ^query <q>)
+   (<q> ^class object)
+-->
+###(write (crlf) |Retrieved smem object failed - all visited.| (cmd stats -d ))
+   (<ts> ^retrieved-objects failed)
+}
+
+#################################
+## If don't have any objects in wm that need to be picked up - do a query to see if any exist
+##
+
+sp {get-object*propose*retrieve-objects*epmem
+ #  :interrupt
+   (state <s> ^name get-object
+             -^object
+             -^retrieved-objects
+              ^top-state.parameters.objects-held-in epmem
+              ^current-location.cleaned yes)
+  -{(<s> ^top-state.objects.object <obj>)
+    (<obj> ^in-storage-room no
+           ^area)}
+-->
+   (<s> ^operator <op> + =, >)
+   (<op> ^name retrieve-objects)
+}
+## Test to see if already know block exists
+sp {apply*retrieve-block*epmem*query*epmem
+   (state <s> ^name get-object
+              ^epmem.command <cmd>
+              ^top-state <ts>
+              ^operator <op>)
+   (<op> ^name retrieve-objects)
+   (<ts> ^parameters.objects-held-in epmem
+         ^missions.mission.object <obj>)
+   (<obj> ^type <type>
+          ^color <color>)
+-->
+   (<cmd> ^query <q>
+          ^neg-query <ng>)
+   (<q> ^objects.object <block>)
+   (<block> ^in-storage-room no
+            ^type <type>
+            ^color <color>)
+}
+
+sp {apply*retrieve-block*smem*query*not-in-storage-room
+   (state <s> ^name get-object
+              ^top-state.storage-area.object-id <id>
+              ^epmem.command.neg-query <ng>
+              ^top-state.parameters.objects-held-in epmem
+              ^operator <op>)
+   (<op> ^name retrieve-objects)
+-->
+   (<ng> ^objects.object <block1>)
+   (<block1> ^id <id>)
+#             ^in-storage-room no)
+}
+
+### (R915 ^cue-size 7 ^graph-match 0 ^match-cardinality -2 ^match-score -1.995
+  ##     ^memory-id 516 ^normalized-match-score -1.995 ^present-id 517
+    ##   ^retrieved R917 ^status success)
+### Mark failure at top until see more objects
+##don't copy if already have these objects!
+
+sp {apply*retrieve-objects*retrieve*epmem
+#:interrupt
+   (state <s> ^name get-object
+              ^top-state.parameters.objects-held-in epmem
+              ^top-state <ts>
+              ^epmem <epmem>
+              ^operator <op>
+              ^top-state.missions.mission.object <obj>)
+   (<obj> ^type <type>
+          ^color <color>)
+   (<op> ^name retrieve-objects)
+   (<epmem> ^command <cmd>
+            ^result <res>)
+   (<cmd> ^query <q>)
+   (<res> ^retrieved <cp>
+          ^graph-match << 1.0 1 >>
+          ^success <q>)
+   (<cp> ^objects.object <block>)
+   (<block> ^type <type>
+            ^color <color>
+            ^class object
+            ^id <id>
+            ^area.id <area-id>
+            ^x <x>
+            ^y <y>)
+-->
+#(write (crlf) |Retrieved object | <cp> | :| (cmd stats -d ))
+   (<s> ^retrieved-objects success)
+   (<ts> ^retrieved-object <nblock>)
+   (<s> ^object <nblock>)
+   (<nblock> ^type <type>
+             ^color <color>
+             ^class object
+             ^id <id>
+             ^area-id <area-id>
+             ^x <x>
+             ^y <y>)
+   (<cmd> ^query <q> -)
+}
+
+sp {apply*retrieve-objects*retrieve*epmem*area-lti
+#:interrupt
+   (state <s> ^name get-object
+              ^top-state.parameters.objects-held-in epmem
+              ^top-state <ts>
+              ^epmem <epmem>
+              ^operator <op>
+              ^top-state.missions.mission.object <obj>)
+   (<obj> ^type <type>
+          ^color <color>)
+   (<op> ^name retrieve-objects)
+   (<epmem> ^command <cmd>
+            ^result <res>)
+   (<cmd> ^query <q>)
+   (<res> ^retrieved <cp>
+          ^graph-match << 1.0 1 >>
+          ^success <q>)
+   (<cp> ^objects.object <block>)
+   (<block> ^type <type>
+            ^color <color>
+            ^class object
+            ^id <id>
+            ^area <area>
+            ^x <x>
+            ^y <y>)
+   (<area> -^id)
+-->
+#(write (crlf) |Retrieved object | <cp> | :| (cmd stats -d ))
+   (<s> ^retrieved-objects success)
+   (<ts> ^retrieved-object <nblock>)
+   (<s> ^object <nblock>)
+   (<nblock> ^type <type>
+             ^color <color>
+             ^class object
+             ^id <id>
+             ^area <area>
+             ^x <x>
+             ^y <y>)
+   (<cmd> ^query <q> -)
+}
+
+sp {apply*retrieve-objects*retrieve*epmem*failed
+   (state <s> ^name get-object
+              ^top-state.parameters.objects-held-in epmem
+              ^epmem <epmem>
+              ^operator <op>)
+   (<op> ^name retrieve-objects)
+   (<epmem> ^command <cmd>
+            ^result <res>)
+   (<cmd> ^query <q>)
+   (<res> ^graph-match { <> 1 <> 1.0 }
+          ^success <q>)
+-->
+   (<s> ^retrieved-objects failed)
+   (<cmd> ^query <q> -)}
+
+sp {apply*record-object*return*epmem
+   (state <s> ^operator <op>
+              ^top-state.parameters.objects-held-in epmem
+              ^epmem <epmem>)
+   (<op> ^name retrieve-objects)
+   (<epmem> ^result.failure <q>
+            ^command <com>)
+   (<com> ^query <q>)
+-->
+   (<s> ^retrieved-objects failed)
+   (<com> ^query <q> -)
+}

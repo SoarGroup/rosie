@@ -1,0 +1,131 @@
+#####!!!!!!!!!!!!!!!!!!!!
+
+sp {get-object*propose*goto-not-clean-area*cleaned
+# :interrupt
+   (state <s> ^name get-object
+              ^top-state.parameters.areas-held-in wm
+              ^top-state.areas.area <area>
+              ^current-location.cleaned yes)
+   (<area> ^cleaned no
+           ^visited yes
+          -^storage-area yes)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name goto-not-clean-area
+         ^type go-to-area
+         ^area <area>)
+}
+sp {get-object*propose*goto-not-clean-area*gateway
+   (state <s> ^name get-object
+              ^top-state.parameters.areas-held-in wm
+              ^top-state.areas.area <area>
+              ^current-location.type door)
+   (<area> ^cleaned no
+           ^visited yes
+          -^storage-area yes)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name goto-not-clean-area
+         ^type go-to-area
+         ^area <area>)
+}
+
+sp {get-object*propose*goto-not-clean-area*storage
+   (state <s> ^name get-object
+              ^top-state.parameters.areas-held-in wm
+              ^top-state.areas.area <area>
+              ^current-location.storage-area yes)
+   (<area> ^cleaned no
+           ^visited yes
+          -^storage-area yes)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name goto-not-clean-area
+         ^type go-to-area
+         ^area <area>)
+}
+
+#############SMEM
+
+sp {get-object*propose*goto-not-clean-area*smem*neighbor-area
+  #interrupt
+   (state <s> ^name get-object
+             -^top-state.all-visited true
+              ^top-state.current-location <cur>
+              ^top-state.parameters.areas-held-in smem)
+   (<cur> ^cleaned yes
+          ^neighbor-area <area>)
+   (<area> ^visited yes
+           ^cleaned no
+          -^avoid true
+           ^id <id>)
+-->
+   (<s> ^operator <op> + =, <)
+   (<op> ^name goto-not-clean-area
+         ^type go-to-area
+         ^area <area>
+         ^storage-area no)
+}
+sp {get-object*propose*goto-not-clean-area*smem
+   (state <s> ^name get-object
+             -^top-state.all-visited true
+              ^top-state.parameters.areas-held-in smem)
+-->
+   (<s> ^operator <op> + =, <)
+   (<op> ^name goto-not-clean-area
+         ^type go-to-area
+         ^storage-area no)
+}
+
+sp {apply*goto-not-clean-area*smem*query
+   (state <s> ^operator <o>
+              ^top-state.parameters.areas-held-in smem
+              ^smem.command <cmd>)
+   (<o> ^name goto-not-clean-area
+       -^area)
+-->
+   (<cmd> ^query <q>)
+   (<q> ^type room
+        ^cleaned no)}
+
+sp {apply*goto-not-clean-area*smem*result
+ #interrupt
+   (state <s> ^operator.name goto-not-clean-area
+              ^smem <smem>)
+   (<smem> ^command.query <q>
+           ^result <res>)
+   (<res> ^retrieved <cp>
+          ^success <q>)
+-->
+###(write (crlf) |Retrieved dirty area | <cp> )
+   (<s> ^area <cp>)}
+
+sp {apply*goto-not-clean-area*smem*operator
+   (state <s> ^operator <o>
+              ^area <area>)
+   (<o> ^name goto-not-clean-area)
+-->
+###(write (crlf) |Retrieved area | <area> )
+   (<o> ^area <area>)}
+
+sp {apply*goto-not-clean-area*smem*result*failure
+   #interrupt
+   :o-support
+   (state <s> ^operator <o>
+              ^smem <smem>)
+   (<o> ^name goto-not-clean-area)
+   (<smem> ^command.query <q>
+           ^result.failure <q>)
+-->
+###(write (crlf) |Failed to find dirty area |)
+   (<o> ^no-dirty-area-found true)}
+
+sp {get-object*compare*goto-not-clean-area
+   (state <s> ^operator <op1> +)
+   (<op1> ^name goto-not-clean-area
+          ^no-dirty-area-found true)
+-->
+   (<s> ^operator <op1> -)
+}
+
+
