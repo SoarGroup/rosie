@@ -1,0 +1,48 @@
+###############################################################################
+#
+# Inside the execute-follow-left-wall1 substate, this will put a follow-left-wall command on the output link
+#
+###############################################################################
+
+sp {execute-follow-left-wall1*propose*send-follow-left-wall-command
+   (state <s> ^name execute-follow-left-wall1
+             -^current-action.command-status)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name send-follow-left-wall-command)
+}
+
+sp {execute-follow-left-wall1*apply*send-follow-left-wall-command
+   (state <s> ^name execute-follow-left-wall1
+              ^operator.name send-follow-left-wall-command
+              ^current-action <a>
+              ^top-state.io.output-link <out>
+              ^termination-condition <term>)
+-->
+   (<out> ^do-control-law <law>)
+   (<law> ^name follow-wall
+          ^parameters.side 1
+          ^termination-condition <term>)
+   (<a> ^sent-command <cmd>)
+}
+
+sp {send-follow-left-wall-command*elaborations
+   (state <s> ^name send-follow-left-wall-command)
+-->
+   (<s> ^attend-to-all-scene-changes true
+        ^allow-wait true)
+}
+
+sp {top-state*apply*execute-follow-left-wall1*copy*command-status
+   (state <s> ^top-state <s>
+              ^operator.name execute-follow-left-wall1
+              ^current-action <a>
+              ^io.output-link <out>)
+   (<a> ^sent-command <cmd>)
+   (<cmd> ^status { <status> << success failure >> })
+-->
+   (<a> ^sent-command <cmd> -)
+   (<a> ^command-status <status>
+        ^status complete)
+   (<out> ^do-control-law <cmd> -)
+}

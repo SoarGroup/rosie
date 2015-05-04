@@ -1,188 +1,88 @@
-####### propose pick-up for objects #########################################
-sp {action*propose*op_pick-up-object
+sp {action*apply*primitive*initiate-operator*create*local*current-action
    (state <s> ^problemspace.action <act>
-              ^world.objects.object <obj>
-             -^world.robot.arm.grabbed <any>)
-   (<obj> ^predicates.category block1)
+              ^operator <o>)
+   (<o> ^action-type primitive
+        ^action-name <action-name>)
    (<act> -^type none)
 -->
-   (<s> ^operator <op> +)
-   (<op> ^name op_pick-up-object 
-   	 ^arg1 <obj>
-     ^action-type primitive)
-}
-
-sp {action*execute*apply*op_pick-up-object*execute*create*current-action*topstate
-   (state <s> ^problemspace.action.type execute
-              ^operator <o>
-              ^topstate.interaction.stack.segment <seg>)
-   (<o> ^name op_pick-up-object
-        ^arg1 <obj>)
--->
-   (<seg> ^current-action <ca>)
-   (<ca> ^name pick-up1
-         ^execution-op execute-pick-up
-         ^arguments.arg1 <obj>)
-}
-
-####### propose put-down for objects #########################################
-sp {action*propose*op_put-down-object
-   (state <s> ^problemspace.action <act>
-              ^world.objects.object <obj>)
-   (<obj> ^predicates.arm-status grabbed)
-   (<act> -^type none)
--->
-   (<s> ^operator <op> +)
-   (<op> ^name op_put-down-object
-   	 ^arg1 <obj>
-     ^action-type primitive)
-}
-
-sp {action*elaborate*op_put-down-object*arg2*from*action-command
-   (state <s> ^problemspace.action <act>
-              ^operator <o> +
-              ^action-command <cmd>)
-   (<o> ^name op_put-down-object)
-   (<cmd> ^arg2 <arg2>)
-   (<arg2> ^arg2 <obj>
-           ^id <rel>)
--->
-   (<o> ^arg2 <new-arg2>)
-   (<new-arg2> ^arg2 <obj>
-               ^id <rel>)
-}
-
-sp {action*apply*op_put-down-object*execute*create*current-action*topstate
-   (state <s> ^problemspace.action.type execute
-              ^operator <o>
-              ^topstate.interaction.stack.segment <seg>)
-   (<o> ^name op_put-down-object
-        ^arg1 <obj>
-        ^arg2.arg2 <obj2>
-        ^arg2.id <rel>)
--->
-   (<seg> ^current-action <ca>)
-   (<ca> ^name put-down1
-         ^execution-op execute-put-down
+   (<s> ^current-action-copy <ca>)
+   (<ca> ^name <action-name>
+         ^execution-operator (concat |execute-| <action-name>)
          ^arguments <args>)
-   (<args> ^arg1 <obj>
-           ^arg2 <new-arg2>)
+}
+
+sp {action*apply*primitive*initiate-operator*mark*copied-arguments
+   (state <s> ^problemspace.action <act>
+              ^operator <o>
+              ^current-action-copy <ca>)
+   (<o> ^action-type primitive
+        ^action-name <action-name>)
+   (<act> -^type none)
+   (<ca> ^name <action-name>)
+-->
+   (<s> ^copied-arguments true)
+}
+
+sp {action*apply*primitive*initiate-operator*copy*level1*args
+   (state <s> ^problemspace.action <act>
+              ^operator <o>
+              ^current-action-copy <ca>)
+   (<o> ^action-type primitive
+        ^action-name <action-name>
+        ^{ <arg-name> << arg1 direction >> } <arg1>)
+   (<act> -^type none)
+   (<ca> ^name <action-name>
+         ^arguments <args>)
+-->
+   (<args> ^<arg-name> <arg1>)
+}
+
+sp {action*apply*primitive*initiate-operator*copy*level2*args
+   (state <s> ^problemspace.action <act>
+              ^operator <o>
+              ^current-action-copy <ca>)
+   (<o> ^action-type primitive
+        ^action-name <action-name>
+        ^arg2 <arg2>)
+   (<act> -^type none)
+   (<ca> ^name <action-name>
+         ^arguments <args>)
+   (<arg2> ^id <rel>
+           ^arg2 <obj2>)
+-->
+   (<args> ^arg2 <new-arg2>)
    (<new-arg2> ^relation <rel>
                ^arg2 <obj2>)
 }
 
-####################### propose open location #################################
-sp {action*propose*op_open
+sp {action*apply*primitive*initiate-operator*copy*until*args
    (state <s> ^problemspace.action <act>
-              ^world.objects.object <obj>)
-   (<obj> ^predicates.door closed)
+              ^operator <o>
+              ^current-action-copy <ca>)
+   (<o> ^action-type primitive
+        ^action-name <action-name>
+        ^until <until>)
    (<act> -^type none)
+   (<ca> ^name <action-name>
+         ^arguments <args>)
+   (<until> ^object-type <type>
+            ^object-count <count>)
 -->
-   (<s> ^operator <op> +)
-   (<op> ^name op_open
-     ^arg1 <obj>
-     ^action-type primitive)
+   (<args> ^until <new-until>)
+   (<new-until> ^object-type <type>
+                ^object-count <count>)
 }
 
-sp {action*apply*op_open*execute*create*current-action*topstate
-   (state <s> ^problemspace.action.type execute
+sp {action*apply*primitive*initiate-operator*copy*current-action*top-state*segment
+   (state <s> ^problemspace.action <act>
               ^operator <o>
-              ^topstate.interaction.stack.segment <seg>)
-   (<o> ^name op_open
-        ^arg1 <obj>)
+              ^current-action-copy <ca>
+              ^copied-arguments true
+              ^top-state.interaction.stack.segment <seg>)
+   (<o> ^action-type primitive
+        ^action-name <action-name>)
+   (<act> -^type none)
+   (<ca> ^name <action-name>)
 -->
    (<seg> ^current-action <ca>)
-   (<ca> ^name open1
-         ^execution-op execute-open
-         ^arguments.arg1 <obj>)
 }
-
-####################### propose close location ##################################
-sp {action*propose*op_close
-   (state <s> ^problemspace.action <act>
-              ^world.objects.object <obj>)
-   (<obj> ^predicates.door open)
-   (<act> -^type none)
--->
-   (<s> ^operator <op> +)
-   (<op> ^name op_close
-     ^arg1 <obj>
-     ^action-type primitive)
-}
-
-sp {action*apply*op_close*execute*create*current-action*topstate
-   (state <s> ^problemspace.action.type execute
-              ^operator <o>
-              ^topstate.interaction.stack.segment <seg>)
-   (<o> ^name op_close
-        ^arg1 <obj>)
--->
-   (<seg> ^current-action <ca>)
-   (<ca> ^name close1
-         ^execution-op execute-close
-         ^arguments.arg1 <obj>)
-}
-
-####################### propose op_turn-on ##################################
-sp {action*propose*op_turn-on
-   (state <s> ^problemspace.action <act>
-              ^world.objects.object <obj>)
-   (<obj> ^predicates.<any> off)
-   (<act> -^type none)
--->
-   (<s> ^operator <op> +)
-   (<op> ^name op_turn-on
-     ^arg1 <obj>
-     ^action-type primitive)
-}
-
-sp {action*apply*op_turn-on*execute*create*current-action*topstate
-   (state <s> ^problemspace.action.type execute
-              ^operator <o>
-              ^topstate.interaction.stack.segment <seg>)
-   (<o> ^name op_turn-on
-        ^arg1 <obj>)
--->
-   (<seg> ^current-action <ca>)
-   (<ca> ^name turn-on1
-         ^execution-op execute-turn-on
-         ^arguments.arg1 <obj>)
-}
-
-####################### propose op_turn-off ##################################
-sp {action*propose*op_turn-off
-   (state <s> ^problemspace.action <act>
-              ^world.objects.object <obj>)
-   (<obj> ^predicates.<any> on)
-   (<act> -^type none)
--->
-   (<s> ^operator <op> +)
-   (<op> ^name op_turn-off
-     ^arg1 <obj>
-     ^action-type primitive)
-}
-
-sp {action*apply*op_turn-off*execute*create*current-action*topstate
-   (state <s> ^problemspace.action.type execute
-              ^operator <o>
-              ^topstate.interaction.stack.segment <seg>)
-   (<o> ^name op_turn-off
-        ^arg1 <obj>)
--->
-   (<seg> ^current-action <ca>)
-   (<ca> ^name turn-off1
-         ^execution-op execute-turn-off
-         ^arguments.arg1 <obj>)
-}
-
-########################## propose wait ########################################
-#sp {propose*op_wait*operator
-#   (state <s> ^problemspace.action <act>)
-#   (<act> -^type none)
-#-->
-#   (<s> ^operator <op> +)
-#   (<op> ^name op_wait
-#   	 ^action-type primitive)
-#}
-#   
-#
