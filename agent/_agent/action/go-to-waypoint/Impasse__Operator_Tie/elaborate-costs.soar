@@ -3,7 +3,7 @@ sp {selection*elaborate*evaluation*dx*dy
    (state <s> ^name selection
               ^evaluation <e>
               ^superstate.desired.waypoint <dwp>
-             -^superstate.world.robot.current-waypoint <cwp>)
+             -^superstate.current-location <cwp>)
    (<e> ^current-location <cwp>)
    (<cwp> ^x <cx> ^y <cy>)
    (<dwp> ^x <dx> ^y <dy>)
@@ -19,7 +19,7 @@ sp {selection*elaborate*evaluation*estimated-cost
    :default
    (state <s> ^name selection
               ^evaluation <e>
-             -^superstate.world.robot.current-waypoint <cwp>
+             -^superstate.current-location <cwp>
               ^superstate.desired.waypoint <dwp>)
    (<e> ^current-location <cwp>
        -^updated-estimate true  ## JEL 2/11/
@@ -30,6 +30,22 @@ sp {selection*elaborate*evaluation*estimated-cost
 -->
    # Pythagorean Theorem
    (<e> ^estimated-cost (sqrt (+ (* <dx> <dx>) (* <dy> <dy>))))
+}
+
+# estimated-cost during adjacent area search
+# set to 0 because we don't know which waypoint we want, 
+#   accept the closest that satisfies the test
+sp {selection*elaborate*evaluation*estimated-cost*adjacent-area*search
+   (state <s> ^name selection
+              ^evaluation <e>
+             -^superstate.current-location <cwp>
+              ^superstate.desired.area <area>)
+   (<e> ^current-location <cwp>
+       -^updated-estimate true)  ## JEL 2/11/
+   (<cwp> ^id <cid>)
+-->
+   # Pythagorean Theorem
+   (<e> ^estimated-cost 0.000001)
 }
 
 # elaborate: total-estimated-cost
@@ -57,3 +73,18 @@ sp {selection*monitor*write*path*costs
    (write (crlf) |Path Cost at | <cur-id> |: | <pc>)
    (write (crlf) |Total Estmated Cost: | <e> | | (+  <ec> <pc>) | : | <e> | path: | <pc> | Estimated Cost: | <ec> )
 }
+
+sp {selection*monitor*write*path*costs*area
+   :default
+   (state <s> ^name selection
+              ^evaluation <e>
+              ^superstate.desired.area.id <des-id>)
+   (<e> ^estimated-cost <ec>
+        ^path-cost <pc>
+        ^current-location.id <cur-id>)
+-->
+   (write (crlf) |Estimated Cost from | <cur-id> | to | <des-id> |: | <ec>)
+   (write (crlf) |Path Cost at | <cur-id> |: | <pc>)
+   (write (crlf) |Total Estmated Cost: | <e> | | (+  <ec> <pc>) | : | <e> | path: | <pc> | Estimated Cost: | <ec> )
+}
+
