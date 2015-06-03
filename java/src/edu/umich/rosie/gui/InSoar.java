@@ -1,4 +1,4 @@
-package edu.umich.insoar;
+package edu.umich.rosie.gui;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -20,8 +20,14 @@ import sml.smlPrintEventId;
 import sml.smlRunEventId;
 import probcog.lcmtypes.*;
 import april.util.TimeUtil;
-
+import edu.umich.insoar.ChatFrame;
 import edu.umich.insoar.world.WorldModel;
+import edu.umich.rosie.Logger;
+import edu.umich.rosie.SoarAgent;
+import edu.umich.rosie.actuation.EnvironmentMenu;
+import edu.umich.rosie.actuation.ArmActuationConnector;
+import edu.umich.rosie.language.LanguageConnector;
+import edu.umich.rosie.perception.ArmPerceptionConnector;
 
 public class InSoar implements RunEventInterface
 {
@@ -42,11 +48,11 @@ public class InSoar implements RunEventInterface
     
     private LanguageConnector language;
     
-    private MotorSystemConnector motorSystem;
+    private ArmActuationConnector motorSystem;
     
-    private Environment environment;
+    private EnvironmentMenu environment;
     
-    private PerceptionConnector perception;
+    private ArmPerceptionConnector perception;
     
     private ISpyRunner ispyRunner;
     
@@ -90,9 +96,9 @@ public class InSoar implements RunEventInterface
 		}
 		
 		language = new LanguageConnector(soarAgent);
-        perception = new PerceptionConnector(soarAgent, classifiersFile);   
-        environment = new Environment(motorSystem);
-        motorSystem = new MotorSystemConnector(soarAgent, perception);
+        perception = new ArmPerceptionConnector(soarAgent, classifiersFile);   
+        environment = new EnvironmentMenu(motorSystem);
+        motorSystem = new ArmActuationConnector(soarAgent, perception);
         try {
 			logger = new Logger(soarAgent, props.getProperty("enable-logs"));
 		} catch (IOException e) {

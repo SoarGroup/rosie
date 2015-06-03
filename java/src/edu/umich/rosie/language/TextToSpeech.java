@@ -1,4 +1,4 @@
-package edu.umich.insoar;
+package edu.umich.rosie.language;
 
 import javax.sound.sampled.*;
 import java.io.*;

@@ -1,4 +1,4 @@
-package edu.umich.insoar;
+package edu.umich.rosie;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -82,5 +82,4 @@ public class Logger implements PrintEventInterface {
 		if (interactionLogWriter != null)
 			soarLogWriter.close();
 	}
-
 }

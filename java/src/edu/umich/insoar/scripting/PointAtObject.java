@@ -3,8 +3,8 @@ package edu.umich.insoar.scripting;
 import lcm.lcm.LCM;
 import april.util.TimeUtil;
 import probcog.lcmtypes.perception_command_t;
-import edu.umich.insoar.InSoar;
 import edu.umich.insoar.world.WorldModel;
+import edu.umich.rosie.gui.InSoar;
 
 public class PointAtObject implements UiCommand {
 	private int objectId;

@@ -1,5 +1,5 @@
 // JNI class for interfaceing with pocketsphinx
-package edu.umich.insoar;
+package edu.umich.rosie.language;
 
 public class sphinxJNI {
 	   static {

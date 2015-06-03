@@ -1,4 +1,4 @@
-package edu.umich.insoar;
+package edu.umich.rosie.gui;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -8,8 +8,9 @@ import javax.swing.JLabel;
 import javax.swing.JMenuBar;
 
 import edu.umich.insoar.world.SVSCommands;
-import edu.umich.insoar.world.WMUtil;
-
+import edu.umich.rosie.SoarAgent;
+import edu.umich.rosie.WMUtil;
+import edu.umich.rosie.perception.ArmPerceptionConnector;
 import sml.Agent;
 import sml.Identifier;
 import sml.WMElement;
@@ -22,7 +23,7 @@ public class SVSTester extends JFrame implements OutputEventInterface, RunEventI
 	
 	private SoarAgent soarAgent;
 	
-	private PerceptionConnector perception;
+	private ArmPerceptionConnector perception;
 	
 	private double val = .5;
 	
@@ -35,7 +36,7 @@ public class SVSTester extends JFrame implements OutputEventInterface, RunEventI
 		soarAgent = new SoarAgent("svs-tester", "agent/test_svs_copy.soar", false);
 		soarAgent.getAgent().AddOutputHandler("report-val", this, null);
 		
-		perception = new PerceptionConnector(soarAgent, "default");
+		perception = new ArmPerceptionConnector(soarAgent, "default");
 		soarAgent.setWorldModel(perception.world);
 		
 		this.menuBar = new JMenuBar();

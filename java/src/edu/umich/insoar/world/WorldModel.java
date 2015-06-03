@@ -13,9 +13,8 @@ import sml.Identifier;
 import sml.smlRunEventId;
 import probcog.lcmtypes.*;
 import april.util.TimeUtil;
-import edu.umich.insoar.InSoar;
-import edu.umich.insoar.SoarAgent;
-import edu.umich.insoar.SoarTimer;
+import edu.umich.rosie.SoarAgent;
+import edu.umich.rosie.gui.InSoar;
 public class WorldModel implements RunEventInterface
 {    
     

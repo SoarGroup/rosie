@@ -4,7 +4,7 @@ import lcm.lcm.LCM;
 import probcog.lcmtypes.perception_command_t;
 import probcog.lcmtypes.robot_command_t;
 import april.util.TimeUtil;
-import edu.umich.insoar.InSoar;
+import edu.umich.rosie.gui.InSoar;
 
 public class LoadClassifierData implements UiCommand {
 	@Override

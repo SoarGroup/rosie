@@ -1,4 +1,4 @@
-package edu.umich.insoar;
+package edu.umich.rosie.perception;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -13,6 +13,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
@@ -29,12 +30,13 @@ import probcog.lcmtypes.*;
 import april.util.PeriodicTasks;
 import april.util.TimeUtil;
 import edu.umich.insoar.world.PerceptualProperty;
-import edu.umich.insoar.world.WMUtil;
 import edu.umich.insoar.world.WorldModel;
+import edu.umich.rosie.AgentConnector;
+import edu.umich.rosie.SoarAgent;
+import edu.umich.rosie.SoarUtil;
+import edu.umich.rosie.gui.InSoar;
 
-public class PerceptionConnector implements OutputEventInterface, RunEventInterface, LCMSubscriber {
-	private SoarAgent soarAgent;
-	
+public class ArmPerceptionConnector extends AgentConnector implements LCMSubscriber {
 	private static int SEND_TRAINING_FPS = 10;
 	Timer sendTrainingTimer;
 	
@@ -47,7 +49,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
 	private int currentTimer = -10;
 	private long prevTime = 0;
 	private long totalTime = 0;
-	private int totalMoves = 0;
+
 	
     private HashMap<training_label_t, Identifier> outstandingTraining;
     
@@ -57,37 +59,42 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
     private String classifiersFile;
     private String armStatus = "wait";
     
-    
-    
-    public PerceptionConnector(SoarAgent soarAgent, String classifiersFile)
+    public ArmPerceptionConnector(SoarAgent soarAgent, String classifiersFile)
     {
-    	this.soarAgent = soarAgent;
+    	super(soarAgent);
+
     	this.classifiersFile = classifiersFile;
     	
     	outstandingTraining = new HashMap<training_label_t, Identifier>();
-    	
-        String[] outputHandlerStrings = { "send-training-label", "modify-scene", "reset-timer", "report-attend-status", "put-down"};
-
-        for (String outputHandlerString : outputHandlerStrings)
-        {
-        	soarAgent.getAgent().AddOutputHandler(outputHandlerString, this, null);
-        }
-        
-       	soarAgent.getAgent().RegisterForRunEvent(
-               smlRunEventId.smlEVENT_BEFORE_INPUT_PHASE, this, null);
-        
         
         world = new WorldModel(soarAgent);
         lcm = LCM.getSingleton();
-        lcm.subscribe("OBSERVATIONS", this);
-        lcm.subscribe("ROBOT_ACTION", this);
         
         sendTrainingTimer = new Timer();
+    }
+    
+    @Override
+    public void connect(){
+    	super.connect();
+
         sendTrainingTimer.schedule(new TimerTask(){
         	public void run(){
         		sendTrainingLabels();
         	}
         }, 1000, 1000/SEND_TRAINING_FPS);
+        
+        lcm.subscribe("OBSERVATIONS", this);
+        lcm.subscribe("ROBOT_ACTION", this);
+    }
+    
+    @Override
+    public void disconnect(){
+    	super.disconnect();
+    	
+    	sendTrainingTimer.cancel();
+    	
+        lcm.unsubscribe("OBSERVATIONS", this);
+        lcm.unsubscribe("ROBOT_ACTION", this);
     }
     
     /*************************************************
@@ -146,143 +153,82 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
      *************************************************/
     long time = 0;
 
-    public void runEventHandler(int eventID, Object data, Agent agent, int phase)
-    {
-    	smlRunEventId runEventId = smlRunEventId.swigToEnum(eventID);
-    	if(runEventId == smlRunEventId.smlEVENT_BEFORE_INPUT_PHASE){
-    		time = TimeUtil.utime();
-    		updateInputLink(agent);
-    		if(InSoar.DEBUG_TRACE){
-    			System.out.println(String.format("%-20s : %d", "PERCEPTION CONNECTOR", (TimeUtil.utime() - time)/1000));
-    		}
-    	}
-    }
-    
-    public void updateInputLink(Agent agent){
-    	prevTime = TimeUtil.utime();
-    	Identifier inputLinkId = agent.GetInputLink();
-    	// Update time information on the input link
+	@Override
+    public void onInputPhase(Identifier inputLink){
+    	time = TimeUtil.utime();
     	
     	if(timeId == null){
-            timeId = inputLinkId.CreateIdWME("time");
+            timeId = inputLink.CreateIdWME("time");
         }
         
         stepNumber++;
         
-        WMUtil.updateIntWME(timeId, "steps", stepNumber);
-        WMUtil.updateIntWME(timeId, "seconds", InSoar.GetSoarTime() / 1000000);
+        SoarUtil.updateIntWME(timeId, "steps", stepNumber);
+        SoarUtil.updateIntWME(timeId, "seconds", InSoar.GetSoarTime() / 1000000);
         
         // Update pointed object
-        WMUtil.updateIntWME(inputLinkId, "pointed-object", pointedId);
+        SoarUtil.updateIntWME(inputLink, "pointed-object", pointedId);
     	
     	if(currentTimer <= -10){
-    		WMUtil.updateStringWME(timeId, "timer-status", "waiting");
+    		SoarUtil.updateStringWME(timeId, "timer-status", "waiting");
     	} else if(--currentTimer <= 0){
-    		WMUtil.updateStringWME(timeId, "timer-status", "expired");
+    		SoarUtil.updateStringWME(timeId, "timer-status", "expired");
     	} else {
-    		WMUtil.updateStringWME(timeId, "timer-status", "ticking");
+    		SoarUtil.updateStringWME(timeId, "timer-status", "ticking");
     	}
     	
-    	
+    	if(InSoar.DEBUG_TRACE){
+    		System.out.println(String.format("%-20s : %d", "PERCEPTION CONNECTOR", (TimeUtil.utime() - time)/1000));
+    	}
     }
 
     /*************************************************
-     * outputEventHandler
-     * Runs when the agent puts the appropriate command on the output link
-     * send-training-label: sends a new training example to perception
+     * outputEventHandlers
      *************************************************/
-    public void outputEventHandler(Object data, String agentName,
-            String attributeName, WMElement wme)
-    {
-    	synchronized(this){
-    		if (!(wme.IsJustAdded() && wme.IsIdentifier()))
-            {
-                return;
-            }
-    		Identifier id = wme.ConvertToIdentifier();
-            
 
-            try{
-            	if(wme.GetAttribute().equals("send-training-label"))
-	            {
-	            	processSendTrainingLabelCommand(id);
-	                System.out.println(wme.GetAttribute());
-	            } else if(wme.GetAttribute().equals("modify-scene")){
-	            	processModifySceneCommand(id);
-	            } else if(wme.GetAttribute().equals("reset-timer")){
-	            	processResetTimerCommand(id);
-	            } else if(wme.GetAttribute().equals("report-attend-status")){
-	            	totalTime += ((TimeUtil.utime() - prevTime)/1000);
-	            	id.CreateStringWME("status", "complete");
-	            } else if(wme.GetAttribute().equals("put-down")){
-	            	totalMoves ++;
-	            }
-	            soarAgent.commitChanges();
-            } catch (IllegalStateException e){
-            	System.out.println(e.getMessage());
-            }
-    	}
-    }
-    
-    
-    private void processResetTimerCommand(Identifier id){
-    	currentTimer = Integer.parseInt(WMUtil.getValueOfAttribute(id, "value"));
-    	id.CreateStringWME("status", "complete");
-    }
+	@Override
+	protected void onOutputEvent(String attName, Identifier id) {
+		if(attName.equals("send-training-label")){
+			processSendTrainingLabelCommand(id);
+		} else if(attName.equals("modify-scene")){
+			processModifySceneCommand(id);
+		}
+	}
 
     private void processSendTrainingLabelCommand(Identifier id){
-    	Integer objId = Integer.parseInt(WMUtil.getValueOfAttribute(id, "id", 
+    	Integer objId = Integer.parseInt(SoarUtil.getValueOfAttribute(id, "id", 
     			"Error (send-training-label): No ^id attribute"));
-    	String label = WMUtil.getValueOfAttribute(id, "label", 
+    	String label = SoarUtil.getValueOfAttribute(id, "label", 
     			"Error (send-training-label): No ^label attribute");
-    	String propName = WMUtil.getValueOfAttribute(id, "property-name", 
+    	String propName = SoarUtil.getValueOfAttribute(id, "property-name", 
     			"Error (send-training-label): No ^property-name attribute");
-    	training_label_t newLabel = new training_label_t();
     	Integer catNum = PerceptualProperty.getPropertyID(propName);
     	if(catNum == null){
+    		id.CreateStringWME("status", "error");
+    		System.err.println("ArmPerceptionConnector::processSendTrainingLabelCommand - bad category");
     		return;
     	}
-    	
     	
     	queueTrainingLabel(objId, catNum, label, id);
     }
     
+    
     private void processModifySceneCommand(Identifier rootId){
-    	String type = WMUtil.getValueOfAttribute(rootId, "type", "Error: No ^type attribute");
-    	if(type.equals("delete")){
-    		String deleteId = WMUtil.getValueOfAttribute(rootId, "id", "Error (delete): No ^id attribute");
-    		//world.removeObject(Integer.parseInt(deleteId));
-    	} else if(type.equals("merge")){
-    		String originalId = WMUtil.getValueOfAttribute(rootId, "original-id", "Error (merge): No ^original-id");
-    		String copyId = WMUtil.getValueOfAttribute(rootId, "copy-id", "Error (merge): No ^copy-id");
-    		//world.mergeObject(Integer.parseInt(originalId), Integer.parseInt(copyId));
-    	} else if(type.equals("move")){
-    		String moveId = WMUtil.getValueOfAttribute(rootId, "id", "Error (move): No ^id attribute");
-    		Identifier posId = WMUtil.getIdentifierOfAttribute(rootId, "pos", "Error (moidfy-scene.move): No pos");
-    		double x = Double.parseDouble(WMUtil.getValueOfAttribute(
-    				posId, "x", "Error (modify-scene.move): No ^x attribute"));
-	        double y = Double.parseDouble(WMUtil.getValueOfAttribute(
-	        		posId, "y", "Error (modify-scene.move): No ^y attribute"));
-	        double z = Double.parseDouble(WMUtil.getValueOfAttribute(
-	        		posId, "z", "Error (modify-scene.move): No ^z attribute"));
-	        //world.moveObject(Integer.parseInt(moveId), x, y, z);
-    	} else if(type.equals("confirm")){
-    		String objId = WMUtil.getValueOfAttribute(rootId, "id", "Error (confirm): No ^id attribute");
-    		//world.confirmObject(Integer.parseInt(objId));
-    	} else if(type.equals("link")){
-    		Set<String> sourceIds = WMUtil.getAllValuesOfAttribute(rootId, "source-id");
+    	String type = SoarUtil.getValueOfAttribute(rootId, "type", "Error: No ^type attribute");
+    	if(type.equals("link")){
+    		Set<String> sourceIds = SoarUtil.getAllValuesOfAttribute(rootId, "source-id");
     		if(sourceIds.size() == 0){
     			rootId.CreateStringWME("status", "error");
     			System.err.println("Error (link): No ^source-id attribute");
     		}
-    		String destId = WMUtil.getValueOfAttribute(rootId, "dest-id", "Error (link): No ^dest-id attribute");
+    		String destId = SoarUtil.getValueOfAttribute(rootId, "dest-id", "Error (link): No ^dest-id attribute");
     		if(destId.contains("bel-")){
     			destId = destId.substring(4);
     		}
     		world.linkObjects(sourceIds, destId);
-    		
     	} else {
     		rootId.CreateStringWME("status", "error");
+    		System.err.println("ArmPerceptionConnector::processModifySceneCommand - bad type");
     		return;
     	}
     	rootId.CreateStringWME("status", "complete");
@@ -386,16 +332,12 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
         
         perceptionMenu.add(saveDataFileButton);
         
-        JMenuItem reportButton = new JMenuItem("Report Data");
-        reportButton.addActionListener(new ActionListener(){
-        	public void actionPerformed(ActionEvent e){
-        		System.out.println("T: " + totalTime);
-        		System.out.println("M: " + totalMoves);
-        	}
-        });
-        
-        perceptionMenu.add(reportButton);
-        
         return perceptionMenu;
     }
+
+	@Override
+	protected void onSoarInit() {
+		timeId = null;
+		outstandingTraining.clear();
+	}
 }

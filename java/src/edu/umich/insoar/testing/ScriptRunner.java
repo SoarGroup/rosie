@@ -3,7 +3,7 @@ package edu.umich.insoar.testing;
 import java.util.List;
 
 import edu.umich.insoar.ChatFrame;
-import edu.umich.insoar.InSoar;
+import edu.umich.rosie.gui.InSoar;
 
 public class ScriptRunner extends Thread {
 	private Script script;

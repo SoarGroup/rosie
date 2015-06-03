@@ -1,4 +1,4 @@
-package edu.umich.insoar;
+package edu.umich.rosie.actuation;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -26,15 +26,16 @@ import april.config.ConfigFile;
 import april.jmat.LinAlg;
 import april.jmat.MathUtil;
 import april.util.TimeUtil;
-
-
 import edu.umich.insoar.scripting.ResetRobotArm;
 import edu.umich.insoar.world.Pose;
 import edu.umich.insoar.world.SVSCommands;
-import edu.umich.insoar.world.WMUtil;
+import edu.umich.rosie.AgentConnector;
+import edu.umich.rosie.SoarAgent;
+import edu.umich.rosie.SoarUtil;
+import edu.umich.rosie.gui.InSoar;
+import edu.umich.rosie.perception.ArmPerceptionConnector;
 
-public class MotorSystemConnector   implements OutputEventInterface, RunEventInterface, LCMSubscriber{
-	private SoarAgent agent;
+public class ArmActuationConnector extends AgentConnector implements LCMSubscriber{
     private Identifier inputLinkId;
 	private Identifier selfId;
 
@@ -59,12 +60,11 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     private long sentTime = 0;
     
     private Identifier waitingCommand = null;
-
     
-    PerceptionConnector perception;
+    ArmPerceptionConnector perception;
 
-    public MotorSystemConnector(SoarAgent agent, PerceptionConnector perception){
-    	this.agent = agent;
+    public ArmActuationConnector(SoarAgent agent, ArmPerceptionConnector perception){
+    	super(agent);
     	pose = new Pose();
     	
     	if(agent.getArmConfig() == null){
@@ -126,7 +126,8 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     }
 
 	// Happens during an input phase
-	public synchronized void runEventHandler(int eventID, Object data, Agent agent, int phase){
+    @Override
+    protected void onInputPhase(Identifier inputLink){
     	long time = 0;
     	if(InSoar.DEBUG_TRACE){
     		time = TimeUtil.utime();
@@ -226,14 +227,14 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     
     private void updateIL(){   	
     	heldObject = curStatus.obj_id;
-    	WMUtil.updateStringWME(selfId, "action", curStatus.action.toLowerCase());
+    	SoarUtil.updateStringWME(selfId, "action", curStatus.action.toLowerCase());
     	if(prevStatus == null){
-        	WMUtil.updateStringWME(selfId, "prev-action", "wait");
+        	SoarUtil.updateStringWME(selfId, "prev-action", "wait");
     	} else {
-        	WMUtil.updateStringWME(selfId, "prev-action", prevStatus.action.toLowerCase());
+        	SoarUtil.updateStringWME(selfId, "prev-action", prevStatus.action.toLowerCase());
     	}
-    	WMUtil.updateStringWME(selfId, "holding-obj", (curStatus.obj_id != -1 ? "true" : "false"));
-    	WMUtil.updateIntWME(selfId, "grabbed-object", perception.world.getSoarId(curStatus.obj_id));
+    	SoarUtil.updateStringWME(selfId, "holding-obj", (curStatus.obj_id != -1 ? "true" : "false"));
+    	SoarUtil.updateIntWME(selfId, "grabbed-object", perception.world.getSoarId(curStatus.obj_id));
     	pose.updateWithArray(curStatus.xyz);
     	pose.updateInputLink(selfId);
     }
@@ -275,39 +276,29 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
     	}
     }
     
+    /**********************************************************
+     * OUTPUT EVENTS
+     ***********************************************************/
 
     @Override
-    public synchronized void outputEventHandler(Object data, String agentName,
-            String attributeName, WMElement wme) {
-		if (!(wme.IsJustAdded() && wme.IsIdentifier()))
-        {
-            return;
+    protected void onOutputEvent(String attName, Identifier id){
+        if (attName.equals("set-state")) {
+            processSetCommand(id);
+        } 
+        else if (attName.equals("pick-up")) {
+            processPickUpCommand(id);
+        } 
+        else if (attName.equals("put-down")) {
+            processPutDownCommand(id);
+        } 
+        else if (attName.equals("point")) {
+            processPointCommand(id);
+        } 
+        else if(attName.equals("home")){
+        	processHomeCommand(id);
         }
-		Identifier id = wme.ConvertToIdentifier();
-        System.out.println(wme.GetAttribute());
-            
-        try{
-            if (wme.GetAttribute().equals("set-state")) {
-                processSetCommand(id);
-            } 
-            else if (wme.GetAttribute().equals("pick-up")) {
-                processPickUpCommand(id);
-            } 
-            else if (wme.GetAttribute().equals("put-down")) {
-                processPutDownCommand(id);
-            } 
-            else if (wme.GetAttribute().equals("point")) {
-                processPointCommand(id);
-            } 
-            else if(wme.GetAttribute().equals("home")){
-            	processHomeCommand(id);
-            }
-            else if(wme.GetAttribute().equals("reset")){
-            	processResetCommand(id);
-            }
-            agent.commitChanges();
-        } catch (IllegalStateException e){
-        	System.out.println(e.getMessage());
+        else if(attName.equals("reset")){
+        	processResetCommand(id);
         }
 	}
     
@@ -318,7 +309,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
      */
     private void processPickUpCommand(Identifier pickUpId)
     {
-        String objectIdStr = WMUtil.getValueOfAttribute(pickUpId,
+        String objectIdStr = SoarUtil.getValueOfAttribute(pickUpId,
                 "object-id", "pick-up does not have an ^object-id attribute");
         Integer id = perception.world.getPerceptionId(Integer.parseInt(objectIdStr));
         if(id == null){
@@ -345,15 +336,15 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
      */
     private void processPutDownCommand(Identifier putDownId)
     {
-        Identifier locationId = WMUtil.getIdentifierOfAttribute(
+        Identifier locationId = SoarUtil.getIdentifierOfAttribute(
                 putDownId, "location",
                 "Error (put-down): No ^location identifier");
         
-        double x = Double.parseDouble(WMUtil.getValueOfAttribute(
+        double x = Double.parseDouble(SoarUtil.getValueOfAttribute(
                 locationId, "x", "Error (put-down): No ^location.x attribute"));
-        double y = Double.parseDouble(WMUtil.getValueOfAttribute(
+        double y = Double.parseDouble(SoarUtil.getValueOfAttribute(
                 locationId, "y", "Error (put-down): No ^location.y attribute"));
-        double z = Double.parseDouble(WMUtil.getValueOfAttribute(
+        double z = Double.parseDouble(SoarUtil.getValueOfAttribute(
                 locationId, "z", "Error (put-down): No ^location.z attribute"));
         robot_command_t command = new robot_command_t();
         command.utime = TimeUtil.utime(); 
@@ -372,7 +363,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
      */
     private void processSetCommand(Identifier id)
     {
-        String objIdStr = WMUtil.getValueOfAttribute(id, "id",
+        String objIdStr = SoarUtil.getValueOfAttribute(id, "id",
                 "Error (set-state): No ^id attribute");
         Integer objId = perception.world.getPerceptionId(Integer.parseInt(objIdStr));
         if(objId == null){
@@ -381,9 +372,9 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
         	return;
         }
         
-        String name = WMUtil.getValueOfAttribute(id,
+        String name = SoarUtil.getValueOfAttribute(id,
                 "name", "Error (set-state): No ^name attribute");
-        String value = WMUtil.getValueOfAttribute(id, "value",
+        String value = SoarUtil.getValueOfAttribute(id, "value",
                 "Error (set-state): No ^value attribute");
 
         set_state_command_t command = new set_state_command_t();
@@ -397,7 +388,7 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
 
     private void processPointCommand(Identifier pointId)
     {
-    	String idStr = WMUtil.getValueOfAttribute(pointId, "id", "Error (point): No ^id attribute");
+    	String idStr = SoarUtil.getValueOfAttribute(pointId, "id", "Error (point): No ^id attribute");
         Integer objId = perception.world.getPerceptionId(Integer.parseInt(idStr));
         if(objId == null){
         	System.err.println("Set: unknown id " + idStr);
@@ -446,5 +437,11 @@ public class MotorSystemConnector   implements OutputEventInterface, RunEventInt
 
 	public Integer getHeldObject() {
 		return heldObject;
+	}
+
+	@Override
+	protected void onSoarInit() {
+		// TODO Auto-generated method stub
+		
 	}
 }

@@ -1,4 +1,4 @@
-package edu.umich.insoar.language;
+package edu.umich.rosie.language;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -6,20 +6,20 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import edu.umich.rosie.SoarUtil;
 import sml.Identifier;
 import sml.WMElement;
-import edu.umich.insoar.world.WMUtil;
 
-public class AgentMessageParser
+public class AgentMessageParser2
 {
 	static int counter = 0;
 	
 	public static String translateAgentMessage(Identifier id){
 		String message = null;
 		
-		String type = WMUtil.getValueOfAttribute(id, "type");
+		String type = SoarUtil.getValueOfAttribute(id, "type");
 		System.out.println("Got " + type + " message");
-		Identifier fieldsId = WMUtil.getIdentifierOfAttribute(id, "fields");
+		Identifier fieldsId = SoarUtil.getIdentifierOfAttribute(id, "fields");
 		if(type == null){
 			return null;
 		} else if(type.equals("get-next-task")){
@@ -49,7 +49,7 @@ public class AgentMessageParser
 	}
 	
 	public static String translateGetPredicateInfo(Identifier fieldsId){
-		String predicateName = WMUtil.getValueOfAttribute(fieldsId, "predicate-name");
+		String predicateName = SoarUtil.getValueOfAttribute(fieldsId, "predicate-name");
 		if (predicateName == null){
 			return "I encountered a new word describing an object, can you help?";
 		} else {
@@ -66,7 +66,7 @@ public class AgentMessageParser
 	}
 	
 	public static String translateObjectDescription(Identifier fields){
-		Identifier descId = WMUtil.getIdentifierOfAttribute(fields, "object");
+		Identifier descId = SoarUtil.getIdentifierOfAttribute(fields, "object");
 		if(descId == null){
 			return "An object";
 		}

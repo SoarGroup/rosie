@@ -9,11 +9,10 @@ import java.util.List;
 
 import javax.swing.JFileChooser;
 
-import edu.umich.insoar.Environment;
-
 import edu.umich.insoar.ChatFrame;
 import edu.umich.insoar.scripting.PointAtObject;
 import edu.umich.insoar.scripting.ResetEnvironmentState;
+import edu.umich.rosie.actuation.EnvironmentMenu;
 
 public class Util {
 	
@@ -95,7 +94,7 @@ public class Util {
     		}
     		else if (action.contains("reset")){
     			Integer id = Integer.parseInt(action.split(" ")[1]);
-    			(new ResetEnvironmentState(id, Environment.getHeldObject())).execute();
+    			(new ResetEnvironmentState(id, EnvironmentMenu.getHeldObject())).execute();
     		}		
     		else {
     			ScriptDataMap.getInstance().getUiCommand(action).execute();

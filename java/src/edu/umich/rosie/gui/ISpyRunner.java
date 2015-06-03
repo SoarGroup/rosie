@@ -1,4 +1,4 @@
-package edu.umich.insoar;
+package edu.umich.rosie.gui;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -15,13 +15,13 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
 import probcog.lcmtypes.perception_command_t;
-
-
+import edu.umich.insoar.ChatFrame;
 import edu.umich.insoar.testing.ActionType;
 import edu.umich.insoar.testing.ISpyScriptGenerator;
 import edu.umich.insoar.testing.ParseScript;
 import edu.umich.insoar.testing.Script;
-import edu.umich.insoar.world.WMUtil;
+import edu.umich.rosie.SoarAgent;
+import edu.umich.rosie.WMUtil;
 import april.util.TimeUtil;
 import lcm.lcm.LCM;
 import lcm.lcm.LCMSubscriber;
