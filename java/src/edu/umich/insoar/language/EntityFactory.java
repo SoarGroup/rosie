@@ -1,5 +1,8 @@
 package edu.umich.insoar.language;
 
+import edu.umich.insoar.language.LinguisticEntity;
+import edu.umich.insoar.language.Patterns.LingObject;
+import edu.umich.insoar.language.Patterns.ObjectRelation;
 import edu.umich.insoar.language.Patterns.*;
 
 public class EntityFactory

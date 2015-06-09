@@ -50,7 +50,7 @@ import com.soartech.bolt.testing.ScriptDataMap;
 import com.soartech.bolt.testing.Settings;
 import com.soartech.bolt.testing.Util;
 
-import probcog.lcmtypes.chat_message_t;
+//import probcog.lcmtypes.chat_message_t;
 
 
 public class ChatFrame extends JFrame
@@ -361,11 +361,11 @@ public class ChatFrame extends JFrame
     
     private void sendLCMChatMessage(String message, String sender){
     	// Print message for logging
-    	chat_message_t chat_message = new chat_message_t();
-    	chat_message.utime = TimeUtil.utime();
-    	chat_message.message = message;
-    	chat_message.sender = sender;
-    	LCM.getSingleton().publish("CHAT_MESSAGES", chat_message);
+//    	chat_message_t chat_message = new chat_message_t();
+//    	chat_message.utime = TimeUtil.utime();
+//    	chat_message.message = message;
+//    	chat_message.sender = sender;
+//    	LCM.getSingleton().publish("CHAT_MESSAGES", chat_message);
     }
     
     public void addMessage(String message, ActionType type) {
