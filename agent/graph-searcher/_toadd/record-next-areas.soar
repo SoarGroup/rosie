@@ -1,0 +1,151 @@
+## JEL ORiginal but costly to match
+#sp {clean-house*propose-record-next-areas*wm
+#   (state <s> ^name robot
+#              ^parameters.areas-held-in wm
+#              ^current-location <ca>
+#              ^areas <aa>)
+#   (<aa> ^area { <> <ca> <garea> }
+#               { <> <ca> <> <garea> <narea> })
+#   (<ca> ^type room
+#        -^next <narea>
+#         ^gateway <g1>
+#         ^id <caid>)
+#   (<g1> ^to { <> <caid> <gid> })
+#   (<garea> ^id <gid>
+#            ^type door
+#            ^gateway { <> <g1> <g2> })
+#   (<g2> ^to { <nid> <> <caid> })
+#   (<narea> ^id <nid>)
+#-->
+#   (<s> ^operator <o> + =)
+#   (<o> ^name record-next-areas
+#        ^next1 <narea>
+#        ^next2 <ca>)}
+
+## Use neighbor instead - should be cheaper
+sp {clean-house*propose-record-next-areas*wm
+   (state <s> ^name robot
+              ^parameters.areas-held-in wm
+              ^current-location <ca>)
+   (<ca> ^type room
+         ^neighbor-area <garea>
+        -^next <narea>
+         ^id <caid>)
+   (<garea> ^id <gid>
+            ^type door
+            ^neighbor-area { <> <ca> <narea> })
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name record-next-areas
+        ^next1 <narea>
+        ^next2 <ca>)}
+
+sp {clean-house*propose-record-next-areas*room-room*wm
+   (state <s> ^name robot
+              ^parameters.areas-held-in wm
+              ^current-location <ca>
+              ^areas.area { <> <ca> <garea> })
+   (<ca> ^type room
+        -^next <garea>
+         ^wall <g1>
+         ^id <caid>)
+   (<g1> ^to { <> <caid> <gid> })
+   (<garea> ^id <gid>
+            ^type room)
+-->
+  ##(write (crlf) |Record thru wall that : | <caid> | is next to | <gid>)
+   (<s> ^operator <o> + =)
+   (<o> ^name record-next-areas
+        ^next1 <garea>
+        ^next2 <ca>)}
+
+sp {clean-house*propose-record-next-areas*room*door*room*smem
+   (state <s> ^name robot
+              ^parameters.areas-held-in smem
+              ^current-location <ca>)
+   (<ca> ^neighbor-area <na>
+        -^next <nna>
+         ^type room)
+   (<na> ^neighbor-area { <nna> <> <ca> }
+         ^type door)
+-->
+ ####(write (crlf) |Record next area - thur door that : | <nna> | is next to | <ca>)
+   (<s> ^operator <o> + =)
+   (<o> ^name record-next-areas
+        ^next1 <nna>
+        ^next2 <ca>)}
+
+sp {clean-house*propose-record-next-areas*room*room*smem
+   (state <s> ^name robot
+              ^parameters.areas-held-in smem
+              ^current-location <ca>)
+   (<ca> ^neighbor-area <na>
+        -^next <na>
+         ^type room)
+   (<na> ^type room)
+-->
+ ###(write (crlf) |Record neighbor room that : | <na> | is next to | <ca>)
+   (<s> ^operator <o> + =)
+   (<o> ^name record-next-areas
+        ^next1 <na>
+        ^next2 <ca>)}
+
+#sp {monitor*next-connections
+#   (state <s> ^superstate nil
+#              ^current-location <ca>)
+#   (<ca> ^next <next> ^id <id>)
+#   (<next> ^id <nid>)
+#-->
+####(write (crlf) |**| <id> | ^next | <nid>)}
+#
+#sp {monitor*next-connections-no-id
+#   (state <s>  ^superstate nil
+#               ^current-location <ca>)
+#   (<ca> ^next <next> ^id <id>)
+#   (<next> -^id <nid>)
+#-->
+####(write (crlf) |--| <id> | ^next | <next>)}
+#
+#sp {monitor*next-connections2
+#   (state <s> ^superstate nil
+#              ^current-location <ca>)
+#   (<ca> ^next <next> ^id <id>)
+#   (<next> ^next <ca> ^id <nid>)
+#-->
+####(write (crlf) |++| <nid> | ^next | <id>)}
+
+sp {apply*record-next-areas1
+# :interrupt
+   (state <s> ^operator <op>
+              ^current-location <ca>)
+   (<op> ^name record-next-areas
+         ^next1 <narea>
+         ^next2 <ca>)
+-->
+   (<ca> ^next <narea>)
+   (<narea> ^next <ca>)
+}
+
+## Must be careful not to overwrite existing area
+sp {apply*record-next-areas*retrieve*next
+  # :interrupt
+   (state <s> ^smem.command <cmd>
+              ^parameters.areas-held-in smem
+              ^operator <op>)
+   (<op> ^name record-next-areas
+         ^next1 <narea>
+         ^next2 <ca>)
+-->
+###(write (crlf) |Retrieve next area to add next | <narea> | :| (cmd stats -d ))
+   (<cmd> ^retrieve <narea>)
+}
+sp {apply*record-next-areas
+   (state <s> ^parameters.areas-held-in smem
+              ^operator <op>)
+   (<op> ^name record-next-areas
+         ^next1 <narea>
+         ^next2 <ca>)
+   (<narea> ^id)
+-->
+   (<s> ^store <narea> <ca>)
+}

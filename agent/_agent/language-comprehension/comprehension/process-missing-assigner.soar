@@ -1,19 +1,7 @@
-sp {comprehension*propose*process-missing-assigner
-   (state <s> ^name comprehension
-              ^segment <seg>)
-   (<seg> ^not-merged-assigner <ass1>)
-   (<ass1> ^structure-type <stype>
-           ^relative-position before
-          -^failed merge)
-  -(<seg> ^not-merged-receiver.structure-type <stype>)
--->
-   (<s> ^operator <op> + =)
-   (<op> ^name process-missing-assigner
-         ^item <ass1>)
-}
 
 sp {comprehension*propose*process-missing-assigner*before
    (state <s> ^name comprehension
+              ^operator.name next-word
               ^segment <seg>)
    (<seg> ^not-merged-assigner <ass1>
          -^not-merged-assigner.lt <ass-before>)
@@ -22,15 +10,17 @@ sp {comprehension*propose*process-missing-assigner*before
           -^failed merge)
   -(<seg> ^not-merged-receiver.structure-type <stype>)
 -->
-   (write (crlf) |Before Assigner removal: | <ass1>)
-   (<s> ^operator <op> + =, >)
-   (<op> ^name process-missing-assigner
-         ^item <ass1>)
+#   (write (crlf) |Before Assigner removal: | <ass1>)
+#   (<s> ^operator <op> + =, >)
+#   (<op> ^name process-missing-assigner
+#         ^item <ass1>)
+   (write (crlf) |Remove assigner | <ass1> | type | <stype>)
+   (<seg> ^not-merged-assigner <ass1> -)
 }
-
 
 sp {comprehension*propose*process-missing-assigner*after
    (state <s> ^name comprehension
+              ^operator.name next-word
               ^segment <seg>)
    (<seg> ^not-merged-assigner <ass1>
           ^not-merged-assigner.lt <ass-after>)
@@ -39,41 +29,28 @@ sp {comprehension*propose*process-missing-assigner*after
           -^failed merge)
    (<seg> ^not-merged-receiver.structure-type <stype>)
 -->
-   (write (crlf) |After Assigner removal: | <ass1>)
-   (<s> ^operator <op> + =, >)
-   (<op> ^name process-missing-assigner
-         ^item <ass1>)
+#   (write (crlf) |After Assigner removal: | <ass1>)
+#   (<s> ^operator <op> + =, >)
+#   (<op> ^name process-missing-assigner
+#         ^item <ass1>)
+   (write (crlf) |Remove assigner | <ass1> | type | <stype>)
+   (<seg> ^not-merged-assigner <ass1> -)
 }
-
-
-# Should only be used after the receiver has merged
-sp {comprehension*propose*process-missing-assigner*before*type
-   (state <s> ^name comprehension
-              ^segment <seg>)
-   (<seg> ^not-merged-receiver <rec>
-          ^not-merged-assigner <ass1>)
-   (<ass1> ^lt.before-type <struc-before>
-          -^failed merge)
-   (<rec> ^structure-type <struc-before>)
--->
-   (write (crlf) |Before-type Assigner removal: | <ass1>)
-   (<s> ^operator <op> + =, >)
-   (<op> ^name process-missing-assigner
-         ^item <ass1>)
-}
-
 
 sp {comprehension*propose*process-missing-assigner*exclusive
    (state <s> ^name comprehension
+              ^operator.name next-word
               ^segment <seg>)
    (<seg> ^not-merged-assigner <ass1>
          -^not-merged-assigner.lt <ass2>)
    (<ass1> ^lt.exclusive <ass2>)
 -->
-   (write (crlf) |Exclusive Assigner removal: | <ass1>)
-   (<s> ^operator <op> + =, >)
-   (<op> ^name process-missing-assigner
-         ^item <ass1>)
+#   (write (crlf) |Exclusive Assigner removal: | <ass1>)
+#   (<s> ^operator <op> + =, >)
+#   (<op> ^name process-missing-assigner
+#         ^item <ass1>)
+   (write (crlf) |Remove exclusive assigner | <ass1>)
+   (<seg> ^not-merged-assigner <ass1> -)
 }
 
 # If just hit phrase end and there is a previous assigner that can't be matched 
@@ -81,6 +58,7 @@ sp {comprehension*propose*process-missing-assigner*exclusive
 #  This will be used to remove dangling ADJ in a DP
 sp {comprehension*propose*process-missing-assigner*phrase-end
    (state <s> ^name comprehension
+              ^operator.name << process-phrase-end next-word >>
               ^segment <seg>)
    (<seg> ^not-merged-assigner <ass1>
          -^not-merged-receiver.lt.converts-to  <rst>)
@@ -91,10 +69,11 @@ sp {comprehension*propose*process-missing-assigner*phrase-end
    (<ps> ^lt.converts-to  <nstruct>
          ^structure-type <nstruct>)
 -->
-   (write (crlf) |Remove optional assigner: | <ass1> | that didn't get included in the phrase.|)
-   (<s> ^operator <op> + =, >)
-   (<op> ^name process-missing-assigner
-         ^item <ass1>)
+ #  (write (crlf) |Remove optional assigner: | <ass1> | that didn't get included in the phrase.|)
+ #  (<s> ^operator <op> + =, >)
+ #  (<op> ^name process-missing-assigner
+ #        ^item <ass1>)
+      (<seg> ^not-merged-assigner <ass1> -)
 }
 
 ##################
@@ -131,64 +110,6 @@ sp {apply*process-missing-assigner*optional*remove
 -->
    (write (crlf) |Remove assigner | <ass1> | type | <stype>)
    (<seg> ^not-merged-assigner <ass1> -)
-   (<pr> ^removed-assigner <ass1>)
-}
-
-sp {apply*process-missing-assigner*required*fail
-   (state <s> ^operator <op>
-             -^segment.not-merged-receiver.structure-type unknown)
-   (<op> ^name process-missing-assigner
-         ^item <ass1>)
-   (<ass1> ^lt.required true
-           ^structure-type <stype>)
--->
-   (write (crlf) |Failed to find a merge for | <ass1> | type | <stype>)
-   (<ass1> ^failed merge)
-}
-
-sp {apply*process-missing-assigner*use-default
- #  :interrupt
-   (state <s> ^operator <op>
-              ^segment <seg>)
-   (<seg> ^semantics <sem>
-          ^not-merged-assigner <ass1>
-         -^not-merged-receiver.structure-type unknown)
-   (<op> ^name process-missing-assigner
-         ^item <ass1>)
-   (<ass1> ^lt <lt>
-           ^syntactic-structure <stype>
-           ^parent-receiver <parent>)
-   (<lt> ^default <default>
-         ^semantic-structure <ss>)
--->
-   (<sem> ^<ss> <default>)
-   (<parent> ^<stype> <default>)
-   (write (crlf) |Using | <default> | for | <stype> | for | <parent>)
-  # (<default> ^super-structure <parent>)
-}
-
-##### This rule used to be written in a way it would never fire.
-### I corrected it - but it might do bad things: JEL 3/18/2015
-sp {apply*process-missing-assigner*unknown-receiver
- #  :interrupt
-   (state <s> ^operator <op>
-              ^segment <seg>)
-   (<seg> ^semantics <sem>
-          ^not-merged-assigner <ass1>
-          ^not-merged-receiver <uri>)
-   (<op> ^name process-missing-assigner
-         ^item <ass1>)
-   (<ass1> ^lt <lt>
-           ^structure-type <stype>
-           ^parent-receiver <parent>)
-   (<uri> -^structure-type 
-          ^current-word.spelling <word>
-          ^lt <lli>)
--->
-   (write (crlf) | Assuming unknown | <word> | is a | <stype>)
-   (<s> ^store-concept <lli>)
-   (<uri> ^structure-type <stype>)
-   (<lli> ^structure-type <stype>)
 }
 
 

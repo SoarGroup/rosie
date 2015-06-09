@@ -1,0 +1,61 @@
+###############################################################################
+#
+# Inside the execute-orient1 substate, this will put a orient command on the output link
+#
+###############################################################################
+
+sp {execute-orient1*propose*send-orient-command
+   (state <s> ^name execute-orient1
+             -^current-action.command-status
+              ^direction <dir>)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name send-orient-command
+        ^direction <dir>)
+}
+
+sp {execute-orient1*elaborate*send-orient-command*yaw
+   (state <s> ^name execute-orient1
+              ^direction-map.<dir> <yaw>
+              ^operator <o> +)
+   (<o> ^name send-orient-command
+        ^direction <dir>)
+-->
+   (<o> ^yaw <yaw>)
+}
+
+sp {execute-orient1*apply*send-orient-command
+   (state <s> ^name execute-orient1
+              ^operator <o>
+              ^current-action <a>
+              ^top-state.io.output-link <out>)
+   (<o> ^name send-orient-command
+        ^yaw <yaw>)
+-->
+   (<out> ^do-control-law <law>)
+   (<law> ^name orient
+          ^parameters.yaw <yaw>
+          ^termination-condition.name stabilized)
+   (<a> ^sent-command <law>)
+}
+
+sp {send-orient-command*elaborations
+   (state <s> ^name send-orient-command)
+-->
+   (<s> ^attend-to-all-scene-changes true
+        ^allow-wait true)
+}
+
+sp {top-state*apply*execute-orient1*copy*command-status
+   (state <s> ^top-state <s>
+              ^operator.name execute-orient1
+              ^current-action <a>
+              ^io.output-link <out>)
+   (<a> ^sent-command <cmd>)
+   (<cmd> ^status { <status> << success failure >> })
+-->
+   (<a> ^sent-command <cmd> -)
+   (<a> ^command-status <status>
+        ^status complete)
+   (<out> ^do-control-law <cmd> -)
+}

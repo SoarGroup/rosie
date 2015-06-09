@@ -8,9 +8,9 @@ sp {comprehension*propose*ground-referent
          ^structure-type)
    (<a1> ^structure-type DP
         -^head.lt.referent nil
-        -^head.lt.referent-type << literal literal-lti >>
+        -^head.lt.referent-type literal-lti
         -^head.head.lt.referent nil
-        -^head.head.lt.referent-type << literal literal-lti >>
+        -^head.head.lt.referent-type literal-lti
         -^ground-tested <r1>
         -^ground-tested <a1>)
 -->
@@ -26,15 +26,16 @@ sp {comprehension*propose*ground-referent*push*head
    (<lm> ^assigner <as>
          ^receiver <r1>)
    (<as> ^parent-receiver <a1>
-         ^structure-type)
+         ^structure-type
+        -^lt.referent-type literal-lti)    # JEL
    (<r1> ^structure-type { <st> << THIS THAT DP >> }
         -^ground-tested <head>)
    (<a1> ^head <head>
         -^ground-tested <head>
         -^head.lt.referent nil
-        -^head.lt.referent-type << literal literal-lti >>
+        -^head.lt.referent-type literal-lti
         -^head.head.lt.referent nil
-        -^head.head.lt.referent-type << literal literal-lti >>)
+        -^head.head.lt.referent-type literal-lti)
    (<head> ^structure-type <st>
           -^ground-tested) # <head>)
 -->
@@ -56,9 +57,9 @@ sp {comprehension*propose*ground-referent*push*complement
    (<a1> ^complement <head>
         -^ground-tested <head>
         -^complement.lt.referent nil
-        -^complement.lt.referent-type << literal literal-lti >>
+        -^complement.lt.referent-type literal-lti
         -^complement.head.lt.referent nil
-        -^complement.head.lt.referent-type << literal literal-lti >>)
+        -^complement.head.lt.referent-type literal-lti)
    (<head> ^structure-type <st>
           -^ground-tested <head>)
   -(<head> ^head <head2>
@@ -69,6 +70,46 @@ sp {comprehension*propose*ground-referent*push*complement
          ^constraints <head>
          ^parameter <head>)
 }
+
+
+sp {comprehension*propose*ground-referent*push*complement2
+   (state <s> ^name comprehension
+              ^segment.last-merge <lm>)
+   (<lm> ^assigner <as>
+         ^receiver <r1>)
+   (<as> ^parent-receiver <a1>
+         ^structure-type)
+   (<r1> ^structure-type PP
+        -^ground-tested <head>)
+   (<a1> ^complement2 <c2>
+        -^ground-tested <head>
+        -^complement2.lt.referent nil
+        -^complement2.lt.referent-type literal-lti
+        -^complement2.head.lt.referent nil
+        -^complement2.head.lt.referent-type literal-lti
+        -^complement2.head.head.lt.referent-type literal-lti)
+   (<c2> ^head <head>)
+   (<head> ^structure-type DP
+          -^ground-tested <head>)
+-->
+   (<s> ^operator <op> + =, >)
+   (<op> ^name ground-referent
+         ^constraints <cons>
+         ^double-constraints <c2> <head>  # constraints from both
+         ^parameter <head>)
+}
+
+sp {comprehension*elaborate-operator*ground-referent
+   (state <s> ^name comprehension
+              ^operator <o> +)
+   (<o> ^name ground-referent
+        ^constraints <con>
+        ^double-constraints.constraint <x>)
+-->
+   (<con> ^constraint <x>)
+}
+
+
 sp {comprehension*compare*ground-referent
    (state <s> ^name comprehension
               ^operator <op1> +
@@ -103,7 +144,7 @@ sp {comprehension*compare*ground-referent*merge*literal
    (<op2> ^name merge 
           ^assigner <ass>)
    (<ass> ^structure-type DP
-          ^lt.referent-type << literal literal-lti >>)
+          ^lt.referent-type literal-lti)
 -->
    (<s> ^operator <op1> < <op2>)
 }
@@ -119,7 +160,7 @@ sp {comprehension*compare*ground-referent*merge*not
    -(<ass> ^structure-type DP
           ^lt.referent nil)
    -(<ass> ^structure-type DP
-           ^lt.referent-type << literal literal-lti >>)
+           ^lt.referent-type literal-lti)
 -->
    (<s> ^operator <op1> > <op2>)
 }
@@ -132,6 +173,72 @@ sp {comprehension*compare*ground-referent*process-semantics
    (<op2> ^name << ground-new-constraint process-semantics >>)
 -->
    (<s> ^operator <op1> > <op2>)
+}
+
+sp {comprehension*elaborate*ground-referent*count-constraints*0
+   (state <s> ^name comprehension
+              ^operator <op1> +)
+   (<op1> ^name ground-referent
+          ^constraints <con>)
+   (<con> -^constraint)
+-->
+   (<op1> ^constraint-count 0)
+}
+
+sp {comprehension*elaborate*ground-referent*count-constraints*1
+   (state <s> ^name comprehension
+              ^operator <op1> +)
+   (<op1> ^name ground-referent
+          ^constraints <con>)
+   (<con> ^constraint <c1> 
+         -^constraint <> <c1>)
+-->
+   (<op1> ^constraint-count 1)
+}
+
+sp {comprehension*elaborate*ground-referent*count-constraints*2
+   (state <s> ^name comprehension
+              ^operator <op1> +)
+   (<op1> ^name ground-referent
+          ^constraints <con>)
+   (<con> ^constraint <c1> { > <c1> <c2> }
+         -^constraint { <> <c1> <> <c2> })
+-->
+   (<op1> ^constraint-count 2)
+}
+
+sp {comprehension*elaborate*ground-referent*count-constraints*3
+   (state <s> ^name comprehension
+              ^operator <op1> +)
+   (<op1> ^name ground-referent
+          ^constraints <con>)
+   (<con> ^constraint <c1> { > <c1> <c2> } { > <c2> > <c1> <c3> }
+         -^constraint { <> <c1> <> <c2> <> <c3> })
+-->
+   (<op1> ^constraint-count 3)
+}
+
+sp {comprehension*elaborate*ground-referent*count-constraints*4
+   (state <s> ^name comprehension
+              ^operator <op1> +)
+   (<op1> ^name ground-referent
+          ^constraints <con>)
+   (<con> ^constraint <c1> { > <c1> <c2> } { > <c2> > <c1> <c3> }  { > <c2> > <c1> > <c3> <c4> }
+         -^constraint { <> <c1> <> <c2> <> <c3> <> <c4> })
+-->
+   (<op1> ^constraint-count 4)
+}
+
+
+sp {comprehension*elaborate*ground-referent*count-constraints*5
+   (state <s> ^name comprehension
+              ^operator <op1> +)
+   (<op1> ^name ground-referent
+          ^constraints <con>)
+   (<con> ^constraint <c1> { > <c1> <c2> } { > <c2> > <c1> <c3> }  { > <c2> > <c1> > <c3> <c4> } { > <c2> > <c1> > <c3> > <c4> <c5> }
+         -^constraint { <> <c1> <> <c2> <> <c3> <> <c4>  <> <c5>})
+-->
+   (<op1> ^constraint-count 5)
 }
 
 
