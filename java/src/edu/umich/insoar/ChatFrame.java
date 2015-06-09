@@ -50,7 +50,7 @@ import edu.umich.insoar.testing.ScriptDataMap;
 import edu.umich.insoar.testing.Settings;
 import edu.umich.insoar.testing.Util;
 
-import probcog.lcmtypes.chat_message_t;
+//import probcog.lcmtypes.chat_message_t;
 
 
 public class ChatFrame extends JFrame
@@ -360,12 +360,12 @@ public class ChatFrame extends JFrame
     }
     
     private void sendLCMChatMessage(String message, String sender){
-    	// Print message for logging
-    	chat_message_t chat_message = new chat_message_t();
-    	chat_message.utime = TimeUtil.utime();
-    	chat_message.message = message;
-    	chat_message.sender = sender;
-    	LCM.getSingleton().publish("CHAT_MESSAGES", chat_message);
+//    	// Print message for logging
+//    	chat_message_t chat_message = new chat_message_t();
+//    	chat_message.utime = TimeUtil.utime();
+//    	chat_message.message = message;
+//    	chat_message.sender = sender;
+//    	LCM.getSingleton().publish("CHAT_MESSAGES", chat_message);
     }
     
     public void addMessage(String message, ActionType type) {

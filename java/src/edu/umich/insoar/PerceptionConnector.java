@@ -96,7 +96,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
     
     private void queueTrainingLabel(Integer objId, Integer cat, String label, Identifier id){
     	training_label_t newLabel = new training_label_t();
-    	newLabel.utime = InSoar.GetSoarTime();
+    	//newLabel.utime = InSoar.GetSoarTime();
     	newLabel.id = objId;
     	newLabel.cat = new category_t();
     	newLabel.cat.cat = cat;
@@ -127,10 +127,10 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
     	synchronized(outstandingTraining){
 	    	Set<training_label_t> finishedLabels = new HashSet<training_label_t>();
 	    	for(Map.Entry<training_label_t, Identifier> e : outstandingTraining.entrySet()){
-	    		if(e.getKey().utime <= time){
+	    		//if(e.getKey().utime <= time){
 	    			finishedLabels.add(e.getKey());
 	    			e.getValue().CreateStringWME("status", "complete");
-	    		}
+	    		//}
 	    	}
 	    	for(training_label_t label : finishedLabels){
 	    		outstandingTraining.remove(label);
@@ -300,7 +300,7 @@ public class PerceptionConnector implements OutputEventInterface, RunEventInterf
                 obs = new observations_t(ins);
                 pointedId = obs.click_id;
                 world.newObservation(obs);
-                receiveAckTime(obs.soar_utime);
+                //receiveAckTime(obs.soar_utime);
             }
             catch (IOException e){
                 e.printStackTrace();
