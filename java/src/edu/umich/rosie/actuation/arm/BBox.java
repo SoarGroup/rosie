@@ -1,4 +1,4 @@
-package edu.umich.insoar.world;
+package edu.umich.rosie.actuation.arm;
 
 import sml.FloatElement;
 import sml.Identifier;
@@ -170,6 +170,13 @@ public class BBox implements IInputLinkElement
         		}
         	}
         }
+    }
+    
+    @Override
+    public synchronized void onInitSoar(){
+    	wmes = null;
+    	typeIDs = null;
+    	bboxID = null;
     }
     
     // remove the object from the input-link

@@ -1,4 +1,4 @@
-package edu.umich.insoar.world;
+package edu.umich.rosie.actuation.arm;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
+import edu.umich.rosie.SVSCommands;
 import sml.Agent;
 import sml.Identifier;
 import probcog.lcmtypes.*;

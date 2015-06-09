@@ -4,9 +4,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Properties;
 
 import javax.swing.JButton;
 import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 
 import lcm.lcm.LCM;
 import lcm.lcm.LCMDataInputStream;
@@ -27,16 +29,14 @@ import april.jmat.LinAlg;
 import april.jmat.MathUtil;
 import april.util.TimeUtil;
 import edu.umich.insoar.scripting.ResetRobotArm;
-import edu.umich.insoar.world.Pose;
-import edu.umich.insoar.world.SVSCommands;
 import edu.umich.rosie.AgentConnector;
+import edu.umich.rosie.SVSCommands;
 import edu.umich.rosie.SoarAgent;
 import edu.umich.rosie.SoarUtil;
-import edu.umich.rosie.gui.InSoar;
+import edu.umich.rosie.actuation.arm.Pose;
 import edu.umich.rosie.perception.ArmPerceptionConnector;
 
 public class ArmActuationConnector extends AgentConnector implements LCMSubscriber{
-    private Identifier inputLinkId;
 	private Identifier selfId;
 
 	private Pose pose;
@@ -60,42 +60,44 @@ public class ArmActuationConnector extends AgentConnector implements LCMSubscrib
     private long sentTime = 0;
     
     private Identifier waitingCommand = null;
-    
-    ArmPerceptionConnector perception;
 
-    public ArmActuationConnector(SoarAgent agent, ArmPerceptionConnector perception){
+    public ArmActuationConnector(SoarAgent agent, Properties props){
     	super(agent);
     	pose = new Pose();
     	
-    	if(agent.getArmConfig() == null){
+    	String armConfigFilepath = props.getProperty("arm-config", null);
+    	if(armConfigFilepath == null){
     		armStatus = null;
     	} else {
 	        try {
-	  			Config config = new ConfigFile(agent.getArmConfig());
+	  			Config config = new ConfigFile(armConfigFilepath);
 	  			armStatus = new ArmStatus(config);
 	  		} catch (IOException e) {
 	  			armStatus = null;
 	  		}
     	}
     	heldObject = -1;
-    	
-    	this.perception = perception;
-    	
+
     	// Setup LCM events
         lcm = LCM.getSingleton();
-        lcm.subscribe("ROBOT_ACTION", this);
-        lcm.subscribe("ARM_STATUS", this);
-
-        // Setup Input Link Events
-        inputLinkId = agent.getAgent().GetInputLink();
-        agent.getAgent().RegisterForRunEvent(smlRunEventId.smlEVENT_BEFORE_INPUT_PHASE, this, null);
         
         // Setup Output Link Events
         String[] outputHandlerStrings = { "pick-up", "put-down", "point", "set-state", "home", "reset"};
-        for (String outputHandlerString : outputHandlerStrings)
-        {
-        	agent.getAgent().AddOutputHandler(outputHandlerString, this, null);
-        }
+        this.setOutputHandlerNames(outputHandlerStrings);
+    }
+    
+    @Override
+    public void connect(){
+    	super.connect();
+        lcm.subscribe("ROBOT_ACTION", this);
+        lcm.subscribe("ARM_STATUS", this);
+    }
+    
+    @Override
+    public void disconnect(){
+    	super.disconnect();
+        lcm.unsubscribe("ROBOT_ACTION", this);
+        lcm.unsubscribe("ARM_STATUS", this);
     }
     
     @Override
@@ -128,11 +130,6 @@ public class ArmActuationConnector extends AgentConnector implements LCMSubscrib
 	// Happens during an input phase
     @Override
     protected void onInputPhase(Identifier inputLink){
-    	long time = 0;
-    	if(InSoar.DEBUG_TRACE){
-    		time = TimeUtil.utime();
-    	}
-    	
 		if(selfId == null){
 			initIL();
 		} else if(gotUpdate){
@@ -145,7 +142,7 @@ public class ArmActuationConnector extends AgentConnector implements LCMSubscrib
 			updateArmInfo();
 		}
 		if(svsCommands.length() > 0){
-			agent.SendSVSInput(svsCommands.toString());
+			soarAgent.getAgent().SendSVSInput(svsCommands.toString());
 			//System.out.println(svsCommands.toString());
 			svsCommands = new StringBuilder();
 		}
@@ -167,14 +164,10 @@ public class ArmActuationConnector extends AgentConnector implements LCMSubscrib
     			
     		}
     	}
-		this.agent.commitChanges();
-    	if(InSoar.DEBUG_TRACE){
-			System.out.println(String.format("%-20s : %d", "MOTOR CONNECTOR", (TimeUtil.utime() - time)/1000));
-    	}
 	}
     
     private void initIL(){
-    	selfId = inputLinkId.CreateIdWME("self");
+    	selfId = soarAgent.getAgent().GetInputLink().CreateIdWME("self");
     	selfId.CreateStringWME("action", "wait");
     	selfId.CreateStringWME("prev-action", "wait");
     	selfId.CreateStringWME("holding-obj", "false");
@@ -234,7 +227,8 @@ public class ArmActuationConnector extends AgentConnector implements LCMSubscrib
         	SoarUtil.updateStringWME(selfId, "prev-action", prevStatus.action.toLowerCase());
     	}
     	SoarUtil.updateStringWME(selfId, "holding-obj", (curStatus.obj_id != -1 ? "true" : "false"));
-    	SoarUtil.updateIntWME(selfId, "grabbed-object", perception.world.getSoarId(curStatus.obj_id));
+    	ArmPerceptionConnector perception = (ArmPerceptionConnector)soarAgent.getPerceptionConnector();
+    	SoarUtil.updateIntWME(selfId, "grabbed-object", perception.getWorld().getSoarId(curStatus.obj_id));
     	pose.updateWithArray(curStatus.xyz);
     	pose.updateInputLink(selfId);
     }
@@ -311,7 +305,8 @@ public class ArmActuationConnector extends AgentConnector implements LCMSubscrib
     {
         String objectIdStr = SoarUtil.getValueOfAttribute(pickUpId,
                 "object-id", "pick-up does not have an ^object-id attribute");
-        Integer id = perception.world.getPerceptionId(Integer.parseInt(objectIdStr));
+        ArmPerceptionConnector perception = (ArmPerceptionConnector)soarAgent.getPerceptionConnector();
+        Integer id = perception.getWorld().getPerceptionId(Integer.parseInt(objectIdStr));
         if(id == null){
         	System.err.println("Pick up: unknown id " + objectIdStr);
         	pickUpId.CreateStringWME("status", "error");
@@ -365,7 +360,8 @@ public class ArmActuationConnector extends AgentConnector implements LCMSubscrib
     {
         String objIdStr = SoarUtil.getValueOfAttribute(id, "id",
                 "Error (set-state): No ^id attribute");
-        Integer objId = perception.world.getPerceptionId(Integer.parseInt(objIdStr));
+        ArmPerceptionConnector perception = (ArmPerceptionConnector)soarAgent.getPerceptionConnector();
+        Integer objId = perception.getWorld().getPerceptionId(Integer.parseInt(objIdStr));
         if(objId == null){
         	System.err.println("Set: unknown id " + objIdStr);
         	id.CreateStringWME("status", "error");
@@ -389,7 +385,8 @@ public class ArmActuationConnector extends AgentConnector implements LCMSubscrib
     private void processPointCommand(Identifier pointId)
     {
     	String idStr = SoarUtil.getValueOfAttribute(pointId, "id", "Error (point): No ^id attribute");
-        Integer objId = perception.world.getPerceptionId(Integer.parseInt(idStr));
+    	ArmPerceptionConnector perc = (ArmPerceptionConnector)soarAgent.getPerceptionConnector();
+        Integer objId = perc.getWorld().getPerceptionId(Integer.parseInt(idStr));
         if(objId == null){
         	System.err.println("Set: unknown id " + idStr);
         	pointId.CreateStringWME("status", "error");
@@ -422,7 +419,7 @@ public class ArmActuationConnector extends AgentConnector implements LCMSubscrib
         id.CreateStringWME("status", "complete");
     }
     
-    public JMenu createMenu(){
+    public void createMenu(JMenuBar menuBar){
     	JMenu actionMenu = new JMenu("Action");
     	JButton armResetButton  = new JButton("Reset Arm");
         armResetButton.addActionListener(new ActionListener(){
@@ -432,7 +429,7 @@ public class ArmActuationConnector extends AgentConnector implements LCMSubscrib
         });
         actionMenu.add(armResetButton);
         
-        return actionMenu;
+        menuBar.add(actionMenu);
     }
 
 	public Integer getHeldObject() {
@@ -440,8 +437,8 @@ public class ArmActuationConnector extends AgentConnector implements LCMSubscrib
 	}
 
 	@Override
-	protected void onSoarInit() {
-		// TODO Auto-generated method stub
-		
+	protected void onInitSoar() {
+		selfId = null;
+		waitingCommand = null;
 	}
 }

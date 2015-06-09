@@ -2,7 +2,6 @@ package edu.umich.insoar.scripting;
 
 import probcog.lcmtypes.robot_command_t;
 import april.util.TimeUtil;
-import edu.umich.rosie.gui.InSoar;
 
 public class ClearClassifierData implements UiCommand {
 

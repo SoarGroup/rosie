@@ -67,6 +67,7 @@ public class SpeechToText {
     		result = result.toLowerCase();
 
     	System.out.println("STT Result: " + result);
-    	soarAgent.getLanguageConnector().getChat().registerNewMessage(result, MessageType.INSTRUCTOR_MESSAGE);
+    	LanguageConnector conn = (LanguageConnector)soarAgent.getLanguageConnector();
+    	conn.getChat().registerNewMessage(result, MessageType.INSTRUCTOR_MESSAGE);
 	}
 }

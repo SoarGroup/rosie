@@ -211,12 +211,14 @@ public class ChatPanel extends JPanel{
 			} else if(arg0.getKeyCode() == KeyEvent.VK_DOWN){
 				downPressed();
 			} else if(arg0.getKeyCode() == KeyEvent.VK_CONTROL){
-				soarAgent.getLanguageConnector().getSTT().startListening();
+				LanguageConnector lang = (LanguageConnector)soarAgent.getLanguageConnector();
+				lang.getSTT().startListening();
 			}
 		}
 		public void keyReleased(KeyEvent arg0) {
 			if(arg0.getKeyCode() == KeyEvent.VK_CONTROL){
-				soarAgent.getLanguageConnector().getSTT().stopListening();
+				LanguageConnector lang = (LanguageConnector)soarAgent.getLanguageConnector();
+				lang.getSTT().stopListening();
 			}
 		}
     }; 
@@ -248,6 +250,7 @@ public class ChatPanel extends JPanel{
     	String msg = chatField.getText();
     	history.add(msg);
     	historyIndex = history.size();
-    	soarAgent.getLanguageConnector().registerNewMessage(msg, MessageType.INSTRUCTOR_MESSAGE);
+    	LanguageConnector lang = (LanguageConnector)soarAgent.getLanguageConnector();
+    	lang.registerNewMessage(msg, MessageType.INSTRUCTOR_MESSAGE);
     }
 }

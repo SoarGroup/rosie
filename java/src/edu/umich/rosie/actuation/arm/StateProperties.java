@@ -1,4 +1,4 @@
-package edu.umich.insoar.world;
+package edu.umich.rosie.actuation.arm;
 
 import java.util.HashMap;
 import java.util.HashSet;

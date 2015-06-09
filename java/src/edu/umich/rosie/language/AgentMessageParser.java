@@ -8,7 +8,7 @@ import java.util.Set;
 
 import sml.Identifier;
 import sml.WMElement;
-import edu.umich.rosie.WMUtil;
+import edu.umich.rosie.SoarUtil;
 
 public class AgentMessageParser
 {
@@ -17,9 +17,9 @@ public class AgentMessageParser
 	public static String translateAgentMessage(Identifier id){
 		String message = null;
 		
-		String type = WMUtil.getValueOfAttribute(id, "type");
+		String type = SoarUtil.getValueOfAttribute(id, "type");
 		System.out.println("Got " + type + " message");
-		Identifier fieldsId = WMUtil.getIdentifierOfAttribute(id, "fields");
+		Identifier fieldsId = SoarUtil.getIdentifierOfAttribute(id, "fields");
 		if(type == null){
 			return null;
 		} else if(type.equals("get-next-task")){
@@ -49,7 +49,7 @@ public class AgentMessageParser
 	}
 	
 	public static String translateGetPredicateInfo(Identifier fieldsId){
-		String predicateName = WMUtil.getValueOfAttribute(fieldsId, "predicate-name");
+		String predicateName = SoarUtil.getValueOfAttribute(fieldsId, "predicate-name");
 		if (predicateName == null){
 			return "I encountered a new word describing an object, can you help?";
 		} else {
@@ -66,7 +66,7 @@ public class AgentMessageParser
 	}
 	
 	public static String translateObjectDescription(Identifier fields){
-		Identifier descId = WMUtil.getIdentifierOfAttribute(fields, "object");
+		Identifier descId = SoarUtil.getIdentifierOfAttribute(fields, "object");
 		if(descId == null){
 			return "An object";
 		}
@@ -84,9 +84,9 @@ public class AgentMessageParser
 //        String message = null;
 //        
 //        
-//        String type = WMUtil.getValueOfAttribute(id, "type");
+//        String type = SoarUtil.getValueOfAttribute(id, "type");
 //        System.out.println(type);
-//        Identifier fieldsId = WMUtil.getIdentifierOfAttribute(id, "fields");
+//        Identifier fieldsId = SoarUtil.getIdentifierOfAttribute(id, "fields");
 //        if(type == null){
 //            return null; 
 //        } else if(type.equals("different-attribute-question")){
@@ -102,7 +102,7 @@ public class AgentMessageParser
 //        } else if(type.equals("category-of-property")){
 //            message = translateCategoryPropertyQuestion(fieldsId);
 //        } else if(type.equals("how-to-measure")){
-//        	message = String.format("How do I measure %s?", WMUtil.getValueOfAttribute(fieldsId, "property"));
+//        	message = String.format("How do I measure %s?", SoarUtil.getValueOfAttribute(fieldsId, "property"));
 //        } else if(type.equals("ambiguous-category")){
 //        	message = translateAmbiguousCategory(fieldsId);
 //        } else if(type.equals("describe-object")){
@@ -114,13 +114,13 @@ public class AgentMessageParser
 //        } else if(type.equals("parse-failure-response")){
 //        	message = "I didn't understand your last message";
 //        } else if(type.equals("single-word-response")){
-//        	message = WMUtil.getValueOfAttribute(fieldsId, "word");
+//        	message = SoarUtil.getValueOfAttribute(fieldsId, "word");
 //        	if(message.equals("dontknow")){
 //        		message = "I don't know";}
 //        } else if(type.equals("no-object")){
 //        	message = "I do not see the object you are talking about";
 //        } else if(type.equals("count-response")){
-//        	int count = Integer.parseInt(WMUtil.getValueOfAttribute(fieldsId, "count"));
+//        	int count = Integer.parseInt(SoarUtil.getValueOfAttribute(fieldsId, "count"));
 //        	message = "There " + (count == 1 ? "is" : "are") + " " + count;
 //        } else if(type.equals("unknown-message")){
 //        	message = "I was not able to understand your last message";
@@ -173,7 +173,7 @@ public class AgentMessageParser
 //        } else if(type.equals("game-new-action2")){
 //            message = "Ok tell me the name of a legal action in this game.";
 //        } else if(type.equals("game-new-action")){
-//            String gameName = WMUtil.getValueOfAttribute(fieldsId, "game-name");
+//            String gameName = SoarUtil.getValueOfAttribute(fieldsId, "game-name");
 //            message = "I don't know how to play " + gameName + 
 //                    ". Is it a multiplayer game?";
 //        } else if(type.equals("game-new-verb")){
@@ -185,10 +185,10 @@ public class AgentMessageParser
 //        } else if(type.equals("game-new-parameter1")){
 //            message = "Ok describe an object for this action.\n";
 //        } else if(type.equals("game-new-parameter")){
-//        	String stateType = WMUtil.getValueOfAttribute(fieldsId, "state-type");
+//        	String stateType = SoarUtil.getValueOfAttribute(fieldsId, "state-type");
 //            message = "Ok describe an object for this " + stateType + " state.";
 //        } else if(type.equals("game-new-condition")){
-//        	String obj = WMUtil.getValueOfAttribute(fieldsId, "type");
+//        	String obj = SoarUtil.getValueOfAttribute(fieldsId, "type");
 //            message = "Ok list a condition for the " + obj + ", or another object.";
 //        } else if(type.equals("game-new-heuristic")){
 //            message = "Are there any heuristics you can teach me? (or finished)";
@@ -251,7 +251,7 @@ public class AgentMessageParser
 //
 //	private static String translateTeachingRequest(Identifier id){
 //    	LingObject obj = LingObject.createFromSoarSpeak(id, "description");
-//    	String prep = WMUtil.getValueOfAttribute(id, "preposition");
+//    	String prep = SoarUtil.getValueOfAttribute(id, "preposition");
 //    	if (prep != null)
 //    	    return "I don't know the preposition " + prep + ". Please teach me with examples";
 //    	else {
@@ -260,7 +260,7 @@ public class AgentMessageParser
 //    }
 //    
 //    private static String translateDifferentAttributeQuestion(Identifier id){
-//        Set<String> exceptions = WMUtil.getAllValuesOfAttribute(id, "exception");
+//        Set<String> exceptions = SoarUtil.getAllValuesOfAttribute(id, "exception");
 //        String exceptionStr = getExceptionString(exceptions);
 //        LingObject differentObject = LingObject.createFromSoarSpeak(id, "different-object");
 //        Set<LingObject> similarObjects = LingObject.createAllFromSoarSpeak(id, "similar-object");
@@ -272,7 +272,7 @@ public class AgentMessageParser
 //    }
 //    
 //    private static String translateCommonAttributeQuestion(Identifier id){
-//        Set<String> exceptions = WMUtil.getAllValuesOfAttribute(id, "exception");
+//        Set<String> exceptions = SoarUtil.getAllValuesOfAttribute(id, "exception");
 //        String exceptionStr = getExceptionString(exceptions);
 //        Set<LingObject> similarObjects = LingObject.createAllFromSoarSpeak(id, "object");
 //        String message = "What do ";
@@ -284,7 +284,7 @@ public class AgentMessageParser
 //    }
 //    
 //    private static String translateAttributePresenceQuestion(Identifier id){
-//        Set<String> exceptions = WMUtil.getAllValuesOfAttribute(id, "exception");
+//        Set<String> exceptions = SoarUtil.getAllValuesOfAttribute(id, "exception");
 //        String exceptionStr = getExceptionString(exceptions);
 //        LingObject object = LingObject.createFromSoarSpeak(id, "object");
 //        String message = String.format("What attribute does %s have?", object.toString());
@@ -293,18 +293,18 @@ public class AgentMessageParser
 //    }
 //    
 //    private static String translateCategoryQuestion(Identifier id){
-//        String word = WMUtil.getValueOfAttribute(id, "word");
+//        String word = SoarUtil.getValueOfAttribute(id, "word");
 //        return String.format("What kind of attribute is %s?", word);
 //    }
 //
 //    private static String translateCategoryPropertyQuestion(Identifier id){
-//        String word = WMUtil.getValueOfAttribute(id, "word");
+//        String word = SoarUtil.getValueOfAttribute(id, "word");
 //        return String.format("What type of property is %s?", word);
 //    }
 //    
 //    private static String translateAmbiguousCategory(Identifier id){
-//    	Set<String> cats = WMUtil.getAllValuesOfAttribute(id, "result");
-//    	String word = WMUtil.getValueOfAttribute(id, "word");
+//    	Set<String> cats = SoarUtil.getAllValuesOfAttribute(id, "result");
+//    	String word = SoarUtil.getValueOfAttribute(id, "word");
 //    	String s = "By " + word + " do you mean ";
 //    	int i = 0;
 //    	for(String cat : cats){
@@ -318,7 +318,7 @@ public class AgentMessageParser
 //    }
 //    
 //    private static String translateSceneObjectsQuestion(Identifier id){
-//        Identifier objects = WMUtil.getIdentifierOfAttribute(id, "objects");
+//        Identifier objects = SoarUtil.getIdentifierOfAttribute(id, "objects");
 //        
 //        Set<LingObject> object = LingObject.createAllFromSoarSpeak(objects, "object");
 //        String message = "The objects in the scene are";
@@ -347,7 +347,7 @@ public class AgentMessageParser
 //    }
 //    
 //    private static String translateGoalDemoQuestion(Identifier id){
-//        Identifier description = WMUtil.getIdentifierOfAttribute(id, "description");
+//        Identifier description = SoarUtil.getIdentifierOfAttribute(id, "description");
 //        
 //        List<ObjectRelation> sentence = ObjectRelation.createAllFromSoarSpeak(description, "sentence");
 //        String message = "The goal state is:\n";
@@ -363,7 +363,7 @@ public class AgentMessageParser
 //        return message;
 //    }
 //    private static String translateObjectsQuestion(Identifier id){
-//        Identifier objects = WMUtil.getIdentifierOfAttribute(id, "objects");
+//        Identifier objects = SoarUtil.getIdentifierOfAttribute(id, "objects");
 //        
 //        Set<LingObject> object = LingObject.createAllFromSoarSpeak(objects, "object");
 //        String message = "";
@@ -392,7 +392,7 @@ public class AgentMessageParser
 //        return message;
 //    }
 //    private static String translateSceneQuestion(Identifier id){
-//      String prep = WMUtil.getValueOfAttribute(id, "prep");
+//      String prep = SoarUtil.getValueOfAttribute(id, "prep");
 //      String prep2 = prep.replaceAll("-", " ");
 //      String object1 = LingObject.createFromSoarSpeak(id, "object1").toString();
 //      String object2 = LingObject.createFromSoarSpeak(id, "object2").toString();
@@ -400,9 +400,9 @@ public class AgentMessageParser
 //  }
 //    
 //    private static String translateValueQuestion(Identifier id){
-//        Identifier attRelationId = WMUtil.getIdentifierOfAttribute(id, "attribute-relation");
+//        Identifier attRelationId = SoarUtil.getIdentifierOfAttribute(id, "attribute-relation");
 //        String objString = LingObject.createFromSoarSpeak(attRelationId, "object1").toString();
-//        String attribute = WMUtil.getValueOfAttribute(attRelationId, "word");
+//        String attribute = SoarUtil.getValueOfAttribute(attRelationId, "word");
 //        
 //        return String.format("What %s is %s?", attribute, objString);
 //    }
@@ -428,7 +428,7 @@ public class AgentMessageParser
 //        }
 //    	
 //    	//kind of a hack :(
-//    	Identifier objectId = WMUtil.getIdentifierOfAttribute(id, "object");
+//    	Identifier objectId = SoarUtil.getIdentifierOfAttribute(id, "object");
 //    	if (objectId == null)
 //    		return "nothing";
 //    	// CK: choose a/an correctly
@@ -442,14 +442,14 @@ public class AgentMessageParser
 //    }
 //    
 //    private static String translateMissingObjectQuestion(Identifier id){
-//    	Identifier objectId = WMUtil.getIdentifierOfAttribute(id, "description");
+//    	Identifier objectId = SoarUtil.getIdentifierOfAttribute(id, "description");
 //    	if (objectId == null)
 //    		return "Can you help me find the object I just lost?";
 //        return "I can't find " + LingObject.createFromSoarSpeak(id, "description") + ". Can you help?";
 //    }
 //    
 //    private static String translateWhichQuestion(Identifier id){
-//    	Identifier objectId = WMUtil.getIdentifierOfAttribute(id, "description");
+//    	Identifier objectId = SoarUtil.getIdentifierOfAttribute(id, "description");
 //    	if (objectId == null)
 //    		return "Which one?";
 //        return "Which " + LingObject.createFromSoarSpeak(id, "description") + "?";

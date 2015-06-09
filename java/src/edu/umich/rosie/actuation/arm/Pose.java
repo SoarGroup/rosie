@@ -1,4 +1,4 @@
-package edu.umich.insoar.world;
+package edu.umich.rosie.actuation.arm;
 
 import sml.FloatElement;
 import sml.Identifier;
@@ -146,6 +146,12 @@ public class Pose implements IInputLinkElement
                 }
             }
         }
+    }
+    
+    @Override
+    public synchronized void onInitSoar(){
+    	wmes = null;
+    	poseID = null;
     }
     
     // remove the object from the input-link

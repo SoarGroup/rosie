@@ -1,4 +1,4 @@
-package edu.umich.insoar.world;
+package edu.umich.rosie.actuation.arm;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,8 +13,9 @@ import sml.Identifier;
 import sml.smlRunEventId;
 import probcog.lcmtypes.*;
 import april.util.TimeUtil;
+import edu.umich.rosie.SVSCommands;
 import edu.umich.rosie.SoarAgent;
-import edu.umich.rosie.gui.InSoar;
+
 public class WorldModel implements RunEventInterface
 {    
     
@@ -50,7 +51,6 @@ public class WorldModel implements RunEventInterface
     	}
     	
     	objects.clear();
-    	soarAgent.commitChanges();
     }
     
     public synchronized void linkObjects(Set<String> sourceIds, String destId){
@@ -89,10 +89,6 @@ public class WorldModel implements RunEventInterface
     {
     	if(newObservation == null){
     		return;
-    	}
-    	if(InSoar.DEBUG_TRACE){
-    		time = TimeUtil.utime();
-    		System.out.println("!!! GOT MESSAGE !!!");
     	}
     	if(objectsId == null){
     		objectsId = agent.GetInputLink().CreateIdWME("objects");
@@ -151,10 +147,6 @@ public class WorldModel implements RunEventInterface
         
         newObservation = null;
         sendObservation();
-        
-        if(InSoar.DEBUG_TRACE){
-			System.out.println(String.format("%-20s : %d", "WORLD MODEL", (TimeUtil.utime() - time)/1000));
-        }
     }
     
     public synchronized void newObservation(observations_t observation){
@@ -175,7 +167,7 @@ public class WorldModel implements RunEventInterface
     	}
 
     	soar_objects_t outgoingObs = new soar_objects_t();
-    	outgoingObs.utime = InSoar.GetSoarTime();
+    	outgoingObs.utime = TimeUtil.utime();
     	outgoingObs.objects = objDatas.toArray(new object_data_t[objDatas.size()]);
     	outgoingObs.num_objects = outgoingObs.objects.length;
     	

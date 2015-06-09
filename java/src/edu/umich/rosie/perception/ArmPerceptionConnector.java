@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -29,12 +30,11 @@ import sml.smlRunEventId;
 import probcog.lcmtypes.*;
 import april.util.PeriodicTasks;
 import april.util.TimeUtil;
-import edu.umich.insoar.world.PerceptualProperty;
-import edu.umich.insoar.world.WorldModel;
 import edu.umich.rosie.AgentConnector;
 import edu.umich.rosie.SoarAgent;
 import edu.umich.rosie.SoarUtil;
-import edu.umich.rosie.gui.InSoar;
+import edu.umich.rosie.actuation.arm.PerceptualProperty;
+import edu.umich.rosie.actuation.arm.WorldModel;
 
 public class ArmPerceptionConnector extends AgentConnector implements LCMSubscriber {
 	private static int SEND_TRAINING_FPS = 10;
@@ -47,9 +47,6 @@ public class ArmPerceptionConnector extends AgentConnector implements LCMSubscri
 	// Object being pointed to
 	private int pointedId = -1;
 	private int currentTimer = -10;
-	private long prevTime = 0;
-	private long totalTime = 0;
-
 	
     private HashMap<training_label_t, Identifier> outstandingTraining;
     
@@ -57,13 +54,12 @@ public class ArmPerceptionConnector extends AgentConnector implements LCMSubscri
     
     protected WorldModel world;
     private String classifiersFile;
-    private String armStatus = "wait";
     
-    public ArmPerceptionConnector(SoarAgent soarAgent, String classifiersFile)
+    public ArmPerceptionConnector(SoarAgent soarAgent, Properties props)
     {
     	super(soarAgent);
 
-    	this.classifiersFile = classifiersFile;
+    	this.classifiersFile = props.getProperty("classifiers-file", "default");
     	
     	outstandingTraining = new HashMap<training_label_t, Identifier>();
         
@@ -71,6 +67,13 @@ public class ArmPerceptionConnector extends AgentConnector implements LCMSubscri
         lcm = LCM.getSingleton();
         
         sendTrainingTimer = new Timer();
+        
+        String[] outputHandlerNames = new String[]{ "send-training-label", "modify-scene" };
+        this.setOutputHandlerNames(outputHandlerNames);
+    }
+    
+    public WorldModel getWorld(){
+    	return world;
     }
     
     @Override
@@ -84,7 +87,6 @@ public class ArmPerceptionConnector extends AgentConnector implements LCMSubscri
         }, 1000, 1000/SEND_TRAINING_FPS);
         
         lcm.subscribe("OBSERVATIONS", this);
-        lcm.subscribe("ROBOT_ACTION", this);
     }
     
     @Override
@@ -94,7 +96,6 @@ public class ArmPerceptionConnector extends AgentConnector implements LCMSubscri
     	sendTrainingTimer.cancel();
     	
         lcm.unsubscribe("OBSERVATIONS", this);
-        lcm.unsubscribe("ROBOT_ACTION", this);
     }
     
     /*************************************************
@@ -103,7 +104,7 @@ public class ArmPerceptionConnector extends AgentConnector implements LCMSubscri
     
     private void queueTrainingLabel(Integer objId, Integer cat, String label, Identifier id){
     	training_label_t newLabel = new training_label_t();
-    	newLabel.utime = InSoar.GetSoarTime();
+    	newLabel.utime = TimeUtil.utime();
     	newLabel.id = objId;
     	newLabel.cat = new category_t();
     	newLabel.cat.cat = cat;
@@ -119,7 +120,7 @@ public class ArmPerceptionConnector extends AgentConnector implements LCMSubscri
     			return;
     		}
     		training_data_t data = new training_data_t();
-    		data.utime = InSoar.GetSoarTime();
+    		data.utime = TimeUtil.utime();
     		data.num_labels = outstandingTraining.size();
     		data.labels = new training_label_t[data.num_labels];
     		int i = 0;
@@ -164,7 +165,7 @@ public class ArmPerceptionConnector extends AgentConnector implements LCMSubscri
         stepNumber++;
         
         SoarUtil.updateIntWME(timeId, "steps", stepNumber);
-        SoarUtil.updateIntWME(timeId, "seconds", InSoar.GetSoarTime() / 1000000);
+        SoarUtil.updateIntWME(timeId, "seconds", TimeUtil.utime() / 1000000);
         
         // Update pointed object
         SoarUtil.updateIntWME(inputLink, "pointed-object", pointedId);
@@ -175,10 +176,6 @@ public class ArmPerceptionConnector extends AgentConnector implements LCMSubscri
     		SoarUtil.updateStringWME(timeId, "timer-status", "expired");
     	} else {
     		SoarUtil.updateStringWME(timeId, "timer-status", "ticking");
-    	}
-    	
-    	if(InSoar.DEBUG_TRACE){
-    		System.out.println(String.format("%-20s : %d", "PERCEPTION CONNECTOR", (TimeUtil.utime() - time)/1000));
     	}
     }
 
@@ -252,23 +249,16 @@ public class ArmPerceptionConnector extends AgentConnector implements LCMSubscri
                 e.printStackTrace();
                 return;
             }
-    	} else if(channel.equals("ROBOT_ACTION")){
-    		try {
-    			robot_action_t action = new robot_action_t(ins);
-    			armStatus = action.action.toLowerCase();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
     	}
     }
     
-    public JMenu createMenu(){
+    public void createMenu(JMenuBar menuBar){
     	JMenu perceptionMenu = new JMenu("Perception");
     	JMenuItem clearDataButton = new JMenuItem("Clear Classifier Data");
         clearDataButton.addActionListener(new ActionListener(){
         	public void actionPerformed(ActionEvent e){
         		perception_command_t cmd = new perception_command_t();
-        		cmd.utime = InSoar.GetSoarTime();
+        		cmd.utime = TimeUtil.utime();
         		cmd.command = "CLEAR_CLASSIFIERS";
                 LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
         	}
@@ -280,7 +270,7 @@ public class ArmPerceptionConnector extends AgentConnector implements LCMSubscri
         loadDataButton.addActionListener(new ActionListener(){
         	public void actionPerformed(ActionEvent e){
         		perception_command_t cmd = new perception_command_t();
-        		cmd.utime = InSoar.GetSoarTime();
+        		cmd.utime = TimeUtil.utime();
         		cmd.command = "LOAD_CLASSIFIERS=" + classifiersFile;
                 LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
         	}
@@ -292,7 +282,7 @@ public class ArmPerceptionConnector extends AgentConnector implements LCMSubscri
         saveDataButton.addActionListener(new ActionListener(){
         	public void actionPerformed(ActionEvent e){
         		perception_command_t cmd = new perception_command_t();
-        		cmd.utime = InSoar.GetSoarTime();
+        		cmd.utime = TimeUtil.utime();
         		cmd.command = "SAVE_CLASSIFIERS=" + classifiersFile;
                 LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
         	}
@@ -308,7 +298,7 @@ public class ArmPerceptionConnector extends AgentConnector implements LCMSubscri
             			  "Load Classifier Data From File",
             			  JOptionPane.QUESTION_MESSAGE);
         		perception_command_t cmd = new perception_command_t();
-        		cmd.utime = InSoar.GetSoarTime();
+        		cmd.utime = TimeUtil.utime();
         		cmd.command = "LOAD_CLASSIFIERS=" + filename;
                 LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
         	}
@@ -324,7 +314,7 @@ public class ArmPerceptionConnector extends AgentConnector implements LCMSubscri
           			  "Save Classifier Data To File",
           			  JOptionPane.QUESTION_MESSAGE);
         		perception_command_t cmd = new perception_command_t();
-        		cmd.utime = InSoar.GetSoarTime();
+        		cmd.utime = TimeUtil.utime();
         		cmd.command = "SAVE_CLASSIFIERS=" + filename;
                 LCM.getSingleton().publish("PERCEPTION_COMMAND", cmd);
         	}
@@ -332,11 +322,11 @@ public class ArmPerceptionConnector extends AgentConnector implements LCMSubscri
         
         perceptionMenu.add(saveDataFileButton);
         
-        return perceptionMenu;
+        menuBar.add(perceptionMenu);
     }
 
 	@Override
-	protected void onSoarInit() {
+	protected void onInitSoar() {
 		timeId = null;
 		outstandingTraining.clear();
 	}

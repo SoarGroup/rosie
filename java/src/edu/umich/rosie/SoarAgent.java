@@ -1,32 +1,63 @@
 package edu.umich.rosie;
 
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Properties;
 
-import edu.umich.rosie.actuation.MobileActuationConnector;
-import edu.umich.rosie.gui.RosieGUI;
-import edu.umich.rosie.gui.RosieGUI.RosieConfig;
-import edu.umich.rosie.language.LanguageConnector;
-import edu.umich.rosie.perception.MobilePerceptionConnector;
-import probcog.rosie.actuation.*;
-import probcog.rosie.language.*;
-import probcog.rosie.perception.*;
 import sml.*;
 import sml.Agent.PrintEventInterface;
 import sml.Agent.RunEventInterface;
 
 public class SoarAgent implements RunEventInterface, PrintEventInterface {
+	public static class AgentConfig{
+		public String agentName;
 
-	private MobilePerceptionConnector perceptionConn;
-	private MobileActuationConnector actuationConn;
-	private LanguageConnector languageConn;
+		public String agentSource;
+		public String smemSource;
+
+		public boolean spawnDebugger;
+		public int watchLevel;
+		public int throttleMS;
+		
+		public String speechFile;
+
+		public Boolean writeLog;
+
+		public AgentConfig(Properties props){
+	        spawnDebugger = props.getProperty("spawn-dubugger", "true").equals("true");
+
+	        agentName = props.getProperty("agent-name", "SoarAgent");
+			agentSource = props.getProperty("agent-source", null);
+			smemSource = props.getProperty("smem-source", null);
+
+	        try{
+	        	watchLevel = Integer.parseInt(props.getProperty("watch-level", "1"));
+	        } catch (NumberFormatException e){
+	        	watchLevel = 1;
+	        }
+
+	        try{
+	        	throttleMS = Integer.parseInt(props.getProperty("decision-throttle-ms", "0"));
+	        } catch(NumberFormatException e){
+	        	throttleMS = 0;
+	        }
+
+			speechFile = props.getProperty("speech-file", "audio_files/sample");
+
+	        writeLog = props.getProperty("enable-log", "false").equals("true");
+		}
+	}
+
+	private AgentConnector perceptionConn;
+	private AgentConnector actuationConn;
+	private AgentConnector languageConn;
 
 	private Kernel kernel;
 	private Agent agent;
 
-	private RosieGUI.RosieConfig config;
+	private AgentConfig config;
 
 	private boolean isRunning = false;
 
@@ -34,29 +65,48 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 
 	private PrintWriter logWriter;
 
-	public SoarAgent(RosieGUI.RosieConfig config){
-		this.config = config;
-
-		initSoar();
-
-		perceptionConn = new MobilePerceptionConnector(this);
-		actuationConn = new MobileActuationConnector(this);
-		languageConn = new LanguageConnector(this, config.speechFile);
+	public SoarAgent(Properties props){
+		this.config = new AgentConfig(props);
 	}
 	
-	public MobilePerceptionConnector getPerceptionConnector(){
+	// Soar Stuff
+	public Agent getAgent(){
+		return agent;
+	}
+	
+	public Kernel getKernel(){
+		return kernel;
+	}
+
+	public boolean isRunning(){
+		return isRunning;
+	}
+
+	// Perception
+	public void setPerceptionConnector(AgentConnector conn){
+		this.perceptionConn = conn;
+	}
+	public AgentConnector getPerceptionConnector(){
 		return perceptionConn;
 	}
 	
-	public MobileActuationConnector getActuationConnector(){
+	// Actuation
+	public void setActuationConnector(AgentConnector conn){
+		this.actuationConn = conn;
+	}
+	public AgentConnector getActuationConnector(){
 		return actuationConn;
 	}
 	
-	public LanguageConnector getLanguageConnector(){
+	// Language
+	public void setLanguageConnector(AgentConnector conn){
+		this.languageConn = conn;
+	}
+	public AgentConnector getLanguageConnector(){
 		return languageConn;
 	}
 	
-	private void initSoar(){
+	public void createAgent(){
     	kernel = Kernel.CreateKernelInNewThread();
         if (kernel == null){
            throw new IllegalStateException("CreateKernelInNewThread() returned null");
@@ -78,7 +128,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         	boolean success = agent.SpawnDebugger(kernel.GetListenerPort());
         	System.out.println("Spawn Debugger: " + (success ? "SUCCESS" : "FAIL"));
         }
-
+        
         agent.RegisterForRunEvent(smlRunEventId.smlEVENT_BEFORE_INPUT_PHASE, this, null);
         agent.RegisterForRunEvent(smlRunEventId.smlEVENT_AFTER_INPUT_PHASE, this, null);
         agent.RegisterForRunEvent(smlRunEventId.smlEVENT_AFTER_OUTPUT_PHASE, this, null);
@@ -95,15 +145,11 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 		agent.ExecuteCommandLine(String.format("watch %d", config.watchLevel));
 
         sourceAgent();
+        
+        perceptionConn.connect();
+        actuationConn.connect();
+        languageConn.connect();
     }
-
-	public Agent getAgent(){
-		return agent;
-	}
-
-	public boolean isRunning(){
-		return isRunning;
-	}
 
 	/**
      * Spawns a new thread that invokes a run command on the agent
@@ -129,6 +175,9 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 
 	public void kill(){
 		agent.KillDebugger();
+		languageConn.disconnect();
+		perceptionConn.disconnect();
+		actuationConn.disconnect();
 		//kernel.DestroyAgent(agent);
     	// SBW removed DestroyAgent call, it hangs in headless mode for some reason
     	// (even when the KillDebugger isn't there)
@@ -146,7 +195,6 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 		reinitAgent();
 		sourceAgent();
 	}
-
 
 	public void backup(String sessionName){
 		if(isRunning){

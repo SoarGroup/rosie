@@ -1,7 +1,6 @@
-package edu.umich.insoar.world;
+package edu.umich.rosie.actuation.arm;
 
 
-import edu.umich.insoar.ChatFrame;
 import edu.umich.insoar.testing.ActionType;
 import sml.Identifier;
 /**
@@ -77,6 +76,11 @@ public class Messages implements IInputLinkElement
         nextID.CreateStringWME("next", "nil");
 
         messageChanged = false;
+    }
+    
+    @Override
+    public synchronized void onInitSoar(){
+    	messageId = null;
     }
 
     @Override

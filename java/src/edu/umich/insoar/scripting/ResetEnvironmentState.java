@@ -8,7 +8,7 @@ import lcm.lcm.LCMDataInputStream;
 import lcm.lcm.LCMSubscriber;
 import april.util.TimeUtil;
 import probcog.lcmtypes.*;
-import edu.umich.insoar.world.WorldModel;
+import edu.umich.rosie.actuation.arm.WorldModel;
 
 
 public class ResetEnvironmentState implements UiCommand {

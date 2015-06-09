@@ -95,11 +95,11 @@ public abstract class AgentConnector implements OutputEventInterface, RunEventIn
 
     // Handling an init-soar
 	public void agentEventHandler(int agentEventId, Object data, String info) {
-		onSoarInit();
+		onInitSoar();
 	}
 	
-	protected abstract void onSoarInit();
+	protected abstract void onInitSoar();
 	
 	// Adding a Java Menu
-	protected abstract JMenu createMenu();
+	protected abstract void createMenu(JMenuBar menuBar);
 }

@@ -12,7 +12,6 @@ import probcog.lcmtypes.perception_command_t;
 import probcog.lcmtypes.robot_command_t;
 import april.util.TimeUtil;
 import edu.umich.insoar.scripting.ResetEnvironmentState;
-import edu.umich.rosie.gui.InSoar;
 
 public class EnvironmentMenu {
 	public static JMenu createMenu() {
@@ -28,7 +27,7 @@ public class EnvironmentMenu {
 				LCM.getSingleton().publish("ROBOT_COMMAND", command);
 
 				perception_command_t pcmd = new perception_command_t();
-				pcmd.utime = InSoar.GetSoarTime();
+				pcmd.utime = TimeUtil.utime();
 				pcmd.command = "reset=time";
 				LCM.getSingleton().publish("GUI_COMMAND", pcmd);
 			}

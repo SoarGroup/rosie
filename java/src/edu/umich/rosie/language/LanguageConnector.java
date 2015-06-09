@@ -1,15 +1,16 @@
 package edu.umich.rosie.language;
 
-import edu.umich.insoar.ChatPanel;
+import java.util.Properties;
+
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+
+import edu.umich.rosie.AgentConnector;
 import edu.umich.rosie.SoarAgent;
 import edu.umich.rosie.SoarUtil;
-import april.util.TimeUtil;
-import sml.Agent;
 import sml.Identifier;
 import sml.WMElement;
-import sml.smlRunEventId;
-import sml.Agent.OutputEventInterface;
-import sml.Agent.RunEventInterface;
+
 
 public class LanguageConnector extends AgentConnector {
 	public enum MessageType{
@@ -19,29 +20,23 @@ public class LanguageConnector extends AgentConnector {
     private TextToSpeech tts;  
     private SpeechToText stt;
     
-    private SoarAgent soarAgent;
     private ChatPanel chat;
     
 	private Messages messages;
 	
 	Identifier languageId = null;
 	
-	public LanguageConnector(SoarAgent agent, String speechFile){
+	public LanguageConnector(SoarAgent agent, Properties props){
+		super(agent);
+		
+		String speechFile = props.getProperty("speech-file", "audio_file/sample");
+		
         this.tts = new TextToSpeech();
         this.stt = new SpeechToText(speechFile, agent);
-        this.soarAgent = agent;
        
         messages = new Messages();
     	
-        String[] outputHandlerStrings = { "send-message" };
-
-        for (String outputHandlerString : outputHandlerStrings)
-        {
-        	soarAgent.getAgent().AddOutputHandler(outputHandlerString, this, null);
-        }
-        
-        soarAgent.getAgent().RegisterForRunEvent(
-                smlRunEventId.smlEVENT_BEFORE_INPUT_PHASE, this, null);
+        this.setOutputHandlerNames(new String[]{ "send-message" });
 	}
 	
 	public void setChat(ChatPanel chat){
@@ -95,43 +90,21 @@ public class LanguageConnector extends AgentConnector {
     	messages.addMessage(message);
     }
     
-    public void runEventHandler(int eventID, Object data, Agent agent, int phase)
+    @Override
+    protected void onInputPhase(Identifier inputLink)
     {
-   		messages.updateInputLink(agent.GetInputLink());
+   		messages.updateInputLink(inputLink);
     }
 
     @Override
-    public void outputEventHandler(Object data, String agentName,
-            String attributeName, WMElement wme)
-    {
-    	synchronized(this){
-    		if (!(wme.IsJustAdded() && wme.IsIdentifier()))
-            {
-                return;
-            }
-    		Identifier id = wme.ConvertToIdentifier();
-            System.out.println(wme.GetAttribute());
-            
-
-            try{
-	            if (wme.GetAttribute().equals("send-message"))
-	            {
-	                processOutputLinkMessage(id);
-	            }
-	            soarAgent.getAgent().Commit();
-            } catch (IllegalStateException e){
-            	System.out.println(e.getMessage());
-            }
+    protected void onOutputEvent(String attName, Identifier id){
+    	if (attName.equals("send-message")){
+    		processOutputLinkMessage(id);
     	}
     }
 
 	private void processOutputLinkMessage(Identifier messageId)
     {	
-		if (messageId == null)
-        {
-            return;
-        }
-
         if (messageId.GetNumberChildren() == 0)
         {
             messageId.CreateStringWME("status", "error");
@@ -150,7 +123,7 @@ public class LanguageConnector extends AgentConnector {
         String type = SoarUtil.getValueOfAttribute(messageId, "type",
                 "Message does not have ^type");
         String message = "";
-        message = AgentMessageParser2.translateAgentMessage(messageId);
+        message = AgentMessageParser.translateAgentMessage(messageId);
         if(message != null && !message.equals("")){
         	this.registerNewMessage(message, MessageType.AGENT_MESSAGE);
         }
@@ -200,4 +173,10 @@ public class LanguageConnector extends AgentConnector {
 
         messageId.CreateStringWME("status", "complete");
     }
+
+	@Override
+	protected void onInitSoar() { }
+
+	@Override
+	public void createMenu(JMenuBar menuBar) {}
 }
