@@ -10,8 +10,8 @@ import java.util.List;
 import javax.swing.JFileChooser;
 
 //import edu.umich.insoar.ChatFrame;
-import edu.umich.insoar.scripting.PointAtObject;
-import edu.umich.insoar.scripting.ResetEnvironmentState;
+//import edu.umich.insoar.scripting.PointAtObject;
+//import edu.umich.insoar.scripting.ResetEnvironmentState;
 
 public class Util {
 	
@@ -86,20 +86,20 @@ public class Util {
     }
     
     public static void executeUiAction(String action) {
-    	try {
-    		if(action.contains("select")){
-    			Integer id = Integer.parseInt(action.split(" ")[1]);
-    			(new PointAtObject(id)).execute();
-    		}
-    		else if (action.contains("reset")){
-    			Integer id = Integer.parseInt(action.split(" ")[1]);
-    			//(new ResetEnvironmentState(id, EnvironmentMenu.getHeldObject())).execute();
-    		}		
-    		else {
-    			ScriptDataMap.getInstance().getUiCommand(action).execute();
-    		}
-		} catch (UiCommandNotFoundException e) {
-			e.printStackTrace();
-		}
+//    	try {
+//    		if(action.contains("select")){
+//    			Integer id = Integer.parseInt(action.split(" ")[1]);
+//    			//(new PointAtObject(id)).execute();
+//    		}
+//    		else if (action.contains("reset")){
+//    			Integer id = Integer.parseInt(action.split(" ")[1]);
+//    			//(new ResetEnvironmentState(id, EnvironmentMenu.getHeldObject())).execute();
+//    		}		
+//    		else {
+//    			//ScriptDataMap.getInstance().getUiCommand(action).execute();
+//    		}
+//		} catch (UiCommandNotFoundException e) {
+//			e.printStackTrace();
+//		}
     }
 }
