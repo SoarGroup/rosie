@@ -23,7 +23,9 @@ public class BOLTLGSupport {
 		String[] sentences = input.split("\\.");
 		
 		for (String sentence : sentences) {
-			lgSupport.handleSentence(sentence);
+			if(!sentence.equals("")){
+				lgSupport.handleSentence(sentence);
+			}
 		}
 	}
 	
