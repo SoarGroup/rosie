@@ -1,10 +1,12 @@
-package edu.umich.rosie;
+package edu.umich.rosie.soar;
 
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Properties;
+
+import edu.umich.rosie.AgentConnector;
 
 import sml.*;
 import sml.Agent.PrintEventInterface;
@@ -174,10 +176,18 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 	}
 
 	public void kill(){
+		queueStop = true;
+		while(isRunning){
+			try {
+				Thread.sleep(10);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		agent.KillDebugger();
 		languageConn.disconnect();
 		perceptionConn.disconnect();
 		actuationConn.disconnect();
-		agent.KillDebugger();
 		//kernel.DestroyAgent(agent);
     	// SBW removed DestroyAgent call, it hangs in headless mode for some reason
     	// (even when the KillDebugger isn't there)

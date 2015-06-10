@@ -6,8 +6,8 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 
 import edu.umich.rosie.AgentConnector;
-import edu.umich.rosie.SoarAgent;
-import edu.umich.rosie.SoarUtil;
+import edu.umich.rosie.soar.SoarAgent;
+import edu.umich.rosie.soar.SoarUtil;
 import sml.Identifier;
 import sml.WMElement;
 

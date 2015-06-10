@@ -1,4 +1,4 @@
-package edu.umich.rosie; 
+package edu.umich.rosie.soar; 
 
 import java.util.HashSet;
 import java.util.Set;

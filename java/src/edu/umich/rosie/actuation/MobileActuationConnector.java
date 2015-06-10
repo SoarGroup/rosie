@@ -39,7 +39,7 @@ import lcm.lcm.LCM;
 import lcm.lcm.LCMDataInputStream;
 import lcm.lcm.LCMSubscriber;
 import edu.umich.rosie.AgentConnector;
-import edu.umich.rosie.SoarAgent;
+import edu.umich.rosie.soar.SoarAgent;
 
 public class MobileActuationConnector extends AgentConnector implements LCMSubscriber{
 //	private static int CL_FPS = 10;

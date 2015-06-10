@@ -33,8 +33,8 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import javax.swing.JPanel;
 
-import edu.umich.rosie.SoarAgent;
 import edu.umich.rosie.language.LanguageConnector.MessageType;
+import edu.umich.rosie.soar.SoarAgent;
 
 public class ChatPanel extends JPanel{
 	// GUI COMPONENTS

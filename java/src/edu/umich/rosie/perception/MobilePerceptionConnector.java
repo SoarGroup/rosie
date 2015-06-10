@@ -9,8 +9,8 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 
 import edu.umich.rosie.AgentConnector;
-import edu.umich.rosie.SoarAgent;
-import edu.umich.rosie.SoarUtil;
+import edu.umich.rosie.soar.SoarAgent;
+import edu.umich.rosie.soar.SoarUtil;
 import april.lcmtypes.pose_t;
 import april.util.TimeUtil;
 import lcm.lcm.LCM;

@@ -9,8 +9,8 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.TargetDataLine;
 
-import edu.umich.rosie.SoarAgent;
 import edu.umich.rosie.language.LanguageConnector.MessageType;
+import edu.umich.rosie.soar.SoarAgent;
 
 public class SpeechToText {
     // Audio Recorder for Speech to Text

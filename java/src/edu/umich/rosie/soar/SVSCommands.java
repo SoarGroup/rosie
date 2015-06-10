@@ -1,4 +1,4 @@
-package edu.umich.rosie;
+package edu.umich.rosie.soar;
 
 
 public class SVSCommands {

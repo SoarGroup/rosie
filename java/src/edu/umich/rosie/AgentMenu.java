@@ -7,6 +7,8 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
+import edu.umich.rosie.soar.SoarAgent;
+
 public class AgentMenu extends JMenu{
 	private SoarAgent agent;
 	public AgentMenu(SoarAgent soarAgent){

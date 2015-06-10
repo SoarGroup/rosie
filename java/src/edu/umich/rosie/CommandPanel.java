@@ -11,6 +11,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import edu.umich.rosie.soar.SoarAgent;
+
 import sml.Agent;
 import sml.Agent.RunEventInterface;
 import sml.Identifier;

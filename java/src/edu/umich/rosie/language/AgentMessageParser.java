@@ -8,7 +8,7 @@ import java.util.Set;
 
 import sml.Identifier;
 import sml.WMElement;
-import edu.umich.rosie.SoarUtil;
+import edu.umich.rosie.soar.SoarUtil;
 
 public class AgentMessageParser
 {

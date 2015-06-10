@@ -5,6 +5,8 @@ import java.util.HashSet;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 
+import edu.umich.rosie.soar.SoarAgent;
+
 import sml.*;
 import sml.Agent.OutputEventInterface;
 import sml.Agent.RunEventInterface;
