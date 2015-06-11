@@ -90,6 +90,12 @@ public class Pose implements ISoarObject
     }
     
     
+    public void updatePosition(double[] pos){
+        pose[PoseIndex.X.ordinal()].setValue(pos[0]);
+        pose[PoseIndex.Y.ordinal()].setValue(pos[1]);
+        pose[PoseIndex.Z.ordinal()].setValue(pos[2]);
+    }
+    
     public void updateWithString(String s){
         s = s.replace("[", "");
         s = s.replace("]", "");

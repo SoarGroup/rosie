@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Properties;
 
-import edu.umich.rosie.AgentConnector;
 
 import sml.*;
 import sml.Agent.PrintEventInterface;
@@ -28,7 +27,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 		public Boolean writeLog;
 
 		public AgentConfig(Properties props){
-	        spawnDebugger = props.getProperty("spawn-dubugger", "true").equals("true");
+	        spawnDebugger = props.getProperty("spawn-debugger", "true").equals("true");
 
 	        agentName = props.getProperty("agent-name", "SoarAgent");
 			agentSource = props.getProperty("agent-source", null);

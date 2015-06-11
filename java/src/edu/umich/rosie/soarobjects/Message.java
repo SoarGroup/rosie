@@ -18,6 +18,7 @@ public class Message implements ISoarObject
     
     public Message(String message, Integer messageNum){
     	this.message = message;
+    	this.messageNum = messageNum;
     }
     
     // Identifier of the message on the input link

@@ -1,12 +1,20 @@
 package edu.umich.rosie.language;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Properties;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 
-import edu.umich.rosie.AgentConnector;
+import lcm.lcm.LCM;
+import lcm.lcm.LCMDataInputStream;
+import lcm.lcm.LCMSubscriber;
+
+import april.util.TimeUtil;
+
+import edu.umich.rosie.lcmtypes.interaction_message_t;
+import edu.umich.rosie.soar.AgentConnector;
 import edu.umich.rosie.soar.SoarAgent;
 import edu.umich.rosie.soar.SoarUtil;
 import edu.umich.rosie.soarobjects.Message;
@@ -14,7 +22,7 @@ import sml.Identifier;
 import sml.WMElement;
 
 
-public class LanguageConnector extends AgentConnector {
+public class LanguageConnector extends AgentConnector implements LCMSubscriber{
 	public enum MessageType{
 		AGENT_MESSAGE, INSTRUCTOR_MESSAGE
 	};
@@ -23,8 +31,6 @@ public class LanguageConnector extends AgentConnector {
 	
     private TextToSpeech tts;  
     private SpeechToText stt;
-    
-    private ChatPanel chat;
     
 	private Message curMessage;
 	private HashSet<Message> messagesToRemove;
@@ -45,12 +51,16 @@ public class LanguageConnector extends AgentConnector {
         this.setOutputHandlerNames(new String[]{ "send-message" });
 	}
 	
-	public void setChat(ChatPanel chat){
-		this.chat = chat;
+	@Override
+	public void connect(){
+		super.connect();
+		LCM.getSingleton().subscribe("INSTRUCTION_MESSAGE.*", this);
 	}
 	
-	public ChatPanel getChat(){
-		return chat;
+	@Override
+	public void disconnect(){
+		super.disconnect();
+		LCM.getSingleton().unsubscribe("INSTRUCTION_MESSAGE.*", this);
 	}
 	
 	public TextToSpeech getTTS(){
@@ -73,28 +83,27 @@ public class LanguageConnector extends AgentConnector {
     		tts.speak(message);
     		break;
     	}
-   		chat.registerNewMessage(message, msgType);
-    	sendLCMChatMessage(message, msgType);
 	}
     
-    private void sendLCMChatMessage(String message, MessageType msgType){
-// AM: TODO
-//    	// Print message for logging
-//    	chat_message_t chat_message = new chat_message_t();
-//    	chat_message.utime = TimeUtil.utime();
-//    	chat_message.message = message;
-//    	chat_message.sender = sender;
-//    	LCM.getSingleton().publish("CHAT_MESSAGES", chat_message);
+    public static void sendLCMChatMessage(String message, MessageType msgType){
+    	interaction_message_t msg = new interaction_message_t();
+    	msg.utime = TimeUtil.utime();
+    	msg.message = message;
+    	msg.message_type = msgType.toString();
+    	LCM.getSingleton().publish("INSTRUCTION_MESSAGE_TX", msg);
     }
     
     @Override
     protected void onInputPhase(Identifier inputLink)
     {
+    	if(languageId == null){
+    		languageId = inputLink.CreateIdWME("language");
+    	}
     	if(curMessage != null){
     		if(curMessage.isAdded()){
     			curMessage.updateWM();
     		} else {
-    			curMessage.addToWM(inputLink);
+    			curMessage.addToWM(languageId);
     		}
     	}
     	for(Message msg : messagesToRemove){
@@ -132,13 +141,12 @@ public class LanguageConnector extends AgentConnector {
         String message = "";
         message = AgentMessageParser.translateAgentMessage(messageId);
         if(message != null && !message.equals("")){
-        	this.registerNewMessage(message, MessageType.AGENT_MESSAGE);
+        	sendLCMChatMessage(message, MessageType.AGENT_MESSAGE);
         }
         messageId.CreateStringWME("status", "complete");
     }
 	
 	private void processAgentMessageStringCommand(Identifier messageId){
-
         String message = "";
         WMElement wordsWME = messageId.FindByAttribute("first", 0);
         if (wordsWME == null || !wordsWME.IsIdentifier())
@@ -176,7 +184,7 @@ public class LanguageConnector extends AgentConnector {
         }
 
         message += ".";
-        this.registerNewMessage(message.substring(0, message.length() - 1), MessageType.AGENT_MESSAGE);
+       	sendLCMChatMessage(message, MessageType.AGENT_MESSAGE);
 
         messageId.CreateStringWME("status", "complete");
     }
@@ -186,8 +194,25 @@ public class LanguageConnector extends AgentConnector {
 		if(curMessage != null){
 			curMessage.removeFromWM();
 		}
+		if(languageId != null){
+			languageId.DestroyWME();
+			languageId = null;
+		}
 	}
 
 	@Override
 	public void createMenu(JMenuBar menuBar) {}
+
+	@Override
+	public void messageReceived(LCM lcm, String channel, LCMDataInputStream ins) {
+		try{
+			if(channel.startsWith("INSTRUCTION_MESSAGE")){
+				interaction_message_t msg = new interaction_message_t(ins);
+				MessageType type = MessageType.valueOf(msg.message_type);
+				registerNewMessage(msg.message, type);
+			}
+		} catch(IOException e){
+			e.printStackTrace();
+		}
+	}
 }

@@ -8,6 +8,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -33,10 +34,15 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import javax.swing.JPanel;
 
+import lcm.lcm.LCM;
+import lcm.lcm.LCMDataInputStream;
+import lcm.lcm.LCMSubscriber;
+
 import edu.umich.rosie.language.LanguageConnector.MessageType;
+import edu.umich.rosie.lcmtypes.interaction_message_t;
 import edu.umich.rosie.soar.SoarAgent;
 
-public class ChatPanel extends JPanel{
+public class ChatPanel extends JPanel implements LCMSubscriber{
 	// GUI COMPONENTS
 	
 	private StyledDocument chatDoc;
@@ -64,16 +70,18 @@ public class ChatPanel extends JPanel{
     private Object outputLock = new Object();
     
     private SoarAgent soarAgent;
-
-	
+    
+    LCM lcm;
 
     public ChatPanel(SoarAgent agent, JFrame parentFrame) {
         this.soarAgent = agent;
         
+        lcm = LCM.getSingleton();
+        lcm.subscribe("INSTRUCTION_MESSAGE.*", this);
+        
         setupGUI(parentFrame);
 		setupStyles();
     }
-    
     
     /**********************************************************
      * Public Interface for interacting with the chat frame
@@ -210,13 +218,13 @@ public class ChatPanel extends JPanel{
 				upPressed();
 			} else if(arg0.getKeyCode() == KeyEvent.VK_DOWN){
 				downPressed();
-			} else if(arg0.getKeyCode() == KeyEvent.VK_CONTROL){
+			} else if(arg0.getKeyCode() == KeyEvent.VK_CONTROL && soarAgent != null){
 				LanguageConnector lang = (LanguageConnector)soarAgent.getLanguageConnector();
 				lang.getSTT().startListening();
 			}
 		}
 		public void keyReleased(KeyEvent arg0) {
-			if(arg0.getKeyCode() == KeyEvent.VK_CONTROL){
+			if(arg0.getKeyCode() == KeyEvent.VK_CONTROL && soarAgent != null){
 				LanguageConnector lang = (LanguageConnector)soarAgent.getLanguageConnector();
 				lang.getSTT().stopListening();
 			}
@@ -247,10 +255,22 @@ public class ChatPanel extends JPanel{
      */
     
     private void sendButtonClicked(){
-    	String msg = chatField.getText();
+    	String msg = chatField.getText().trim();
     	history.add(msg);
     	historyIndex = history.size();
-    	LanguageConnector lang = (LanguageConnector)soarAgent.getLanguageConnector();
-    	lang.registerNewMessage(msg, MessageType.INSTRUCTOR_MESSAGE);
+    	LanguageConnector.sendLCMChatMessage(msg, MessageType.INSTRUCTOR_MESSAGE);
     }
+
+
+	public void messageReceived(LCM lcm, String channel, LCMDataInputStream ins) {
+		try{
+			if(channel.startsWith("INSTRUCTION_MESSAGE")){
+				interaction_message_t msg = new interaction_message_t(ins);
+				MessageType type = MessageType.valueOf(msg.message_type);
+				registerNewMessage(msg.message, type);
+			}
+		} catch(IOException e){
+			e.printStackTrace();
+		}
+	}
 }
