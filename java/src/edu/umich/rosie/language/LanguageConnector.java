@@ -1,5 +1,6 @@
 package edu.umich.rosie.language;
 
+import java.util.HashSet;
 import java.util.Properties;
 
 import javax.swing.JMenu;
@@ -8,6 +9,7 @@ import javax.swing.JMenuBar;
 import edu.umich.rosie.AgentConnector;
 import edu.umich.rosie.soar.SoarAgent;
 import edu.umich.rosie.soar.SoarUtil;
+import edu.umich.rosie.soarobjects.Message;
 import sml.Identifier;
 import sml.WMElement;
 
@@ -17,12 +19,15 @@ public class LanguageConnector extends AgentConnector {
 		AGENT_MESSAGE, INSTRUCTOR_MESSAGE
 	};
 	
+	private int nextMessageId = 1;
+	
     private TextToSpeech tts;  
     private SpeechToText stt;
     
     private ChatPanel chat;
     
-	private Messages messages;
+	private Message curMessage;
+	private HashSet<Message> messagesToRemove;
 	
 	Identifier languageId = null;
 	
@@ -33,8 +38,9 @@ public class LanguageConnector extends AgentConnector {
 		
         this.tts = new TextToSpeech();
         this.stt = new SpeechToText(speechFile, agent);
-       
-        messages = new Messages();
+        
+        curMessage = null;
+        messagesToRemove = new HashSet<Message>();
     	
         this.setOutputHandlerNames(new String[]{ "send-message" });
 	}
@@ -58,7 +64,10 @@ public class LanguageConnector extends AgentConnector {
 	public synchronized void registerNewMessage(String message, MessageType msgType){
 		switch(msgType){
     	case INSTRUCTOR_MESSAGE:
-    		messages.addMessage(message);
+    		if(curMessage != null){
+    			messagesToRemove.add(curMessage);
+    		}
+    		curMessage = new Message(message, nextMessageId++);
     		break;
     	case AGENT_MESSAGE:
     		tts.speak(message);
@@ -78,22 +87,20 @@ public class LanguageConnector extends AgentConnector {
 //    	LCM.getSingleton().publish("CHAT_MESSAGES", chat_message);
     }
     
-    public void clear(){
-    	messages.destroy();
-    }
-    
-    public void destroyMessage(int id){
-    	messages.destroy();
-    }
-    
-    public void newMessage(String message){
-    	messages.addMessage(message);
-    }
-    
     @Override
     protected void onInputPhase(Identifier inputLink)
     {
-   		messages.updateInputLink(inputLink);
+    	if(curMessage != null){
+    		if(curMessage.isAdded()){
+    			curMessage.updateWM();
+    		} else {
+    			curMessage.addToWM(inputLink);
+    		}
+    	}
+    	for(Message msg : messagesToRemove){
+    		msg.removeFromWM();
+    	}
+    	messagesToRemove.clear();
     }
 
     @Override
@@ -175,7 +182,11 @@ public class LanguageConnector extends AgentConnector {
     }
 
 	@Override
-	protected void onInitSoar() { }
+	protected void onInitSoar() { 
+		if(curMessage != null){
+			curMessage.removeFromWM();
+		}
+	}
 
 	@Override
 	public void createMenu(JMenuBar menuBar) {}
