@@ -1,6 +1,7 @@
 sp {comprehend-word*propose*finish-comprehend*success
    (state <s> ^name << comprehend-word comprehend-construction >>
-              ^comprehension-structure.not-merged-receiver.lt
+             # ^comprehension-structure.not-merged-receiver.lt
+              ^created-receiver true
               ^created-assigners <n>
               ^retrievals <m>)
 -->
@@ -31,39 +32,252 @@ sp {comprehend-word*compare*finish-comprehend*better
    (state <s> ^name comprehend-word
               ^operator <op1> +
                         <op2> +)
-   (<op1> ^name finish-comprehend)
+   (<op1> ^name << return-receiver finish-comprehend >>)
    (<op2> ^name << smem-lexical-retrieval-cw-pw smem-lexical-retrieval-cw-pw-type >>)
 -->
    (<s> ^operator <op1> > <op2>)
 }
 
-## Can't chunk over because it is selected based on exhaustion.
 sp {apply*finish-comprehend
+  #:interrupt
    (state <s> ^operator <op>
               ^name comprehend-word
-            #  ^quiescence t
-              ^current-word <cw>
               ^segment <ss>
+              ^current-word <cw>
+              ^created-receiver true
               ^comprehension-structure <cs>)
    (<op> ^name finish-comprehend)
 -->
-   (<ss> ^comprehension-structure <cs>)
+    (<ss> ^comprehension-structure <cs>)
+    (<cs> ^processed true)
+   (<cw> ^processed true)
+}
+
+sp {apply*finish-comprehend*construction
+   (state <s> ^operator <op>
+              ^name comprehend-construction
+              ^created-receiver true
+              ^segment <ss>
+              ^comprehension-structure <cs>
+              ^current-item <c-item>
+              ^prior-item <p-item>)
+   (<cs> ^retrieved-lexical-item  <cw>)
+   (<op> ^name finish-comprehend)
+-->
+   (<ss> ^comprehension-structure <cs>
+         ^construction-comprehended <cc>)
+   (<cc> ^current-item <c-item>
+         ^prior-item <p-item>)
    (<cs> ^processed true)
    (<cw> ^processed true)
 }
 
-## Can't chunk over because it is selected based on exhaustion.
-sp {apply*finish-comprehend*construction
-   (state <s> ^operator <op>
-              ^name comprehend-construction
-             # ^quiescence t
-              ^segment <ss>
-              ^comprehension-structure <cs>)
-   (<cs> ^retrieved-lexical-item  <cw>)
-   (<op> ^name finish-comprehend)
--->
-   (<ss> ^comprehension-structure <cs>)
-   (<cs> ^processed true)
-   (<cw> ^processed true)
-}
+
+#############################################################################################
+#############################################################################################
+
+#
+#sp {apply*finish-comprehend*remove-comprehension-structure*receiver*still-first-word
+#   (state <s> ^operator.name finish-comprehend
+#              ^comprehension-structure <cs>)
+#   (<cs> ^first-word true
+#         ^not-merged-receiver <item>)
+#   (<item> ^current-word <cw>)
+#-->
+#   (<cw> ^first-word true)}
+#
+#
+#sp {apply*finish-comprehend*remove-comprehension-structure*assigner
+#   (state <s> ^operator.name finish-comprehend
+#              ^segment <seg>)
+#   (<s> ^comprehension-structure.not-merged-assigner <item>)
+#-->
+#   (<seg> ^not-merged-assigner <item>)
+#}
+#
+#sp {apply*finish-comprehend*new-word
+#   (state <s> ^operator.name finish-comprehend
+#              ^segment <seg>)
+#   (<seg> ^semantics <sem>)
+#   (<s> ^comprehension-structure.new-word <nw>)
+#   (<nw> ^structure-type { <> V <> UV }
+#         ^spelling <spelling>)
+#-->
+#   (write (crlf) |Unknown word: | <spelling> | failed in finish-comprehend.|)
+#   (<sem> ^new-word <nw>
+#          ^interaction-status.failure <failure>)
+#   (<failure> ^type unknown-word
+#              ^word <spelling>)
+#}
+#
+#sp {apply*finish-comprehend*new-word*verb
+#   (state <s> ^operator.name finish-comprehend
+#              ^segment <seg>)
+#   (<seg> ^semantics <sem>)
+#   (<s> ^comprehension-structure.new-word <nw>)
+#   (<nw> ^structure-type  V
+#         ^spelling <spelling>)
+#-->
+#   (<sem> ^new-word <nw>)
+#}
+#
+########################
+#sp {apply*finish-comprehend*remove-comprehension-structure*snip-receiver
+#   (state <s> ^operator.name finish-comprehend
+#              ^segment <seg>)
+#   (<s> ^comprehension-structure.remove-receiver <rr>)
+#   (<seg> ^not-merged-receiver <rr>)
+#-->
+#   (<seg> ^not-merged-receiver <rr> -)
+#}
+#
+#sp {apply*finish-comprehend*remove-comprehension-structure*snip-assigner
+#   (state <s> ^operator.name finish-comprehend
+#              ^segment <seg>)
+#   (<s> ^comprehension-structure.remove-assigner <rr>)
+#   (<seg> ^not-merged-assigner <rr>)
+#-->
+#   (<seg> ^not-merged-assigner <rr> -)
+#}
+#
+#########################
+#
+# sp {apply*finish-comprehend*create-receiver*init-retrieved-stack
+#    (state <s> ^operator.name finish-comprehend
+#               ^segment <seg>)
+#    (<s> ^comprehension-structure.not-merged-receiver <item>)
+#    (<seg> -^retrieved-stack <x>)
+#-->
+#    (write (crlf) |Initialize retrieved-stack with | <item>)
+#    (<seg> ^retrieved-stack <stack>
+#           ^not-merged-receiver <item>)
+#    (<stack> ^item <item>
+#             ^prior nil)}
+##
+# sp {apply*finish-comprehend*create-receiver*push-retrieved-stack*noskip
+#    (state <s> ^operator.name finish-comprehend
+#               ^segment <ss>)
+#    (<s> ^comprehension-structure <cs>)
+#    (<ss> ^retrieved-stack <rc>)
+#    (<cs> ^not-merged-receiver <item>
+#         -^remove-receiver <rr>
+#          ^type word)
+#    (<rc> ^item { <rr> <> <item> })
+#-->
+#    (write (crlf) |Push: | <item> | with on retrieved-stack.|)
+#    (<ss> ^retrieved-stack <rc> -
+#                           <nrc>
+#          ^not-merged-receiver <item>)
+#    (<nrc> ^item <item>
+#           ^prior <rc>)
+#    }
+##
+# sp {apply*finish-comprehend*create-receiver*push-retrieved-stack*replace*stale-receiver
+#    (state <s> ^operator.name finish-comprehend
+#               ^segment <ss>)
+#    (<s> ^comprehension-structure <cs>)
+#    (<ss> ^retrieved-stack <rc>)
+#    (<cs> ^not-merged-receiver <item>
+#          ^remove-receiver <rr>
+#          ^type word)
+#    (<rc> ^item { <rr> <> <item> }
+#          ^prior nil)
+#-->
+#    (write (crlf) |Replace retrieved-stack item: | <rr> | with | <item>)
+#    (<rc> ^item <rr> - <item>)
+#   (<ss> ^not-merged-receiver <item>)}
+##
+##
+# sp {apply*finish-comprehend*create-receiver*push-retrieved-stack*skip1*stale-receiver
+#    (state <s> ^operator.name finish-comprehend
+#               ^segment <ss>)
+#    (<s> ^comprehension-structure <cs>)
+#    (<ss> ^retrieved-stack <rc>)
+#    (<cs> ^not-merged-receiver <item>
+#          ^remove-receiver <rr>
+#         -^remove-receiver <rr2>)
+#    (<rc> ^item { <rr> <> <item> }
+#          ^prior <prior>)
+#    (<prior> ^item <rr2>)
+#-->
+#    (write (crlf) |Replace retrieved-stack item: | <rr> | with | <item>)
+#    (<rc> ^item <rr> - <item>)
+#   (<ss> ^not-merged-receiver <item>)}
+#
+##
+##
+#########################################
+##
+# sp {apply*finish-comprehend*create-receiver*push-retrieved-stack*skip2*stale-receiver
+#    (state <s> ^operator.name finish-comprehend
+#               ^segment <ss>)
+#    (<s> ^comprehension-structure <cs>)
+#    (<ss> ^retrieved-stack <rc>)
+#    (<cs> ^not-merged-receiver <item>
+#          ^remove-receiver <rr> <rr2>)
+#    (<rc> ^item { <rr> <> <item> }
+#          ^prior <prior>)
+#    (<prior> ^item <rr2>
+#             ^prior <prior2>)
+#-->   
+#    (write (crlf) |Replace | <rr> | and | <rr2> |on retrieved stack with | <item>)
+#    (<ss> ^retrieved-stack <rc> -
+#                           <nrc>
+#          ^not-merged-receiver <item>)
+#    (<nrc> ^item <item>
+#           ^prior <prior2>)}
+##
+# sp {apply*finish-comprehend*stale-receiver-prior-word
+#    (state <s> ^operator.name finish-comprehend
+#               ^segment <ss>)
+#    (<s> ^comprehension-structure <cs>)
+#    (<ss> ^retrieved-stack <rc>)
+#    (<cs> ^words prior-word
+#          ^remove-receiver <item>)
+#    (<rc> ^prior <prior>)
+#    (<prior> ^item <item>
+#             ^prior <prior2>)
+#-->   
+#    (write (crlf) |Pop | <prior> | from the stack.|)
+#    (<rc> ^prior <prior> - <prior2>)}
+###
+#
+#####  IF failed, then pop the second item off the retrieved-stack
+#sp {apply*finish-comprehend*failed-with-stack
+#   (state <s> ^operator.name finish-comprehend
+#              ^segment <seg>)
+#   (<s> ^comprehension-structure.failed true)
+#   (<seg> ^retrieved-stack <rs>)
+#   (<rs> ^prior <p>)
+#   (<p> ^prior { <> nil <p2> })
+#  -->
+#   (<rs> ^prior <p> -
+#                <p2>)
+#   (write (crlf) |Failed construction retrieval. Remove prior item | <p>)
+#}
+#
+#sp {apply*finish-comprehend*failed-without-stack
+#   (state <s> ^operator.name finish-comprehend
+#              ^segment <seg>)
+#   (<s> ^comprehension-structure.failed true)
+#   (<seg> ^retrieved-stack <rs>)
+#   (<rs> ^prior <p>)
+#   (<p> ^prior nil)
+#  -->
+#   (<seg> ^failed-construction true)
+#}
+##
+#######
+#
+# sp {apply*finish-comprehend*create-receiver*construction
+#    (state <s> ^operator.name finish-comprehend
+#               ^segment <ss>)
+#    (<s> ^comprehension-structure <cs>)
+#    (<cs> ^not-merged-receiver <item>)
+#    (<item> ^lt.construction)
+##-->   
+#    (write (crlf) |Create receiver: | <item>)
+#    (<ss> ^not-merged-receiver <item>)}
+
+
 

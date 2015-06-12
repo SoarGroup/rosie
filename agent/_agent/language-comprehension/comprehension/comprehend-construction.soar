@@ -15,6 +15,9 @@ sp {comprehension*propose*comprehend-construction*after-success-assigner
     (<cs> ^type construction
           ^processed true)}
   -(<c-item> ^lt.structure CP)
+ -{(<seg> ^construction-comprehended <cc>)
+   (<cc> ^current-item <c-item>
+         ^prior-item <p-item>)}
 -->
    (<s> ^operator <op> + =)
    (<op> ^name comprehend-construction
@@ -24,29 +27,29 @@ sp {comprehension*propose*comprehend-construction*after-success-assigner
 
 ## if the two most recent items are not merged and the newer one isn't going to merge with anything else or convert to a phrase
 
-sp {comprehension*propose*comprehend-construction
-   (state <s> ^name comprehension
-              ^segment <seg>)
-   (<seg> ^retrieved-stack <rs>
-          ^current-word.processed true
-          ^not-merged-receiver <c-item>
-         -^failed-construction true)
-   (<rs> ^item <c-item>
-         ^prior.item { <> nil <p-item> })
-  -{(<seg> ^not-merged-assigner.structure-type <p>)}
-   (<c-item> ^structure-type <p>
-            -^lt.converts-to )
-  -{(<seg> ^comprehension-structure <cs>)
-    (<cs> ^type construction
-          ^processed true)}
-  -(<c-item> ^lt.structure CP)
--->
-   (<s> ^operator <op> + =)
-   (<op> ^name comprehend-construction
-         ^current-item <c-item>
-         ^prior-item <p-item>)
-}
-
+## This is syntactically equivalent to the previous one so it is a duplicate.
+#sp {comprehension*propose*comprehend-construction
+#   (state <s> ^name comprehension
+#              ^segment <seg>)
+#   (<seg> ^retrieved-stack <rs>
+#          ^current-word.processed true
+#          ^not-merged-receiver <c-item>
+#         -^failed-construction true)
+#   (<rs> ^item <c-item>
+#         ^prior.item { <> nil <p-item> })
+#  -{(<seg> ^not-merged-assigner.structure-type <p>)}
+#   (<c-item> ^structure-type <p>
+#            -^lt.converts-to )
+#  -{(<seg> ^comprehension-structure <cs>)
+#    (<cs> ^type construction
+#          ^processed true)}
+#  -(<c-item> ^lt.structure CP)
+#-->
+#   (<s> ^operator <op> + =)
+#   (<op> ^name comprehend-construction
+#         ^current-item <c-item>
+#         ^prior-item <p-item>)
+#}
 
 sp {comprehension*propose*comprehend-construction*unknown
    (state <s> ^name comprehension
@@ -145,16 +148,6 @@ sp {comprehension*propose*comprehend-construction*failed-merge
          ^current-item <c-item>
          ^prior-item <p-item>)
 }
-#
-#sp {apply*comprehend-construction
-#   (state <s> ^operator <op>
-#              ^segment <seg>)
-#   (<op> ^name comprehend-construction)
-#-->
-#   (<seg> ^comprehension-structure <cs>)
-#   (<cs> ^type construction)
-#}
-
 
 sp {comprehension*compare*comprehend-construction
    (state <s> ^name comprehension
@@ -166,12 +159,64 @@ sp {comprehension*compare*comprehend-construction
    (<s> ^operator <op1> > <op2>)
 }
 
-sp {comprehension*compare*comprehend-construction2
+sp {comprehension*compare*merge*comprehend-word*comprehend-completion
+ #  :interrupt
    (state <s> ^name comprehension
               ^operator <op1> +
                         <op2> +)
+   (<op1> ^name merge)
+   (<op2> ^name << comprehend-completion >>)
+-->
+   (<s> ^operator <op1> > <op2>)
+}
+
+### Testing...
+sp {comprehension*compare*merge*comprehend-construction
+ #  :interrupt
+   (state <s> ^name comprehension
+              ^operator <op1> +
+                        <op2> +)
+   (<op1> ^name merge 
+          ^receiver <pi>)
+   (<op2> ^name << comprehend-construction >>
+          ^prior-item <pi>)
+-->
+   (<s> ^operator <op1> > <op2>)
+}
+
+
+sp {comprehension*compare*merge*comprehend-construction*diff*pi
+#  :interrupt
+   (state <s> ^name comprehension
+              ^operator <op1> +
+                        <op2> +)
+   (<op1> ^name merge 
+          ^receiver <pi>)
+   (<op2> ^name << comprehend-construction >>
+         -^prior-item <pi>)
+-->
+   (<s> ^operator <op1> > <op2>)
+}
+
+sp {comprehension*compare*comprehend-construction*process-semantics
+  # :interrupt
+   (state <s> ^name comprehension
+              ^operator <op1> +
+              ^operator <op2> +)
    (<op1> ^name comprehend-construction)
-   (<op2> ^name << process-semantics process-phrase-end >>)
+   (<op2> ^name << process-semantics >>)
+-->
+   (<s> ^operator <op1> < <op2>)
+}
+
+
+sp {comprehension*compare*comprehend-construction*process-phrase-end
+  # :interrupt
+   (state <s> ^name comprehension
+              ^operator <op1> +
+              ^operator <op2> +)
+   (<op1> ^name comprehend-construction)
+   (<op2> ^name << process-phrase-end >>)
 -->
    (<s> ^operator <op1> < <op2>)
 }
