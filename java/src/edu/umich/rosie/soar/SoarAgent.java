@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Properties;
 
+import edu.umich.rosie.soarobjects.Time;
+
 
 import sml.*;
 import sml.Agent.PrintEventInterface;
@@ -54,6 +56,8 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 	private AgentConnector perceptionConn;
 	private AgentConnector actuationConn;
 	private AgentConnector languageConn;
+	
+	private Time time;
 
 	private Kernel kernel;
 	private Agent agent;
@@ -68,6 +72,8 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 
 	public SoarAgent(Properties props){
 		this.config = new AgentConfig(props);
+		
+		time = new Time();
 	}
 	
 	// Soar Stuff
@@ -184,6 +190,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 			}
 		}
 		agent.KillDebugger();
+		time.removeFromWM();
 		languageConn.disconnect();
 		perceptionConn.disconnect();
 		actuationConn.disconnect();
@@ -280,6 +287,11 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 			if(queueStop){
 				sendCommand("stop");
 				queueStop = false;
+			}
+			if(time.isAdded()){
+				time.updateWM();
+			} else {
+				time.addToWM(arg2.GetInputLink());
 			}
 			if(config.throttleMS > 0){
 				try {
