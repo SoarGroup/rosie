@@ -22,7 +22,7 @@ import sml.Identifier;
 import sml.WMElement;
 
 
-public class LanguageConnector extends AgentConnector implements LCMSubscriber{
+public class LanguageConnector extends AgentConnector implements MessageLogger.IMessageListener{
 	public enum MessageType{
 		AGENT_MESSAGE, INSTRUCTOR_MESSAGE
 	};
@@ -37,6 +37,8 @@ public class LanguageConnector extends AgentConnector implements LCMSubscriber{
 	
 	Identifier languageId = null;
 	
+	private MessageLogger messageLogger;
+	
 	public LanguageConnector(SoarAgent agent, Properties props){
 		super(agent);
 		
@@ -47,6 +49,8 @@ public class LanguageConnector extends AgentConnector implements LCMSubscriber{
         
         curMessage = null;
         messagesToRemove = new HashSet<Message>();
+        
+        messageLogger = new MessageLogger("agent");
     	
         this.setOutputHandlerNames(new String[]{ "send-message" });
 	}
@@ -54,13 +58,13 @@ public class LanguageConnector extends AgentConnector implements LCMSubscriber{
 	@Override
 	public void connect(){
 		super.connect();
-		LCM.getSingleton().subscribe("INSTRUCTION_MESSAGE.*", this);
+		messageLogger.addMessageListener(this);
 	}
 	
 	@Override
 	public void disconnect(){
 		super.disconnect();
-		LCM.getSingleton().unsubscribe("INSTRUCTION_MESSAGE.*", this);
+		messageLogger.removeMessageListener(this);
 	}
 	
 	public TextToSpeech getTTS(){
@@ -71,27 +75,23 @@ public class LanguageConnector extends AgentConnector implements LCMSubscriber{
 		return stt;
 	}
 	
-	public synchronized void registerNewMessage(String message, MessageType msgType){
-		switch(msgType){
+	public void sendMessage(String message, MessageType type){
+		messageLogger.sendMessage(message, type);
+	}
+	
+	public synchronized void receiveMessage(interaction_message_t message){
+		switch(MessageType.valueOf(message.message_type)){
     	case INSTRUCTOR_MESSAGE:
     		if(curMessage != null){
     			messagesToRemove.add(curMessage);
     		}
-    		curMessage = new Message(message, nextMessageId++);
+    		curMessage = new Message(message.message, nextMessageId++);
     		break;
     	case AGENT_MESSAGE:
-    		tts.speak(message);
+    		tts.speak(message.message);
     		break;
     	}
 	}
-    
-    public static void sendLCMChatMessage(String message, MessageType msgType){
-    	interaction_message_t msg = new interaction_message_t();
-    	msg.utime = TimeUtil.utime();
-    	msg.message = message;
-    	msg.message_type = msgType.toString();
-    	LCM.getSingleton().publish("INSTRUCTION_MESSAGE_TX", msg);
-    }
     
     @Override
     protected void onInputPhase(Identifier inputLink)
@@ -141,7 +141,7 @@ public class LanguageConnector extends AgentConnector implements LCMSubscriber{
         String message = "";
         message = AgentMessageParser.translateAgentMessage(messageId);
         if(message != null && !message.equals("")){
-        	sendLCMChatMessage(message, MessageType.AGENT_MESSAGE);
+        	sendMessage(message, MessageType.AGENT_MESSAGE);
         }
         messageId.CreateStringWME("status", "complete");
     }
@@ -184,7 +184,7 @@ public class LanguageConnector extends AgentConnector implements LCMSubscriber{
         }
 
         message += ".";
-       	sendLCMChatMessage(message, MessageType.AGENT_MESSAGE);
+       	sendMessage(message, MessageType.AGENT_MESSAGE);
 
         messageId.CreateStringWME("status", "complete");
     }
@@ -203,16 +203,4 @@ public class LanguageConnector extends AgentConnector implements LCMSubscriber{
 	@Override
 	public void createMenu(JMenuBar menuBar) {}
 
-	@Override
-	public void messageReceived(LCM lcm, String channel, LCMDataInputStream ins) {
-		try{
-			if(channel.startsWith("INSTRUCTION_MESSAGE")){
-				interaction_message_t msg = new interaction_message_t(ins);
-				MessageType type = MessageType.valueOf(msg.message_type);
-				registerNewMessage(msg.message, type);
-			}
-		} catch(IOException e){
-			e.printStackTrace();
-		}
-	}
 }

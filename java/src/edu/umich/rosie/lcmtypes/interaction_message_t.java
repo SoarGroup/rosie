@@ -12,15 +12,16 @@ import lcm.lcm.*;
 public final class interaction_message_t implements lcm.lcm.LCMEncodable
 {
     public long utime;
-    public String message;
+    public int message_id;
     public String message_type;
+    public String message;
  
     public interaction_message_t()
     {
     }
  
     public static final long LCM_FINGERPRINT;
-    public static final long LCM_FINGERPRINT_BASE = 0x1e8e55019509f7e1L;
+    public static final long LCM_FINGERPRINT_BASE = 0x47edac78525f763dL;
  
     static {
         LCM_FINGERPRINT = _hashRecursive(new ArrayList<Class<?>>());
@@ -49,9 +50,11 @@ public final class interaction_message_t implements lcm.lcm.LCMEncodable
         char[] __strbuf = null;
         outs.writeLong(this.utime); 
  
-        __strbuf = new char[this.message.length()]; this.message.getChars(0, this.message.length(), __strbuf, 0); outs.writeInt(__strbuf.length+1); for (int _i = 0; _i < __strbuf.length; _i++) outs.write(__strbuf[_i]); outs.writeByte(0); 
+        outs.writeInt(this.message_id); 
  
         __strbuf = new char[this.message_type.length()]; this.message_type.getChars(0, this.message_type.length(), __strbuf, 0); outs.writeInt(__strbuf.length+1); for (int _i = 0; _i < __strbuf.length; _i++) outs.write(__strbuf[_i]); outs.writeByte(0); 
+ 
+        __strbuf = new char[this.message.length()]; this.message.getChars(0, this.message.length(), __strbuf, 0); outs.writeInt(__strbuf.length+1); for (int _i = 0; _i < __strbuf.length; _i++) outs.write(__strbuf[_i]); outs.writeByte(0); 
  
     }
  
@@ -80,9 +83,11 @@ public final class interaction_message_t implements lcm.lcm.LCMEncodable
         char[] __strbuf = null;
         this.utime = ins.readLong();
  
-        __strbuf = new char[ins.readInt()-1]; for (int _i = 0; _i < __strbuf.length; _i++) __strbuf[_i] = (char) (ins.readByte()&0xff); ins.readByte(); this.message = new String(__strbuf);
+        this.message_id = ins.readInt();
  
         __strbuf = new char[ins.readInt()-1]; for (int _i = 0; _i < __strbuf.length; _i++) __strbuf[_i] = (char) (ins.readByte()&0xff); ins.readByte(); this.message_type = new String(__strbuf);
+ 
+        __strbuf = new char[ins.readInt()-1]; for (int _i = 0; _i < __strbuf.length; _i++) __strbuf[_i] = (char) (ins.readByte()&0xff); ins.readByte(); this.message = new String(__strbuf);
  
     }
  
@@ -91,9 +96,11 @@ public final class interaction_message_t implements lcm.lcm.LCMEncodable
         edu.umich.rosie.lcmtypes.interaction_message_t outobj = new edu.umich.rosie.lcmtypes.interaction_message_t();
         outobj.utime = this.utime;
  
-        outobj.message = this.message;
+        outobj.message_id = this.message_id;
  
         outobj.message_type = this.message_type;
+ 
+        outobj.message = this.message;
  
         return outobj;
     }

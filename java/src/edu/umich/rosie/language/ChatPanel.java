@@ -13,6 +13,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import javax.sound.sampled.LineUnavailableException;
@@ -40,9 +42,10 @@ import lcm.lcm.LCMSubscriber;
 
 import edu.umich.rosie.language.LanguageConnector.MessageType;
 import edu.umich.rosie.lcmtypes.interaction_message_t;
+import edu.umich.rosie.lcmtypes.interaction_messages_t;
 import edu.umich.rosie.soar.SoarAgent;
 
-public class ChatPanel extends JPanel implements LCMSubscriber{
+public class ChatPanel extends JPanel implements MessageLogger.IMessageListener{
 	// GUI COMPONENTS
 	
 	private StyledDocument chatDoc;
@@ -72,15 +75,17 @@ public class ChatPanel extends JPanel implements LCMSubscriber{
     private SoarAgent soarAgent;
     
     LCM lcm;
+    
+    private MessageLogger messageLogger;
 
     public ChatPanel(SoarAgent agent, JFrame parentFrame) {
         this.soarAgent = agent;
         
-        lcm = LCM.getSingleton();
-        lcm.subscribe("INSTRUCTION_MESSAGE.*", this);
-        
         setupGUI(parentFrame);
 		setupStyles();
+        
+        messageLogger = new MessageLogger("instructor");
+        messageLogger.addMessageListener(this);
     }
     
     /**********************************************************
@@ -92,9 +97,10 @@ public class ChatPanel extends JPanel implements LCMSubscriber{
      *   Remove all messages from the text field
      */
     
-    public void registerNewMessage(String message, MessageType msgType){
+    @Override
+    public void receiveMessage(interaction_message_t message){
     	synchronized(outputLock){
-	    	Style msgStyle = chatDoc.getStyle(msgType.toString());
+	    	Style msgStyle = chatDoc.getStyle(message.message_type);
 			DateFormat dateFormat = new SimpleDateFormat("mm:ss:SSS");
 			Date d = new Date();
 			
@@ -103,7 +109,7 @@ public class ChatPanel extends JPanel implements LCMSubscriber{
 				chatDoc.insertString(origLength, dateFormat.format(d)+" ", msgStyle);
 			
 				int nextLength = chatDoc.getLength();
-				chatDoc.insertString(nextLength, message+"\n", msgStyle);
+				chatDoc.insertString(nextLength, message.message+"\n", msgStyle);
 			} catch (BadLocationException e){
 				// Should never encounter this
 				System.err.println("Failed to add message to chat window");
@@ -113,7 +119,7 @@ public class ChatPanel extends JPanel implements LCMSubscriber{
 			int end = chatDoc.getLength();
 			tPane.select(end, end);
 
-    		switch(msgType){
+    		switch(MessageType.valueOf(message.message_type)){
 	    	case INSTRUCTOR_MESSAGE:
 	            chatField.setText("");
 	            chatField.requestFocus();
@@ -258,19 +264,6 @@ public class ChatPanel extends JPanel implements LCMSubscriber{
     	String msg = chatField.getText().trim();
     	history.add(msg);
     	historyIndex = history.size();
-    	LanguageConnector.sendLCMChatMessage(msg, MessageType.INSTRUCTOR_MESSAGE);
+    	messageLogger.sendMessage(msg, MessageType.INSTRUCTOR_MESSAGE);
     }
-
-
-	public void messageReceived(LCM lcm, String channel, LCMDataInputStream ins) {
-		try{
-			if(channel.startsWith("INSTRUCTION_MESSAGE")){
-				interaction_message_t msg = new interaction_message_t(ins);
-				MessageType type = MessageType.valueOf(msg.message_type);
-				registerNewMessage(msg.message, type);
-			}
-		} catch(IOException e){
-			e.printStackTrace();
-		}
-	}
 }

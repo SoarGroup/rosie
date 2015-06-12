@@ -50,7 +50,7 @@ public class Message implements ISoarObject
         	if(word.isEmpty()){
         		continue;
         	}
-        	nextID.CreateStringWME("spelling", word);
+        	nextID.CreateStringWME("spelling", word.toLowerCase());
         	nextID = nextID.CreateIdWME("next");
         }
         nextID.CreateStringWME("spelling", Character.toString(punct));
