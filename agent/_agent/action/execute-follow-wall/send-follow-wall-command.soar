@@ -6,24 +6,44 @@
 
 sp {execute-follow-wall1*propose*send-follow-wall-command
    (state <s> ^name execute-follow-wall1
+              ^direction-id.side <side>
              -^current-action.command-status)
 -->
    (<s> ^operator <o> + >)
-   (<o> ^name send-follow-wall-command)
+   (<o> ^name send-follow-wall-command
+        ^side <side>)
 }
 
-sp {execute-follow-wall1*apply*send-follow-wall-command
+sp {execute-follow-wall1*apply*send-follow-wall-command*no*until
    (state <s> ^name execute-follow-wall1
-              ^operator.name send-follow-wall-command
+              ^operator <o>
               ^current-action <a>
               ^top-state.io.output-link <out>
-              ^termination-condition <term>)
+             -^until-clause)
+   (<o> ^name send-follow-wall-command
+        ^side <side>)
 -->
    (<out> ^do-control-law <law>)
    (<law> ^name follow-wall
           ^parameters.side 1
-          ^termination-condition <term>)
-   (<a> ^sent-command <cmd>)
+          ^termination-condition.name stabilized)
+   (<a> ^sent-command <law>)
+}
+
+sp {execute-follow-wall1*apply*send-follow-wall-command*until
+   (state <s> ^name execute-follow-wall1
+              ^operator <o>
+              ^current-action <a>
+              ^top-state.io.output-link <out>
+              ^until-clause <until>)
+   (<o> ^name send-follow-wall-command
+        ^side <side>)
+-->
+   (<out> ^do-control-law <law>)
+   (<law> ^name follow-wall
+          ^parameters.side 1
+          ^termination-condition <until>)
+   (<a> ^sent-command <law>)
 }
 
 sp {send-follow-wall-command*elaborations

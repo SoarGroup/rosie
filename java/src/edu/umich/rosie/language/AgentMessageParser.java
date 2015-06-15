@@ -44,6 +44,10 @@ public class AgentMessageParser
 			message = "Could you be more specific?";
 		} else if (type.equals("object-description")){
 			message = translateObjectDescription(fieldsId);
+		} else if(type.equals("learn-location-failure")){
+			message = "I was not able to identify my current location";
+		} else if(type.equals("get-location-info")){
+			message = translateGetLocationInfo(fieldsId);
 		}
 		return message;
 	}
@@ -54,6 +58,16 @@ public class AgentMessageParser
 			return "I encountered a new word describing an object, can you help?";
 		} else {
 			return "Can you tell me what the word '" + predicateName + "' is?";
+		}
+	}
+	
+	public static String translateGetLocationInfo(Identifier fieldsId){
+		String locationName = SoarUtil.getValueOfAttribute(fieldsId, "location-name");
+		if (locationName != null){
+			return "I don't know where the " + locationName + " is.\n" + 
+					"Can you take me there?";
+		} else {
+			return "Where is it?";
 		}
 	}
 	
