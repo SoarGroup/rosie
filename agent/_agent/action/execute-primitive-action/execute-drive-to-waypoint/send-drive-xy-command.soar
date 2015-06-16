@@ -1,0 +1,45 @@
+###############################################################################
+#
+# Inside the execute-drive-to-waypoint1 substate, this will put a drive-to-waypoint command on the output link
+#
+###############################################################################
+
+sp {execute-drive-to-waypoint1*propose*send-drive-xy-command
+   (state <s> ^name execute-drive-to-waypoint1
+             -^current-action.command-status)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name send-drive-xy-command
+        ^command-operator true)
+}
+
+sp {execute-drive-to-waypoint1*apply*send-drive-xy-command*no*until
+   (state <s> ^name execute-drive-to-waypoint1
+              ^operator.name send-drive-xy-command
+              ^current-action <a>
+              ^waypoint <wp>
+              ^top-state.io.output-link <out>)
+   (<wp> ^x <x> ^y <y>)
+-->
+   (<out> ^do-control-law <law>)
+   (<law> ^name drive-xy
+          ^parameters <params>
+          ^termination-condition.name stabilized)
+   (<params> ^x <x> ^y <y>)
+   (<a> ^sent-command <law>)
+}
+
+sp {top-state*apply*execute-drive-to-waypoint1*copy*command-status
+   (state <s> ^top-state <s>
+              ^operator.name execute-drive-to-waypoint1
+              ^current-action <a>
+              ^io.output-link <out>)
+   (<a> ^sent-command <cmd>)
+   (<cmd> ^status { <status> << success failure >> })
+-->
+   (<a> ^sent-command <cmd> -)
+   (<a> ^command-status <status>
+        ^status complete
+        ^at-waypoint true)
+   (<out> ^do-control-law <cmd> -)
+}
