@@ -10,16 +10,63 @@
 #######
 # OPERATOR PROPOSAL
 #######
+sp {interpret-message*propose*generate-action-operator
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>
+             -^action-operator <op>)
+   (<msg> ^message-type command)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name generate-action-operator
+        ^command-message <msg>)
+   (interrupt)
+}
+
+sp {generate-action-operator*elaborate*allow-substate
+   (state <s> ^name generate-action-operator
+              ^superstate.name interpret-message)
+-->
+   (<s> ^allow-substate true)
+}
+
+
 sp {interpret-message*propose*interpret-command
    (state <s> ^name interpret-message
-              ^instructor-message <msg>)
+              ^instructor-message <msg>
+              ^action-operator <op>)
    (<msg> ^message-type command
          -^interpreted true)
 -->
    (<s> ^operator <o> +)
-   (<o> ^name interpret-command
-        ^message <msg>)
+   (<o> ^name interpret-command)
 }
+
+sp {interpret-message*apply*interpret-command
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>
+              ^operator.name interpret-command
+              ^action-operator <op>)
+   (<op> ^action-id.name <action-name>)
+-->
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type action
+        ^parameters.action-operator <op>
+        ^satisfaction.action-event.type <action-name>)
+   (<msg> ^interpreted true)
+}
+
+sp {interpret-message*apply*interpret-command*pop-segment*existing-action
+   (state <s> ^name interpret-message
+              ^operator.name interpret-command
+              ^top-state.interaction.stack.segment.purpose.type action)
+-->
+   (<s> ^terminate-segment true)
+}
+              
+
+
 
 #######
 ## OPERATOR ELABORATIONS
