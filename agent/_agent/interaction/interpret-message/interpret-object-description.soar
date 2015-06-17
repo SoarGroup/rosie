@@ -21,6 +21,7 @@ sp {interpret-message*propose*interpret-object-description
    (<s> ^operator <o> +)
    (<o> ^name interpret-object-description
         ^message <msg>)
+   (interrupt)
 }
 
 ######
@@ -28,6 +29,17 @@ sp {interpret-message*propose*interpret-object-description
 ######
 
 # Elaborate useful information from the message onto the operator
+
+# goal: OPTIONAL - the robot is the object
+sp {interpret-message*elaborate*interpret-object-description*goal
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-object-description
+        ^message.arg1 <obj>)
+   (<obj> ^id.name goal)
+-->
+   (<o> ^goal <obj>)
+}
 
 # robot: OPTIONAL - the robot is the object
 sp {interpret-message*elaborate*interpret-object-description*robot
@@ -45,8 +57,9 @@ sp {interpret-message*elaborate*interpret-object-description*object
    (state <s> ^name interpret-message
               ^operator <o> +)
    (<o> ^name interpret-object-description
-        ^message.arg1 <obj>)
-   (<obj> ^predicates <preds>)
+        ^message.arg1 <obj>
+       -^goal <obj>
+       -^robot <obj>)
 -->
    (<o> ^object <obj>)
 }
@@ -80,19 +93,73 @@ sp {interpret-message*elaborate*interpret-object-description*arg2
    (<o> ^relation <rel>)
 }
 
+sp {interpret-message*elaborate*interpret-object-description*subclause
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-object-description
+        ^message.subclause <sub>)
+-->
+   (<o> ^subclause <sub>)
+}
+
+#####
+# MESSAGE CATEGORIZATION
+#####
+
+sp {interpret-message*elaborate*interpret-object-description*purpose*train-on-object
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-object-description
+        ^object <obj>
+        ^predicate <pred>)
+-->
+   (<o> ^purpose train-on-object)
+}
+
+sp {interpret-message*elaborate*interpret-object-description*purpose*learn-goal-definition
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-object-description
+        ^goal <goal>
+        ^subclause <sub>)
+-->
+   (<o> ^purpose learn-goal-definition)
+}
+   
+sp {interpret-message*elaborate*interpret-object-description*purpose*teach-location
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-object-description
+        ^robot <rob>
+        ^relation <rel>)
+-->
+   (<o> ^purpose teach-location)
+}
+   
+sp {interpret-message*elaborate*interpret-object-description*purpose*teach-relation
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-object-description
+        ^object <obj>
+        ^relation <rel>)
+-->
+   (<o> ^purpose teach-relation)
+}
+
 #####
 # OPERATOR APPLICATION
 #####
 
-# Normal occurence of object-description
-#   Purpose is to learn about a predicate for an example object
+###########################
+# Purpose: train-on-object
+
 sp {interpret-message*apply*interpret-object-description*create*segment*train-on-object
    (state <s> ^name interpret-message
               ^operator <o>)
    (<o> ^name interpret-object-description
+        ^purpose train-on-object
         ^message <msg>
-        ^object <obj>
-       -^relation)
+        ^object <obj>)
 -->
    (<s> ^new-segment-info <info>
         ^mark-interpreted <msg>)
@@ -100,8 +167,7 @@ sp {interpret-message*apply*interpret-object-description*create*segment*train-on
            ^originator instructor)
    (<p> ^type train-on-object 
         ^parameters <params>
-        ^satisfaction <sat>)
-   (<sat> ^learning-event.type object)
+        ^satisfaction.learning-event.type object)
    (<params> ^object <obj>)
 }
 
@@ -110,20 +176,23 @@ sp {interpret-message*apply*interpret-object-description*copy*predicates
               ^operator <o>
               ^new-segment-info.purpose.parameters <params>)
    (<o> ^name interpret-object-description
-       -^relation
+        ^purpose train-on-object
         ^predicate.id <pred>)
 -->
    (<params> ^predicate <pred>)
 }
+
+###########################
+# Purpose: teach-relation
 
 # Object description is a relationship (preposition) example between two objects
 sp {interpret-message*apply*interpret-object-description*create*segment*teach-relation
    (state <s> ^name interpret-message
               ^operator <o>)
    (<o> ^name interpret-object-description
+        ^purpose teach-relation
         ^message <msg>
         ^object <obj>
-       -^predicate #only handle single for now
         ^relation <rel>)
 -->
    (<s> ^new-segment-info <info>
@@ -132,18 +201,21 @@ sp {interpret-message*apply*interpret-object-description*create*segment*teach-re
            ^originator instructor)
    (<p> ^type teach-relation
         ^parameters <params>
-        ^satisfaction <sat>)
-   (<sat> ^learning-event.type relation)
+        ^satisfaction.learning-event.type relation)
    (<params> ^object <obj>
              ^relation <rel>)
 }
+
+###########################
+# Purpose: teach-location
 
 sp {interpret-message*apply*interpret-object-description*create*segment*teach-location
    (state <s> ^name interpret-message
               ^operator <o>)
    (<o> ^name interpret-object-description
-        ^robot <robot>
+        ^purpose teach-location
         ^message <msg>
+        ^robot <robot>
         ^relation.arg2 <loc>)
 -->
    (<s> ^new-segment-info <info>
@@ -155,6 +227,86 @@ sp {interpret-message*apply*interpret-object-description*create*segment*teach-lo
         ^satisfaction <sat>)
    (<sat> ^learning-event.type location)
    (<params> ^location-id <loc>)
+}
+
+
+sp {interpret-message*apply*interpret-object-description*teach-location*terminate-segment
+   (state <s> ^name interpret-message
+              ^operator <o>
+	      		^current-purpose.satisfaction.dialog-event <de>)
+   (<o> ^name interpret-object-description
+        ^purpose teach-location)
+   (<de> ^type location-description
+         ^originator instructor)
+-->
+   (<s> ^terminate-segment true)
+}
+
+###########################
+# Purpose: learn-goal-definition
+
+sp {interpret-message*apply*interpret-object-description*create*segment*learn-goal-definition
+   (state <s> ^name interpret-message
+              ^operator <o>)
+   (<o> ^name interpret-object-description
+        ^purpose learn-goal-definition
+        ^message <msg>)
+-->
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type learn-goal-definition
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<sat> ^learning-event.type goal)
+}
+
+sp {interpret-message*apply*interpret-object-description*learn-goal-definition*elaborate*goal-predicate*state
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^new-segment-info.purpose.parameters <params>)
+   (<o> ^name interpret-object-description
+        ^purpose learn-goal-definition
+        ^subclause <sub>)
+   (<sub> ^arg1 <obj>
+          ^predicate.id <pred-id>)
+-->
+   (<params> ^goal-predicate <pred>)
+   (<pred> ^type state
+           ^id <pred-id>
+           ^1 <obj>)
+}
+
+sp {interpret-message*apply*interpret-object-description*learn-goal-definition*elaborate*goal-predicate*relation
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^new-segment-info.purpose.parameters <params>)
+   (<o> ^name interpret-object-description
+        ^purpose learn-goal-definition
+        ^subclause <sub>)
+   (<sub> ^arg1 <obj1>
+          ^{ << arg2 relation >>} <rel>)
+   (<rel> ^id <rel-id>
+          ^arg2 <obj2>)
+-->
+   (<params> ^goal-predicate <pred>)
+   (<pred> ^type relation
+           ^id <rel-id>
+           ^1 <obj1>
+           ^2 <obj2>)
+}
+
+sp {interpret-message*apply*interpret-object-description*learn-goal-definition*terminate*segment
+   (state <s> ^name interpret-message
+              ^operator <o>
+	      		^current-purpose.satisfaction.dialog-event <de>)
+   (<o> ^name interpret-object-description
+        ^purpose learn-goal-definition)
+   (<de> ^type goal-description
+         ^originator instructor)
+-->
+   (<s> ^terminate-segment true)
 }
 
 sp {interpret-message*apply*interpret-object-description*remove*unknown-word*failure
