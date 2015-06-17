@@ -1,15 +1,18 @@
 sp {generate-action-operator*propose*copy-command-arg
    (state <s> ^name generate-action-operator
               ^command-message <msg>
-              ^action-operator <op>)
+              ^action-operator <op>
+             -^copied-arg <arg-name>)
    (<msg> ^{ <arg-name> << arg1 arg2 relation >> } <arg>)
-   (<op> -^<arg-name>)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name copy-command-arg
         ^command-arg-name <arg-name>
         ^arg-value <arg>)
 }
+
+###################
+# arg-type object
 
 sp {generate-action-operator*elaborate*copy-command-arg*arg-type*object
    (state <s> ^name generate-action-operator
@@ -24,6 +27,41 @@ sp {generate-action-operator*elaborate*copy-command-arg*arg-type*object
         ^arg-name arg1)
 }
 
+sp {generate-action-operator*apply*copy-command-arg*copy*object*arg
+   (state <s> ^name generate-action-operator
+              ^operator <o>
+              ^action-operator <op>)
+   (<o> ^name copy-command-arg
+        ^command-arg-name <cmd-arg-name>
+        ^arg-name <arg-name>
+        ^arg-type object
+        ^arg-value <object>)
+-->
+   (<op> ^<arg-name> <arg>)
+   (<arg> ^arg-type object
+          ^id <object>)
+   (<s> ^copied-arg <cmd-arg-name>)
+}
+
+sp {generate-action-operator*apply*copy-command-arg*object*store*procedural
+   (state <s> ^name generate-action-operator
+              ^operator <o>
+              ^action-id.procedural <proc>)
+   (<o> ^name copy-command-arg
+        ^arg-name <arg-name>
+        ^arg-type object
+        ^arg-value <arg>)
+   (<proc> -^<arg-name>)
+-->
+   (<proc> ^<arg-name> <new-arg>)
+   (<new-arg> ^arg-type object)
+   (<s> ^to-store <proc> <new-arg>)
+}
+
+
+######################
+## arg-type concept
+
 sp {generate-action-operator*elaborate*copy-command-arg*arg-type*concept
    (state <s> ^name generate-action-operator
               ^operator <o> +)
@@ -35,29 +73,50 @@ sp {generate-action-operator*elaborate*copy-command-arg*arg-type*concept
         ^arg-name arg1)
 }
 
+sp {generate-action-operator*apply*copy-command-arg*copy*concept*arg
+   (state <s> ^name generate-action-operator
+              ^operator <o>
+              ^action-operator <op>)
+   (<o> ^name copy-command-arg
+        ^command-arg-name <cmd-arg-name>
+        ^arg-name <arg-name>
+        ^arg-type concept
+        ^arg-value.id <concept>)
+-->
+   (<op> ^<arg-name> <arg>)
+   (<arg> ^arg-type concept
+          ^id <concept>)
+   (<s> ^copied-arg <cmd-arg-name>)
+}
+
+sp {generate-action-operator*apply*copy-command-arg*concept*store*procedural
+   (state <s> ^name generate-action-operator
+              ^operator <o>
+              ^action-id.procedural <proc>)
+   (<o> ^name copy-command-arg
+        ^arg-name <arg-name>
+        ^arg-type concept
+        ^arg-value <arg>)
+   (<proc> -^<arg-name>)
+-->
+   (<proc> ^<arg-name> <new-arg>)
+   (<new-arg> ^arg-type concept)
+   (<s> ^to-store <proc> <new-arg>)
+}
+
+#######################
+### arg-type predicate
+
 sp {generate-action-operator*elaborate*copy-command-arg*arg-type*predicate
    (state <s> ^name generate-action-operator
               ^operator <o> +)
    (<o> ^name copy-command-arg
         ^command-arg-name { <arg-name> << arg2 relation >>}
         ^arg-value <val>)
+   (<val> -^until-clause)
 -->
    (<o> ^arg-type predicate
         ^arg-name arg2)
-}
-
-sp {generate-action-operator*apply*copy-command-arg*copy*object*concept*arg
-   (state <s> ^name generate-action-operator
-              ^operator <o>
-              ^action-operator <op>)
-   (<o> ^name copy-command-arg
-        ^arg-name <arg-name>
-        ^arg-type { <arg-type> << object concept >> }
-        ^arg-value <val>)
--->
-   (<op> ^<arg-name> <arg>)
-   (<arg> ^arg-type <arg-type>
-          ^id <val>)
 }
 
 sp {generate-action-operator*apply*copy-command-arg*predicate
@@ -65,6 +124,7 @@ sp {generate-action-operator*apply*copy-command-arg*predicate
               ^operator <o>
               ^action-operator <op>)
    (<o> ^name copy-command-arg
+        ^command-arg-name <cmd-arg-name>
         ^arg-name <arg-name>
         ^arg-type predicate
         ^arg-value <val>)
@@ -75,26 +135,10 @@ sp {generate-action-operator*apply*copy-command-arg*predicate
    (<arg> ^arg-type predicate
           ^id <pred-id>
           ^2 <obj>)
+   (<s> ^copied-arg <cmd-arg-name>)
 }
 
-
-sp {generate-action-operator*apply*copy-command-arg*procedural*arg1
-   (state <s> ^name generate-action-operator
-              ^operator <o>
-              ^action-id.procedural <proc>)
-   (<o> ^name copy-command-arg
-        ^arg-name <arg-name>
-        ^arg-type { <arg-type> << object concept >> }
-        ^arg-value <arg>)
-   (<proc> -^<arg-name>)
--->
-   (<proc> ^<arg-name> <new-arg>)
-   (<new-arg> ^arg-type <arg-type>)
-   (<s> ^to-store <proc> <new-arg>)
-}
-
-
-sp {generate-action-operator*apply*copy-command-arg*procedural*predicate*arg
+sp {generate-action-operator*apply*copy-command-arg*predicate*store*procedural
    (state <s> ^name generate-action-operator
               ^operator <o>
               ^action-id.procedural <proc>)
@@ -110,4 +154,37 @@ sp {generate-action-operator*apply*copy-command-arg*procedural*predicate*arg
               ^2 <new-arg2>)
    (<s> ^to-store <proc> <new-arg>)
 }
+
+###########################
+## arg-type until-clause
+
+sp {generate-action-operator*elaborate*copy-command-arg*arg-type*until-clause
+   (state <s> ^name generate-action-operator
+              ^operator <o> +)
+   (<o> ^name copy-command-arg
+        ^command-arg-name { <arg-name> << arg2 relation >>}
+        ^arg-value.until-clause <until>)
+-->
+   (<o> ^arg-type until-clause
+        ^arg-name arg2)
+}
+
+sp {generate-action-operator*apply*copy-command-arg*until-clause
+   (state <s> ^name generate-action-operator
+              ^operator <o>
+              ^action-operator <cmd>)
+   (<o> ^name copy-command-arg
+        ^command-arg-name { <cmd-arg-name> << arg1 arg2 >> }
+        ^arg-value <val>)
+   (<val> ^until-clause <clause>)
+   (<clause> ^arg1.predicates.spatial-shape <shape>)
+-->
+   (<cmd> ^until-clause <new-clause>)
+   (<new-clause> ^name count
+             ^parameters <params>)
+   (<params> ^count 1
+             ^class <shape>)
+   (<s> ^copied-arg <cmd-arg-name>)
+}
+              
    
