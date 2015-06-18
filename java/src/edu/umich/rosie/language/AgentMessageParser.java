@@ -30,6 +30,7 @@ public class AgentMessageParser
 			simpleMessages.put("learn-location-failure", "I was not able to identify my current location");
 			simpleMessages.put("get-goal-info", "What is the goal of that action?");
 			simpleMessages.put("no-action-context-for-goal", "I don't know what action that goal is for");
+			simpleMessages.put("get-next-subaction", "What do I do next?");
 		}
 		
 		String type = SoarUtil.getValueOfAttribute(id, "type");
