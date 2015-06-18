@@ -88,6 +88,10 @@ public class ChatPanel extends JPanel implements MessageLogger.IMessageListener{
         messageLogger.addMessageListener(this);
     }
     
+    public MessageLogger getMessageLogger(){
+    	return messageLogger;
+    }
+    
     /**********************************************************
      * Public Interface for interacting with the chat frame
      * 
