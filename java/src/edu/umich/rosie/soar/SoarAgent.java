@@ -27,9 +27,12 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 		public String speechFile;
 
 		public Boolean writeLog;
+		public Boolean writeStandardOut;
 
 		public AgentConfig(Properties props){
 	        spawnDebugger = props.getProperty("spawn-debugger", "true").equals("true");
+	        writeStandardOut = props.getProperty("write-to-stout", "false").equals("true");
+	       
 
 	        agentName = props.getProperty("agent-name", "SoarAgent");
 			agentSource = props.getProperty("agent-source", null);
@@ -139,6 +142,9 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         agent.RegisterForRunEvent(smlRunEventId.smlEVENT_BEFORE_INPUT_PHASE, this, null);
         agent.RegisterForRunEvent(smlRunEventId.smlEVENT_AFTER_INPUT_PHASE, this, null);
         agent.RegisterForRunEvent(smlRunEventId.smlEVENT_AFTER_OUTPUT_PHASE, this, null);
+        if(config.writeStandardOut){
+        	agent.RegisterForPrintEvent(smlPrintEventId.smlEVENT_PRINT, this, null);
+        }
 
 		if(config.writeLog){
 			try {
@@ -314,8 +320,11 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 
 	@Override
 	public void printEventHandler(int eventID, Object data, Agent agent, String message) {
-		synchronized(logWriter) {
-			logWriter.print(message);
+		if(config.writeStandardOut){
+			System.out.print(message);
 		}
+//		synchronized(logWriter) {
+//			logWriter.print(message);
+//		}
 	}
 }
