@@ -31,7 +31,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 
 		public AgentConfig(Properties props){
 	        spawnDebugger = props.getProperty("spawn-debugger", "true").equals("true");
-	        writeStandardOut = props.getProperty("write-to-stout", "false").equals("true");
+	        writeStandardOut = props.getProperty("write-to-stdout", "false").equals("true");
 	       
 
 	        agentName = props.getProperty("agent-name", "SoarAgent");
@@ -142,18 +142,19 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         agent.RegisterForRunEvent(smlRunEventId.smlEVENT_BEFORE_INPUT_PHASE, this, null);
         agent.RegisterForRunEvent(smlRunEventId.smlEVENT_AFTER_INPUT_PHASE, this, null);
         agent.RegisterForRunEvent(smlRunEventId.smlEVENT_AFTER_OUTPUT_PHASE, this, null);
-        if(config.writeStandardOut){
-        	agent.RegisterForPrintEvent(smlPrintEventId.smlEVENT_PRINT, this, null);
-        }
 
 		if(config.writeLog){
 			try {
 				logWriter = new PrintWriter(new FileWriter("rosie-log.txt"));
-				agent.RegisterForPrintEvent(smlPrintEventId.smlEVENT_PRINT, this, this);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
+
+        if(config.writeStandardOut || config.writeLog){
+        	agent.RegisterForPrintEvent(smlPrintEventId.smlEVENT_PRINT, this, null);
+        }
+
 
 		agent.ExecuteCommandLine(String.format("watch %d", config.watchLevel));
 
@@ -323,8 +324,10 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 		if(config.writeStandardOut){
 			System.out.print(message);
 		}
-//		synchronized(logWriter) {
-//			logWriter.print(message);
-//		}
+		if(config.writeLog){
+			synchronized(logWriter) {
+				logWriter.print(message);
+			}
+		}
 	}
 }

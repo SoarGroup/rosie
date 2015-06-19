@@ -10,9 +10,9 @@ import java.util.Queue;
 import lcm.lcm.LCM;
 import lcm.lcm.LCMDataInputStream;
 import lcm.lcm.LCMSubscriber;
-
+import magic2.lcmtypes.led_message_t;
+import magic2.lcmtypes.speak_t;
 import april.util.TimeUtil;
-
 import edu.umich.rosie.language.LanguageConnector.MessageType;
 import edu.umich.rosie.lcmtypes.interaction_message_t;
 import edu.umich.rosie.lcmtypes.interaction_messages_t;
@@ -37,6 +37,8 @@ public class MessageLogger implements LCMSubscriber{
 	
 	private SendMessagesThread sendThread;
 	
+	private boolean sendMagicMessages = false;
+	
 	public MessageLogger(String loggerName){
 		this.loggerName = loggerName;
 		
@@ -48,6 +50,10 @@ public class MessageLogger implements LCMSubscriber{
 		sendThread.start();
 
 		LCM.getSingleton().subscribe("INTERACTION_MESSAGE.*", this);
+	}
+	
+	public void sendMagicMessages(){
+		sendMagicMessages = true;
 	}
 	
 	public void addMessageListener(IMessageListener listener){
@@ -106,6 +112,9 @@ public class MessageLogger implements LCMSubscriber{
 					int i = 0;
 					for(interaction_message_t message : messages){
 						messageList.messages[i++] = message;
+						if(i == messageList.num_messages && sendMagicMessages){
+							speakMessage(message.message);
+						}
 					}
 					LCM.getSingleton().publish("INTERACTION_MESSAGE_" + loggerName.toUpperCase() + "_TX", messageList);
 				}
@@ -119,6 +128,25 @@ public class MessageLogger implements LCMSubscriber{
 		}
 	}
 
+	private void speakMessage(String message){
+		speak_t speak = new speak_t();
+		speak.utime = TimeUtil.utime();
+		speak.message = message;
+		speak.priority = 1;
+		speak.args = "";
+		LCM.getSingleton().publish("SPEAK", speak);
+		
+		led_message_t led = new led_message_t();
+		led.utime = TimeUtil.utime();
+		led.msg = message;
+		led.pid = 23;
+		led.mid = 1;
+		led.red = 50;
+		led.green = 127;
+		led.blue = 50;
+		led.rotate_keepalive = 2;
+		LCM.getSingleton().publish("LED_MESSAGE", led);
+	}
 
 	@Override
 	public void messageReceived(LCM lcm, String channel, LCMDataInputStream ins) {
