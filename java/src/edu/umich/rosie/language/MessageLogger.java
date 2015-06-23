@@ -10,7 +10,7 @@ import java.util.Queue;
 import lcm.lcm.LCM;
 import lcm.lcm.LCMDataInputStream;
 import lcm.lcm.LCMSubscriber;
-import magic2.lcmtypes.led_message_t;
+//import magic2.lcmtypes.led_message_t;
 import magic2.lcmtypes.speak_t;
 import april.util.TimeUtil;
 import edu.umich.rosie.language.LanguageConnector.MessageType;
@@ -136,16 +136,16 @@ public class MessageLogger implements LCMSubscriber{
 		speak.args = "";
 		LCM.getSingleton().publish("SPEAK", speak);
 		
-		led_message_t led = new led_message_t();
-		led.utime = TimeUtil.utime();
-		led.msg = message;
-		led.pid = 23;
-		led.mid = 1;
-		led.red = 50;
-		led.green = 127;
-		led.blue = 50;
-		led.rotate_keepalive = 2;
-		LCM.getSingleton().publish("LED_MESSAGE", led);
+		//led_message_t led = new led_message_t();
+		//led.utime = TimeUtil.utime();
+		//led.msg = message;
+		//led.pid = 23;
+		//led.mid = 1;
+		//led.red = 50;
+		//led.green = 127;
+		//led.blue = 50;
+		//led.rotate_keepalive = 2;
+		//LCM.getSingleton().publish("LED_MESSAGE", led);
 	}
 
 	@Override
