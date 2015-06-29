@@ -36,10 +36,6 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import javax.swing.JPanel;
 
-import lcm.lcm.LCM;
-import lcm.lcm.LCMDataInputStream;
-import lcm.lcm.LCMSubscriber;
-
 import edu.umich.rosie.language.LanguageConnector.MessageType;
 import edu.umich.rosie.lcmtypes.interaction_message_t;
 import edu.umich.rosie.lcmtypes.interaction_messages_t;
@@ -73,8 +69,6 @@ public class ChatPanel extends JPanel implements MessageLogger.IMessageListener{
     private Object outputLock = new Object();
     
     private SoarAgent soarAgent;
-    
-    LCM lcm;
     
     private MessageLogger messageLogger;
 

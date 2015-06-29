@@ -7,10 +7,6 @@ import java.util.Properties;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 
-import lcm.lcm.LCM;
-import lcm.lcm.LCMDataInputStream;
-import lcm.lcm.LCMSubscriber;
-
 import april.util.TimeUtil;
 
 import edu.umich.rosie.lcmtypes.interaction_message_t;
