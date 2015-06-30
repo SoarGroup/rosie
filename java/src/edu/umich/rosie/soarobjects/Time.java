@@ -1,12 +1,11 @@
 package edu.umich.rosie.soarobjects;
 
-import april.util.TimeUtil;
 import sml.Identifier;
 import edu.umich.rosie.soar.ISoarObject;
 import edu.umich.rosie.soar.IntWME;
+import java.util.Calendar;
 
 public class Time implements ISoarObject{
-	
 	private long startTime;
 	private boolean added = false;
 
@@ -15,10 +14,14 @@ public class Time implements ISoarObject{
 	private IntWME steps;
 	
 	public Time(){
-		startTime = TimeUtil.utime();
+		startTime = mstime();
 		
 		seconds = new IntWME("seconds", 0);
 		steps = new IntWME("steps", 0);
+	}
+	
+	public static long mstime(){
+		return (Calendar.getInstance()).getTimeInMillis();
 	}
 
 	@Override
@@ -45,7 +48,7 @@ public class Time implements ISoarObject{
 			return;
 		}
 		
-		seconds.setValue((int)((TimeUtil.utime() - startTime)/1000000));
+		seconds.setValue((int)((mstime() - startTime)/1000));
 		seconds.updateWM();
 		
 		steps.setValue(steps.getValue()+1);

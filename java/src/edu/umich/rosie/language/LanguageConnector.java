@@ -1,15 +1,11 @@
 package edu.umich.rosie.language;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Properties;
 
-import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 
-import april.util.TimeUtil;
-
-import edu.umich.rosie.lcmtypes.interaction_message_t;
+import edu.umich.rosie.language.IMessagePasser.RosieMessage;
 import edu.umich.rosie.soar.AgentConnector;
 import edu.umich.rosie.soar.SoarAgent;
 import edu.umich.rosie.soar.SoarUtil;
@@ -18,7 +14,7 @@ import sml.Identifier;
 import sml.WMElement;
 
 
-public class LanguageConnector extends AgentConnector implements MessageLogger.IMessageListener{
+public class LanguageConnector extends AgentConnector implements IMessagePasser.IMessageListener{
 	public enum MessageType{
 		AGENT_MESSAGE, INSTRUCTOR_MESSAGE
 	};
@@ -33,9 +29,9 @@ public class LanguageConnector extends AgentConnector implements MessageLogger.I
 	
 	Identifier languageId = null;
 	
-	private MessageLogger messageLogger;
+	private IMessagePasser messagePasser;
 	
-	public LanguageConnector(SoarAgent agent, Properties props){
+	public LanguageConnector(SoarAgent agent, Properties props, IMessagePasser messagePasser){
 		super(agent);
 		
 		String speechFile = props.getProperty("speech-file", "audio_file/sample");
@@ -46,7 +42,7 @@ public class LanguageConnector extends AgentConnector implements MessageLogger.I
         curMessage = null;
         messagesToRemove = new HashSet<Message>();
         
-        messageLogger = new MessageLogger("agent");
+        this.messagePasser = messagePasser;
     	
         this.setOutputHandlerNames(new String[]{ "send-message" });
 	}
@@ -54,13 +50,13 @@ public class LanguageConnector extends AgentConnector implements MessageLogger.I
 	@Override
 	public void connect(){
 		super.connect();
-		messageLogger.addMessageListener(this);
+		messagePasser.addMessageListener(this);
 	}
 	
 	@Override
 	public void disconnect(){
 		super.disconnect();
-		messageLogger.removeMessageListener(this);
+		messagePasser.removeMessageListener(this);
 	}
 	
 	public TextToSpeech getTTS(){
@@ -72,11 +68,11 @@ public class LanguageConnector extends AgentConnector implements MessageLogger.I
 	}
 	
 	public void sendMessage(String message, MessageType type){
-		messageLogger.sendMessage(message, type);
+		messagePasser.sendMessage(message, type);
 	}
 	
-	public synchronized void receiveMessage(interaction_message_t message){
-		switch(MessageType.valueOf(message.message_type)){
+	public synchronized void receiveMessage(RosieMessage message){
+		switch(message.type){
     	case INSTRUCTOR_MESSAGE:
     		if(curMessage != null){
     			messagesToRemove.add(curMessage);

@@ -37,11 +37,10 @@ import javax.swing.text.StyledDocument;
 import javax.swing.JPanel;
 
 import edu.umich.rosie.language.LanguageConnector.MessageType;
-import edu.umich.rosie.lcmtypes.interaction_message_t;
-import edu.umich.rosie.lcmtypes.interaction_messages_t;
+import edu.umich.rosie.language.IMessagePasser.*;
 import edu.umich.rosie.soar.SoarAgent;
 
-public class ChatPanel extends JPanel implements MessageLogger.IMessageListener{
+public class ChatPanel extends JPanel implements IMessagePasser.IMessageListener{
 	// GUI COMPONENTS
 	
 	private StyledDocument chatDoc;
@@ -70,19 +69,19 @@ public class ChatPanel extends JPanel implements MessageLogger.IMessageListener{
     
     private SoarAgent soarAgent;
     
-    private MessageLogger messageLogger;
+    private IMessagePasser messageLogger;
 
-    public ChatPanel(SoarAgent agent, JFrame parentFrame) {
+    public ChatPanel(SoarAgent agent, JFrame parentFrame, IMessagePasser messageLogger) {
         this.soarAgent = agent;
         
         setupGUI(parentFrame);
 		setupStyles();
         
-        messageLogger = new MessageLogger("instructor");
-        messageLogger.addMessageListener(this);
+		this.messageLogger = messageLogger;
+        this.messageLogger.addMessageListener(this);
     }
     
-    public MessageLogger getMessageLogger(){
+    public IMessagePasser getMessageLogger(){
     	return messageLogger;
     }
     
@@ -96,9 +95,9 @@ public class ChatPanel extends JPanel implements MessageLogger.IMessageListener{
      */
     
     @Override
-    public void receiveMessage(interaction_message_t message){
+    public void receiveMessage(RosieMessage message){
     	synchronized(outputLock){
-	    	Style msgStyle = chatDoc.getStyle(message.message_type);
+	    	Style msgStyle = chatDoc.getStyle(message.type.toString());
 			DateFormat dateFormat = new SimpleDateFormat("mm:ss:SSS");
 			Date d = new Date();
 			
@@ -117,7 +116,7 @@ public class ChatPanel extends JPanel implements MessageLogger.IMessageListener{
 			int end = chatDoc.getLength();
 			tPane.select(end, end);
 
-    		switch(MessageType.valueOf(message.message_type)){
+    		switch(message.type){
 	    	case INSTRUCTOR_MESSAGE:
 	            chatField.setText("");
 	            chatField.requestFocus();

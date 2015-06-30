@@ -160,9 +160,15 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 
         sourceAgent();
         
-        perceptionConn.connect();
-        actuationConn.connect();
-        languageConn.connect();
+        if(perceptionConn != null){
+        	perceptionConn.connect();
+        }
+        if(actuationConn != null){
+        	actuationConn.connect();
+        }
+        if(languageConn != null){
+        	languageConn.connect();
+        }
     }
 
 	/**
@@ -198,9 +204,15 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 		}
 		agent.KillDebugger();
 		time.removeFromWM();
-		languageConn.disconnect();
-		perceptionConn.disconnect();
-		actuationConn.disconnect();
+        if(perceptionConn != null){
+        	perceptionConn.disconnect();
+        }
+        if(actuationConn != null){
+        	actuationConn.disconnect();
+        }
+        if(languageConn != null){
+        	languageConn.disconnect();
+        }
 		//kernel.DestroyAgent(agent);
     	// SBW removed DestroyAgent call, it hangs in headless mode for some reason
     	// (even when the KillDebugger isn't there)
