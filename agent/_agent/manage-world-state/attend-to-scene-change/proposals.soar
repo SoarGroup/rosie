@@ -1,54 +1,3 @@
-###############################################################################
-#
-# Proposal rules for attend-to-scene-change within an substate
-#
-###############################################################################
-
-# if flag attend-to-robot is on the state, 
-#   it will propose an operator to attend to the robot
-sp {anystate*propose*attend-to-scene-change*attend-to-robot
-   (state <s> ^attend-to-robot true
-              ^top-state.scene-monitor.scene-changes <sc>)
-   (<sc> ^change <c>)
-   (<c> ^type << arm-status-change >>)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name attend-to-scene-change
-        ^change <c>)
-}
-
-sp {anystate*propose*attend-to-scene-change*attend-to-object
-   (state <s> ^attend-to-object <id>
-              ^top-state.scene-monitor.scene-changes <sc>)
-   (<sc> ^change <c>)
-   (<c> ^object.id <id>)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name attend-to-scene-change
-        ^change <c>)
-}
-
-# If the flag attend-to-all-scene-changes is on the state,
-#   it will propose an operator for each scene-change
-sp {anystate*propose*attend-to-scene-change*attend-to-all-scene-changes
-   (state <s> ^attend-to-all-scene-changes true
-              ^top-state.scene-monitor.scene-changes <sc>)
-   (<sc> ^change <c>)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name attend-to-scene-change
-        ^change <c>)
-}
-
-# Reject attending to an object if it is being moved
-sp {anystate*reject*attend-to-scene-change*moving*object
-   (state <s> ^operator <o> +)
-   (<o> ^name attend-to-scene-change
-        ^change.object.wm-obj.predicates.arm-status << moving grabbed >>)
--->
-   (<s> ^operator <o> -)
-}
-
 ################################################################################
 #
 # Proposal rules for operators within attend-to-scene-change
@@ -58,11 +7,10 @@ sp {anystate*reject*attend-to-scene-change*moving*object
 
 sp {attend-to-scene-change*propose*attend-to-change
    (state <s> ^name attend-to-scene-change
-              ^scene-change <change>
-              ^top-state.scene-monitor.scene-changes.change-info.change <c>)
+              ^change-info <info>)
+   (<info> ^type <type>
+           ^op-name <op-name>)
    (<change> ^type <change-type>)
-   (<c> ^name <change-type>
-        ^op-name <op-name>)
 -->
    (<s> ^operator <o> +)
    (<o> ^name <op-name>

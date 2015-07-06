@@ -1,0 +1,116 @@
+##########################################################################
+#
+# perception-monitor.object-monitor: 
+#   A top-state set of elaborations that monitor objects 
+#   and compare new perceptual information with current representations
+#   in working memory. If discepancies are reported they are recorded
+#
+##########################################################################
+
+# The structure will look as follows
+#(state <s> ^superstate nil
+#           ^perception-monitor <perc-mon>)
+#  (<perc-mon> ^object-monitor <obj-mon>)
+#    (<obj-mon> ^object-info <info>)
+#      (<info> ^object-handle <handle>
+#              ^perception-obj <perc-obj> # Reference to the perceptual object in svs
+#              ^belief-obj <bel-obj>      # Reference to the belief object in svs
+#              ^wm-obj <wm-obj>           # Reference to the object representation in wm (top-state.world object)
+#              ^input-link-obj <il-obj>   # Reference to the object representation on the input-link
+#              ^differences <diffs>       # Elaborations used to record informatino about discrepancies
+#              ^predicate-info <pred>)    # Elaborations used to monitor unary predicates
+#        (<pred> ^property-handle <prop-handle>
+#                ^predicate-handle <pred-handle>
+#                ^input-link-pred <il-pred> # Reference to the predicate info on the input link
+#                ^hypothesis <hyp>)
+#          (<hyp> ^handle <handle>
+#                 ^confidence <conf>
+#                 ^best true
+#                 ^case << none uncertain certain >>)
+                 
+
+##############################################################
+#
+# Monitoring new objects
+#
+##############################################################
+
+sp {top-state*perception-monitor*object-monitor*elaborate*new-object-info
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor <obj-mon>
+              ^svs.spatial-scene.child <perc-obj>)
+   (<obj-mon> -^object-info.perception-obj <perc-obj>)
+   (<perc-obj> -^id << arm world eye >>
+                ^object-source perception)
+-->
+   (<obj-mon> ^new-object-info <new-obj-info>)
+   (<new-obj-info> ^differences <diffs>
+                   ^perception-obj <perc-obj>)
+}
+
+sp {top-state*perception-monitor*object-monitor*elaborate*new-object-info*object-handle
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.new-object-info <obj-info>)
+   (<obj-info> ^perception-obj.id <svs-id>)
+-->
+   (<obj-info> ^object-handle (int <svs-id>))
+}
+
+sp {top-state*perception-monitor*object-monitor*new-object*elaborate*input-link-obj
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.new-object-info <obj-info>
+              ^io.input-link.objects.object <il-obj>)
+   (<obj-info> ^object-handle <handle>)
+   (<il-obj> ^object-handle <handle>)
+-->
+   (<obj-info> ^input-link-obj <il-obj>)
+}
+
+##################################################################
+#
+# Monitoring confirmed objects
+#
+##################################################################
+
+sp {top-state*perception-monitor*object-monitor*object-info*elaboratee*belief-obj
+  (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info <obj-info>
+              ^svs.spatial-scene.child <belief-obj>)
+  (<obj-info> ^belief-handle <handle>)
+  (<belief-obj> ^id <handle>)
+-->
+  (<obj-info> ^belief-obj <belief-obj>)
+}
+
+sp {top-state*perception-monitor*object-monitor*object-info*elaborate*perception-obj
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info <obj-info>
+              ^svs.spatial-scene.child <perc-obj>)
+  (<obj-info> ^perception-handle <handle>)
+   (<perc-obj> ^id <handle>)
+-->
+   (<obj-info> ^perception-obj <perc-obj>)
+}
+
+sp {top-state*perception-monitor*object-monitor*object-info*elaborate*perception-obj*internal
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info <obj-info1>
+              ^perception-monitor.object-monitor.object-info <obj-info2>)
+   (<obj-info1> ^object-handle <handle1>
+                ^internal-handle <handle2>)
+   (<obj-info2> ^object-handle <handle2>
+                ^perception-obj <perc-obj>)
+-->
+   (<obj-info1> ^perception-obj <perc-obj>)
+}
+   
+
+sp {top-state*perception-monitor*object-monitor*object-info*elaborate*input-link-obj
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info <obj-info>
+              ^io.input-link.objects.object <il-obj>)
+   (<obj-info> ^object-handle <obj-handle>)
+   (<il-obj> ^object-handle <obj-handle>)
+-->
+   (<obj-info> ^input-link-obj <il-obj>)
+}

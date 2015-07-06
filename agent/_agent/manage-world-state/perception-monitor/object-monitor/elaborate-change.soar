@@ -1,0 +1,365 @@
+#########################################################
+# Change: new-object
+#   Occurs when a new object comes on the svs link
+#########################################################
+
+sp {top-state*perception-monitor*object-monitor*elaborate*change*new-object
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^changes <changes>
+               ^object-monitor.new-object-info <obj-info>)
+   (<obj-info> ^perception-obj <perc-obj>
+              -^status)
+-->
+   (<changes> ^change <change>)
+   (<change> ^type new-object
+             ^object-info <obj-info>)
+}
+
+sp {top-state*perception-monitor*elaborate*change-info*new-object
+   (state <s> ^superstate nil
+              ^perception-monitor.change-info <info>)
+-->
+   (<info> ^change <new-obj>)
+   (<new-obj> ^type new-object
+              ^category object
+              ^op-name attend-to-new-object)
+}
+
+###########################################################################
+#
+# Change: stability-timer-satisfied
+#   When the stability timer expires, then we need to check the new object out
+#   If the object is stable, we know it's actually there (as opposed to noise)
+#
+##########################################################################
+
+sp {top-state*perception-monitor*object-monitor*elaborate*change*evaluate-new-object
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^changes <changes>
+               ^object-monitor.new-object-info <obj-info>)
+   (<obj-info> ^stability-timer-satisfied true)
+-->
+   (<changes> ^change <change>)
+   (<change> ^type stability-timer-satisfied
+             ^object-info <obj-info>)
+}
+
+sp {top-state*perception-monitor*elaborate*change-info*stability-timer-satisfied
+   (state <s> ^superstate nil
+              ^perception-monitor.change-info <info>)
+-->
+   (<info> ^change <stability-timer-satisfied>)
+   (<stability-timer-satisfied> ^type stability-timer-satisfied
+                                ^category object
+                                ^op-name evaluate-stability)
+}
+
+############################################################################
+##
+## Change: new-stable-object
+##   Once we're fairly certain an object exists, we still need to fit it into
+##     out understainding of the world (identify it)
+##
+###########################################################################
+
+sp {top-state*perception-monitor*object-monitor*elaborate*change*new-stable-object
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^changes <changes>
+               ^object-monitor.new-object-info <obj-info>)
+   (<obj-info> ^status unidentified)
+-->
+   (<changes> ^change <change>)
+   (<change> ^type new-stable-object
+             ^object-info <obj-info>)
+}
+
+sp {top-state*perception-monitor*elaborate*change-info*new-stable-object
+   (state <s> ^superstate nil
+              ^perception-monitor.change-info <info>)
+-->
+   (<info> ^change <new-stable-obj>)
+   (<new-stable-obj> ^type new-stable-object
+                     ^category object
+                     ^op-name evaluate-new-object)
+}
+
+
+###########################################################################
+#
+# Change: moved-object
+#   If an object's position significantly changes, investigate
+#
+##########################################################################
+sp {top-state*perception-monitor*object-monitor*elaborate*change*moved-object
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^changes <changes>
+               ^object-monitor.object-info <obj-info>)
+   (<obj-info> ^differences <diffs>)
+   (<diffs> ^has-moved true
+            ^is-occluded false)
+-->
+   (<changes> ^change <change>)
+   (<change> ^type moved-object
+             ^object-info <obj-info>)
+}
+
+sp {top-state*perception-monitor*elaborate*change-info*moved-object
+   (state <s> ^superstate nil
+              ^perception-monitor.change-info <info>)
+-->
+   (<info> ^change <moved-object>)
+   (<moved-object> ^type moved-object
+                   ^category object
+                   ^op-name check-for-occlusion)
+}
+
+###########################################################################
+#
+# Change: shrunken-object
+#   If an object's volume drastrically lowers, investigate
+#
+##########################################################################
+sp {top-state*perception-monitor*object-monitor*elaborate*change*shurnken-object
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^changes <changes>
+               ^object-monitor.object-info <obj-info>)
+   (<obj-info> ^differences <diffs>)
+   (<diffs> ^has-shrunk true
+            ^is-occluded false)
+-->
+   (<changes> ^change <change>)
+   (<change> ^type shrunken-object
+             ^object-info <obj-info>)
+}
+
+sp {top-state*perception-monitor*elaborate*change-info*shrunken-object
+   (state <s> ^superstate nil
+              ^perception-monitor.change-info <info>)
+-->
+   (<info> ^change <shrunk-obj>)
+   (<shrunk-obj> ^type shrunken-object
+                 ^category object
+                 ^op-name evaluate-shrunken-object)
+}
+
+###########################################################################
+#
+# Change: grown-object
+#   If an object's volume drastrically increases, investigate
+#
+##########################################################################
+sp {top-state*perception-monitor*object-monitor*elaborate*change*grown-object
+   (state <s> ^superstate nil
+              ^io.input-link.self.action wait
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^changes <changes>
+               ^object-monitor.object-info <obj-info>)
+   (<obj-info> ^differences <diffs>)
+   (<diffs> ^has-grown true
+           -^growth-wait true)
+-->
+   (<changes> ^change <change>)
+   (<change> ^type grown-object
+             ^object-info <obj-info>)
+}
+
+sp {top-state*perception-monitor*elaborate*change-info*grown-object
+   (state <s> ^superstate nil
+              ^perception-monitor.change-info <info>)
+-->
+   (<info> ^change <grown-obj>)
+   (<grown-obj> ^type grown-object
+                ^category object
+                ^op-name evaluate-grown-object)
+}
+
+
+    
+#############################################################################
+# Change: recheck-occlusion
+#   Periodically check occluded objects to see if they are still occluded
+#############################################################################
+
+sp {top-state*perception-monitor*object-monitor*elaborate*change*recheck-occlusion
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^changes <changes>
+               ^object-monitor.object-info <obj-info>)
+   (<obj-info> ^differences <diffs>)
+   (<diffs> ^occlusion-time-expired true)
+-->
+   (<changes> ^change <change>)
+   (<change> ^type recheck-occlusion
+             ^object-info <obj-info>)
+}
+
+sp {top-state*perception-monitor*elaborate*change-info*recheck-occlusion
+   (state <s> ^superstate nil
+              ^perception-monitor.change-info <info>)
+-->
+   (<info> ^change <recheck-occlusion>)
+   (<recheck-occlusion> ^type recheck-occlusion
+                        ^category object
+                        ^op-name check-for-occlusion)
+}
+
+#########################################################
+# Change: stale-object
+#   Occurs when an object on the svs link becomes stale
+#########################################################
+
+sp {top-state*perception-monitor*object-monitor*elaborate*change*stale-object
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^changes <changes>
+               ^object-monitor.object-info <obj-info>)
+   (<obj-info> ^differences <diffs>)
+   (<diffs> ^is-stale true
+            ^is-occluded false)
+-->
+   (<changes> ^change <change>)
+   (<change> ^type stale-object
+             ^object-info <obj-info>)
+}
+
+sp {top-state*perception-monitor*elaborate*change-info*stale-object
+   (state <s> ^superstate nil
+              ^perception-monitor.change-info <info>)
+-->
+   (<info> ^change <stale-obj>)
+   (<stale-obj> ^type stale-object 
+                ^category object
+                ^op-name attend-to-stale-object)
+}
+
+############################################################################################
+# Change: new-predicate
+#    When a unary predicate appears for a predicate category we haven't added yet
+#############################################################################################
+sp {monitor-scene-changes*elaborate*scene-changes*new-predicate
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^changes <changes>
+               ^object-monitor.object-info <obj-info>)
+   (<obj-info> ^predicate-info.predicate <pred>
+               ^wm-obj.predicates <wm-preds>)
+   (<pred> ^predicate-category <pred-cat>
+           ^predicate-value <pred-val>)
+   (<wm-preds> -^<pred-cat> <any>)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type new-predicate
+             ^object <obj>
+             ^predicate <pred>)
+}
+
+sp {top-state*perception-monitor*elaborate*change-info*new-object-predicate
+   (state <s> ^superstate nil
+              ^perception-monitor.change-info <info>)
+-->
+   (<info> ^change <new-obj-pred>)
+   (<new-obj-pred> ^type new-object-predicate
+                   ^category object
+                   ^op-name attend-to-new-object-predicate)
+}
+
+############################################################################################
+# Change: changed-predicate
+#    When a unary predicate for a given category is different between 
+#    belief and perception objects
+#############################################################################################
+
+sp {monitor-scene-changes*elaborate*scene-changes*changed-predicate*visual
+   (state <s> ^top-state <s>
+              ^scene-monitor.object <obj>
+              ^scene-monitor.scene-changes <sc>)
+   (<obj> ^predicates.predicate <pred>
+          ^wm-obj.predicates <wm-preds>
+          ^differences.is-occluded false)
+   (<pred> ^predicate-type visual
+           ^predicate-category <pred-cat>
+           ^predicate-value <cur-value>)
+   (<wm-preds> ^<pred-cat> {<old-value> <> <cur-value>})
+-->
+   (<sc> ^change <change>)
+   (<change> ^type changed-predicate
+             ^object <obj>
+             ^predicate <pred>)
+}
+
+sp {monitor-scene-changes*elaborate*scene-changes*changed-predicate*state
+   (state <s> ^top-state <s>
+              ^scene-monitor.object <obj>
+              ^scene-monitor.scene-changes <sc>)
+   (<obj> ^predicates.predicate <pred>
+          ^wm-obj.predicates <wm-preds>)
+   (<pred> ^predicate-type state
+           ^predicate-category <pred-cat>
+           ^predicate-value <cur-value>)
+   (<wm-preds> ^<pred-cat> {<old-value> <> <cur-value>})
+-->
+   (<sc> ^change <change>)
+   (<change> ^type changed-predicate
+             ^object <obj>
+             ^predicate <pred>)
+}
+
+sp {top-state*perception-monitor*elaborate*change-info*changed-object-predicate
+   (state <s> ^superstate nil
+              ^perception-monitor.change-info <info>)
+-->
+   (<info> ^change <changed-obj-pred>)
+   (<changed-obj-pred> ^type changed-object-predicate
+                       ^category object
+                       ^op-name attend-to-changed-object-predicate)
+}
+############################################################################################
+# Change: status-change
+#    When an object becomes live/stale
+#############################################################################################
+
+sp {monitor-scene-changes*elaborate*scene-changes*status-change*stale
+   (state <s> ^top-state <s>
+              ^scene-monitor.object <obj>
+              ^scene-monitor.scene-changes <sc>)
+   (<obj> ^differences.is-stale true
+          ^wm-obj.predicates <preds>)
+   (<preds> -^status stale)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type status-change
+             ^object <obj>
+             ^old-status live
+             ^new-status stale)
+}
+
+sp {monitor-scene-changes*elaborate*scene-changes*status-change*live
+   (state <s> ^top-state <s>
+              ^scene-monitor.object <obj>
+              ^scene-monitor.scene-changes <sc>)
+   (<obj> ^differences.is-stale false
+          ^wm-obj.predicates <preds>)
+   (<preds> -^status live)
+-->
+   (<sc> ^change <change>)
+   (<change> ^type status-change
+             ^object <obj>
+             ^old-status stale
+             ^new-status live)
+}
+
+sp {top-state*perception-monitor*elaborate*change-info*changed-object-status
+   (state <s> ^superstate nil
+              ^perception-monitor.change-info <info>)
+-->
+   (<info> ^change <changed-obj-status>)
+   (<changed-obj-status> ^type changed-object-status
+                         ^category object
+                         ^op-name attend-to-changed-object-status)
+}
+
