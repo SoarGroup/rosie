@@ -1,16 +1,29 @@
+### Tries to find an object in the world that corresponds to a DP in the sentence
+###   (DP can't have an assigner of ^referent-type literal)
+### Different cases based on how specified (see index-scene-objects and failed grounding)
+###  - using "the", "a", pointing, or a "plural
+
+### When complete, marks the assigner with ^ground-tested.
+
+### Constraints on the grounding come from the assigners parent-receiver (or its head)
+### Parameter comes from receiver
+### 
+### Constraint format: 
+###     (<con> ^referent.handle <hand>)  ("handle" as property name)
+###     (<con> ^property.handle <property>  ^handle <value>)
+###     (<con> ^property (^handle <property> ^value <value>))
+###     (<con> ^{<< movable category type >> <type> } <value> 
+
 sp {comprehension*propose*ground-referent
-  # :interrupt
+  #:interrupt
    (state <s> ^name comprehension
               ^segment.last-merge <lm>)
    (<lm> ^assigner <as>
          ^receiver <r1>)
    (<as> ^parent-receiver { <> <r1> <a1> }
+        -^lt.referent-type literal   ## Don't ground if referent-type literal
          ^structure-type)
    (<a1> ^structure-type DP
-        -^head.lt.referent nil
-        -^head.lt.referent-type literal-lti
-        -^head.head.lt.referent nil
-        -^head.head.lt.referent-type literal-lti
         -^ground-tested <r1>
         -^ground-tested <a1>)
 -->
@@ -26,18 +39,14 @@ sp {comprehension*propose*ground-referent*push*head
    (<lm> ^assigner <as>
          ^receiver <r1>)
    (<as> ^parent-receiver <a1>
-         ^structure-type
-        -^lt.referent-type literal-lti)    # JEL
+        -^lt.referent-type literal   ## Don't ground if referent-type literal
+         ^structure-type)   
    (<r1> ^structure-type { <st> << THIS THAT DP >> }
         -^ground-tested <head>)
    (<a1> ^head <head>
-        -^ground-tested <head>
-        -^head.lt.referent nil
-        -^head.lt.referent-type literal-lti
-        -^head.head.lt.referent nil
-        -^head.head.lt.referent-type literal-lti)
+        -^ground-tested <head>)
    (<head> ^structure-type <st>
-          -^ground-tested) # <head>)
+          -^ground-tested )#<head>)  # head ?  - need the head test for to the right of
 -->
    (<s> ^operator <op> + =, >)
    (<op> ^name ground-referent
@@ -55,11 +64,7 @@ sp {comprehension*propose*ground-referent*push*complement
    (<r1> ^structure-type { <st> << THIS THAT DP >> }
         -^ground-tested <head>)
    (<a1> ^complement <head>
-        -^ground-tested <head>
-        -^complement.lt.referent nil
-        -^complement.lt.referent-type literal-lti
-        -^complement.head.lt.referent nil
-        -^complement.head.lt.referent-type literal-lti)
+        -^ground-tested <head>)
    (<head> ^structure-type <st>
           -^ground-tested <head>)
   -(<head> ^head <head2>
@@ -81,14 +86,8 @@ sp {comprehension*propose*ground-referent*push*complement2
          ^structure-type)
    (<r1> ^structure-type PP
         -^ground-tested <head>)
-   (<a1> ^complement2 <c2>
-        -^ground-tested <head>
-        -^complement2.lt.referent nil
-        -^complement2.lt.referent-type literal-lti
-        -^complement2.head.lt.referent nil
-        -^complement2.head.lt.referent-type literal-lti
-        -^complement2.head.head.lt.referent-type literal-lti
-        -^complement2.head.head.lt.referent nil)
+   (<a1> ^<< complement complement2 >> <c2>
+        -^ground-tested <head>)
    (<c2> ^head <head>)
    (<head> ^structure-type DP
           -^ground-tested <head>)
@@ -102,6 +101,7 @@ sp {comprehension*propose*ground-referent*push*complement2
 }
 
 sp {comprehension*elaborate-operator*ground-referent*lt
+  #:interrupt
    (state <s> ^name comprehension
               ^operator <o> +)
    (<o> ^name ground-referent
@@ -112,6 +112,7 @@ sp {comprehension*elaborate-operator*ground-referent*lt
 }
 
 sp {comprehension*elaborate-operator*ground-referent
+  #:interrupt
    (state <s> ^name comprehension
               ^operator <o> +)
    (<o> ^name ground-referent
@@ -148,6 +149,7 @@ sp {comprehension*compare*ground-referent*merge
 }
 
 sp {comprehension*compare*ground-referent*merge*literal
+  #:interrupt
    (state <s> ^name comprehension
               ^operator <op1> +
                         <op2> +)
@@ -156,9 +158,9 @@ sp {comprehension*compare*ground-referent*merge*literal
    (<op2> ^name merge 
           ^assigner <ass>)
    (<ass> ^structure-type DP
-          ^lt.referent-type literal-lti)
+          ^lt.referent-type literal)
 -->
-   (<s> ^operator <op1> -) # <op2>)  JEL 
+   (<s> ^operator <op1> -)  
 }
 
 sp {comprehension*compare*ground-referent*merge*not
@@ -169,10 +171,6 @@ sp {comprehension*compare*ground-referent*merge*not
           ^constraints.structure-type DP)
    (<op2> ^name merge 
           ^assigner <ass>)
-   -(<ass> ^structure-type DP
-          ^lt.referent nil)
-   -(<ass> ^structure-type DP
-           ^lt.referent-type literal-lti)
 -->
    (<s> ^operator <op1> > <op2>)
 }
@@ -264,25 +262,25 @@ sp {comprehension*apply*ground-referent*zero-constraints
   -(<p> ^lt.specifier)
   -(<p> ^lt.demonstrative)
 -->   
-      (<c> ^failed-grounding <p>
+   (<c> ^failed-grounding <p>
         ^ground-tested <p>)
    (<p> ^failed-constraint <c>)
    (write (crlf) |No constraints - Error - Assume nothing passes.|)
 }
 
-sp {comprehension*apply*ground-referent*locations
+sp {comprehension*apply*ground-referent*non-objects
    (state <s> ^name comprehension
               ^operator <op1>)
    (<op1> ^name ground-referent
           ^parameter <p>
           ^constraints <con>)
    (<con> ^constraint <c>)
-   (<c> ^property <prop>)
-   (<prop> ^type location)
+   (<c> -^property.type visual
+         ^handle <handle> )
 -->   
+   (write (crlf) |Ground referent that is not visual: | <c> |, | <handle> )
    (<con> ^referent <c>
           ^ground-tested <p> <con>)
-   (<p> ^ground-tested <p>)
 }
 
 
