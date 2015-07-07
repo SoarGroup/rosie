@@ -1,29 +1,27 @@
 sp {match-known-object*propose*link-objects
    (state <s> ^name match-known-object
-              ^object-info.perception-obj.id <source>
+              ^object-info <src-obj-info>
               ^overlap-results.result <res>)
-   (<res> ^object-b <dest>
+   (<res> ^overlapper-info <dest-obj-info>
           ^overlap <val>)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name link-objects
-        ^category perception
-        ^dest-id <dest>
-        ^source-id <source>
+        ^src-info <src-obj-info>
+        ^dest-info <dest-obj-info>
         ^overlap <val>)
 }
 
 # Only for non-stale, we will take any overlap for a stale
 sp {match-known-object*reject*not-enough-overlap
    (state <s> ^name match-known-object
-              ^top-state.scene-monitor.object <obj>
+              ^top-state.perception-monitor.object-monitor.object-info <dest-info>
               ^operator <o>
               ^contained-threshold <thresh>)
    (<o> ^name link-objects
-        ^dest-id <id>
+        ^dest-info <dest-obj-info>
         ^overlap < <thresh>)
-   (<obj> ^belief-obj.id <id>
-          ^perception-obj)
+   (<dest-obj-info> ^perception-obj <any>) # Not Stale
 -->
    (<s> ^operator <o> -)
 }
@@ -32,7 +30,7 @@ sp {match-known-object*reject*not-enough-overlap
 #   (state <s> ^name match-known-object
 #              ^operator <o>
 #              ^contained-threshold <thresh>
-#              ^top-state.scene-monitor.object <stale-obj>)
+#              ^top-state.perception-monitor.object-monitor.object-info <stale-obj>)
 #   (<o> ^name link-objects
 #        ^dest-id <stale-id>
 #        ^source-id <new-id>
@@ -61,13 +59,13 @@ sp {match-known-object*apply*link-objects
               ^operator <o>
               ^io.output-link <ol>)
    (<o> ^name link-objects
-        ^dest-id <dest>
-        ^source-id <source>)
+        ^src-info.perception-obj.id <src-handle>
+        ^dest-info.perception-obj.id <dest-handle>)
 -->
    (<ol> ^modify-scene <ms>)
    (<ms> ^type link
-         ^source-id <source>
-         ^dest-id <dest>)
+         ^source-handle <src-handle>
+         ^destination-handle <dest-handle>)
 }
 
 sp {match-known-object*apply*link-objects*monitor*perception
@@ -76,9 +74,9 @@ sp {match-known-object*apply*link-objects*monitor*perception
               ^top-state.agent-params.debug-mode on
               ^top-state.agent-params.debug-perception true)
    (<o> ^name link-objects
-        ^dest-id <dest>
-        ^source-id <source>)
+        ^src-info.perception-obj.id <src>
+        ^dest-info.perception-obj.id <dest>)
 -->
-   (write |Linking object | <source> | to | <dest>)
+   (write |Linking object | <src> | to | <dest>)
 }
         
