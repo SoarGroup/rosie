@@ -1,0 +1,333 @@
+##!
+# @file
+#
+# @created plindes 20150706
+# File: check-expectation.soar
+# Author: Peter Lindes
+# Created: 6 July 2015
+#
+# Desc: Check to see if a completed parse meets the given expectation.
+#
+#
+#
+
+#   Propose an operator to check the expectation
+sp {check-failure*propose*check-expectation
+   (state <s> ^name termination-processing
+              ^checked-not-merged-receivers true
+              ^checked-not-merged-assigners true
+              ^superstate.segment <seg>)
+   (<seg> -^parse-failed-receiver
+          -^parse-failed-assigner
+          -^processed-terminator true)
+   (<seg> ^original-sentence <cs>)
+   (<cs> ^processed-sentence true)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name check-expectation)
+}
+
+sp {check-failure*apply*check-expectation*no-expectation
+   (state <s> ^operator <op>
+              ^top-state.world-usage internal
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<op> ^name check-expectation)
+   (<ts> ^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<seg> ^expected nil)
+-->
+   (<seg> ^checked-expectation true
+          ^processed-terminator true)
+   (<ts> ^terminated-sentence <csn>
+         ^success-count <sc> - 
+                       (+ <sc> 1))
+   (write (crlf) (concat |NO EXPECTATION PROVIDED for sentence | <csn> |.|))
+#   (interrupt)
+}
+
+sp {check-failure*apply*check-expectation*no-message-type
+   (state <s> ^operator <op>
+              ^top-state.world-usage internal
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<op> ^name check-expectation)
+   (<ts> ^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<seg> ^original-sentence <cs>
+          ^expected <expect>
+          ^semantics <sem>)
+   (<cs> ^processed-sentence true)
+   (<expect> ^message-type <msg-type>)
+  -(<sem> ^message-type <type>)
+-->
+   (<seg> ^checked-expectation true)
+   (write (crlf) (concat |Expected message type | <msg-type> | but none found.|))
+}
+
+sp {check-failure*apply*check-expectation*message-type-wrong
+   (state <s> ^operator <op>
+              ^top-state.world-usage internal
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<op> ^name check-expectation)
+   (<ts> ^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<seg> ^original-sentence <cs>
+          ^expected <expect>
+          ^semantics <sem>)
+   (<cs> ^processed-sentence true)
+   (<expect> ^message-type <msg-type>)
+   (<sem> ^message-type <type> <> <msg-type>)
+-->
+   (<seg> ^checked-expectation true)
+   (write (crlf) (concat |Expected message type | <msg-type> | but found | <type> |.|))
+}
+
+sp {check-failure*apply*check-expectation*attribute-ok-l1
+   (state <s> ^operator <op>
+              ^top-state.world-usage internal
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<op> ^name check-expectation)
+   (<ts> ^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<seg> ^original-sentence <cs>
+          ^expected <expected>
+          ^semantics <sem>)
+   (<cs> ^processed-sentence true)
+   (<expected> ^<attr> <value>)
+   (<sem> ^<attr> <value>)
+-->
+   (<seg> ^checked-expectation true)
+   (write (crlf) (concat |EXPECTATION MATCHED: | <sem> | ^| <attr> | | <value> | found.|))
+#   (interrupt)
+}
+
+sp {check-failure*apply*check-expectation*attribute-failed-l1
+   (state <s> ^operator <op>
+              ^top-state.world-usage internal
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<op> ^name check-expectation)
+   (<ts> ^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<seg> ^original-sentence <cs>
+          ^expected <expected>
+          ^semantics <sem>)
+   (<cs> ^processed-sentence true)
+   (<expected> ^<attr> <value>)
+   (<sem> -^<attr> )
+-->
+   (<seg> ^checked-expectation true)
+   (write (crlf) (concat |EXPECTATION FAILED: | <sem> | ^| <attr> | missing.|))
+#   (interrupt)
+}
+
+sp {check-failure*apply*check-expectation*attribute-value-failed-l1
+   (state <s> ^operator <op>
+              ^top-state.world-usage internal
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<op> ^name check-expectation)
+   (<ts> ^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<seg> ^original-sentence <cs>
+          ^expected <expected>
+          ^semantics <sem>)
+   (<cs> ^processed-sentence true)
+   (<expected> ^<attr> <value>)
+   (<sem> ^<attr> <v2> <> <value>)
+  -(<v2> ^<a2> )
+-->
+   (<seg> ^checked-expectation true)
+   (write (crlf) (concat |EXPECTATION FAILED: | <sem> | ^| <attr> | | <v2> | <> | <value> |.|))
+#   (interrupt)
+}
+
+sp {check-failure*apply*check-expectation*attribute-ok-l2
+   (state <s> ^operator <op>
+              ^top-state.world-usage internal
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<op> ^name check-expectation)
+   (<ts> ^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<seg> ^original-sentence <cs>
+          ^expected <expected>
+          ^semantics <sem>)
+   (<cs> ^processed-sentence true)
+   (<expected> ^<attr> <value>)
+   (<sem> ^<attr> <v2>)
+   (<value> ^<a2> <v2-2>)
+   (<v2> ^<a2> )
+-->
+   (<seg> ^checked-expectation true)
+   (write (crlf) (concat |EXPECTATION MATCHED: | <sem> | ^| <attr> |.| <a2> | found.|))
+#   (interrupt)
+}
+
+sp {check-failure*apply*check-expectation*attribute-value-ok-l2
+   (state <s> ^operator <op>
+              ^top-state.world-usage internal
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<op> ^name check-expectation)
+   (<ts> ^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<seg> ^original-sentence <cs>
+          ^expected <expected>
+          ^semantics <sem>)
+   (<cs> ^processed-sentence true)
+   (<expected> ^<attr> <value>)
+   (<sem> ^<attr> <v2>)
+   (<value> ^<a2> <v2-2>)
+   (<v2> ^<a2> <v2-2>)
+-->
+   (<seg> ^checked-expectation true)
+   (write (crlf) (concat |EXPECTATION MATCHED: | <sem> | ^| <attr> |.| <a2> | | <v2-2> | found.|))
+#   (interrupt)
+}
+
+sp {check-failure*apply*check-expectation*attribute-failed-l2
+   (state <s> ^operator <op>
+              ^top-state.world-usage internal
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<op> ^name check-expectation)
+   (<ts> ^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<seg> ^original-sentence <cs>
+          ^expected <expected>
+          ^semantics <sem>)
+   (<cs> ^processed-sentence true)
+   (<expected> ^<attr> <value>)
+   (<sem> ^<attr> <v2>)
+   (<value> ^<a2> <v2-2>)
+   (<v2> -^<a2> )
+-->
+   (<seg> ^checked-expectation true)
+   (write (crlf) (concat |EXPECTATION FAILED: | <sem> | ^| <attr> |.| <a2> | missing.|))
+#   (interrupt)
+}
+
+sp {check-failure*apply*check-expectation*attribute-ok-l3
+   (state <s> ^operator <op>
+              ^top-state.world-usage internal
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<op> ^name check-expectation)
+   (<ts> ^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<seg> ^original-sentence <cs>
+          ^expected <expected>
+          ^semantics <sem>)
+   (<cs> ^processed-sentence true)
+   (<expected> ^<attr> <value>)
+   (<sem> ^<attr> <v2>)
+   (<value> ^<a2> <v2-2>)
+   (<v2> ^<a2> <v3-2>)
+   (<v2-2> ^<a3> )
+   (<v3-2> ^<a3> )
+   -->
+   (<seg> ^checked-expectation true)
+   (write (crlf) (concat |EXPECTATION MATCHED: | <sem> | ^| <attr> |.| <a2>  |.| <a3> | found.|))
+#   (interrupt)
+}
+
+sp {check-failure*apply*check-expectation*attribute-value-ok-l3
+   (state <s> ^operator <op>
+              ^top-state.world-usage internal
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<op> ^name check-expectation)
+   (<ts> ^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<seg> ^original-sentence <cs>
+          ^expected <expected>
+          ^semantics <sem>)
+   (<cs> ^processed-sentence true)
+   (<expected> ^<attr> <value>)
+   (<sem> ^<attr> <v2>)
+   (<value> ^<a2> <v2-2>)
+   (<v2> ^<a2> <v3-2>)
+   (<v2-2> ^<a3> <v3>)
+   (<v3-2> ^<a3> <v3>)
+-->
+   (<seg> ^checked-expectation true)
+   (write (crlf) (concat |EXPECTATION MATCHED: | <sem> | ^| <attr> |.| <a2> |.| <a3>  | | <v3> | found.|))
+#   (interrupt)
+}
+
+sp {check-failure*apply*check-expectation*done
+   (state <s> ^operator <op>
+              ^top-state.world-usage internal
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<op> ^name check-expectation)
+   (<ts> ^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<seg> ^checked-expectation true)
+-->
+   (<seg> ^processed-terminator true)
+   (<ts> ^terminated-sentence <csn>
+         ^success-count <sc> - 
+                       (+ <sc> 1))
+#   (interrupt)
+}
+
+########
+
+sp {apply*check-expectation*new-message
+   (state <s> ^name termination-processing
+              ^operator.name  check-expectation
+             #-^top-state.world-usage internal
+             -^failed-receiver
+             -^failed-assigner
+              ^segment <seg>
+              ^top-state.interaction.status <status>)
+   (<seg> ^checked-expectation true
+          ^semantics <sem>)
+   (<sem> ^message-type <ms-type>)
+-->
+   (<status> ^new-message <sem>)
+}
+
+sp {apply*check-expectation-interaction-status
+   (state <s> ^name termination-processing
+              ^operator.name  check-expectation
+             #-^top-state.world-usage internal
+             -^failed-receiver
+             -^failed-assigner
+              ^segment <seg>
+              ^top-state.interaction.status <status>)
+   (<seg> ^checked-expectation true
+          ^semantics <sem>)
+   (<sem> ^interaction-status.<att> <value>)
+-->
+   (<status> ^<att> <value>)
+}
