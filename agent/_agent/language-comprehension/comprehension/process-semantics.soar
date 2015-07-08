@@ -1,5 +1,5 @@
 ## New version of process-semantics.
-## Puts semantics on assigner.parent-receiver.semantics - need to create for every receiver.
+## Puts semantics on assigner.parent-receiver.semantics - need to create for every receiver
 ##    So previously computed semantics for receiver structures are accessible via receiver.semantics 
 
 ###### Semantic Conversion
@@ -12,6 +12,16 @@ sp {elaborate*assigner
 -->
    (<s> ^assigner <ass>)}
 
+sp {elaborate*process-semantics*DP-DP
+ #:interrupt
+   (state <s> ^name comprehension
+              ^assigner <ass>)
+   (<ass> ^merged-receiver <mre>)   
+   (<mre> ^structure-type DP
+          ^complement.head.head.lt.referent <sg>
+          ^head.lt.referent.handle of1)
+-->
+   (<s> ^deep-complement true)}
 
 #####!! ADD assigner to operator so bind to a specific assigner!
 
@@ -22,8 +32,9 @@ sp {elaborate*assigner
 
 sp {propose*process-semantics*referent
    (state <s> ^name comprehension
+             -^deep-complement true
               ^assigner <ass>)
-   (<ass> ^merged-receiver.referent { <> nil <sg> }  ##JEL 12/20
+   (<ass> ^merged-receiver.referent <sg>
          -^processed-semantics <sg>
           ^lt.semantic-structure { <> *copy* <> *embed* <ss> }) 
 -->
@@ -33,35 +44,17 @@ sp {propose*process-semantics*referent
          ^attribute <ss>
          ^value <sg>)}
 
+
 ## There is not a referent on receiver and have known lt semantic structure to attach it.
 sp {propose*process-semantics*no-local-referent*lt-referent
- #  :interrupt
+ #:interrupt
    (state <s> ^name comprehension
               ^assigner <ass>)
    (<ass> ^merged-receiver <mre>
          -^processed-semantics <sg>
           ^lt.semantic-structure { <> *copy* <> *embed* <ss> })
-   (<mre> ^lt.referent { <> nil <sg> }
+   (<mre> ^lt.referent <sg>
          -^referent)
--->
-   (<s> ^operator <op> + =, >)
-   (<op> ^name process-semantics
-         ^assigner <ass>
-         ^attribute <ss>
-         ^value <sg>)}
-
-sp {propose*process-semantics*default*referent*nil
- #  :interrupt
-   (state <s> ^name comprehension
-              ^assigner <ass>)
-   (<ass> ^merged-receiver <mre>
-         -^processed-semantics <sg>
-          ^lt.semantic-structure { <> *copy* <> *embed* <ss> })
-   (<mre> -^referent <sg>
-           ^lt <lli>)
-   (<lli> ^spelling <sg>
-          ^referent nil
-         -^semantic-value)
 -->
    (<s> ^operator <op> + =, >)
    (<op> ^name process-semantics
@@ -73,31 +66,91 @@ sp {propose*process-semantics*no-referent*constraint
    (state <s> ^name comprehension
               ^assigner <ass>)
    (<ass> ^merged-receiver <mre>
-         -^processed-semantics <sg>
-          ^lt <lt>)
-   (<lt> ^semantic-structure { <> *copy* <> *embed* <ss> }
-        -^referent-type literal-lti)
-   (<mre> ^constraint <sg>
-         -^lt.referent <> nil
-         -^referent
-         -^semantics)
+         -^processed-semantics <con>
+          ^lt.semantic-structure { <> *copy* <> *embed* <ss> })
+   (<mre> ^constraint <con>
+          -^head.lt.referent <sg>
+          -^lt.referent
+          -^referent)
 -->
    (<s> ^operator <op> + =, >)
    (<op> ^name process-semantics
          ^assigner <ass>
          ^attribute <ss>
-         ^value <sg>)}
+         ^value <con>)}
+
+sp {propose*process-semantics*no-referent*head
+   (state <s> ^name comprehension
+              ^assigner <ass>)
+   (<ass> ^merged-receiver <mre>
+         -^processed-semantics <sg>
+          ^lt.semantic-structure { <> *copy* <> *embed* <ss> })
+   (<mre> -^constraint <con>
+          -^lt.referent
+          -^referent
+           ^head.referent <head>)
+-->
+   (write (crlf) |propose*process-semantics*no-referent*head|)
+   (<s> ^operator <op> + =, >)
+  # (interrupt)
+   (<op> ^name process-semantics
+         ^assigner <ass>
+         ^attribute <ss>
+         ^value <head>)}
+
+sp {propose*process-semantics*referent-type*no-constraint*relation
+   (state <s> ^name comprehension
+              ^assigner <ass>)
+   (<ass> ^merged-receiver <mre>
+         -^processed-semantics <rel>
+          ^lt.semantic-structure { <> *copy* <> *embed* <> relation <ss> })
+   (<mre> -^constraint <con>
+          -^semantics
+          -^referent
+           ^lt <lli>
+          -^head.referent)
+   (<lli> -^referent
+           ^relation <rel>)
+-->
+   (write (crlf) |propose*process-semantics*referent-type*no-constraint*relation|)
+ #  (interrupt)
+   (<s> ^operator <op> + =, >)
+   (<op> ^name process-semantics
+         ^assigner <ass>
+         ^attribute <ss>
+         ^value <rel>)}  ### SPECIAL
+
+sp {propose*process-semantics*error
+ #:interrupt
+   (state <s> ^name comprehension
+              ^assigner <ass>)
+   (<ass> ^merged-receiver <mre>
+         -^processed-semantics <sg>
+          ^lt <lt>)
+   (<lt> ^semantic-structure { <> *copy* <> *embed* <ss> })
+   (<mre> -^constraint 
+          -^referent
+          -^head.referent
+          -^head.lt.referent
+           ^lt <lli>)
+   (<lli> -^referent 
+          -^relation 
+           ^spelling <sg>)
+-->
+   
+   (write (crlf) |No receiver.referent. No receiver.lt.referent/relation: | <mre> |, | <sg>)}
 
 ### FAILED REFERENT
 sp {propose*process-semantics*failed-referent
- #  :interrupt
+ #:interrupt
    (state <s> ^name comprehension
               ^assigner <ass>)
-   (<ass> ^merged-receiver <mr>
+   (<ass> ^merged-receiver <mre>
          -^processed-semantics <sg>
           ^lt.semantic-structure { <> *copy* <> *embed* <ss> }) 
-  (<mr> ^lt.relation <rel>
-        ^head <head>)
+  (<mre> ^lt.relation <rel>
+        -^referent
+         ^head <head>)
   (<head> ^constraint <con>
           ^failed-grounding <fg>)
 -->
@@ -106,255 +159,23 @@ sp {propose*process-semantics*failed-referent
          ^assigner <ass>
          ^attribute <ss>
          ^relation <val>)
-   (<val> ^arg2 <con> 
-          ^id <rel>)}
+   (<val> ^2 <con> 
+          ^handle <rel>)}
 
-#### LITERAL
-#sp {propose*process-semantics*referent-type*literal*with-constraint
-#   (state <s> ^name comprehension
-#              ^assigner <ass>)
-#   (<ass> ^merged-receiver <mre>
-#         -^processed-semantics <sg>
-#          ^lt <lt>)
-#   (<lt> ^semantic-structure { <> *copy* <ss> }
-#         ^referent-type literal)
-#   (<mre> ^constraint <sg>
-#         -^referent)
-#-->
-#   (<s> ^operator <op> + =, >)
-#   (<op> ^name process-semantics
-#         ^assigner <ass>
-#         ^attribute <ss>
-#         ^value <sg>)}
-#
-#sp {propose*process-semantics*referent-type*literal*no-constraint
-#   (state <s> ^name comprehension
-#              ^assigner <ass>)
-#   (<ass> ^merged-receiver <mre>
-#         -^processed-semantics <sg>
-#          ^lt <lt>)
-#   (<lt> ^semantic-structure { <> *copy* <ss> }
-#         ^referent-type literal)
-#   (<mre> -^constraint <con>
-#          -^referent
-#           ^lt  <lli>)
-#   (<lli> -^referent <> nil
-#           ^spelling <sg>)
-#-->
-#   (<s> ^operator <op> + =, >)
-#   (<op> ^name process-semantics
-#         ^assigner <ass>
-#         ^attribute <ss>
-#         ^value <sg>)}
-#
-#sp {propose*process-semantics*referent-type*literal*no-constraint*literal*lt-referent
-#   (state <s> ^name comprehension
-#              ^assigner <ass>)
-#   (<ass> ^merged-receiver <mre>
-#         -^processed-semantics <sg>
-#          ^lt <lt>)
-#   (<lt> ^semantic-structure { <> *copy* <ss> }
-#         ^referent-type literal)
-#   (<mre> -^constraint <con>
-#          -^referent
-#           ^lt  <lli>)
-#   (<lli> ^referent { <> nil <sg> })
-#-->
-#   (<s> ^operator <op> + =, >)
-#   (<op> ^name process-semantics
-#         ^assigner <ass>
-#         ^attribute <ss>
-#         ^value <sg>)}
-
-##### Literal LTI
-
-sp {propose*process-semantics*referent-type*literal-lti*with-constraint
-   (state <s> ^name comprehension
-              ^assigner <ass>)
-   (<ass> ^merged-receiver <mre>
-         -^processed-semantics <con>
-          ^lt <lt>)
-   (<lt> ^semantic-structure { <> *copy* <> *embed* <ss> }
-         ^referent-type literal-lti)
-   (<mre> ^constraint <con> 
-         -^referent)
-   (<con> ^property.name <property> #{ << shape size color relation action spatial-shape direction >> <property> } 
-          ^name <sg>)
-   (<sg> -^name)
--->
-   (<s> ^operator <op> + =, >)
-   (<op> ^name process-semantics
-         ^special literal-lti
-         ^assigner <ass>
-         ^attribute <ss>
-         ^value-id <con>)}
-
-sp {propose*process-semantics*referent-type*literal-lti*with-constraint*name
-   (state <s> ^name comprehension
-              ^assigner <ass>)
-   (<ass> ^merged-receiver <mre>
-         -^processed-semantics <id>
-          ^lt <lt>)
-   (<lt> ^semantic-structure { <> *copy* <> *embed* <ss> }
-         ^referent-type literal-lti)
-   (<mre> ^constraint <con> 
-         -^referent)
-   (<con> ^property.name <property> #{ << shape size color relation action spatial-shape direction >> <property> } 
-          ^id <id>)
-   (<id> ^name)
--->
-   (<s> ^operator <op> + =, >)
-   (<op> ^name process-semantics
-         ^special literal-lti
-         ^assigner <ass>
-         ^attribute <ss>
-         ^value-id <id>)}
-
-sp {propose*process-semantics*referent-type*literal-lti*no-constraint*relation
-  # :interrupt
-   (state <s> ^name comprehension
-              ^assigner <ass>)
-   (<ass> ^merged-receiver <mre>
-         -^processed-semantics <rel>
-          ^lt <lt>)
-   (<lt> ^semantic-structure { <> *copy* <> *embed* <ss> }
-         ^referent-type literal-lti)
-   (<mre> -^constraint <con>
-          -^referent
-           ^lt  <lli>
-          -^head.referent)
-   (<lli> -^referent <> nil
-           ^relation <rel>
-          -^name
-          -^id)
--->
-   (<s> ^operator <op> + =, >)
-   (<op> ^name process-semantics
-         ^special literal-lti
-         ^assigner <ass>
-         ^attribute <ss>
-         ^value-id <rel>)}
-
-sp {propose*process-semantics*referent-type*literal-lti*no-constraint
-  # :interrupt
-   (state <s> ^name comprehension
-              ^assigner <ass>)
-   (<ass> ^merged-receiver <mre>
-         -^processed-semantics <sg>
-          ^lt <lt>)
-   (<lt> ^semantic-structure { <> *copy* <> *embed* <ss> }
-         ^referent-type literal-lti)
-   (<mre> -^constraint <con>
-          -^referent
-           ^lt  <lli>)
-   (<lli> -^referent <> nil
-          -^relation <rel>
-          -^name
-          -^id
-           ^spelling <sg>)
--->
-   (<s> ^operator <op> + =, >)
-   (<op> ^name process-semantics
-         ^special literal-lti
-         ^assigner <ass>
-         ^attribute <ss>
-         ^value <sg>)}
-
-sp {propose*process-semantics*referent-type*literal-lti*no-constraint*id
-   (state <s> ^name comprehension
-              ^assigner <ass>)
-   (<ass> ^merged-receiver <mre>
-         -^processed-semantics <lli>
-          ^lt <lt>)
-   (<lt> ^semantic-structure { <> *copy* <> *embed* <ss> }
-         ^referent-type literal-lti)
-   (<mre> -^constraint <con>
-          -^referent
-           ^lt  <lli>)
-   (<lli> -^referent <> nil
-           ^id <id>)
--->
-   (<s> ^operator <op> + =, >)
-   (<op> ^name process-semantics
-         ^special literal-lti
-         ^assigner <ass>
-         ^attribute <ss>
-         ^value-special <lli>)}  ## Was ^value-id <id>
-
-
-sp {propose*process-semantics*referent-type*literal-lti*no-constraint*name
-   (state <s> ^name comprehension
-              ^assigner <ass>)
-   (<ass> ^merged-receiver <mre>
-         -^processed-semantics <lli>
-          ^lt <lt>)
-   (<lt> ^semantic-structure { <> *copy* <> *embed* <ss> }
-         ^referent-type literal-lti)
-   (<mre> -^constraint <con>
-          -^referent
-           ^lt  <lli>)
-   (<lli> -^referent <> nil
-          -^id
-           ^name <pf>) 
--->
-   (<s> ^operator <op> + =, >)
-   (<op> ^name process-semantics
-        # ^special literal-lti
-         ^assigner <ass>
-         ^attribute <ss>
-         ^value-id <lli>)}
-
-sp {propose*process-semantics*referent-type*literal-lti*no-constraint*literal*lt-referent
-   (state <s> ^name comprehension
-              ^assigner <ass>)
-   (<ass> ^merged-receiver <mre>
-         -^processed-semantics <sg>
-          ^lt <lt>)
-   (<lt> ^semantic-structure { <> *copy* <> *embed* <ss> }
-         ^referent-type literal-lti)
-   (<mre> -^constraint <con>
-          -^referent
-           ^lt  <lli>)
-   (<lli> ^referent { <> nil <sg> })
--->
-   (<s> ^operator <op> + =, >)
-   (<op> ^name process-semantics
-         ^special literal-lti
-         ^assigner <ass>
-         ^attribute <ss>
-         ^value-id <sg>)}
-
-### Referent nil
-sp {propose*process-semantics*referent-nil
- #  :interrupt
-   (state <s> ^name comprehension
-              ^assigner <ass>)
-   (<ass> ^merged-receiver.lt <lli>
-         -^processed-semantics <sg>
-          ^lt.semantic-structure { <> *copy* <> *embed* <ss> }) 
-   (<lli> ^referent nil
-          ^semantic-value <sg>)
--->
-   (<s> ^operator <op> + =, >)
-   (<op> ^name process-semantics
-         ^assigner <ass>
-         ^attribute <ss>
-         ^value <sg>)}
-
-sp {propose*process-semantics*referent-nil*deeper
-#   :interrupt
+sp {propose*process-semantics*referent*deeper
+#:interrupt
    (state <s> ^name comprehension
               ^assigner <ass>)
    (<ass> ^merged-receiver <mre> 
          -^processed-semantics <sg>
           ^lt.semantic-structure { <> *copy* <> *embed* <ss> })
-   (<mre> ^head.lt <lli>
+   (<mre> ^head.lt.referent <sg>
+         -^referent
+         -^lt.referent
          -^constraint
-         -^complement.head.head.lt.semantic-value)
-   (<lli> ^referent nil
-          ^semantic-value <sg>)
+         -^complement.head.head.lt.referent)
 -->   
-   (write (crlf) |propose*process-semantics*referent-nil*deeper - OK?|)
+   (write (crlf) |propose*process-semantics*referent*deeper.|)
    (<s> ^operator <op> + =, >)
    (<op> ^name process-semantics
          ^assigner <ass>
@@ -367,22 +188,20 @@ sp {propose*process-semantics*referent-nil*deeper*constraint
    (state <s> ^name comprehension
               ^assigner <ass>)
    (<ass> ^merged-receiver <mre> 
-         -^processed-semantics <sg>
+         -^processed-semantics <con>
           ^lt.semantic-structure { <> *copy* <> *embed* <ss> })
-   (<mre> ^head.lt <lli>
+   (<mre> ^head.lt.referent
+         -^referent
+         -^lt.referent
           ^constraint <con>
-         -^complement.head.head.lt.semantic-value)
-   (<lli> ^referent nil
-         ^semantic-value <sg>)
+         -^complement.head.head.lt.referent)
 -->   
    (write (crlf) |propose*process-semantics*referent-nil*deeper*constraint - OK?|)
    (<s> ^operator <op> + =, >)
    (<op> ^name process-semantics
          ^assigner <ass>
          ^attribute <ss>
-         ^relation <sp-x>)
-   (<sp-x> ^id <con>
-           ^arg2 <sg>)}
+         ^value <con>)}
 #
 
 #######################################
@@ -395,8 +214,10 @@ sp {propose*process-semantics*receiver
          -^processed-semantics <sg>)
    (<mr> ^lt <lt>)
    (<lt> ^semantic-structure { <> *copy* <> *embed* <ss> }
-         ^referent { <> nil <sg> }) 
+         ^referent <sg>) 
 -->
+   (write (crlf) | propose*process-semantics*receiver - semantic-structure in receiver???|)
+  # (interrupt)
    (<s> ^operator <op> + =, >)
    (<op> ^name process-semantics
          ^assigner <ass>
@@ -404,19 +225,30 @@ sp {propose*process-semantics*receiver
          ^value <sg>)}
 
 
+sp {propose*process-semantics*referent2
+   (state <s> ^operator <op> +
+              ^assigner <ass>)
+   (<ass> ^merged-receiver.lt <lt>)
+   (<lt> ^semantic-structure2 <ss> 
+         ^referent2 <sg>)
+   (<op> ^name process-semantics) 
+-->
+   (<op> ^attribute2 <ss>
+         ^value2 <sg>)}
+
 ################################
 ## Prepositions
 ##
 
 ## Semantic structure comes from parent of assigner
 sp {propose*process-semantics*preposition-relation*head*referent
-  # :interrupt
+  #:interrupt
    (state <s> ^name comprehension
               ^assigner <ass>)
    (<ass> ^merged-receiver <mre> 
          -^processed-semantics <sg>
           ^lt.semantic-structure { <> *copy* <> *embed* <ss> })
-   (<mre> ^lt.relation <spr>
+   (<mre> ^lt.relation.handle <spr>
           ^head.referent <sg>)
 -->
    (write (crlf) |propose*process-semantics*preposition-relation*head*referent - OK|)
@@ -425,66 +257,68 @@ sp {propose*process-semantics*preposition-relation*head*referent
          ^assigner <ass>
          ^attribute <ss>
          ^relation <sp-x>)
-   (<sp-x> ^id <spr>
-           ^arg2 <sg>)}
+   (<sp-x> ^handle <spr>
+           ^2 <sg>)}
 
-sp {propose*process-semantics*relation*head-head-lt-semantic-value
+sp {propose*process-semantics*relation*head-head-lt-referent
    #:interrupt
    (state <s> ^name comprehension
                ^assigner <ass>)
    (<ass> ^merged-receiver <mre> 
          -^processed-semantics <sg>
           ^lt.semantic-structure relation)
-   (<mre> ^lt.relation <spr>
-          ^head.head.lt.semantic-value <sg>)
+   (<mre> ^lt.relation.handle <spr>
+          ^head.head.lt.referent <sg>
+         -^head.referent)
 -->
-   (write (crlf) |propose*process-semantics*relation*head-head-lt-semantic-value - ok|)
+   (write (crlf) |propose*process-semantics*relation*head-head-lt-referent - ok|)
    (<s> ^operator <op> + =, >)
    (<op> ^name process-semantics
          ^assigner <ass>
          ^attribute relation
          ^relation <srx>)
-   (<srx> ^id <spr>
-          ^arg2 <sg>)}
+   (<srx> ^handle <spr>
+          ^2 <sg>)}
 
-## Pulls up a spatial relation embedding in a following clause, such as to the left (of the stove)
+## Pulls up a spatial relation embedded in a following clause, such as to the left (of the stove)
 sp {propose*process-semantics*relation*semantics
    #:interrupt
    (state <s> ^name comprehension
                ^assigner <ass>)
    (<ass> ^merged-receiver <mre> 
          -^processed-semantics <sg>
-          ^lt.semantic-structure relation )
-   (<mre> ^head.semantics. { <spr> relation } <sg>)
+          ^lt.semantic-structure relation)
+   (<mre> ^head.referent.relation <sg>)
 -->
    (write (crlf) |propose*process-semantics*relation*semantics - ok|)
    (<s> ^operator <op> + =, >)
    (<op> ^name process-semantics
          ^assigner <ass>
-         ^attribute <spr>
+         ^attribute predicate
          ^value <sg>)}
 
 # For when merging "of the game" with the preceeding "name/action/.." 
 
 sp {propose*process-semantics*DP-with-of-DP
-  #:interrupt
+ # :interrupt
    (state <s> ^name comprehension
               ^assigner <ass>)
    (<ass> ^merged-receiver <mre> 
          -^processed-semantics <sg>
           ^lt.semantic-structure { <> *copy* <> *embed* <ss> })
    (<mre> ^structure-type DP
-          ^complement.head.head.lt.semantic-value <sg>
-          ^head.lt.semantic-value.id <name-id>)
+          ^complement.head.head.lt.referent <sg>
+          ^head.lt.referent.handle of1)
 -->
    (write (crlf) |propose*process-semantics*DP-with-of-DP - OK|)
+   (interrupt)
    (<s> ^operator <op> + =, >)
    (<op> ^name process-semantics
          ^assigner <ass>
          ^attribute <ss>
          ^relation <sr>)
-   (<sr> ^id <name-id>
-         ^arg2 <sg>)}
+   (<sr> ^handle of1
+         ^2 <sg>)}
 
 
 # For when merging "for two minutes" with the preceeding "wait" 
@@ -497,45 +331,22 @@ sp {propose*process-semantics*PP-with-of-PP-DP
          -^processed-semantics <sg>
           ^lt.semantic-structure { <> *copy* <> *embed* <ss> }) 
    (<mre> ^structure-type PP
-          ^head.head.lt.semantic-value.id <minutes>
-          ^head.lt.semantic-value <sg>)  #two
+          ^head.head.lt.referent.handle <minutes>
+          ^head.lt.referent <sg>)  #two
 -->
    (write (crlf) |propose*process-semantics*PP-with-of-PP-DP - OK|)
-      (<s> ^operator <op> + =, >)
+   (<s> ^operator <op> + =, >)
    (<op> ^name process-semantics
          ^assigner <ass>
          ^attribute <ss>
          ^relation <sr>)
-   (<sr> ^id <minutes>
-         ^arg2 <sg>)}
-
-### Need to be able to process without ^object 
-###  That gets filled in by later PP - later semantic structure "of the stove"
-#
-#sp {propose*process-semantics*PP-with-of-PP-DP2
-#  #:interrupt
-#   (state <s> ^name comprehension
-#              ^assigner <ass>)
-#   (<ass> ^merged-receiver <mre> 
-#         -^processed-semantics <sg>
-#          ^lt.semantic-structure <ss>) 
-#   (<mre> ^structure-type DP
-#          ^head.lt <lt>)
-#   (<lt> ^semantic-structure <sss>
-#         ^<sss> <sg>)  #two
-#-->
-#   (write (crlf) |propose*process-semantics*PP-with-of-PP-DP2 - OK?|)
-#      (<s> ^operator <op> + =, >)
-#   (<op> ^name process-semantics
-#         ^assigner <ass>
-#         ^attribute <ss>
-#         ^relation <sr>)
-#   (<sr> ^<sss> <sg>)}
+   (<sr> ^handle <minutes>
+         ^2 <sg>)}
 
 ###### Need to splice into preceeding structure - Should be a general copy up...
 # For when merging "of the garbage" with the preceeding "to the left of" which is already associated with a verb.
 sp {propose*process-semantics*PP-with-left-of-PP
- #  :interrupt
+ #:interrupt
    (state <s> ^name comprehension
               ^assigner <ass>)
    (<ass> ^merged-receiver <mre> 
@@ -543,10 +354,10 @@ sp {propose*process-semantics*PP-with-left-of-PP
           ^lt.semantic-structure { <> *copy* <> *embed* <ss> }
           ^parent-receiver.head.lt <hlli>)
    (<hlli> ^semantic-entity-type relation
-           ^relation <left-of1>)
+           ^relation.handle <left-of1>)
    (<mre> ^structure-type PP
           ^head.referent <obj>
-          ^lt.relation.name of1)  #JEL - 1/9/15 added .name
+          ^lt.relation.handle of1)  
 -->
    (write (crlf) |propose*process-semantics*PP-with-left-of-PP - Check-fix.|)
    (<s> ^operator <op> + =, >)
@@ -554,37 +365,37 @@ sp {propose*process-semantics*PP-with-left-of-PP
          ^assigner <ass>
          ^attribute relation
          ^relation <sr>)
-   (<sr> ^id <left-of1>
-         ^arg2 <obj>)}
+   (<sr> ^handle <left-of1>
+         ^2 <obj>)}
 
-sp {propose*process-semantics*PP-with-left-of-PP2
-   #:interrupt
-   (state <s> ^name comprehension
-              ^assigner <ass>)
-   (<ass> ^merged-receiver <mre> 
-         -^processed-semantics <obj>
-          #^lt.semantic-structure { <> *copy* <> *embed* <ss> }
-          ^parent-receiver.head.lt <hlli>)
-   (<hlli> ^semantic-entity-type relation
-           ^semantic-structure <ss>
-           ^relation <left-of1>)
-   (<mre> ^structure-type PP
-          ^head.referent <obj>
-          ^lt.relation.name of1)   #JEL - 1/9/15 added .name
--->
-   (write (crlf) |propose*process-semantics*PP-with-left-of-PP2 - Check-fix.|)
-   (<s> ^operator <op> + =, >)
-   (<op> ^name process-semantics
-         ^assigner <ass>
-         ^attribute relation
-         ^relation <sr>)
-   (<sr> ^id <left-of1>
-         ^arg2 <obj>)}
-#excise propose*process-semantics*PP-with-left-of-PP
+
+## Removed because it doesn't have a lt.semantic-structure
+#sp {propose*process-semantics*PP-with-left-of-PP2
+#   #:interrupt
+#   (state <s> ^name comprehension
+#              ^assigner <ass>)
+#   (<ass> ^merged-receiver <mre> 
+#         -^processed-semantics <obj>
+#          ^parent-receiver.head.lt <hlli>)
+#   (<hlli> ^semantic-entity-type relation
+#           ^relation.handle <left-of1>)
+#   (<mre> ^structure-type PP
+#          ^head.referent <obj>
+#          ^lt.relation.handle of1)   
+#-->
+#   (write (crlf) |propose*process-semantics*PP-with-left-of-PP2 - Check-fix.|)
+#   (<s> ^operator <op> + =, >)
+#   (<op> ^name process-semantics
+#         ^assigner <ass>
+#         ^attribute relation
+#         ^relation <sr>)
+#   (<sr> ^handle <left-of1>
+#         ^2 <obj>)}
+
 ########### ADJECTIVES
 
 sp {propose*process-semantics*default*adjunct
-  # :interrupt
+  #:interrupt
    (state <s> ^name comprehension
               ^assigner <ass>)
    (<ass> ^merged-receiver <mre> 
@@ -617,6 +428,7 @@ sp {propose*process-semantics*adjective
          ^value <lli>)}
 
 sp {propose*process-semantics*adjective*unknown-name
+   #:interrupt
    (state <s> ^name comprehension
               ^assigner <ass>)
    (<ass> ^merged-receiver <mre> 
@@ -625,7 +437,7 @@ sp {propose*process-semantics*adjective*unknown-name
    (<mre> -^referent 
            ^lt <lli>)
    (<lli> ^structure-type ADJ
-         -^name <pf>
+         -^referent.handle <pf>
           ^object-feature { <> unknown <of> })
 -->
    (<s> ^operator <op> + =, >)
@@ -636,6 +448,7 @@ sp {propose*process-semantics*adjective*unknown-name
          ^extra-attribute <of>)}
 
 sp {propose*process-semantics*adjective*unknown-object-feature
+   #:interrupt
    (state <s> ^name comprehension
               ^assigner <ass>)
    (<ass> ^merged-receiver <mre> 
@@ -644,28 +457,7 @@ sp {propose*process-semantics*adjective*unknown-object-feature
    (<mre> -^referent 
            ^lt <lli>)
    (<lli> ^structure-type ADJ
-          ^spelling <word>
-         -^name 
-         -^id.property)
--->
-   (<s> ^operator <op> + =, >)
-   (<op> ^name process-semantics
-         ^assigner <ass>
-         ^attribute <ss>
-         ^value <lli>)}
-
-sp {propose*process-semantics*semantic*unknown
-   (state <s> ^name comprehension
-              ^assigner <ass>)
-   (<ass> ^merged-receiver <mre> 
-         -^processed-semantics <lli>
-          ^lt <lla>)
-   (<lla> ^semantic-structure { <> *copy* <> *embed* <ss> }
-         -^referent-type literal-lti)
-   (<mre> -^referent <sg>
-           ^lt <lli>)
-   (<lli> -^structure-type
-          ^spelling <word>)
+         -^referent)
 -->
    (<s> ^operator <op> + =, >)
    (<op> ^name process-semantics
@@ -676,7 +468,7 @@ sp {propose*process-semantics*semantic*unknown
 ############ Copy Semantics
 # will copy all of the substructures from semantics <sg> to the next higher level
 sp {propose*process-semantics*copy
-  # :interrupt
+  #:interrupt
    (state <s> ^name comprehension
               ^assigner <ass>)
    (<ass> -^processed-semantics *copy*
@@ -713,45 +505,89 @@ sp {propose*process-semantics*embed
 
 # will create ^<att> <sg> from the semantics <sg> pointer (but not copy the the substructure) 
 sp {propose*process-semantics*use-semantics
-   #:interrupt
    (state <s> ^name comprehension
               ^assigner <ass>)
    (<ass> ^merged-receiver.semantics <sg>
          -^processed-semantics <sg>
           ^lt.semantic-structure { <> *copy* <> *embed* <ss> }) 
--{(<sg> ^relation  <x>)
-  (<ass> ^lt.semantic-structure << relation arg1 >>)}
-  -{(<ass> ^merged-receiver.semantics <sg>)
-    (<sg> -^<att>)}
+ -{(<sg> ^relation  <x>)
+   (<ass> ^lt.semantic-structure << relation arg1 >>)}  
+ -{(<ass> ^merged-receiver.semantics <sg>)
+   (<sg> -^<att>)}
+  -(<sg> ^<ss>) # Don't double embed
+  -(<sg> ^<< arg1 arg2 predicate >>)
 -->
    (write (crlf) |propose*process-semantics*use-semantics|)
+  # (interrupt)
    (<s> ^operator <op> + =, >)
    (<op> ^name process-semantics
          ^assigner <ass>
          ^attribute <ss>
          ^value <sg>)}
 
+sp {propose*process-semantics*use-semantics2
+   (state <s> ^name comprehension
+              ^assigner <ass>)
+   (<ass> ^merged-receiver.semantics <sg>
+         -^processed-semantics <value>
+          ^lt.semantic-structure { <> *copy* <> *embed* <ss> }) 
+ -{(<sg> ^relation  <x>)
+   (<ass> ^lt.semantic-structure << relation arg1 >>)}  
+ -{(<ass> ^merged-receiver.semantics <sg>)
+   (<sg> -^<att>)}
+  -(<sg> ^<ss>) # Don't double embed
+   (<sg> ^<< predicate arg1 arg2 >> <value>)
+-->
+   (write (crlf) |propose*process-semantics*use-semantics|)
+  # (interrupt)
+   (<s> ^operator <op> + =, >)
+   (<op> ^name process-semantics
+         ^assigner <ass>
+         ^attribute <ss>
+         ^value <value>)}
+
+# will create ^<att> <sg> from the semantics <sg> pointer 
+sp {propose*process-semantics*use-semantics*already*same-attribute
+   (state <s> ^name comprehension
+              ^assigner <ass>)
+   (<ass> ^merged-receiver.semantics <sg>
+         -^processed-semantics <value>
+          ^lt.semantic-structure { <> *copy* <> *embed* <ss> }) 
+ -{(<sg> ^relation  <x>)
+   (<ass> ^lt.semantic-structure << relation arg1 >>)}  
+ -{(<ass> ^merged-receiver.semantics <sg>)
+   (<sg> -^<att>)}
+   (<sg> ^<ss> <value>) # Don't double embed
+-->
+   (write (crlf) |propose*process-semantics*use-semantics|)
+  # (interrupt)
+   (<s> ^operator <op> + =, >)
+   (<op> ^name process-semantics
+         ^assigner <ass>
+         ^attribute <ss>
+         ^value <value>)}
+
 sp {propose*process-semantics*semantics*relation
    (state <s> ^name comprehension
               ^assigner <ass>)
    (<ass> ^merged-receiver <mre>
          -^processed-semantics <sg>
-          ^lt.semantic-structure <ss>) 
+          ^lt.semantic-structure relation) 
    (<mre> ^semantics <sem>
           ^<< complement head >>.lt <lt>)  ## New JEL
    (<sem> ^of-relation <sg>)
-   (<lt> ^semantic-structure <att>
+   (<lt> ^semantic-structure relation
          ^<att> <left-of1>)
 -->
    (write (crlf) |propose*process-semantics*relation|)
+  # (interrupt)
    (<s> ^operator <op> + =, >)
    (<op> ^name process-semantics
          ^assigner <ass>
-         ^attribute <att>
-         ^<att> <sr>
-         ^semantics <sem> <left-of1>)
-   (<sr> ^id <left-of1>
-         ^arg2 <sg>)}
+         ^attribute relation
+         ^relation <sr>)
+   (<sr> ^handle <left-of1>
+         ^2 <sg>)}
 
 ############ MONITOR
 
@@ -761,7 +597,8 @@ sp {monitor*process-semantics*semantic
    (<ref> ^object) 
    -->
    (write (crlf) |Referent with object: | <ref>)
-   (interrupt)}
+ #  (interrupt)
+   }
 
 ######################### Control Knowledge
 

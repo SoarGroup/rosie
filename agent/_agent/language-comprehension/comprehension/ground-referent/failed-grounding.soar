@@ -1,66 +1,133 @@
 sp {ground-referent*propose*failed-grounding
+  # :interrupt
    (state <s> ^name ground-referent
-              ^quiescence t                # no chunking failure              
-              ^candidate-set <cs>)
-   (<cs> ^generated-candidates true
-        -^proto-referent.object <obj>)
+              ^quiescence t                # no chunking because failure              
+              ^proto-referents none)
 -->
    (<s> ^operator <op> + =, >)
    (<op> ^name failed-grounding)
 }
 
+# Generate a referent that will have all of the constraints added to it
+#  This is for the case when it is not an indefinite referent (a/an)
 sp {ground-referent*apply*failed-grounding
    (state <s> ^operator.name failed-grounding
-             -^superstate.name evaluate-operator)
+             -^superstate.name evaluate-operator
+             -^constraint-lt.specifier indefinite
+              ^top-state.dialog-world.objects <objs>)
 -->
    (<s> ^proto-referent <pr>)
+   (<objs> ^object <pr>)
    (<pr> ^predicates <pred>
-         ^id (make-constant-symbol |new-object-id|))
-   (write (crlf) |Nothing passed all constraints.|)
+         ^handle (make-constant-symbol |new-object-id|)
+         ^item-type object)
+   (<pred> ^visible false)
+   (<pred> ^dialog-object true)
+   (write (crlf) |Nothing passed all constraints for definite referent. Creating ^visible false object.|)
+}
+
+# Generate a referent that will have all of the constraints added to it
+#  This is for the case when it is an indefinite referent (a/an)
+#  Add it to the dialog-world so it can be refered to in the future
+                                                   
+sp {ground-referent*apply*failed-grounding*indefinite
+   #:interrupt
+   (state <s> ^operator.name failed-grounding
+             -^superstate.name evaluate-operator
+              ^constraint-lt.specifier indefinite
+              ^top-state.dialog-world.objects <objs>)
+-->
+   (write (crlf) |Added indefinite referent | <pr> | to dialog-world.|)
+   (<objs> ^object <pr>)
+   (<s> ^proto-referent <pr>)
+   (<pr> ^predicates <pred>
+         ^handle (make-constant-symbol |new-object-id|)
+         ^item-type object)
+   (<pred> ^dialog-object true)
 }
 
 sp {ground-referent*apply*failed-grounding*property
    (state <s> ^operator.name failed-grounding
-              ^proto-referent.predicates <pred>
+              ^proto-referent <pr>
              -^superstate.name evaluate-operator
               ^superstate.operator.<< double-constraints constraints >>.constraint <constraint>)
-   (<constraint> ^name <value> ^property.name <prop>)
+   (<constraint> ^handle <value> 
+                 ^property.<< name handle >> <prop>)
+   (<pr> ^predicates <pred>)
 -->
+   (<pr> ^predicates-copied true)
    (<pred> ^<prop> <value>)
    (write (crlf) |Add predicate: ^| <prop> | | <value>)
 }
 
 sp {ground-referent*apply*failed-grounding*property2
    (state <s> ^operator.name failed-grounding
-              ^proto-referent.predicates <pred>
+              ^proto-referent <pr>
              -^superstate.name evaluate-operator
-              ^superstate.operator.<< double-constraints constraints >>.constraint <constraint>)
-   (<constraint> ^{ <prop> << movable category type >> } <value>)
+              ^superstate.operator.<< double-constraints constraints >>.constraint.{ <prop> << movable category number quantity type >> } <value>)
+   (<pr> ^predicates <pred>)
 -->
+   (<pr> ^predicates-copied true)
    (<pred> ^<prop> <value>)
    (write (crlf) |Add predicate: ^| <prop> | | <value>)
 }
 
 sp {ground-referent*apply*failed-grounding*property3
    (state <s> ^operator.name failed-grounding
-              ^proto-referent.predicates <pred>
-             -^superstate.name evaluate-operator)
+              ^proto-referent <pr>
+             -^superstate.name evaluate-operator
+              ^superstate.operator.<< double-constraints constraints >>.constraint <constraint>)
+  -{(<constraint> ^handle <value> 
+                  ^property.<< name handle >>  <prop>)}
+  -(<constraint> ^<< movable category type number quantity >>)
 -->
-   (<pred> ^visible false)
-   (write (crlf) |Add predicate: ^visible false|)
+   (<pr> ^predicates-copied true)
+   (write (crlf) |No predicates|)
 }
+
+## Copy referent - mark ground-tested - add referent to dialog-list
 sp {ground-referent*apply*failed-grounding*finish
    (state <s> ^operator.name failed-grounding
-              ^superstate.operator <so>
+              ^superstate.operator.<< double-constraints constraints >> <c>
               ^proto-referent <ref>)
-   (<so> ^<< double-constraints constraints >> <c>)
-   (<ref> ^predicates.visible false) 
+   (<ref> ^predicates-copied true) 
 -->
    (<c> ^ground-tested <c>
         ^referent <ref>)
 }
 
-sp {apply*tested-referent*monitor*fail*remove-current-referent2
+## Add referent to dialog-object-list
+sp {ground-referent*apply*failed-grounding*finish2
+   #:interrupt
+   (state <s> ^operator.name failed-grounding
+              ^top-state <ts>
+              ^proto-referent <ref>)
+   (<ref> ^predicates-copied true) 
+   (<ts> ^dialog-object-list <dol>)
+-->
+   (<ts> ^dialog-object-list <dol> -
+                             <ndol>)
+   (<ndol> ^referent <ref>
+           ^next <dol>)
+}
+
+## Add referent to dialog-object-list-access
+sp {ground-referent*apply*failed-grounding*finish3
+   (state <s> ^operator.name failed-grounding
+              ^segment <ss>
+              ^proto-referent <ref>)
+   (<ref> ^predicates-copied true) 
+   (<ss> ^dialog-object-list-access <dol>)
+-->
+   (<ss> ^dialog-object-list-access <dol> -
+                                   <ndol>)
+   (<ndol> ^referent <ref>
+           ^next <dol>)
+}
+
+### Remove old referent
+
+sp {apply*failed-grounding*remove-current-referent
    (state <s> ^operator.name failed-grounding
              -^proto-referent <obj>
               ^superstate.operator <so>

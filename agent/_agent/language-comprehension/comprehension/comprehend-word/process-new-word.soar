@@ -23,7 +23,7 @@ sp {comprehend-word*propose*process-new-word*no-primitive-assigner*unknown
    (<op> ^name process-new-word
          ^type U
          ^spell <spell>
-		 ^id.name (make-constant-symbol <spell>))
+		 ^handle (make-constant-symbol <spell>))
 }
 
 sp {comprehend-word*propose*process-new-word*multiple-non-U-primitive-assigner*fail
@@ -44,7 +44,7 @@ sp {comprehend-word*propose*process-new-word*multiple-non-U-primitive-assigner*f
    (<op> ^name process-new-word
          ^spelling <spell>
          ^fail true
-		 ^id.name (make-constant-symbol <spell>))
+		 ^handle (make-constant-symbol <spell>))
 }
 
 sp {comprehend-word*propose*process-new-word*single-primitive-assigner*guess
@@ -65,7 +65,7 @@ sp {comprehend-word*propose*process-new-word*single-primitive-assigner*guess
    (<op> ^name process-new-word
          ^type <st>
          ^spell <spell>
-		 ^id.name (make-constant-symbol <spell>))
+		 ^handle (make-constant-symbol <spell>))
 }
 
 sp {comprehend-word*propose*process-new-word*U
@@ -85,7 +85,7 @@ sp {comprehend-word*propose*process-new-word*U
    (<op> ^name process-new-word
          ^type U
          ^spell <spell>
-		 ^id.name (make-constant-symbol <spell>))
+		 ^handle (make-constant-symbol <spell>))
 }
 
 ## Reject failure if a ^type U
@@ -104,7 +104,7 @@ sp {comprehend-word*reject*process-new-word*reject-failure-if-U
 
 ## Reject failure U's when there is a deeper match for a DP that is unresolved
 sp {comprehend-word*reject*process-new-word*reject-failure-if-shallow-U
-#  :interrupt
+#:interrupt
    (state <s> ^name comprehend-word
               ^operator <op1> +
               ^segment <seg>)
@@ -146,23 +146,22 @@ sp {comprehend-word*compare*process-new-word*prefer-most-recent-unknown
 sp {apply*process-new-word*assign
    #:interrupt
    (state <s> ^operator <op>
-              ^comprehension-structure <cs>
-              ^smem.command <cmd>)
+              ^comprehension-structure <cs>)
    (<op> ^name process-new-word
          ^type { <> U <st> }
          ^spell <spell>
-         ^id <id>)
-   (<id> ^name <name>)
+         ^handle <name>)
 -->
    (<s> ^new-word true
-        ^retrieved-lexical-item <nw>)
-   (<s> ^store-concept <nw> <id>)
+        ^retrieved-lexical-item <nw>
+        ^store-concept <nw> <ref>)
    (<nw> ^spelling <spell>
          ^structure-type <st>
-         ^id <id>)
+         ^referent <ref>)
+   (<ref> ^handle <name>)
    (<cs> ^retrieved-lexical-item <nw>
          ^new-word <nw>)
-   (write (crlf) |I guess | <spell> | is a | <st> | with id | <id> | name | <name>)
+   (write (crlf) |I guess | <spell> | is a | <st> | with handle | <name>)
 }
 
 
@@ -174,19 +173,16 @@ sp {apply*process-new-word*assign*U
    (<op> ^name process-new-word
          ^type U
          ^spell <spell>
-         ^id <id>)
-   (<id> ^name <name>)
+         ^handle <name>)
 -->
-   (<cs> ^retrieved-lexical-item <nw>
-         ^new-word <nw>)   
-   (<s> ^new-word true
-        ^new-id <id>
+   (<cs> ^retrieved-lexical-item <nw>)   
+   (<s> ^store-concept <nw> <ref>
+        ^new-word true
         ^retrieved-lexical-item <nw>)
-   (<id> ^name <name>)   # Added because otherwise was being retracted. Don't know why. JEL
-   (<s> ^store-concept <nw> <id>)
    (<nw> ^spelling <spell>
-         ^id <id>)
-   (write (crlf) |I guess | <spell> | is UNKNOWN with id | <id> | name | <name>)
+         ^referent <ref>)
+   (<ref> ^handle <name>)
+   (write (crlf) |I guess | <spell> | is UNKNOWN with handle | <name>)
 }
 
 ## Even if unknown new word, store it away. 
@@ -197,7 +193,6 @@ sp {apply*process-new-word*failure*internal
               ^segment <seg>
               ^top-state <ts>)
    (<ts> ^current-sentence-number <csn>
-         ^smem.command <cmd>
          ^world-usage internal)
    (<seg> ^semantics <sem>
           ^current-word <cw>
@@ -205,39 +200,36 @@ sp {apply*process-new-word*failure*internal
    (<op> ^name process-new-word
          ^spelling <spell>
          ^fail true
-         ^id <id>)
+         ^handle <name>)
 -->
-   (<cmd> ^store <nw> <id>)
+   (<s> ^store-concept <nw> <ref>)
    (<nw> ^spelling <spell>
-        #^structure-type U
-         ^id <id>)
+         ^referent <ref>)
+   (<ref> ^handle <name>)
    (<cw> ^processed true)
    (write (crlf) |New word: | <spell> | can't assign at this time. Store it as UNKNOWN (no type). Need help from user.|)
    (<sem> ^interaction-status.failure <is>)
    (<is> ^type unknown-word
          ^word <spell>)
-   (<cs> #^processed-sentence true
-         ^processing-result failure)
+   (<cs> ^processing-result failure)
 }
 
 sp {apply*process-new-word*failure*external
    (state <s> ^operator <op>
               ^segment <seg>
-              ^top-state <ts>)
-   (<ts> ^smem.command <cmd>
-         ^world-usage external)
+              ^top-state.world-usage external)
    (<seg> ^semantics <sem>
           ^current-word <cw>
           ^original-sentence <cs>)
    (<op> ^name process-new-word
          ^spelling <spell>
          ^fail true
-         ^id <id>)
+         ^handle <name>)
 -->
-   (<cmd> ^store <nw> <id>)
+   (<s> ^store-concept <nw> <ref>)
    (<nw> ^spelling <spell>
-     #    ^structure-type U
-         ^id <id>)
+         ^referent <ref>)
+   (<ref> ^handle <name>)
    (<cw> ^processed true)
    (write (crlf) |New word: | <spell> | can't assign at this time. Store it as no type (UNKNOWN). Need help from user.|)
    (<sem> ^interaction-status.failure <is>)
