@@ -104,20 +104,28 @@ sp {check-for-occlusion*apply*occlusion-command*copy*object-occluded*false
    (<s> ^object-occluded false)
 }
 
-sp {check-for-occlusion*apply*occlusion-command*remove*old*info
+sp {check-for-occlusion*apply*occlusion-command*mark*occluded
    (state <s> ^name check-for-occlusion
               ^operator.name occlusion-command
               ^report-to-top-state true
               ^object-info.differences <diffs>
-              ^object-occluded <bool>)
-   (<diffs> ^is-occluded true
-            ^recheck-occlusion-time <t>)
+              ^object-occluded true)
 -->
-   (<diffs> ^is-occluded true -
-            ^recheck-occlusion-time <t> -)
+   (<diffs> ^is-occluded true)
 }
 
-sp {check-for-occlusion*apply*occlusion-command*is-occluded*true*add*info
+sp {check-for-occlusion*apply*occlusion-command*not*occluded*remove*flag
+   (state <s> ^name check-for-occlusion
+              ^operator.name occlusion-command
+              ^report-to-top-state true
+              ^object-info.differences <diffs>
+              ^object-occluded false)
+   (<diffs> ^is-occluded true)
+-->
+   (<diffs> ^is-occluded true -)
+}
+
+sp {check-for-occlusion*apply*occlusion-command*occluded*create*time
    (state <s> ^name check-for-occlusion
               ^operator.name occlusion-command
               ^report-to-top-state true
@@ -125,8 +133,22 @@ sp {check-for-occlusion*apply*occlusion-command*is-occluded*true*add*info
               ^occlusion-check-period <period>
               ^io.input-link.time.seconds <cur-t>
               ^object-info.differences <diffs>)
+   (<diffs> -^recheck-occlusion-time)
 -->
-   (<diffs> ^is-occluded true
+   (<diffs> ^recheck-occlusion-time (+ <cur-t> <period>))
+}
+
+sp {check-for-occlusion*apply*occlusion-command*occluded*update*time
+   (state <s> ^name check-for-occlusion
+              ^operator.name occlusion-command
+              ^report-to-top-state true
+              ^object-occluded true
+              ^occlusion-check-period <period>
+              ^io.input-link.time.seconds <cur-t>
+              ^object-info.differences <diffs>)
+   (<diffs> ^recheck-occlusion-time <old-t>)
+-->
+   (<diffs> ^recheck-occlusion-time <old-t> -
             ^recheck-occlusion-time (+ <cur-t> <period>))
 }
 
