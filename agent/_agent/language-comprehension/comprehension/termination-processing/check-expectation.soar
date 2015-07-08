@@ -48,71 +48,8 @@ sp {check-failure*apply*check-expectation*no-expectation
 #   (interrupt)
 }
 
-sp {check-failure*apply*check-expectation*no-message-type
-   (state <s> ^operator <op>
-              ^top-state.world-usage internal
-              ^segment <seg>
-              ^top-state <ts>
-             -^failed-receiver
-             -^failed-assigner)
-   (<op> ^name check-expectation)
-   (<ts> ^current-sentence-number <csn>
-         ^success-count <sc>)
-   (<seg> ^original-sentence <cs>
-          ^expected <expect>
-          ^semantics <sem>)
-   (<cs> ^processed-sentence true)
-   (<expect> ^message-type <msg-type>)
-  -(<sem> ^message-type <type>)
--->
-   (<seg> ^checked-expectation true)
-   (write (crlf) (concat |Expected message type | <msg-type> | but none found.|))
-}
-
-sp {check-failure*apply*check-expectation*message-type-wrong
-   (state <s> ^operator <op>
-              ^top-state.world-usage internal
-              ^segment <seg>
-              ^top-state <ts>
-             -^failed-receiver
-             -^failed-assigner)
-   (<op> ^name check-expectation)
-   (<ts> ^current-sentence-number <csn>
-         ^success-count <sc>)
-   (<seg> ^original-sentence <cs>
-          ^expected <expect>
-          ^semantics <sem>)
-   (<cs> ^processed-sentence true)
-   (<expect> ^message-type <msg-type>)
-   (<sem> ^message-type <type> <> <msg-type>)
--->
-   (<seg> ^checked-expectation true)
-   (write (crlf) (concat |Expected message type | <msg-type> | but found | <type> |.|))
-}
-
-sp {check-failure*apply*check-expectation*attribute-ok-l1
-   (state <s> ^operator <op>
-              ^top-state.world-usage internal
-              ^segment <seg>
-              ^top-state <ts>
-             -^failed-receiver
-             -^failed-assigner)
-   (<op> ^name check-expectation)
-   (<ts> ^current-sentence-number <csn>
-         ^success-count <sc>)
-   (<seg> ^original-sentence <cs>
-          ^expected <expected>
-          ^semantics <sem>)
-   (<cs> ^processed-sentence true)
-   (<expected> ^<attr> <value>)
-   (<sem> ^<attr> <value>)
--->
-   (<seg> ^checked-expectation true)
-   (write (crlf) (concat |EXPECTATION MATCHED: | <sem> | ^| <attr> | | <value> | found.|))
-#   (interrupt)
-}
-
-sp {check-failure*apply*check-expectation*attribute-failed-l1
+#   At L1:   (x ^a ) is missing  - FAIL
+sp {check-failure*apply*check-expectation*l1-attribute-missing
    (state <s> ^operator <op>
               ^top-state.world-usage internal
               ^segment <seg>
@@ -130,11 +67,12 @@ sp {check-failure*apply*check-expectation*attribute-failed-l1
    (<sem> -^<attr> )
 -->
    (<seg> ^checked-expectation true)
-   (write (crlf) (concat |EXPECTATION FAILED: | <sem> | ^| <attr> | missing.|))
+   (write (crlf) (concat |EXPECTATION FAILED: '| <sem> | ^| <attr> |' missing.|))
 #   (interrupt)
 }
 
-sp {check-failure*apply*check-expectation*attribute-value-failed-l1
+#   At L1:   (x ^a c) == (y ^a c) - PASS
+sp {check-failure*apply*check-expectation*l1-constant-match
    (state <s> ^operator <op>
               ^top-state.world-usage internal
               ^segment <seg>
@@ -148,16 +86,41 @@ sp {check-failure*apply*check-expectation*attribute-value-failed-l1
           ^expected <expected>
           ^semantics <sem>)
    (<cs> ^processed-sentence true)
+   (<expected> -^<attr> {<=> <s>})  # NOT an identifier
+   (<expected> ^<attr> <value>)
+   (<sem> ^<attr> <value>)
+-->
+   (<seg> ^checked-expectation true)
+   (write (crlf) (concat |EXPECTATION MATCHED: '| <sem> | ^| <attr> | | <value> |' found.|))
+#   (interrupt)
+}
+
+#   At L1:   (x ^a c) <> (y ^a d) - FAIL
+sp {check-failure*apply*check-expectation*l1-constant-fail
+   (state <s> ^operator <op>
+              ^top-state.world-usage internal
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<op> ^name check-expectation)
+   (<ts> ^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<seg> ^original-sentence <cs>
+          ^expected <expected>
+          ^semantics <sem>)
+   (<cs> ^processed-sentence true)
+   (<expected> -^<attr> {<=> <s>})  # NOT an identifier
    (<expected> ^<attr> <value>)
    (<sem> ^<attr> <v2> <> <value>)
-  -(<v2> ^<a2> )
 -->
    (<seg> ^checked-expectation true)
-   (write (crlf) (concat |EXPECTATION FAILED: | <sem> | ^| <attr> | | <v2> | <> | <value> |.|))
+   (write (crlf) (concat |EXPECTATION FAILED: '| <sem> | ^| <attr> |' | <value> | <> | <v2> |.|))
 #   (interrupt)
 }
 
-sp {check-failure*apply*check-expectation*attribute-ok-l2
+#   At L1:   (x ^a <c>) <> (y ^a d) - FAIL
+sp {check-failure*apply*check-expectation*l1-identifier-fail
    (state <s> ^operator <op>
               ^top-state.world-usage internal
               ^segment <seg>
@@ -171,17 +134,19 @@ sp {check-failure*apply*check-expectation*attribute-ok-l2
           ^expected <expected>
           ^semantics <sem>)
    (<cs> ^processed-sentence true)
+   (<expected> ^<attr> {<=> <s>})  # IS an identifier
    (<expected> ^<attr> <value>)
-   (<sem> ^<attr> <v2>)
-   (<value> ^<a2> <v2-2>)
-   (<v2> ^<a2> )
+   (<sem> -^<attr> <v2> {<=> <s>})  # NOT an identifier
+   (<sem> ^<attr> <v2> <> <value>)
 -->
    (<seg> ^checked-expectation true)
-   (write (crlf) (concat |EXPECTATION MATCHED: | <sem> | ^| <attr> |.| <a2> | found.|))
+   (write (crlf) (concat |EXPECTATION FAILED: '| <sem> | ^| <attr> |' | <value> | <> | <v2> |.|))
 #   (interrupt)
 }
 
-sp {check-failure*apply*check-expectation*attribute-value-ok-l2
+#   At L1:   (x ^a <w>),  (y ^a <z>), <w> has no children - PASS
+#   If there are children, we have to check at level 2
+sp {check-failure*apply*check-expectation*l1-identifier-match-no-children
    (state <s> ^operator <op>
               ^top-state.world-usage internal
               ^segment <seg>
@@ -195,17 +160,18 @@ sp {check-failure*apply*check-expectation*attribute-value-ok-l2
           ^expected <expected>
           ^semantics <sem>)
    (<cs> ^processed-sentence true)
+   (<expected> ^<attr> {<=> <s>})  # IS an identifier
    (<expected> ^<attr> <value>)
+  -(<value> ^<attr-x> )
    (<sem> ^<attr> <v2>)
-   (<value> ^<a2> <v2-2>)
-   (<v2> ^<a2> <v2-2>)
 -->
    (<seg> ^checked-expectation true)
-   (write (crlf) (concat |EXPECTATION MATCHED: | <sem> | ^| <attr> |.| <a2> | | <v2-2> | found.|))
+   (write (crlf) (concat |EXPECTATION MATCHED: '| <sem> | ^| <attr> | | <v2> |' found.|))
 #   (interrupt)
 }
 
-sp {check-failure*apply*check-expectation*attribute-failed-l2
+#   At L2:   (x ^a ) is missing  - FAIL
+sp {check-failure*apply*check-expectation*l2-attribute-missing
    (state <s> ^operator <op>
               ^top-state.world-usage internal
               ^segment <seg>
@@ -219,17 +185,18 @@ sp {check-failure*apply*check-expectation*attribute-failed-l2
           ^expected <expected>
           ^semantics <sem>)
    (<cs> ^processed-sentence true)
-   (<expected> ^<attr> <value>)
-   (<sem> ^<attr> <v2>)
-   (<value> ^<a2> <v2-2>)
-   (<v2> -^<a2> )
+   (<expected> ^<attr1> <expected2>)
+   (<sem> ^<attr1> <sem2>)
+   (<expected2> ^<attr2> <value>)
+   (<sem2> -^<attr2> )
 -->
    (<seg> ^checked-expectation true)
-   (write (crlf) (concat |EXPECTATION FAILED: | <sem> | ^| <attr> |.| <a2> | missing.|))
+   (write (crlf) (concat |EXPECTATION FAILED: '| <sem> | ^| <attr1> |.| <attr2> |' missing.|))
 #   (interrupt)
 }
 
-sp {check-failure*apply*check-expectation*attribute-ok-l3
+#   At L2:   (x ^a c) == (y ^a c) - PASS
+sp {check-failure*apply*check-expectation*l2-constant-match
    (state <s> ^operator <op>
               ^top-state.world-usage internal
               ^segment <seg>
@@ -243,19 +210,19 @@ sp {check-failure*apply*check-expectation*attribute-ok-l3
           ^expected <expected>
           ^semantics <sem>)
    (<cs> ^processed-sentence true)
-   (<expected> ^<attr> <value>)
-   (<sem> ^<attr> <v2>)
-   (<value> ^<a2> <v2-2>)
-   (<v2> ^<a2> <v3-2>)
-   (<v2-2> ^<a3> )
-   (<v3-2> ^<a3> )
-   -->
+   (<expected> ^<attr1> <expected2>)
+   (<sem> ^<attr1> <sem2>)
+   (<expected2> -^<attr2> {<=> <s>})  # NOT an identifier
+   (<expected2> ^<attr2> <value>)
+   (<sem2> ^<attr2> <value>)
+-->
    (<seg> ^checked-expectation true)
-   (write (crlf) (concat |EXPECTATION MATCHED: | <sem> | ^| <attr> |.| <a2>  |.| <a3> | found.|))
+   (write (crlf) (concat |EXPECTATION MATCHED: '| <sem> | ^| <attr1> |.| <attr2> | | <value> |' found.|))
 #   (interrupt)
 }
 
-sp {check-failure*apply*check-expectation*attribute-value-ok-l3
+#   At L2:   (x ^a c) <> (y ^a d) - FAIL
+sp {check-failure*apply*check-expectation*l2-constant-fail
    (state <s> ^operator <op>
               ^top-state.world-usage internal
               ^segment <seg>
@@ -269,15 +236,211 @@ sp {check-failure*apply*check-expectation*attribute-value-ok-l3
           ^expected <expected>
           ^semantics <sem>)
    (<cs> ^processed-sentence true)
-   (<expected> ^<attr> <value>)
-   (<sem> ^<attr> <v2>)
-   (<value> ^<a2> <v2-2>)
-   (<v2> ^<a2> <v3-2>)
-   (<v2-2> ^<a3> <v3>)
-   (<v3-2> ^<a3> <v3>)
+   (<expected> ^<attr1> <expected2>)
+   (<sem> ^<attr1> <sem2>)
+   (<expected2> -^<attr2> {<=> <s>})  # NOT an identifier
+   (<expected2> ^<attr2> <value>)
+   (<sem2> ^<attr2> <v2> <> <value>)
 -->
    (<seg> ^checked-expectation true)
-   (write (crlf) (concat |EXPECTATION MATCHED: | <sem> | ^| <attr> |.| <a2> |.| <a3>  | | <v3> | found.|))
+   (write (crlf) (concat |EXPECTATION FAILED: '| <sem> | ^| <attr1> |.| <attr2> |' | <value> | <> | <v2> |.|))
+#   (interrupt)
+}
+
+#   At L2:   (x ^a <c>) <> (y ^a d) - FAIL
+sp {check-failure*apply*check-expectation*l2-identifier-fail
+   (state <s> ^operator <op>
+              ^top-state.world-usage internal
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<op> ^name check-expectation)
+   (<ts> ^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<seg> ^original-sentence <cs>
+          ^expected <expected>
+          ^semantics <sem>)
+   (<cs> ^processed-sentence true)
+   (<expected> ^<attr1> <expected2>)
+   (<sem> ^<attr1> <sem2>)
+   (<expected2> ^<attr2> {<=> <s>})  # IS an identifier
+   (<expected2> ^<attr2> <value>)
+   (<sem2> -^<attr2> <v2> {<=> <s>})  # NOT an identifier
+   (<sem2> ^<attr2> <v2> <> <value>)
+-->
+   (<seg> ^checked-expectation true)
+   (write (crlf) (concat |EXPECTATION FAILED: '| <sem> | ^| <attr1> |.| <attr2> |' | <value> | <> | <v2> |.|))
+#   (interrupt)
+}
+
+#   At L2:   (x ^a <w>),  (y ^a <z>), <w> has no children - PASS
+#   If there are children, we have to check at level 3
+sp {check-failure*apply*check-expectation*l2-identifier-match-no-children
+   (state <s> ^operator <op>
+              ^top-state.world-usage internal
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<op> ^name check-expectation)
+   (<ts> ^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<seg> ^original-sentence <cs>
+          ^expected <expected>
+          ^semantics <sem>)
+   (<cs> ^processed-sentence true)
+   (<expected> ^<attr1> <expected2>)
+   (<sem> ^<attr1> <sem2>)
+   (<expected2> ^<attr2> {<=> <s>})  # IS an identifier
+   (<expected2> ^<attr2> <value>)
+  -(<value> ^<attr-x> )
+   (<sem2> ^<attr2> <v2>)
+-->
+   (<seg> ^checked-expectation true)
+   (write (crlf) (concat |EXPECTATION MATCHED: '| <sem> | ^| <attr1> |.| <attr2> | | <v2> |' found.|))
+#   (interrupt)
+}
+
+#   At L3:   (x ^a ) is missing  - FAIL
+sp {check-failure*apply*check-expectation*l3-attribute-missing
+   (state <s> ^operator <op>
+              ^top-state.world-usage internal
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<op> ^name check-expectation)
+   (<ts> ^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<seg> ^original-sentence <cs>
+          ^expected <expected>
+          ^semantics <sem>)
+   (<cs> ^processed-sentence true)
+   (<expected> ^<attr1> <expected2>)
+   (<sem> ^<attr1> <sem2>)
+   (<expected2> ^<attr2> <expected3>)
+   (<sem2> ^<attr2> <sem3>)
+   (<expected3> ^<attr3> <value>)
+   (<sem3> -^<attr3> )
+-->
+   (<seg> ^checked-expectation true)
+   (write (crlf) (concat |EXPECTATION FAILED: '| <sem> | ^| <attr1> |.| <attr2> |.| <attr3> |' missing.|))
+#   (interrupt)
+}
+
+#   At L3:   (x ^a c) == (y ^a c) - PASS
+sp {check-failure*apply*check-expectation*l3-constant-match
+   (state <s> ^operator <op>
+              ^top-state.world-usage internal
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<op> ^name check-expectation)
+   (<ts> ^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<seg> ^original-sentence <cs>
+          ^expected <expected>
+          ^semantics <sem>)
+   (<cs> ^processed-sentence true)
+   (<expected> ^<attr1> <expected2>)
+   (<sem> ^<attr1> <sem2>)
+   (<expected2> ^<attr2> <expected3>)
+   (<sem2> ^<attr2> <sem3>)
+   (<expected3> -^<attr3> {<=> <s>})  # NOT an identifier
+   (<expected3> ^<attr3> <value>)
+   (<sem3> ^<attr3> <value>)
+-->
+   (<seg> ^checked-expectation true)
+   (write (crlf) (concat |EXPECTATION MATCHED: '| <sem> | ^| <attr1> |.| <attr2> |.| <attr3> | | <value> |' found.|))
+#   (interrupt)
+}
+
+#   At L3:   (x ^a c) <> (y ^a d) - FAIL
+sp {check-failure*apply*check-expectation*l3-constant-fail
+   (state <s> ^operator <op>
+              ^top-state.world-usage internal
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<op> ^name check-expectation)
+   (<ts> ^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<seg> ^original-sentence <cs>
+          ^expected <expected>
+          ^semantics <sem>)
+   (<cs> ^processed-sentence true)
+   (<expected> ^<attr1> <expected2>)
+   (<sem> ^<attr1> <sem2>)
+   (<expected2> ^<attr2> <expected3>)
+   (<sem2> ^<attr2> <sem3>)
+   (<expected3> -^<attr3> {<=> <s>})  # NOT an identifier
+   (<expected3> ^<attr3> <value>)
+   (<sem3> ^<attr3> <v2> <> <value>)
+-->
+   (<seg> ^checked-expectation true)
+   (write (crlf) (concat |EXPECTATION FAILED: '| <sem> | ^| <attr1> |.| <attr2> |.| <attr3> |' | <value> | <> | <v2> |.|))
+#   (interrupt)
+}
+
+#   At L3:   (x ^a <c>) <> (y ^a d) - FAIL
+sp {check-failure*apply*check-expectation*l3-identifier-fail
+   (state <s> ^operator <op>
+              ^top-state.world-usage internal
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<op> ^name check-expectation)
+   (<ts> ^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<seg> ^original-sentence <cs>
+          ^expected <expected>
+          ^semantics <sem>)
+   (<cs> ^processed-sentence true)
+   (<expected> ^<attr1> <expected2>)
+   (<sem> ^<attr1> <sem2>)
+   (<expected2> ^<attr2> <expected3>)
+   (<sem2> ^<attr2> <sem3>)
+   (<expected3> ^<attr3> {<=> <s>})  # IS an identifier
+   (<expected3> ^<attr3> <value>)
+   (<sem3> -^<attr3> <v2> {<=> <s>})  # NOT an identifier
+   (<sem3> ^<attr3> <v2> <> <value>)
+-->
+   (<seg> ^checked-expectation true)
+   (write (crlf) (concat |EXPECTATION FAILED: '| <sem> | ^| <attr1> |.| <attr2> |.| <attr3> |' | <value> | <> | <v2> |.|))
+#   (interrupt)
+}
+
+#   At L3:   (x ^a <w>),  (y ^a <z>), <w> has no children - PASS
+#   If there are children, we have to check at level 4
+sp {check-failure*apply*check-expectation*l3-identifier-match-no-children
+   (state <s> ^operator <op>
+              ^top-state.world-usage internal
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<op> ^name check-expectation)
+   (<ts> ^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<seg> ^original-sentence <cs>
+          ^expected <expected>
+          ^semantics <sem>)
+   (<cs> ^processed-sentence true)
+   (<expected> ^<attr1> <expected2>)
+   (<sem> ^<attr1> <sem2>)
+   (<expected2> ^<attr2> <expected3>)
+   (<sem2> ^<attr2> <sem3>)
+   (<expected3> ^<attr3> {<=> <s>})  # IS an identifier
+   (<expected3> ^<attr3> <value>)
+#  -(<value> ^<attr-x> )    #   Only do this check if level 4 implemented
+   (<sem3> ^<attr3> <v2>)
+-->
+   (<seg> ^checked-expectation true)
+   (write (crlf) (concat |EXPECTATION MATCHED: '| <sem> | ^| <attr1> |.| <attr2> |.| <attr3> | | <v2> |' found.|))
 #   (interrupt)
 }
 
@@ -331,3 +494,43 @@ sp {apply*check-expectation-interaction-status
 -->
    (<status> ^<att> <value>)
 }
+
+###########################################################
+#   SOME EXAMPLES OF TYPE CHECKING - COURTESY OF Justin Li
+#sp {iden-different-types
+#    (state <s> ^x <x>
+#               ^y <y>)
+#    (<x> ^z {<val> <=> <s>})
+#   -(<y> ^z {<=> <val>})
+#-->
+#    # fail
+#}
+#
+#sp {iden-same-types
+#    (state <s> ^x <x>
+#               ^y <y>)
+#    (<x> ^z {<val> <=> <s>})
+#    (<y> ^z {<=> <val>})
+#-->
+#    # pass
+#}
+#
+#sp {const-different-types
+#    (state <s> ^x <x>
+#               ^y <y>)
+#    (<x> ^z <val>)
+#   -(<x> ^z {<=> <s>})
+#   -(<y> ^z {<=> <val>})
+#-->
+#    # fail
+#}
+#
+#sp {const-same-types
+#    (state <s> ^x <x>
+#               ^y <y>)
+#    (<x> ^z <val>)
+#   -(<x> ^z {<=> <s>})
+#    (<y> ^z <val>)
+#-->
+#    # pass
+#}
