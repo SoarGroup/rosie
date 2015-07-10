@@ -1,7 +1,7 @@
 # Report failure if there are no more candidates for the missing object
 sp {execute-put-down1*propose*report-failure
    (state <s> ^name execute-put-down1
-              ^current-action.command-status <status>
+              ^current-action.put-down-command.status complete
              -^top-state.perception-monitor.object-monitor.new-object-info.status
               ^held-object.predicates.status stale)
 -->
@@ -21,13 +21,23 @@ sp {execute-put-down1*apply*report-failure*report*failure
         ^missing-object <obj>)
 }
 
-# Remove the command-status so that if we come back and try it again later, 
-#   we can start fresh
-sp {execute-put-down1*apply*report-failure*remove*status
+sp {execute-put-down1*apply*report-failure*remove*grabbed
    (state <s> ^name execute-put-down1
-              ^current-action <a>
-              ^operator.name report-failure)
-   (<a> ^command-status <status>)
+              ^operator.name report-failure
+              ^held-object.predicates <preds>)
+   (<preds> ^arm-status grabbed)
 -->
-   (<a> ^command-status <status> -)
+   (<preds> ^arm-status grabbed -)
+}
+
+sp {execute-put-down1*apply*report-failure*remove*put-down-command
+   (state <s> ^name execute-put-down1
+              ^operator.name report-failure
+              ^current-action <a>
+              ^io.output-link <out>)
+   (<a> ^put-down-command <cmd>)
+   (<out> ^put-down <cmd>)
+-->
+   (<a> ^put-down-command <cmd> -)
+   (<out> ^put-down <cmd> -)
 }

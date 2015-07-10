@@ -1,13 +1,23 @@
 # Report failure if there are no more candidates for the missing object
 sp {execute-pick-up1*propose*report-failure
    (state <s> ^name execute-pick-up1
-              ^current-action.command-status failure
+              ^current-action.pick-up-command.status failure
              -^top-state.perception-monitor.object-monitor.new-object-info.status
               ^target-object.predicates.status stale)
 -->
    (<s> ^operator <o> +)
    (<o> ^name report-failure)
 }
+
+sp {execute-pick-up1*apply*report-failure*remove-arm-status
+   (state <s> ^name execute-pick-up1
+              ^operator.name report-failure
+              ^target-object.predicates <preds>)
+   (<preds> ^arm-status moving)
+-->
+   (<preds> ^arm-status moving -)
+}
+
 
 # Report a failure, may lead to more interactions
 sp {execute-pick-up1*apply*report-failure*report*failure
@@ -21,13 +31,15 @@ sp {execute-pick-up1*apply*report-failure*report*failure
         ^missing-object <obj>)
 }
 
-# Remove the command-status so that if we come back and try it again later, 
-#   we can start fresh
-sp {execute-pick-up1*apply*report-failure*remove*status
+# Remove the commands from the output-link/current-action
+sp {execute-pick-up1*apply*report-failure*remove*commands
    (state <s> ^name execute-pick-up1
               ^current-action <a>
-              ^operator.name report-failure)
-   (<a> ^command-status <status>)
+              ^operator.name report-failure
+              ^io.output-link <out>)
+   (<a> ^{ <cmd-type> << pick-up-command reset-command >> } <cmd>)
+   (<out> ^<cmd-name> <cmd>)
 -->
-   (<a> ^command-status <status> -)
+   (<a> ^<cmd-type> <cmd> -)
+   (<out> ^<cmd-name> <cmd> -)
 }

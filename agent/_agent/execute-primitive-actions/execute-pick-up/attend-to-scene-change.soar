@@ -1,58 +1,39 @@
-sp {execute-pick-up1*elaborate*attend-to-all-scene-changes*true
-   (state <s> ^name execute-pick-up1
-              ^current-action.command-status <status>)
--->
-   (<s> ^attend-to-robot true)
-}
-
-sp {execute-pick-up1*elaborate*attend-to-object*finished
-   (state <s> ^name execute-pick-up1
-              ^current-action.command-status <status>
-              ^target-object.id <id>)
--->
-   (<s> ^attend-to-object <id>)
-}
-
-sp {execute-pick-up1*elaborate*attend-to-all-scene-changes*missing*object
-   (state <s> ^name execute-pick-up1
-              ^current-action.command-status failure
-              ^target-object.predicates.status stale)
--->
-   (<s> ^attend-to-all-scene-changes true)
-}
-
 # Don't attend to stale-object on the object being grabbed
 sp {execute-pick-up1*reject*attend-to-stale-object
    (state <s> ^name execute-pick-up1
               ^operator <o> +
-              ^target-object.id <id>)
+              ^target-object <obj>)
    (<o> ^name attend-to-scene-change
         ^change.type stale-object
-        ^change.object.id <id>)
+        ^change.object-info.wm-obj <obj>)
 -->
    (<s> ^operator <o> -)
 }
 
-# Don't attend to new objects
+## Don't attend to new objects while the arm is moving
 sp {execute-pick-up1*reject*attend-to-new-object
    (state <s> ^name execute-pick-up1
-              ^operator <o> +)
+              ^operator <o> +
+              ^current-action.pick-up-command <cmd>)
    (<o> ^name attend-to-scene-change
         ^change.type new-object)
+   (<cmd> -^status)
 -->
    (<s> ^operator <o> -)
 }
 
-#sp {execute-pick-up1*best*preference*attend-to-object*target
-#   (state <s> ^name execute-pick-up1
-#              ^operator <o> +
-#              ^target-object.id <id>
-#              ^current-action.command-status failure)
-#   (<o> ^name attend-to-scene-change
-#        ^change.object.id <id>)
-#-->
-#   (<s> ^operator <o> >)
-#}
+# Don't attend at all to the object being picked up while the arm is moving
+sp {execute-pick-up1*reject*attend-to-scene-change*grabbed*object
+   (state <s> ^name execute-pick-up1
+              ^operator <o> +
+              ^target-object.handle <handle>
+              ^current-action.pick-up-command <cmd>)
+   (<o> ^name attend-to-scene-change
+        ^change.object-info.object-handle <handle>)
+   (<cmd> -^status)
+-->
+   (<s> ^operator <o> -)
+}
 
 sp {execute-pick-up1*elaborate*evaluate-new-object*candidate-for-missing-object
    (state <s> ^name execute-pick-up1
@@ -61,7 +42,7 @@ sp {execute-pick-up1*elaborate*evaluate-new-object*candidate-for-missing-object
               ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
    (<o> ^name attend-to-scene-change
         ^change.type new-stable-object
-        ^change.object <cand>)
+        ^change.object-info <cand>)
    (<obj-info> ^object-handle <obj-handle>)
 -->
    (<cand> ^candidate-for-missing-object <obj-info>)

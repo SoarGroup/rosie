@@ -1,47 +1,37 @@
-# Attend to the robot
-sp {execute-put-down1*elaborate*attend-to-robot*true
-   (state <s> ^name execute-put-down1)
--->
-   (<s> ^attend-to-robot true)
-}
-
-# When the action is finished, try attending to the held object
-sp {execute-put-down1*elaborate*attend-to-object*complete
-   (state <s> ^name execute-put-down1
-              ^current-action.command-status <status>
-              ^held-object.id <id>)
--->
-   (<s> ^attend-to-object <id>)
-}
-
-# If the object is missing (stale), then do additional attending
-sp {execute-put-down1*elaborate*attend-to-all-scene-changes*true*stale*object
-   (state <s> ^name execute-put-down1
-              ^current-action.command-status <status>
-              ^held-object.predicates.status stale)
--->
-   (<s> ^attend-to-all-scene-changes true)
-}
-
 # Don't attend to stale-object on the object being grabbed
 sp {execute-put-down1*reject*attend-to-stale-object*held*object
    (state <s> ^name execute-put-down1
               ^operator <o> +
-              ^held-object.id <id>)
+              ^held-object.handle <handle>)
    (<o> ^name attend-to-scene-change
         ^change.type stale-object
-        ^change.object.id <id>)
+        ^change.object-info.object-handle <handle>)
 -->
    (<s> ^operator <o> -)
 }
 
-# Don't attend to new objects 
+# Don't attend to new objects while the arm is moving
 # (only evaluate those that were added during the put down as candidates for missing)
 sp {execute-put-down1*reject*attend-to-new-object
    (state <s> ^name execute-put-down1
+              ^current-action.put-down-command <cmd>
               ^operator <o> +)
    (<o> ^name attend-to-scene-change
         ^change.type new-object)
+   (<cmd> -^status)
+-->
+   (<s> ^operator <o> -)
+}
+
+# Don't attend at all to the object being put down up while the arm is moving
+sp {execute-put-down1*reject*attend-to-scene-change*grabbed*object
+   (state <s> ^name execute-put-down1
+              ^operator <o> +
+              ^target-object.handle <handle>
+              ^current-action.put-down-command <cmd>)
+   (<o> ^name attend-to-scene-change
+        ^change.object-info.object-handle <handle>)
+   (<cmd> -^status)
 -->
    (<s> ^operator <o> -)
 }
