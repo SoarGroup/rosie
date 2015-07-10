@@ -16,8 +16,8 @@ public class Time implements ISoarObject{
 	public Time(){
 		startTime = mstime();
 		
-		seconds = new IntWME("seconds", 0);
-		steps = new IntWME("steps", 0);
+		seconds = new IntWME("seconds", 0L);
+		steps = new IntWME("steps", 0L);
 	}
 	
 	public static long mstime(){
@@ -48,7 +48,7 @@ public class Time implements ISoarObject{
 			return;
 		}
 		
-		seconds.setValue((int)((mstime() - startTime)/1000));
+		seconds.setValue((mstime() - startTime)/1000);
 		seconds.updateWM();
 		
 		steps.setValue(steps.getValue()+1);

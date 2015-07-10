@@ -6,14 +6,14 @@ import sml.Identifier;
 
 public class IntWME implements ISoarObject{
 	private String att;
-	private Integer val;
+	private Long val;
 	
 	private IntElement wme;
 	
 	private boolean changed = false;
 	private boolean added = false;
 	
-	public IntWME(String att, Integer val){
+	public IntWME(String att, Long val){
 		this.att = att;
 		this.val = val;
 		this.wme = null;
@@ -23,11 +23,11 @@ public class IntWME implements ISoarObject{
 		return added;
 	}
 	
-	public void setValue(Integer newVal){
+	public void setValue(Long newVal){
 		val = newVal;
 		changed = true;
 	}
-	public Integer getValue(){
+	public Long getValue(){
 		return val;
 	}
 

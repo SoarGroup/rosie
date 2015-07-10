@@ -1,45 +1,42 @@
-sp {execute-drive-to-waypoint1*propose*center-on-waypoint
+sp {execute-drive-to-waypoint1*propose*center-on-waypoint*turn
    (state <s> ^name execute-drive-to-waypoint1
+              ^intermediate-turn <> none
               ^current-action <a>
               ^waypoint <wp>)
-   (<a> ^near-waypoint true
-        -^at-waypoint)
+   (<a> ^turn-command.status success
+        ^drive-command.status success
+       -^center-command)
 -->
    (<s> ^operator <o> + >)
    (<o> ^name center-on-waypoint
-        ^waypoint <wp>
-        ^command-operator true)
+        ^waypoint <wp>)
+}
+
+sp {execute-drive-to-waypoint1*propose*center-on-waypoint*no*turn
+   (state <s> ^name execute-drive-to-waypoint1
+              ^intermediate-turn none
+              ^current-action <a>
+              ^waypoint <wp>)
+   (<a> ^drive-command.status success
+       -^center-command)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name center-on-waypoint
+        ^waypoint <wp>)
 }
 
 sp {execute-drive-to-waypoint1*apply*center-on-waypoint
    (state <s> ^name execute-drive-to-waypoint1
               ^operator <o>
               ^current-action <a>
-              ^top-state.io.input-link.self <self>
-              ^top-state.io.output-link <out>)
+              ^io.input-link.self <self>
+              ^io.output-link <out>)
    (<o> ^name center-on-waypoint
-        ^waypoint.id <id>)
+        ^waypoint.handle <handle>)
 -->
    (<out> ^do-control-law <law>)
    (<law> ^name drive-to-tag
-          ^parameters.class <id>
+          ^parameters.class <handle>
           ^termination-condition.name stabilized)
    (<a> ^center-command <law>)
 }
-
-sp {top-state*execute-drive-to-waypoint1*apply*center-on-waypoint*cleanup
-   (state <s> ^superstate nil
-              ^operator.name execute-drive-to-waypoint1
-              ^current-action <a>
-              ^io.output-link <out>)
-   (<a> ^center-command <cmd>)
-   (<cmd> ^status success)
--->
-   (<a> ^center-command <cmd> -
-        ^at-waypoint true)
-   (<out> ^do-control-law <cmd> -)
-}
-              
-
-
-   
