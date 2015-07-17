@@ -1,6 +1,7 @@
 package edu.umich.rosie.language;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -14,44 +15,93 @@ public class AgentMessageParser
 {
 	static int counter = 0;
 	
+	private static HashMap<String, String> simpleMessages = null;
+	
 	public static String translateAgentMessage(Identifier id){
-		String message = null;
+		if(simpleMessages == null){
+			simpleMessages = new HashMap<String, String>();
+			simpleMessages.put("ok", "Ok");
+//			simpleMessages.put("unable-to-satisfy", "I was unable to carry out that instruction");
+//			simpleMessages.put("unable-to-interpret-message", "I was unable to interpret that last message");
+//			simpleMessages.put("missing-object", "I lost the object I was using");
+//			simpleMessages.put("index-object-failure", "I couldn't find the referenced object");
+//			simpleMessages.put("no-proposed-action", "I couldn't perform the requested action");
+//			simpleMessages.put("multiple-arguments", "Could you be more specific?");
+//			simpleMessages.put("learn-location-failure", "I was not able to identify my current location");
+//			simpleMessages.put("get-goal-info", "What is the goal of that action?");
+//			simpleMessages.put("no-action-context-for-goal", "I don't know what action that goal is for");
+//			simpleMessages.put("get-next-subaction", "What do I do next?");
+			simpleMessages.put("unable-to-satisfy", "I couldn't do that");
+			simpleMessages.put("unable-to-interpret-message", "I don't understand.");
+			simpleMessages.put("missing-object", "I lost the object I was using");
+			simpleMessages.put("index-object-failure", "I couldn't find the referenced object");
+			simpleMessages.put("no-proposed-action", "I couldn't do that");
+			simpleMessages.put("multiple-arguments", "Could you be more specific?");
+			simpleMessages.put("learn-location-failure", "I don't know where I am.");
+			simpleMessages.put("get-goal-info", "What is the goal?");
+			simpleMessages.put("no-action-context-for-goal", "I don't know what action that goal is for");
+			simpleMessages.put("get-next-subaction", "What do I do next?");
+		}
 		
 		String type = SoarUtil.getValueOfAttribute(id, "type");
-		System.out.println("Got " + type + " message");
-		Identifier fieldsId = SoarUtil.getIdentifierOfAttribute(id, "fields");
 		if(type == null){
 			return null;
-		} else if(type.equals("get-next-task")){
-			message = translateNextTaskPrompt();
-		} else if(type.equals("get-predicate-info")){
-			message = translateGetPredicateInfo(fieldsId);
-		} else if(type.equals("report-successful-training")){
-			message = translateReportSuccessfulTraining(fieldsId);
-		} else if(type.equals("unable-to-satisfy")){
-			message = "I was unable to carry out that instruction";
-		} else if(type.equals("unable-to-interpret-message")){
-			message = "I was unable to interpret that last message";
-		} else if(type.equals("ok")){
-			message = "Ok";
-		} else if(type.equals("missing-object")){
-			message = "I lost the object I was using";
-		} else if(type.equals("index-object-failure")){
-			message = "I couldn't find the referenced object";
-		} else if(type.equals("no-proposed-action")){
-			message = "I couldn't perform the requested action";
-		} else if(type.equals("multiple-arguments")){
-			message = "Could you be more specific?";
-		} else if (type.equals("object-description")){
-			message = translateObjectDescription(fieldsId);
-		} else if(type.equals("learn-location-failure")){
-			message = "I was not able to identify my current location";
-		} else if(type.equals("get-location-info")){
-			message = translateGetLocationInfo(fieldsId);
 		}
-		return message;
+
+		System.out.println("Got Message:" + type);
+		if(simpleMessages.containsKey(type)){
+			return simpleMessages.get(type);
+		}
+		
+		Identifier fieldsId = SoarUtil.getIdentifierOfAttribute(id, "fields");
+		if(type.equals("get-next-task")){
+			return translateNextTaskPrompt();
+		} else if(type.equals("get-predicate-info")){
+			return translateGetPredicateInfo(fieldsId);
+		} else if(type.equals("report-successful-training")){
+			return translateReportSuccessfulTraining(fieldsId);
+		} else if(type.equals("object-description")){
+			return translateObjectDescription(fieldsId);
+		} else if(type.equals("get-location-info")){
+			return translateGetLocationInfo(fieldsId);
+		} else if(type.equals("get-item-request")){
+			return translateGetItemRequest(fieldsId);
+		} else if(type.equals("give-item-request")){
+			return translateGiveItemRequest(fieldsId);
+		} else if(type.equals("ask-about-item")){
+			return translateAskAboutItem(fieldsId);
+			
+		}
+		return null;
 	}
 	
+	public static String translateGetItemRequest(Identifier fieldsId){
+		String item = SoarUtil.getValueOfAttribute(fieldsId, "item");
+		if (item != null){
+			item = item.replace("1", "");
+			return "Please give me a " + item;
+		}
+		return null;
+	}	
+
+	public static String translateGiveItemRequest(Identifier fieldsId){
+		String item = SoarUtil.getValueOfAttribute(fieldsId, "item");
+		if (item != null){
+			item = item.replace("1", "");
+			return "Please take the " + item;
+		}
+		return null;
+	}	
+
+	public static String translateAskAboutItem(Identifier fieldsId){
+		String item = SoarUtil.getValueOfAttribute(fieldsId, "item");
+		if (item != null){
+			item = item.replace("1", "");
+			return "Is there a " + item + " here?";
+		}
+		return null;
+	}	
+
 	public static String translateGetPredicateInfo(Identifier fieldsId){
 		String predicateName = SoarUtil.getValueOfAttribute(fieldsId, "predicate-name");
 		if (predicateName == null){
@@ -64,8 +114,9 @@ public class AgentMessageParser
 	public static String translateGetLocationInfo(Identifier fieldsId){
 		String locationName = SoarUtil.getValueOfAttribute(fieldsId, "location-name");
 		if (locationName != null){
-			return "I don't know where the " + locationName + " is.\n" + 
-					"Can you take me there?";
+			return "Can you take me to the " + locationName + "?\n";
+//			return "I don't know where the " + locationName + " is.\n" + 
+//					"Can you take me there?";
 		} else {
 			return "Where is it?";
 		}

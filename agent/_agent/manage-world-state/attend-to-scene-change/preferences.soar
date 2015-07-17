@@ -1,3 +1,14 @@
+# Reject an attend-to-scene-change operator if attending to an object being moved
+
+sp {anystate*reject*attend-to-scene-change*moving*object
+   (state <s> ^operator <o> +)
+   (<o> ^name attend-to-scene-change
+        ^change.object-info.wm-obj.predicates.arm-status << moving grabbed >>
+        ^change.type <> changed-object-status)
+-->
+   (<s> ^operator <o> -)
+}
+
 # Ordering of scene change operators
 
 sp {anystate*attend-to-scene-change*prefer*higher*preference-order
@@ -33,6 +44,8 @@ sp {anystate*attend-to-scene-change*elaborate*default*preference-order
 
 # Preference Orders:
 
+# update-object = 200
+# delete-object = 200
 # arm-status-change = 150
 # new-location = 150
 # different-moving-state = 150
@@ -47,11 +60,18 @@ sp {anystate*attend-to-scene-change*elaborate*default*preference-order
 # status-change = 20
 # recheck-occlusion = 10
 
+sp {anystate*scene-change*update*delete*object*preference-order
+   (state <s> ^operator <o> +)
+   (<o> ^name attend-to-scene-change
+        ^change.type << update-object delete-object >>) 
+-->
+   (<o> ^preference-order 200)
+}
 
 sp {anystate*scene-change*robot-changes*preference-order
    (state <s> ^operator <o> +)
    (<o> ^name attend-to-scene-change
-        ^change.type << arm-status-change new-location different-moving-state >>)
+        ^change.type << changed-arm-status changed-robot-status changed-waypoint >>)
 -->
    (<o> ^preference-order 150)
 }
@@ -83,7 +103,7 @@ sp {anystate*scene-change*new-object*preference-order
 sp {anystate*scene-change*stability-timer-satisfied*preference-order
    (state <s> ^operator <o> +)
    (<o> ^name attend-to-scene-change
-        ^change.type stability-timer-satisfied)
+        ^change.type << stability-timer-satisfied new-stable-object >>)
 -->
    (<o> ^preference-order 50)
 }
@@ -107,7 +127,7 @@ sp {anystate*scene-change*moved-object*preference-order
 sp {anystate*scene-change*unary*predicates*preference-order
    (state <s> ^operator <o> +)
    (<o> ^name attend-to-scene-change
-        ^change.type << new-predicate changed-predicate status-change >>)
+        ^change.type << changed-object-predicate changed-object-status >>)
 -->
    (<o> ^preference-order 20)
 }

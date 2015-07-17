@@ -27,9 +27,12 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 		public String speechFile;
 
 		public Boolean writeLog;
+		public Boolean writeStandardOut;
 
 		public AgentConfig(Properties props){
 	        spawnDebugger = props.getProperty("spawn-debugger", "true").equals("true");
+	        writeStandardOut = props.getProperty("write-to-stdout", "false").equals("true");
+	       
 
 	        agentName = props.getProperty("agent-name", "SoarAgent");
 			agentSource = props.getProperty("agent-source", null);
@@ -143,19 +146,29 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 		if(config.writeLog){
 			try {
 				logWriter = new PrintWriter(new FileWriter("rosie-log.txt"));
-				agent.RegisterForPrintEvent(smlPrintEventId.smlEVENT_PRINT, this, this);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
 
+        if(config.writeStandardOut || config.writeLog){
+        	agent.RegisterForPrintEvent(smlPrintEventId.smlEVENT_PRINT, this, null);
+        }
+
+
 		agent.ExecuteCommandLine(String.format("watch %d", config.watchLevel));
 
         sourceAgent();
         
-        perceptionConn.connect();
-        actuationConn.connect();
-        languageConn.connect();
+        if(perceptionConn != null){
+        	perceptionConn.connect();
+        }
+        if(actuationConn != null){
+        	actuationConn.connect();
+        }
+        if(languageConn != null){
+        	languageConn.connect();
+        }
     }
 
 	/**
@@ -191,9 +204,15 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 		}
 		agent.KillDebugger();
 		time.removeFromWM();
-		languageConn.disconnect();
-		perceptionConn.disconnect();
-		actuationConn.disconnect();
+        if(perceptionConn != null){
+        	perceptionConn.disconnect();
+        }
+        if(actuationConn != null){
+        	actuationConn.disconnect();
+        }
+        if(languageConn != null){
+        	languageConn.disconnect();
+        }
 		//kernel.DestroyAgent(agent);
     	// SBW removed DestroyAgent call, it hangs in headless mode for some reason
     	// (even when the KillDebugger isn't there)
@@ -314,8 +333,13 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 
 	@Override
 	public void printEventHandler(int eventID, Object data, Agent agent, String message) {
-		synchronized(logWriter) {
-			logWriter.print(message);
+		if(config.writeStandardOut){
+			System.out.print(message);
+		}
+		if(config.writeLog){
+			synchronized(logWriter) {
+				logWriter.print(message);
+			}
 		}
 	}
 }

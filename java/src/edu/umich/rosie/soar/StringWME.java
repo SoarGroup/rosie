@@ -43,7 +43,7 @@ public class StringWME implements ISoarObject{
 		if(wme == null || !changed){
 			return;
 		}
-		if(wme.GetValue() != val){
+		if(!wme.GetValue().equals(val)){
 			wme.Update(val);
 		}
 		changed = false;

@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
 
-import april.util.TimeUtil;
-
 public class ISpyScriptGenerator {
 //	private static String[][] properties = new String[][]{
 //		new String[]{ "red", "orange", "yellow", "green", "blue", "purple" },
@@ -45,7 +43,7 @@ public class ISpyScriptGenerator {
 	
 	public static Script generateNormalScript(String logname){
 		ArrayList<String> lines = generateLines();
-		Collections.shuffle(lines, new Random(TimeUtil.utime()));
+//		Collections.shuffle(lines, new Random(TimeUtil.utime()));
 
 		if(logname != null){
 			try{

@@ -1,0 +1,49 @@
+              
+# If we are doing segmentation reasoning, link multiple fragments
+# All new perceptual objects that the stale object contains are linked to it
+sp {attend-to-stale-object*propose*link-objects
+   (state <s> ^name attend-to-stale-object
+              ^found-contained-fragment true
+              ^object-info.object-handle <dest-handle>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name link-objects
+        ^modify-scene-command <cmd>)
+   (<cmd> ^type link
+          ^destination-handle <dest-handle>)
+}
+
+sp {attend-to-stale-object*elaborate*link-objects*src-handle
+   (state <s> ^name attend-to-stale-object
+              ^operator <o> +
+              ^contained-fragment-id <src-handle>)
+   (<o> ^name link-objects
+        ^modify-scene-command <cmd>)
+-->
+   (<cmd> ^source-handle <src-handle>)
+}
+
+# Need to do all at once, otherwise only 1 fragment will be linked
+sp {attend-to-stale-object*apply*link-objects
+   (state <s> ^name attend-to-stale-object
+              ^operator <o>
+              ^io.output-link <ol>)
+   (<o> ^name link-objects
+        ^modify-scene-command <cmd>)
+-->
+   (<ol> ^modify-scene <cmd>)
+}
+
+sp {attend-to-stale-object*apply*link-objects*monitor*perception
+   (state <s> ^name attend-to-stale-object
+              ^operator <o>
+              ^top-state.agent-params.debug-mode on
+              ^top-state.agent-params.debug-perception true)
+   (<o> ^name link-objects
+        ^modify-scene-command <cmd>)
+   (<cmd> ^source-handle <src>
+          ^destination-handle <dest>)
+-->
+   (write |Linking object | <src> | to | <dest> (crlf))
+}
+        

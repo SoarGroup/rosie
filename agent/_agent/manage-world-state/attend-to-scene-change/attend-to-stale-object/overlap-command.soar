@@ -1,0 +1,52 @@
+# For each intersecting perception object that isn't a belief object yet, 
+#   Find out if the stale belief object contains it
+sp {attend-to-stale-object*propose*overlap-command*contains*new*fragment
+   (state <s> ^name attend-to-stale-object
+              ^object-info.belief-obj.id <stale-id>
+              ^intersected-perc-id <perc-id>
+             -^top-state.perception-monitor.object-monitor.object-info.perception-obj.id <perc-id>
+             -^overlap-results.result.object-a <perc-id>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name overlap-command
+        ^object-a <perc-id>
+        ^object-b <stale-id>)
+}
+
+# For each intersecting perception object that is a belief object,
+#   Find out if the stale belief object is contained by it
+sp {attend-to-stale-object*propose*overlapt-command*contained-by
+   (state <s> ^name attend-to-stale-object
+              ^object-info.belief-obj.id <stale-id>
+              ^intersected-perc-id <perc-id>
+              ^top-state.perception-monitor.object-monitor.object-info.perception-obj.id <perc-id>
+             -^overlap-results.result.object-b <perc-id>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name overlap-command
+        ^object-a <stale-id>
+        ^object-b <perc-id>)
+}
+
+sp {attend-to-stale-object*apply*overlap-command*copy-result
+   (state <s> ^name attend-to-stale-object
+              ^operator.name overlap-command
+              ^overlap-command <cmd>
+              ^overlap-results <results>)
+   (<cmd> ^result <res>)
+   (<res> ^overlap <> none)
+-->
+   (<s> ^overlap-command <cmd> -)
+   (<results> ^result <res>)
+}
+
+sp {attend-to-stale-object*apply*overlap-command*debug-perception*report*overlap
+   (state <s> ^name attend-to-stale-object
+              ^operator.name overlap-command
+              ^overlap-command.result <res>
+              ^top-state.agent-params.debug-mode on
+              ^top-state.agent-params.debug-perception true)
+   (<res> ^object-a <a> ^object-b <b> ^overlap <val>)
+-->
+   (write |Overlap: | <val> | of | <a> | is contained by | <b> (crlf))
+} 
