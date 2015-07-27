@@ -42,9 +42,6 @@ sp {comprehend-word*propose*smem-lexical-retrieval-cw-pw-type
               ^segment <seg>
              -^retrieved-lexical-item
              -^comprehension-structure.retrieved-lexical-item)
-#  -{(<s> ^failed-retrieval <fr>)
-#    (<fr> ^current-word <up>
-#          ^prior-word <pick-type>)}
    (<seg> ^retrieved-stack.item.lt.structure-type <pick-type>
          -^retry)
 -->
@@ -101,7 +98,7 @@ sp {comprehend-construction*apply*smem-lexical-retrieval-cw-pw
         ^prior-word <pick>)
 -->   
    (write (crlf) |Attempt retrieval for: | <up> |, | <pick>)
-   (<cmd> ^query <x>)
+   (<cmd> ^query <x> ^depth 9)
    (<x> ^current-word <up>
         ^prior-word <pick>)
 }
@@ -117,6 +114,24 @@ sp {comprehend-word*apply*smem-lexical-retrieval-cw-pw*success*monitor
 -->
    (write (crlf) |Retrieval Success for | <cw> | | <pw> | => | <x>)
 }
+
+
+sp {comprehend-word*apply*smem-lexical-retrieval-cw-pw*success
+   (state <s> ^operator.name << smem-lexical-retrieval-cw-pw smem-lexical-retrieval-cw-pw-type >>
+              ^comprehension-structure <cs>
+              ^smem <smem>)
+   (<smem> ^result.retrieved <rli>
+           ^command <c>)
+   (<c> ^query <q>)
+   (<q> ^current-word <cw>
+        ^prior-word <pw>)
+   (<rli> ^current-word <cw>
+        ^prior-word <pw>)
+-->
+   (<c> ^query <q> -
+        ^depth 9 -)
+   (<cs> ^retrieved-lexical-item <rli>)
+}
 ############@@@@@@@@@@@@@@@@@##########
 sp {comprehend-word*apply*smem-lexical-retrieval-assigner-prior-word-stale
   #:interrupt
@@ -128,7 +143,8 @@ sp {comprehend-word*apply*smem-lexical-retrieval-assigner-prior-word-stale
         ^prior-word-stale true)
    (<seg> ^not-merged-assigner <uai>
           ^retrieved-stack.item <prior-receiver>)
-   (<rli> -^consumes-prior-word false)
+   (<rli> -^consumes-prior-word false 
+           ^prior-word <pw>)
    (<uai> ^parent-receiver <prior-receiver>
           ^lt <lt>)
 -->
@@ -145,7 +161,8 @@ sp {comprehend-word*apply*smem-lexical-retrieval-receiver-prior-word-stale
    (<seg> ^not-merged-receiver <uai>
           ^retrieved-stack.item <uai>)
    (<uai> ^lt <lt>)
-   (<rli> -^consumes-prior-word false)
+   (<rli> -^consumes-prior-word false
+           ^prior-word <pw>)
 -->
    (write (crlf) |Remove receiver: | <uai> | for prior word: | <pw>)
    (<cs> ^remove-receiver <uai>)}
@@ -159,8 +176,10 @@ sp {comprehend-word*apply*smem-lexical-retrieval-proprogate-first-word
               ^comprehension-structure <cs>)
    (<o> ^name smem-lexical-retrieval-cw-pw
         ^prior-word-stale true)
-   (<seg> ^prior-word <pick>)
-   (<pick> ^first-word true)
+   (<seg> ^prior-word <pw>)
+   (<pw> ^first-word true
+         ^spelling <pick>)
+   (<rli> ^prior-word <pick>)
 -->
    (write (crlf) |Current-word becomes a first word.|)
    (<cs> ^first-word true)}
