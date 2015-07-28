@@ -1,12 +1,13 @@
 # elaborate dx, dy
-sp {selection*elaborate*evaluation*dx*dy
+sp {waypoint-search*selection*elaborate*evaluation*dx*dy
    (state <s> ^name selection
+              ^problem-space.name waypoint-search
               ^evaluation <e>
-              ^superstate.desired.waypoint <dwp>
-             -^superstate.current-location <cwp>)
-   (<e> ^current-location <cwp>)
-   (<cwp> ^x <cx> ^y <cy>)
-   (<dwp> ^x <dx> ^y <dy>)
+              ^desired.waypoint <des-wp>
+             -^current-waypoint <cur-wp>)
+   (<e> ^current-waypoint <cur-wp>)
+   (<cur-wp> ^x <cx> ^y <cy>)
+   (<dur-wp> ^x <dx> ^y <dy>)
 -->
    (<e> ^dx (- <dx> <cx>)
         ^dy (- <dy> <cy>))
@@ -19,33 +20,15 @@ sp {selection*elaborate*evaluation*estimated-cost
    :default
    (state <s> ^name selection
               ^evaluation <e>
-             -^superstate.current-location <cwp>
-              ^superstate.desired.waypoint <dwp>)
-   (<e> ^current-location <cwp>
+             -^current-waypoint <cur-wp>
+              ^desired.waypoint <des-wp>)
+   (<e> ^current-waypoint { <cur-wp> <> <des-wp> }
        -^updated-estimate true  ## JEL 2/11/
         ^dx <dx>
         ^dy <dy>)
-   (<cwp> ^handle <ch>)
-   (<dwp> ^handle { <dh> <> <ch> })
 -->
    # Pythagorean Theorem
    (<e> ^estimated-cost (sqrt (+ (* <dx> <dx>) (* <dy> <dy>))))
-}
-
-# estimated-cost during adjacent area search
-# set to 0 because we don't know which waypoint we want, 
-#   accept the closest that satisfies the test
-sp {selection*elaborate*evaluation*estimated-cost*adjacent-area*search
-   (state <s> ^name selection
-              ^evaluation <e>
-             -^superstate.current-location <cwp>
-              ^superstate.desired.area <area>)
-   (<e> ^current-location <cwp>
-       -^updated-estimate true)  ## JEL 2/11/
-   (<cwp> ^handle <ch>)
--->
-   # Pythagorean Theorem
-   (<e> ^estimated-cost 0.000001)
 }
 
 # elaborate: total-estimated-cost
@@ -64,27 +47,12 @@ sp {selection*monitor*write*path*costs
    :default
    (state <s> ^name selection
               ^evaluation <e>
-              ^superstate.desired.waypoint.handle <des-handle>)
+              ^desired.waypoint.handle <des-handle>)
    (<e> ^estimated-cost <ec>
         ^path-cost <pc>
-        ^current-location.handle <cur-handle>)
+        ^current-waypoint.handle <cur-handle>)
 -->
    (write (crlf) |Estimated Cost from | <cur-handle> | to | <des-handle> |: | <ec>)
    (write (crlf) |Path Cost at | <cur-handle> |: | <pc>)
    (write (crlf) |Total Estmated Cost: | <e> | | (+  <ec> <pc>) | : | <e> | path: | <pc> | Estimated Cost: | <ec> )
 }
-
-sp {selection*monitor*write*path*costs*area
-   :default
-   (state <s> ^name selection
-              ^evaluation <e>
-              ^superstate.desired.area.handle <des-handle>)
-   (<e> ^estimated-cost <ec>
-        ^path-cost <pc>
-        ^current-location.handle <cur-handle>)
--->
-   (write (crlf) |Estimated Cost from | <cur-handle> | to | <des-handle> |: | <ec>)
-   (write (crlf) |Path Cost at | <cur-handle> |: | <pc>)
-   (write (crlf) |Total Estmated Cost: | <e> | | (+  <ec> <pc>) | : | <e> | path: | <pc> | Estimated Cost: | <ec> )
-}
-
