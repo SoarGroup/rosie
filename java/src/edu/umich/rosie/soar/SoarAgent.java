@@ -26,6 +26,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 		
 		public String speechFile;
 
+		public Boolean verbose;
 		public Boolean writeLog;
 		public Boolean writeStandardOut;
 
@@ -37,6 +38,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 	        agentName = props.getProperty("agent-name", "SoarAgent");
 			agentSource = props.getProperty("agent-source", null);
 			smemSource = props.getProperty("smem-source", null);
+			verbose = props.getProperty("verbose", "true").equals("true");
 
 	        try{
 	        	watchLevel = Integer.parseInt(props.getProperty("watch-level", "1"));
@@ -293,7 +295,11 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 		}
 		if(config.agentSource != null){
 			String res = agent.ExecuteCommandLine("source " + config.agentSource + " -v");
-			System.out.println(res);
+			if(config.verbose){
+				System.out.println(res);
+			} else {
+				System.out.println("Sourced Productions");
+			}
 		}
 	}
 

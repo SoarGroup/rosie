@@ -76,7 +76,7 @@ public class MessageResponseThread extends Thread
 			}
 			catch (ClassNotFoundException e)
 			{
-				System.err.println("Class Not Found Exception");
+				System.err.println("Class Not Found Exception" + e.toString());
 			}
 			catch (InterruptedException e)
 			{

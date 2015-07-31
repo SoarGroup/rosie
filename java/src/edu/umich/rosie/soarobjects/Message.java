@@ -17,7 +17,7 @@ public class Message implements ISoarObject
     private boolean added = false;
     
     public Message(String message, Integer messageNum){
-    	this.message = message;
+    	this.message = message.replace("\u200b", "");
     	this.messageNum = messageNum;
     }
     
