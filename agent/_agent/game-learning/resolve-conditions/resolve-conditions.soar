@@ -1,0 +1,131 @@
+sp {all-states*elaborate*linkstate
+   (state <s> ^superstate <ts>)
+   (<ts> ^linkstate <ss>)
+-->
+   (<s> ^linkstate <ss>)
+}
+
+sp {resolve-conditions*elaborate*type
+   (state <s> ^name resolve-conditions)
+-->
+   (<s> ^type action)
+}
+#learn conditions of predicates if unchunked
+sp {resolve-conditions*elaborate*nlp-set
+   (state <s> ^name resolve-conditions
+              #^type <type> 
+             ^linkstate <ts>)
+   (<ts> ^<type>.condition <c> ^gtype <type>)
+-->
+   (<s> ^condition <c>)
+}
+
+
+#todo remove this rule
+sp {resolve-conditions*elaborate*parameter-set
+   (state <s> ^name resolve-conditions
+              ^type <type>
+             ^linkstate <ts>)
+   (<ts> ^<type> <t2>
+         ^gtype <type>)
+   (<t2> ^parameter-set <ps>
+         ^potential-args <po>)
+-->
+   (<s> ^parameter-set <ps>
+        ^potential-args <po>)
+}
+
+#try to evaluate conditions whose arguments have been determined
+sp {resolve-conditions*propose*eval-condition
+   (state <s> ^name resolve-conditions
+              #^linkstate.ewave <e>
+              ^condition <co>)
+  # (<co> ^ewave <= <e>)  #doubles have both ewave no bad only test on final copy
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name eval-condition
+        ^condition <co>)
+}
+sp {resolve-conditions*disprefer*concepts
+   (state <s> ^name resolve-conditions
+              ^operator <o> +)
+   (<o> ^name eval-condition
+        ^condition <co>)
+   (<co> ^type concept)
+-->
+   (<s> ^operator <o> <)
+}
+sp {resolve-conditions*disprefer*input-args
+   (state <s> ^name resolve-conditions
+              ^operator <o> +)
+   (<o> ^name eval-condition
+        ^condition <co>)
+   (<co> ^attribute input-arg)
+-->
+   (<s> ^operator <o> <)
+}
+
+sp {resolve-conditions*prefer*eval-condition*childresults
+   (state <s> ^name resolve-conditions
+              ^operator <o> +)
+   (<o> ^name eval-condition
+        ^condition <co>)
+   (<co> ^args.<< 1 2 3 4 5 6 7 8 9 10 >> <c1>)
+   (<c1> -^result.set.pair.{1})
+-->
+   (<s> ^operator <o> <)
+}
+sp {resolve-conditions*prefer*eval-condition*childresults-under
+   (state <s> ^name resolve-conditions
+              ^operator <o> +)
+   (<o> ^name eval-condition
+        ^condition <co>)
+   (<co> ^args.<< 1 2 3 4 5 6 7 8 9 10 >> <c1>)
+   (<c1> -^result.set.pair.{1}.<something> -^return-type number)
+-->
+   (<s> ^operator <o> <)
+}
+sp {resolve-conditions*prefer*eval-condition*reject-complete
+   (state <s> ^name resolve-conditions
+              ^linkstate <ls>
+              ^operator <o> +)
+   (<o> ^name eval-condition
+        ^condition <co>)
+   (<co> ^result.set.pair.{1} <a>)
+  -{(state <ls>)
+    (<a> -^<something>)}
+-->
+   (<s> ^operator <o> -)
+}
+#TODO fix number issue
+sp {resolve-conditions*prefer*eval-condition*reject-complete*number
+   (state <s> ^name resolve-conditions
+              ^operator <o> +)
+   (<o> ^name eval-condition
+        ^condition <co>)
+   (<co> ^result.set.pair.{1} <something> ^return-type number)
+-->
+   (<s> ^operator <o> -)
+}
+
+sp {resolve-conditions*propose*eval-parameters
+   (state <s> ^name resolve-conditions
+              #^linkstate.gtype action
+              ^potential-args <po>
+              ^parameter-set <ps>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name eval-parameters
+        ^potential-args <po>
+        ^parameter-set <ps>)
+}
+
+sp {resolve-conditions*prefer*eval-condition*over*eval-parameters
+   (state <s> ^name resolve-conditions
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name eval-condition)
+   (<o2> ^name eval-parameters)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
