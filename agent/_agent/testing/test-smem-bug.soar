@@ -1,0 +1,135 @@
+smem --set learning on
+
+source smem-query.soar
+
+smem --add {
+    (<goal> ^handle goal ^procedural <proc> ^predicate <pred>)
+    (<proc> ^arg1 <parg>)
+    (<pred> ^1 <pred-arg1>)
+    (<pred-arg1> ^default <def>)
+    (<def> ^name pantry)
+}
+
+sp {anystate*elaborate*name*superoperator
+   (state <s> ^superstate.operator.name <name>)
+-->
+   (<s> ^name <name>)
+}
+
+# Step 1: retrieve the goal in a substate and copy to superstate
+sp {top-state*propose*retrieve-goal
+   (state <s> ^superstate nil
+             -^goal
+             -^deleted)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name retrieve-goal)
+}
+
+sp {retrieve-goal*elaborate*smem-query
+   (state <s> ^name retrieve-goal)
+-->
+   (<s> ^smem-query <q>)
+   (<q> ^cue.handle goal
+        ^depth 5)
+}
+
+sp {retrieve-goal*propose*copy-goal
+   (state <s> ^name retrieve-goal
+              ^smem-query.result <goal>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name copy-goal
+        ^goal <goal>)
+}
+
+sp {retrieve-goal*apply*copy-goal
+   (state <s> ^name retrieve-goal
+              ^operator <o>
+              ^superstate <ss>)
+   (<o> ^name copy-goal
+        ^goal <goal>)
+-->
+   (<ss> ^goal <goal>)
+}
+
+# Step 2: go into a substate and delete from the superstate
+sp {top-state*propose*delete-goal
+   (state <s> ^superstate nil
+              ^goal <goal>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name delete-goal)
+}
+
+sp {delete-goal*propose*delete-from-superstate
+   (state <s> ^name delete-goal)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name delete-from-superstate)
+}
+
+sp {delete-goal*apply*delete-from-superstate
+   (state <s> ^name delete-goal
+              ^operator.name delete-from-superstate
+              ^superstate <ss>)
+   (<ss> ^goal <goal>)
+-->
+   (<ss> ^goal <goal> -
+         ^deleted true)
+}
+
+# Step 3: Go into a substate, retrieves the goal locally
+#   and does the replacement which leads to the bug
+sp {top-state*propose*update-goal
+   (state <s> ^superstate nil
+              ^deleted true)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name update-goal)
+}
+
+sp {update-goal*elaborate*smem-query
+   (state <s> ^name update-goal)
+-->
+   (<s> ^smem-query <q>)
+   (<q> ^cue.handle goal
+        ^depth 5)
+}
+
+sp {update-goal*elaborate*goal
+   (state <s> ^name update-goal
+              ^smem-query <q>)
+   (<q> ^cue.handle goal
+        ^result <goal>)
+-->
+   (<s> ^goal <goal>)
+}
+
+sp {update-goal*propose*replace-argument
+   (state <s> ^name update-goal
+              ^goal <goal>)
+   (<goal> ^predicate <goal-pred>
+           ^procedural.arg1 <parg>)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name replace-argument
+        ^goal-predicate <goal-pred>
+        ^structure <struct>)
+   (<struct> ^1 <parg>)
+}
+              
+sp {update-goal*apply*replace-argument
+   (state <s> ^name update-goal
+              ^operator <o>)
+   (<o> ^name replace-argument
+        ^goal-predicate <goal-pred>
+        ^structure.{ <arg-name> << 1 2 >> } <parg>)
+   (<parg> -^default <def>)
+   (<goal-pred> ^<arg-name> <arg-slot>)
+   (<arg-slot> ^default <def>)
+-->
+   (<goal-pred> ^<arg-name> <arg-slot> -
+                ^<arg-name> <parg>)
+   (<parg> ^default <def>)
+}

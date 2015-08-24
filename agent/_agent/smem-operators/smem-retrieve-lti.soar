@@ -1,0 +1,66 @@
+############################################################################
+# Operator: smem lti retrieval operator which can be fired on any state
+# If you add the wme ^retrieve-lti <lti> to ANY state, it will do the retrieval
+#   of the substructure for epmem
+# Will add a ^retrieved-lti <lti> to the state when done
+
+
+sp {anystate*propose*smem-retrieve-lti
+   (state <s> ^smem-retrieve <ret>)
+   (<ret> ^identifier <lti>
+         -^retrieved true)
+-->
+   (<s> ^operator <o> + > =)
+   (<o> ^name smem-retrieve-lti
+        ^retrieve-info <ret>)
+}
+
+sp {anystate*apply*smem-retrieve-lti*create*retrieve*command
+   (state <s> ^operator <o>
+              ^smem.command <cmd>)
+   (<o> ^name smem-retrieve-lti
+        ^retrieve-info.identifier <lti>)
+-->
+   (<cmd> ^retrieve <lti>)
+}
+
+sp {anystate*apply*smem-retrieve-lti*copy*retrieve*params
+   (state <s> ^operator <o>
+              ^smem.command <cmd>)
+   (<o> ^name smem-retrieve-lti
+        ^retrieve-info <info>)
+   (<info> ^{ <att> <> identifier <> retrieved } <val>)
+-->
+   (<cmd> ^<att> <val>)
+}
+#
+#sp {new*anystate*apply*smem-retrieve*create-cue*clear
+#   (state <s> ^smem.command <cmd>
+#	      ^operator <op>)
+#   (<op> ^name smem-retrieve-new
+#   	 ^identifier <lti>)
+#   (<cmd> ^{<command> << retrieve store query >>} {<olti> <> <lti>})
+#-->
+#   (<cmd> ^<command> <olti> -)
+#}
+
+sp {anystate*apply*smem-retrieve-lti*mark*retrieved
+   (state <s> ^operator <o>
+              ^smem.result.{ << success failure >> } <lti>)
+   (<o> ^name smem-retrieve-lti
+        ^retrieve-info <ret>)
+   (<ret> ^identifier <lti>)
+-->
+   (<ret> ^retrieved true)
+}
+
+sp {anystate*apply*smem-retrieve-lti*clear*smem*command
+   (state <s> ^operator <o>
+              ^smem.result.{ << success failure >> } <lti>
+              ^smem.command <cmd>)
+   (<o> ^name smem-retrieve-lti
+        ^retrieve-info.identifier <lti>)
+   (<cmd> ^<att> <val>)
+-->
+   (<cmd> ^<att> <val> -)
+}

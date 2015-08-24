@@ -82,7 +82,7 @@ public class MessageServer implements IMessagePasser
 		try
 		{
 			serverSocket = new ServerSocket();
-			serverSocket.bind(new InetSocketAddress(InetAddress.getLocalHost(), 9999));
+			serverSocket.bind(new InetSocketAddress("192.168.2.3", 9999));
 		}
 		catch (IOException ioe)
 		{

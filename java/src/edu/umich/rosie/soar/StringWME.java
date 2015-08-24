@@ -50,8 +50,10 @@ public class StringWME implements ISoarObject{
 	}
 
 	public void removeFromWM() {
-		wme.DestroyWME();
-		wme = null;
-		added = false;
+		if(wme != null){
+			wme.DestroyWME();
+			wme = null;
+			added = false;
+		}
 	}
 }

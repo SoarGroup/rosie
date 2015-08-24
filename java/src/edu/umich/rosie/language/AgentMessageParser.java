@@ -79,7 +79,7 @@ public class AgentMessageParser
 		String item = SoarUtil.getValueOfAttribute(fieldsId, "item");
 		if (item != null){
 			item = item.replace("1", "");
-			return "Please give me a " + item;
+			return "Please give me the " + item;
 		}
 		return null;
 	}	
