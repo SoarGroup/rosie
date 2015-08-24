@@ -195,6 +195,39 @@ sp {apply*merge*push-constraint
    (<receiver> ^constraint <con>)
 }
 
+sp {apply*merge*push-constraint*receiver-assigner*DP-RC
+  #:interrupt
+   (state <s> ^operator <op>
+              ^segment.not-merged-receiver <receiver>)
+   (<op> ^name merge
+         ^receiver <receiver>
+         ^assigner.parent-receiver <pr>)
+    (<pr> -^constraint <con>
+           ^structure-type RC)
+    (<receiver> ^constraint <con>
+                ^structure-type << C-ADJ-P DP >>)
+-->
+   (write (crlf) |Add DP/C-ADJ-P constraint | <con> | to RC parent-receiver | <pr> | from receiver.|)
+   (<pr> ^constraint <con>)
+}
+
+
+sp {apply*merge*push-constraint*receiver-assigner*RCP-D
+  #:interrupt
+   (state <s> ^operator <op>
+              ^segment.not-merged-receiver <receiver>)
+   (<op> ^name merge
+         ^receiver <receiver>
+         ^assigner.parent-receiver <pr>)
+    (<pr> -^constraint <con>
+           ^structure-type D)
+    (<receiver> ^constraint <con>
+                ^structure-type RCP)
+-->
+   (write (crlf) |Add RCP constraint | <con> | to D parent-receiver | <pr> | from receiver.|)
+   (<pr> ^constraint <con>)
+}
+
 sp {apply*merge*push-constraint*clear-ground-tested
   #:interrupt
    (state <s> ^operator <op>
@@ -315,24 +348,25 @@ sp {apply*merge*constraint*preposition-right-conversion
 
 ##
 sp {apply*merge*constraint*preposition-noun
- #:interrupt
+  #:interrupt
    (state <s> ^operator <op>
               ^segment <seg>)
    (<op> ^name merge
          ^receiver <receiver>
          ^assigner <assigner>)
    (<assigner> ^parent-receiver <pword>
-               ^structure-type << PP CONJP >>)
-   (<pword> ^structure-type << D DP >>
+               ^structure-type << PP CONJP C-ADJ-P >>)
+   (<pword> ^structure-type << D DP RC >>
            -^head.lt.semantic-structure relation) # don't do this if part of 'to the left of'
-   (<receiver> ^structure-type << PP CONJP >>
+   (<receiver> ^structure-type << PP CONJP C-ADJ-P >>
                ^lt.relation.handle { <> of1 <sr> }  # Of is a special case...
-               ^head.referent <obj>)   
+               ^head <head>)
+   (<head> ^referent <obj>)   
 -->
    (<seg> ^new-constraint <nc>)
-   (<nc> ^object <pword>
+   (<nc> ^object <pword> #<head>  # was <pword>
          ^constraint <c>)
-   (<pword> ^constraint <c>)
+   (<pword> ^constraint <c>) #<head> # was <pword>
    (<c> ^relation <srx>)
    (<srx> ^2 <obj>
           ^handle <sr>)
@@ -347,9 +381,9 @@ sp {apply*merge*constraint*preposition-noun*semantics
          ^receiver <receiver>
          ^assigner <assigner>)
    (<assigner> ^parent-receiver <pword>
-               ^structure-type << PP CONJP >>)
+               ^structure-type << PP CONJP C-ADJ-P >>)
    (<pword> ^structure-type << D DP >>)
-   (<receiver> ^structure-type << PP CONJP >>
+   (<receiver> ^structure-type << PP CONJP C-ADJ-P >>
                ^semantics.relation <spr>)
 -->
    (<seg> ^new-constraint <nc>)
@@ -368,14 +402,44 @@ sp {apply*merge*forward-grounding*to-preposition-verb
          ^assigner <assigner>)
    (<assigner> ^parent-receiver <pword>)
    (<pword> ^structure-type VP)
-   (<receiver> ^structure-type << PP CONJP >>
-                    ^lt.relation <sr>
-                    ^head.referent <sg>) 
+   (<receiver> ^structure-type << PP CONJP C-ADJ-P >>
+               ^lt.relation <sr>
+               ^head.referent <sg>) 
 -->
    (<pword> ^<sr> <sg>
             ^relation <srr>)
    (<srr> ^2 <sg>
           ^handle <sr>)}
+
+###############
+## For to the left of
+sp {apply*merge*constraint*to-the-left-of
+  #:interrupt
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<op> ^name merge
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^parent-receiver <pword>
+               ^structure-type DP)
+   (<pword> ^structure-type P)
+   (<receiver> ^head.lt <lt>
+               ^complement <com>)
+   (<lt> ^relation.handle <right-left>
+         ^semantic-structure relation) 
+   (<com> ^lt.relation.handle of1
+          ^head.referent <garbage>)
+-->
+   (<seg> ^new-constraint <nc>)
+   (<nc> ^object <pword>
+         ^constraint <c>)
+   (<pword> ^constraint <c>)
+   (<c> ^relation <srx>)
+   (<srx> ^2 <garbage>
+          ^handle <right-left>)
+   (write (crlf) |Add new constraint to | <pword> | relation: | <right-left> | object: | <garbage>)
+}
+
 
 ###### MERGE syntactic-referent-type from  
 ###  Tictactoe is a game - red is a color 
