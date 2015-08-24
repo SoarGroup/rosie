@@ -3,8 +3,9 @@ sp {top-statel*elaborate*lti-store
 -->
    (<s> ^lti-store <store>)
    (<store> ^to-get <get>)
-   (<get> ^handle cook1 pick-up1 put-down1 turn-on1 turn-off1 on2 off2 closed1 open1 cooked1 raw1)
 }
+
+# Add handls to the to-get ID to retrieve LTI's
 
 sp {top-state*elaborate*smem-query*lti-store
    (state <s> ^superstate nil
@@ -29,25 +30,14 @@ sp {top-state*elaborate*smem-query*lti-store*result
    (<store> ^<handle> <lti>)
 }
 
-sp {top-state*elaborate*message-list
-   (state <s> ^superstate nil
-              ^turn-off ASEFASEF
-              )
+sp {DEBUG-RULE*wait-for-response*propose*send-next-message
+   (state <s> ^name wait-for-response
+              ^top-state <top>)
+   (<top> ^message-list.next { <next> <> none })
 -->
-   (<s> ^message-list <msgs>)
-   (<msgs> ^message <m1> <m2> <m3> <m4> <m5>
-           ^next <m1>)
-   
-   (<m1> ^message-num 1
-         ^next <m2>)
-   (<m2> ^message-num 2
-         ^next <m3>)
-   (<m3> ^message-num 3
-         ^next <m4>)
-   (<m4> ^message-num 4
-         ^next <m5>)
-   (<m5> ^message-num 5
-         ^next none)
+   (<s> ^operator <o> + >)
+   (<o> ^name send-next-message
+        ^message <next>)
 }
 
 sp {DEBUG-RULE*top-state*propose*send-next-message
@@ -61,12 +51,12 @@ sp {DEBUG-RULE*top-state*propose*send-next-message
 }
 
 sp {DEBUG-RULE*top-state*apply*send-next-message*create*message
-   (state <s> ^superstate nil
-              ^operator <o>
-              ^interaction.status <status>
-              ^message-list <msgs>)
+   (state <s> ^operator <o>
+              ^top-state <top>)
    (<o> ^name send-next-message
         ^message <msg>)
+   (<top> ^interaction.status <status>
+          ^message-list <msgs>)
    (<msg> ^next <next>
           ^structure <struct>)
 -->
@@ -75,39 +65,3 @@ sp {DEBUG-RULE*top-state*apply*send-next-message*create*message
    (<status> ^new-message <struct>)
 }
 
-
-sp {top-state*testing*elaborate*test-message*1
-   (state <s> ^superstate nil
-              ^message-list.message <msg>
-              ^lti-store.pick-up1 <pickup>
-              ^world.objects.object <steak>)
-   (<msg> ^message-num 1)
-   (<steak> ^handle 6)
--->
-   (<msg> ^structure <st>)
-   (<st> ^action <pickup> ^arg1 <steak> ^message-type command)
-}
-
-sp {top-state*testing*elaborate*test-message*2
-   (state <s> ^superstate nil
-              ^message-list.message <msg>
-              ^lti-store.put-down1 <putdown>
-              ^world.objects.object <steak>
-              ^world.objects.object <oven>)
-   (<msg> ^message-num 2)
-   (<steak> ^handle 6)
-   (<oven> ^handle 4)
--->
-   (<msg> ^structure <st>)
-   (<st> ^action <putdown> ^arg1 <steak> ^arg2 <rel> ^message-type command)
-   (<rel> ^arg-type predicate ^handle on1 ^2 <oven>)
-}
-
-#(S297 ^action @A1012 ^arg1 O8059 ^message-type command)
-#  (@A1012 ^handle cook ^item-type action)
-#  (O8059 ^handle 6 ^item-type object ^predicates P90138 ^real true
-#         ^svs-obj C181)
-#    (P90138 ^arm-status not-grabbed ^category block1 ^cooked false
-#           ^movable true ^object-handle 6 ^shape steak1 ^size medium1
-#           ^visible true)
-#    (C181 ^id bel-6 ^object-source belief ^type node)

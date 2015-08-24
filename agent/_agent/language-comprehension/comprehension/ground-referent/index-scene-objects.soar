@@ -39,6 +39,26 @@ sp {ground-referent*propose*index-scene-object*no-specifier
          ^specifier definite)
 }
 
+sp {ground-referent*propose*index-scene-object*multiple
+#:interrupt
+   (state <s> ^name ground-referent
+              ^operator <op> +
+              ^constraint.multiple true)
+   (<op> ^name index-scene-objects)
+-->
+   (<op> ^multiple true)
+}
+
+sp {ground-referent*propose*index-scene-object*possesive
+#:interrupt
+   (state <s> ^name ground-referent
+              ^operator <op> +
+              ^constraint-lt.possesive true)
+   (<op> ^name index-scene-objects)
+-->
+   (<op> ^possesive true)
+}
+
 ############# APPLY #########
 
 sp {ground-referent*apply*index-scene-objects*personal*create*robot
@@ -60,7 +80,8 @@ sp {ground-referent*apply*index-scene-objects*create*candidates
               ^constraint-count <cc>
               ^top-state.world.objects.object <obj>)  
    (<o> ^name index-scene-objects
-        ^specifier << definite universal >>)
+        ^specifier << definite universal >>
+       -^possesive true)
 -->
    (<cand> ^proto-referent <pr>)
    (<pr> ^constraint-count <cc>
@@ -73,19 +94,34 @@ sp {ground-referent*apply*index-scene-objects*create*current-location*object
               ^constraint-count <cc>
               ^top-state.world.robot.current-location <obj>)  
    (<o> ^name index-scene-objects
-        ^specifier << definite universal >>)
+        ^specifier << definite universal >>
+       -^possesive true)
 -->
    (<cand> ^proto-referent <pr>)
    (<pr> ^constraint-count <cc>
          ^object <obj>)
 }
+
+sp {ground-referent*apply*index-scene-objects*create*current-location*object*possesive
+   (state <s> ^operator <o>
+              ^candidate-set <cand>
+              ^constraint-count <cc>)  
+   (<o> ^name index-scene-objects
+        ^specifier << definite universal >>
+        ^possesive true)
+-->
+   (write (crlf) |Possesive referent.|)
+   (<cand> ^proto-referent none)
+}
+
 sp {ground-referent*apply*index-scene-objects*create*candidates*dialog
    (state <s> ^operator <o>
               ^candidate-set <cand>
               ^constraint-count <cc>
               ^top-state.dialog-world.objects.object <obj>)  
    (<o> ^name index-scene-objects
-        ^specifier << definite universal >>)
+        ^specifier << definite universal >>
+       -^possesive true)
 -->
    (write (crlf) |Found | <pr> | from dialog-world.|)
    (<cand> ^proto-referent <pr>)
@@ -94,18 +130,78 @@ sp {ground-referent*apply*index-scene-objects*create*candidates*dialog
 }
 
 sp {ground-referent*apply*index-scene-objects*create*candidates*dialog*it
+   :interrupt
    (state <s> ^operator <o>
               ^candidate-set <cand>
               ^constraint-count <cc>
-              ^segment.dialog-object-list-access.referent <obj>)  
+              ^segment.dialog-object-list-access.referent <obj>
+             -^segment.merged-assigner.parent-receiver.semantics.arg1.predicates.category)  
    (<o> ^name index-scene-objects
         ^specifier it)
+   (<obj> #^predicates.category << block object >>
+          ^property.handle category)
 -->
    (write (crlf) |Found IT from dialog-list:| <obj>)
    (<cand> ^proto-referent <pr>)
    (<pr> ^constraint-count <cc>
          ^object <obj>)
 }
+
+sp {ground-referent*apply*index-scene-objects*create*candidates*dialog*it*arg1
+   #:interrupt
+   (state <s> ^operator <o>
+              ^candidate-set <cand>
+              ^constraint-count <cc>
+              ^segment <seg>)
+   (<seg> ^merged-assigner <ma>)
+   (<ma> ^parent-receiver.semantics.arg1 <obj>)
+  -{(<seg> ^merged-assigner { < <ma> <ma2>})
+   (<ma2> ^parent-receiver.semantics.arg1 <obj>)}
+   (<o> ^name index-scene-objects
+        ^specifier it)
+   (<obj> ^predicates.category)
+-->
+   (write (crlf) |Found IT from arg1:| <obj>)
+   (<cand> ^proto-referent <pr>)
+   (<pr> ^constraint-count <cc>
+         ^object <obj>)
+}
+
+sp {ground-referent*apply*index-scene-objects*create*candidates*dialog*it*next
+   :interrupt
+   (state <s> ^operator <o>
+              ^candidate-set <cand>
+              ^constraint-count <cc>
+             -^segment.merged-assigner.parent-receiver.semantics.arg1.predicates.category
+              ^segment.dialog-object-list-access.referent.predicates.category location
+              ^segment.dialog-object-list-access.next.referent <obj>)  
+   (<o> ^name index-scene-objects
+        ^specifier it)
+   (<obj> #^predicates.category << block object >>
+          ^property.handle category)
+-->
+   (write (crlf) |Found IT from dialog-list:| <obj>)
+   (<cand> ^proto-referent <pr>)
+   (<pr> ^constraint-count <cc>
+         ^object <obj>)
+}
+
+sp {ground-referent*apply*index-scene-objects*create*candidates*dialog*it*failed
+   (state <s> ^operator <o>    
+              ^superstate.operator <so>
+              ^candidate-set <cand>
+              ^constraint-count <cc>
+             -^segment.dialog-object-list-access.referent.predicates.category << block object >>
+             -^segment.dialog-object-list-access.next.referent.predicates.category << block object >>)  
+   (<o> ^name index-scene-objects
+        ^specifier it)
+   (<so> ^parameter <p>
+         ^constraints <c>)
+-->                       
+   (<c> ^ground-tested <p>)
+   (write (crlf) |Nothing was previously referred to for IT.|)
+}
+
 sp {ground-referent*apply*index-scene-objects*create*candidate*indefinite
    (state <s> ^operator <o>
               ^candidate-set <cand>
@@ -137,7 +233,7 @@ sp {ground-referent*apply*index-scene-objects*demonstrative*create*candidates
    (<o> ^name index-scene-objects
         ^specifier demonstrative)           
 -->
-    (<cand> ^proto-referent <pr>)
+   (<cand> ^proto-referent <pr>)
    (<pr> ^constraint-count <cc>
          ^object <obj>)
 }
