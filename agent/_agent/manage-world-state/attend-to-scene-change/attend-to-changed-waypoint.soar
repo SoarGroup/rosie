@@ -18,20 +18,22 @@ sp {attend-to-changed-waypont*elaborate*smem-query-cue*location
    (state <s> ^name attend-to-changed-waypoint
               ^new-waypoint-handle <wp-handle>)
 -->
-   (<s> ^smem-query-cue <cue>)
+   (<s> ^smem-query <q>)
+   (<q> ^cue <cue>
+        ^depth 3)
    (<cue> ^waypoint <wp-handle>)
 }
 
 sp {attend-to-changed-waypoint*elaborate*current-location*none
    (state <s> ^name attend-to-changed-waypoint
-              ^retrieved-lti-cue.retrieved-lti failure)
+              ^smem-query.result failure)
 -->
    (<s> ^new-location none)
 }
 
 sp {attend-to-changed-waypoint*elaborate*current-location*success
    (state <s> ^name attend-to-changed-waypoint
-              ^retrieved-lti-cue.retrieved-lti { <loc-lti> <> failure})
+              ^smem-query.result { <loc-lti> <> failure })
 -->
    (<s> ^new-location <loc-lti>)
 }
@@ -111,3 +113,23 @@ sp {attend-to-changed-waypoint*apply*change-waypoint-info*monitor*location
 -->
    (write |current-location: | <loc-handle> (crlf))
 }
+
+
+sp {attend-to-changed-waypoint*apply*change-waypoint-info*add*unknown-object
+   (state <s> ^name attend-to-changed-waypoint
+              ^operator <o>
+              ^top-state.world <world>)
+   (<o> ^name change-waypoint-info
+        ^current-location { <new-loc> <> none })
+   (<world> ^predicates.predicate <in-pred>
+            ^unknown-objects.object <obj>
+            ^objects <objs>)
+   (<in-pred> ^handle in1
+              ^instance <i>)
+   (<i> ^1 <obj> ^2 <new-loc>)
+   (<obj> ^handle <obj-handle>)
+-->
+   (<objs> ^object <obj>)
+   (write |Object | <obj-handle> | is visible.| (crlf))
+}
+
