@@ -7,28 +7,411 @@
 #retrieve structure
 
 
-#elaborate any needed predicate structures
-sp {evaluate-predicate*propose*retrieve-predicate-structure
-   (state <s> ^name evaluate-predicate
-   #           ^no-actions true
-              ^predicate-handle <handle>
-              -^predicate)
-   #           ^game-name <name>)
--->
-   (<s> ^operator <o> +)
-   (<o> ^name retrieve-predicate-structure
-        ^handle <handle>)
-}
+###make rule to not chunk
+#sp {chunk-parameters*eval-condition**no-action
+#   (state <s> ^superstate  <ss>
+#              ^choices none
+#              ^attribute state
+#              ^impasse no-change)
+#   (<ss> ^list.game ^name learn-param)
+#-->
+#(<ss> ^operator <op>)
+#(<op> ^name action
+#      ^aname no-action
+#      ^parameters <p>)
+#(<p> ^1 <obj>)
+#(<obj> ^id 100)
+#}
 
 
-sp {evaluate-predicate*propose*learn-predicate
-   (state <s> ^name evaluate-predicate
-   #           ^no-actions true
-              ^predicate <pred>)
-   #           ^game-name <name>)
+
+sp {evaluate-predicate*eval-condition*impasse
+   (state <s> ^superstate  <ss>
+              ^choices none
+              ^attribute state
+              ^impasse no-change)
+   (<ss> ^list.game)
 -->
-   (<s> ^operator <o> +)
-   (<o> ^name learn-predicate
-        ^type action
-        ^action <pred>)
+   (force-learn <s>)
+   (<s> ^name evaluate-predicate
+        ^linkstate <ss>
+        ^result <r>)
 }
+
+sp {evaluate-predicate*propose*resolve-conditions
+   (state <s> ^name evaluate-predicate
+             -^result.set <set>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name resolve-conditions)
+}
+
+sp {evaluate-predicate*elaborate*problemspace*games
+   (state <s> ^superstate.problemspace {<ps> << games >>})
+-->
+   (<s> ^problemspace <ps>)
+}
+
+sp {evaluate-predicate*propose*new-operator
+   (state <s> ^name evaluate-predicate
+              ^linkstate <ss>)
+             # ^result.set <set>)
+   (<ss> ^list.game <g> ^gtype {<type> << action goal >>} ^<type> <t2>)
+   (<t2> ^aname <aname> ^parameter-set.set <set>)
+  # (<g> ^type <type>)
+-->
+   (<ss> ^operator <op> + )
+   (<op> ^name <type>
+         ^aname <aname>
+         ^parameters <set>)
+}
+
+#sp {chunk-parameters*propose*new-operator
+#   (state <s> ^name chunk-parameters
+#              ^superstate <ss>
+#              ^result.set <set>)
+#   (<ss> ^list.game <g> ^gtype {<type> predicate} ^<type>.aname <aname>)
+#   (<g> ^type <type>)
+#   (<ss> ^<type> <t>)
+#-->
+#   (interrupt)
+#   (<t> ^pair <set>)
+#}
+
+
+#sp {chunk-preferences*eval-condition*impasse
+#   (state <s> ^superstate  <ss>
+#              #^choices none
+#              ^attribute operator
+#              ^impasse tie)
+#   (<ss> ^list.game ^predicate <pred>)
+#   (<pred> ^ntype heuristic)
+#-->
+#   (force-learn <s>)
+#   (<s> ^name chunk-preferences
+#        ^linkstate <ss>)
+#}
+#
+#
+##for now assume parameters are ordered first action mentioned, then second, then ancilary parameters
+##assume parameters capture whole action (for now)
+#sp {chunk-parameters*preference*prefer*single-operators*2args
+#   (state <s> ^name chunk-preferences
+#              ^superstate <ss>)
+#   (<ss> ^operator <o1> + ^predicate <pred>)# + ^operator <o2> +)
+#   (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+#   (<pref> ^1 <co> -^2)
+#   (<ps> ^set <set>)
+#   (<o1> ^parameters <set1>) #^aname <name> 
+#   (<set1> ^1 <obj1> ^2 <obj2>)
+#   (<set> ^<i1> <obj1> ^<i2> <obj2>)
+#   (<co> ^parameter <pa1> ^type concept ^attribute action ^result.set.pair <set1>) #^name <name>
+#   (<pa1> ^num 2 ^{1}.param-id <i1> ^{2}.param-id <i2>)
+#-->
+#   (<ss> ^operator <o1> >)
+#}
+#sp {chunk-parameters*preference*prefer*single-operators*1args
+#   (state <s> ^name chunk-preferences
+#              ^superstate <ss>)
+#   (<ss> ^operator <o1> + ^predicate <pred>)# + ^operator <o2> +)
+#   (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+#   (<pref> ^1 <co> -^2)
+#   (<ps> ^set <set>)
+#   (<o1> ^parameters <set1>) #^aname <name>
+#   (<set1> ^1 <obj1>)
+#   (<set> ^<i1> <obj1>)
+#   (<co> ^parameter <pa1> ^type concept ^attribute action ^result.set.pair <set1>)#^name <name> 
+#   (<pa1> ^num 1 ^{1}.param-id <i1>)
+#-->
+#   (<ss> ^operator <o1> >)
+#}
+#sp {chunk-parameters*preference*disprefer*single-operators*2args
+#   (state <s> ^name chunk-preferences
+#              ^superstate <ss>)
+#   (<ss> ^operator <o1> + ^predicate <pred>)# + ^operator <o2> +)
+#   (<pred> ^disprefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+#   (<pref> ^1 <co> -^2)
+#   (<ps> ^set <set>)
+#   (<o1> ^parameters <set1>)#^aname <name> 
+#   (<set1> ^1 <obj1> ^2 <obj2>)
+#   (<set> ^<i1> <obj1> ^<i2> <obj2>)
+#   (<co> ^parameter <pa1> ^type concept ^attribute action ^result.set.pair <set1>)#^name <name> 
+#   (<pa1> ^num 2 ^{1}.param-id <i1> ^{2}.param-id <i2>)
+#-->
+#   (<ss> ^operator <o1> <)
+#}
+##name not needed? #set should bind (even if another action has same arguments, set wont match
+##sp {chunk-parameters*preference*disprefer*single-operators*1args
+##   (state <s> ^name chunk-preferences
+##              ^superstate <ss>)
+##   (<ss> ^operator <o1> + ^predicate <pred>)# + ^operator <o2> +)
+##   (<pred> ^disprefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+##   (<pref> ^1 <co> -^2)
+##   (<ps> ^set <set>)
+##   (<o1> ^aname <name> ^parameters <set1>)
+##   (<set1> ^1 <obj1>)
+##   (<set> ^<i1> <obj1>)
+##   (<co> ^parameter <pa1> ^type concept ^attribute action ^name <name> ^result.set.pair <set1>)
+##   (<pa1> ^num 1 ^{1}.param-id <i1>)
+##-->
+##   (<ss> ^operator <o1> <)
+##}
+#sp {chunk-parameters*preference*disprefer*single-operators*1args*any
+#   (state <s> ^name chunk-preferences
+#              ^superstate <ss>)
+#   (<ss> ^operator <o1> + ^predicate <pred>)# + ^operator <o2> +)
+#   (<pred> ^disprefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+#   (<pref> ^1 <co> -^2)
+#   (<ps> ^set <set>)
+#   (<o1> ^parameters <set1>)
+#   (<set1> ^1 <obj1>)
+#   (<set> ^<i1> <obj1>)
+#   (<co> ^parameter <pa1> ^type concept ^attribute action ^result.set.pair <set1>)
+#   (<pa1> ^num 1 ^{1}.param-id <i1>)
+#-->
+#   (<ss> ^operator <o1> <)
+#}
+#
+#
+#sp {chunk-parameters*preference*prefer*two-operators*2args2 #how in general?
+#   (state <s> ^name chunk-preferences
+#              ^superstate <ss>)
+#   (<ss> ^operator <o1> + ^operator <o2> + ^predicate <pred>)# + ^operator <o2> +)
+#   (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+#   (<pref> ^1 <co1> ^2 <co2>)
+#   
+#   (<ps> ^set <set>)
+#   (<o1> ^parameters <set1>)# ^aname <name> 
+#   (<o2> ^parameters <set2>)#^aname <name2> 
+#   (<set1> ^1 <obj1> ^2 <obj2>)
+#   (<set2> ^1 <obj3> ^2 <obj4>)
+#   (<set> ^<i1> <obj1> ^<i2> <obj2> ^<i3> <obj3> ^<i4> <obj4>)
+#   
+#   (<co1> ^parameter <pa1> ^type concept ^attribute action ^name <name> ^result.set.pair <set1>)
+#   (<co2> ^parameter <pa2> ^type concept ^attribute action ^name <name2> ^result.set.pair <set2>)
+#   (<pa1> ^num 2 ^{1}.param-id <i1> ^{2}.param-id <i2>)
+#   (<pa2> ^num 2 ^{1}.param-id <i3> ^{2}.param-id <i4>)
+#-->
+#   (<ss> ^operator <o1> > <o2>)
+#}
+#
+#
+#sp {chunk-parameters*preference*disprefer*two-operators*2args2 #how in general?
+#   (state <s> ^name chunk-preferences
+#              ^superstate <ss>)
+#   (<ss> ^operator <o1> + ^operator <o2> + ^predicate <pred>)# + ^operator <o2> +)
+#   (<pred> ^disprefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+#   (<pref> ^1 <co1> ^2 <co2>)
+#   
+#   (<ps> ^set <set>)
+#  (<o1> ^parameters <set1>)# ^aname <name> 
+#   (<o2> ^parameters <set2>)#^aname <name2> 
+#   (<set1> ^1 <obj1> ^2 <obj2>)
+#   (<set2> ^1 <obj3> ^2 <obj4>)
+#   (<set> ^<i1> <obj1> ^<i2> <obj2> ^<i3> <obj3> ^<i4> <obj4>)
+#   
+#   (<co1> ^parameter <pa1> ^type concept ^attribute action ^name <name> ^result.set.pair <set1>)
+#   (<co2> ^parameter <pa2> ^type concept ^attribute action ^name <name2> ^result.set.pair <set2>)
+#   (<pa1> ^num 2 ^{1}.param-id <i1> ^{2}.param-id <i2>)
+#   (<pa2> ^num 2 ^{1}.param-id <i3> ^{2}.param-id <i4>)
+#-->
+#   (<ss> ^operator <o1> < <o2>)
+#}
+#
+#
+#sp {chunk-parameters*preference*prefer*two-operators*2args1 #how in general?
+#   (state <s> ^name chunk-preferences
+#              ^superstate <ss>)
+#   (<ss> ^operator <o1> + ^operator <o2> + ^predicate <pred>)# + ^operator <o2> +)
+#   (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+#   (<pref> ^1 <co1> ^2 <co2>)
+#   
+#   (<ps> ^set <set>)
+#   (<o1> ^parameters <set1>)# ^aname <name> 
+#   (<o2> ^parameters <set2>)#^aname <name2> 
+#   (<set1> ^1 <obj1> ^2 <obj2>)
+#   (<set2> ^1 <obj3>)
+#   (<set> ^<i1> <obj1> ^<i2> <obj2> ^<i3> <obj3>)
+#   
+#   (<co1> ^parameter <pa1> ^type concept ^attribute action ^name <name> ^result.set.pair <set1>)
+#   (<co2> ^parameter <pa2> ^type concept ^attribute action ^name <name2> ^result.set.pair <set2>)
+#   (<pa1> ^num 2 ^{1}.param-id <i1> ^{2}.param-id <i2>)
+#   (<pa2> ^num 1 ^{1}.param-id <i3>)
+#-->
+#   (<ss> ^operator <o1> > <o2>)
+#}
+#
+#sp {chunk-parameters*preference*prefer*two-operators*1args2 #how in general?
+#   (state <s> ^name chunk-preferences
+#              ^superstate <ss>)
+#   (<ss> ^operator <o1> + ^operator <o2> + ^predicate <pred>)# + ^operator <o2> +)
+#   (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+#   (<pref> ^1 <co1> ^2 <co2>)
+#   
+#   (<ps> ^set <set>)
+#   (<o1> ^parameters <set1>)# ^aname <name> 
+#   (<o2> ^parameters <set2>)#^aname <name2> 
+#   (<set1> ^1 <obj1>)
+#   (<set2> ^1 <obj3> ^2 <obj4>)
+#   (<set> ^<i1> <obj1> ^<i3> <obj3> ^<i4> <obj4>)
+#   
+#   (<co1> ^parameter <pa1> ^type concept ^attribute action ^name <name> ^result.set.pair <set1>)
+#   (<co2> ^parameter <pa2> ^type concept ^attribute action ^name <name2> ^result.set.pair <set2>)
+#   (<pa1> ^num 1 ^{1}.param-id <i1>)
+#   (<pa2> ^num 2 ^{1}.param-id <i3> ^{2}.param-id <i4>)
+#-->
+#   (<ss> ^operator <o1> > <o2>)
+#}
+#sp {chunk-parameters*preference*prefer*two-operators*1args1 #how in general?
+#   (state <s> ^name chunk-preferences
+#              ^superstate <ss>)
+#   (<ss> ^operator <o1> + ^operator <o2> + ^predicate <pred>)# + ^operator <o2> +)
+#   (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+#   (<pref> ^1 <co1> ^2 <co2>)
+#   
+#   (<ps> ^set <set>)
+#   (<o1> ^parameters <set1>)# ^aname <name> 
+#   (<o2> ^parameters <set2>)#^aname <name2> 
+#   (<set1> ^1 <obj1>)
+#   (<set2> ^1 <obj2>)
+#   (<set> ^<i1> <obj1> ^<i2> <obj2>)
+#   
+#   (<co1> ^parameter <pa1> ^type concept ^attribute action ^result.set.pair <set1>)
+#   (<co2> ^parameter <pa2> ^type concept ^attribute action ^result.set.pair <set2>)
+#   (<pa1> ^num 1 ^{1}.param-id <i1>)
+#   (<pa2> ^num 1 ^{1}.param-id <i2>)
+#-->
+#   (<ss> ^operator <o1> > <o2>)
+#}
+#sp {chunk-parameters*preference*disprefer*two-operators*1args1
+#   (state <s> ^name chunk-preferences
+#              ^superstate <ss>)
+#   (<ss> ^operator <o1> + ^operator <o2> + ^predicate <pred>)# + ^operator <o2> +)
+#   (<pred> ^disprefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+#   (<pref> ^1 <co1> ^2 <co2>)
+#   
+#   (<ps> ^set <set>)
+#   (<o1> ^parameters <set1>)# ^aname <name> 
+#   (<o2> ^parameters <set2>)#^aname <name2> 
+#   (<set1> ^1 <obj1>)
+#   (<set2> ^1 <obj2>)
+#   (<set> ^<i1> <obj1> ^<i2> <obj2>)
+#   
+#   (<co1> ^parameter <pa1> ^type concept ^attribute action ^result.set.pair <set1>)#^name <name> 
+#   (<co2> ^parameter <pa2> ^type concept ^attribute action ^result.set.pair <set2>)#^name <name2> 
+#   (<pa1> ^num 1 ^{1}.param-id <i1>)
+#   (<pa2> ^num 1 ^{1}.param-id <i2>)
+#-->
+#   (<ss> ^operator <o1> < <o2>)
+#}
+
+#todo make more subspace search organized
+#handle parameters not first or ordered
+
+#sp {copychunk-parameters*propose*new-operator22a #how in general?
+#   (state <s> ^name chunk-preferences
+#              ^superstate <ss>)
+#   (<ss> ^operator <o1> + ^operator <o2> + ^predicate <pred>)# + ^operator <o2> +)
+#   (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+#   (<pref> ^1 <co1> ^2 <co2>)
+#   (<ps> ^argnum 3 ^set <set>)
+#   (<o1> ^aname <name> ^parameters <set1>)
+#   (<o2> ^aname <name2> ^parameters <set2>)
+#   (<set1> ^1 <obj1> ^2 <obj2>)
+#   (<set2> ^1 <obj1> ^2 <obj3>)
+#   (<set> ^1 <obj1> ^2 <obj2> ^3 <obj3>)
+#   
+#   (<co1> ^type concept ^attribute action ^name <name>)# ^result.set.pair <set1>) should connect? somehow
+#   (<co2> ^type concept ^attribute action ^name <name2>)
+#-->
+#   (<ss> ^operator <o1> > <o2>)
+#}
+#sp {chunk-parameters*propose*new-operator22a #how in general?
+#   (state <s> ^name chunk-preferences
+#              ^superstate <ss>)
+#   (<ss> ^operator <o1> + ^operator <o2> + ^predicate <pred>)# + ^operator <o2> +)
+#   (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+#   (<pref> ^1 <co1> ^2 <co2>)
+#   (<ps> ^argnum 2 ^set <set>)
+#   (<o1> ^aname <name> ^parameters <set1>)
+#   (<o2> ^aname <name2> ^parameters <set2>)
+#   (<set1> ^1 <obj1>)
+#   (<set2> ^1 <obj2>)
+#   (<set> ^1 <obj1> ^2 <obj2>)
+#   
+#   (<co1> ^type concept ^attribute action ^name <name>)# ^result.set.pair <set1>) should connect? somehow
+#   (<co2> ^type concept ^attribute action ^name <name2>)
+#-->
+#   (<ss> ^operator <o1> > <o2>)
+#}
+#sp {chunk-parameters*propose*new-operator22a #how in general?
+#   (state <s> ^name chunk-preferences
+#              ^superstate <ss>)
+#   (<ss> ^operator <o1> + ^operator <o2> + ^predicate <pred>)# + ^operator <o2> +)
+#   (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+#   (<pref> ^1 <co1> ^2 <co2>)
+#   (<ps> ^set <set>)
+#   (<o1> ^aname <name> ^parameters <set1>)
+#   (<o2> ^aname <name2> ^parameters <set2>)
+#   (<set1> ^1 <obj1>)
+#   (<set2> ^1 <obj2>)
+#   (<set> ^1 <obj1> ^2 <obj2>)
+#   
+#   (<co1> ^type concept ^attribute action ^name <name>)# ^result.set.pair <set1>) should connect? somehow
+#   (<co2> ^type concept ^attribute action ^name <name2>)
+#-->
+#   (<ss> ^operator <o1> > <o2>)
+#}
+
+
+
+
+
+#sp {resolve-conditions*elab*concept-results
+#   (state <s> ^name resolve-conditions
+#              ^linkstate <ts>
+#              ^condition <co>)
+#   (<ts> ^<pred> <t>)
+#   (<co> ^name <name> ^type concept ^attribute <pred>  ^result.set <rset>)
+#   (<t> ^nlp-set.aname <name> ^pair <p>)
+#-->
+#   (<rset> ^pair <p>)
+#}
+#sp {resolve-conditions*elab*concept-results22
+#   (state <s> ^name learn-param#resolve-conditions
+#              ^<pred> <t>
+#              ^predicate.condition <co>)
+#   (<co> ^name <name> ^type concept ^attribute <pred> ^result.set <rset>)
+#   (<t> ^nlp-set.aname <name> ^pair <p> ^link <co>)
+#-->
+#   (<rset> ^pair <p>)
+#}
+
+
+
+
+##elaborate any needed predicate structures
+#sp {evaluate-predicate*propose*retrieve-predicate-structure
+#   (state <s> ^name evaluate-predicate
+#   #           ^no-actions true
+#              ^predicate-handle <handle>
+#              -^predicate)
+#   #           ^game-name <name>)
+#-->
+#   (<s> ^operator <o> +)
+#   (<o> ^name retrieve-predicate-structure
+#        ^predicate-handle <handle>)
+#}
+#
+#
+#sp {evaluate-predicate*propose*learn-predicate
+#   (state <s> ^name evaluate-predicate
+#   #           ^no-actions true
+#              ^predicate <pred>)
+#   #           ^game-name <name>)
+#-->
+#   (<s> ^operator <o> +)
+#   (<o> ^name learn-predicate
+#        ^type action
+#        ^action <pred>)
+#}

@@ -10,7 +10,7 @@
 #}
 #sp {learn-predicate*apply*learn-predicate-complete
 #   (state <s> ^name learn-predicate
-#              ^topstate.current-game <cg>
+#              ^top-state.current-game <cg>
 #              ^operator.name learn-predicate-complete
 #              ^superstate <ss>
 #              ^gtype <type>
@@ -25,7 +25,7 @@
 #}
 #sp {learn-predicate*apply*learn-predicate-complete*verbs
 #   (state <s> ^name learn-predicate
-#              ^topstate.current-game <cg>
+#              ^top-state.current-game <cg>
 #              ^operator.name learn-predicate-complete
 #              ^superstate <ss>
 #              ^gtype <type>
@@ -52,6 +52,12 @@
 #   (<o> ^name lookup-game
 #        ^game-name <name>)
 #}
+#temporary flag
+sp {top-state*elaborate*game-learning-flag
+   (state <s> ^superstate nil)
+-->
+   (<s> ^game-learning-flag true)
+}
 
 sp {learn-predicate*elaborate*input-args
    (state <s> ^name learn-predicate
@@ -72,11 +78,9 @@ sp {learn-predicate*elaborate*input-args
 }
 
 sp {learn-predicate*elaborate*tcn
-#   :o-support
    (state <s> ^name learn-predicate
               ^superstate.operator <op>)
-   (<op> #^game-name <name>
-          ^<type> <t>
+   (<op> ^message <t>
         # ^tcn <tcn>
          ^type {<type> << predicate action goal >>})
 -->
@@ -87,6 +91,23 @@ sp {learn-predicate*elaborate*tcn
   (<act> ^parameter-set <ps>
         ^potential-args <po>)
 }
+
+#sp {learn-predicate*elaborate*tcn
+##   :o-support
+#   (state <s> ^name learn-predicate
+#              ^superstate.operator <op>)
+#   (<op> #^game-name <name>
+#          ^<type> <t>
+#        # ^tcn <tcn>
+#         ^type {<type> << predicate action goal >>})
+#-->
+#   (<s> #^tcn <tcn>  #TEMP HACK PUT BACK
+#        ^structure <t>
+#        ^gtype <type>
+#        ^<type> <act>)
+#  (<act> ^parameter-set <ps>
+#        ^potential-args <po>)
+#}
 
 #sp {learn-predicate*elaborate*tcn
 ##   :o-support
@@ -106,12 +127,14 @@ sp {learn-predicate*elaborate*tcn
 ##TEMP HACK PUT BACK
 sp {learn-predicate*propose*convert-language-format
    (state <s> ^name learn-predicate
-             -^action.nlp-set
-              ^gtype action
+             -^<gtype>.nlp-set
+              ^structure <t>
+              ^gtype <gtype>
              -^tcn)
 -->
    (<s> ^operator <o> + =)
-   (<o> ^name convert-parsed-format)
+   (<o> ^name convert-parsed-format
+        ^structure <t>)
 }
 
 
@@ -119,12 +142,12 @@ sp {learn-predicate*elaborate*list-games
    (state <s> ^name learn-predicate
              # ^gtype <type>
               ^superstate.operator <op>)
-   (<op> ^type <type> ^<type>.name <name>)
+   (<op> ^type <type>)# ^<type>.name <name>)
 -->
    (<s> ^list.game <g> ^objects <o> ^simulated true)
    (<g> ^game <name> ^type action predicate) 
-   (<s> ^current <g> ^game <name>)
-   (<s> ^prepositions <p>)
+   (<s> ^current <g> ^game todo-fix)#<name>)
+ #  (<s> ^prepositions <p>)
 }
 sp {learn-predicate*elaborate*actiongoalname
    (state <s> ^name learn-predicate
@@ -150,10 +173,10 @@ sp {learn-predicate*propose*formate-conditions
 
 sp {learn-predicate*elaborate*problem-space*predicate-structure
    (state <s> ^name learn-predicate
-              ^problem-space.world <world>
-              ^superstate.predicate <source>)
+              ^top-state.world <world2>)
 -->
-   (<world> ^source <source>
+   (<s> ^problem-space.world <world>)
+   (<world> ^source <world2>
             ^copy-type deep)
 }
 
@@ -168,111 +191,111 @@ sp {learn-predicate*elaborate*problem-space*predicate-structure
 
 ## TODO replace
 ####copy operations
-#sp {learn-predicate*elaborate*sub-conditions
-#   (state <s> ^name learn-predicate
-#              ^gtype <type>
-#              ^<type> <t>)
-#   (<t> ^condition <co>)
-#   (<co> ^args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <cond>)
-#   (<cond> ^name <name>)
-#-->
-#   (<t> ^condition <cond>)
-#}
-#sp {learn-predicate*elaborate*sub-conditions*predicate
-#   (state <s> ^name learn-predicate
-#              ^gtype predicate
-#              ^predicate <t>)
-#   (<t> ^nlp-set.nlp <cond>)
-#-->
-#   (<t> ^condition <cond>)
-#}
+sp {learn-predicate*elaborate*sub-conditions
+   (state <s> ^name learn-predicate
+              ^gtype <type>
+              ^<type> <t>)
+   (<t> ^condition <co>)
+   (<co> ^args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <cond>)
+   (<cond> ^name <name>)
+-->
+   (<t> ^condition <cond>)
+}
+sp {learn-predicate*elaborate*sub-conditions*predicate
+   (state <s> ^name learn-predicate
+              ^gtype predicate
+              ^predicate <t>)
+   (<t> ^nlp-set.nlp <cond>)
+-->
+   (<t> ^condition <cond>)
+}
 #
-#sp {learn-predicate*prefer*copy-topstate*over*format-conditions
+#sp {learn-predicate*prefer*copy-top-state*over*format-conditions
 #   (state <s> ^name learn-predicate
 #              ^operator <o> +
 #              ^operator <o2> +)
-#   (<o> ^name copy-topstate)
+#   (<o> ^name copy-top-state)
 #   (<o2> ^name format-conditions)
 #-->
 #   (<s> ^operator <o> > <o2>)
 #}
 #            
 #
-#sp {learn-predicate*propose*copy-topstate
+#sp {learn-predicate*propose*copy-top-state
 #   (state <s> ^name learn-predicate
 #              ^gtype <type>
 #             -^prepositions.prep.instance.{1})
 #-->
 #   (interrupt)
 #   (<s> ^operator <o> + >)
-#   (<o> ^name copy-topstate)
+#   (<o> ^name copy-top-state)
 #}
 #
-#sp {learn-predicate*apply*copy-topstate*objects
+#sp {learn-predicate*apply*copy-top-state*objects
 #   (state <s> ^name learn-predicate
 #              ^objects <objs>
-#              ^operator.name copy-topstate
-#              ^topstate.object <obj>)
+#              ^operator.name copy-top-state
+#              ^top-state.object <obj>)
 #   (<obj> ^id <id> ^category <cat>)
 #-->
 #   (<objs> ^object <obj2>)
 #   (<obj2> ^id <id> ^type <cat>)
 #}
 #
-#sp {learn-predicate*apply*copy-topstate*objects*desc
+#sp {learn-predicate*apply*copy-top-state*objects*desc
 #   (state <s> ^name learn-predicate
 #              ^objects.object <obj2>
-#              ^operator.name copy-topstate
-#              ^topstate.object <obj>)
+#              ^operator.name copy-top-state
+#              ^top-state.object <obj>)
 #   (<obj> ^id <id> ^linguistic-desc.word <word>)
 #   (<obj2> ^id <id>)
 #-->
 #   (<obj2> ^word <word>)
 #}
-#sp {learn-predicate*apply*copy-topstate*objects*attr
+#sp {learn-predicate*apply*copy-top-state*objects*attr
 #   (state <s> ^name learn-predicate
 #              ^objects.object <obj2>
-#              ^operator.name copy-topstate
-#              ^topstate.object <obj>)
+#              ^operator.name copy-top-state
+#              ^top-state.object <obj>)
 #   (<obj> ^id <id> ^{<something> <> object-desc <> linguistic-desc <> category <> id <> type} <word>)
 #   (<obj2> ^id <id>)
 #-->
 #   (<obj2> ^<something> <word>)
 #}
-#sp {learn-predicate*apply*copy-topstate*objects*desc*percept
+#sp {learn-predicate*apply*copy-top-state*objects*desc*percept
 #   (state <s> ^name learn-predicate
 #              ^objects.object <obj2>
-#              ^operator.name copy-topstate
-#              ^topstate.object <obj>)
+#              ^operator.name copy-top-state
+#              ^top-state.object <obj>)
 #   (<obj> ^id <id> ^object-desc.<< color shape size >> <word>)
 #   (<obj2> ^id <id>)
 #-->
 #   (<obj2> ^word <word>)
 #}
-#sp {learn-predicate*apply*copy-topstate*contexts
+#sp {learn-predicate*apply*copy-top-state*contexts
 #   (state <s> ^name learn-predicate
-#              ^operator.name copy-topstate
-#              ^topstate.{<contexts> << successive dictionary word-pairs integers heuristics >>} <int>)
+#              ^operator.name copy-top-state
+#              ^top-state.{<contexts> << successive dictionary word-pairs integers heuristics >>} <int>)
 #-->
 #   (<s> ^<contexts> <int>)
 #}
 #
-#sp {learn-predicate*apply*copy-topstate*preps
+#sp {learn-predicate*apply*copy-top-state*preps
 #   (state <s> ^name learn-predicate
 #              ^prepositions <p>
-#              ^operator.name copy-topstate
-#              ^topstate.prepositions.<< prep prep2 >> <prep>)
+#              ^operator.name copy-top-state
+#              ^top-state.prepositions.<< prep prep2 >> <prep>)
 #   (<prep> ^name <name>)
 #-->
 #   (<p> ^prep <prep2>)
 #   (<prep2> ^name <name>)
 #}
-#sp {learn-predicate*apply*copy-topstate*pairs
+#sp {learn-predicate*apply*copy-top-state*pairs
 #   (state <s> ^name learn-predicate
 #              ^objects <o>
 #              ^prepositions.prep <prep2>
-#              ^operator.name copy-topstate
-#              ^topstate.prepositions.<< prep prep2 >> <prep>)
+#              ^operator.name copy-top-state
+#              ^top-state.prepositions.<< prep prep2 >> <prep>)
 #   (<o> ^object <obj> ^object <obj2>)
 #   (<obj> ^id <ida>)
 #   (<obj2> ^id <idb>)
@@ -283,12 +306,12 @@ sp {learn-predicate*elaborate*problem-space*predicate-structure
 #   (<prep2> ^instance <pair2>)
 #   (<pair2> ^1 <obj> ^2 <obj2>)
 #}
-#sp {learn-predicate*apply*copy-topstate*pairsstring
+#sp {learn-predicate*apply*copy-top-state*pairsstring
 #   (state <s> ^name learn-predicate
 #              ^objects <o>
 #              ^prepositions.prep <prep2>
-#              ^operator.name copy-topstate
-#              ^topstate.prepositions.<< prep prep2 >> <prep>)
+#              ^operator.name copy-top-state
+#              ^top-state.prepositions.<< prep prep2 >> <prep>)
 #   (<o> ^object <obj> ^object <obj2>)
 #   (<obj> ^id <ida>)
 #   (<obj2> ^id <idb>)
@@ -299,12 +322,12 @@ sp {learn-predicate*elaborate*problem-space*predicate-structure
 #   (<prep2> ^instance <pair2>)
 #   (<pair2> ^1 <obj> ^2 <obj2>)
 #}
-#sp {learn-predicate*apply*copy-topstate*pairs*3arg
+#sp {learn-predicate*apply*copy-top-state*pairs*3arg
 #   (state <s> ^name learn-predicate
 #              ^objects <o>
 #              ^prepositions.prep <prep2>
-#              ^operator.name copy-topstate
-#              ^topstate.prepositions.prep2 <prep>)
+#              ^operator.name copy-top-state
+#              ^top-state.prepositions.prep2 <prep>)
 #   (<o> ^object <obj> ^object <obj2> ^object <obj3>)
 #   (<obj> ^id <ida>)
 #   (<obj2> ^id <idb>)
