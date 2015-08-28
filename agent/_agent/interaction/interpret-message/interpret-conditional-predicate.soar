@@ -1,0 +1,94 @@
+###################################################################
+#
+# interpret-conditional-predicate
+#   Occurs when 
+#
+###################################################################
+
+#######
+# OPERATOR PROPOSAL
+#######
+sp {interpret-message*propose*interpret-conditional-predicate
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>)
+   (<msg> ^message-type conditional
+         -^interpreted true)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name interpret-conditional-predicate
+        ^message <msg>)
+}
+
+######
+# OPERATOR ELABORATIONS
+######
+
+# Elaborate useful information from the message onto the operator
+
+
+#####
+# MESSAGE CATEGORIZATION
+#####
+
+sp {interpret-message*elaborate*interpret-conditional-predicate*purpose*learn-goal-definition
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-conditional-predicate)
+-->
+   (<o> ^purpose learn-predicate-definition)
+}
+   
+#####
+# OPERATOR APPLICATION
+#####
+
+
+###########################
+# Purpose: learn-predicate-definition
+
+sp {interpret-message*apply*interpret-conditional-predicate*create*segment*learn-predicate-definition
+   (state <s> ^name interpret-message
+              ^top-state.game-learning-flag true #TODO change
+              ^operator <o>)
+   (<o> ^name interpret-conditional-predicate
+        ^purpose learn-predicate-definition
+        ^message <msg>)
+-->
+   (interrupt)
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type learn-action-predicate
+        ^parameters.message <msg>
+        ^satisfaction <sat>)
+   (<sat> ^learning-event.type goal)
+}
+
+
+#TODO need this rule?
+sp {interpret-message*apply*interpret-conditional-predicate*learn-goal-definition*terminate*segment
+   (state <s> ^name interpret-message
+              ^operator <o>
+	      		^current-purpose.satisfaction.dialog-event <de>)
+   (<o> ^name interpret-conditional-predicate
+        ^purpose learn-predicate-definition)
+   (<de> ^type goal-description
+         ^originator instructor)
+-->
+   (<s> ^terminate-segment true)
+}
+
+#TODO need this rule?
+sp {interpret-message*apply*interpret-conditional-predicate*remove*unknown-word*failure
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^top-state.interaction.status <status>)
+   (<o> ^name interpret-conditional-predicate
+        ^predicate.spelling <word>)
+   (<status> ^failure <f>)
+   (<f> ^type unknown-word
+        ^word <word>)
+-->
+   (<status> ^failure <f> -)
+}
