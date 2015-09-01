@@ -1,14 +1,107 @@
-sp {store-predicate-structure*elaborate*predicate-lti
+sp {store-predicate-structure*elaborate*attributes
    (state <s> ^name store-predicate-structure
               ^superstate.operator <o>)
-   (<o> ^predicate-lti <lti>)
+   (<o> ^storing <t> ^handle <h> ^message <msg> ^type <y>)
 -->
-   (<s> ^predicate-lti <lti>)
+   (<s> ^storing <t> ^handle <h> ^message <msg> ^ptype <y>)
 }
 
-sp {store-predicate-structure*elaborate*smem-retrieve
+sp {store-predicate-structure*elaborate*multiplayer
    (state <s> ^name store-predicate-structure
-              ^predicate-lti <lti>)
+              ^superstate.operator <o>)
+   (<o> ^multiplayer <m>)
 -->
-   (<s> ^smem-concept <lti>)
+   (<s> ^multiplayer <m>)
 }
+
+
+#only store at end
+sp {store-predicate-structure*propose*complete
+   (state <s> ^name store-predicate-structure)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name complete)
+}
+
+sp {store-predicate-structure*apply*complete
+   (state <s> ^name store-predicate-structure
+              ^operator.name complete
+              ^top-state.interaction.status <status>
+              ^io.output-link <out>)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type single-word-response
+          ^fields.word ok)
+   (<status> ^performed.learning-event <de>)
+   (<de> ^type game
+         ^originator agent)
+}
+sp {store-predicate-structure*apply*complete*remove-learn-link
+   (state <s> ^name store-predicate-structure
+              ^operator.name complete
+             -^message.predicate <ll>
+              ^top-state <ts>)
+   (<s> ^storing name)
+   (<ts> ^dialog-context <dc>)
+   (<dc> ^learn-link <ll>)
+-->
+   (<dc> ^learn-link <ll> -)
+}
+sp {store-predicate-structure*elaborate*top-state*dialogue-context*game
+   (state <s> ^name store-predicate-structure
+              ^operator.name complete
+              ^top-state <ts>)
+   (<s> ^storing name ^ptype game ^handle <handle> ^message.predicate <pred>)
+-->
+   (<ts> ^dialog-context <dc>)
+   (<dc> ^type game-learning ^name <handle> ^structure <pred>)
+   (<pred> ^actions <act> ^goals <go> ^heuristics <heu>)
+}
+
+sp {store-predicate-structure*elaborate*top-state*dialogue-context*goal
+   (state <s> ^name store-predicate-structure
+              ^operator.name complete
+              ^top-state <ts>)
+   (<s> ^storing name ^ptype goal ^handle <handle> ^message.predicate <pred2>)
+   (<ts> ^dialog-context <dc>)
+   (<dc> ^structure <pred>)
+   (<pred> ^goals <go>)
+-->
+   (<go> ^goal <pred2>)
+   (<pred2> ^predicate-structure <ps> ^type goal)
+   (<dc> ^learn-link <pred2>)
+}
+
+sp {store-predicate-structure*elaborate*top-state*dialogue-context*action
+   (state <s> ^name store-predicate-structure
+              ^operator.name complete
+              ^top-state <ts>)
+   (<s> ^storing name ^ptype action ^handle <handle> ^message.predicate <pred2>)
+   (<ts> ^dialog-context <dc>)
+   (<dc> ^structure <pred>)
+   (<pred> ^actions <act>)
+-->
+   (<act> ^action <pred2>)
+   (<pred2> ^predicate-structure <ps> ^type action ^verb-structure <vs>)
+   (<dc> ^learn-link <pred2>)
+}
+
+sp {store-predicate-structure*elaborate*top-state*dialogue-context*multiplayer
+   (state <s> ^name store-predicate-structure
+              ^operator.name complete
+              ^top-state <ts>)
+   (<s> ^multiplayer <mult>)
+   (<ts> ^dialog-context <dc>)
+   (<dc> ^structure <pred>)
+-->
+   (<pred> ^multiplayer <mult>)
+}
+
+
+
+#sp {store-predicate-structure*elaborate*smem-retrieve
+#   (state <s> ^name store-predicate-structure
+#              ^predicate-lti <lti>)
+#-->
+#   (<s> ^smem-concept <lti>)
+#}

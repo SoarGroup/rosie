@@ -1,0 +1,163 @@
+
+#call from any state, no arguments
+# result is ^state-result <res>)
+#   (<res> ^relationships <rels> ^objects <os> ^object-desc-set <ods>)
+
+sp {extract-state*propose*copy-relationships
+   (state <s> ^name extract-state
+             -^relationships.done)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name copy-relationships)
+}
+sp {extract-state*apply*copy-relationships*default
+   (state <s> ^name extract-state
+              ^operator.name copy-relationships
+              ^relationships <rels>)
+-->
+   (<rels> ^done true)
+}
+sp {extract-state*apply*copy-relationships
+   (state <s> ^name extract-state
+              ^relationships <rels>
+              ^operator.name copy-relationships
+              ^topstate.prepositions.prep <p>)
+   (<p> ^name <name> ^pair <pair3>)
+   (<pair3> ^a <ida> ^b <idb> -^c)
+-->
+   (<rels> ^relations <r>)
+   (<r> ^name <name> ^pair <pair>)
+   (<pair> ^a <ida> ^b <idb>)
+}
+
+sp {extract-state*apply*copy-relationships*3arg
+   (state <s> ^name extract-state
+              ^relationships <rels>
+              ^operator.name copy-relationships
+              ^topstate.prepositions.prep2 <p>)
+   (<p> ^name <name> ^pair <pair3>)
+   (<pair3> ^a <ida> ^b <idb> ^c <idc>)
+-->
+   (<rels> ^relations <r>)
+   (<r> ^name <name> ^pair <pair>)
+   (<pair> ^a <ida> ^b <idb> ^c <idc>)
+}
+
+sp {extract-state*propose*copy-objects
+   (state <s> ^name extract-state
+             -^object-set.done)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name copy-objects)
+}
+sp {extract-state*apply*copy-objects*default
+   (state <s> ^name extract-state
+              ^operator.name copy-objects
+              ^object-set <set>)
+-->
+   (<set> ^done true)
+}
+sp {extract-state*apply*copy-objects
+   (state <s> ^name extract-state
+              ^relationships.relations <p>
+              ^object-set <os>
+              ^topstate.object <obj>
+              ^operator.name copy-objects
+              ^relationships <rels>)
+   (<p> ^name <name> ^pair <pair>)
+   (<pair> ^<< a b c >> <id>)
+   (<obj> ^id <id>)
+-->
+   (<os> ^object <obj>)
+}
+
+
+sp {extract-state*propose*describe-object
+   (state <s> ^name extract-state
+              ^object-set.object <obj>
+             -^object-desc-set.obj-desc.id <id>)
+   (<obj> ^id <id>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name describe-object
+        ^object <obj>)
+}
+sp {extract-state*apply*describe-object
+   (state <s> ^name extract-state
+              ^operator <o>
+              ^object-set.object <obj>
+              ^object-desc-set <ods>)
+   (<obj> ^id <id> ^category <type>)
+   (<o> ^name describe-object
+         ^description <desc>
+        ^object <obj>)
+-->
+   (<ods> ^obj-desc <desc>)
+   (<desc> ^id <id> ^type <type>)
+}
+
+################################
+# 
+# extract object predicates
+#
+################################
+
+sp {extract-state*propose*copy-predicates
+   (state <s> ^name extract-state
+             -^predicate-set.done)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name copy-predicates)
+}
+
+sp {extract-state*apply*copy-predicates*mark*done
+   (state <s> ^name extract-state
+              ^operator.name copy-predicates
+              ^predicate-set <preds>)
+-->
+   (<preds> ^done true)
+}
+
+sp {extract-state*apply*copy-predicates*create*objects
+   (state <s> ^name extract-state
+              ^operator.name copy-predicates
+              ^topstate.object <obj>
+              ^predicate-set <preds>)
+   (<obj> ^object-desc.<att> <val>)
+-->
+   (<preds> ^predicate <pred>)
+   (<pred> ^object <obj> ^name <att> ^value <val>)
+}
+
+sp {extract-state*propose*complete-state
+   (state <s> ^name extract-state)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name complete-state)
+}
+
+sp {extract-state*apply*complete-state*remove-object-fromdesc
+   (state <s> ^name extract-state
+              ^object-desc-set.obj-desc <o>
+              ^operator.name complete-state)
+   (<o> -^type either ^word {<obj> object} ^type <type>)
+-->
+   (<o> ^word <obj> -
+        ^word <type>)
+}
+
+sp {extract-state*apply*complete-state
+   (state <s> ^name extract-state
+              ^object-set <os>
+              ^relationships <rels>
+              ^object-desc-set <ods>
+              ^predicate-set <preds>
+              ^superstate.operator <op>
+              ^superstate <ss>
+              ^operator.name complete-state)
+-->
+#   (interrupt)
+   (<ss> ^state-result <res>)
+   (<res> ^relationships <rels> ^objects <os> ^object-desc-set <ods> 
+          ^predicate-set <preds>)
+}
