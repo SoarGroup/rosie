@@ -10,6 +10,7 @@
 #######
 sp {interpret-message*propose*interpret-conditional-predicate
    (state <s> ^name interpret-message
+              ^top-state.dialog-context.type game-learning
               ^instructor-message <msg>)
    (<msg> ^message-type conditional
          -^interpreted true)
@@ -30,8 +31,19 @@ sp {interpret-message*propose*interpret-conditional-predicate
 # MESSAGE CATEGORIZATION
 #####
 
-sp {interpret-message*elaborate*interpret-conditional-predicate*purpose*learn-goal-definition
+sp {interpret-message*elaborate*interpret-conditional-predicate*purpose*learn-action-predicate-definition
    (state <s> ^name interpret-message
+              ^top-state.dialog-context.type game-learning
+              -^top-state.dialog-context.learning-predicate
+              ^operator <o> +)
+   (<o> ^name interpret-conditional-predicate)
+-->
+   (<o> ^purpose learn-action-predicate-definition)
+}
+
+sp {interpret-message*elaborate*interpret-conditional-predicate*purpose*learn-predicate-definition
+   (state <s> ^name interpret-message
+              ^top-state.dialog-context.learning-predicate
               ^operator <o> +)
    (<o> ^name interpret-conditional-predicate)
 -->
@@ -45,16 +57,31 @@ sp {interpret-message*elaborate*interpret-conditional-predicate*purpose*learn-go
 
 ###########################
 # Purpose: learn-predicate-definition
-
-sp {interpret-message*apply*interpret-conditional-predicate*create*segment*learn-predicate-definition
+sp {interpret-message*apply*interpret-conditional-predicate*create*segment*learn-property-predicate
    (state <s> ^name interpret-message
-              ^top-state.dialog-context.type game-learning
               ^operator <o>)
    (<o> ^name interpret-conditional-predicate
         ^purpose learn-predicate-definition
         ^message <msg>)
 -->
-   (interrupt)
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type learn-property-predicate
+        ^parameters.message <msg>
+        ^satisfaction <sat>)
+   (<sat> ^learning-event.type game)
+}
+###########################
+# Purpose: learn-action-predicate-defintion
+sp {interpret-message*apply*interpret-conditional-predicate*create*segment*learn-action-predicate-definition
+   (state <s> ^name interpret-message
+              ^operator <o>)
+   (<o> ^name interpret-conditional-predicate
+        ^purpose learn-action-predicate-definition
+        ^message <msg>)
+-->
    (<s> ^new-segment-info <info>
         ^mark-interpreted <msg>)
    (<info> ^purpose <p>
@@ -64,6 +91,23 @@ sp {interpret-message*apply*interpret-conditional-predicate*create*segment*learn
         ^satisfaction <sat>)
    (<sat> ^learning-event.type game)
 }
+
+sp {interpret-message*apply*interpret-conditional-predicate*create*context-links
+   (state <s> ^name interpret-message
+              ^top-state.dialog-context <dc> 
+              ^operator <o>)
+   (<o> ^name interpret-conditional-predicate
+        ^purpose learn-predicate-definition
+        ^message <msg>)
+   (<dc> ^learning-predicate <lp>)
+   (<msg> ^then-subclause <tc>)
+   (<tc> ^arg1 <obj> ^predicate <pred> -^arg2)
+   (<pred> ^handle <name>)
+   (<lp> ^name <name>)
+-->
+   (<dc> ^learn-link <pred>
+         ^input-object-1 <obj>)
+}   
 
 
 #TODO need this rule?
