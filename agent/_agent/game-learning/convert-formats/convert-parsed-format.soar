@@ -76,6 +76,19 @@ sp {convert-parsed-format*elaborate*predicate-is-predicate
    (<p> ^equal-to <pp>)
    (<pp> ^equal-to <p>)
 }
+
+sp {convert-parsed-format*elaborate*predicate*number*attribute
+   (state <s> ^name convert-parsed-format
+              ^parameter <c>)
+   (<c> ^predicates.number <num> ^formatted <f2> ^parameter-index <id2>)
+-->
+   (<s> ^predicate <p> <pp>)
+   (<p> ^property.handle number ^handle <num> ^equal-to <pp>)
+   (<pp> ^handle of1 ^2 <p2> ^equal-to <p>)
+   (<p2> ^2 <c> ^handle number1)
+   #(<c2> ^formatted <f2> ^parameter-index <id2>)
+}
+
 sp {convert-parsed-format*elaborate*predicate-objects
    (state <s> ^name convert-parsed-format
               ^predicate <c>)
@@ -292,7 +305,7 @@ sp {create-object*elaborate*category
    :o-support
    (state <s> ^name create-object
               ^parameter.predicates <c>)
-   (<c> ^category {<cat> <> object} -^multiple)
+   (<c> ^category {<cat> <> object})# -^multiple)
 -->
    (<s> ^condition <c1> ^last-condition <c1>)
    (<c1> ^name <cat> ^parameter <p> ^type attribute ^attribute category ^rtype single)
@@ -302,37 +315,37 @@ sp {create-object*elaborate*cateogy*object
    :o-support
    (state <s> ^name create-object
               ^parameter.predicates <c>)
-   (<c> ^category {<cat> << object >>} -^multiple)
+   (<c> ^category {<cat> << object >>})# -^multiple)
 -->
    (<s> ^condition <c1> ^last-condition <c1>)
    (<c1> ^name <cat> ^parameter <p> ^type attribute ^attribute primitive ^rtype single)
 }
 
-sp {create-object*elaborate*plural
-   :o-support
-   (state <s> ^name create-object
-              ^parameter.predicates <c>)
-   (<c> ^category {<cat> <> object} ^multiple true)
--->
-   (<s> ^condition <c1> ^last-condition <c1>)
-   (<c1> ^name <cat> ^parameter <p> ^type attribute ^attribute category ^rtype set)
-}
-sp {create-object*elaborate*cateogy*object*plural
-   :o-support
-   (state <s> ^name create-object
-              ^parameter.predicates <c>)
-   (<c> ^category {<cat> << object >>} ^multiple true)
--->
-   (<s> ^condition <c1> ^last-condition <c1>)
-   (<c1> ^name <cat> ^parameter <p> ^type attribute ^attribute primitive ^rtype set)
-}
+#sp {create-object*elaborate*plural
+#   :o-support
+#   (state <s> ^name create-object
+#              ^parameter.predicates <c>)
+#   (<c> ^category {<cat> <> object} ^multiple true)
+#-->
+#   (<s> ^condition <c1> ^last-condition <c1>)
+#   (<c1> ^name <cat> ^parameter <p> ^type attribute ^attribute category ^rtype set)
+#}
+#sp {create-object*elaborate*cateogy*object*plural
+#   :o-support
+#   (state <s> ^name create-object
+#              ^parameter.predicates <c>)
+#   (<c> ^category {<cat> << object >>} ^multiple true)
+#-->
+#   (<s> ^condition <c1> ^last-condition <c1>)
+#   (<c1> ^name <cat> ^parameter <p> ^type attribute ^attribute primitive ^rtype set)
+#}
 
 sp {create-object*propose*unary-predicate
    (state <s> ^name create-object
              -^condition.name <val>
               ^parameter <c>)
    (<c> ^predicates <p>)
-   (<p> ^{<att> <> category <> dialog-object <> handle <> type <> visible <> multiple} <val>)
+   (<p> ^{<att> <> category <> dialog-object <> handle <> type <> visible <> multiple <> number} <val>)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name unary-predicate
@@ -344,7 +357,7 @@ sp {preference*create-object*dispref*unary-predicate
    (state <s> ^name create-object
               ^operator <o> +)
     (<o> ^name unary-predicate
-        ^attribute property)
+        ^attribute << relation property >>)
 -->
    (<s> ^operator <o> <)
 
@@ -365,13 +378,29 @@ sp {create-object*elaborate*condition
               ^operator <o>
               ^last-condition <cond>
               ^parameter <c>)
-   (<cond> ^rtype <rtype>)
+   #(<cond> ^rtype <rtype>)
    (<o> ^name unary-predicate
         ^attribute {<att> << color size shape >>}
         ^value <val>)
 -->
    (<s> ^condition <co>)
-   (<co> ^name <val> ^parameter <p> ^type attribute ^attribute <att> ^rtype <rtype> ^args <a>)
+   (<co> ^name <val> ^parameter <p> ^type attribute ^attribute <att> ^args <a> ^rtype single)
+   (<a> ^1 <cond>)
+   (<s> ^last-condition <cond> -)
+   (<s> ^last-condition <co>)
+}
+#all unary relations are over sets
+sp {create-object*elaborate*condition*relation
+   (state <s> ^name create-object
+              ^operator <o>
+              ^last-condition <cond>
+              ^parameter <c>)
+   (<o> ^name unary-predicate
+        ^attribute relation
+        ^value <val>)
+-->
+   (<s> ^condition <co>)
+   (<co> ^name <val> ^parameter <p> ^type state-pair ^attribute preposition ^args <a> ^rtype set)
    (<a> ^1 <cond>)
    (<s> ^last-condition <cond> -)
    (<s> ^last-condition <co>)
@@ -382,13 +411,13 @@ sp {create-object*elaborate*condition*learned-predicate
               ^operator <o>
               ^last-condition <cond>
               ^parameter <c>)
-   (<cond> ^rtype <rtype>)
+ #  (<cond> ^rtype <rtype>)
    (<o> ^name unary-predicate
         ^attribute property
         ^value <val>)
 -->
    (<s> ^condition <co>)
-   (<co> ^name <val> ^parameter <p> ^type concept ^attribute predicate ^rtype <rtype> ^args <a>)
+   (<co> ^name <val> ^parameter <p> ^type concept ^attribute predicate ^args <a> ^rtype single)#^rtype <rtype>
    (<a> ^1 <cond>)
    (<s> ^last-condition <cond> -)
    (<s> ^last-condition <co>)
@@ -400,15 +429,31 @@ sp {create-object*propose*complete
    (<s> ^operator <o> + <)
    (<o> ^name complete)
 }
-sp {create-object*apply*complete
+
+sp {create-object*apply*complete*multiple
    (state <s> ^name create-object
               ^operator.name complete
+              ^parameter.predicates.multiple true
               ^last-condition <cond>
               ^superstate.operator.parameter <c>)
+   (<cond> ^rtype <rtype>)
 -->
    (<c> ^formatted <cond>)
+   (<cond> ^rtype <rtype> -)
+   (<cond> ^rtype set)
 }
-   
+sp {create-object*apply*complete*single
+   (state <s> ^name create-object
+              ^operator.name complete
+             -^parameter.predicates.multiple true
+              ^last-condition <cond>
+              ^superstate.operator.parameter <c>)
+   (<cond> ^rtype <rtype>)
+-->
+   (<c> ^formatted <cond>)
+   (<cond> ^rtype <rtype> -)
+   (<cond> ^rtype single)
+}   
    
 #problems
 #indefinite?

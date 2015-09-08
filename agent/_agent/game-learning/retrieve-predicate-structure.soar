@@ -26,7 +26,7 @@ sp {retrieve-predicate-structure*elaborate*smem-query
 -->
    (<s> ^smem-query <query>)
    (<query> ^cue <cue>
-            ^depth 8)
+            ^depth 10)
    (<cue> ^handle <handle>)
 }
 
@@ -36,7 +36,7 @@ sp {retrieve-predicate-structure*elaborate*smem-retrieve
 -->
    (<s> ^smem-retrieve <query>)
    (<query> ^identifier <lti>
-            ^depth 8)
+            ^depth 10)
 }
 
 sp {retrieve-predicate-structure*propose*complete
@@ -77,14 +77,14 @@ sp {retrieve-predicate-structure*apply*complete*smem-query*result
    (state <s> ^name retrieve-predicate-structure
               ^operator.name complete
               ^condition <co>
-              ^copy-count 10
+              ^copy-count 12
               ^smem-query.result <pred>
               ^copy-structure.destination <dest>
               ^superstate <ss>)
-   (<pred> ^handle <name> ^argnum <an>)
+   (<pred> ^handle <name> ^argnum <an> ^primary-rtype <rtype>)
 -->
    (<ss> ^predicate <p> ^gtype predicate)
-   (<p> ^aname <name> ^nlp-set <dest> ^formated predicate ^parameter-set <P124> ^potential-args <P125> ^link <co>)
+   (<p> ^aname <name> ^nlp-set <dest> ^primary-rtype <rtype> ^formated predicate ^parameter-set <P124> ^potential-args <P125> ^link <co>)
   (<P124> ^argnum <an>)
   (<dest> ^aname <name>)#^nlp <cs> <cs1>
 }
@@ -93,7 +93,7 @@ sp {retrieve-predicate-structure*copy*stucture
    (state <s> ^name retrieve-predicate-structure
               ^nlp-set <pred>)
 -->
-   (<s> ^copy-structure <copy> ^copy-count 0)
+   (<s> ^copy-structure <copy> ^copy-count 0 ^copy-map <cm> ^pending-map <pm>)
    (<copy> ^source <pred>
            ^destination <dest>
             ^copy-type deep)
@@ -101,171 +101,67 @@ sp {retrieve-predicate-structure*copy*stucture
 sp {copy-structure*elaborate*copy-count
  #  :o-support
    (state <s> ^copy-structure <copy>
-              ^copy-count {<cc> < 10})
+              ^copy-count {<cc> < 12})
 -->
 #   (<s> ^copy-count <cc> -)
    (<s> ^copy-count (+ 1 <cc>))
    
 }
 
+#TODO a bit hacky of a copy, but works
+sp {copy-structure*elaborate*copy-pending
+   :o-support
+   (state <s> ^copy-structure <copy> ^copy-map <cm> ^pending-map <pm>)
+   (<pm> ^<src> <dest>)
+  -{(<pm> ^<src> {<dest2> <> <dest>})}
+-->
+   (<cm> ^<src> <dest>)
+}
+sp {copy-structure*elaborate*copy-pending*double
+   :o-support
+   (state <s> ^copy-structure <copy> ^copy-map <cm> ^pending-map <pm>)
+   (<pm> ^<src> <dest>)
+   (<pm> ^<src> {<dest2> < <dest>})
+-->
+   (<cm> ^<src> <dest>)
+}
 
+#first do pending-map to handle multiple refs to same wme
 sp {copy-structure*elaborate*copy
-#   :o-support
-   (state <s> ^copy-structure <copy>)
+   :o-support
+   (state <s> ^copy-structure <copy> ^copy-map <cm> ^pending-map <pm>)
    (<copy> ^source <source> ^destination <dest>)
-   (<source> ^{<something> <> duplicate-to} {<x> <=> <s>})
- # -{(<x> ^duplicate-to <x2>)}
+   (<source> ^<something> {<x> <=> <s>})
+   (<cm> -^<x>)
 -->
    (<dest> ^<something> <x2>)
-   (<x> ^duplicate-to <x2>)
+   (<pm> ^<x> <x2>)
 }
-
 sp {copy-structure*elaborate*copy2
-#   :o-support
-   (state <s> ^copy-structure <copy>)
-   (<copy> ^source <source> ^destination <dest>)
-   (<source> ^{<something> <> duplicate-to} <x>)
-   (<x> ^duplicate-to <x2>)
-   (<x> ^{<something2> <> duplicate-to} {<a> <=> <s>})
+   :o-support
+   (state <s> ^copy-map <cm> ^pending-map <pm>)
+   (<cm> ^<src> <new>)
+   (<src> ^<something> {<x> <=> <s>})
+   (<cm> -^<x>)
 -->
-   (<x2> ^<something2> <b>)
-   (<a> ^duplicate-to <b>)  
+   (<pm> ^<x> <x2>)
+}
+sp {copy-structure*elaborate*copy3
+   :o-support
+   (state <s> ^copy-map <cm>)
+   (<cm> ^<src> <new>)
+   (<src> ^<something> {<x> <=> <s>})
+   (<cm> ^<x> <x2>)
+-->
+   (<new> ^<something> <x2>)
 }
 sp {copy-structure*elaborate*copy2*value
-#   :o-support
-   (state <s> ^copy-structure <copy>)
-   (<copy> ^source <source> ^destination <dest>)
-   (<source> ^{<something> <> duplicate-to} <x>)
-   (<x> ^duplicate-to <x2>)
-   (<x> ^{<something2> <> duplicate-to} <a>)
-   -{(<x> ^<something2> {<a> <=> <s>})}
+   :o-support
+   (state <s> ^copy-map <cm>)
+   (<cm> ^<src> <new>)
+   (<src> ^<something> <x>)
+  -{(<src> ^<something> {<x> <=> <s>})}
 -->
-   (<x2> ^<something2> <a>)
-}
-
-sp {copy-structure*elaborate*copy3
- #  :o-support
-   (state <s> ^copy-structure <copy>)
-   (<copy> ^source <source> ^destination <dest>)
-   (<source> ^{<something> <> duplicate-to} <x>)
-  # (<x> ^duplicate-to <x2>)
-   (<x> ^{<something2> <> duplicate-to} <a>)
-   (<a> ^duplicate-to <b>)
-   (<a> ^{<something3> <> duplicate-to} {<d> <=> <s>})
--->
-   (<b> ^<something3> <e>)
-   (<d> ^duplicate-to <e>)  
-}
-sp {copy-structure*elaborate*copy3*value
-#   :o-support
-   (state <s> ^copy-structure <copy>)
-   (<copy> ^source <source> ^destination <dest>)
-   (<source> ^{<something> <> duplicate-to} <x>)
-  # (<x> ^duplicate-to <x2>)
-   (<x> ^{<something2> <> duplicate-to} <a>)
-   (<a> ^duplicate-to <b>)
-   (<a> ^{<something3> <> duplicate-to} <d>)
-   -{(<a> ^<something3> {<d> <=> <s>})}
--->
-   (<b> ^<something3> <d>)
-}
-
-sp {copy-structure*elaborate*copy4
-#   :o-support
-   (state <s> ^copy-structure <copy>)
-   (<copy> ^source <source> ^destination <dest>)
-   (<source> ^{<something> <> duplicate-to} <x>)
-  # (<x> ^duplicate-to <x2>)
-   (<x> ^{<something2> <> duplicate-to} <a>)
-   (<a> ^{<something3> <> duplicate-to} <d>)
-   (<d> ^duplicate-to <e>)
-   (<d> ^{<something4> <> duplicate-to} {<h> <=> <s>})
--->
-   (<e> ^<something4> <g>)
-   (<h> ^duplicate-to <g>)  
-}
-
-sp {copy-structure*elaborate*copy4*value
-#   :o-support
-   (state <s> ^copy-structure <copy>)
-   (<copy> ^source <source> ^destination <dest>)
-   (<source> ^{<something> <> duplicate-to} <x>)
-  # (<x> ^duplicate-to <x2>)
-   (<x> ^{<something2> <> duplicate-to} <a>)
-   (<a> ^{<something3> <> duplicate-to} <d>)
-   (<d> ^duplicate-to <e>)
-   (<d> ^{<something4> <> duplicate-to} <h>)
-   -{(<d> ^<something4> {<h> <=> <s>})}
--->
-   (<e> ^<something4> <h>)
-}
-
-sp {copy-structure*elaborate*copy5
-#   :o-support
-   (state <s> ^copy-structure <copy>)
-   (<copy> ^source <source> ^destination <dest>)
-   (<source> ^{<something> <> duplicate-to}.{<something2> <> duplicate-to}.{<something3> <> duplicate-to}.{<something4> <> duplicate-to} {<h> <=> <s>})
-   (<h> ^duplicate-to <g>)
-   (<h> ^{<something5> <> duplicate-to} {<i> <=> <s>})
-   -->
-   (<g> ^<something5> <j>)
-   (<i> ^duplicate-to <j>)  
-}
-sp {copy-structure*elaborate*copy5*value
-#   :o-support
-   (state <s> ^copy-structure <copy>)
-   (<copy> ^source <source> ^destination <dest>)
-   (<source> ^{<something> <> duplicate-to}.{<something2> <> duplicate-to}.{<something3> <> duplicate-to}.{<something4> <> duplicate-to} {<h> <=> <s>})
-   (<h> ^duplicate-to <g>)
-   (<h> ^{<something5> <> duplicate-to} <i>)
-   -{(<h> ^<something5> {<i> <=> <s>})}
-   -->
-   (<g> ^<something5> <i>)
-}
-
-sp {copy-structure*elaborate*copy6
- #  :o-support
-   (state <s> ^copy-structure <copy>)
-   (<copy> ^source <source> ^destination <dest>)
-   (<source> ^{<something> <> duplicate-to}.{<something2> <> duplicate-to}.{<something3> <> duplicate-to}.{<something4> <> duplicate-to}.{<something5> <> duplicate-to} {<h> <=> <s>})
-   (<h> ^duplicate-to <g>)
-   (<h> ^{<something6> <> duplicate-to} {<i> <=> <s>})
-   -->
-   (<g> ^<something6> <j>)
-   (<i> ^duplicate-to <j>)  
-}
-
-sp {copy-structure*elaborate*copy6*value
-#   :o-support
-   (state <s> ^copy-structure <copy>)
-   (<copy> ^source <source> ^destination <dest>)
-   (<source> ^{<something> <> duplicate-to}.{<something2> <> duplicate-to}.{<something3> <> duplicate-to}.{<something4> <> duplicate-to}.{<something5> <> duplicate-to} {<h> <=> <s>})
-   (<h> ^duplicate-to <g>)
-   (<h> ^{<something6> <> duplicate-to} <i>)
-   -{(<h> ^<something6> {<i> <=> <s>})}
-   -->
-   (<g> ^<something6> <i>) 
-}
-sp {copy-structure*elaborate*copy7
- #  :o-support
-   (state <s> ^copy-structure <copy>)
-   (<copy> ^source <source> ^destination <dest>)
-   (<source> ^{<something> <> duplicate-to}.{<something2> <> duplicate-to}.{<something3> <> duplicate-to}.{<something4> <> duplicate-to}.{<something5> <> duplicate-to}.{<something6> <> duplicate-to} {<h> <=> <s>})
-   (<h> ^duplicate-to <g>)
-   (<h> ^{<something7> <> duplicate-to} {<i> <=> <s>})
-   -->
-   (<g> ^<something7> <j>)
-   (<i> ^duplicate-to <j>)  
-}
-sp {copy-structure*elaborate*copy7*value
-#   :o-support
-   (state <s> ^copy-structure <copy>)
-   (<copy> ^source <source> ^destination <dest>)
-   (<source> ^{<something> <> duplicate-to}.{<something2> <> duplicate-to}.{<something3> <> duplicate-to}.{<something4> <> duplicate-to}.{<something5> <> duplicate-to}.{<something6> <> duplicate-to} {<h> <=> <s>})
-   (<h> ^duplicate-to <g>)
-   (<h> ^{<something7> <> duplicate-to} <i>)
-   -{(<h> ^<something7> {<i> <=> <s>})}
-   -->
-   (<g> ^<something7> <i>)
+   (<new> ^<something> <x>)
 }
    
