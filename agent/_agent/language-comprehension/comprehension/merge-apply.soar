@@ -238,7 +238,7 @@ sp {apply*merge*push-constraint*receiver-assigner*RCP-D
          ^receiver <receiver>
          ^assigner.parent-receiver <pr>)
     (<pr> -^constraint <con>
-           ^structure-type D)
+           ^structure-type << CN D QUANT >>) # Maybe should be lt.converts-to DP
     (<receiver> ^constraint <con>
                 ^structure-type RCP)
 -->
@@ -323,7 +323,7 @@ sp {apply*merge*constraint*features2
    (<assigner> ^parent-receiver <pword>)
    (<receiver> ^lt.referent <id>)
    (<id> ^property <pf>
-         ^<< handle name >> <value>)
+         ^<< handle name >> { <> category <value> })
    (<pf> ^<< handle name >> <name>
         -^value)
   -(<pword> ^constraint <id>)
@@ -331,6 +331,7 @@ sp {apply*merge*constraint*features2
    (write (crlf) |Add constraint ^| <name>  | | <value> | to | <pword> | from lt:| <id>)
    (<pword> ^constraint <id>)
 }
+
 
 sp {apply*merge*constraint*preposition-right-conversion
  #:interrupt
@@ -377,6 +378,7 @@ sp {apply*merge*constraint*preposition-noun
    (<pword> ^structure-type << D DP RC >>
            -^head.lt.semantic-structure relation) # don't do this if part of 'to the left of'
    (<receiver> ^structure-type << PP CONJP C-ADJ-P >>
+              -^lt.relation-type ternary
                ^lt.relation.handle { <> of1 <sr> }  # Of is a special case...
                ^head <head>)
    (<head> ^referent <obj>)   
@@ -389,6 +391,36 @@ sp {apply*merge*constraint*preposition-noun
    (<srx> ^2 <obj>
           ^handle <sr>)
    (write (crlf) |Add new constraint to | <pword> | relation: | <sr> | object: | <obj>)
+}
+
+sp {apply*merge*constraint*preposition-noun*ternary
+  #:interrupt
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<op> ^name merge
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^parent-receiver <pword>
+               ^structure-type << PP CONJP C-ADJ-P >>)
+   (<pword> ^structure-type << D DP RC >>
+           -^head.lt.semantic-structure relation) # don't do this if part of 'to the left of'
+   (<receiver> ^structure-type << PP CONJP C-ADJ-P >>
+               ^lt.relation-type ternary
+               ^lt.relation.handle <sr>
+               ^head <head>
+               ^complement <comp>)
+   (<head> ^referent <obj>)
+   (<comp> ^referent <comp-obj>)   
+-->
+   (<seg> ^new-constraint <nc>)
+   (<nc> ^object <pword> #<head>  # was <pword>
+         ^constraint <c>)
+   (<pword> ^constraint <c>) #<head> # was <pword>
+   (<c> ^relation <srx>)
+   (<srx> ^2 <obj>
+          ^3 <comp-obj>
+          ^handle <sr>)
+   (write (crlf) |Add new constraint to | <pword> | ternary relation: | <sr> | object: | <obj> | object2: | <comp-obj>)
 }
 
 sp {apply*merge*constraint*preposition-noun*semantics
@@ -413,7 +445,7 @@ sp {apply*merge*constraint*preposition-noun*semantics
 }
 
 ### 
-sp {apply*merge*forward-grounding*to-preposition-verb
+sp {apply*merge*forward-grounding*to-preposition-verb*binary
    (state <s> ^operator <op>)
    (<op> ^name merge
          ^receiver <receiver>
@@ -421,12 +453,32 @@ sp {apply*merge*forward-grounding*to-preposition-verb
    (<assigner> ^parent-receiver <pword>)
    (<pword> ^structure-type VP)
    (<receiver> ^structure-type << PP CONJP C-ADJ-P >>
+              -^lt.relation-type ternary
                ^lt.relation <sr>
                ^head.referent <sg>) 
 -->
    (<pword> ^<sr> <sg>
             ^relation <srr>)
    (<srr> ^2 <sg>
+          ^handle <sr>)}
+
+sp {apply*merge*forward-grounding*to-preposition-verb*ternary
+   (state <s> ^operator <op>)
+   (<op> ^name merge
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^parent-receiver <pword>)
+   (<pword> ^structure-type VP)
+   (<receiver> ^structure-type << PP CONJP C-ADJ-P >>
+               ^lt.relation-type ternary
+               ^lt.relation <sr>
+               ^head.referent <sg>
+               ^complement.referent <cr>) 
+-->
+   (<pword> ^<sr> <sg>
+            ^relation <srr>)
+   (<srr> ^2 <sg>
+          ^3 <cr> 
           ^handle <sr>)}
 
 sp {apply*merge*constraint*preposition-noun-special # for named
@@ -441,6 +493,7 @@ sp {apply*merge*constraint*preposition-noun-special # for named
    (<pword> ^structure-type D
             ^head.lt.referent <ref>) 
    (<receiver> ^structure-type PP
+              -^lt.relation-type ternary
                ^lt.relation.handle <sr>
                ^head.lt.relation.handle <obj>)   
 -->
@@ -449,6 +502,32 @@ sp {apply*merge*constraint*preposition-noun-special # for named
           ^handle <sr>)
    (write (crlf) |Add new constraint to | <ref> | relation: | <sr> | object: | <obj>)
 }
+
+
+sp {apply*merge*constraint*preposition-noun-special*ternary # for named
+  #:interrupt
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<op> ^name merge
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^parent-receiver <pword>
+               ^structure-type PP)
+   (<pword> ^structure-type D
+            ^head.lt.referent <ref>) 
+   (<receiver> ^structure-type PP
+               ^lt.relation-type ternary
+               ^lt.relation.handle <sr>
+               ^head.lt.relation.handle <obj>
+               ^complement.lt.relation.handle <rh>)   
+-->
+   (<ref> ^relation <srx>)
+   (<srx> ^2 <obj>
+          ^3 <rh>
+          ^handle <sr>)
+   (write (crlf) |Add new constraint to | <ref> | relation: | <sr> | object: | <obj> | object2: | <rh>)
+}
+
 
 ###############
 ## For to the left of
