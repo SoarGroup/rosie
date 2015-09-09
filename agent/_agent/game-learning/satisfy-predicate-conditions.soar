@@ -9,15 +9,128 @@ sp {satisfy-predicate-conditions*propose*predicate-operator
     (<o1> ^type <c2> + ^name <c1> + ^parameters <i1> +)
 }
 
-sp {satisfy-predicate-conditions*propose*finished-learning-predicate
-    (state <s1> ^main-type predicate ^gtype predicate ^list <l1> ^predicate <a1>)
+sp {satisfy-predicate-conditions*propose*finished-learning
+    (state <s1> ^main-type predicate ^gtype predicate ^list <l1> ^predicate <a1>
+                ^top-state.dialog-context.learning true)
     (<l1> ^game <g1>)
     (<a1> ^parameter-set <p1> ^aname <c1>)
     (<p1> ^set <i1>)
     -->
+   (interrupt)
     (<s1> ^operator <o1> + =)
-    (<o1> ^name finished-learning-predicate)
+    (<o1> ^name finished-learning
+          ^type predicate)
 }
+
+sp {satisfy-predicate-conditions*propose*finished-learning*action-goal
+    (state <s1> ^superstate <ss>
+                ^top-state.dialog-context.learning true)
+    (<ss> ^main-type {<type> << action goal >>} ^operator.type <type>)
+    (<a1> ^parameter-set <p1> ^aname <c1>)
+    (<p1> ^set <i1>)
+    -->
+   (interrupt)
+    (<s1> ^operator <o1> + =)
+    (<o1> ^name finished-learning)
+}
+
+#TODO for all types or only predicates?
+sp {finished-learning*store*predicate*concept
+   (state <s> ^name finished-learning    
+              ^superstate.operator.type predicate        
+              ^smem.command <sc>
+              ^top-state.dialog-context.learn-link <ll>)
+-->
+   (<s> ^to-store <ll>)
+   (<sc> ^store <ll>)
+}
+sp {finished-learning*propose*store*primary*rtype
+   (state <s> ^operator.name finished-learning
+              ^top-state.dialog-context.learn-link <ll>)
+   (<ll> ^predicate-structure.conditions.parameter.<num> <p>)
+   (<p> ^param-id 1 ^type <rtype>)
+-->
+   (<ll> ^primary-rtype <rtype>)
+}
+
+sp {finished-learning*propose*store-next-level
+   (state <s> ^name finished-learning
+             -^to-store <something2>
+              ^to-store <ts>)
+   (<ts> ^{<something> <> final <> goal-state <> initial <> set <> instance} {<something2> <=> <s>})
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name store-game-level
+        ^to-store <something2>)
+}
+
+sp {finished-learning*apply*store-next-level
+   (state <s> ^name finished-learning
+              ^operator <o>
+              ^smem.command <sc>)
+   (<o> ^name store-game-level
+        ^to-store <something2>)
+-->
+   (<s> ^to-store <something2>)
+   (<sc> ^store <something2>)
+}
+
+sp {finished-learning*propose*complete
+   (state <s> ^name finished-learning)
+-->
+   (<s> ^operator <o> + <)
+   (<o> ^name complete)
+}
+
+sp {finished-learning*apply*complete*remove-learn-link
+    (state <s1> ^name finished-learning
+                ^operator.name complete
+                ^top-state.dialog-context <dc>)
+    (<dc> ^learn-link <ll>)
+-->
+   (<dc> ^learn-link <ll> -)
+}
+sp {finished-learning*apply*complete*remove-learning-predicate
+    (state <s1> ^name finished-learning
+                ^operator.name complete
+                ^top-state.dialog-context <dc>)
+    (<dc> ^learning-predicate <lp>)
+-->
+   (<dc> ^learning-predicate <lp> -)
+}
+sp {finished-learning*apply*complete*input-object-1
+    (state <s1> ^name finished-learning
+                ^operator.name complete
+                ^top-state.dialog-context <dc>)
+    (<dc> ^input-object-1 <lp>)
+-->
+   (<dc> ^input-object-1 <lp> -)
+}
+sp {finished-learning*apply*complete*input-object-2
+    (state <s1> ^name finished-learning
+                ^operator.name complete
+                ^top-state.dialog-context <dc>)
+    (<dc> ^input-object-2 <lp>)
+-->
+   (<dc> ^input-object-2 <lp> -)
+}
+
+sp {finished-learning*apply*complete*send-message
+    (state <s1> ^name finished-learning
+                ^operator.name complete
+                ^top-state.interaction.status <status>
+                ^top-state.io.output-link <out>)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type single-word-response
+          ^fields.word ok)
+   (<status> ^performed.learning-event <de>)
+   (<de> ^type game
+         ^originator agent)
+}
+
+
+
 #TODO give everything primary rtype
 #check same primary return type (in future need to deal with different param usage of concepts)
 sp {satisfy-predicate-conditions*elaborate*condition-instance
