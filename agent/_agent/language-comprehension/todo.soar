@@ -1,33 +1,40 @@
 ###    Need to change that in right-left.soar
 
-###  Take advantage of termination for ambiguity in merging - if have hit "." merge with required.
-###
-###                    ^semantic-entity-type relation
-###                    ^semantic-structure predicate
-### +1. Conjunctions for VP and VP - need VP to promote to CP
-### +2. "that location" should work (instead of it thinking it is getting a relative clause).
+################################################################################
 
-### -3. Changes because of ^depth in smem retrieval
-### -6. Make comprehend-word one operator.
-### -1. Get chunking working correctly (again)
-### -2. Get terminate-sentence working with chunking
-### -3. Get skipped sentences working (Turn the stove on. The stove is on. The stove is turned on.)
-### -4. Construction that starts with an adverb: "Carefully pick up ..."
-###  7. Spreading activation experimentation
-###  9. Learn new comprehend-word operators so can learn control knowledge to select
-###     between them (including RL).
-###  11. For constraints such as movable - need more consistent representation and need to be able to have objects
-###      objects inherit such features - such as from a category (block1). For now, comment on these constraints.
+#### Soar stuff
+### 1. Changes because of ^depth in smem retrieval
+### 2. Get chunking working correctly (again)
+### 3. Get terminate-sentence working with chunking
+### 4. Spreading activation experimentation
 ####
+#### Rosie Structural Stuff
+### 2. Make comprehend-word one operator.
+### 3. Exclusive should also be able to be required
+### 4. Conjunctions for VP and VP - need VP to promote to CP
+### 5. Learn new comprehend-word operators so can learn control knowledge to select between them (including RL).
+### 6. For constraints such as movable - need more consistent representation and need to be able to have objects
+###      objects inherit such features - such as from a category (block1). For now, comment on these constraints.
+### 7. When adding new objects to dialog-world.objects, should also be adding relations that 
+###    are mentioned in the sentence. Can't wait for downstream processing because can be referred to
+###    in follow on clause of same sentence. Maybe need to send semantics downstream immediately as
+###    opposed to waiting for end of sentence?  "Store a red block that is behind the green block."  
+###    "The goal is that a red block is on a green block" "The goal is that a red block on a green block is under the white block."
+### 8. Take advantage of termination for ambiguity in merging - if have hit "." merge with required.
+### 9. More robust to all of the failures - still produce semantics if fail. 
+###
+#### Linguistic stuff
+### 1. mission determiners -- next to [ ] enemy locations - usually plurals 
+### 2. "that location" should work (instead of it thinking it is getting a relative clause).
+### 3.  there are more [Xs] than [Ys]
+### 4. X and Y flank Z [inverse of between] 
+### 5. Get skipped sentences working (Turn the stove on. The stove is on. The stove is turned on.)
+### 6. Construction that starts with an adverb: "Carefully pick up ..."
+### 7. Handle both uses of left and right
+### 8. more uses of conjunction  move x and y 
+### 9. has the same rank as. Has a higher rank than; has more X than Y's 
 
-###########
-# 1. When adding new objects to dialog-world.objects, should also be adding relations that 
-#    are mentioned in the sentence. Can't wait for downstream processing because can be referred to
-#    in follow on clause of same sentence. Maybe need to send semantics downstream immediately as
-#    opposed to waiting for end of sentence?  "Store a red block that is behind the green block."  
-#    "The goal is that a red block is on a green block" "The goal is that a red block on a green block is under the white block."
-
-########################################3
+################################################################################
 ### Change Log
 ### 8/23/2015
 # 1. Replaced ground-referent/failed-grounding.soar: ground-referent*apply*failed-grounding*indefinite*non-location ...*location with 
@@ -55,3 +62,43 @@
 # 8/25/2015
 # 1. created mobile-task-instructions-v2.soar - most of today's changes are to make those sentences work.
 # 2. add "remember .. as ..." to verbs; "recall DP"; "stapler" as noun; visible as adjective; message as noun; Bob; heard; said; response; question;  current; soar (adj) main (adj).
+# 3. remove ground-referent*apply*index-scene-objects*create*current-location*object and add ^property current for the current location and ^property starting for the starting location.
+# 4. modify comprehension*propose*process-missing-assigner*before*x so it doesn't apply if the 
+#    assigner that is being removed has a potential receiver with the structure as a subpart.
+# 5. Add remember-if because too hard to get working as combination of existing construction
+# 6. modify comprehension*elaborate*possible-merge so it won't apply if there is another require
+#    assigner that must come before the assigner being considered for the merge.
+#
+# 8/27/2015
+# 1. Modify ground-referent*apply*failed-grounding*property16 so it doesn't copy handle so often. REquires updating expectations. 
+# 2. Change how "it" is used - cover missing cases.
+
+#
+# 9/1/2015
+# 1. Added rules to copy constraints in ground-referent from the ^parameter to constraint - had some constraints (especially relations in "to the right of" lost.
+# 2. Modify merge to reject merge with right/left-noun that don't make sense
+
+# 9/2/2015
+# 1. For new games added lots of new nouns, verbs, prepositions (between) - need to do more on between.
+# 2. Add special flag ^strip-assigners true for "named" so that what follows it is just picked up without it having to fill any assigners.
+# 3. added apply*merge*constraint*preposition-noun-special to handle special case of named preposition - this is surely a hack.
+# 4. Add ^hypothetical true to parent receiver - when encounter, add ^hypothetical true to segment. Change to if.soar and comprehend-word. 
+# 5. If ^hypothetical true, on multiple grounding, assume need a description, not a grounding. Modify process-multiple-grounding.soar to mark prototype-referents none. [restricted to only multiples on 9/4]
+# 6. Disabled *-DP-V as it was causing problems.
+
+# 9/3/2015 
+# 1. Modified If construction so it is C and then converts to CP - otherwise it merges too early
+# 2. Modify selection rules in comprehend-construction to subtly change when it is selected relative to merge.
+# 3. Eliminate "," as option in IF - so Then can be required.
+
+# 9/4/2015 
+# 1. Constrained comprehension*propose*process-missing-assigner*new so doesn't knock out possible future matches.
+# 2. Modify change from 9/2: 5 - need to restrict to only when expecting multiples. If definitive - try to pick one.
+# 3. Add propose*process-semantics*DP-with-of-DP*referent so it picks up a referent if one exists for a relation
+
+# 9/6/2015
+# 1. Remove referent literal from there-is constructions. Not sure why it was there (sic).
+
+#9/8/2015
+# 1. Modify merge-apply.soar and process-semantics and process-semantics.soar to support ternary relations (between)
+# 2. Removed place as a noun and made it a verb
