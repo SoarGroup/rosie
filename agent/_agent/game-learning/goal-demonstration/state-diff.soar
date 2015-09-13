@@ -143,8 +143,8 @@ sp {state-diff*apply*copy-new-relationships*copy*2arg
              -^attend.relation <rel-name>
               ^initial.relationships <initial-rels>
               ^final.relationships.relations <final-rel>
-              ^valid-objects.object.id <ida>
-              ^valid-objects.object.id <idb>
+              ^valid-objects.object <ida>
+              ^valid-objects.object <idb>
               ^valid-relations.relation <rel-name>
               ^copied-relations <copied>)
    (<final-rel> ^name <rel-name>
@@ -170,9 +170,9 @@ sp {state-diff*apply*copy-new-relationships*copy*3arg
              -^attend.relation <rel-name>
               ^initial.relationships <initial-rels>
               ^final.relationships.relations <final-rel>
-              ^valid-objects.object.id <ida>
-              ^valid-objects.object.id <idb>
-              ^valid-objects.object.id <idc>
+              ^valid-objects.object <ida>
+              ^valid-objects.object <idb>
+              ^valid-objects.object <idc>
               ^valid-relations.relation <rel-name>
               ^copied-relations <copied>)
    (<final-rel> ^name <rel-name>
@@ -280,14 +280,12 @@ sp {state-diff*apply*copy-objects*copy*object*in*attend
    (state <s> ^name state-diff
               ^operator.name copy-objects
               ^attend.object <obj>
-              ^final.object-desc-set.obj-desc <desc>
-              ^object-set <obj-set>
-              ^object-desc-set <desc-set>)
-   (<obj> ^id <id>)
-   (<desc> ^id <id>)
+              ^final.objects.object <ocj>
+              ^object-set <obj-set>)
+             # ^object-desc-set <desc-set>)
 -->
    (<obj-set> ^object <obj>)
-   (<desc-set> ^obj-desc <desc>)
+ #  (<desc-set> ^obj-desc <desc>)
 }
 
 # Copy an object if it was in a copied-relation
@@ -295,15 +293,15 @@ sp {state-diff*apply*copy-objects*copy*object*from*relationship
    (state <s> ^name state-diff
               ^operator.name copy-objects
               ^object-set <obj-set>
-              ^object-desc-set <desc-set>
-              ^copied-relations.<rel-name>.{<< 1 2 3 >>} <id>
-              ^final.objects.object <obj>
-              ^final.object-desc-set.obj-desc <desc>)
-   (<obj> ^id <id>)
-   (<desc> ^id <id>)
+#              ^object-desc-set <desc-set>
+              ^copied-relations.<rel-name>.{<< 1 2 3 >>} <obj>
+              ^final.objects.object <obj>)
+              #^final.object-desc-set.obj-desc <desc>)
+#   (<obj> ^id <id>)
+#   (<desc> ^id <id>)
 -->
    (<obj-set> ^object <obj>)
-   (<desc-set> ^obj-desc <desc>)
+ #  (<desc-set> ^obj-desc <desc>)
 }
    
 #
@@ -356,53 +354,81 @@ sp {state-diff*apply*copy-predicates*mark*done
 -->
    (<s> ^copied-predicates true)
 }
-
-# Copy a predicate if it has changed between initial and final
+sp {state-diff*apply*copy-predicates*object-descriptions
+   (state <s> ^name state-diff
+              #^operator.name copy-predicates
+              ^predicate-set <preds>
+              ^object-set.object <obj>
+              ^valid-objects.object <obj>)
+   (<obj> ^predicates.category <type>)
+-->
+   (<preds> ^<obj> <description>)
+   (<description> ^type <type>)
+}
+#TODO umm all predicates get added??? will even use?
 sp {state-diff*apply*copy-predicates*create*diff*changed
    (state <s> ^name state-diff
               ^operator.name copy-predicates
-              ^initial.predicate-set.predicate <initial-pred>
+             # ^initial.predicate-set.predicate <initial-pred>
               ^final.predicate-set.predicate <final-pred>
               ^predicate-set <preds>
+              ^object-set.object <obj>
               ^valid-predicates.predicate <name>
               ^valid-objects.object <obj>)
-   (<initial-pred> ^object <obj> ^name <name> ^value <val>)
-   (<final-pred> ^object <obj> ^name <name> ^value {<val2> <> <val>})
+  # (<initial-pred> ^object <obj> ^name <name> ^value <val>)
+   (<final-pred> ^object <obj> ^name <name> ^value <val2>)
+    (<preds> ^<obj> <desc>)
 -->
    (<preds> ^predicate <new-pred>)
    (<new-pred> ^object <obj> ^name <name> ^value <val2>)
+   (<desc> ^<name> <val2>)
 }
-
-# The predicate does not exist in the initial state
-sp {state-diff*apply*copy-predicates*create*diff*new
-   (state <s> ^name state-diff
-              ^operator.name copy-predicates
-              ^initial.predicate-set <initial-set>
-              ^final.predicate-set.predicate <final-pred>
-              ^predicate-set <preds>
-              ^valid-predicates.predicate <name>
-              ^valid-objects.object <obj>)
-   -{(<initial-set> ^predicate <initial-pred>)
-     (<initial-pred> ^object <obj> ^name <name>)}
-   (<final-pred> ^object <obj> ^name <name> ^value <val>)
--->
-   (<preds> ^predicate <new-pred>)
-   (<new-pred> ^object <obj> ^name <name> ^value <val>)
-}
- 
-# The predicate is in the attend list
-sp {state-diff*apply*copy-predicates*create*in*attend
-   (state <s> ^name state-diff
-              ^operator.name copy-predicates
-              ^attend.predicate <name>
-              ^final.predicate-set.predicate <final-pred>
-              ^predicate-set <preds>
-              ^valid-objects.object <obj>)
-   (<final-pred> ^object <obj> ^name <name> ^value <val>)
--->
-   (<preds> ^predicate <new-pred>)
-   (<new-pred> ^object <obj> ^name <name> ^value <val>)
-}
+# Copy a predicate if it has changed between initial and final
+#sp {state-diff*apply*copy-predicates*create*diff*changed
+#   (state <s> ^name state-diff
+#              ^operator.name copy-predicates
+#              ^initial.predicate-set.predicate <initial-pred>
+#              ^final.predicate-set.predicate <final-pred>
+#              ^predicate-set <preds>
+#              ^valid-predicates.predicate <name>
+#              ^valid-objects.object <obj>)
+#   (<initial-pred> ^object <obj> ^name <name> ^value <val>)
+#   (<final-pred> ^object <obj> ^name <name> ^value {<val2> <> <val>})
+#-->
+#   (<preds> ^predicate <new-pred>)
+#   (<new-pred> ^object <obj> ^name <name> ^value <val2>)
+#}
+#
+## The predicate does not exist in the initial state
+#sp {state-diff*apply*copy-predicates*create*diff*new
+#   (state <s> ^name state-diff
+#              ^operator.name copy-predicates
+#              ^initial.predicate-set <initial-set>
+#              ^final.predicate-set.predicate <final-pred>
+#              ^predicate-set <preds>
+#              ^valid-predicates.predicate <name>
+#              ^valid-objects.object <obj>)
+#   -{(<initial-set> ^predicate <initial-pred>)
+#     (<initial-pred> ^object <obj> ^name <name>)}
+#   (<final-pred> ^object <obj> ^name <name> ^value <val>)
+#-->
+#   (<preds> ^predicate <new-pred>)
+#   (<new-pred> ^object <obj> ^name <name> ^value <val>)
+#}
+# 
+## The predicate is in the attend list
+#sp {state-diff*apply*copy-predicates*create*in*attend
+#   (state <s> ^name state-diff
+#              ^operator.name copy-predicates
+#              ^attend.predicate <name>
+#              ^final.predicate-set.predicate <final-pred>
+#              ^predicate-set <preds>
+#              ^valid-objects.object <obj>)
+#   (<final-pred> ^object <obj> ^name <name> ^value <val>)
+#-->
+#   (<preds> ^predicate <new-pred>)
+#   (<new-pred> ^object <obj> ^name <name> ^value <val>)
+#}
     
               
 
@@ -424,20 +450,20 @@ sp {state-diff*apply*copy-extra-relationships*default
    (<s> ^copied-extra-relationships true)
 }
 
-sp {state-diff*apply*copy-extra-relationships*predicates
-   (state <s> ^name state-diff
-              ^operator.name copy-extra-relationships
-              ^predicate-set <preds>
-              ^final.predicate-set.predicate <final-pred>
-              ^valid-predicates.predicate <pred-name>
-              ^object-set.object <obj>)
-   (<final-pred> ^object <obj> ^name <pred-name> ^value <val>)
-   -{(<preds> ^predicate <copy-pred>)
-     (<copy-pred> ^object <obj> ^name <pred-name> ^value <val>)}
--->
-   (<preds> ^predicate <new-pred>)
-   (<new-pred> ^object <obj> ^name <pred-name> ^value <val>)
-}
+#sp {state-diff*apply*copy-extra-relationships*predicates
+#   (state <s> ^name state-diff
+#              ^operator.name copy-extra-relationships
+#              ^predicate-set <preds>
+#              ^final.predicate-set.predicate <final-pred>
+#              ^valid-predicates.predicate <pred-name>
+#              ^object-set.object <obj>)
+#   (<final-pred> ^object <obj> ^name <pred-name> ^value <val>)
+#   -{(<preds> ^predicate <copy-pred>)
+#     (<copy-pred> ^object <obj> ^name <pred-name> ^value <val>)}
+#-->
+#   (<preds> ^predicate <new-pred>)
+#   (<new-pred> ^object <obj> ^name <pred-name> ^value <val>)
+#}
 
 
 sp {state-diff*apply*copy-extra-relationships*2args
@@ -446,8 +472,8 @@ sp {state-diff*apply*copy-extra-relationships*2args
               ^relationships <rels>
               ^final.relationships.relations <final-rel>
               ^valid-relations.relation <rel-name>
-              ^object-set.object.id <ida>
-              ^object-set.object.id <idb>
+              ^object-set.object <ida>
+              ^object-set.object <idb>
               ^copied-relations <copied>)
    (<final-rel> ^name <rel-name> ^instance <instance>)
    (<instance> ^1 <ida> ^2 <idb> -^c)
@@ -464,9 +490,9 @@ sp {state-diff*apply*copy-extra-relationships*3args
               ^relationships <rels>
               ^final.relationships.relations <final-rel>
               ^valid-relations.relation <rel-name>
-              ^object-set.object.id <ida>
-              ^object-set.object.id <idb>
-              ^object-set.object.id <idc>
+              ^object-set.object <ida>
+              ^object-set.object <idb>
+              ^object-set.object <idc>
               ^copied-relations <copied>)
    (<final-rel> ^name <rel-name> ^instance <instance>)
    (<instance> ^1 <ida> ^2 <idb> ^c <idc>)
@@ -501,7 +527,7 @@ sp {state-diff*apply*complete
               ^operator.name complete
               ^object-set <os>
               ^relationships <rels>
-              ^object-desc-set <ods>
+#              ^object-desc-set <ods>
               ^predicate-set <preds>
 #              ^extra-relationships <rels2>
               ^superstate.operator <op>
@@ -511,5 +537,5 @@ sp {state-diff*apply*complete
 #    -{(<rels> ^relations.instance <instance>)}}
 -->
    (<ss> ^diff-result <res>)
-   (<res> ^relationships <rels> ^objects <os> ^object-desc-set <ods> ^predicates <preds>)
+   (<res> ^relationships <rels> ^objects <os> ^predicates <preds>)#^object-desc-set <ods>
 }
