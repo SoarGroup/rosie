@@ -72,7 +72,9 @@ public class AgentMessageParser
 			return translateAskAboutItem(fieldsId);
 		} else if(type.equals("describe-goal-state")){
 			return translateGoalState(fieldsId);
-		}
+		} else if(type.equals("describe-final-goal-state")){
+		return translateFinalGoalState(fieldsId);
+	}
 		return null;
 	}
 	
@@ -131,11 +133,24 @@ public class AgentMessageParser
 		return "I was unable to carry out that instruction";
 	}
 	
-	
+    public static String translateFinalGoalState(Identifier fields){
+		String result = "Ok, I've learned that the goal state is that ";
+		result += getGoalState(fields);
+		return result;
+		
+    }
 	public static String translateGoalState(Identifier fields){
 		
-		Identifier relationships = SoarUtil.getIdentifierOfAttribute(fields, "relationships");
 		String result = "I think the goal state is that ";
+		result += getGoalState(fields);
+		return result;
+		
+	}
+	
+	public static String getGoalState(Identifier fields){
+		Identifier relationships = SoarUtil.getIdentifierOfAttribute(fields, "relationships");
+		ArrayList<String> objects = new ArrayList<String>();
+		String result = "";
 		
 		for(int index = 0; index < relationships.GetNumberChildren(); index++)
 		{
@@ -159,6 +174,33 @@ public class AgentMessageParser
             Identifier object2 = SoarUtil.getIdentifierOfAttribute(relation, "2");
             String objDescription1 = generateObjectDescriptionNew(object1);
             String objDescription2 = generateObjectDescriptionNew(object2);
+            
+            if (objects.contains(object1.GetValueAsString()))
+            {
+            	objDescription1 = "the " + objDescription1;
+            }
+            else
+            {
+            	objects.add(object1.GetValueAsString());
+    			if (startsWithVowel(objDescription1))
+    				objDescription1 = "an " + objDescription1;
+    			else
+    				objDescription1 = "a " + objDescription1;
+            }
+            
+            if (objects.contains(object2.GetValueAsString()))
+            {
+            	objDescription2 = "the " + objDescription2;
+            }
+            else
+            {
+            	objects.add(object2.GetValueAsString());
+    			if (startsWithVowel(objDescription2))
+    				objDescription2 = "an " + objDescription2;
+    			else
+    				objDescription2 = "a " + objDescription2;
+            }
+            
             result += objDescription1 + " is " + preposition + " " + objDescription2;
 		}
 		return result;
@@ -177,6 +219,10 @@ public class AgentMessageParser
 			return "A " + desc + ".";
 		}
 		
+	}
+	public static boolean startsWithVowel(String adj){
+		return (adj.startsWith(" a") || adj.startsWith(" e") || adj.startsWith(" i") || 
+				adj.startsWith(" o") || adj.startsWith(" u"));
 	}
 	
 //    public static String translateAgentMessage(Identifier id){
@@ -377,17 +423,18 @@ public class AgentMessageParser
 		}
 		
 		String desc = "";
-		boolean init = true;
+		//boolean init = true;
 		for(String adj : adjectives){
+			/*
 			desc = "a";
 			if (init && (adj.startsWith(" a") || adj.startsWith(" e") || adj.startsWith(" i") || 
 						adj.startsWith(" o") || adj.startsWith(" u")))
 				desc = "an";
 			init = false;
-			
-			desc += " " + adj;
+			*/
+			desc += adj + " ";
 		}
-		desc += " " + root;
+		desc += root;
 		return desc;
 	}
 //

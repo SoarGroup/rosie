@@ -1,4 +1,3 @@
-
 sp {setup-search*elaborate*nlp-set*conditions
    (state <s> ^name setup-search
               ^gtype <type>
@@ -18,44 +17,73 @@ sp {setup-search*elaborate*sub-conditionszz
    (<t> ^condition <cond>)
 }
 
+#first do a deep copy
 sp {setup-search*elaborate*tcn
    (state <s> ^name setup-search
-              ^top-state.current-game <cg>
+              ^top-state.dialog-context.structure <cg>
               ^superstate.operator <op>)
    (<op> ^game-name <name>)
-   (<cg> ^name <name> ^goal <goal>)# ^multiplayer <m>)
+   (<cg> ^handle <name> ^goals.goal <goal>)
 -->
    (<s> ^gtype action
         ^gtype goal
-        ^multiplayer false
-        ^goal <goal>)
-}
-sp {setup-search*elaborate*tcn*actions
-   (state <s> ^name setup-search
-              ^top-state.current-game <cg>
-              ^superstate.operator <op>)
-   (<op> ^game-name <name>)
-   (<cg> ^name <name> ^action <act>)
--->
-   (<s> ^action <act>)
+        ^problemspace games
+        ^multiplayer false)
 }
 
-sp {setup-search*elaborate*list-games
+#TODO need below?
+sp {setup-search*elaborate*copy-stucture*elaborate*goal
    (state <s> ^name setup-search
-              ^superstate.operator <op>)
-   (<op> ^game-name <name>)
+              ^copy-count 12
+              ^copy-structure.destination <dest>)
+    (<dest> ^goals.goal <goal>)
 -->
-   (<s>  ^objects <o>)
-   (<s> ^prepositions <p>
-        ^problemspace games)
+	(<s> ^goal <goal>)
 }
+sp {setup-search*elaborate*copy-stucture*elaborate*action
+   (state <s> ^name setup-search
+              ^copy-count 12
+              ^copy-structure.destination <dest>)
+    (<dest> ^actions.action <act>)
+-->
+	(<s> ^action <act>)
+}
+sp {setup-search*elaborate*copy-stucture
+   (state <s> ^name setup-search
+              ^top-state.dialog-context.structure <cg>)
+-->
+   (<s> ^copy-structure <copy> ^copy-count 0 ^copy-map <cm> ^pending-map <pm>)
+   (<copy> ^source <cg>
+           ^destination <dest>
+            ^copy-type deep)
+}
+#sp {setup-search*elaborate*tcn*actions
+#   (state <s> ^name setup-search
+#              ^top-state.dialog-context.structure <cg>
+#              ^superstate.operator <op>)
+#   (<op> ^game-name <name>)
+#   (<cg> ^name <name> ^actions.action <act>)
+#-->
+#   (<s> ^action-to-copy <act>)
+#}
+
+
+
+#sp {setup-search*elaborate*list-games
+#   (state <s> ^name setup-search
+#              ^superstate.operator <op>)
+#   (<op> ^game-name <name>)
+#-->
+#   (<s> ^objects <o>)
+#   (<s> ^prepositions <p>
+#        ^problemspace games)
+#}
 
 sp {setup-search*propose*find-solution
    (state <s> ^name setup-search
               ^superstate.operator <op>)
    (<op> ^game-name <name>)
 -->
-#   (interrupt)
    (<s> ^operator <o> + =)
    (<o> ^name find-solution
         ^game-name <name>)
@@ -72,7 +100,7 @@ sp {find-solution*propose*game-search*elab-depth-limit
 
 sp {find-solution*propose*game-search*elab-depth-limit*tower
    (state <s> ^name find-solution
-   	      ^superstate.operator.game-name tower-chunk)
+   	      ^superstate.operator.game-name tower-of-hanoi1)
 -->
    (<s> ^depth-limit 7)
 }
@@ -88,14 +116,14 @@ sp {find-solution*propose*game-search*elab-depth-limit*frog
 sp {find-solution*propose*game-search
    (state <s> ^name find-solution
               ^superstate.multiplayer false
-              ^superstate.objects <objs>
+              #^world.objects <objs>
               ^depth-limit <dl>
               ^superstate.operator <op>)
    (<op> ^game-name <name>)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name game-search
-        ^objects <objs>
+        #^objects <objs>
         ^dcount 0
         ^depth-limit <dl> #todo fix
         ^list.game <g>
@@ -106,13 +134,13 @@ sp {find-solution*propose*game-search
 sp {find-solution*propose*game-search*muliplayer
    (state <s> ^name find-solution
               ^superstate.multiplayer true
-              ^superstate.objects <objs>
+              #^world.objects <objs>
               ^superstate.operator <op>)
    (<op> ^game-name <name>)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name game-search
-        ^objects <objs>
+        #^objects <objs>
         ^dcount 0
         ^depth-limit 1
         ^list.game <g>
@@ -121,86 +149,95 @@ sp {find-solution*propose*game-search*muliplayer
    (<g> ^game <name> ^type action goal)
 }
 
-sp {setup-search*propose*copy-top-state
-   (state <s> ^name setup-search
-             -^prepositions.prep.instance.a)
--->
-   (<s> ^operator <o> + >)
-   (<o> ^name copy-top-state)
-}
 
-sp {setup-search*apply*copy-top-state*objects
+sp {setup-search*elaborate*problem-space*predicate-structure
    (state <s> ^name setup-search
-              ^objects <objs>
-              ^operator.name copy-top-state
-              ^top-state.object <obj>)
-   (<obj> ^id <id> ^category <cat>)
+              ^top-state.world <world2>)
 -->
-   (<objs> ^object <obj2>)
-   (<obj2> ^id <id> ^type <cat>)
+   (<s> ^problem-space.world <world>)
+   (<world> ^source <world2>
+            ^copy-type deep)
 }
-
-sp {setup-search*apply*copy-top-state*objects*desc
-   (state <s> ^name setup-search
-              ^objects.object <obj2>
-              ^operator.name copy-top-state
-              ^top-state.object <obj>)
-   (<obj> ^id <id> ^linguistic-desc.word <word>)
-   (<obj2> ^id <id>)
--->
-   (<obj2> ^word <word>)
-}
-sp {setup-search*apply*copy-top-state*objects*desc*percept
-   (state <s> ^name setup-search
-              ^objects.object <obj2>
-              ^operator.name copy-top-state
-              ^top-state.object <obj>)
-   (<obj> ^id <id> ^object-desc.<< color shape size >> <word>)
-   (<obj2> ^id <id>)
--->
-   (<obj2> ^word <word>)
-}
-
-sp {setup-search*apply*copy-top-state*preps
-   (state <s> ^name setup-search
-              ^prepositions <p>
-              ^operator.name copy-top-state
-              ^top-state.prepositions.<< prep prep2 >> <prep>)
-   (<prep> ^name <name>)
--->
-   (<p> ^prep <prep2>)
-   (<prep2> ^name <name>)
-}
-sp {setup-search*apply*copy-top-state*instances
-   (state <s> ^name setup-search
-              ^objects <o>
-              ^prepositions.prep <prep2>
-              ^operator.name copy-top-state
-              ^top-state.prepositions.<< prep prep2 >> <prep>)
-   (<o> ^object <obj> ^object <obj2>)
-   (<obj> ^id <ida>)
-   (<obj2> ^id <idb>)
-   (<prep> ^name <name> ^instance <instance>)
-   (<prep2> ^name <name>)
-   (<instance> ^a <ida> ^b <idb> -^c)
--->
-   (<prep2> ^instance <instance2>)
-   (<instance2> ^a <obj> ^b <obj2>)
-}
-sp {setup-search*apply*copy-top-state*instances*3arg
-   (state <s> ^name setup-search
-              ^objects <o>
-              ^prepositions.prep <prep2>
-              ^operator.name copy-top-state
-              ^top-state.prepositions.prep2 <prep>)
-   (<o> ^object <obj> ^object <obj2> ^object <obj3>)
-   (<obj> ^id <ida>)
-   (<obj2> ^id <idb>)
-   (<obj3> ^id <idc>)
-   (<prep> ^name <name> ^instance <instance>)
-   (<prep2> ^name <name>)
-   (<instance> ^a <ida> ^b <idb> ^c <idc>)
--->
-   (<prep2> ^instance <instance2>)
-   (<instance2> ^a <obj> ^b <obj2> ^c <obj3>)
-}
+#sp {setup-search*propose*copy-top-state
+#   (state <s> ^name setup-search
+#             -^prepositions.prep.instance.a)
+#-->
+#   (<s> ^operator <o> + >)
+#   (<o> ^name copy-top-state)
+#}
+#
+#sp {setup-search*apply*copy-top-state*objects
+#   (state <s> ^name setup-search
+#              ^objects <objs>
+#              ^operator.name copy-top-state
+#              ^top-state.object <obj>)
+#   (<obj> ^id <id> ^category <cat>)
+#-->
+#   (<objs> ^object <obj2>)
+#   (<obj2> ^id <id> ^type <cat>)
+#}
+#
+#sp {setup-search*apply*copy-top-state*objects*desc
+#   (state <s> ^name setup-search
+#              ^objects.object <obj2>
+#              ^operator.name copy-top-state
+#              ^top-state.object <obj>)
+#   (<obj> ^id <id> ^linguistic-desc.word <word>)
+#   (<obj2> ^id <id>)
+#-->
+#   (<obj2> ^word <word>)
+#}
+#sp {setup-search*apply*copy-top-state*objects*desc*percept
+#   (state <s> ^name setup-search
+#              ^objects.object <obj2>
+#              ^operator.name copy-top-state
+#              ^top-state.object <obj>)
+#   (<obj> ^id <id> ^object-desc.<< color shape size >> <word>)
+#   (<obj2> ^id <id>)
+#-->
+#   (<obj2> ^word <word>)
+#}
+#
+#sp {setup-search*apply*copy-top-state*preps
+#   (state <s> ^name setup-search
+#              ^prepositions <p>
+#              ^operator.name copy-top-state
+#              ^top-state.prepositions.<< prep prep2 >> <prep>)
+#   (<prep> ^name <name>)
+#-->
+#   (<p> ^prep <prep2>)
+#   (<prep2> ^name <name>)
+#}
+#sp {setup-search*apply*copy-top-state*instances
+#   (state <s> ^name setup-search
+#              ^objects <o>
+#              ^prepositions.prep <prep2>
+#              ^operator.name copy-top-state
+#              ^top-state.prepositions.<< prep prep2 >> <prep>)
+#   (<o> ^object <obj> ^object <obj2>)
+#   (<obj> ^id <ida>)
+#   (<obj2> ^id <idb>)
+#   (<prep> ^name <name> ^instance <instance>)
+#   (<prep2> ^name <name>)
+#   (<instance> ^a <ida> ^b <idb> -^c)
+#-->
+#   (<prep2> ^instance <instance2>)
+#   (<instance2> ^a <obj> ^b <obj2>)
+#}
+#sp {setup-search*apply*copy-top-state*instances*3arg
+#   (state <s> ^name setup-search
+#              ^objects <o>
+#              ^prepositions.prep <prep2>
+#              ^operator.name copy-top-state
+#              ^top-state.prepositions.prep2 <prep>)
+#   (<o> ^object <obj> ^object <obj2> ^object <obj3>)
+#   (<obj> ^id <ida>)
+#   (<obj2> ^id <idb>)
+#   (<obj3> ^id <idc>)
+#   (<prep> ^name <name> ^instance <instance>)
+#   (<prep2> ^name <name>)
+#   (<instance> ^a <ida> ^b <idb> ^c <idc>)
+#-->
+#   (<prep2> ^instance <instance2>)
+#   (<instance2> ^a <obj> ^b <obj2> ^c <obj3>)
+#}
