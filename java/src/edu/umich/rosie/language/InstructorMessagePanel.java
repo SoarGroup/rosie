@@ -3,8 +3,12 @@ package edu.umich.rosie.language;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Properties;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -17,9 +21,27 @@ public class InstructorMessagePanel extends JPanel{
 	private ChatPanel chat;
 	private HashMap<String, JButton> messages;
 	
-	public InstructorMessagePanel(ChatPanel chat){
+	public InstructorMessagePanel(ChatPanel chat, Properties props){
 		this.chat = chat;
 		this.messages = new HashMap<String, JButton>();
+		
+		String messageFile = props.getProperty("messages-file", null);
+		if(messageFile != null){
+			try{
+				BufferedReader br = new BufferedReader(new FileReader(messageFile));
+				try {
+					String line = br.readLine();
+					while(line != null){
+						addMessage(line);
+						line = br.readLine();
+					}
+				} finally {
+				    br.close();
+				}
+			} catch(IOException e){
+				System.err.println("InstructorMessagePanel: Failed to read file " + messageFile);
+			}
+		}
 
 		initPanel();
 	}

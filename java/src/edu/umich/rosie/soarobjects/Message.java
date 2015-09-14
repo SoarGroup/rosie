@@ -44,11 +44,25 @@ public class Message implements ISoarObject
         	punct = lastChar;
         }
         
+        // Extract quoted string to add as a single symbol
+        String quote = null;
+        int beginQuote = message.indexOf('"');
+        if(beginQuote >= 0){
+        	int endQuote = message.indexOf('"', beginQuote + 1);
+        	if(endQuote >= 0){
+        		quote = message.substring(beginQuote+1, endQuote);
+        		message = message.substring(0, beginQuote) + "_XXX_" + message.substring(endQuote+1);
+        	}
+        }
+        
         Identifier nextID = messageId.CreateIdWME("next");
         String[] words = message.split(" ");
         for(String word : words){
         	if(word.isEmpty()){
         		continue;
+        	}
+        	if(word.equals("_XXX_")){
+        		word = quote;
         	}
         	nextID.CreateStringWME("spelling", word.toLowerCase());
         	nextID = nextID.CreateIdWME("next");

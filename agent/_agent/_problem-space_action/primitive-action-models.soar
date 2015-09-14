@@ -1,4 +1,7 @@
-### implement action-model for pick-up 
+##############################################
+# pick-up
+
+# Mark the object as grabbed
 sp {action*apply*pickup*do*action-model
    (state <s> ^problem-space.name action
               ^problem-space.action.type simulate
@@ -11,6 +14,7 @@ sp {action*apply*pickup*do*action-model
             ^arm-status not-grabbed -)
 }
 
+# Remove any in/on relations the object has
 sp {action*apply*pickup*do*action-model*remove*in*on*relation
    (state <s> ^problem-space.name action
               ^problem-space.action.type simulate
@@ -25,8 +29,10 @@ sp {action*apply*pickup*do*action-model*remove*in*on*relation
    (<pred> ^instance <i> -)
 }
 
+##############################################
+# put-down
 
-# action model for close
+# Mark the object as not-grabbed
 sp {action*apply*putdown*do*action-model*arm-status
    (state <s> ^problem-space.name action
               ^problem-space.action.type simulate
@@ -39,6 +45,7 @@ sp {action*apply*putdown*do*action-model*arm-status
    (<obj1-preds> ^arm-status not-grabbed)
 }
 
+# Add the expected relation from the arg2
 sp {action*apply*putdown*do*action-model*on
    (state <s> ^problem-space.name action
               ^problem-space.action.type simulate
@@ -54,6 +61,7 @@ sp {action*apply*putdown*do*action-model*on
    (<i> ^1 <obj1> ^2 <obj2>)
 }
 
+# Add the default in relation if there is no arg2
 sp {action*apply*put-down*do*action-model*add*in*relation
    (state <s> ^problem-space.name action
               ^problem-space.action.type simulate
@@ -61,7 +69,8 @@ sp {action*apply*put-down*do*action-model*add*in*relation
               ^world.robot.current-location <loc>
               ^world.predicates.predicate <pred>)
    (<o> ^name initiate-put-down1
-        ^arg1.id <obj>)
+        ^arg1.id <obj>
+       -^arg2)
    (<pred> ^handle in1)
    (<obj> ^predicates.arm-status grabbed)
 -->
@@ -69,7 +78,11 @@ sp {action*apply*put-down*do*action-model*add*in*relation
    (<i> ^1 <obj> ^2 <loc>)
 }
 
-# action model for go-to-location
+##############################################
+# go-to-location
+
+# Add the location as the current-location for the robot
+#  And marks as visible
 sp {action*apply*go-to-location*do*action-model*add*new*location
    (state <s> ^problem-space.name action
               ^problem-space.action.type simulate
@@ -77,10 +90,15 @@ sp {action*apply*go-to-location*do*action-model*add*new*location
               ^world.robot <robot>)
    (<o> ^name initiate-go-to-location1
         ^arg2.2 <new-loc>)
+   (<new-loc> ^predicates <preds>)
 -->
    (<robot> ^current-location <new-loc>)
+   (<preds> ^visible false -
+            ^visible true)
 }
 
+# Remove the old current-location from the robot
+#   And mark it as not visible
 sp {action*apply*go-to-location*do*action-model*remove*old*location
    (state <s> ^problem-space.name action
               ^problem-space.action.type simulate
@@ -89,11 +107,55 @@ sp {action*apply*go-to-location*do*action-model*remove*old*location
    (<o> ^name initiate-go-to-location1
         ^arg2.2 <new-loc>)
    (<robot> ^current-location { <old-loc> <> <new-loc> })
+   (<old-loc> ^predicates <preds>)
 -->
    (<robot> ^current-location <old-loc> -)
+   (<preds> ^visible true -
+            ^visible false)
+}
+
+# Any objects that are in the new location are marked as visible
+sp {action*apply*go-to-location*do*action-model*mark*new*object*visible
+   (state <s> ^problem-space.name action
+              ^problem-space.action.type simulate
+              ^operator <o>
+              ^world <world>)
+   (<o> ^name initiate-go-to-location1
+        ^arg2.2 <new-loc>)
+   (<world> ^predicates.predicate <in-pred>
+            ^objects.object <obj>)
+   (<in-pred> ^handle in1
+              ^instance <i>)
+   (<i> ^1 <obj> ^2 <new-loc>)
+   (<obj> ^predicates <preds>)
+-->
+   (<preds> ^visible false -
+            ^visible true)
+}
+
+# Any objects that are in the old location are marked as visible
+sp {action*apply*go-to-location*do*action-model*mark*old*objects*not*visible
+   (state <s> ^problem-space.name action
+              ^problem-space.action.type simulate
+              ^operator <o>
+              ^world <world>)
+   (<o> ^name initiate-go-to-location1
+        ^arg2.2 <new-loc>)
+   (<world> ^predicates.predicate <in-pred>
+            ^objects.object <obj>)
+   (<in-pred> ^handle in1
+              ^instance <i>)
+   (<i> ^1 <obj> ^2 { <old-loc> <> <new-loc> })
+   (<obj> ^predicates <preds>)
+-->
+   (<preds> ^visible true -
+            ^visible false)
 }
            
-# action model for open
+##############################################
+# open
+
+# Change the door from closed to open
 sp {action*apply*open*do*action-model
    (state <s> ^problem-space.name action
               ^problem-space.action.type simulate
@@ -106,7 +168,10 @@ sp {action*apply*open*do*action-model
             ^door1 open2)
 }
 
-# action model for close
+##############################################
+# close
+
+# Change the door predicate from open to closed
 sp {action*apply*close*do*action-model
    (state <s> ^problem-space.name action
               ^problem-space.action.type simulate
@@ -119,7 +184,10 @@ sp {action*apply*close*do*action-model
             ^door1 closed2)
 }
 
-# action model for turn-on
+##############################################
+# turn-on
+
+# Change the activation predicate from off to on
 sp {action*apply*turn-on*do*action-model
    (state <s> ^problem-space.name action
               ^problem-space.action.type simulate
@@ -132,7 +200,10 @@ sp {action*apply*turn-on*do*action-model
             ^activation1 on2)
 }
 
-# action model for turn-off
+##############################################
+# turn-off
+
+# Change the activation predicate from on to off
 sp {action*apply*turn-off*do*action-model
    (state <s> ^problem-space.name action
               ^problem-space.action.type simulate
@@ -143,4 +214,51 @@ sp {action*apply*turn-off*do*action-model
 -->
    (<preds> ^activation1 on2 -
             ^activation1 off2)
+}
+
+
+##############################################
+# remember
+
+# Adds source on the 2nd argument
+sp {action*apply*remember*do*action-model
+   (state <s> ^problem-space.name action
+              ^problem-space.action.type simulate
+          ^operator <op>)
+   (<op> ^name initiate-remember1
+         ^arg1.id <arg1>
+         ^arg2.id.predicates.<att> <val>)
+   (<arg1> ^predicates <preds>)
+-->
+   (<preds> ^<att> <val>)
+}
+
+##############################################
+# wait
+
+sp {action*apply*wait*do*action-model
+   (state <s> ^problem-space.name action
+              ^problem-space.action.type simulate
+              ^operator <op>
+              ^world <world>)
+   (<op> ^name initiate-wait1
+         ^until-clause.predicate <pred>)
+   (<world> ^predicates.predicate <on-pred>
+            ^objects.object <steak>
+            ^objects.object <stove>)
+   (<on-pred> ^handle on1
+              ^instance <i>)
+   (<i> ^1 <steak> ^2 <stove>)
+   (<steak> ^predicates <steak-preds>)
+   (<steak-preds> ^shape steak1)
+   (<stove> ^predicates <stove-preds>)
+   (<stove-preds> ^name stove
+                  ^door1 closed2
+                  ^activation1 on2)
+   (<pred> ^type state
+           ^handle cooked1
+           ^1 <steak>)
+-->
+   (<steak-preds> ^meat1 raw1 -
+                  ^meat1 cooked1)
 }

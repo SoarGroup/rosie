@@ -41,6 +41,8 @@ public class AgentMessageParser
 			simpleMessages.put("get-goal-info", "What is the goal?");
 			simpleMessages.put("no-action-context-for-goal", "I don't know what action that goal is for");
 			simpleMessages.put("get-next-subaction", "What do I do next?");
+			simpleMessages.put("confirm-pick-up", "I have picked up the object.");
+			simpleMessages.put("confirm-put-down", "I have put down the object.");
 		}
 		
 		String type = SoarUtil.getValueOfAttribute(id, "type");
