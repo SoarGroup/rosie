@@ -101,12 +101,22 @@ public class ChatPanel extends JPanel implements IMessagePasser.IMessageListener
 			DateFormat dateFormat = new SimpleDateFormat("mm:ss:SSS");
 			Date d = new Date();
 			
+			String fullMessage = dateFormat.format(d) + " ";
+
+			switch(message.type){
+			case INSTRUCTOR_MESSAGE:
+				fullMessage += "Mentor: ";
+				break;
+			case AGENT_MESSAGE:
+				fullMessage += "Agent: " ;
+				break;
+			}
+			
+			fullMessage += message.message + "\n";
+			
 			try{
 				int origLength = chatDoc.getLength();
-				chatDoc.insertString(origLength, dateFormat.format(d)+" ", msgStyle);
-			
-				int nextLength = chatDoc.getLength();
-				chatDoc.insertString(nextLength, message.message+"\n", msgStyle);
+				chatDoc.insertString(origLength, fullMessage, msgStyle);
 			} catch (BadLocationException e){
 				// Should never encounter this
 				System.err.println("Failed to add message to chat window");
