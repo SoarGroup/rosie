@@ -72,8 +72,11 @@ public class AgentMessageParser
 			return translateGiveItemRequest(fieldsId);
 		} else if(type.equals("ask-about-item")){
 			return translateAskAboutItem(fieldsId);
-			
-		}
+		} else if(type.equals("describe-goal-state")){
+			return translateGoalState(fieldsId);
+		} else if(type.equals("describe-final-goal-state")){
+		return translateFinalGoalState(fieldsId);
+	}
 		return null;
 	}
 	
@@ -132,6 +135,79 @@ public class AgentMessageParser
 		return "I was unable to carry out that instruction";
 	}
 	
+    public static String translateFinalGoalState(Identifier fields){
+		String result = "Ok, I've learned that the goal state is that ";
+		result += getGoalState(fields);
+		return result;
+		
+    }
+	public static String translateGoalState(Identifier fields){
+		
+		String result = "I think the goal state is that ";
+		result += getGoalState(fields);
+		return result;
+		
+	}
+	
+	public static String getGoalState(Identifier fields){
+		Identifier relationships = SoarUtil.getIdentifierOfAttribute(fields, "relationships");
+		ArrayList<String> objects = new ArrayList<String>();
+		String result = "";
+		
+		for(int index = 0; index < relationships.GetNumberChildren(); index++)
+		{
+            //WMElement wme = relationships.GetChild(index);
+			if (index != 0)
+				result+= " and ";
+//			WMElement el = descId.GetChild(c);
+//			String att = el.GetAttribute().toLowerCase();
+//			String val = el.GetValueAsString().toLowerCase();
+//			if(att.equals("name")){
+//				
+//			}
+		    WMElement wme = relationships.GetChild(index);
+		    Identifier relation = wme.ConvertToIdentifier();
+		    
+            String preposition = SoarUtil.getValueOfAttribute(relation, "name");
+            preposition = preposition.replace("1", "");
+            preposition = preposition.replace('-', ' ');
+            //expect more than one, loop
+            Identifier object1 = SoarUtil.getIdentifierOfAttribute(relation, "1");
+            Identifier object2 = SoarUtil.getIdentifierOfAttribute(relation, "2");
+            String objDescription1 = generateObjectDescriptionNew(object1);
+            String objDescription2 = generateObjectDescriptionNew(object2);
+            
+            if (objects.contains(object1.GetValueAsString()))
+            {
+            	objDescription1 = "the " + objDescription1;
+            }
+            else
+            {
+            	objects.add(object1.GetValueAsString());
+    			if (startsWithVowel(objDescription1))
+    				objDescription1 = "an " + objDescription1;
+    			else
+    				objDescription1 = "a " + objDescription1;
+            }
+            
+            if (objects.contains(object2.GetValueAsString()))
+            {
+            	objDescription2 = "the " + objDescription2;
+            }
+            else
+            {
+            	objects.add(object2.GetValueAsString());
+    			if (startsWithVowel(objDescription2))
+    				objDescription2 = "an " + objDescription2;
+    			else
+    				objDescription2 = "a " + objDescription2;
+            }
+            
+            result += objDescription1 + " is " + preposition + " " + objDescription2;
+		}
+		return result;
+	}
+	
 	public static String translateObjectDescription(Identifier fields){
 		Identifier descId = SoarUtil.getIdentifierOfAttribute(fields, "object");
 		if(descId == null){
@@ -145,6 +221,10 @@ public class AgentMessageParser
 			return "A " + desc + ".";
 		}
 		
+	}
+	public static boolean startsWithVowel(String adj){
+		return (adj.startsWith(" a") || adj.startsWith(" e") || adj.startsWith(" i") || 
+				adj.startsWith(" o") || adj.startsWith(" u"));
 	}
 	
 //    public static String translateAgentMessage(Identifier id){
@@ -313,6 +393,50 @@ public class AgentMessageParser
 			desc = adj + " " + root;
 		}
 		
+		return desc;
+	}
+	public static String generateObjectDescriptionNew(Identifier descId){
+		String root = SoarUtil.getValueOfAttribute(descId, "type");
+		
+		//ArrayList<String> adjectives = (ArrayList<String>) SoarUtil.getAllValuesOfAttribute(descId, "value");
+		ArrayList<String> adjectives = new ArrayList<String>();
+		
+		for(int c = 0; c < descId.GetNumberChildren(); c++){
+			WMElement el = descId.GetChild(c);
+			String att = el.GetAttribute().toLowerCase();
+			String val = el.GetValueAsString().toLowerCase();
+			val = val.replace("1", "");
+			if(att.equals("type"))
+				continue;
+			if(att.equals("name")){
+				if (!root.equals("block")){
+					adjectives.add(root);
+				}
+				root = val;
+			} else if(att.equals("shape")){
+				if (root.equals("block")){
+					root = val;
+				} else {
+					adjectives.add(val);
+				}
+			} else {
+				adjectives.add(val);
+			}
+		}
+		
+		String desc = "";
+		//boolean init = true;
+		for(String adj : adjectives){
+			/*
+			desc = "a";
+			if (init && (adj.startsWith(" a") || adj.startsWith(" e") || adj.startsWith(" i") || 
+						adj.startsWith(" o") || adj.startsWith(" u")))
+				desc = "an";
+			init = false;
+			*/
+			desc += adj + " ";
+		}
+		desc += root;
 		return desc;
 	}
 //
