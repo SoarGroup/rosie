@@ -61,6 +61,7 @@ sp {learn-goal-demonstration*propose*state-diff
               ^top-state.dialog-context <g>)
    (<g> ^initial <istate> ^final <fstate> -^goal-state ^attend <at> ^ignore <ig>)
 -->
+   (interrupt)
    (<s> ^operator <o> + =)
    (<o> ^name state-diff
         ^initial <istate>
@@ -70,18 +71,18 @@ sp {learn-goal-demonstration*propose*state-diff
 #   (<ig> ^relation larger-than1
 #         ^relation below1)
 }
-#TODO need?
-sp {learn-goal-demonstration*apply*state-diff*remove-attend-ignore
-   (state <s> ^name learn-goal-demonstration
-              ^top-state.dialog-context <g>
-              ^operator.name state-diff
-        	  ^diff-result <dstate>)
-   (<g> ^attend <at> ^ignore <ig>)
--->
-   (<g> ^attend <at> -)
-   (<g> ^ignore <ig> -)
-   (<g> ^attend <at2> ^ignore <ig2>)
-}
+##TODO need?
+#sp {learn-goal-demonstration*apply*state-diff*remove-attend-ignore
+#   (state <s> ^name learn-goal-demonstration
+#              ^top-state.dialog-context <g>
+#              ^operator.name state-diff
+#        	  ^diff-result <dstate>)
+#   (<g> ^attend <at> ^ignore <ig>)
+#-->
+#   (<g> ^attend <at> -)
+#   (<g> ^ignore <ig> -)
+#   (<g> ^attend <at2> ^ignore <ig2>)
+#}
 sp {learn-goal-demonstration*apply*state-diff
    (state <s> ^name learn-goal-demonstration
               ^top-state.dialog-context <g>
@@ -106,6 +107,18 @@ sp {learn-goal-demonstration*apply*state-diff*copy-goal-relations
    (<gr> ^relation <r1>)
    (<r1> ^1 <desc1> ^2 <desc2> ^name <name>)
 }
+sp {learn-goal-demonstration*apply*state-diff*copy-goal-relations*1arg
+   (state <s> ^name learn-goal-demonstration
+              ^top-state.dialog-context <g>)
+   (<g> ^goal-state <dstate> ^goal-relationships <gr>)
+   (<dstate> ^relationships.relations <r> ^predicates <p>)
+   (<p> ^<obj1> <desc1> ^<obj2> <desc2>)
+   (<r> ^instance <in> ^name <name>)
+   (<in> ^1 <obj1> -^2)
+-->
+   (<gr> ^relation <r1>)
+   (<r1> ^1 <desc1> ^name <name>)
+}
 
 #TODO convert to natural language and read back
 #TODO handle corrects by additions, or removals
@@ -123,7 +136,80 @@ sp {learn-goal-demonstration*send-message*describe-goal-state
 -->
    (<changes> ^outgoing-message <msg>)
    (<msg> ^type describe-goal-state
-          ^fields.relationships <gs>)
+          ^fields <f>)
+   (<f> ^relationships <gs> ^definitive yes)
+   (<status> ^performed.learning-event <de>)
+   (<de> ^type game
+         ^originator agent)
+}
+
+
+sp {learn-goal-demonstration*elaborate*new-segment-info*learn-goal-definition
+   (state <s> ^name learn-goal-demonstration
+              ^top-state.dialog-context.goal-relationships <G10020>
+              ^top-state.dialog-context.finished-demo true
+              -^top-state.dialog-context.type game-learning)
+-->
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type learn-goal-definition
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<sat> ^learning-event.type goal)
+}
+sp {learn-goal-demonstration*propose*complete
+   (state <s> ^name learn-goal-demonstration
+              ^top-state.dialog-context.goal-relationships <G10020>
+              ^top-state.dialog-context.finished-demo true
+              -^top-state.dialog-context.type game-learning)
+-->
+   (<s> ^operator <o> + <)
+   (<o> ^name complete)
+}
+
+
+sp {learn-goal-demonstration*elaborate*goal-predicates*state-predicate
+   (state <s> ^name learn-goal-demonstration
+              ^top-state.dialog-context.goal-state.relationships <G10020>
+              ^top-state.dialog-context.finished-demo true
+               ^new-segment-info.purpose.parameters <params>)
+   (<G10020> ^relations <r>)
+   (<r> ^name <name> ^instance <i>)
+   (<i> ^1 <obj1> -^2)
+-->
+   (<params> ^goal-predicate <pred>)
+   (<pred> ^handle <name> ^1 <obj1> ^type state)
+}
+sp {learn-goal-demonstration*elaborate*goal-predicates*relation-predicate
+   (state <s> ^name learn-goal-demonstration
+              ^top-state.dialog-context.goal-state.relationships <G10020>
+              ^top-state.dialog-context.finished-demo true
+              ^new-segment-info.purpose.parameters <params>)
+   (<G10020> ^relations <r>)
+   (<r> ^name <name> ^instance <i>)
+   (<i> ^1 <obj1> ^2 <obj2>)
+-->
+   (<params> ^goal-predicate <pred>)
+   (<pred> ^handle <name> ^1 <obj1> ^2 <obj2> ^type relation)
+}
+
+
+sp {learn-goal-demonstration*apply*complete*create*new-segment
+   (state <s> ^name learn-goal-demonstration
+              ^operator.name complete
+              ^top-state <ts>
+              ^new-segment-info <info>)
+   (<ts> ^dialog-context <dc> ^interaction.status <status> ^interaction.changes <c>)
+   (<dc> ^goal-relationships <gs>)
+   (<info> ^purpose.parameters)
+-->
+   (<c> ^new-segment-info <info>)
+   (<ts> ^dialog-context <dc> -)
+   (<c> ^outgoing-message <msg>)
+   (<msg> ^type describe-final-goal-state
+          ^fields <f>)
+   (<f> ^relationships <gs> ^definitive no)
    (<status> ^performed.learning-event <de>)
    (<de> ^type game
          ^originator agent)

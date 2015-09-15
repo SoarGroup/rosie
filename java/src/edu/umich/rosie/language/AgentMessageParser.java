@@ -75,8 +75,8 @@ public class AgentMessageParser
 		} else if(type.equals("describe-goal-state")){
 			return translateGoalState(fieldsId);
 		} else if(type.equals("describe-final-goal-state")){
-		return translateFinalGoalState(fieldsId);
-	}
+			return translateFinalGoalState(fieldsId);
+	    }
 		return null;
 	}
 	
@@ -153,57 +153,66 @@ public class AgentMessageParser
 		Identifier relationships = SoarUtil.getIdentifierOfAttribute(fields, "relationships");
 		ArrayList<String> objects = new ArrayList<String>();
 		String result = "";
+		String definitive = SoarUtil.getValueOfAttribute(fields, "definitive");
 		
+	    boolean allDefinitive = false;
+	    if (definitive.equals("yes"))
+	    	allDefinitive = true;
 		for(int index = 0; index < relationships.GetNumberChildren(); index++)
 		{
-            //WMElement wme = relationships.GetChild(index);
 			if (index != 0)
 				result+= " and ";
-//			WMElement el = descId.GetChild(c);
-//			String att = el.GetAttribute().toLowerCase();
-//			String val = el.GetValueAsString().toLowerCase();
-//			if(att.equals("name")){
-//				
-//			}
+
 		    WMElement wme = relationships.GetChild(index);
 		    Identifier relation = wme.ConvertToIdentifier();
 		    
             String preposition = SoarUtil.getValueOfAttribute(relation, "name");
-            preposition = preposition.replace("1", "");
+            preposition = preposition.replaceAll("\\d", "");
+            
             preposition = preposition.replace('-', ' ');
             //expect more than one, loop
             Identifier object1 = SoarUtil.getIdentifierOfAttribute(relation, "1");
-            Identifier object2 = SoarUtil.getIdentifierOfAttribute(relation, "2");
-            String objDescription1 = generateObjectDescriptionNew(object1);
-            String objDescription2 = generateObjectDescriptionNew(object2);
             
-            if (objects.contains(object1.GetValueAsString()))
+            
+            String objDescription1 = generateObjectDescriptionNew(object1);
+            String objDescription2 = "";
+            Identifier object2 = SoarUtil.getIdentifierOfAttribute(relation, "2");
+            
+            //may have only one object
+            if (object2 != null)
+            	objDescription2 = generateObjectDescriptionNew(object2);
+            
+            if (allDefinitive)
             {
             	objDescription1 = "the " + objDescription1;
-            }
-            else
-            {
-            	objects.add(object1.GetValueAsString());
-    			if (startsWithVowel(objDescription1))
-    				objDescription1 = "an " + objDescription1;
-    			else
-    				objDescription1 = "a " + objDescription1;
-            }
-            
-            if (objects.contains(object2.GetValueAsString()))
-            {
             	objDescription2 = "the " + objDescription2;
             }
             else
             {
-            	objects.add(object2.GetValueAsString());
-    			if (startsWithVowel(objDescription2))
-    				objDescription2 = "an " + objDescription2;
-    			else
-    				objDescription2 = "a " + objDescription2;
+            	if (objects.contains(object1.GetValueAsString()))
+            		objDescription1 = "the " + objDescription1;
+	            else {
+	            	objects.add(object1.GetValueAsString());
+	    			if (startsWithVowel(objDescription1))
+	    				objDescription1 = "an " + objDescription1;
+	    			else
+	    				objDescription1 = "a " + objDescription1;
+	            }
+	            
+	            if (objects.contains(object2.GetValueAsString()))
+	            	objDescription2 = "the " + objDescription2;
+	            else {
+	            	objects.add(object2.GetValueAsString());
+	    			if (startsWithVowel(objDescription2))
+	    				objDescription2 = "an " + objDescription2;
+	    			else
+	    				objDescription2 = "a " + objDescription2;
+	            }
             }
-            
-            result += objDescription1 + " is " + preposition + " " + objDescription2;
+            if (object2 != null)
+            	result += objDescription1 + " is " + preposition + " " + objDescription2;
+            else
+            	result += objDescription1 + " is " + preposition;
 		}
 		return result;
 	}
@@ -397,7 +406,8 @@ public class AgentMessageParser
 	}
 	public static String generateObjectDescriptionNew(Identifier descId){
 		String root = SoarUtil.getValueOfAttribute(descId, "type");
-		
+		if (root == null)
+			root = "object";
 		//ArrayList<String> adjectives = (ArrayList<String>) SoarUtil.getAllValuesOfAttribute(descId, "value");
 		ArrayList<String> adjectives = new ArrayList<String>();
 		
@@ -405,20 +415,13 @@ public class AgentMessageParser
 			WMElement el = descId.GetChild(c);
 			String att = el.GetAttribute().toLowerCase();
 			String val = el.GetValueAsString().toLowerCase();
-			val = val.replace("1", "");
+			val = val.replaceAll("\\d", "");//replace("1", "");
 			if(att.equals("type"))
 				continue;
 			if(att.equals("name")){
-				if (!root.equals("block")){
-					adjectives.add(root);
-				}
 				root = val;
 			} else if(att.equals("shape")){
-				if (root.equals("block")){
-					root = val;
-				} else {
-					adjectives.add(val);
-				}
+				root = val;
 			} else {
 				adjectives.add(val);
 			}
