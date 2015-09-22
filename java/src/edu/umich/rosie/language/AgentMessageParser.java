@@ -1,10 +1,12 @@
 package edu.umich.rosie.language;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 import sml.Identifier;
@@ -14,6 +16,16 @@ import edu.umich.rosie.soar.SoarUtil;
 public class AgentMessageParser
 {
 	static int counter = 0;
+	
+	// Synonymous generic messages for more natural responses
+	private static final List<String> hiMsg = Arrays.asList("hi!", "hey!", "hello!", "greetings");
+	private static final List<String> byeMsg = Arrays.asList("bye!", "goodbye!", "so long");
+	private static final List<String> affirmMsg = Arrays.asList("ok", "I understand", "all right", "sure", "got it", "correct", "right", "affirmative");
+	private static final List<String> negateMsg = Arrays.asList("no", "wrong", "incorrect");
+	private static final List<String> uncertainMsg = Arrays.asList("I don't know", "I'm not sure", "I am uncertain");
+	
+	
+	private static Random rand = new Random();
 	
 	private static HashMap<String, String> simpleMessages = null;
 	
@@ -77,9 +89,48 @@ public class AgentMessageParser
 		} else if(type.equals("describe-final-goal-state")){
 			return translateFinalGoalState(fieldsId);
 	    }
+		//conversational messages
+		else if(type.equals("generic"))
+		{
+			return translateGeneric(fieldsId);
+	    }
+		
+		
 		return null;
 	}
-	
+
+    public static String translateGeneric(Identifier fieldsId){
+    	String result = null;
+    	String type = SoarUtil.getValueOfAttribute(fieldsId, "type");
+    	
+    	int size = 0;
+    	List<String> options = null;
+    	if (type.equals("affirmative"))
+    	{
+    		options = affirmMsg;
+    		size = affirmMsg.size();
+    	}
+    	else if (type.equals("negative"))
+    	{
+    		options = negateMsg;
+    		size = negateMsg.size();
+    	}
+    	else if (type.equals("hello"))
+    	{
+    		options = hiMsg;
+    		size = hiMsg.size();
+    	}
+    	else if (type.equals("bye"))
+    	{
+    		options = byeMsg;
+    		size = byeMsg.size();
+    	}
+    	
+    	if (options == null)
+    		return null;
+    	int randomInt = rand.nextInt(size);
+    	return options.get(randomInt);
+    }
 	public static String translateGetItemRequest(Identifier fieldsId){
 		String item = SoarUtil.getValueOfAttribute(fieldsId, "item");
 		if (item != null){
