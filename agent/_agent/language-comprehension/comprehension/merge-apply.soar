@@ -147,7 +147,7 @@ sp {apply*merge*copy-first-word
          ^assigner <assigner>)
    (<assigner> ^parent-receiver <pword>)
    (<receiver> ^current-word.first-word true)
-  -(<pword> ^constraint.<att> <val>)
+  -(<pword> ^constraint.<att> <val>)                  # why?
    (<pword> ^current-word <wd>)
 -->
    (write (crlf) |Copy ^first-word true from | <receiver> | to | <pword>)
@@ -241,6 +241,8 @@ sp {apply*merge*push-constraint*receiver-assigner*RCP-D
            ^structure-type << CN D QUANT >>) # Maybe should be lt.converts-to DP
     (<receiver> ^constraint <con>
                 ^structure-type RCP)
+   -{(<con> ^handle <handle>)
+     (<pr> ^constraint.handle <handle>)}
 -->
    (write (crlf) |Add RCP constraint | <con> | to D parent-receiver | <pr> | from receiver.|)
    (<pr> ^constraint <con>)
@@ -285,14 +287,13 @@ sp {apply*merge*constraint*features*name
          ^receiver <receiver>
          ^assigner <assigner>)
    (<assigner> ^parent-receiver <pword>)
-   (<receiver> ^lt <lt>)
-   (<lt> ^referent <id>)
+   (<receiver> ^lt-referent <id>)
    (<id> -^property
           ^<< handle name >> <handle>)
   -(<pword> ^constraint <id>)
 -->
    (write (crlf) |*****Add constraint name | <handle> | to | <pword> | from lt.referent.|)
-   (<pword> ^constraint <lt>)
+   (<pword> ^constraint <id>)
 }
 
 sp {apply*merge*constraint*features
@@ -303,7 +304,7 @@ sp {apply*merge*constraint*features
          ^receiver <receiver>
          ^assigner <assigner>)
    (<assigner> ^parent-receiver <pword>)
-   (<receiver> ^lt.referent <id>)
+   (<receiver> ^lt-referent <id>)
    (<id> ^property <pf>)
    (<pf> ^<< handle name >> <name>
          ^value <value>)
@@ -321,7 +322,7 @@ sp {apply*merge*constraint*features2
          ^receiver <receiver>
          ^assigner <assigner>)
    (<assigner> ^parent-receiver <pword>)
-   (<receiver> ^lt.referent <id>)
+   (<receiver> ^lt-referent <id>)
    (<id> ^property <pf>
          ^<< handle name >> { <> category <value> })
    (<pf> ^<< handle name >> <name>
@@ -375,7 +376,7 @@ sp {apply*merge*constraint*preposition-noun
          ^assigner <assigner>)
    (<assigner> ^parent-receiver <pword>
                ^structure-type << PP CONJP C-ADJ-P >>)
-   (<pword> ^structure-type << D DP RC >>
+   (<pword> ^structure-type << D DP CN RC >>
            -^head.lt.semantic-structure relation) # don't do this if part of 'to the left of'
    (<receiver> ^structure-type << PP CONJP C-ADJ-P >>
               -^lt.relation-type ternary
@@ -402,7 +403,7 @@ sp {apply*merge*constraint*preposition-noun*ternary
          ^assigner <assigner>)
    (<assigner> ^parent-receiver <pword>
                ^structure-type << PP CONJP C-ADJ-P >>)
-   (<pword> ^structure-type << D DP RC >>
+   (<pword> ^structure-type << D DP CN RC >>
            -^head.lt.semantic-structure relation) # don't do this if part of 'to the left of'
    (<receiver> ^structure-type << PP CONJP C-ADJ-P >>
                ^lt.relation-type ternary
@@ -432,7 +433,7 @@ sp {apply*merge*constraint*preposition-noun*semantics
          ^assigner <assigner>)
    (<assigner> ^parent-receiver <pword>
                ^structure-type << PP CONJP C-ADJ-P >>)
-   (<pword> ^structure-type << D DP >>)
+   (<pword> ^structure-type << D DP CN >>)
    (<receiver> ^structure-type << PP CONJP C-ADJ-P >>
                ^semantics.relation <spr>)
 -->
@@ -443,17 +444,92 @@ sp {apply*merge*constraint*preposition-noun*semantics
    (<c> ^relation <spr>)
    (write (crlf) |Add new (semantic) constraint to | <pword> | relation: | <spr>)
 }
-############### ... the relation that is named ...
-sp {apply*merge*constraint*RCP*merge*noun
-  #:interrupt
+
+sp {apply*merge*constraint*PP*merge*of
+ # :interrupt
    (state <s> ^operator <op>
               ^segment <seg>)
    (<op> ^name merge
          ^receiver <receiver>
          ^assigner <assigner>)
    (<assigner> ^parent-receiver <pword>)
-   (<pword> ^structure-type D
-            ^head.lt.referent <ref>) 
+   (<pword> ^structure-type << D CN >>
+            ^head.lt-referent <ref1>) 
+   (<receiver> ^structure-type PP
+               ^lt.relation.handle of1
+               ^head.head.lt-referent <ref>
+              -^head.referent) #
+--> 
+   (<ref1> ^relation <srx>)
+   (<srx> ^2 <ref>
+          ^handle of1)
+   (write (crlf) |Add new constraint of1 to | <pword> | relation: of1 handle: | <ref>)
+}
+
+
+sp {apply*merge*constraint*PP*merge*of*referent
+ # :interrupt
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<op> ^name merge
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^parent-receiver <pword>)
+   (<pword> ^structure-type << D CN >>
+            ^head.lt-referent <ref1>
+           -^head.lt.spelling << left-noun right-noun >>) 
+   (<receiver> ^structure-type PP
+               ^lt.relation.handle of1
+               #^head.head.lt-referent <ref>
+               ^head.referent <ref>) #
+--> 
+   (<ref1> ^relation <srx>)
+   (<srx> ^2 <ref>
+          ^handle of1)
+   (write (crlf) |Add new constraint of1 to | <pword> | relation: of1 handle: | <ref>)
+}
+
+
+sp {apply*merge*constraint*PP*merge*of*referent*no-lt-referent
+ # :interrupt
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<op> ^name merge
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^parent-receiver <pword>)
+   (<pword> ^structure-type << D CN >>
+           -^head.lt-referent <ref1>
+           -^head.lt.spelling << left-noun right-noun >>)
+   (<receiver> ^structure-type PP
+               ^lt.relation.handle of1
+               #^head.head.lt-referent <ref>
+               ^head.referent <ref>) #
+--> 
+   (<seg> ^new-constraint <nc>)
+   (<nc> ^object <pword>
+         ^constraint <c>)
+   (<pword> ^constraint <c>)
+   (<c> ^relation <spr>)
+   (<spr> ^2 <ref>
+          ^handle of1)
+   (write (crlf) |Add new (semantic) constraint to | <pword> | relation: | <spr>)
+#   (<pword> ^relation <srx>)
+#   (<srx> ^2 <ref>
+#          ^handle of1)
+#   (write (crlf) |Add new constraint of1 to | <pword> | relation: of1 handle: | <ref>)
+}
+############### ... the relation that is named ...
+sp {apply*merge*constraint*RCP*merge*noun
+ # :interrupt
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<op> ^name merge
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^parent-receiver <pword>)
+   (<pword> ^structure-type  << D CN >>
+            ^head.lt-referent <ref>) 
    (<receiver> ^structure-type RCP
                ^complement <comp>)
    (<comp> ^lt.relation.handle <named>   #  named
@@ -472,7 +548,7 @@ sp {apply*merge*forward-grounding*to-preposition-verb*binary
          ^receiver <receiver>
          ^assigner <assigner>)
    (<assigner> ^parent-receiver <pword>)
-   (<pword> ^structure-type VP)
+   (<pword> ^structure-type << VP GP >>)
    (<receiver> ^structure-type << PP CONJP C-ADJ-P >>
               -^lt.relation-type ternary
                ^lt.relation <sr>
@@ -489,7 +565,7 @@ sp {apply*merge*forward-grounding*to-preposition-verb*ternary
          ^receiver <receiver>
          ^assigner <assigner>)
    (<assigner> ^parent-receiver <pword>)
-   (<pword> ^structure-type VP)
+   (<pword> ^structure-type << VP GP >>)
    (<receiver> ^structure-type << PP CONJP C-ADJ-P >>
                ^lt.relation-type ternary
                ^lt.relation <sr>
@@ -511,8 +587,8 @@ sp {apply*merge*constraint*preposition-noun-special # for named
          ^assigner <assigner>)
    (<assigner> ^parent-receiver <pword>
                ^structure-type PP)
-   (<pword> ^structure-type D
-            ^head.lt.referent <ref>) 
+   (<pword> ^structure-type  << D CN >>
+            ^head.lt-referent <ref>) 
    (<receiver> ^structure-type PP
               -^lt.relation-type ternary
                ^lt.relation.handle <sr>
@@ -534,8 +610,8 @@ sp {apply*merge*constraint*preposition-noun-special*ternary # for named
          ^assigner <assigner>)
    (<assigner> ^parent-receiver <pword>
                ^structure-type PP)
-   (<pword> ^structure-type D
-            ^head.lt.referent <ref>) 
+   (<pword> ^structure-type  << D CN >>
+            ^head.lt-referent <ref>) 
    (<receiver> ^structure-type PP
                ^lt.relation-type ternary
                ^lt.relation.handle <sr>
@@ -642,6 +718,18 @@ sp {apply*merge*define-new-verb
 -->
    (<seg> ^new-verb <lli>)}
 
+sp {apply*merge*clear-new-word
+  # :interrupt
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<seg> ^unknown-word <uw>)
+   (<op> ^name merge
+         ^receiver <receiver>
+         ^assigner.lt <lla>)
+   (<lla>  ^structure-type U)
+   (<receiver> ^lt.spelling <uw>)
+-->
+   (<seg> ^unknown-word <uw> -)}
 
 ########################################
 ###### Clean-up retrieved-stack
@@ -800,8 +888,9 @@ sp {apply*merge*remove-processing-result-failure
 
 ########
 ## Remove failed grounding for nil referent
-
+##  Assigner should not have a referent!
 sp {apply*merge*remove-failed-construction*referent-nil
+   #:interrupt
    (state <s> ^operator <op>
               ^segment <seg>)
    (<op> ^name merge

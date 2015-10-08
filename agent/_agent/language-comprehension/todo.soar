@@ -15,26 +15,21 @@
 ### 5. Learn new comprehend-word operators so can learn control knowledge to select between them (including RL).
 ### 6. For constraints such as movable - need more consistent representation and need to be able to have objects
 ###      objects inherit such features - such as from a category (block1). For now, comment on these constraints.
-### 7. When adding new objects to dialog-world.objects, should also be adding relations that 
-###    are mentioned in the sentence. Can't wait for downstream processing because can be referred to
-###    in follow on clause of same sentence. Maybe need to send semantics downstream immediately as
-###    opposed to waiting for end of sentence?  "Store a red block that is behind the green block."  
-###    "The goal is that a red block is on a green block" "The goal is that a red block on a green block is under the white block."
-### 8. Take advantage of termination for ambiguity in merging - if have hit "." merge with required.
-### 9. More robust to all of the failures - still produce semantics if fail. 
-###10. Handle new undefined words better
+### 7. Take advantage of termination for ambiguity in merging - if have hit "." merge with required.
+### 8. More robust to all of the failures - still produce semantics if fail. 
+### 9. Handle new undefined words better
+###10. Found some places where assigners have referent - don't think that makes sense.
+###11. Get repair working again and better so can handle lexical ambiguity better.
 ###
 #### Linguistic stuff
-### 1. missing determiners -- next to [ ] enemy locations - usually plurals [Some progress on this.]
-### 2. "that location" should work (instead of it thinking it is getting a relative clause). That as a specifier - followed by a naked noun
-### 3. there are more [Xs] than [Ys]
-### 4. X and Y flank Z [inverse of between] 
-### 5. Get skipped sentences working (Turn the stove on. The stove is on. The stove is turned on.)
-### 6. Construction that starts with an adverb: "Carefully pick up ..."
-### 7. Handle both uses of left and right
-### 8. more uses of conjunction  move x and y 
-### 9. has the same rank as. Has a higher rank than; has more X than Y's 
-###10. Of not work completely right for deep embedings of color, ...
+### 1. "that location" should work (instead of it thinking it is getting a relative clause). That as a specifier - followed by a naked noun
+### 2. there are more [Xs] than [Ys]
+### 3. right as adjective work with right as noun - handle both uses of left and right
+### 4. Get skipped sentences working (Turn the stove on. The stove is on. The stove is turned on.)
+### 5. Construction that starts with an adverb: "Carefully pick up ..."
+### 6. more uses of conjunction  move x and y 
+### 7. has the same rank as. Has a higher rank than; has more X than Y's 
+
 
 ################################################################################
 ### Change Log
@@ -115,4 +110,45 @@
 # 9/14/2015
 # 1. Add rule to prefer merge to comprehend-construction if the current word it a T - makes merges happen to get to most abstract CP before look for T. 
 #    Probably a more general principle, but can't think of it right now.
+
+# 9/18/2015
+# 1. Try to handle the case of "equal to the color of the block ..." where "of the block gets completely lost. Add
+#   apply*merge*constraint*PP*merge*of so adds a constraint when "of the block" merges. Worried this overlaps
+#   with some processing in process-semantics already there to hand "of the ..." but the problem is
+#   in this case process-semantics never comes in because there is no semantic structure on the assigner.
+
+# 9/21/2015
+# 1. For all lt.referent, need to copy the referent to the sti so that modifications (constraints) can be added
+#    without a. modifying the referent lti if we ever go to mirroring and b. so that if the same referent is
+#    used more than once in a sentence we don't get invalid transfer. Multiple changes to create-receiver to copy the referent.
+# 2. Modified all access using lt.referent to use lt-referent. 
+
+# 9/22/2015
+# 1. Modified merge-apply to handle case of of where there is a definite referent. 
+# 2. Fixed bug in merge-apply from above.
+# 3. Add more (than) and great
+# 4. Added negation test to comprehension*propose*process-missing-assigner*new so it doesn't remove possible merges because of possible exclusive matches 
+#    that won't arise because there is something more recent they will match with.
+# 5. Add quantifier to ground-referent for processing some, all, ...
+
+# 9/23/2015
+# 1. Fix greater than/more than/larger than so these are distinct
+# 2. Add lots of handling for unknown words so the right signal is sent on only when it isn't processed.
+
+# 9/25/2015
+# 1. Restrict propose*process-semantics*DP-with-of-DP*referent so doesn't fire if there is already a referent. 
+# 2. apply*ground-new-constraint*dialog-object modified action so uses <r-1> instead of <r-2>
+
+# 9/26/2015
+# 1. Fix failed-grounding so is handles possessives - puts a flag on the object.
+# 2. Also added a case it was missing for when nothing gets copied.
+
+# 9/28/2015
+# 1. Added specifier distinct for "another" - don't retrieve from dialog is have specifier distince
+# 2. Don't select "another" as a match in ground-referent for a later definitive referent - ... "another card then the card" - the card doesn't match another.
+# 3. Added "they" - needs to catch a prior multiple referent!
+
+# 10/5/2015
+# 1. cleaned up prefer and avoid
+# 2. comprehension*propose*comprehend-construction2 - must have unmerged receiver for p-item to suggest a retrieval. Might break stuff - need to test!
 
