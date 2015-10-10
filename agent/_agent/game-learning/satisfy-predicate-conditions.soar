@@ -1,6 +1,5 @@
 
 sp {satisfy-predicate-conditions*propose*predicate-operator*goal
-    :interrupt
     (state <s1> ^gtype { << goal >> <c2> } ^list <l1> ^<c2> <a1>)
     (<l1> ^game <g1>)
     (<a1> ^parameter-set <p1> ^aname <c1>)
@@ -24,10 +23,9 @@ sp {satisfy-predicate-conditions*propose*finished-learning
     (state <s1> ^main-type predicate ^gtype predicate ^list <l1> ^predicate <a1>
                 ^top-state.dialog-context.learning true)
     (<l1> ^game <g1>)
-    (<a1> ^parameter-set <p1> ^aname <c1>)
+    (<a1> ^parameter-set <p1> ^handle <c1>)
     (<p1> ^set <i1>)
     -->
-   (interrupt)
     (<s1> ^operator <o1> + =)
     (<o1> ^name finished-learning
           ^type predicate)
@@ -37,18 +35,18 @@ sp {satisfy-predicate-conditions*propose*finished-learning*action-goal
     (state <s1> ^superstate <ss>
                 ^top-state.dialog-context.learning true)
     (<ss> ^main-type {<type> << action goal >>} ^operator.type <type> ^<type> <a1>)
-    (<a1> ^parameter-set <p1> ^aname <c1>)
+    (<a1> ^parameter-set <p1> ^handle <c1>)
     (<p1> ^set <i1>)
     -->
-   (interrupt)
     (<s1> ^operator <o1> + =)
-    (<o1> ^name finished-learning)
+    (<o1> ^name finished-learning
+          ^type <type>)
 }
 
 #TODO for all types or only predicates?
 sp {finished-learning*store*predicate*concept
    (state <s> ^name finished-learning    
-              ^superstate.operator.type predicate        
+              #^superstate.operator.type predicate        
               ^smem.command <sc>
               ^top-state.dialog-context.learn-link <ll>)
 -->
@@ -93,14 +91,41 @@ sp {finished-learning*propose*complete
    (<o> ^name complete)
 }
 
-sp {finished-learning*apply*complete*remove-learn-link
-    (state <s1> ^name finished-learning
-                ^operator.name complete
-                ^top-state.dialog-context <dc>)
-    (<dc> ^learn-link <ll>)
--->
-   (<dc> ^learn-link <ll> -)
-}
+#sp {finished-learning*apply*complete*remove-learn-link
+#    (state <s1> ^name finished-learning
+#                ^operator.name complete
+#                ^top-state.dialog-context <dc>)
+#    (<dc> ^learn-link <ll>)
+#-->
+#   (<dc> ^learn-link <ll> -)
+#}
+
+#sp {finished-learning*apply*complete*remove-action
+#    (state <s1> ^name finished-learning
+#                ^superstate.operator.type action
+#                ^operator.name complete
+#                ^top-state.dialog-context <dc>)
+#    (<dc> ^structure.actions <act>)
+#    (<act> ^action <a>)
+#    (<a> ^handle <name>)
+#-->
+#   (<act> ^action <a> -)
+#   (<act> ^handle <name>)
+#}
+#
+#sp {finished-learning*apply*complete*remove-goal
+#    (state <s1> ^name finished-learning
+#                ^superstate.operator.type goal
+#                ^operator.name complete
+#                ^top-state.dialog-context <dc>)
+#    (<dc> ^structure.goals <act>)
+#    (<act> ^goal <a>)
+#    (<a> ^handle <name>)
+#-->
+#   (<act> ^goal <a> -)
+#   (<act> ^handle <name>)
+#}
+
 sp {finished-learning*apply*complete*remove-learning-predicate
     (state <s1> ^name finished-learning
                 ^operator.name complete
@@ -129,10 +154,15 @@ sp {finished-learning*apply*complete*input-object-2
 sp {finished-learning*apply*complete*send-message
     (state <s1> ^name finished-learning
                 ^operator.name complete
-               -^top-state.dialog-context.goal-state
+                ^top-state.dialog-context <dc>
                 ^top-state.interaction.status <status>
                 ^top-state.interaction.changes <changes>)
+    (<dc> ^structure.actions <act>)
+    (<act> ^action <a>)
+    (<a> ^handle <name>)
 -->
+   (<act> ^action <a> -)
+   (<act> ^handle <name>)
    (<changes> ^outgoing-message <msg>)
    (<msg> ^type simple-message
           ^message-type ok)
@@ -146,10 +176,15 @@ sp {finished-learning*apply*complete*send-message
 sp {finished-learning*apply*complete*send-message*goal-state
     (state <s1> ^name finished-learning
                 ^operator.name complete
-                ^top-state.dialog-context.goal-relationships <gs>
+                ^top-state.dialog-context <dc>
                 ^top-state.interaction.status <status>
                 ^top-state.interaction.changes <changes>)
+    (<dc> ^structure.goals <act> ^goal-relationships <gs>)
+    (<act> ^goal <a>)
+    (<a> ^handle <name>)
 -->
+   (<act> ^goal <a> -)
+   (<act> ^handle <name>)
    (<changes> ^outgoing-message <msg>)
    (<msg> ^type describe-final-goal-state
           ^fields <f>)
