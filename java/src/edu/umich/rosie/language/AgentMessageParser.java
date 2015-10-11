@@ -90,6 +90,10 @@ public class AgentMessageParser
 			return translateGoalState(fieldsId);
 		} else if(type.equals("describe-final-goal-state")){
 			return translateFinalGoalState(fieldsId);
+	    } else if(type.equals("unknown-word")){
+			return translateUnknownWord(fieldsId);
+	    } else if(type.equals("learned-unknown-word")){
+			return translateLearnedUnknownWord(fieldsId);
 	    }
 		//conversational messages
 		else if(type.equals("generic"))
@@ -100,6 +104,25 @@ public class AgentMessageParser
 		
 		return null;
 	}
+	 public static String translateLearnedUnknownWord(Identifier fieldsId){
+	    	String result = "Ok, I now understand the concept ";
+	    	String word = SoarUtil.getValueOfAttribute(fieldsId, "word");
+	    	if (word != null)
+	    		result += word;
+	    	
+	    	return result;
+	 }
+	 
+	 public static String translateUnknownWord(Identifier fieldsId){
+	    	String result = "I don't know the concept ";
+	    	String word = SoarUtil.getValueOfAttribute(fieldsId, "word");
+	    	if (word != null)
+	    		result += word;
+	    	
+	    	return result;
+	 }
+	    	
+	    	
 
     public static String translateGeneric(Identifier fieldsId){
     	String result = null;
