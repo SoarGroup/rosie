@@ -56,6 +56,9 @@ public class AgentMessageParser
 			simpleMessages.put("confirm-pick-up", "I have picked up the object.");
 			simpleMessages.put("confirm-put-down", "I have put down the object.");
 			simpleMessages.put("easy", "That was easy!");
+			simpleMessages.put("describe-game", "Ok, what are the actions and goals of the game.");
+			simpleMessages.put("describe-action", "What are the conditions of the action");
+			simpleMessages.put("describe-goal", "What are the conditions of the goal");
 		}
 		
 		String type = SoarUtil.getValueOfAttribute(id, "type");
