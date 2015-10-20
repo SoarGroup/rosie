@@ -10,15 +10,15 @@
 #######
 # OPERATOR PROPOSAL
 #######
-sp {interpret-message*propose*generate-action-operator
+sp {interpret-message*propose*interpret-action-command
    (state <s> ^name interpret-message
               ^instructor-message <msg>
               -^top-state.dialog-context
-             -^action-operator <op>)
+              -^new-segment-info)
    (<msg> ^message-type command)
 -->
    (<s> ^operator <o> +)
-   (<o> ^name generate-action-operator
+   (<o> ^name interpret-action-command
         ^command-message <msg>)
 }
 
@@ -36,6 +36,7 @@ sp {interpret-message*propose*interpret-conditional-predicate*command
    (<o> ^name interpret-conditional-predicate
         ^message <msg>)
 }
+
 sp {interpret-message*propose*interpret-attend-list
    (state <s> ^name interpret-message
               ^instructor-message <msg>
@@ -48,6 +49,7 @@ sp {interpret-message*propose*interpret-attend-list
    (<o> ^name interpret-attend-list
         ^message <msg>)
 }
+
 sp {interpret-message*propose*interpret-ignore-list
    (state <s> ^name interpret-message
               ^instructor-message <msg>
@@ -61,157 +63,25 @@ sp {interpret-message*propose*interpret-ignore-list
         ^message <msg>)
 }
 
-sp {generate-action-operator*elaborate*allow-substate
-   (state <s> ^name generate-action-operator
-              ^superstate.name interpret-message)
--->
-   (<s> ^allow-substate true)
-}
-
-sp {interpret-message*propose*interpret-command
+sp {interpret-message*apply*interpret-action-command
    (state <s> ^name interpret-message
               ^instructor-message <msg>
-              ^action-operator <op>)
-   (<msg> ^message-type command
-         -^interpreted true)
--->
-   (<s> ^operator <o> +)
-   (<o> ^name interpret-command)
-}
-
-sp {interpret-message*apply*interpret-command
-   (state <s> ^name interpret-message
-              ^instructor-message <msg>
-              ^operator.name interpret-command
-              ^action-operator <op>)
-   (<op> ^action-handle <action-handle>)
+              ^operator.name interpret-action-command)
+   (<msg> ^action.handle <action-handle>)
 -->
    (<s> ^new-segment-info <info>)
    (<info> ^purpose <p>
            ^originator instructor)
-   (<p> ^type action
-        ^parameters.action-operator <op>
+   (<p> ^type execute-action
+        ^parameters.command-message <msg>
         ^satisfaction.action-event.type <action-handle>)
    (<msg> ^interpreted true)
 }
 
-sp {interpret-message*apply*interpret-command*pop-segment*existing-action
+sp {interpret-message*apply*interpret-action-command*pop-segment*existing-action
    (state <s> ^name interpret-message
-              ^operator.name interpret-command
+              ^operator.name interpret-action-command
               ^top-state.interaction.stack.segment.purpose.type action)
 -->
    (<s> ^terminate-segment true)
 }
-
-sp {interpret-message*apply*interpret-command*add*unseen*objects*to*world*depth1
-   (state <s> ^name interpret-message
-              ^operator.name interpret-command
-              ^action-operator.<arg-name> <arg>
-              ^top-state.world.objects <objs>)
-  (<arg> ^arg-type << object location >>
-        -^imagined true
-          ^id <obj>)
-   (<objs> -^object <obj>)
--->
-   (<objs> ^object <obj>)
-}
-
-sp {interpret-message*apply*interpret-command*add*unseen*objects*to*world*depth2
-   (state <s> ^name interpret-message
-              ^operator.name interpret-command
-              ^action-operator.<arg-name> <arg>
-              ^top-state.world.objects <objs>)
-   (<arg> ^arg-type predicate
-         -^imagined true
-          ^{ << 1 2 >> } <obj>)
-  (<obj> ^item-type << object location >>)
-   (<objs> -^object <obj>)
--->
-   (<objs> ^object <obj>)
-}
-
-sp {interpret-message*apply*interpret-command*add*unseen*in*predicate*from
-   (state <s> ^name interpret-message
-              ^operator.name interpret-command
-              ^action-operator <action>
-              ^top-state.world.predicates.predicate <in-pred>)
-   (<action> ^arg1.id <obj>
-             ^arg2 <arg2>)
-   (<arg2> ^arg-type predicate
-           ^handle from1
-           ^2 <loc>)
-   (<in-pred> ^handle in1)
-   -{(<in-pred> ^instance <inst>)
-     (<inst> ^1 <obj> ^2 <loc>)}
--->
-   (<in-pred> ^instance <i>)
-   (<i> ^1 <obj> ^2 <loc>)
-}
-
-#######
-## OPERATOR ELABORATIONS
-#######
-#
-#sp {interpret-message*elaborate*action-id
-#   (state <s> ^name interpret-message
-#              ^operator <o> +)
-#   (<o> ^name interpret-command
-#        ^message.action.id <action>)
-#-->
-#   (<o> ^action-id <action>)
-#}
-#
-#sp {interpret-message*elaborate*arguments
-#   (state <s> ^name interpret-message
-#              ^operator <o> +)
-#   (<o> ^name interpret-command
-#        ^message.{<arg> << arg1 arg2 arg3 arg4 >>} <val>)
-#-->
-#   (<o> ^<arg> <val>
-#        ^has-arguments true)
-#}
-#
-######
-## OPERATOR APPLICATION
-######
-#
-## Mark the message as interpreted (retracts operator)
-#sp {interpret-message*apply*interpret-command*create*segment
-#   (state <s> ^name interpret-message
-#              ^operator <o>)
-#   (<o> ^name interpret-command
-#        ^action-id <action>)
-#  (<action> ^name <action-handle>)
-#-->
-#   (<s> ^new-segment-info <info>)
-#   (<info> ^purpose <p>
-#           ^originator instructor)
-#   (<p> ^type action
-#        ^parameters <params>
-#        ^satisfaction <sat>)
-#   (<sat> ^action-event.type <action-handle>)
-#   (<params> ^action-command <cmd>)
-#   (<cmd> ^id <action>)
-#}
-#
-#sp {interpret-message*apply*interpret-command*copy*arguments
-#   (state <s> ^name interpret-message
-#              ^operator <o>
-#              ^new-segment-info.purpose.parameters.action-command <cmd>)
-#   (<o> ^name interpret-command
-#        ^message <msg>
-#        ^{<arg> << arg1 arg2 arg3 arg4 relation predicate >>} <val>)
-#-->
-#   (<cmd> ^<arg> <val>)
-#   (<s> ^mark-interpreted <msg>)
-#}
-#
-#sp {interpret-message*apply*interpret-command*mark*interpreted*no*args
-#   (state <s> ^name interpret-message
-#              ^operator <o>)
-#   (<o> ^name interpret-command
-#       -^has-arguments true
-#        ^message <msg>)
-#-->
-#   (<s> ^mark-interpreted <msg>)
-#}
