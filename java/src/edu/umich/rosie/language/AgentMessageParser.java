@@ -33,7 +33,7 @@ public class AgentMessageParser
 //			simpleMessages.put("get-next-subaction", "What do I do next?");
 			simpleMessages.put("unable-to-satisfy", "I couldn't do that");
 			simpleMessages.put("unable-to-interpret-message", "I don't understand.");
-			simpleMessages.put("missing-object", "I lost the object I was using");
+			simpleMessages.put("missing-object", "I lost the object I was using. Can you help me find it?");
 			simpleMessages.put("index-object-failure", "I couldn't find the referenced object");
 			simpleMessages.put("no-proposed-action", "I couldn't do that");
 			simpleMessages.put("multiple-arguments", "Could you be more specific?");

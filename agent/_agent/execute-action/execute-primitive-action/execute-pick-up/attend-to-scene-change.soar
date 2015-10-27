@@ -1,8 +1,56 @@
-# Don't attend to stale-object on the object being grabbed
-sp {execute-pick-up1*reject*attend-to-stale-object
+
+## While the arm is moving, don't do any attending except for new objects
+## Don't attend to new objects while the arm is moving
+sp {execute-pick-up1*reject*attend-to-scene-change*while*moving
    (state <s> ^problem-space.name execute-primitive-action
-              ^action-handle pick-up1
+               ^action-handle pick-up1
               ^operator <o> +
+              ^current-action.pick-up-command <cmd>)
+   (<o> ^name attend-to-scene-change
+        ^change.type <> new-object)
+   (<cmd> -^status)
+-->
+   (<s> ^operator <o> -)
+}
+
+## Once the arm is finished, if the target-object is missing,
+## Then add new objects as candidates for the missing object
+sp {execute-pick-up1*elaborate*evaluate-new-object*candidate-for-missing-object
+   (state <s> ^problem-space.name execute-primitive-action
+               ^action-handle pick-up1
+              ^operator <o> +
+              ^target-object <obj>
+              ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
+   (<o> ^name attend-to-scene-change
+        ^change.type new-stable-object
+        ^change.object-info <cand>)
+   (<obj> ^handle <obj-handle>
+          ^predicates.visible false)
+   (<obj-info> ^object-handle <obj-handle>)
+-->
+   (<cand> ^candidate-for-missing-object <obj-info>)
+}
+
+## If we have to attend to a stale object, mark it as missing so it won't be deleted
+sp {execute-pick-up1*elaborate*attend-to*stale-object*mark*missing
+   (state <s> ^problem-space.name execute-primitive-action
+               ^action-handle pick-up1
+              ^operator <o> +
+              ^target-object <obj>)
+   (<o> ^name attend-to-scene-change
+        ^change.type stale-object
+        ^change.object-info <obj-info>)
+   (<obj-info> ^wm-obj <obj>)
+-->
+   (<obj-info> ^missing true)
+}
+
+## If there are still new objects to process, don't attend-to-stale-object
+sp {execute-pick-up1*reject*attend-to-stale-object*still*new*objects
+   (state <s> ^problem-space.name execute-primitive-action
+               ^action-handle pick-up1
+              ^operator <o> +
+              ^no-new-objects false
               ^target-object <obj>)
    (<o> ^name attend-to-scene-change
         ^change.type stale-object
@@ -11,44 +59,34 @@ sp {execute-pick-up1*reject*attend-to-stale-object
    (<s> ^operator <o> -)
 }
 
-## Don't attend to new objects while the arm is moving
-sp {execute-pick-up1*reject*attend-to-new-object
+## If the stale-object substate determined we can't find the object,
+##   reject the operator (terminate the substate)
+sp {execute-pick-up1*reject*attend-to-stale-object*cant-find
    (state <s> ^problem-space.name execute-primitive-action
-              ^action-handle pick-up1
+               ^action-handle pick-up1
               ^operator <o> +
-              ^current-action.pick-up-command <cmd>)
+              ^target-object <obj>)
    (<o> ^name attend-to-scene-change
-        ^change.type new-object)
-   (<cmd> -^status)
+        ^change.type stale-object
+        ^change.object-info <obj-info>)
+   (<obj-info> ^wm-obj <obj>
+               ^cant-find true)
 -->
    (<s> ^operator <o> -)
 }
 
-# Don't attend at all to the object being picked up while the arm is moving
-sp {execute-pick-up1*reject*attend-to-scene-change*grabbed*object
-   (state <s> ^problem-space.name execute-primitive-action
-              ^action-handle pick-up1
-              ^operator <o> +
-              ^target-object.handle <handle>
-              ^current-action.pick-up-command <cmd>)
-   (<o> ^name attend-to-scene-change
-        ^change.object-info.object-handle <handle>)
-   (<cmd> -^status)
--->
-   (<s> ^operator <o> -)
-}
 
-sp {execute-pick-up1*elaborate*evaluate-new-object*candidate-for-missing-object
-   (state <s> ^problem-space.name execute-primitive-action
-              ^action-handle pick-up1
-              ^operator <o> +
-              ^target-object.handle <obj-handle>
-              ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
-   (<o> ^name attend-to-scene-change
-        ^change.type new-stable-object
-        ^change.object-info <cand>)
-   (<obj-info> ^object-handle <obj-handle>)
--->
-   (<cand> ^candidate-for-missing-object <obj-info>)
-}
-
+#
+#sp {execute-pick-up1*elaborate*evaluate-new-object*candidate-for-missing-object
+#   (state <s> ^name execute-pick-up1
+#              ^operator <o> +
+#              ^target-object.handle <obj-handle>
+#              ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
+#   (<o> ^name attend-to-scene-change
+#        ^change.type new-stable-object
+#        ^change.object-info <cand>)
+#   (<obj-info> ^object-handle <obj-handle>)
+#-->
+#   (<cand> ^candidate-for-missing-object <obj-info>)
+#}
+#
