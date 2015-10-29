@@ -23,7 +23,7 @@ public class TextToSpeech
 	
     public void speak(String words) 
     {
-    	//new Thread(new SpeechThread(words)).start();
+    	new Thread(new SpeechThread(words)).start();
     }
     
     class SpeechThread implements Runnable {

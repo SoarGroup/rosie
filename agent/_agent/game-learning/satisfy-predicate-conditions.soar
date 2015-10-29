@@ -19,6 +19,7 @@ sp {satisfy-predicate-conditions*propose*predicate-operator*action
     (<o1> ^type <c2> + ^name <c1> + ^parameters <i1> + ^verb-structure <vs>)
 }
 
+
 sp {satisfy-predicate-conditions*propose*finished-learning
     (state <s1> ^main-type predicate ^gtype predicate ^list <l1> ^predicate <a1>
                 ^top-state.dialog-context.learning true)
@@ -31,36 +32,138 @@ sp {satisfy-predicate-conditions*propose*finished-learning
           ^type predicate)
 }
 
-sp {satisfy-predicate-conditions*propose*finished-learning*action-goal
-    (state <s1> ^superstate <ss>
-                ^top-state.dialog-context.learning true)
-    (<ss> ^main-type {<type> << action goal >>} ^operator.type <type> ^<type> <a1>)
+sp {satisfy-predicate-conditions*elaborate-finished-learning
+    (state <s1> ^top-state.dialog-context.learning true ^superstate <ss>)
+    (<s1> ^main-type {<type> << action >>} ^operator <o> ^<type> <a1>)
+    (<o> ^type <type> -^duplicate-of) 
     (<a1> ^parameter-set <p1> ^handle <c1>)
     (<p1> ^set <i1>)
     -->
-    (<s1> ^operator <o1> + =)
+  #  (<s1> ^operator <o> -)
+    (<ss> ^finished-learning <type>)
+}
+sp {satisfy-predicate-conditions*elaborate-finished-learning*goal
+    (state <s1> ^top-state.dialog-context.learning true ^superstate.superstate <ss>)
+    (<s1> ^main-type {<type> <<  goal >>} ^operator <o> ^<type> <a1>)
+    (<o> ^type <type> -^duplicate-of) 
+    (<a1> ^parameter-set <p1> ^handle <c1>)
+    (<p1> ^set <i1>)
+    -->
+  #  (<s1> ^operator <o> -)
+    (<ss> ^finished-learning <type>)
+}
+
+
+sp {satisfy-predicate-conditions*propose*finished-learning*actiongoal
+    (state <s1> ^top-state.dialog-context.learning true)
+    (<s1> ^main-type {<type> << action goal >>} ^<type> <a1> ^finished-learning <type>)
+-->
+    (<s1> ^operator <o1> + >)
     (<o1> ^name finished-learning
           ^type <type>)
 }
 
-#TODO for all types or only predicates?
+##dummmmb 
+sp {satisfy-predicate-conditions*apply*finished-learning*elab-store-link
+    (state <s1> ^top-state.dialog-context.learning true
+                ^top-state.dialog-context.learn-link <ll>
+                ^operator.name finished-learning)
+    (<ll> ^predicate-structure)
+-->
+    (<s1> ^store-link (deep-copy <ll>))
+}
+
+
+
+#HACK TO FIX MIRROR JUSTIFICATTION PROBLEM
+##dummmmb 
+sp {satisfy-predicate-conditions*apply*finished-learning*remove-instance
+    (state <s1> ^top-state.dialog-context.learning true
+                ^store-link <ll>
+                ^operator.name finished-learning)
+    (<ll> ^predicate-structure.conditions.result.set <res>)
+    (<res> ^instance <i>)
+-->
+    (<res> ^instance <i> -)
+}
+sp {satisfy-predicate-conditions*apply*finished-learning*remove-instance2
+    (state <s1> ^top-state.dialog-context.learning true
+                ^store-link <ll>
+                ^operator.name finished-learning)
+    (<ll> ^predicate-structure.conditions.args.<n>.result.set <res>)
+    (<res> ^instance <i>)
+-->
+    (<res> ^instance <i> -)
+}
+sp {satisfy-predicate-conditions*apply*finished-learning*remove-instance3
+    (state <s1> ^top-state.dialog-context.learning true
+                ^store-link <ll>
+                ^operator.name finished-learning)
+    (<ll> ^predicate-structure.conditions.args.<n>.args.<n1>.result.set <res>)
+    (<res> ^instance <i>)
+-->
+    (<res> ^instance <i> -)
+}
+sp {satisfy-predicate-conditions*apply*finished-learning*remove-instance4
+    (state <s1> ^top-state.dialog-context.learning true
+                ^store-link <ll>
+                ^operator.name finished-learning)
+    (<ll> ^predicate-structure.conditions.args.<n>.args.<n1>.args.<n2>.result.set <res>)
+    (<res> ^instance <i>)
+-->
+    (<res> ^instance <i> -)
+}
+          
+#sp {satisfy-predicate-conditions*propose*finished-learning*action-goal
+#    (state <s1> ^superstate <ss>
+#                ^top-state.dialog-context.learning true)
+#    (<ss> ^main-type {<type> << action goal >>} ^operator.type <type> ^<type> <a1>)
+#    (<a1> ^parameter-set <p1> ^handle <c1>)
+#    (<p1> ^set <i1>)
+#    -->
+#    (<s1> ^operator <o1> + =)
+#    (<o1> ^name finished-learning
+#          ^type <type>)
+#}
+
 sp {finished-learning*store*predicate*concept
    (state <s> ^name finished-learning    
-              #^superstate.operator.type predicate        
               ^smem.command <sc>
-              ^top-state.dialog-context.learn-link <ll>)
+              ^superstate.store-link <ll>)
 -->
-   (<s> ^to-store <ll>)
+    (<s> ^store-link <ll>)
+    (<s> ^to-store <ll>)
    (<sc> ^store <ll>)
 }
+##TODO for all types or only predicates?
+#sp {finished-learning*store*predicate*concept
+#   (state <s> ^name finished-learning    
+#              #^superstate.operator.type predicate        
+#              ^smem.command <sc>
+#              ^top-state.dialog-context.learn-link <ll>)
+#-->
+#   (<s> ^to-store <ll>)
+#   (<sc> ^store <ll>)
+#}
 sp {finished-learning*propose*store*primary*rtype
    (state <s> ^operator.name finished-learning
-              ^top-state.dialog-context.learn-link <ll>)
+              ^store-link <ll>)
    (<ll> ^predicate-structure.conditions.parameter.<num> <p>)
    (<p> ^param-id 1 ^type <rtype>)
 -->
    (<ll> ^primary-rtype <rtype>)
 }
+
+##HACK TO FIX MIRRORING PROBLEM... no
+#sp {finished-learning*remove*instance*results
+#   (state <s> ^name finished-learning
+#              ^operator.name complete
+#              ^to-store <ts>)
+#   (<ts> ^set <r1>)
+#   (<r1> ^instance <i>)
+#-->
+#    (<r1> ^instance <i> -)
+#}
 
 sp {finished-learning*propose*store-next-level
    (state <s> ^name finished-learning
@@ -102,14 +205,14 @@ sp {finished-learning*apply*complete*remove-learn-link
    (<dc> ^learn-link <l2> -)
 }
 
-#sp {finished-learning*apply*complete*remove-learn-link
-#    (state <s1> ^name finished-learning
-#                ^operator.name complete
-#                ^top-state.dialog-context <dc>)
-#    (<dc> ^learn-link <ll>)
-#-->
-#   (<dc> ^learn-link <ll> -)
-#}
+sp {finished-learning*apply*complete*remove-learn-link
+    (state <s1> ^name finished-learning
+                ^operator.name complete
+                ^top-state.dialog-context <dc>)
+    (<dc> ^learn-link <ll>)
+-->
+   (<dc> ^learn-link <ll> -)
+}
 
 sp {finished-learning*apply*complete*input-object-1
     (state <s1> ^name finished-learning
