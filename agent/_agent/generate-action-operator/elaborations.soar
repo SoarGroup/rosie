@@ -208,6 +208,51 @@ sp {generate-action-operator*elaborate*argument-info*until-clause*count-shape*fi
    (<arg-info> ^final-count <c>)
 }
 
+
+#### object-id (a pointer to the object) ####
+
+sp {generate-action-operator*elaborate*argument-info*object-id*object*not*linked
+   (state <s> ^name generate-action-operator
+              ^argument-info <arg-info>)
+   (<arg-info> ^arg-type << object location >>
+               ^value <obj>)
+   (<obj> -^linked-to)
+-->
+   (<arg-info> ^object-id <obj>)
+}
+
+sp {generate-action-operator*elaborate*argument-info*object-id*object*linked
+   (state <s> ^name generate-action-operator
+              ^argument-info <arg-info>)
+   (<arg-info> ^arg-type << object location >>
+               ^value <obj>)
+   (<obj> ^linked-to <link>)
+-->
+   (<arg-info> ^object-id <link>)
+}
+
+sp {generate-action-operator*elaborate*argument-info*object-id*predicate*object*not*linked
+   (state <s> ^name generate-action-operator
+              ^argument-info <arg-info>)
+   (<arg-info> ^arg-type predicate
+               ^value <pred>)
+   (<pred> ^2 <obj>)
+   (<obj> -^linked-to)
+-->
+   (<pred> ^id2 <obj>)
+}
+
+sp {generate-action-operator*elaborate*argument-info*object-id*predicate*object*linked
+   (state <s> ^name generate-action-operator
+              ^argument-info <arg-info>)
+   (<arg-info> ^arg-type predicate
+               ^value <pred>)
+   (<pred> ^2 <obj>)
+   (<obj> ^linked-to <link>)
+-->
+   (<pred> ^id2 <link>)
+}
+
 #### object arg-status << visible imagined abstract >> ####
 
 # If the object is on the top-state world and is visible, mark visible
@@ -343,6 +388,7 @@ sp {generate-action-operator*elaborate*argument-info*predicate*arg-status*imagin
                 ^value <obj1>)
    (<arg2-info> ^arg-name arg2
                 ^arg-type predicate
+               -^procedural.arg-status abstract
                 ^value.handle <pred-handle>
                 ^value.{2} <obj2>)
    (<ts-pred> ^handle <pred-handle>)
@@ -366,6 +412,7 @@ sp {generate-action-operator*elaborate*argument-info*predicate*arg-status*imagin
                 ^value <obj1>)
    (<arg2-info> ^arg-name arg2
                 ^arg-type predicate
+               -^procedural.arg-status abstract
                 ^value.handle <pred-handle>
                 ^value.{2} <obj2>)
    (<ts-pred> ^handle <rel-handle>)
@@ -373,6 +420,55 @@ sp {generate-action-operator*elaborate*argument-info*predicate*arg-status*imagin
      (<i> ^1 <obj1> ^2 <obj2>)}
 -->
    (<arg2-info> ^arg-status imagined)
+}
+
+# If the predicate is not on the top-state and is noted as abstract, mark as abstract
+sp {generate-action-operator*elaborate*argument-info*predicate*arg-status*abstract
+   (state <s> ^name generate-action-operator
+              ^predicate-lti <pred-info>
+              ^argument-info <arg1-info>
+              ^argument-info <arg2-info>
+              ^top-state.world.predicates.predicate <ts-pred>)
+   (<pred-info> ^handle <pred-handle>
+               -^spatial-relation
+                ^relation-type existing)
+   (<arg1-info> ^arg-name arg1
+                ^value <obj1>)
+   (<arg2-info> ^arg-name arg2
+                ^arg-type predicate
+                ^procedural.arg-status abstract
+                ^value.handle <pred-handle>
+                ^value.{2} <obj2>)
+   (<ts-pred> ^handle <pred-handle>)
+   -{(<ts-pred> ^instance <i>)
+     (<i> ^1 <obj1> ^2 <obj2>)}
+-->
+   (<arg2-info> ^arg-status abstract)
+}
+
+# If the predicate is not on the top-state (in the form of the one it is an alias for) 
+#    and is marked in procedural memory as abstract - mark as abstract
+sp {generate-action-operator*elaborate*argument-info*predicate*arg-status*abstract*2
+   (state <s> ^name generate-action-operator
+              ^predicate-lti <pred-info>
+              ^argument-info <arg1-info>
+              ^argument-info <arg2-info>
+              ^top-state.world.predicates.predicate <ts-pred>)
+   (<pred-info> ^handle <pred-handle>
+                ^spatial-relation.handle <rel-handle>
+                ^relation-type existing)
+   (<arg1-info> ^arg-name arg1
+                ^value <obj1>)
+   (<arg2-info> ^arg-name arg2
+                ^arg-type predicate
+                ^procedural.arg-status abstract
+                ^value.handle <pred-handle>
+                ^value.{2} <obj2>)
+   (<ts-pred> ^handle <rel-handle>)
+   -{(<ts-pred> ^instance <i>)
+     (<i> ^1 <obj1> ^2 <obj2>)}
+-->
+   (<arg2-info> ^arg-status abstract)
 }
 
 # If the predicate represents a desired relation - mark as desired
