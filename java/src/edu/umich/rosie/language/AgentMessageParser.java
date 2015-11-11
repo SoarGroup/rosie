@@ -43,6 +43,7 @@ public class AgentMessageParser
 			simpleMessages.put("get-next-subaction", "What do I do next?");
 			simpleMessages.put("confirm-pick-up", "I have picked up the object.");
 			simpleMessages.put("confirm-put-down", "I have put down the object.");
+			simpleMessages.put("execution-failure", "I failed to complete the action.");
 		}
 		
 		String type = SoarUtil.getValueOfAttribute(id, "type");
