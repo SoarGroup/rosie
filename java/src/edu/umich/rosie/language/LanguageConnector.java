@@ -74,6 +74,18 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
 	public synchronized void receiveMessage(RosieMessage message){
 		switch(message.type){
     	case INSTRUCTOR_MESSAGE:
+    		System.out.println("Instructor Message: |" + message.message + "|");
+    		if(message.message.startsWith("S: ")){
+    			String command = message.message.substring(3);
+    			if(command.equals("stop")){
+    				soarAgent.stop();
+    			} else if(command.equals("run")){
+    				soarAgent.start();
+    			} else {
+    				System.out.println(soarAgent.sendCommand(command));
+    			}
+    			return;
+    		}
     		if(curMessage != null){
     			messagesToRemove.add(curMessage);
     		}

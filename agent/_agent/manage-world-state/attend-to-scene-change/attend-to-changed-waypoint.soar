@@ -1,36 +1,152 @@
-# Updating world.robot.current-waypoint
-sp {anystate*apply*attend-to-scene-change*changed-waypoint*add*new
-   (state <s> ^operator <o>
-              ^top-state.world.robot <robot>
+sp {attend-to-changed-waypoint*elaborate*new-waypoint-handle
+   (state <s> ^name attend-to-changed-waypoint
+              ^superstate.operator.new-waypoint-handle <wp-handle>)
+-->
+   (<s> ^new-waypoint-handle <wp-handle>)
+}
+
+sp {attend-to-changed-waypoint*elaborate*new-waypoint*topstate
+   (state <s> ^name attend-to-changed-waypoint
+              ^new-waypoint-handle <wp-handle>
               ^top-state.maps.map.waypoint <wp>)
-   (<o> ^name attend-to-scene-change
-        ^change.type changed-waypoint
-        ^change.new-waypoint-handle <wp-handle>)
    (<wp> ^handle <wp-handle>)
+-->
+   (<s> ^new-waypoint <wp>)
+}
+
+#sp {attend-to-changed-waypont*elaborate*smem-query-cue*location
+#   (state <s> ^name attend-to-changed-waypoint
+#              ^new-waypoint-handle <wp-handle>)
+#-->
+#   (<s> ^smem-query <q>)
+#   (<q> ^cue <cue>
+#        ^depth 3)
+#   (<cue> ^waypoint <wp-handle>)
+#}
+#
+#sp {attend-to-changed-waypoint*elaborate*current-location*none
+#   (state <s> ^name attend-to-changed-waypoint
+#              ^smem-query.result failure)
+#-->
+#   (<s> ^new-location none)
+#}
+#
+#sp {attend-to-changed-waypoint*elaborate*current-location*success
+#   (state <s> ^name attend-to-changed-waypoint
+#              ^smem-query.result { <loc-lti> <> failure })
+#-->
+#   (<s> ^new-location <loc-lti>)
+#}
+
+sp {attend-to-changed-waypoint*elaborate*current-location*none
+   (state <s> ^name attend-to-changed-waypoint
+              ^new-waypoint-handle <wp-handle>
+              -^top-state.world.objects.object.waypoint <wp-handle>)
+-->
+   (<s> ^new-location none)
+}
+
+sp {attend-to-changed-waypoint*elaborate*current-location*success
+   (state <s> ^name attend-to-changed-waypoint
+              ^new-waypoint-handle <wp-handle>
+              ^top-state.world.objects.object <loc>)
+   (<loc> ^waypoint <wp-handle>)
+-->
+   (<s> ^new-location <loc>)
+}
+
+sp {attend-to-changed-waypoint*propose*change-waypoint-info
+   (state <s> ^name attend-to-changed-waypoint
+              ^new-waypoint <wp>
+              ^new-location <loc>)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name change-waypoint-info
+        ^current-waypoint <wp>
+        ^current-location <loc>)
+}
+
+sp {attend-to-changed-waypoint*apply*change-waypoint-info*add*new*waypoint
+   (state <s> ^name attend-to-changed-waypoint
+              ^operator <o>
+              ^top-state.world.robot <robot>)
+   (<o> ^name change-waypoint-info
+        ^current-waypoint <wp>)
 -->
    (<robot> ^current-waypoint <wp>)
 }
-   
-sp {anystate*apply*attend-to-scene-change*changed-waypoint*remove*old
-   (state <s> ^operator <o>
-              ^top-state.world.robot <robot>
-              ^top-state.maps.map.waypoint <wp>)
-   (<o> ^name attend-to-scene-change
-        ^change.type changed-waypoint
-        ^change.new-waypoint-handle <wp-handle>)
-   (<wp> ^handle <wp-handle>)
+
+sp {attend-to-changed-waypoint*apply*change-waypoint-info*add*new*location
+   (state <s> ^name attend-to-changed-waypoint
+              ^operator <o>
+              ^top-state.world <world>)
+   (<o> ^name change-waypoint-info
+        ^current-location { <loc> <> none })
+   (<world> ^robot <robot>
+             ^objects <objs>)
+-->
+   (<robot> ^current-location <loc>)
+   (<objs> ^object <loc>)
+}
+
+sp {attend-to-changed-waypoint*apply*change-waypoint-info*remove*old*waypoint
+   (state <s> ^name attend-to-changed-waypoint
+              ^operator <o>
+              ^top-state.world.robot <robot>)
+   (<o> ^name change-waypoint-info
+        ^current-waypoint <wp>)
    (<robot> ^current-waypoint { <old-wp> <> <wp> })
 -->
    (<robot> ^current-waypoint <old-wp> -)
 }
 
-sp {anystate*apply*attend-to-scene-change*monitor*changed-waypoint
-   (state <s> ^operator <o>
-              ^top-state.agent-params.debug-mode on)
-   (<o> ^name attend-to-scene-change
-        ^change.type changed-waypoint
-        ^change.new-waypoint-handle <wp-handle>)
+sp {attend-to-changed-waypoint*apply*change-waypoint-info*remove*old*location
+   (state <s> ^name attend-to-changed-waypoint
+              ^operator <o>
+              ^top-state.world.robot <robot>)
+   (<o> ^name change-waypoint-info
+        ^current-location <loc>)
+   (<robot> ^current-location { <old-loc> <> <loc> })
+-->
+   (<robot> ^current-location <old-loc> -)
+}
+
+sp {attend-to-changed-waypoint*apply*change-waypoint-info*monitor*waypoint
+   (state <s> ^name attend-to-changed-waypoint
+              ^top-state.agent-params.debug-mode on
+              ^operator <o>)
+   (<o> ^name change-waypoint-info
+        ^current-waypoint.handle <wp-handle>)
 -->
    (write |current-waypoint: | <wp-handle> (crlf))
 }
-              
+
+sp {attend-to-changed-waypoint*apply*change-waypoint-info*monitor*location
+   (state <s> ^name attend-to-changed-waypoint
+              ^top-state.agent-params.debug-mode on
+              ^operator <o>)
+   (<o> ^name change-waypoint-info
+        ^current-location.handle <loc-handle>)
+-->
+   (write |current-location: | <loc-handle> (crlf))
+}
+
+
+sp {attend-to-changed-waypoint*apply*change-waypoint-info*add*unknown-object
+   (state <s> ^name attend-to-changed-waypoint
+              ^operator <o>
+              ^top-state.world <world>)
+   (<o> ^name change-waypoint-info
+        ^current-location { <new-loc> <> none })
+   (<world> ^predicates.predicate <in-pred>
+            ^unknown-objects.object <obj>
+            ^objects <objs>)
+   (<in-pred> ^handle in1
+              ^instance <i>)
+   (<i> ^1 <obj> ^2 <new-loc>)
+   (<obj> ^handle <obj-handle>)
+-->
+   (<objs> ^object <obj>)
+   (write |Object | <obj-handle> | is visible.| (crlf))
+}
+

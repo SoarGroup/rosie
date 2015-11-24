@@ -1,0 +1,648 @@
+
+sp {satisfy-predicate-conditions*propose*predicate-operator*goal
+    (state <s1> ^gtype { << goal >> <c2> } ^list <l1> ^<c2> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^parameter-set <p1> ^aname <c1>)
+    (<p1> ^set <i1>)
+    -->
+    (<s1> ^operator <o1> +)
+    (<o1> ^type <c2> + ^name <c1> + ^parameters <i1> +)
+}
+
+sp {satisfy-predicate-conditions*propose*predicate-operator*action
+    (state <s1> ^gtype { << action >> <c2> } ^list <l1> ^<c2> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^parameter-set <p1> ^aname <c1> ^verb-structure <vs>)
+    (<p1> ^set <i1>)
+    -->
+    (<s1> ^operator <o1> +)
+    (<o1> ^type <c2> + ^name <c1> + ^parameters <i1> + ^verb-structure <vs>)
+}
+
+sp {satisfy-predicate-conditions*propose*finished-learning
+    (state <s1> ^main-type predicate ^gtype predicate ^list <l1> ^predicate <a1>
+                ^top-state.dialog-context.learning true)
+    (<l1> ^game <g1>)
+    (<a1> ^parameter-set <p1> ^aname <c1>)
+    (<p1> ^set <i1>)
+    -->
+   (interrupt)
+    (<s1> ^operator <o1> + =)
+    (<o1> ^name finished-learning
+          ^type predicate)
+}
+
+sp {satisfy-predicate-conditions*propose*finished-learning*action-goal
+    (state <s1> ^superstate <ss>
+                ^top-state.dialog-context.learning true)
+    (<ss> ^main-type {<type> << action goal >>} ^operator.type <type>)
+    (<a1> ^parameter-set <p1> ^aname <c1>)
+    (<p1> ^set <i1>)
+    -->
+   (interrupt)
+    (<s1> ^operator <o1> + =)
+    (<o1> ^name finished-learning)
+}
+
+#TODO for all types or only predicates?
+sp {finished-learning*store*predicate*concept
+   (state <s> ^name finished-learning    
+              ^superstate.operator.type predicate        
+              ^smem.command <sc>
+              ^top-state.dialog-context.learn-link <ll>)
+-->
+   (<s> ^to-store <ll>)
+   (<sc> ^store <ll>)
+}
+sp {finished-learning*propose*store*primary*rtype
+   (state <s> ^operator.name finished-learning
+              ^top-state.dialog-context.learn-link <ll>)
+   (<ll> ^predicate-structure.conditions.parameter.<num> <p>)
+   (<p> ^param-id 1 ^type <rtype>)
+-->
+   (<ll> ^primary-rtype <rtype>)
+}
+
+sp {finished-learning*propose*store-next-level
+   (state <s> ^name finished-learning
+             -^to-store <something2>
+              ^to-store <ts>)
+   (<ts> ^{<something> <> final <> goal-state <> initial <> set <> instance} {<something2> <=> <s>})
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name store-game-level
+        ^to-store <something2>)
+}
+
+sp {finished-learning*apply*store-next-level
+   (state <s> ^name finished-learning
+              ^operator <o>
+              ^smem.command <sc>)
+   (<o> ^name store-game-level
+        ^to-store <something2>)
+-->
+   (<s> ^to-store <something2>)
+   (<sc> ^store <something2>)
+}
+
+sp {finished-learning*propose*complete
+   (state <s> ^name finished-learning)
+-->
+   (<s> ^operator <o> + <)
+   (<o> ^name complete)
+}
+
+sp {finished-learning*apply*complete*remove-learn-link
+    (state <s1> ^name finished-learning
+                ^operator.name complete
+                ^top-state.dialog-context <dc>)
+    (<dc> ^learn-link <ll>)
+-->
+   (<dc> ^learn-link <ll> -)
+}
+sp {finished-learning*apply*complete*remove-learning-predicate
+    (state <s1> ^name finished-learning
+                ^operator.name complete
+                ^top-state.dialog-context <dc>)
+    (<dc> ^learning-predicate <lp>)
+-->
+   (<dc> ^learning-predicate <lp> -)
+}
+sp {finished-learning*apply*complete*input-object-1
+    (state <s1> ^name finished-learning
+                ^operator.name complete
+                ^top-state.dialog-context <dc>)
+    (<dc> ^input-object-1 <lp>)
+-->
+   (<dc> ^input-object-1 <lp> -)
+}
+sp {finished-learning*apply*complete*input-object-2
+    (state <s1> ^name finished-learning
+                ^operator.name complete
+                ^top-state.dialog-context <dc>)
+    (<dc> ^input-object-2 <lp>)
+-->
+   (<dc> ^input-object-2 <lp> -)
+}
+
+sp {finished-learning*apply*complete*send-message
+    (state <s1> ^name finished-learning
+                ^operator.name complete
+               -^top-state.dialog-context.goal-state
+                ^top-state.interaction.status <status>
+                ^top-state.interaction.changes <changes>)
+-->
+   (<changes> ^outgoing-message <msg>)
+   (<msg> ^type simple-message
+          ^message-type ok)
+   (<status> ^performed.learning-event <de>)
+   (<de> ^type game
+         ^originator agent)
+}
+
+#describe here too
+#remove more flags?
+sp {finished-learning*apply*complete*send-message*goal-state
+    (state <s1> ^name finished-learning
+                ^operator.name complete
+                ^top-state.dialog-context.goal-relationships <gs>
+                ^top-state.interaction.status <status>
+                ^top-state.interaction.changes <changes>)
+-->
+   (<changes> ^outgoing-message <msg>)
+   (<msg> ^type describe-final-goal-state
+          ^fields <f>)
+   (<f> ^relationships <gs> ^definitive no)
+   (<status> ^performed.learning-event <de>)
+   (<de> ^type game
+         ^originator agent)
+}
+
+
+
+#TODO give everything primary rtype
+#check same primary return type (in future need to deal with different param usage of concepts)
+sp {satisfy-predicate-conditions*elaborate*condition-instance
+    (state <s1> ^gtype <c3> ^list <l1> ^<c3> <a1> ^<c1> <t1>)
+    (<l1> ^game <g1>)
+    (<a1> ^condition <c4>)
+    (<c4> ^type concept ^result <r1> ^name <c2> ^attribute <c1> ^rtype <rtype>)
+    (<r1> ^set <s2>)
+    (<t1> ^nlp-set <n1> ^instance <i1> ^link <c4> ^primary-rtype <rtype>)
+    (<n1> ^aname <c2>)
+    -->
+    (<s2> ^instance <i1> +)
+}
+#only if one main parameter
+sp {satisfy-predicate-conditions*elaborate*condition-instance*single-to-set
+    (state <s1> ^gtype <c3> ^list <l1> ^<c3> <a1> ^<c1> <t1>)
+    (<l1> ^game <g1>)
+    (<a1> ^condition <c4>)
+    (<c4> ^type concept ^result <r1> ^name <c2> ^attribute <c1> ^rtype set ^parameter.num 1)
+    (<r1> ^set <s2>)
+    (<t1> ^nlp-set <n1> ^link <c4> ^primary-rtype single)#^instance <i1> 
+    (<n1> ^aname <c2>)
+    -->
+    (<s2> ^instance <i1>)
+    (<i1> ^1 <set>)
+}
+sp {satisfy-predicate-conditions*elaborate*condition-instance*single-to-set*copy-objects
+    (state <s1> ^gtype <c3> ^list <l1> ^<c3> <a1> ^<c1> <t1>)
+    (<l1> ^game <g1>)
+    (<a1> ^condition <c4>)
+    (<c4> ^type concept ^result <r1> ^name <c2> ^attribute <c1> ^rtype set ^parameter.num 1)
+    (<r1> ^set.instance.{1} <set>)
+    (<t1> ^nlp-set <n1> ^instance.{1} <obj> ^link <c4> ^primary-rtype single)
+    (<n1> ^aname <c2>)
+    -->
+    (<set> ^<object> <obj>)
+}
+
+sp {satisfy-predicate-conditions*elaborate*condition-instance*action #TODO fix no link issue
+    (state <s1> ^gtype <c3> ^list <l1> ^<c3> <a1> ^action <t1>)
+    (<l1> ^game <g1>)
+    (<a1> ^condition <c4>)
+    (<c4> ^type concept ^result <r1> ^name <c2> ^attribute action)
+    (<r1> ^set <s2>)
+    (<t1> ^nlp-set <n1> ^instance <i1>)# ^link <c4>)
+    (<n1> ^aname <c2>)
+    -->
+    (<s2> ^instance <i1> +)
+}
+
+#TODO may not need this once we have ewave working
+sp {satisfy-predicate-conditions*elaborate*calculate6
+    (state <s1> ^gtype <c1> ^list <l1> ^<c1> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^parameter-set <p2> ^potential-args <p1>)
+    (<p2> ^tested calculate5 ^tested calculate4)
+    -->
+    (<p2> ^tested calculate6 +)
+}
+
+sp {satisfy-predicate-conditions*elaborate*calculate5
+    (state <s1> ^gtype <c1> ^list <l1> ^<c1> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^parameter-set <p2> ^potential-args <p1>)
+    (<p2> ^tested calculate4 ^tested calculate3)
+    -->
+    (<p2> ^tested calculate5 +)
+}
+
+sp {satisfy-predicate-conditions*elaborate*calculate4
+    (state <s1> ^gtype <c1> ^list <l1> ^<c1> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^parameter-set <p2> ^potential-args <p1>)
+    (<p2> ^tested calculate3 ^tested calculate2)
+    -->
+    (<p2> ^tested calculate4 +)
+}
+
+sp {satisfy-predicate-conditions*elaborate*calculate3
+    (state <s1> ^gtype <c1> ^list <l1> ^<c1> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^parameter-set <p2> ^potential-args <p1>)
+    (<p2> ^tested calculate2 ^tested calculate1)
+    -->
+    (<p2> ^tested calculate3 +)
+}
+
+sp {satisfy-predicate-conditions*elaborate*calculate2
+    (state <s1> ^gtype <c1> ^list <l1> ^<c1> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^parameter-set <p2> ^potential-args <p1>)
+    (<p2> ^tested calculate1)
+    -->
+    (<p2> ^tested calculate2 +)
+}
+
+#TODO sometimes prefires and doesn't retract if child of lti????
+
+#test that all conditions have an instance with a result
+sp {satisfy-predicate-conditions*elaborate*calculate1
+    (state <s1> ^simulated true ^gtype <c1> ^list <l1> ^<c1> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^potential-args <p1> ^parameter-set <p2>)
+    -{(<a1> ^condition <c>)
+      (<c> ^result.set <rset>)
+     -{(<rset> ^instance.{1})}}
+    -->
+    (<p2> ^tested calculate1 +)
+}
+
+sp {satisfy-predicate-conditions*elaborate*instance*from-predicate-results
+    (state <s1> ^gtype predicate ^predicate <p1> ^list <l1>)
+    (<p1>  ^parameter-set <p2> ^potential-args <p3>)#^aname <name>
+    (<p2>  ^tested calculate5 ^tested calculate2
+          ^tested calculate6 ^tested calculate1 ^set <s2>)
+    (<l1> ^game <g1>)
+  #  (<g1> ^type predicate)
+    -->
+    (<p1> ^instance <s2> +)
+}
+
+sp {satisfy-predicate-conditions*elaborate*result*set
+    (state <s1> ^gtype <c1> ^list <l1> ^<c1> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^parameter-set <p2> ^potential-args <p1>)
+    (<p2> ^tested calculate5 ^tested calculate3 ^tested calculate2
+          ^tested calculate6 ^tested calculate4 ^tested calculate1 ^iset <i1>)
+   -{ (<p2> ^neg <neg1>)
+      (<neg1> ^<ind4> <obj3>)
+      (<i1> ^<ind4> <obj3>)}
+   -{ (<p2> ^negpair3 <pair3>)
+      (<pair3> ^<ind3> <objc> ^{ <> <ind3> <ind2> } <objb>
+            ^{ <> <ind3> <> <ind2> <ind1> } <obja>)
+      (<i1> ^<ind3> <objc> ^<ind2> <objb> ^<ind1> <obja>)}
+   -{ (<p2> ^negpair <pair>)
+      (<pair> ^<ind2> <objb> ^{ <> <ind2> <ind1> } <obja>)
+      (<i1> ^<ind2> <objb> ^<ind1> <obja>)}
+   -{ (<i1> ^<ind1> { <=> <i1> <obja> } ^<ind1> <obja>
+            ^{ <> <ind1> <ind2> } <obja>)}
+    -->
+    (<p2> ^set <i1> +)
+}
+sp {satisfy-predicate-conditions*elaborate*initial-set*3-arguments
+    (state <s1> ^gtype <c1> ^list <l1> ^<c1> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^parameter-set <p2> ^potential-args <p1>)
+    (<p2> ^tested calculate6 ^argnum 3)
+    (<p1> ^3 <o3> ^2 <o2> ^1 <o1>)
+  -{ (<p2> ^neg <n3>)
+      (<n3> ^3 <o3>)}
+   -{ (<p2> ^neg <n2>)
+      (<n2> ^2 <o2>)}
+   -{ (<p2> ^neg <n1>)
+      (<n1> ^1 <o1>)}
+-{ (<p2> ^negpair <pair1>)
+      (<pair1> ^1 <o1> ^2 <o2>)}
+-{ (<p2> ^negpair <pair2>)
+      (<pair2> ^1 <o1> ^3 <o3>)}
+-{ (<p2> ^negpair <pair8>)
+      (<pair8> ^2 <o2> ^3 <o3>)}
+    -->
+    (<p2> ^iset <i1> +)
+    (<i1> ^1 <o1> + ^2 <o2> + ^3 <o3> +)
+}
+
+sp {satisfy-predicate-conditions*elaborate*initial-set*2-arguments
+    (state <s1> ^gtype <c1> ^list <l1> ^<c1> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^parameter-set <p2> ^potential-args <p1>)
+    (<p2> ^tested calculate6 ^argnum 2)
+    (<p1> ^2 <o2> ^1 <o1>)
+   -{ (<p2> ^neg <n2>)
+      (<n2> ^2 <o2>)}
+   -{ (<p2> ^neg <n1>)
+      (<n1> ^1 <o1>)}
+   -{ (<p2> ^negpair <pair1>)
+      (<pair1> ^1 <o1> ^2 <o2>)}
+    -->
+    (<p2> ^iset <i1> +)
+    (<i1> ^1 <o1> + ^2 <o2> +)
+}
+
+sp {satisfy-predicate-conditions*elaborate*initial-set*5-arguments
+    (state <s1> ^gtype <c1> ^list <l1> ^<c1> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^parameter-set <p2> ^potential-args <p1>)
+    (<p2> ^tested calculate6 ^argnum 5)
+    (<p1> ^5 <o5> ^4 <o4> ^3 <o3> ^2 <o2> ^1 <o1>)
+  -{ (<p2> ^neg <n5>)
+      (<n5> ^5 <o5>)}
+  -{ (<p2> ^neg <n4>)
+      (<n4> ^4 <o4>)}
+  -{ (<p2> ^neg <n3>)
+      (<n3> ^3 <o3>)}
+   -{ (<p2> ^neg <n2>)
+      (<n2> ^2 <o2>)}
+   -{ (<p2> ^neg <n1>)
+      (<n1> ^1 <o1>)}
+-{ (<p2> ^negpair <pair1>)
+      (<pair1> ^1 <o1> ^2 <o2>)}
+-{ (<p2> ^negpair <pair2>)
+      (<pair2> ^1 <o1> ^3 <o3>)}
+-{ (<p2> ^negpair <pair3>)
+      (<pair3> ^1 <o1> ^4 <o4>)}
+-{ (<p2> ^negpair <pair4>)
+      (<pair4> ^1 <o1> ^5 <o5>)}
+-{ (<p2> ^negpair <pair8>)
+      (<pair8> ^2 <o2> ^3 <o3>)}
+-{ (<p2> ^negpair <pair9>)
+      (<pair9> ^2 <o2> ^4 <o4>)}
+-{ (<p2> ^negpair <pair10>)
+      (<pair10> ^2 <o2> ^5 <o5>)}
+-{ (<p2> ^negpair <pair14>)
+      (<pair14> ^3 <o3> ^4 <o4>)}
+-{ (<p2> ^negpair <pair15>)
+      (<pair15> ^3 <o3> ^5 <o5>)}
+-{ (<p2> ^negpair <pair21>)
+      (<pair21> ^4 <o4> ^5 <o5>)}
+    -->
+    (<p2> ^iset <i1> +)
+    (<i1> ^5 <o5> + ^4 <o4> + ^1 <o1> + ^2 <o2> + ^3 <o3> +)
+}
+
+sp {satisfy-predicate-conditions*elaborate*initial-set*6-arguments
+    (state <s1> ^gtype <c1> ^list <l1> ^<c1> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^parameter-set <p2> ^potential-args <p1>)
+    (<p2> ^tested calculate6 ^argnum 6)
+    (<p1> ^6 <o6> ^5 <o5> ^4 <o4> ^3 <o3> ^2 <o2> ^1 <o1>)
+  -{ (<p2> ^neg <n6>)
+      (<n6> ^6 <o6>)}
+  -{ (<p2> ^neg <n5>)
+      (<n5> ^5 <o5>)}
+  -{ (<p2> ^neg <n4>)
+      (<n4> ^4 <o4>)}
+  -{ (<p2> ^neg <n3>)
+      (<n3> ^3 <o3>)}
+   -{ (<p2> ^neg <n2>)
+      (<n2> ^2 <o2>)}
+   -{ (<p2> ^neg <n1>)
+      (<n1> ^1 <o1>)}
+-{ (<p2> ^negpair <pair1>)
+      (<pair1> ^1 <o1> ^2 <o2>)}
+-{ (<p2> ^negpair <pair2>)
+      (<pair2> ^1 <o1> ^3 <o3>)}
+-{ (<p2> ^negpair <pair3>)
+      (<pair3> ^1 <o1> ^4 <o4>)}
+-{ (<p2> ^negpair <pair4>)
+      (<pair4> ^1 <o1> ^5 <o5>)}
+-{ (<p2> ^negpair <pair5>)
+      (<pair5> ^1 <o1> ^6 <o6>)}
+-{ (<p2> ^negpair <pair8>)
+      (<pair8> ^2 <o2> ^3 <o3>)}
+-{ (<p2> ^negpair <pair9>)
+      (<pair9> ^2 <o2> ^4 <o4>)}
+-{ (<p2> ^negpair <pair10>)
+      (<pair10> ^2 <o2> ^5 <o5>)}
+-{ (<p2> ^negpair <pair11>)
+      (<pair11> ^2 <o2> ^6 <o6>)}
+-{ (<p2> ^negpair <pair14>)
+      (<pair14> ^3 <o3> ^4 <o4>)}
+-{ (<p2> ^negpair <pair15>)
+      (<pair15> ^3 <o3> ^5 <o5>)}
+-{ (<p2> ^negpair <pair16>)
+      (<pair16> ^3 <o3> ^6 <o6>)}
+-{ (<p2> ^negpair <pair21>)
+      (<pair21> ^4 <o4> ^5 <o5>)}
+-{ (<p2> ^negpair <pair22>)
+      (<pair22> ^4 <o4> ^6 <o6>)}
+-{ (<p2> ^negpair <pair25>)
+      (<pair25> ^5 <o5> ^6 <o6>)}
+    -->
+    (<p2> ^iset <i1> +)
+    (<i1> ^6 <o6> + ^5 <o5> + ^4 <o4> + ^1 <o1> + ^2 <o2> + ^3 <o3> +)
+}
+
+sp {satisfy-predicate-conditions*elaborate*initial-set*8-arguments
+    (state <s1> ^gtype <c1> ^list <l1> ^<c1> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^parameter-set <p2> ^potential-args <p1>)
+    (<p2> ^tested calculate6 ^argnum 8)
+    (<p1> ^8 <o8> ^7 <o7> ^6 <o6> ^5 <o5> ^4 <o4> ^3 <o3> ^2 <o2> ^1 <o1>)
+  -{ (<p2> ^neg <n8>)
+      (<n8> ^8 <o8>)}
+  -{ (<p2> ^neg <n7>)
+      (<n7> ^5 <o7>)}
+  -{ (<p2> ^neg <n6>)
+      (<n6> ^6 <o6>)}
+  -{ (<p2> ^neg <n5>)
+      (<n5> ^5 <o5>)}
+  -{ (<p2> ^neg <n4>)
+      (<n4> ^4 <o4>)}
+  -{ (<p2> ^neg <n3>)
+      (<n3> ^3 <o3>)}
+   -{ (<p2> ^neg <n2>)
+      (<n2> ^2 <o2>)}
+   -{ (<p2> ^neg <n1>)
+      (<n1> ^1 <o1>)}
+-{ (<p2> ^negpair <pair1>)
+      (<pair1> ^1 <o1> ^2 <o2>)}
+-{ (<p2> ^negpair <pair2>)
+      (<pair2> ^1 <o1> ^3 <o3>)}
+-{ (<p2> ^negpair <pair3>)
+      (<pair3> ^1 <o1> ^4 <o4>)}
+-{ (<p2> ^negpair <pair4>)
+      (<pair4> ^1 <o1> ^5 <o5>)}
+-{ (<p2> ^negpair <pair5>)
+      (<pair5> ^1 <o1> ^6 <o6>)}
+-{ (<p2> ^negpair <pair6>)
+      (<pair6> ^1 <o1> ^7 <o7>)}
+-{ (<p2> ^negpair <pair7>)
+      (<pair7> ^1 <o1> ^8 <o8>)}
+-{ (<p2> ^negpair <pair8>)
+      (<pair8> ^2 <o2> ^3 <o3>)}
+-{ (<p2> ^negpair <pair9>)
+      (<pair9> ^2 <o2> ^4 <o4>)}
+-{ (<p2> ^negpair <pair10>)
+      (<pair10> ^2 <o2> ^5 <o5>)}
+-{ (<p2> ^negpair <pair11>)
+      (<pair11> ^2 <o2> ^6 <o6>)}
+-{ (<p2> ^negpair <pair12>)
+      (<pair12> ^2 <o2> ^7 <o7>)}
+-{ (<p2> ^negpair <pair13>)
+      (<pair13> ^2 <o2> ^8 <o8>)}
+-{ (<p2> ^negpair <pair14>)
+      (<pair14> ^3 <o3> ^4 <o4>)}
+-{ (<p2> ^negpair <pair15>)
+      (<pair15> ^3 <o3> ^5 <o5>)}
+-{ (<p2> ^negpair <pair16>)
+      (<pair16> ^3 <o3> ^6 <o6>)}
+-{ (<p2> ^negpair <pair17>)
+      (<pair17> ^3 <o3> ^7 <o7>)}
+-{ (<p2> ^negpair <pair18>)
+      (<pair18> ^3 <o3> ^8 <o8>)}
+-{ (<p2> ^negpair <pair21>)
+      (<pair21> ^4 <o4> ^5 <o5>)}
+-{ (<p2> ^negpair <pair22>)
+      (<pair22> ^4 <o4> ^6 <o6>)}
+-{ (<p2> ^negpair <pair23>)
+      (<pair23> ^4 <o4> ^7 <o7>)}
+-{ (<p2> ^negpair <pair24>)
+      (<pair24> ^4 <o4> ^8 <o8>)}
+-{ (<p2> ^negpair <pair25>)
+      (<pair25> ^5 <o5> ^6 <o6>)}
+-{ (<p2> ^negpair <pair26>)
+      (<pair26> ^5 <o5> ^7 <o7>)}
+-{ (<p2> ^negpair <pair27>)
+      (<pair27> ^5 <o5> ^8 <o8>)}
+-{ (<p2> ^negpair <pair28>)
+      (<pair28> ^6 <o6> ^7 <o7>)}
+-{ (<p2> ^negpair <pair29>)
+      (<pair29> ^6 <o6> ^8 <o8>)}
+-{ (<p2> ^negpair <pair30>)
+      (<pair30> ^7 <o2> ^8 <o8>)}
+    -->
+    (<p2> ^iset <i1> +)
+    (<i1> ^8 <o8> + ^7 <o7> + ^6 <o6> + ^5 <o5> + ^4 <o4> + ^1 <o1> + ^2 <o2> + ^3 <o3> +)
+}
+
+sp {satisfy-predicate-conditions*elaborate*initial-set*4-arguments
+    (state <s1> ^gtype <c1> ^list <l1> ^<c1> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^parameter-set <p2> ^potential-args <p1>)
+    (<p2> ^tested calculate6 ^argnum 4)
+    (<p1> ^4 <o4> ^3 <o3> ^2 <o2> ^1 <o1>)
+  -{ (<p2> ^neg <n4>)
+      (<n4> ^4 <o4>)}
+  -{ (<p2> ^neg <n3>)
+      (<n3> ^3 <o3>)}
+   -{ (<p2> ^neg <n2>)
+      (<n2> ^2 <o2>)}
+   -{ (<p2> ^neg <n1>)
+      (<n1> ^1 <o1>)}
+-{ (<p2> ^negpair <pair1>)
+      (<pair1> ^1 <o1> ^2 <o2>)}
+-{ (<p2> ^negpair <pair2>)
+      (<pair2> ^1 <o1> ^3 <o3>)}
+-{ (<p2> ^negpair <pair3>)
+      (<pair3> ^1 <o1> ^4 <o4>)}
+-{ (<p2> ^negpair <pair4>)
+      (<pair4> ^2 <o2> ^3 <o3>)}
+-{ (<p2> ^negpair <pair5>)
+      (<pair5> ^2 <o2> ^4 <o4>)}
+-{ (<p2> ^negpair <pair6>)
+      (<pair6> ^3 <o3> ^4 <o4>)}
+    -->
+    (<p2> ^iset <i1> +)
+    (<i1>  ^4 <o4> + ^1 <o1> + ^2 <o2> + ^3 <o3> +)
+}
+
+sp {satisfy-predicate-conditions*elaborate*initial-set*1-arguments
+    (state <s1> ^gtype <c1> ^list <l1> ^<c1> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^parameter-set <p2> ^potential-args <p1>)
+    (<p2> ^tested calculate6 ^argnum 1)
+    (<p1> ^1 <o1>)
+   -{ (<p2> ^neg <n1>)
+      (<n1> ^1 <o1>)}
+    -->
+    (<p2> ^iset <i1> +)
+    (<i1> ^1 <o1> +)
+}
+
+
+sp {satisfy-predicate-conditions*elaborate*negative-condition-instance*2-arguments
+    (state <s1> ^gtype <c2> ^list <l1> ^<c2> <p1>)
+    (<l1> ^game <g1>)
+    (<p1> ^parameter-set <p2> ^potential-args <p3> ^condition <c1>)
+    (<p2> ^tested calculate1)
+    (<c1> ^parameter <p4> ^result <r1>)
+    (<p4> ^num 2 ^2 <*1> ^1 <*2>) #not necessarily 1 and 2
+    (<*1> ^param-id <x1>)
+    (<*2> ^param-id <x2>)
+    (<p3> ^<x2> <*3> ^<x1> <*4>)
+   -{ (<r1> ^set <s2>)
+      (<s2> ^instance <p5>)
+      (<p5> ^2 <*4> ^1 <*3>)}
+    -->
+    (<p2> ^negpair <n1> +)
+    (<n1> ^<x2> <*3> + ^<x1> <*4> +)
+}
+sp {satisfy-predicate-conditions*elaborate*negative-condition-instance*3-arguments
+    (state <s1> ^gtype <c19> ^list <l1> ^<c19> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^parameter-set <p1> ^potential-args <p2> ^condition <c1>)
+    (<p1> ^tested calculate1)
+    (<c1> ^parameter <p3> ^result <r1>)
+    (<p3> ^num 3 ^3 <*1> ^2 <*2> ^1 <*3>) #not necessarily 1 and 2 and 3
+    (<*1> ^param-id <ar2>)
+    (<*2> ^param-id <ar1>)
+    (<*3> ^param-id <ar3>)
+    (<p2> ^<ar3> <*4> ^<ar2> <*5> ^<ar1> <*6>)
+   -{ (<r1> ^set <s2>)
+      (<s2> ^instance <p4>)
+      (<p4> ^1 <*4> ^3 <*5> ^2 <*6>)}
+    -->
+    (<p1> ^negpair3 <n1> +)
+    (<n1> ^<ar1> <*6> + ^<ar2> <*5> + ^<ar3> <*4> +)
+}
+
+
+sp {satisfy-predicate-conditions*elaborate*negative-condition-instance*1-argument
+    (state <s1> ^gtype <c2> ^list <l1> ^<c2> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^parameter-set <p2> ^potential-args <p1> ^condition <c1>)
+    (<p2> ^tested calculate1)
+    (<c1> ^parameter <p3> ^result <r1>)
+    (<p3> ^<c6> <p4>)
+    (<p4> ^param-id <c4>)
+    (<p1> ^<c4> <o1>)
+   -{ (<r1> ^set <s*1>)
+      (<s*1> ^instance <p*1>)
+      (<p*1> ^<c6> <o1>)}
+    -->
+    (<p2> ^neg <n1> +)
+    (<n1> ^<c4> <o1> +)
+}
+
+sp {satisfy-predicate-conditions*elaborate*potential-argument*number
+    (state <s1> ^gtype <c1> ^list <l1> ^<c1> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^condition <c3> ^potential-args <p1> ^parameter-set <p2>)
+    (<c3> ^return-type number ^parameter <p3> ^result <r1>)
+    (<r1> ^set <s2>)
+    (<s2> ^instance <p5>)
+    (<p3> ^<c4> <p4> ^1) #tests existance of 1 to create possible of any
+    (<p4> ^type single ^param-id <c6>)
+    (<p5> ^<c4> <c7>)
+    -->
+    (<p1> ^<c6> <c7> +)
+}
+sp {satisfy-predicate-conditions*elaborate*potential-argument
+    (state <s1> ^gtype <c2> ^list <l1> ^<c2> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^potential-args <p1> ^parameter-set <p2> ^condition <c1>)
+    (<c1> ^parameter <p3> ^result <r1>)
+    (<r1> ^set <s2>)
+    (<s2> ^instance <p5>)
+    (<p5> ^1 <o2> ^{ << 1 2 3 4 5 >> <c4> } <o1>) #tests existance of non empty 1 to create possible of any
+   -{ (<o2> -^<wme> <w*1>)
+      (<s1> ^list <l*1>)}
+    (<p3> ^<c4> <p4>)
+    (<p4> ^param-id <c6>)
+    -->
+    (<p1> ^<c6> <o1> +)
+}

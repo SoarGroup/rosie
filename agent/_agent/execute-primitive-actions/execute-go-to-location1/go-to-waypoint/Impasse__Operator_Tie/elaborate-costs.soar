@@ -1,0 +1,76 @@
+sp {waypoint-search*selection*elaborate*path-cost*0
+   (state <s> ^name selection
+              ^problem-space.name waypoint-search
+             -^superstate.name evaluate-operator)
+-->
+   (<s> ^path-cost 0)
+}
+
+sp {waypoint-search*selection*elaborate*path-cost*superstate
+   (state <s> ^name selection
+              ^problem-space.name waypoint-search
+              ^superstate <ss>)
+   (<ss> ^name evaluate-operator
+         ^superstate.operator.evaluation.path-cost <pc>)
+-->
+   (<s> ^path-cost <pc>)
+}
+
+# elaborate dx, dy
+sp {waypoint-search*selection*elaborate*evaluation*dx*dy
+   (state <s> ^name selection
+              ^problem-space.name waypoint-search
+              ^evaluation <e>
+              ^desired.waypoint <des-wp>
+             -^current-waypoint <cur-wp>)
+   (<e> ^current-waypoint <cur-wp>)
+   (<cur-wp> ^x <cx> ^y <cy>)
+   (<des-wp> ^x <dx> ^y <dy>)
+-->
+   (<e> ^dx (- <dx> <cx>)
+        ^dy (- <dy> <cy>))
+}
+
+# elaborate estimated-cost
+
+# Not at desired waypoint
+sp {selection*elaborate*evaluation*estimated-cost
+   :default
+   (state <s> ^name selection
+              ^evaluation <e>
+             -^current-waypoint <cur-wp>
+              ^desired.waypoint <des-wp>)
+   (<e> ^current-waypoint { <cur-wp> <> <des-wp> }
+       -^updated-estimate true  ## JEL 2/11/
+        ^dx <dx>
+        ^dy <dy>)
+-->
+   # Pythagorean Theorem
+   (<e> ^estimated-cost (sqrt (+ (* <dx> <dx>) (* <dy> <dy>))))
+}
+
+# elaborate: total-estimated-cost
+sp {selection*elaborate*evaluation*total-estimated-cost
+   :default
+   (state <s> ^name selection
+              ^evaluation <e>)
+   (<e> ^estimated-cost <ec>
+        ^path-cost <pc>)
+-->
+   (<e> ^total-estimated-cost (+  <ec> <pc>))
+}
+
+# print out info about path costs
+sp {selection*monitor*write*path*costs
+   :default
+   (state <s> ^name selection
+              ^evaluation <e>
+              ^desired.waypoint.handle <des-handle>)
+   (<e> ^estimated-cost <ec>
+        ^path-cost <pc>
+        ^current-waypoint.handle <cur-handle>)
+-->
+   (write (crlf) |Estimated Cost from | <cur-handle> | to | <des-handle> |: | <ec>)
+   (write (crlf) |Path Cost at | <cur-handle> |: | <pc>)
+   (write (crlf) |Total Estmated Cost: | <e> | | (+  <ec> <pc>) | : | <e> | path: | <pc> | Estimated Cost: | <ec> )
+}

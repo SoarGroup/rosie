@@ -1,0 +1,67 @@
+sp {top-statel*elaborate*lti-store
+   (state <s> ^superstate nil)
+-->
+   (<s> ^lti-store <store>)
+   (<store> ^to-get <get>)
+}
+
+# Add handls to the to-get ID to retrieve LTI's
+
+sp {top-state*elaborate*smem-query*lti-store
+   (state <s> ^superstate nil
+              ^lti-store.to-get.handle <handle>
+             -^lti-store.<handle> <lti>)
+-->
+   (<s> ^smem-query <q>)
+   (<q> ^cue <cue>
+        ^depth 8)
+   (<cue> ^handle <handle>)
+}
+
+sp {top-state*elaborate*smem-query*lti-store*result
+   :o-support
+   (state <s> ^superstate nil
+              ^smem-query <q>
+              ^lti-store <store>)
+   (<q> ^cue.handle <handle>
+        ^result <lti>)
+   (<store> ^to-get.handle <handle>)
+-->
+   (<store> ^<handle> <lti>)
+}
+
+sp {DEBUG-RULE*wait-for-response*propose*send-next-message
+   (state <s> ^name wait-for-response
+              ^top-state <top>)
+   (<top> ^message-list.next { <next> <> none })
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name send-next-message
+        ^message <next>)
+}
+
+sp {DEBUG-RULE*top-state*propose*send-next-message
+   (state <s> ^superstate nil
+             -^interaction.status.new-message
+              ^message-list.next { <next> <> none })
+-->
+   (<s> ^operator <o> + <)
+   (<o> ^name send-next-message 
+        ^message <next>)
+}
+
+sp {DEBUG-RULE*top-state*apply*send-next-message*create*message
+   (state <s> ^operator <o>
+              ^top-state <top>)
+   (<o> ^name send-next-message
+        ^message <msg>)
+   (<top> ^interaction.status <status>
+          ^message-list <msgs>)
+   (<msg> ^next <next>
+          ^structure <struct>)
+-->
+   (<msgs> ^next <msg> -
+           ^next <next>)
+   (<status> ^new-message <struct>)
+}
+

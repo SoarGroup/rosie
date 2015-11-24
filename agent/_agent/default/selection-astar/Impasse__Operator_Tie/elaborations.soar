@@ -11,20 +11,32 @@ sp {evaluate-operator*elaborate*forward*visited
    (state <s> ^name selection
               ^superstate.superstate.operator.evaluation.visited <ewp>
               ^operator <op>)
-   (<ewp> ^id <id>)
    (<op> ^name evaluate-operator
          ^evaluation <e>)
 -->
- ##(write (crlf) |Visited from superstate evaluation: | <ewp> |: | <id>)
+ ##(write (crlf) |Visited from superstate evaluation: | <ewp>)
    (<e> ^visited <ewp>)
 }
 
+# AM: WPFIX
+#sp {evaluate-operator*elaborate*visited*current-location
+#   :default
+#  #interrupt
+#   (state <s> ^name selection
+#              ^operator <op>
+#              ^superstate.top-state.current-location <wp>)
+#   (<op> ^name evaluate-operator
+#         ^evaluation <e>)
+#-->
+# ##(write (crlf) <e> | Mark superstate current location as visited: | <wp>)
+#   (<e> ^visited <wp>)
+#}
 sp {evaluate-operator*elaborate*visited*current-location
    :default
   #interrupt
    (state <s> ^name selection
               ^operator <op>
-              ^superstate.top-state.current-location <wp>)
+              ^current-waypoint <wp>)
    (<op> ^name evaluate-operator
          ^evaluation <e>)
 -->
@@ -42,22 +54,39 @@ sp {selection*elaborate*state*all-objects-total-estimated-cost
  ##(write (crlf) |Not all operators total estimated cost|)
    (<s> ^not-all-operators-total-estimated-cost true)}
 
-#
+# AM: WPFIX
+#sp {selection*elaborate*evaluation*estimated-cost
+#   :default
+#   (state <s> ^name selection
+#              ^evaluation <e>
+#             -^top-state.current-location <cloc>
+#              ^superstate.desired.location <dloc>)
+#   (<e> ^current-location <cloc>
+#       -^updated-estimate true)
+#   (<cloc> ^x <cx> ^y <cy> ^id <cid>)
+#   (<dloc> ^x <dx> ^y <dy> ^id <did>)
+#-->
+# ##(write (crlf) |current x | <cx> | y | <cy>)
+# ##(write (crlf) |desired x | <dx> | y | <dy>)
+# ##(write (crlf) |range:    | (compute-range <cx> <cy> <dx> <dy>))
+# ##(write (crlf) |Estimated Cost: | (compute-range <cx> <cy> <dx> <dy>) | : | <e> | : | <cid>)
+#   (<e> ^estimated-cost (compute-range <cx> <cy> <dx> <dy>)  )
+#}
 sp {selection*elaborate*evaluation*estimated-cost
    :default
    (state <s> ^name selection
               ^evaluation <e>
-             -^top-state.current-location <cloc>
-              ^superstate.desired.location <dloc>)
-   (<e> ^current-location <cloc>
+             -^current-waypoint <cur-wp>
+              ^desired-waypoint <des-wp>)
+   (<e> ^current-waypoint <cur-wp>
        -^updated-estimate true)
-   (<cloc> ^x <cx> ^y <cy> ^id <cid>)
-   (<dloc> ^x <dx> ^y <dy> ^id <did>)
+   (<cur-wp> ^x <cx> ^y <cy>)
+   (<des-wp> ^x <dx> ^y <dy>)
 -->
  ##(write (crlf) |current x | <cx> | y | <cy>)
  ##(write (crlf) |desired x | <dx> | y | <dy>)
  ##(write (crlf) |range:    | (compute-range <cx> <cy> <dx> <dy>))
- ##(write (crlf) |Estimated Cost: | (compute-range <cx> <cy> <dx> <dy>) | : | <e> | : | <cid>)
+ ##(write (crlf) |Estimated Cost: | (compute-range <cx> <cy> <dx> <dy>) | : | <e> | : | <cur-wp>)
    (<e> ^estimated-cost (compute-range <cx> <cy> <dx> <dy>)  )
 }
 sp {selection*elaborate*evaluation*total-estimated-cost

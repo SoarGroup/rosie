@@ -1,0 +1,269 @@
+sp {format-conditions*elaborate*parameter-set
+   (state <s> ^name format-conditions)
+-->
+   (<s> ^parameter-set <ps>)
+}
+sp {format-conditions*elaborate*operator*condition
+   (state <s> ^name format-conditions
+              ^superstate.operator.nlp-set.nlp <nlp>)
+-->
+   (<s> ^condition <nlp>
+        ^condition-set <nlp>)
+}
+
+sp {format-conditions*elaborate*sub-conditions
+   (state <s> ^name format-conditions
+              ^condition <co>)
+   (<co> ^args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <cond>)
+   (<cond> ^name <name>)
+-->
+   (<s> ^condition <cond>)
+}
+
+sp {format-conditions*propose*calculate1
+   (state <s> ^name format-conditions
+             -^tested calculate1)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name calculate1)
+}
+sp {format-conditions*propose*calculate2
+   (state <s> ^name format-conditions
+              ^tested calculate1
+             -^tested calculate2)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name calculate2)
+}
+sp {format-conditions*propose*complete
+   (state <s> ^name format-conditions
+              ^tested calculate1
+              ^tested calculate2)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name complete)
+}
+
+sp {format-conditions*apply*complete*parameter-set
+   (state <s> ^name format-conditions
+              ^parameter-set <ps>
+              ^superstate <ss>
+              ^operator.name complete)
+   (<ss> ^<type> <t> ^operator.type <type>)
+   (<t> ^parameter-set <ps2>)
+   (<ps> ^argnum <num>)
+-->
+   (<ps2> ^argnum <num>)
+   (<t> ^formated <type>)
+}
+sp {format-conditions*apply*complete*condition
+   (state <s> ^name format-conditions
+              ^parameter-set <ps>
+              ^condition-set <cs>
+              ^superstate <ss>
+              ^operator.name complete)
+   (<ss> ^<type> <t> ^operator.type <type>)
+-->
+   (<t> ^condition <cs>)
+}
+
+sp {format-conditions*apply*calculate1*default
+   (state <s> ^name format-conditions
+              ^operator.name calculate1)
+  -{(<s> ^condition <c>)
+     (<c> -^rtype)}
+-->
+   (<s> ^tested calculate1)
+}
+sp {format-conditions*apply*calculate2*default
+   (state <s> ^name format-conditions
+              ^operator.name calculate2)
+ -{(<s> ^condition <c>)
+     (<c> -^result -^attribute input-arg)}
+ #-{(<s> ^condition <c>)
+ #    (<c> -^ewave)}
+-->
+   (<s> ^tested calculate2)
+}
+sp {format-conditions*apply*calculate1*negative-test
+   (state <s> ^name format-conditions
+              ^operator.name calculate1
+              ^condition <co>)
+   (<co> -^negative)
+-->
+   (<co> ^negative false)
+}
+#TODO even need base object on location/block?
+#get rid of pair and test
+sp {format-conditions*apply*calculate1*no-object
+   (state <s> ^name format-conditions
+              ^operator.name calculate1)
+-{(<s> ^condition <c>)
+  (<c> ^name object ^attribute primitive)}
+
+-->
+   (<s> ^condition <c2>)
+   (<c2> ^name object ^args <a3> ^negative false ^result.set <res> ^rtype single ^parameter.num 0 ^type attribute ^attribute primitive)
+}
+
+#sp {format-conditions*apply*calculate1*ewave1
+#   (state <s> ^name format-conditions
+#              ^operator.name calculate1
+#              ^condition <c>)
+#   (<c> ^name object)
+#-->
+#   (<c> ^ewave 1)
+#}
+##sp {format-conditions*apply*calculate1*ewave1
+##   (state <s> ^name format-conditions
+##              ^operator.name calculate1
+##              ^condition <c>)
+##   (<c> ^type concept)
+##-->
+##   (<c> ^ewave 1)
+##}
+#sp {format-conditions*apply*calculate2*ewave-single
+#   (state <s> ^name format-conditions
+#              ^operator.name calculate2
+#              ^condition <c>)
+#   (<c> -^ewave ^args <a>) #^rtype single
+#  -{(<a> ^{<num> << 1 2 3 >>} <a1>)
+#    (<a1> -^ewave)}
+#	(<a> ^<num2> <a2>)
+#    (<a2> ^ewave <ew> ^rtype single)
+#  -{(<a> ^<num> <a1>)
+#    (<a1> ^ewave > <ew>)}
+#-->
+#   (<c> ^ewave (+ 1 <ew>))
+#}
+#sp {format-conditions*apply*calculate2*ewave-set
+#   (state <s> ^name format-conditions
+#              ^operator.name calculate2
+#              ^condition <c>)
+#   (<c> -^ewave ^args <a>)
+#  -{(<a> ^{<num> << 1 2 3 >>} <a1>)
+#    (<a1> -^ewave)}
+#	(<a> ^<num2> <a2>)
+#    (<a2> ^ewave <ew> ^rtype set)
+#  -{(<a> ^<num> <a1>)
+#    (<a1> ^ewave > <ew>)}
+#-->
+#   (<c> ^ewave (+ 2 <ew>))
+#}
+
+
+sp {format-conditions*apply*calculate1*rtype
+   (state <s> ^name format-conditions
+              ^operator.name << calculate1 calculate2 >>
+              ^condition <co>)
+   (<co> -^rtype ^parameter.{1}.type <type>)
+-->
+   (<co> ^rtype <type>)
+}
+
+sp {format-conditions*apply*calculate1*rtype*no-type
+   (state <s> ^name format-conditions
+              ^operator.name << calculate1 calculate2 >>
+              ^condition <co>)
+   (<co> ^args.{1}.rtype <type> -^rtype -^parameter)
+-->
+   (<co> ^rtype <type>)
+}
+
+#IS TYPE IMPORTANT ON RESULT LINKS 
+sp {format-conditions*apply*calculate1*type
+   (state <s> ^name format-conditions
+              ^operator.name << calculate1 calculate2 >>
+              ^condition <co>)
+   (<co> ^parameter <p> ^args.<arg>.rtype <type>)
+   (<p> ^num {<arg2> <> <arg>} ^{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <a1>)
+   (<a1> -^type)
+-->
+   (<a1> ^type <type>)
+}
+sp {format-conditions*apply*calculate1*type2
+   (state <s> ^name format-conditions
+              ^operator.name << calculate1 calculate2 >>
+              ^condition <co>)
+   (<co> ^rtype <type> ^parameter <p>)
+   (<p> ^num <arg2> ^<arg2> <a1>)
+   (<a1> -^type)
+-->
+   (<a1> ^type <type>)
+}
+
+sp {format-conditions*apply*calculate1*empty-args
+   (state <s> ^name format-conditions
+              ^operator.name calculate1
+              ^condition <co>)
+   (<co> -^args)
+-->
+   (<co> ^args <a1>)
+}
+
+sp {format-conditions*apply*calculate1*empty-parameter
+   (state <s> ^name format-conditions
+              ^operator.name calculate2
+              ^condition <co>)
+   (<co> -^parameter)
+-->
+   (<co> ^parameter.num 0)
+}
+
+
+sp {format-conditions*apply*calculate2*paramlinking
+   (state <s> ^name format-conditions
+              ^operator.name calculate2
+              ^condition <co>)
+   (<co> -^result ^parameter.num -^attribute input-arg)
+-->
+   (<co> ^result.set <p>)
+}
+
+sp {format-conditions*apply*calculate1*location-block-noobj
+   (state <s> ^name format-conditions
+              ^operator.name calculate2
+              ^condition <c2>
+              ^condition <co>)
+   (<co> ^name << location block >> ^rtype <type> ^args <a1>)
+   (<a1> -^<something>)
+   (<c2> ^name object ^attribute primitive)
+ # -{(<s> ^condition {<c3> > <c2>}) #to limit to one object if multiple
+ #   (<c3> ^name object ^rtype <type>)}
+-->
+   (<a1> ^num 1 ^1 <c2>)
+}
+
+
+sp {format-conditions*apply*calculate1*parameter-num2
+   (state <s> ^name format-conditions
+              ^operator.name calculate1
+              ^condition <co>)
+   (<co> ^parameter <p>)
+   (<p> -^num -^result)
+-->
+   (<p> ^num (size <p>))
+}
+
+sp {format-conditions*apply*calculate1*arg-num
+   (state <s> ^name format-conditions
+              ^operator.name calculate2
+              ^condition <co>)
+   (<co> ^args <a>)
+   (<a> ^<something>)
+   (<a> -^num )
+-->
+   (<a> ^num (size <a>))
+}
+sp {format-conditions*apply*calculate1*parameter-set*argnum
+   (state <s> ^name format-conditions
+              ^operator.name calculate1
+              ^parameter-set <ps>
+              ^condition <co>)
+   (<ps> -^argnum)
+   (<co> ^parameter.{<arg2> << 1 2 3 4 5 6 7 8 9 >>}.param-id <num>)
+  -{(<s> ^condition.parameter.{<arg> << 1 2 3 4 5 6 7 8 9 >>}.param-id > <num>)}
+-->
+   (<ps> ^argnum <num>)
+}
+
