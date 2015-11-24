@@ -28,6 +28,41 @@ sp {interpret-message*prefer*interpret-unknown-word*clear
     (<s> ^operator <o> > <o2>)
 }
 
+sp {interpret-message*apply*interpret-unknown-word*store-sentence
+ #   :interrupt
+   (state <s> ^name interpret-message
+            #  ^top-state.dialog-context <dc>
+              ^top-state <ts> 
+              ^operator <o>)
+   (<ts> ^io.input-link.language.sentence <se> -^stored-sentence)
+   (<o> ^name interpret-unknown-word)
+   (<se> ^next <n1> ^sentence-number <sn> ^complete-sentence <cs>)
+-->
+  #  (interrupt)
+    (<ts> ^stored-sentence <st>)
+    (<st> ^sentence-number (+ 3 <sn>) ^complete-sentence <cs> ^next (deep-copy <n1>) ^spelling *)
+}
+
+sp {interpret-message*apply*interpret-unknown-word*store-sentence*processed
+  #  :interrupt
+   (state <s> ^name interpret-message
+              ^top-state <ts> 
+              ^operator <o>)
+   (<ts> ^stored-sentence <st> ^unprocessed-next <n>)
+   (<o> ^name interpret-unknown-word)
+   (<st> ^processed <t> ^processed-sentence <pt>
+       ^processing-result <pr>)
+-->
+  #  (interrupt)
+    (<ts> ^unprocessed-next <n> -)
+    (<st> ^processed <t> -)
+    (<st> ^processed-sentence <pt> -)
+    (<st> ^processing-result <pr> -)
+}
+
+
+
+
 ######
 # OPERATOR ELABORATIONS
 ######
@@ -40,6 +75,7 @@ sp {interpret-message*prefer*interpret-unknown-word*clear
 #   And send message to human
 sp {interpret-message*apply*interpret-unknown-word*create*segment
    (state <s> ^name interpret-message
+              #^unprocessed-next nil
               ^top-state.dialog-context <dc>
               ^operator <o>)
    (<o> ^name interpret-unknown-word
@@ -72,7 +108,8 @@ sp {interpret-message*apply*interpret-unknown-word*create*segment
 sp {interpret-message*apply*interpret-ignore*store-smem-word
    (state <s> ^name interpret-message
               ^smem.command <sc>
-              ^top-state.dialog-context <dc>
+             # ^unprocessed-next nil
+           #   ^top-state.dialog-context <dc>
               ^operator <o>)
    (<o> ^name interpret-unknown-word
         ^word <word>

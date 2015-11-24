@@ -161,6 +161,7 @@ sp {finished-learning*apply*store-next-level
 sp {finished-learning*propose*complete
    (state <s> ^name finished-learning)
 -->
+  #  (interrupt)
    (<s> ^operator <o> + <)
    (<o> ^name complete)
 }
@@ -176,6 +177,18 @@ sp {finished-learning*apply*complete*remove-learn-link
    (<dc> ^learn-link <l2> -)
 }
 
+sp {finished-learning*apply*complete*remove-stored-sentence
+    (state <s1> ^name finished-learning
+                ^operator.name complete
+                ^top-state <ts>)
+    (<ts> ^stored-sentence <st> ^unprocessed-next <n>)
+    (<st> ^processed true ^processed-sentence true
+       ^processing-result)
+-->
+    (<ts> ^stored-sentence <st> -)
+    (<ts> ^unprocessed-next <n> -)
+}
+
 #sp {finished-learning*apply*complete*remove-learn-link
 #    (state <s1> ^name finished-learning
 #                ^operator.name complete
@@ -184,6 +197,42 @@ sp {finished-learning*apply*complete*remove-learn-link
 #-->
 #   (<dc> ^learn-link <ll> -)
 #}
+sp {satisfy-purpose*finished-learning*apply*complete*remove-learn-link
+    (state <s1> ^name satisfy-purpose
+                ^operator.name wait-for-response
+                ^top-state.dialog-context <dc>)
+    (<dc> ^learn-link <ll> ^structure.<< goals actions >>.handle <a>)
+    (<ll> ^handle <a>)
+-->
+   (<dc> ^learn-link <ll> -)
+}
+sp {satisfy-purpose*clean*dialog-object-list
+    (state <s1> ^name satisfy-purpose
+                ^operator.name wait-for-response
+                ^top-state <ts>)
+    (<ts> ^dialog-object-list {<dol> <=> <s1>})
+-->
+   (<ts> ^dialog-object-list <dol> -)
+   (<ts> ^dialog-object-list nil)
+}
+sp {satisfy-purpose*clean*dialog-object-list-saved
+    (state <s1> ^name satisfy-purpose
+                ^operator.name wait-for-response
+                ^top-state <ts>)
+    (<ts> ^dialog-object-list-saved {<dol> <=> <s1>})
+-->
+   (<ts> ^dialog-object-list-saved <dol> -)
+   (<ts> ^dialog-object-list-saved nil)
+}
+sp {satisfy-purpose*clean*dialog-world
+    (state <s1> ^name satisfy-purpose
+                ^operator.name wait-for-response
+                ^top-state <ts>)
+    (<ts> ^dialog-world.<< objects predicates >> <dw>)
+    (<dw> ^<something> <obj>)
+-->
+   (<dw> ^<something> <obj> -)
+}
 
 sp {finished-learning*apply*complete*input-object-1
     (state <s1> ^name finished-learning
@@ -235,7 +284,7 @@ sp {finished-learning*apply*complete*send-message*action
    (<act> ^handle <name>)
    (<changes> ^outgoing-message <msg>)
    (<msg> ^type simple-message
-          ^message-type ok)
+          ^message-type learned-action)
    (<status> ^performed.learning-event <de>)
    (<de> ^type game
          ^originator agent)
@@ -255,7 +304,7 @@ sp {finished-learning*apply*complete*send-message*goal
    (<act> ^handle <name>)
    (<changes> ^outgoing-message <msg>)
    (<msg> ^type simple-message
-          ^message-type ok)
+          ^message-type learned-goal)
    (<status> ^performed.learning-event <de>)
    (<de> ^type game
          ^originator agent)

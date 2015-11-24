@@ -59,6 +59,8 @@ public class AgentMessageParser
 			simpleMessages.put("describe-game", "Ok, what are the actions and goals of the game.");
 			simpleMessages.put("describe-action", "What are the conditions of the action");
 			simpleMessages.put("describe-goal", "What are the conditions of the goal");
+			simpleMessages.put("learned-goal", "I have learned the goal.");
+			simpleMessages.put("learned-action", "I have learned the action.");
 		}
 		
 		String type = SoarUtil.getValueOfAttribute(id, "type");
@@ -495,6 +497,8 @@ public class AgentMessageParser
 			String att = el.GetAttribute().toLowerCase();
 			String val = el.GetValueAsString().toLowerCase();
 			val = val.replaceAll("\\d", "");//replace("1", "");
+			if (val.isEmpty())
+				continue;
 			if(att.equals("type"))
 				continue;
 			if(att.equals("name")){
