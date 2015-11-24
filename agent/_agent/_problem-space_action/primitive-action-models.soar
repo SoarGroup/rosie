@@ -226,13 +226,27 @@ sp {action*apply*turn-off*do*action-model
 sp {action*apply*remember*do*action-model
    (state <s> ^problem-space.name action
               ^problem-space.action.type simulate
-          ^operator <op>)
+              ^operator <op>
+              -^world.objects.object <arg1>)
    (<op> ^name op_remember1
          ^arg1.id <arg1>
-         ^arg2.id.predicates.<att> <val>)
+         ^arg2.id <arg2>)
    (<arg1> ^predicates <preds>)
+   (<arg2> ^predicates.<att> <val>)
 -->
    (<preds> ^<att> <val>)
+}
+
+sp {action*apply*remember*do*action-model*link
+   (state <s> ^problem-space.name action
+              ^problem-space.action.type simulate
+              ^operator <op>
+              ^world.objects.object <arg1>)
+   (<op> ^name op_remember1
+         ^arg1.id <arg1>
+         ^arg2.id <arg2>)
+-->
+   (<arg1> ^linked-to <arg2>)
 }
 
 #############################################
@@ -350,6 +364,89 @@ sp {action*apply*recall*do*action-model*add*object*arg
 -->
    (<objs> ^object <obj>)
 }
+
+#####################################################
+# ask
+
+sp {action*apply*ask*do*action-model
+   (state <s> ^problem-space.name action
+              ^problem-space.action.type simulate
+              ^operator <o>
+              ^world.objects <objs>)
+   (<o> ^name op_ask1
+        ^arg1.id.predicates.sentence <sent>)
+-->
+   (<objs> ^object <answer>)
+   (<answer> ^item-type object ^predicates <preds>)
+   (<preds> ^category message ^modifier1 answer1 ^sentence |answer placeholder|)
+}
+
+sp {action*apply*ask*do*action-model*mark*asked
+   (state <s> ^problem-space.name action
+              ^problem-space.action.type simulate
+              ^operator <o>)
+   (<o> ^name op_ask1
+        ^arg1.id.predicates.sentence <sent>)
+-->
+   (<s> ^asked <sent>)
+}
+
+
+#####################################################
+# say
+
+sp {action*apply*say*do*action-model
+   (state <s> ^problem-space.name action
+              ^problem-space.action.type simulate
+              ^operator <o>
+              ^world <w>)
+   (<o> ^name op_say1
+        ^arg1.id <msg>)
+   (<msg> ^predicates.category message
+          ^predicates.sentence <any>)
+   (<w> ^objects.object <person>
+        ^predicates.predicate <in>
+        ^predicates.predicate <heard>
+        ^robot.current-location <cur-loc>)
+   (<person> ^predicates.category person)
+   (<in> ^handle in1
+         ^instance <in-i>)
+   (<in-i> ^1 <person> ^2 <cur-loc>)
+   (<heard> ^handle heard2)
+   -{(<heard> ^instance <heard-i>)
+     (<heard-i> ^1 <person> ^2 <msg>)}
+-->
+   (<heard> ^instance <i>)
+   (<i> ^1 <person> ^2 <msg>)
+}
+
+sp {action*apply*say*do*action-model*linked-to
+   (state <s> ^problem-space.name action
+              ^problem-space.action.type simulate
+              ^operator <o>
+              ^world <w>)
+   (<o> ^name op_say1
+        ^arg1.id <msg>)
+   (<w> ^objects.object <person>
+        ^objects.object <other>
+        ^predicates.predicate <in>
+        ^predicates.predicate <heard>
+        ^robot.current-location <cur-loc>)
+   (<person> ^predicates.category person)
+   (<other> ^linked-to <msg>
+            ^predicates.sentence <any>)
+   (<in> ^handle in1
+         ^instance <in-i>)
+   (<in-i> ^1 <person> ^2 <cur-loc>)
+   (<heard> ^handle heard2)
+   -{(<heard> ^instance <heard-i>)
+     (<heard-i> ^1 <person> ^2 <other>)}
+-->
+   (<heard> ^instance <i> <i2>)
+   (<i> ^1 <person> ^2 <other>)
+   (<i2> ^1 <person> ^2 <msg>)
+}
+
 
 #####################################################
 # apply subaction you perform once

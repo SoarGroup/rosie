@@ -63,6 +63,7 @@ public class Message implements ISoarObject
         	}
         	if(word.equals("_XXX_")){
         		word = quote;
+        		nextID.CreateStringWME("quoted", "true");
         	}
         	nextID.CreateStringWME("spelling", word.toLowerCase());
         	nextID = nextID.CreateIdWME("next");

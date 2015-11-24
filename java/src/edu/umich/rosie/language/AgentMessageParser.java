@@ -77,6 +77,8 @@ public class AgentMessageParser
 			return translateGoalState(fieldsId);
 		} else if(type.equals("describe-final-goal-state")){
 			return translateFinalGoalState(fieldsId);
+	    } else if(type.equals("say-sentence")){
+	    	return translateSaySentence(fieldsId);
 	    }
 		return null;
 	}
@@ -236,6 +238,15 @@ public class AgentMessageParser
 		return (adj.startsWith(" a") || adj.startsWith(" e") || adj.startsWith(" i") || 
 				adj.startsWith(" o") || adj.startsWith(" u"));
 	}
+	
+	public static String translateSaySentence(Identifier fieldsId){
+		String sentence = SoarUtil.getValueOfAttribute(fieldsId, "sentence");
+		if (sentence != null){
+			sentence = sentence.replace("1", "");
+			return sentence;
+		}
+		return null;
+	}	
 	
 //    public static String translateAgentMessage(Identifier id){
 //        String message = null;
