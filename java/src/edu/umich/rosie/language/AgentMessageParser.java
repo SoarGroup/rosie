@@ -99,6 +99,8 @@ public class AgentMessageParser
 			return translateUnknownWord(fieldsId);
 	    } else if(type.equals("learned-unknown-word")){
 			return translateLearnedUnknownWord(fieldsId);
+	    } else if(type.equals("transfer-concept")){
+			return translateTransferConcept(fieldsId);
 	    }
 		//conversational messages
 		else if(type.equals("generic"))
@@ -216,6 +218,15 @@ public class AgentMessageParser
 		return "I was unable to carry out that instruction";
 	}
 	
+	public static String translateTransferConcept(Identifier fields){
+		String concept = SoarUtil.getValueOfAttribute(fields, "concept-name");
+		
+		String result = "Does \'" + concept + "\' mean that ";
+		result += getGoalState(fields);
+		result += "?";
+		return result;
+		
+    }
     public static String translateFinalGoalState(Identifier fields){
 		String result = "Ok, I've learned that the goal state is that ";
 		result += getGoalState(fields);
@@ -237,7 +248,7 @@ public class AgentMessageParser
 		String definitive = SoarUtil.getValueOfAttribute(fields, "definitive");
 		
 	    boolean allDefinitive = false;
-	    if (definitive.equals("yes"))
+	    if ((definitive != null) && (definitive.equals("yes")))
 	    	allDefinitive = true;
 		for(int index = 0; index < relationships.GetNumberChildren(); index++)
 		{
@@ -258,6 +269,12 @@ public class AgentMessageParser
             String objDescription1 = generateObjectDescriptionNew(object1);
             String objDescription2 = "";
             Identifier object2 = SoarUtil.getIdentifierOfAttribute(relation, "2");
+           
+            String negative = SoarUtil.getValueOfAttribute(relation, "negative");
+            
+            if ((negative != null) && (negative.equals("true")))
+            	preposition = "not " + preposition;
+            
             
             //may have only one object
             if (object2 != null)
@@ -270,8 +287,11 @@ public class AgentMessageParser
             }
             else
             {
+            	if (!objDescription1.equals("it"))
+            	{
             	if (objects.contains(object1.GetValueAsString()))
-            		objDescription1 = "the " + objDescription1;
+            		
+            			objDescription1 = "the " + objDescription1;
 	            else {
 	            	objects.add(object1.GetValueAsString());
 	    			if (startsWithVowel(objDescription1))
@@ -279,7 +299,9 @@ public class AgentMessageParser
 	    			else
 	    				objDescription1 = "a " + objDescription1;
 	            }
-	            
+            	}
+            	if (!objDescription2.equals("it"))
+            	{
 	            if (objects.contains(object2.GetValueAsString()))
 	            	objDescription2 = "the " + objDescription2;
 	            else {
@@ -289,6 +311,7 @@ public class AgentMessageParser
 	    			else
 	    				objDescription2 = "a " + objDescription2;
 	            }
+            	}
             }
             if (object2 != null)
             	result += objDescription1 + " is " + preposition + " " + objDescription2;
@@ -314,7 +337,9 @@ public class AgentMessageParser
 	}
 	public static boolean startsWithVowel(String adj){
 		return (adj.startsWith(" a") || adj.startsWith(" e") || adj.startsWith(" i") || 
-				adj.startsWith(" o") || adj.startsWith(" u"));
+				adj.startsWith(" o") || adj.startsWith(" u") ||
+				adj.startsWith("a") || adj.startsWith("e") || adj.startsWith("i") || 
+						adj.startsWith("o") || adj.startsWith("u"));
 	}
 	
 //    public static String translateAgentMessage(Identifier id){
@@ -489,6 +514,10 @@ public class AgentMessageParser
 		String root = SoarUtil.getValueOfAttribute(descId, "type");
 		if (root == null)
 			root = "object";
+		
+		if (root.equals("it"))
+			return root;
+		
 		//ArrayList<String> adjectives = (ArrayList<String>) SoarUtil.getAllValuesOfAttribute(descId, "value");
 		ArrayList<String> adjectives = new ArrayList<String>();
 		

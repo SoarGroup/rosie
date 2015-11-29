@@ -1,0 +1,179 @@
+
+sp {chunk-predicate-structure*elaborate*result
+   (state <s> ^name chunk-predicate-structure
+              ^predicate <p>
+              ^gtype predicate
+              ^superstate <ss>)
+-->
+    (<ss> ^predicate <p> ^gtype predicate)
+}
+sp {chunk-predicate-structure*elaborate*result*actiongoal
+   (state <s> ^name chunk-predicate-structure
+              ^<t> <p>
+              ^retrieve-handle
+              ^operator.name complete
+              ^gtype <t>
+              ^superstate <ss>)
+-->
+    (<ss> ^<t> <p>)
+}
+sp {chunk-predicate-structure*propose*complete
+   (state <s> ^name chunk-predicate-structure
+              ^<t> <p>
+              ^retrieve-handle
+              ^gtype <t>)
+-->
+    (<s> ^operator <o> + =)
+    (<o> ^name complete)
+}
+sp {chunk-predicate-structure*elaborate*game-name
+    :o-support
+   (state <s> ^name chunk-predicate-structure
+              ^superstate.game <name>)
+-->
+   (<s> ^game <name>)
+}
+
+sp {chunk-predicate-structure*elaborate*gtype
+   (state <s> ^name chunk-predicate-structure
+              ^superstate.operator <o>)
+   (<o> ^gtype <gtype>
+        ^<gtype> <a>)
+-->
+   (<s> ^gtype <gtype>
+        ^<gtype> <a>)
+}
+
+sp {chunk-predicate-structure*elaborate*predicate-handle
+   (state <s> ^name chunk-predicate-structure
+              ^superstate.operator <o>)
+   (<o> ^gtype <gtype>
+        ^predicate-handle <handle>)
+-->
+   (<s> ^gtype <gtype>
+        ^retrieve-handle <handle>)
+}
+
+sp {chunk-predicate-structure*impasse*actiongoal
+   (state <s> ^superstate <ss>
+              ^choices none
+              ^attribute state
+              ^impasse no-change)
+   (<ss> ^retrieve-handle <handle> ^gtype <t>)
+-->
+   (force-learn <s>)
+   (<s> ^name chunk-predicate-impasse
+        ^linkstate <ss>
+        ^handle <handle>
+        ^gtype <t>)
+}
+
+#TODO works for now, but predicates can have predicates
+sp {chunk-predicate-structure*impasse
+   (state <s> ^superstate <ss>
+              ^choices none
+              ^attribute state
+              ^impasse no-change)
+   (<ss> ^gtype <t> ^<t> <a>)
+-->
+   (force-learn <s>)
+   (<s> ^name chunk-predicate-impasse
+        ^linkstate <ss>
+        ^condition <co>
+        ^<t> <a>
+        ^gtype <t>)
+}
+sp {chunk-predicate-impasse*propose*retrieve-predicate-structure*action
+   (state <s> ^name chunk-predicate-impasse)
+   (<s> ^gtype <gtype>
+        ^handle <name>
+       -^action
+        -^goal)
+-->
+    (interrupt)
+   (<s> ^operator <o> + >)
+   (<o> ^name retrieve-predicate-structure
+        ^handle <name>)
+}
+
+
+sp {chunk-predicate-impasse*propose*retrieve-predicate-structure
+   (state <s> ^name chunk-predicate-impasse)
+   (<s> ^gtype <gtype>
+       -^handle
+        -^unknown
+       -^predicate.link <co>
+         ^<gtype>.condition <co>)
+   (<co> ^type concept ^attribute predicate ^name <name>)
+-->
+    (interrupt)
+   (<s> ^operator <o> + >)
+   (<o> ^name retrieve-predicate-structure
+        ^condition <co>
+        ^handle <name>)
+}
+sp {chunk-predicate-impasse*elaborate*dont-learn
+   (state <s> ^name chunk-predicate-impasse
+              ^unknown
+              ^superstate <ss>)
+-->
+    (<ss> ^unknown true)
+}
+sp {chunk-predicate-impasse*propose*transfer-predicate-structure
+   (state <s> ^name chunk-predicate-structure)
+   (<s> ^gtype <gtype>
+       -^handle
+        ^unknown
+         ^<gtype>.condition <co>)
+   (<co> ^type concept ^attribute predicate ^name <name>)
+-->
+    (interrupt)
+   (<s> ^operator <o> + >)
+   (<o> ^name transfer-predicate-structure
+        ^condition <co>
+        ^handle <name>)
+}
+
+
+sp {chunk-predicate-impasse*propose*complete
+   (state <s> ^name chunk-predicate-impasse)
+-->
+    (<s> ^operator <o> + <)
+    (<o> ^name complete)
+}
+sp {chunk-predicate-impasse*apply*complete
+   (state <s> ^name chunk-predicate-impasse
+              ^operator.name complete
+              -^handle
+              ^superstate <ss>
+              ^predicate <p>
+             # ^from <gname>
+              ^gtype <gtype>
+              ^<gtype>.condition <co>)
+   #(<ss> ^game <gname>) 
+   (<co> ^type concept ^attribute predicate)# ^name <name>)
+   (<p> ^link <co>)# ^handle <name>)
+-->
+    (<ss> ^predicate <p> ^gtype predicate)
+}
+
+sp {chunk-predicate-impasse*apply*complete*action
+   (state <s> ^name chunk-predicate-impasse
+              ^operator.name complete
+              ^superstate <ss>
+              ^handle <h>
+              ^gtype action
+              ^action <p>)
+-->
+    (<ss> ^action <p>)
+}
+sp {chunk-predicate-impasse*apply*complete*goal
+   (state <s> ^name chunk-predicate-impasse
+              ^operator.name complete
+              ^superstate <ss>
+              ^handle <h>
+              ^gtype goal
+              ^goal <p>)
+-->
+    (<ss> ^goal <p>)
+}

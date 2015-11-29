@@ -1,159 +1,3 @@
-
-sp {chunk-predicate-structure*elaborate*result
-   (state <s> ^name chunk-predicate-structure
-              ^predicate <p>
-              ^gtype predicate
-              ^superstate <ss>)
--->
-    (<ss> ^predicate <p> ^gtype predicate)
-}
-sp {chunk-predicate-structure*elaborate*result*actiongoal
-   (state <s> ^name chunk-predicate-structure
-              ^<t> <p>
-              ^retrieve-handle
-              ^operator.name complete
-              ^gtype <t>
-              ^superstate <ss>)
--->
-    (<ss> ^<t> <p>)
-}
-sp {chunk-predicate-structure*propose*complete
-   (state <s> ^name chunk-predicate-structure
-              ^<t> <p>
-              ^retrieve-handle
-              ^gtype <t>)
--->
-    (<s> ^operator <o> + =)
-    (<o> ^name complete)
-}
-sp {chunk-predicate-structure*elaborate*game-name
-    :o-support
-   (state <s> ^name chunk-predicate-structure
-              ^superstate.game <name>)
--->
-   (<s> ^game <name>)
-}
-
-sp {chunk-predicate-structure*elaborate*gtype
-   (state <s> ^name chunk-predicate-structure
-              ^superstate.operator <o>)
-   (<o> ^gtype <gtype>
-        ^<gtype> <a>)
--->
-   (<s> ^gtype <gtype>
-        ^<gtype> <a>)
-}
-
-sp {chunk-predicate-structure*elaborate*predicate-handle
-   (state <s> ^name chunk-predicate-structure
-              ^superstate.operator <o>)
-   (<o> ^gtype <gtype>
-        ^predicate-handle <handle>)
--->
-   (<s> ^gtype <gtype>
-        ^retrieve-handle <handle>)
-}
-
-sp {chunk-predicate-structure*impasse*actiongoal
-   (state <s> ^superstate <ss>
-              ^choices none
-              ^attribute state
-              ^impasse no-change)
-   (<ss> ^retrieve-handle <handle> ^gtype <t>)
--->
-   (force-learn <s>)
-   (<s> ^name chunk-predicate-impasse
-        ^linkstate <ss>
-        ^handle <handle>
-        ^gtype <t>)
-}
-
-#TODO works for now, but predicates can have predicates
-sp {chunk-predicate-structure*impasse
-   (state <s> ^superstate <ss>
-              ^choices none
-              ^attribute state
-              ^impasse no-change)
-   (<ss> ^gtype <t> ^<t> <a>)# ^game <gname>)# -^retrieve-handle)#{<t> << action goal >>}
--->
-   (force-learn <s>)
-   (<s> ^name chunk-predicate-impasse
-        ^linkstate <ss>
-        ^condition <co>
-        ^<t> <a>
-        ^gtype <t>)
-}
-sp {chunk-predicate-impasse*propose*retrieve-predicate-structure*action
-   (state <s> ^name chunk-predicate-impasse)
-   (<s> ^gtype <gtype>
-        ^handle <name>
-       -^action
-        -^goal)
--->
-    (interrupt)
-   (<s> ^operator <o> + >)
-   (<o> ^name retrieve-predicate-structure
-        ^handle <name>)
-}
-
-
-sp {chunk-predicate-impasse*propose*retrieve-predicate-structure
-   (state <s> ^name chunk-predicate-impasse)
-   (<s> ^gtype <gtype>
-       -^handle
-       -^predicate.link <co>
-         ^<gtype>.condition <co>)
-   (<co> ^type concept ^attribute predicate ^name <name>)
--->
-    (interrupt)
-   (<s> ^operator <o> + >)
-   (<o> ^name retrieve-predicate-structure
-        ^condition <co>
-        ^handle <name>)
-}
-sp {chunk-predicate-impasse*propose*complete
-   (state <s> ^name chunk-predicate-impasse)
--->
-    (<s> ^operator <o> + <)
-    (<o> ^name complete)
-}
-sp {chunk-predicate-impasse*apply*complete
-   (state <s> ^name chunk-predicate-impasse
-              ^operator.name complete
-              -^handle
-              ^superstate <ss>
-              ^predicate <p>
-             # ^from <gname>
-              ^gtype <gtype>
-              ^<gtype>.condition <co>)
-   #(<ss> ^game <gname>) 
-   (<co> ^type concept ^attribute predicate)# ^name <name>)
-   (<p> ^link <co>)# ^handle <name>)
--->
-    (<ss> ^predicate <p> ^gtype predicate)
-}
-
-sp {chunk-predicate-impasse*apply*complete*action
-   (state <s> ^name chunk-predicate-impasse
-              ^operator.name complete
-              ^superstate <ss>
-              ^handle <h>
-              ^gtype action
-              ^action <p>)
--->
-    (<ss> ^action <p>)
-}
-sp {chunk-predicate-impasse*apply*complete*goal
-   (state <s> ^name chunk-predicate-impasse
-              ^operator.name complete
-              ^superstate <ss>
-              ^handle <h>
-              ^gtype goal
-              ^goal <p>)
--->
-    (<ss> ^goal <p>)
-}
-
 sp {retrieve-predicate-structure*elaborate*predicate-handle
    (state <s> ^name retrieve-predicate-structure
               ^superstate.operator <o>)
@@ -202,16 +46,14 @@ sp {retrieve-predicate-structure*propose*complete
 
 
 #TODO initiate teaching interaction
-#sp {retrieve-predicate-structure*elaborate*smem-query*unknown
-#   (state <s> ^name retrieve-predicate-structure
-##              ^operator.name complete
-#              #^condition <co>
-#              ^nlp-set <nlps>)
-#   (<s> ^smem-query.result <pred>)
-#   (<pred> -^predicate-structure)
-#-->
-#   (<s> ^unknown-concept <pred>)
-#}
+sp {retrieve-predicate-structure*elaborate*smem-query*unknown
+   (state <s> ^name retrieve-predicate-structure
+              ^smem.result.failure
+              ^superstate <ss>)
+-->
+    (interrupt)
+   (<ss> ^unknown true)
+}
 
 sp {retrieve-predicate-structure*apply*complete*smem-query*result*no-condition-link
    (state <s> ^name retrieve-predicate-structure
@@ -221,7 +63,6 @@ sp {retrieve-predicate-structure*apply*complete*smem-query*result*no-condition-l
               ^superstate <ss>)
    (<ss> ^gtype action)
    (<dest> ^predicate-structure <ps> ^verb-structure <vs> ^handle <name> ^argnum <an> ^primary-rtype <rtype>)
-   #(<pred> ^handle <name> ^argnum <an> ^primary-rtype <rtype>)
 -->
    (<ss> ^action <p>)
    (<p> ^handle <name> ^aname <name> ^verb-structure <vs> ^nlp-set <ps> ^primary-rtype <rtype> ^formated predicate ^parameter-set <P124> ^potential-args <P125>)
@@ -236,8 +77,7 @@ sp {retrieve-predicate-structure*apply*complete*smem-query*result*no-condition-l
               ^copy-structure.destination <dest>
               ^superstate <ss>)
    (<ss> ^gtype goal)
-   (<dest> ^predicate-structure <ps> ^handle <name> ^argnum <an> ^primary-rtype <rtype>)#)
-   #(<pred> ^handle <name> ^argnum <an> ^primary-rtype <rtype>)
+   (<dest> ^predicate-structure <ps> ^handle <name> ^argnum <an> ^primary-rtype <rtype>)
 -->
    (<ss> ^goal <p>)
    (<p> ^handle <name> ^aname <name> ^nlp-set <ps> ^primary-rtype <rtype> ^formated predicate ^parameter-set <P124> ^potential-args <P125>)
@@ -250,19 +90,13 @@ sp {retrieve-predicate-structure*apply*complete*smem-query*result
    (state <s> ^name retrieve-predicate-structure
               ^operator.name complete
               ^condition <co>
-             # ^smem.result.retrieved <pred>
               ^copy-structure.destination <dest>
               ^superstate <ss>)
-#   (<ss> ^superstate.game <gname>)
-   (<dest> ^predicate-structure <ps> ^argnum <an> ^primary-rtype <rtype> ^handle <name> )# ^from <gname>)
-  # (<pred> ^handle <name> ^argnum <an> ^primary-rtype <rtype>)
+   (<dest> ^predicate-structure <ps> ^argnum <an> ^primary-rtype <rtype> ^handle <name> )
 -->
    (<ss> ^predicate <p> ^gtype predicate)
-   #(<dest> ^formated predicate ^parameter-set <P124> ^potential-args <P125> ^link <co>) #new
-#
    (<p> ^handle <name> ^aname <name> ^nlp-set <ps> ^primary-rtype <rtype> ^formated predicate ^parameter-set <P124> ^potential-args <P125> ^link <co>)
   (<P124> ^argnum <an>)
-  #(<dest> ^aname <name>)
 (<ps> ^aname <name>)
 }
 
