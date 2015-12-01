@@ -29,6 +29,7 @@ sp {interpret-message*propose*interpret-yes-no-message
 # Don't even need to do any special processing, just create a response
 sp {interpret-message*apply*interpret-yes-no-message*mark
    (state <s> ^name interpret-message
+              ^top-state.current-action
               ^operator <o>)
    (<o> ^name interpret-yes-no-message
         ^message <msg>)
@@ -54,4 +55,60 @@ sp {interpret-message*apply*interpret-yes-no-message*yes*mark*received-no*action
         ^message-type no)
 -->
    (<a> ^received-no true)
-}          
+}
+
+sp {interpret-message*apply*interpret-yes-no-message*yes*concept-transfer
+   (state <s> ^name interpret-message
+              ^top-state <ts>
+              ^smem.command <sc>
+              ^operator <o>)
+   (<ts> ^dialog-context <dc>)
+   (<dc> ^learning-predicate <lp> ^transfering <tf>)
+   (<lp> ^name <name>)
+   (<tf> ^name <name> ^lti <pred> ^to <game>)
+   (<o> ^name interpret-yes-no-message
+        ^message-type yes)
+-->
+   (<pred> ^from <game>)
+   (<sc> ^store <pred>)
+   #(<dc> ^learning-predicate <lp> -)
+   #(<dc> ^transfering <tf> -)
+}
+sp {interpret-message*apply*interpret-yes-no-message*yes*concept-transfer2
+   (state <s> ^name interpret-message
+              ^top-state <ts>
+              #^smem.command <sc>
+              ^operator <o>)
+   (<ts> ^dialog-context <dc>)
+   (<dc> ^learning-predicate <lp> ^transfering <tf>)
+   (<lp> ^name <name>)
+   (<tf> ^name <name> ^lti <pred> ^to <game>)
+   (<pred> ^from <game>)
+   (<o> ^name interpret-yes-no-message
+        ^message <msg>
+        ^message-type yes)
+-->
+    (<msg> ^interpreted true)
+   (<dc> ^learning-predicate <lp> -)
+   (<dc> ^transfering <tf> -)
+}
+
+#how make sure different handle??
+sp {interpret-message*apply*interpret-yes-no-message*no*concept-transfer
+   (state <s> ^name interpret-message
+              ^top-state <ts>
+              ^operator <o>)
+   (<ts> ^dialog-context <dc> ^interaction.changes <changes>)
+   (<dc> ^learning-predicate <lp> ^transfering <tf>)
+   (<lp> ^name <name>)
+   (<tf> ^name <name> ^lti <pred> ^to <game>)
+   (<o> ^name interpret-yes-no-message
+        ^message <msg>
+        ^message-type no)
+-->
+   (<msg> ^interpreted true)
+   (<dc> ^transfering <tf> -)
+   (<changes> ^outgoing-message <msg2>)
+   (<msg2> ^type unknown-word
+              ^fields.word <name>)
+}    
