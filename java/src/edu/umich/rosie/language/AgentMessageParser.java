@@ -55,12 +55,16 @@ public class AgentMessageParser
 			simpleMessages.put("get-next-subaction", "What do I do next?");
 			simpleMessages.put("confirm-pick-up", "I have picked up the object.");
 			simpleMessages.put("confirm-put-down", "I have put down the object.");
+			//added for games and puzzles
+			simpleMessages.put("your-turn", "Your turn.");
+			simpleMessages.put("i-win", "I win!");
 			simpleMessages.put("easy", "That was easy!");
 			simpleMessages.put("describe-game", "Please setup the game.");
+			simpleMessages.put("describe-puzzle", "Please setup the puzzle.");
 			simpleMessages.put("setup-goal", "Please setup the goal state.");
-			simpleMessages.put("define-actions", "Can you describe the legal actions of the game?");
-			simpleMessages.put("describe-action", "What are the conditions of the action");
-			simpleMessages.put("describe-goal", "Please describe or demonstrate the goal");
+			simpleMessages.put("define-actions", "Can you describe the legal actions?");
+			simpleMessages.put("describe-action", "What are the conditions of the action.");
+			simpleMessages.put("describe-goal", "Please describe or demonstrate the goal.");
 			simpleMessages.put("learned-goal", "Ok, I've learned the goal.");
 			simpleMessages.put("learned-action", "Ok, I've learned the action.");
 		}
@@ -114,11 +118,10 @@ public class AgentMessageParser
 		return null;
 	}
 	 public static String translateLearnedUnknownWord(Identifier fieldsId){
-	    	String result = "Ok, I now understand the concept ";
+	    	String result = "Ok, I've learned the concept ";
 	    	String word = SoarUtil.getValueOfAttribute(fieldsId, "word");
 	    	if (word != null)
 	    		result += word;
-	    	
 	    	return result;
 	 }
 	 
@@ -127,7 +130,6 @@ public class AgentMessageParser
 	    	String word = SoarUtil.getValueOfAttribute(fieldsId, "word");
 	    	if (word != null)
 	    		result += word;
-	    	
 	    	return result;
 	 }
 	    	
