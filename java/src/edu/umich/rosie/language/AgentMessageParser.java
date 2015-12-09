@@ -107,6 +107,8 @@ public class AgentMessageParser
 			return translateLearnedUnknownWord(fieldsId);
 	    } else if(type.equals("transfer-concept")){
 			return translateTransferConcept(fieldsId);
+	    } else if(type.equals("already-know-concept")){
+			return translateAlreadyKnowConcept(fieldsId);
 	    }
 		//conversational messages
 		else if(type.equals("generic"))
@@ -224,13 +226,23 @@ public class AgentMessageParser
 	
 	public static String translateTransferConcept(Identifier fields){
 		String concept = SoarUtil.getValueOfAttribute(fields, "concept-name");
-		
+		concept = concept.replaceAll("\\d", "");
 		String result = "Does \'" + concept + "\' mean that ";
 		result += getGoalState(fields);
 		result += "?";
 		return result;
 		
     }
+	public static String translateAlreadyKnowConcept(Identifier fields){
+		String concept = SoarUtil.getValueOfAttribute(fields, "concept-name");
+		String type = SoarUtil.getValueOfAttribute(fields, "type");
+		concept = concept.replaceAll("\\d", "");
+		String result = "Ok, I already know the "+ type + " " + concept + ".";
+		
+		return result;
+		
+    }
+	
     public static String translateFinalGoalState(Identifier fields){
 		String result = "Ok, I've learned that the goal state is that ";
 		result += getGoalState(fields);

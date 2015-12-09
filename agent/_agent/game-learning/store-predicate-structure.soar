@@ -55,6 +55,7 @@ sp {store-predicate-structure*apply*complete*puzzle-name
 sp {store-predicate-structure*apply*complete*goal-name
    (state <s> ^name store-predicate-structure
               ^operator.name complete
+              ^found-transferable-knowledge false
               ^ptype goal
               ^top-state.interaction.status <status>
               ^top-state.interaction.changes <changes>)
@@ -69,6 +70,7 @@ sp {store-predicate-structure*apply*complete*goal-name
 sp {store-predicate-structure*apply*complete*action-name
    (state <s> ^name store-predicate-structure
               ^operator.name complete
+              ^found-transferable-knowledge false
               ^ptype action
               ^top-state.interaction.status <status>
               ^top-state.interaction.changes <changes>)
@@ -76,6 +78,27 @@ sp {store-predicate-structure*apply*complete*action-name
    (<changes> ^outgoing-message <msg>)
    (<msg> ^type simple-message
           ^message-type describe-action)
+   (<status> ^performed.learning-event <de>)
+   (<de> ^type game
+         ^originator agent)
+}
+
+sp {store-predicate-structure*apply*complete*action-goal-transfer
+   (state <s> ^name store-predicate-structure
+              ^operator.name complete
+              ^found-transferable-knowledge true
+              ^copied <r>
+          #    ^smem.command <sc>
+              ^handle <handle>
+              ^ptype {<ptype> << action goal >>}
+              ^top-state.interaction.status <status>
+              ^top-state.interaction.changes <changes>)
+-->
+ #  (<sc> ^store <r>)
+   (<changes> ^outgoing-message <msg>)
+   (<msg> ^type already-know
+          ^fields <f>)
+   (<f> ^concept-name <handle> ^type <ptype>)
    (<status> ^performed.learning-event <de>)
    (<de> ^type game
          ^originator agent)
@@ -115,7 +138,7 @@ sp {store-predicate-structure*elaborate*top-state*dialogue-context*game
    (state <s> ^name store-predicate-structure
               ^operator.name complete
               ^top-state <ts>)
-   (<s> ^storing name ^ptype game ^handle <handle> ^message.predicate <pred>)
+   (<s> ^storing name ^ptype game ^handle <handle> ^message.predicate <pred> )
 -->
    (<ts> ^dialog-context <dc>)
    (<dc> ^type game-learning ^name <handle> ^structure <pred> ^learning true ^needs-setup true)
@@ -131,7 +154,7 @@ sp {store-predicate-structure*elaborate*top-state*dialogue-context*goal
    (state <s> ^name store-predicate-structure
               ^operator.name complete
               ^top-state <ts>)
-   (<s> ^storing name ^ptype goal ^handle <handle> ^message.predicate <pred2>)
+   (<s> ^storing name ^ptype goal ^handle <handle> ^message.predicate <pred2> ^found-transferable-knowledge false)
    (<ts> ^dialog-context <dc>)
    (<dc> ^structure <pred>)
    (<pred> ^goals <go>)
@@ -141,11 +164,12 @@ sp {store-predicate-structure*elaborate*top-state*dialogue-context*goal
    (<dc> ^learn-link <pred2> ^needs-goal-setup true)
 }
 
+
 sp {store-predicate-structure*elaborate*top-state*dialogue-context*action
    (state <s> ^name store-predicate-structure
               ^operator.name complete
               ^top-state <ts>)
-   (<s> ^storing name ^ptype action ^handle <handle> ^message.predicate <pred2>)
+   (<s> ^storing name ^ptype action ^handle <handle> ^message.predicate <pred2> ^found-transferable-knowledge false)
    (<ts> ^dialog-context <dc>)
    (<dc> ^structure <pred>)
    (<pred> ^actions <act>)
@@ -154,6 +178,68 @@ sp {store-predicate-structure*elaborate*top-state*dialogue-context*action
    (<pred2> ^predicate-structure <ps> ^type action)
    (<dc> ^learn-link <pred2>)
 }
+
+sp {store-predicate-structure*elaborate*top-state*dialogue-context*action*transfer
+   (state <s> ^name store-predicate-structure
+              ^operator.name complete
+              ^smem.command <sc>
+              ^smem.result.retrieved <r>
+              ^top-state <ts>)
+   (<s> ^storing name ^ptype action ^handle <handle> ^message.predicate <pred2> ^found-transferable-knowledge true)
+   (<ts> ^dialog-context <dc>)
+   (<dc> ^structure <pred> ^name <gname>)
+   (<pred> ^actions <act>)
+-->
+    (<s> ^copied <r>)
+   (<r> ^from <gname>)
+   (<sc> ^store <r>)
+   (<act> ^handle <handle>)
+}
+sp {store-predicate-structure*elaborate*top-state*dialogue-context*goal*transfer
+   (state <s> ^name store-predicate-structure
+              ^operator.name complete
+              ^smem.command <sc>
+              ^smem.result.retrieved <r>
+              ^top-state <ts>)
+   (<s> ^storing name ^ptype goal ^handle <handle> ^message.predicate <pred2> ^found-transferable-knowledge true)
+   (<ts> ^dialog-context <dc>)
+   (<dc> ^structure <pred> ^name <gname>)
+   (<pred> ^goals <go>)
+-->
+    (<s> ^copied <r>)
+   (<r> ^from <gname>)
+   (<sc> ^store <r>)
+   (<go> ^handle <handle>)
+}
+
+sp {store-predicate-structure*elaborate*query*find-transferable*knowlege
+   (state <s> ^name store-predicate-structure
+              ^smem.command <sc>)
+             # ^operator.name complete)
+   (<s> ^storing name ^ptype << action goal >> ^handle <handle> ^message.predicate <pred2>)
+-->
+   (<sc> ^query <pred2> ^depth 1)
+   (<pred2> ^handle <handle> ^item-type predicate)
+}
+
+
+sp {store-predicate-structure*elaborate*found-transferable-knowledge*true
+    :o-support
+   (state <s> ^name store-predicate-structure
+              ^smem.result.retrieved)
+-->
+   (<s> ^found-transferable-knowledge true)
+}
+
+sp {store-predicate-structure*elaborate*found-transferable-knowledge*false
+    :o-support
+   (state <s> ^name store-predicate-structure
+              ^smem.result.failure)
+-->
+   (<s> ^found-transferable-knowledge false)
+}
+
+
 
 sp {store-predicate-structure*elaborate*top-state*dialogue-context*multiplayer
    (state <s> ^name store-predicate-structure
