@@ -39,12 +39,22 @@ sp {chunk-predicate-structure*propose*check-smem-concept
     (<o> ^name check-smem-concept)
 }
 
+sp {check-smem-concept*propose*complete
+   (state <s> ^name check-smem-concept
+              ^superstate.superstate.superstate.name transfer-action-goal)
+              
+-->
+    (<s> ^operator <o> + >)
+    (<o> ^name store-smem-transfer)
+}
+
 
 sp {chunk-predicate-structure*elaborate*smem-query
    (state <s> ^name check-smem-concept
               ^smem.command <c>
               ^superstate <ss>)
    (<ss> ^game <game>
+         -^superstate.superstate.name transfer-action-goal
          ^gtype <gtype>
          ^<gtype>.condition <co>)
    (<co> ^type concept ^attribute predicate ^name <name>)
@@ -53,6 +63,24 @@ sp {chunk-predicate-structure*elaborate*smem-query
         ^depth 1)
    (<cue> ^handle <name> ^from <game> ^item-type predicate)
 }
+
+sp {chunk-predicate-structure*elaborate*smem-query*auto-transfer
+   (state <s> ^name check-smem-concept
+              ^smem.command <c>
+              ^superstate <ss>)
+   (<ss> #^game <game>
+         ^superstate.superstate.name transfer-action-goal
+         ^gtype <gtype>
+         ^<gtype>.condition <co>)
+   (<co> ^type concept ^attribute predicate ^name <name>)
+-->
+   (<c> ^query <cue>
+        ^depth 1)
+   (<cue> ^handle <name> ^item-type predicate)
+}
+
+#if mid transfer, want to chunk with current name and add smem from
+
 
 #sp {chunk-predicate-structure*elaborate*smem-query
 #   (state <s> ^name check-smem-concept
@@ -75,6 +103,40 @@ sp {chunk-predicate-structure*elaborate*known
               ^name check-smem-concept
               ^superstate <ss>
               ^smem.result.retrieved)
+   (<ss> -^superstate.superstate.name transfer-action-goal)
+-->
+   (<ss> ^known true)
+}
+
+sp {chunk-predicate-structure*elaborate*from
+   (state <s> #^name chunk-predicate-structure
+              ^name check-smem-concept
+              ^superstate <ss>
+              ^operator.name store-smem-transfer
+              ^smem.result.retrieved <r>)
+   (<ss> ^game <game> ^superstate.superstate.name transfer-action-goal)
+-->
+   (<s> ^re-store-game <r>)
+   (<r> ^from <game> +)
+}
+sp {chunk-predicate-structure*elaborate*known-store
+    :o-support
+   (state <s> #^name chunk-predicate-structure
+              ^name store-smem-transfer#check-smem-concept
+             # ^re-store-game <r>
+             # ^operator.name complete
+              ^smem.command <sc>
+              ^superstate <ss>)
+   (<ss> ^re-store-game <r>)
+-->
+   (<sc> ^store <r>)
+   (<ss> ^stored true)
+}
+sp {check-smem-concept*elaborate*known*stored
+   (state <s> ^name check-smem-concept
+              ^stored true
+              ^operator.name store-smem-transfer
+              ^superstate <ss>)
 -->
    (<ss> ^known true)
 }
@@ -122,7 +184,7 @@ sp {chunk-predicate-structure*impasse*actiongoal
               ^choices none
               ^attribute state
               ^impasse no-change)
-   (<ss> ^retrieve-handle <handle> ^gtype <t>)
+   (<ss> ^retrieve-handle <handle> ^gtype <t>)# ^name chunk-predicate-structure)
 -->
    (force-learn <s>)
    (<s> ^name chunk-predicate-impasse
