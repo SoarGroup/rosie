@@ -58,6 +58,7 @@ public class AgentMessageParser
 			//added for games and puzzles
 			simpleMessages.put("your-turn", "Your turn.");
 			simpleMessages.put("i-win", "I win!");
+			simpleMessages.put("i-lose", "Damn, I lose.");
 			simpleMessages.put("easy", "That was easy!");
 			simpleMessages.put("describe-game", "Please setup the game.");
 			simpleMessages.put("describe-puzzle", "Please setup the puzzle.");
@@ -67,6 +68,8 @@ public class AgentMessageParser
 			simpleMessages.put("describe-goal", "Please describe or demonstrate the goal.");
 			simpleMessages.put("learned-goal", "Ok, I've learned the goal.");
 			simpleMessages.put("learned-action", "Ok, I've learned the action.");
+			simpleMessages.put("already-learned-goal", "I know that goal.");
+			simpleMessages.put("already-learned-action", "I know that action.");
 		}
 		
 		String type = SoarUtil.getValueOfAttribute(id, "type");
