@@ -1,3 +1,17 @@
+
+#### For when hit "and" and need to wait to see what follows to determine if there is a merge
+
+sp {comprehension*elaborate*delay-possible-merge
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^not-merged-receiver <receiver1> { <> <receiver1> <receiver2> })
+   (<receiver1> ^delay-merge true
+                ^decision-count <after>)
+   (<receiver2> ^decision-count < <after>)
+-->
+   (<receiver2> ^dont-merge true)
+}
+
 sp {comprehension*elaborate*possible-merge
    (state <s> ^name comprehension
               ^segment <seg>)
@@ -6,7 +20,8 @@ sp {comprehension*elaborate*possible-merge
    (<assigner> ^structure-type <stype>
                ^lt <lt>
               -^lt.lexical-item-spelling)
-   (<receiver> ^structure-type <stype>)
+   (<receiver> ^structure-type <stype>
+              -^dont-merge true)
   -(<assigner> ^parent-receiver <receiver>) # Cannot fulfill itself
  -{(<assigner> ^lt.after <after>
                ^parent-receiver <pr>)           # enforce after
@@ -37,7 +52,8 @@ sp {comprehension*elaborate*possible-merge*lexical-item*match*required
    (<assigner> ^structure-type <stype>
                ^lt.lexical-item-spelling <lex-item-spell>)
    (<receiver> ^structure-type <stype>
-               ^lt.spelling <lex-item-spell>)
+               ^lt.spelling <lex-item-spell>
+              -^dont-merge true)
   -(<assigner> ^parent-receiver <receiver>) # Cannot fulfill itself
  -{(<assigner> ^parent-receiver <parent>)
    (<receiver> ^ << DP GP VP PP CP CONJP >> <parent>)}
@@ -69,7 +85,8 @@ sp {comprehension*elaborate*possible-merge*unknown
           ^not-merged-assigner <assigner>)
    (<assigner> ^structure-type U
               -^lt.lexical-item-spelling)
-   (<receiver> -^structure-type)
+   (<receiver> -^structure-type
+               -^dont-merge true)
   -(<assigner> ^parent-receiver <receiver>) # Cannot fulfill itself
  -{(<assigner> ^lt.after <after>
                ^parent-receiver <pr>)           # enforce after
@@ -98,7 +115,8 @@ sp {comprehension*elaborate*possible-merge*lexical-item*match*required*unknown
    (<assigner> ^structure-type U
                ^lt.lexical-item-spelling <lex-item-spell>)
    (<receiver> -^structure-type
-               ^lt.spelling <lex-item-spell>)
+               ^lt.spelling <lex-item-spell>
+              -^dont-merge true)
   -(<assigner> ^parent-receiver <receiver>) # Cannot fulfill itself
  -{(<assigner> ^parent-receiver <parent>)
    (<receiver> ^ << DP VP PP CP CONJP >> <parent>)}
@@ -131,7 +149,8 @@ sp {comprehension*elaborate*possible-merge*any
    (<assigner> ^structure-type ANY
                ^lt <lt>
               -^lt.lexical-item-spelling)
-   (<receiver> ^structure-type <stype>)
+   (<receiver> ^structure-type <stype>
+              -^dont-merge true)
   -(<assigner> ^parent-receiver <receiver>) # Cannot fulfill itself
  -{(<assigner> ^lt.after <after>
                ^parent-receiver <pr>)           # enforce after
@@ -162,7 +181,8 @@ sp {comprehension*elaborate*possible-merge*lexical-item*match*required*any
    (<assigner> ^structure-type ANY
                ^lt.lexical-item-spelling <lex-item-spell>)
    (<receiver> ^structure-type <stype>
-               ^lt.spelling <lex-item-spell>)
+               ^lt.spelling <lex-item-spell>
+              -^dont-merge true)
   -(<assigner> ^parent-receiver <receiver>) # Cannot fulfill itself
  -{(<assigner> ^parent-receiver <parent>)
    (<receiver> ^ << DP GP VP PP CP CONJP >> <parent>)}
@@ -526,6 +546,23 @@ sp {comprehension*compare*merge*prefer*most-recent*attachment-immediate
    (<s> ^operator <op1> < <op2>)
 }
 
+
+sp {comprehension*compare*merge*prefer*attachment-immediate*follow
+   (state <s> ^name comprehension
+              ^operator <op1> +
+              ^operator { <> <op1> <op2> } +)
+   (<op1> ^name merge
+          ^assigner <ass1>
+          ^receiver <rec>)
+   (<ass1> ^decision-count <dc>
+           ^lt.attachment immediately-follow)
+   (<op2> ^name merge
+          ^assigner <ass2>
+          ^receiver <rec>)
+  (<ass2> ^decision-count < <dc>)
+-->
+   (<s> ^operator <op1> > <op2>)
+}
 
 sp {comprehension*compare*merge*prefer*most-recent*first-word*prefer
   # :interrupt
