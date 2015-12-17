@@ -58,18 +58,22 @@ public class AgentMessageParser
 			//added for games and puzzles
 			simpleMessages.put("your-turn", "Your turn.");
 			simpleMessages.put("i-win", "I win!");
-			simpleMessages.put("i-lose", "Damn, I lose.");
+			simpleMessages.put("i-lose", "Damn. I lose.");
 			simpleMessages.put("easy", "That was easy!");
 			simpleMessages.put("describe-game", "Please setup the game.");
 			simpleMessages.put("describe-puzzle", "Please setup the puzzle.");
 			simpleMessages.put("setup-goal", "Please setup the goal state.");
+			simpleMessages.put("setup-failure", "Please setup the failure condition.");
 			simpleMessages.put("define-actions", "Can you describe the legal actions?");
 			simpleMessages.put("describe-action", "What are the conditions of the action.");
 			simpleMessages.put("describe-goal", "Please describe or demonstrate the goal.");
+			simpleMessages.put("describe-failure", "Please describe the failure condition.");
 			simpleMessages.put("learned-goal", "Ok, I've learned the goal.");
 			simpleMessages.put("learned-action", "Ok, I've learned the action.");
+			simpleMessages.put("learned-failure", "Ok, I've learned the failure condition.");
 			simpleMessages.put("already-learned-goal", "I know that goal.");
 			simpleMessages.put("already-learned-action", "I know that action.");
+			simpleMessages.put("already-learned-failure", "I know that failure condition.");
 		}
 		
 		String type = SoarUtil.getValueOfAttribute(id, "type");

@@ -4,8 +4,7 @@ sp {find-solution*propose*game-search*elab-depth-limit
 -->
    (<s> ^depth-limit 1
         ^game <name>
-        ^gtype goal
-        ^gtype action)
+        ^gtype goal action failure)
 }
 
 sp {find-solution*elaborate*problem-space*world
@@ -42,6 +41,18 @@ sp {find-solution*propose*chunk-predicate-structure*goal
          ^predicate-handle <h>)
 }
 
+sp {find-solution*propose*chunk-predicate-structure*failure
+   (state <s> ^name find-solution
+             -^failure.handle <h>
+              -^found-action
+              ^top-state.dialog-context.structure.failures.handle <h>)
+-->
+    (<s> ^operator <o> + =)
+    (<o> ^name chunk-predicate-structure
+         ^gtype failure
+         ^predicate-handle <h>)
+}
+
 sp {find-solution*propose*game-search
    (state <s> ^name find-solution
               -^superstate.multiplayer true
@@ -59,7 +70,7 @@ sp {find-solution*propose*game-search
         ^list.game <g>
         ^current <g> 
         ^game <name>)
-   (<g> ^game <name> ^type action goal)
+   (<g> ^game <name> ^type action goal failure)
 }
 sp {find-solution*elaborate*depth-limit-1-less
    (state <s> ^name find-solution
@@ -90,7 +101,7 @@ sp {find-solution*propose*game-search*muliplayer
         ^list.game <g>
         ^current <g> 
         ^game <name>)
-   (<g> ^game <name> ^type action goal)
+   (<g> ^game <name> ^type action goal failure)
 }
 
 sp {find-solution*mark*found-action
@@ -157,6 +168,14 @@ sp {find-solution*propose*completed-all-actions
     (<fa2> -^mark)}          
 -->
    (<s> ^operator <o> + < =)
+   (<o> ^name completed-all-actions)
+}
+
+sp {find-solution*propose*completed-all-actions*game-lost
+   (state <s> ^name find-solution
+              ^top-state.dialog-context.game-lost true)       
+-->
+   (<s> ^operator <o> + > =)
    (<o> ^name completed-all-actions)
 }
 
@@ -238,6 +257,7 @@ sp {find-solution*apply*completed-all-actions*send-message
 sp {find-solution*apply*completed-all-actions*send-message*your-turn
    (state <s> ^name find-solution
               ^operator <o>
+              -^top-state.dialog-context.game-lost true
               -^top-state.dialog-context.game-won true
               ^superstate.multiplayer true
               ^top-state.interaction.status <status>
@@ -264,6 +284,23 @@ sp {find-solution*apply*completed-all-actions*send-message*won
    (<changes> ^outgoing-message <msg>)
    (<msg> ^type simple-message
           ^message-type i-win)
+   (<status> ^performed.learning-event <de>)
+   (<de> ^type game
+         ^originator agent)
+ }
+
+sp {find-solution*apply*completed-all-actions*send-message*lose
+   (state <s> ^name find-solution
+              ^operator <o>
+              ^top-state.dialog-context.game-lost true
+              ^superstate.multiplayer true
+              ^top-state.interaction.status <status>
+              ^top-state.interaction.changes <changes>)
+   (<o> ^name completed-all-actions)
+-->
+   (<changes> ^outgoing-message <msg>)
+   (<msg> ^type simple-message
+          ^message-type i-lose)
    (<status> ^performed.learning-event <de>)
    (<de> ^type game
          ^originator agent)
