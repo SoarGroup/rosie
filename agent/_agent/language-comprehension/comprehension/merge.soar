@@ -24,7 +24,7 @@ sp {comprehension*elaborate*possible-merge
               -^dont-merge true)
   -(<assigner> ^parent-receiver <receiver>) # Cannot fulfill itself
  -{(<assigner> ^lt.after <after>
-               ^parent-receiver <pr>)           # enforce after
+               ^parent-receiver <pr>)           # enforce after - seems like it over enforces it
    (<seg> ^not-merged-assigner <nma>)
    (<nma> ^parent-receiver <pr>
           ^lt <after>)}
@@ -529,6 +529,28 @@ sp {comprehension*compare*merge*prefer*most-recent*not-pp*before2
    (<s> ^operator <op2> -)
 }
 
+sp {comprehension*compare*merge*prefer*most-recent*PP-shared-parent-receiver
+   (state <s> ^name comprehension
+              ^operator <op1> +
+              ^operator <op2> +)
+   (<op1> ^name merge
+          ^assigner <ass1>
+          ^receiver <rec>)
+   (<ass1> ^decision-count <dc>
+           ^lt <lt1>
+           ^parent-receiver <pr>)
+  -(<lt1> ^<< after before >> <ltass2>)
+   (<op2> ^name merge
+          ^assigner <ass2>
+          ^receiver <rec>)
+   (<ass2> ^decision-count <dc>
+           ^lt <ltass2>
+           ^parent-receiver <pr>)
+   (<rec> ^structure-type PP)
+  -(<ltass2> ^<< after before >> <lt1>)
+-->
+   (<s> ^operator <op2> = <op1>)
+}
 sp {comprehension*compare*merge*prefer*most-recent*attachment-immediate
    (state <s> ^name comprehension
               ^operator <op1> +
@@ -595,3 +617,26 @@ sp {comprehension*compare*merge*prefer*predicate
 -->
    (<s> ^operator <op1> < <op2>)
 }
+
+sp {comprehension*compare*merge*prefer*probable
+   #:interrupt
+   (state <s> ^name comprehension
+              ^segment <seg>
+              ^operator <op1> +
+              ^operator { <> <op1> <op2> } +)
+   (<seg> ^probable-merge <npm>)
+   (<npm> ^assigner <ass2>
+          ^receiver <> <rec1>)
+   (<op1> ^name merge
+          ^receiver <rec1>
+          ^assigner <ass1>)
+   (<op2> ^name merge
+          ^receiver <rec1> 
+          ^assigner { <> <ass1> <ass2> })
+ -{(<seg> ^probable-merge <npm2>)
+   (<npm2> ^receiver <> <rec1>
+           ^assigner <ass1>)}
+-->
+   (<s> ^operator <op1> > <op2>)
+}
+
