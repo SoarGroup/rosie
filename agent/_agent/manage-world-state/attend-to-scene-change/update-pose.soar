@@ -1,0 +1,49 @@
+##################################################################
+#
+# Monitoring for need to copy an object
+#
+##################################################################
+
+sp {anystate*apply*attend-to-scene-change*update-pose*svs*copy_node
+   (state <s> ^operator <o>
+              ^top-state.svs.command <cmd>)
+   (<o> ^name attend-to-scene-change
+        ^change.type update-pose
+        ^change.object-info <obj-info>)
+   (<obj-info> ^perception-obj.id <perc-id>
+               ^belief-obj.id <bel-id>)
+-->
+   (<cmd> ^copy_transform <copy>)
+   (<copy> ^source <perc-id>
+           ^destination <bel-id>
+           ^position yes
+           ^rotation yes
+           ^scale yes)
+   (<obj-info> ^copy-command <copy>)
+}
+
+sp {anystate*apply*attend-to-scene-change*update-pose*cleanup
+   (state <s> ^operator <o>
+              ^top-state.svs.command <cmd>)
+   (<o> ^name attend-to-scene-change
+        ^change.type update-pose
+        ^change.object-info <obj-info>)
+   (<obj-info> ^update-pose true
+               ^copy-command <copy>)
+   (<copy> ^status success)
+-->
+   (<obj-info> ^update-pose true -
+               ^copy-command <copy> -)
+}
+   
+sp {anystate*apply*attend-to-scene-change*update-pose*report
+   (state <s> ^operator <o>
+              ^top-state.agent-params.debug-mode on
+              ^top-state.agent-params.debug-perception true)
+   (<o> ^name attend-to-scene-change
+        ^change.type update-pose
+        ^change.object-info.object-handle <obj-handle>)
+-->
+   (write |Updating Object | <obj-handle>)
+}
+   

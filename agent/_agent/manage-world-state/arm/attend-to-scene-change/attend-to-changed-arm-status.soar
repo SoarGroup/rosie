@@ -1,0 +1,56 @@
+# Update world.robot.arm.action
+
+sp {anystate*apply*attend-to-changed-arm-status*add*current*action
+   (state <s> ^operator <o>
+              ^top-state.world.robot.arm <arm>)
+   (<o> ^name attend-to-scene-change
+        ^change.type changed-arm-status
+        ^change.self-info.action <action>)
+-->
+   (<arm> ^action <action>)
+}
+
+sp {anystate*apply*attend-to-changed-arm-status*remove*old*action
+   (state <s> ^operator <o>
+              ^top-state.world.robot.arm <arm>)
+   (<o> ^name attend-to-scene-change
+        ^change.type changed-arm-status
+        ^change.self-info.action <action>)
+   (<arm> ^action {<old-action> <> <action>})
+-->
+   (<arm> ^action <old-action> -)
+}
+
+# When we move an object, remove all internal links associated with it
+sp {anystate*apply*attend-to-changed-arm-status*stopped*remove*moved-object*internal-links
+   (state <s> ^operator <o>
+              ^top-state.world.robot.arm <arm>
+              ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
+   (<o> ^name attend-to-scene-change
+        ^change.type changed-arm-status
+        ^change.self-info.action wait)
+   (<arm> ^moving <handle1>)
+   (<obj-info> ^object-handle <handle1>
+                ^internal-link <handle2>)
+-->
+   (<obj-info> ^internal-link <handle2> -)
+   (write |Moved object | <handle1> | and removed link to | <handle2> (crlf))
+}
+
+sp {anystate*apply*attend-to-changed-arm-status*stopped*remove*other*internal-links
+   (state <s> ^operator <o>
+              ^top-state.world.robot.arm <arm>
+              ^top-state.perception-monitor.object-monitor <mon>)
+   (<o> ^name attend-to-scene-change
+        ^change.type changed-arm-status
+        ^change.self-info.action wait)
+   (<arm> ^moving <id>)
+   (<mon> ^object <src-obj>
+          ^object <dest-obj>)
+   (<src-obj> ^id <id>)
+   (<dest-obj> ^id <id2>
+               ^internal-link <id>)
+-->
+   (<dest-obj> ^internal-link <id> -)
+   (write |Moved object | <id> | and removed link from | <id2> (crlf))
+}
