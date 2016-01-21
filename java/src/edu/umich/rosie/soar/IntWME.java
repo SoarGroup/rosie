@@ -23,6 +23,10 @@ public class IntWME implements ISoarObject{
 		return added;
 	}
 	
+	public String getAttribute(){
+		return att;
+	}
+	
 	public void setValue(Long newVal){
 		val = newVal;
 		changed = true;

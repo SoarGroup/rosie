@@ -21,6 +21,10 @@ public class FloatWME implements ISoarObject{
 	public boolean isAdded(){
 		return added;
 	}		
+	
+	public String getAttribute(){
+		return att;
+	}
 
 	public void setValue(Double newVal){
 		val = newVal;

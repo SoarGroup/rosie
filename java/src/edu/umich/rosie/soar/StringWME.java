@@ -21,6 +21,10 @@ public class StringWME implements ISoarObject{
 	public boolean isAdded(){
 		return added;
 	}	
+	
+	public String getAttribute(){
+		return att;
+	}
 
 	public void setValue(String newVal){
 		val = newVal;
