@@ -1,5 +1,5 @@
 sp {termination-processing*propose*create-new-verb
-   #:interrupt
+  # :interrupt
    (state <s> ^name termination-processing
               ^segment.new-verb <nv>
               ^segment.semantics <sem>
@@ -12,6 +12,7 @@ sp {termination-processing*propose*create-new-verb
          ^action <action>
          ^verb <nv>)
 }
+
 #   @T999  Move DP PP 
 #   @T998  Pick DP (movable)
 #   @T997  Clean (not movable)
@@ -34,9 +35,11 @@ sp {termination-processing*apply*create-new-verb*moveable*arg1*998
    (<sem> ^arg1
          -^arg2)
    (<action> ^handle <name>)
+   (<nv> ^spelling <nw>)
 -->      
    (write (crlf) |Create new verb: | <action> |: type T996 (arg2 optional)|)
-   (<s> ^new-verb <nv>)
+   (<s> ^new-verb <nv> 
+        ^checked <nw>)   # so detect used but unknown word doesn't get selected.
    (<cmd> ^store <nv>)
    (<nv> ^new-action true
          ^super-type @T996)  #allow it to add later
@@ -52,9 +55,11 @@ sp {termination-processing*apply*create-new-verb*moveable*arg1*999
    (<sem> ^arg1
           ^arg2)
    (<action> ^handle <name>)
+   (<nv> ^spelling <nw>)
 -->      
    (write (crlf) |Create new verb: | <action> |: , type: T996 (arg2 optional)|)
-   (<s> ^new-verb <nv>)
+   (<s> ^new-verb <nv>
+        ^checked <nw>)   # so detect used but unknown word doesn't get selected.
    (<cmd> ^store <nv>)
    (<nv> ^new-action true
          ^super-type @T996)     ## Allow it to drop it later
@@ -67,12 +72,52 @@ sp {termination-processing*apply*create-new-verb*moveable*arg2*995
    (<op> ^name create-new-verb
          ^action <action>
          ^verb <nv>)
+   (<nv> ^spelling <nw>)
    (<sem> -^arg1
            ^arg2)
 -->      
    (write (crlf) |Create new verb: | <action> |: , type: T995|)
-   (<s> ^new-verb <nv>)
+   (<s> ^new-verb <nv>
+        ^checked <nw>)   # so detect used but unknown word doesn't get selected.
    (<cmd> ^store <nv>)
    (<nv> ^new-action true
          ^super-type @T995)
+}
+
+
+## Verb via "the name of the action is ..."
+sp {termination-processing*propose*create-new-verb*named-action
+  # :interrupt
+   (state <s> ^name termination-processing
+              ^segment.semantics <sem>
+             -^new-verb <nv>)
+   (<sem> ^message-type object-description
+          ^arg1 <arg1>
+          ^predicate <pred>)
+   (<pred> ^handle <handle>
+           ^word-structure <ws>)
+   (<ws> ^spelling <spell>)
+   (<arg1> ^handle of1 ^2 <arg2>)
+   (<arg2> ^handle name1 ^2 <two>)
+   (<two> ^handle action)
+-->
+   (<s> ^operator <op> + =, >)
+   (<op> ^name create-new-verb2
+         ^word <ws>)
+}
+
+
+sp {termination-processing*apply*create-new-verb2*996
+   (state <s> ^operator <op>
+              ^top-state.smem.command <cmd>)
+   (<op> ^name create-new-verb2
+         ^word <nv>)
+   (<nv> ^spelling <nw>)
+-->      
+   (write (crlf) |Create new verb: | <nw> |: , type: T996 (arg2 optional)|)
+   (<s> ^new-verb <nv>
+        ^checked <nw>)   # so detect used but unknown word doesn't get selected.
+   (<cmd> ^store <nv>)
+   (<nv> ^new-action true
+         ^super-type @T999)     ## Allow it to drop it later
 }

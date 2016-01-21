@@ -1,0 +1,67 @@
+### If there are multiple groundings, search the ^dialog-object-list-access
+### to see if there is one in that list can be used.
+### The access list is a separate pointer from from ^dialog-object-list
+###  to avoid GDS issues when something is added to the list in the middle of sentence processing.
+
+sp {comprehension*elaborate-operator*process-multiple-groundings
+   (state <s> ^name comprehension
+              ^referent-home.referent <obj> <> <obj>
+             -^referent-home.constraint.multiple true)
+-->
+   (<s> ^multiple-referents true)
+}
+
+sp {comprehend*propose*process-multiple-groundings
+#:interrupt
+   (state <s> ^name comprehension
+              ^multiple-referents true
+             -^processed-multiple true)
+-->
+   (<s> ^operator <op> + =, >)
+   (<op> ^name process-multiple-groundings)
+}
+
+sp {comprehension*compare*process-multiple-groundings
+   (state <s> ^name comprehension
+              ^operator <op1> +
+                        <op2> +)
+   (<op1> ^name process-multiple-groundings)
+   (<op2> ^name << process-phrase-end process-semantics merge process-missing-assigner clean-up-retrieved-stack comprehend-construction comprehend-word >>)
+-->
+   (<s> ^operator <op1> > <op2>)
+}
+
+sp {comprehend*apply*process-multiple-groundings*not
+   (state <s> ^operator <op>
+              ^referent-home <pr>)
+   (<op> ^name process-multiple-groundings)
+  -{(<pr> ^referent <pr-g> { <> <pr-g> <pr-d> })
+    (<pr-g> ^predicates.status live)
+    (<pr-d> ^predicates.visible << false unknown >>)}
+-->
+   (<op> ^not-live-available-with-not-visible true)
+}
+
+sp {process-multiple-groundings*hypothetical-remove*for-multiples
+   (state <s> ^operator <op>
+              ^multiple-referents true
+             -^referent-home.lt.specifier << it definite >>
+              ^segment.hypothetical true
+              ^referent-home <pr>)
+   (<pr> ^referent <proto>)
+   (<op> ^name process-multiple-groundings)
+-->
+   (<pr> ^referent <proto> -)
+}
+
+### Clean up stale referent-home structures
+
+sp {comprehend*apply*non-process-multiple*remove-referent-home
+   (state <s> ^operator <op> 
+              ^referent-home <pr>)
+   (<op> -^name << process-multiple-groundings dialog-object-list-update >> )
+-->
+   (<s> ^referent-home <pr> -)
+}
+
+

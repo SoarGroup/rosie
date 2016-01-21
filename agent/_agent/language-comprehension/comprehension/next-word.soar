@@ -63,6 +63,7 @@ sp {comprehension*apply*next-word*no-prior
           ^prior-word <old-w>)}
 
 sp {comprehension*apply*next-word*end-of-sentence-failure*external
+  # :interrupt
    (state <s> ^operator.name next-word
               ^top-state <ts> 
               ^segment <seg>
@@ -92,15 +93,56 @@ sp {comprehension*apply*next-word*end-of-sentence-failure*internal
    (<seg> ^input-sentence <i>
           ^current-word <old-w>
           ^prior-word <pw>
+          ^original-sentence <cs>
+          ^original-sentence.complete-sentence <os>
+          ^semantics <sem>)
+   (<i> ^next nil
+        ^spelling << |?| |!| |.| >>)
+-->
+  # (interrupt)
+   (write (crlf) |Internal parse FAILED. Didn't get complete parse by time end of sentence encountered.|)
+  # (<cs> ^processing-result failure)
+   (<seg> ^parse-failed-end-of-sentence true)
+   (write (crlf) |========== | <csn> | =============================================| (crlf) <os>)
+   (write (crlf) (cmd print -d 7 <sem>) |=======================|)
+}
+
+sp {comprehension*apply*next-word*end-of-sentence-failure*unknown-word*external
+   (state <s> ^operator.name next-word
+              ^top-state.world-usage external
+              ^segment <seg>
+              ^top-state.interaction.status <status>)
+   (<seg> ^input-sentence <i>
+          ^unknown-word <uw>
+          ^current-word <old-w>
+          ^prior-word <pw>
           ^original-sentence <cs>)
    (<i> ^next nil
         ^spelling << |?| |!| |.| >>)
 -->
-#  (interrupt)
-   (write (crlf) |Internal parse FAILED. Didn't get complete parse by time end of sentence encountered.|)
-   (<cs> ^processing-result failure)
-   (<seg> ^parse-failed-end-of-sentence true)
+ # (interrupt)
+   (write (crlf) |Unknown Word encountered during parse, possibly contributing to failure: | <uw>)
+   (<status> ^failure <is>)
+   (<is> ^type unknown-word
+         ^word <uw>)
 }
+
+sp {comprehension*apply*next-word*end-of-sentence-failure*unknown-word*internal
+   (state <s> ^operator.name next-word
+              ^top-state.world-usage internal
+              ^segment <seg>)
+   (<seg> ^input-sentence <i>
+          ^unknown-word <uw>
+          ^current-word <old-w>
+          ^prior-word <pw>
+          ^original-sentence <cs>)
+   (<i> ^next nil
+        ^spelling << |?| |!| |.| >>)
+-->
+ #  (interrupt)
+   (write (crlf) |Unknown Word encountered during parse, possibly contributing to failure: | <uw>)
+}
+
 
 sp {comprehension*apply*next-word*mark-first-word
    (state <s> ^operator.name next-word
@@ -164,4 +206,10 @@ sp {comprehension*apply*next-word*clean-up-failure
    (<seg> ^failed-construction true -)
 }
 
+sp {comprehension*apply*next-word*clean-up-multiple
+   (state <s> ^operator.name next-word
+              ^processed-multiple true)
+-->
+   (<s> ^processed-multiple true)
+}
 

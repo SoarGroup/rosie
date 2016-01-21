@@ -1,5 +1,6 @@
 sp {comprehend-word*propose*smem-lexical-retrieval
    (state <s> ^name << comprehend-word comprehend-construction >>
+              ^failed-operator smem-lexical-retrieval-cw-pw-type
               ^current-word <cw>)
    (<s> -^retrieved-lexical-item
         -^comprehension-structure.retrieved-lexical-item
@@ -13,15 +14,45 @@ sp {comprehend-word*propose*smem-lexical-retrieval
    (<o> ^name smem-lexical-retrieval
         ^word <cw>)}
 
-
+sp {comprehend-word*propose*smem-lexical-retrieval2
+   (state <s> ^name << comprehend-word comprehend-construction >>
+              ^failed-operator smem-lexical-retrieval-cw-pw
+             -^failed-operator smem-lexical-retrieval-cw-pw-type
+              ^current-word <cw>)
+   (<s> -^retrieved-lexical-item
+        -^comprehension-structure.retrieved-lexical-item
+        -^failed-retrieval true
+        -^segment.retry
+         ^segment <seg>
+        -^retrieved-stack.item.lt.structure-type <pick-type>)
+  -{(<seg> ^prior-word.spelling |*|)
+    (<cw> ^next.spelling |.|)}
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name smem-lexical-retrieval
+        ^word <cw>)}
 ### Retrieval
 
-sp {comprehend-word*apply*smem-lexical-retrieval*ignore-whether-first-word
+sp {comprehend-word*apply*smem-lexical-retrieval*not-first-word
    (state <s> ^operator <o>
               ^smem.command <cmd>)
    (<o> ^name smem-lexical-retrieval
         ^word <word>)
-   (<word> ^spelling <x>)
+   (<word> ^spelling <x>
+          -^first-word true)
+-->   
+   (write (crlf) |Attempt retrieval for: | <x>)
+   (<cmd> ^query <q> ^depth 9)
+   (<q> ^spelling <x>)
+}
+
+sp {comprehend-word*apply*smem-lexical-retrieval*first-word
+   (state <s> ^operator <o>
+              ^smem.command <cmd>)
+   (<o> ^name smem-lexical-retrieval
+        ^word <word>)
+   (<word> ^spelling <x>
+           ^first-word true)
 -->   
    (write (crlf) |Attempt retrieval for: | <x>)
    (<cmd> ^query <q> ^depth 9)
