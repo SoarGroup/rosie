@@ -18,12 +18,12 @@ public class AgentMessageParser
 	static int counter = 0;
 	
 	// Synonymous generic messages for more natural responses
-	private static final List<String> hiMsg = Arrays.asList("hi!", "hey!", "hello!", "greetings");
+	private static final List<String> hiMsg = Arrays.asList("hi!", "hey!", "hello!", "greetings", "what's up?");
 	private static final List<String> byeMsg = Arrays.asList("bye!", "goodbye!", "so long");
 	private static final List<String> affirmMsg = Arrays.asList("ok", "I understand", "all right", "sure", "got it", "correct", "right", "affirmative");
 	private static final List<String> negateMsg = Arrays.asList("no", "wrong", "incorrect");
 	private static final List<String> uncertainMsg = Arrays.asList("I don't know", "I'm not sure", "I am uncertain");
-	
+	private static final List<String> introMsg = Arrays.asList("Hi! My name is Rosie. I am an interactive learning task learning robot build on the soar cognitive architecture");
 	
 	private static Random rand = new Random();
 	
@@ -58,11 +58,12 @@ public class AgentMessageParser
 			//added for games and puzzles
 			simpleMessages.put("your-turn", "Your turn.");
 			simpleMessages.put("i-win", "I win!");
-			simpleMessages.put("i-lose", "Damn. I lose.");
+			simpleMessages.put("i-lose", "I lose.");
 			simpleMessages.put("easy", "That was easy!");
 			simpleMessages.put("describe-game", "Please setup the game.");
 			simpleMessages.put("describe-puzzle", "Please setup the puzzle.");
 			simpleMessages.put("setup-goal", "Please setup the goal state.");
+			simpleMessages.put("tell-me-go", "Ok, tell me when to go.");
 			simpleMessages.put("setup-failure", "Please setup the failure condition.");
 			simpleMessages.put("define-actions", "Can you describe the legal actions?");
 			simpleMessages.put("describe-action", "What are the conditions of the action.");
@@ -116,7 +117,11 @@ public class AgentMessageParser
 			return translateTransferConcept(fieldsId);
 	    } else if(type.equals("already-know-concept")){
 			return translateAlreadyKnowConcept(fieldsId);
-	    }
+	    } else if(type.equals("learned-teacher-name")){
+		    return translateLearnedTeacherName(fieldsId);
+        } else if(type.equals("learned-game")){
+		    return translateLearnedGame(fieldsId);
+        } 
 		//conversational messages
 		else if(type.equals("generic"))
 		{
@@ -126,11 +131,46 @@ public class AgentMessageParser
 		
 		return null;
 	}
+	
+	public static String translateLearnedGame(Identifier fieldsId){
+    	String result = "Ok, I've learned the rules of ";
+    	String word = SoarUtil.getValueOfAttribute(fieldsId, "game");
+  
+    	if (word != null)
+    	{
+    		word = word.replaceAll("\\d", "");
+    		result += word;
+    	}
+    	String type = SoarUtil.getValueOfAttribute(fieldsId, "type");
+    	if ((type != null) && type.equalsIgnoreCase("puzzle"))
+    		result += ". Should I try to solve the puzzle?";
+    	else
+    		result += ". Shall we play a game?";
+    	return result;
+    }
+	
+	
+	
 	 public static String translateLearnedUnknownWord(Identifier fieldsId){
 	    	String result = "Ok, I've learned the concept ";
 	    	String word = SoarUtil.getValueOfAttribute(fieldsId, "word");
+	    	
 	    	if (word != null)
+	    	{
+	    		word = word.replaceAll("\\d", "");
 	    		result += word;
+	    	}
+	    	return result;
+	 }
+	 public static String translateLearnedTeacherName(Identifier fieldsId){
+	    	String result = "Hello ";
+	    	String word = SoarUtil.getValueOfAttribute(fieldsId, "word");
+	    	if (word != null)
+	    	{
+	    		word = word.replaceAll("\\d", "");
+	    		result += word;
+	    	}
+	    	result += "! My name is Rosie. I am an interactive task learning robot.";
 	    	return result;
 	 }
 	 
@@ -138,7 +178,10 @@ public class AgentMessageParser
 	    	String result = "I don't know the concept ";
 	    	String word = SoarUtil.getValueOfAttribute(fieldsId, "word");
 	    	if (word != null)
+	    	{
+	    		word = word.replaceAll("\\d", "");
 	    		result += word;
+	    	}
 	    	return result;
 	 }
 	    	

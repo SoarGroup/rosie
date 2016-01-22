@@ -87,6 +87,64 @@ sp {find-solution*elaborate*found-true
     (<s> ^found-action true)
 }
 
+
+sp {find-solution*prefer*chunk-predicate-structure*over*game-learning-complete
+   (state <s> ^name find-solution
+              ^operator <o2> +
+              ^operator <o> +)
+   (<o> ^name chunk-predicate-structure)
+   (<o2> ^name game-learning-complete)
+-->
+   (<s> ^operator <o> > <o2>)
+}
+
+sp {find-solution*propose*game-learning-complete
+   (state <s> ^name find-solution
+              -^found-action
+             -^top-state.dialog-context.finished-game-teaching true
+              ^superstate.multiplayer true
+              ^superstate.operator <op>)
+   (<op> ^game-name <name>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name game-learning-complete
+        ^type game
+        ^game <name>)
+}
+sp {find-solution*propose*game-learning-complete*puzzle
+   (state <s> ^name find-solution
+              -^found-action
+             -^top-state.dialog-context.finished-game-teaching true
+             -^superstate.multiplayer true
+              ^superstate.operator <op>)
+   (<op> ^game-name <name>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name game-learning-complete
+        ^type puzzle
+        ^game <name>)
+}
+sp {find-solution*apply*game-learning-complete
+   (state <s> ^name find-solution
+              ^top-state.dialog-context <dc>
+               ^operator <o>
+               ^top-state.interaction.status <status>
+              ^top-state.interaction.changes <changes>)
+   (<o> ^name game-learning-complete
+        ^type <type>
+        ^game <name>)
+-->
+   (<changes> ^outgoing-message <msg>)
+   (<msg> ^type learned-game
+          ^fields <f>)
+   (<f> ^game <name> ^type <type>)
+   (<status> ^performed.learning-event <de>)
+   (<de> ^type game
+         ^originator agent)
+   (<dc> ^finished-game-teaching true)
+}
+
+
 sp {find-solution*propose*game-search*muliplayer
    (state <s> ^name find-solution
               -^found-action
@@ -204,9 +262,9 @@ sp {find-solution*apply*completed-all-actions*remove*dialog-context
 sp {find-solution*apply*completed-all-actions*remove*dialog-context*game
    (state <s> ^name find-solution
              ^superstate.multiplayer true
-             ^top-state.dialog-context.game-won true
-              ^operator <o>         
-              ^top-state <ts>)
+             ^top-state.dialog-context.<< game-lost game-won >> true
+             ^operator <o>         
+             ^top-state <ts>)
    (<o> ^name completed-all-actions)
    (<ts> ^dialog-context <dc>)
 -->
