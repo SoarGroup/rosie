@@ -1,7 +1,10 @@
 package edu.umich.rosie.language;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -18,7 +21,7 @@ public class AgentMessageParser
 	static int counter = 0;
 	
 	// Synonymous generic messages for more natural responses
-	private static final List<String> hiMsg = Arrays.asList("hi!", "hey!", "hello!", "greetings", "what's up?");
+	private static final List<String> hiMsg = Arrays.asList("Hi", "Hey", "Hello", "Greetings", "What's up");
 	private static final List<String> byeMsg = Arrays.asList("bye!", "goodbye!", "so long");
 	private static final List<String> affirmMsg = Arrays.asList("ok", "I understand", "all right", "sure", "got it", "correct", "right", "affirmative");
 	private static final List<String> negateMsg = Arrays.asList("no", "wrong", "incorrect");
@@ -55,6 +58,7 @@ public class AgentMessageParser
 			simpleMessages.put("get-next-subaction", "What do I do next?");
 			simpleMessages.put("confirm-pick-up", "I have picked up the object.");
 			simpleMessages.put("confirm-put-down", "I have put down the object.");
+			
 			//added for games and puzzles
 			simpleMessages.put("your-turn", "Your turn.");
 			simpleMessages.put("i-win", "I win!");
@@ -121,6 +125,8 @@ public class AgentMessageParser
 		    return translateLearnedTeacherName(fieldsId);
         } else if(type.equals("learned-game")){
 		    return translateLearnedGame(fieldsId);
+        } else if(type.equals("current-time")){
+		    return translateCurrentTime(fieldsId);
         } 
 		//conversational messages
 		else if(type.equals("generic"))
@@ -148,8 +154,15 @@ public class AgentMessageParser
     		result += ". Shall we play a game?";
     	return result;
     }
-	
-	
+	public static String translateCurrentTime(Identifier fieldsId){
+		String result = "The current time is ";
+		Date now = new Date();
+		
+		String time = new SimpleDateFormat("h:mm a").format(now);
+		result+= time;
+		
+		return result;	
+	}
 	
 	 public static String translateLearnedUnknownWord(Identifier fieldsId){
 	    	String result = "Ok, I've learned the concept ";
@@ -163,7 +176,8 @@ public class AgentMessageParser
 	    	return result;
 	 }
 	 public static String translateLearnedTeacherName(Identifier fieldsId){
-	    	String result = "Hello ";
+		 
+	    	String result = hiMsg.get(rand.nextInt(hiMsg.size())) + " ";
 	    	String word = SoarUtil.getValueOfAttribute(fieldsId, "word");
 	    	if (word != null)
 	    	{
@@ -218,6 +232,7 @@ public class AgentMessageParser
     		return null;
     	int randomInt = rand.nextInt(size);
     	return options.get(randomInt);
+    	
     }
 	public static String translateGetItemRequest(Identifier fieldsId){
 		String item = SoarUtil.getValueOfAttribute(fieldsId, "item");
