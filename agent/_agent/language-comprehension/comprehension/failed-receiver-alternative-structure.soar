@@ -13,7 +13,9 @@ sp {comprehension*propose*failed-receiver-alternative-structure
               ^segment <seg>)
    (<seg> ^parse-failed-receiver <nmr>
           ^not-merged-assigner <nma>
-         -^retried-once <nmr>)                               # Only try once for the same receiver
+         -^retried
+         -^retried-sentence true              
+         -^retry-sentence <nmr>)                               # Only try once for the same receiver
    (<nmr> ^lt.alternative-structure <structure-new>)  # must be an alternative structure that can be used...
 -->
    (<s> ^operator <op> + =, >)
@@ -21,21 +23,47 @@ sp {comprehension*propose*failed-receiver-alternative-structure
          ^not-merged-receiver <nmr>
          ^not-merged-assigner <nma>)
 }
-
+sp {comprehension*compare*failed-receiver-alternative-structure
+   (state <s> ^operator <op> +
+              ^operator <op2> +)
+   (<op> ^name failed-receiver-alternative-structure)
+   (<op2> ^name failed-comprehension)
+-->
+   (<s> ^operator <op> > <op2>)
+}
+sp {comprehension*propose*failed-assigner-alternative-structure
+#:interrupt
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^parse-failed-assigner <nma> 
+          ^alternative-structure-receiver <nmr>
+         -^retried
+         -^retried-sentence true              
+         -^retry-sentence <nmr>)      
+-->
+   (<s> ^operator <op> + =, >)
+   (<op> ^name failed-receiver-alternative-structure
+         ^not-merged-receiver <nmr>
+         ^not-merged-assigner <nma>)
+}
+## Receiver that has an alternative structure
 
 sp {comprehension*propose*failed-receiver-alternative-structure2
+   #:interrupt
    (state <s> ^name comprehension
               ^segment <seg>)
    (<seg> ^parse-failed-receiver <nmr>
-          ^alternative-structure-receiver <asr>
+          ^alternative-structure-receiver <asr>        # saved
           ^not-merged-assigner <nma>
-         -^retried-once <nmr> 
-         -^retried-once <asr>)                         # Only try once for the same receiver
+         -^retry-sentence <nmr> 
+         -^retry-sentence <asr>
+         -^retried
+         -^retried-sentence true  )                         # Only try once for the same receiver
    (<nmr> -^lt.alternative-structure <structure-new>)  # must be an alternative structure that can be used...
 -->
    (<s> ^operator <op> + =, >)
    (<op> ^name failed-receiver-alternative-structure
-         ^not-merged-receiver <asr>
+         ^not-merged-receiver <asr>         # not really not-merged - could have merged by now
          ^not-merged-assigner <nma>)
 }
 
@@ -81,6 +109,20 @@ sp {comprehension*apply*failed-receiver-alternative-structure
          ^alternative-structure <structure-new>)
 -->
    (write (crlf) |Will retry, and see if can retrieve new version of | <nmr> | from | <structure-old> | to | <structure-new>)
-   (<seg> ^retry <nmr>
-          ^retried-once <nmr>)}
+   (<seg> ^retry <nmr>)}
 
+sp {comprehension*apply*failed-receiver-alternative-structure*sentence
+  # :interrupt
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<op> ^name failed-receiver-alternative-structure
+         ^not-merged-receiver <nmr>        
+         ^not-merged-assigner <nma>)
+   (<nmr> ^lt <lt>)
+   (<lt> ^structure-type <structure-old>
+         ^alternative-structure <structure-new>)
+   (<seg> #-^parse-failed-receiver.lt.alternative-structure # only do this if the point of value doesn't have an alternative
+           ^alternative-structure-receiver <nmr>)  
+-->
+   (write (crlf) |Will retry *sentence*, and see if can retrieve new version of | <nmr> | from | <structure-old> | to | <structure-new>)
+   (<seg> ^retry-sentence <nmr>)}

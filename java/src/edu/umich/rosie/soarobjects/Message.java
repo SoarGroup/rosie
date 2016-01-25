@@ -17,7 +17,7 @@ public class Message implements ISoarObject
     private boolean added = false;
     
     public Message(String message, Integer messageNum){
-    	this.message = message.replace("\u200b", "");
+    	this.message = message.trim().replace("\u200b", "");
     	this.messageNum = messageNum;
     }
     
@@ -63,6 +63,7 @@ public class Message implements ISoarObject
         	}
         	if(word.equals("_XXX_")){
         		word = quote;
+                        nextID.CreateStringWME("quoted", "true");
         	}
         	nextID.CreateStringWME("spelling", word.toLowerCase());
         	nextID = nextID.CreateIdWME("next");
