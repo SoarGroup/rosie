@@ -1,7 +1,7 @@
 import random, re, string
 
-#gamelist = ["8puzzle", "5puzzle", "4tower", "3tower"];
-gamelist=["3mens", "tictactoe", "8puzzle", "5puzzle", "4tower", "3tower", "picaria", "9holes"]
+gamelist = ["8puzzle", "5puzzle", "4tower", "3tower"];
+#gamelist=["3mens", "tictactoe", "8puzzle", "5puzzle", "4tower", "3tower", "picaria", "9holes"]
 shuffled = random.sample(gamelist, len(gamelist))
 #newscript = str(shuffled) + "\n"
 newscript = ""
