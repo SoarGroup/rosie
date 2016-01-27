@@ -294,6 +294,7 @@ public class AgentMessageParser
 		concept = concept.replaceAll("\\d", "");
 		String result = "Does \'" + concept + "\' mean that ";
 		result += getGoalState(fields);
+		result += getGoalStateFunctions(fields);
 		result += "?";
 		return result;
 		
@@ -321,7 +322,44 @@ public class AgentMessageParser
 		return result;
 		
 	}
-	
+	public static String getGoalStateFunctions(Identifier fields){
+		Identifier relationships = SoarUtil.getIdentifierOfAttribute(fields, "functions");
+		ArrayList<String> objects = new ArrayList<String>();
+		String result = "";
+		String definitive = SoarUtil.getValueOfAttribute(fields, "definitive");
+		
+	 
+		for(int index = 0; index < relationships.GetNumberChildren(); index++)
+		{
+		    result+= " and ";
+
+		    WMElement wme = relationships.GetChild(index);
+		    Identifier function = wme.ConvertToIdentifier();
+		    
+            String of1 = SoarUtil.getValueOfAttribute(function, "of1");
+            String of2 = SoarUtil.getValueOfAttribute(function, "of2");
+            of1 = of1.replaceAll("\\d", "");
+            of2 = of2.replaceAll("\\d", "");
+            
+            //expect more than one, loop
+            Identifier object1 = SoarUtil.getIdentifierOfAttribute(function, "1");
+            Identifier object2 = SoarUtil.getIdentifierOfAttribute(function, "2");
+            
+            String objDescription1 = generateObjectDescriptionNew(object1);
+            String objDescription2 = generateObjectDescriptionNew(object2);
+            
+	    	if (!objDescription1.equals("it"))
+	    	{
+	    		objDescription1 = "the " + objDescription1;
+	        }
+            if (!objDescription2.equals("it"))
+            {
+	    		objDescription2 = "the " + objDescription2;
+            }
+            	result += "the " + of1 + " of " + objDescription1 + " is " +  "the " + of2 + " of "+ objDescription2;
+		}
+		return result;
+	}
 	public static String getGoalState(Identifier fields){
 		Identifier relationships = SoarUtil.getIdentifierOfAttribute(fields, "relationships");
 		ArrayList<String> objects = new ArrayList<String>();
@@ -614,6 +652,9 @@ public class AgentMessageParser
 			if(att.equals("name")){
 				root = val;
 			} else if(att.equals("shape")){
+				root = val;
+			} else if (val.equals("block"))
+			{
 				root = val;
 			} else {
 				adjectives.add(val);

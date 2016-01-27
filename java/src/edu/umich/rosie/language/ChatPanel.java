@@ -99,10 +99,11 @@ public class ChatPanel extends JPanel implements IMessagePasser.IMessageListener
     	synchronized(outputLock){
 	    	Style msgStyle = chatDoc.getStyle(message.type.toString());
 			DateFormat dateFormat = new SimpleDateFormat("mm:ss:SSS");
+			//int dc = soarAgent.getAgent().GetDecisionCycleCounter();
 			Date d = new Date();
 			
+			//String fullMessage = dc + " " + dateFormat.format(d) + " ";
 			String fullMessage = dateFormat.format(d) + " ";
-
 			switch(message.type){
 			case INSTRUCTOR_MESSAGE:
 				fullMessage += "Mentor: ";
