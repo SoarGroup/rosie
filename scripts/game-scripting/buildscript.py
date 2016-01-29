@@ -1,9 +1,9 @@
 import random, re, string
 
-gamelist = ["3tower","8puzzle","5puzzle","mens3"]
-#gamelist=["3tower","tictactoe","9holes","4tower","5puzzle","8puzzle","mens3", "picaria"]
-#gamelist=["mens3", "tictactoe", "8puzzle", "5puzzle", "4tower", "3tower", "picaria", "9holes"]
-shuffled = gamelist #random.sample(gamelist, len(gamelist))
+#gamelist = ["3tower","8puzzle","5puzzle","mens3"]
+#gamelist=["3tower","tictactoe","9holes","4tower","5puzzle","8puzzle","mens3", "picaria", "iso8puzzle"]
+gamelist=["mens3", "iso8puzzle", "4tower", "5puzzle", "8puzzle", "9holes", "picaria", "tictactoe", "3tower"]
+shuffled = gamelist#random.sample(gamelist, len(gamelist))
 
 newscript = ""
 scriptname = ""
@@ -16,6 +16,8 @@ for game in shuffled:
 
 result = open(scriptname + ".script", 'wb+')
 learnedlist = ""
+old = " "
+forget = " "
 for line in newscript.splitlines():
     mylist = line.split(',')
     extras = []
@@ -31,6 +33,10 @@ for line in newscript.splitlines():
                 extras.append(sentence)
             elif "is matched" in sentence and "is matched" in learnedlist:
                 extras.append(sentence)
+            elif "is matched" in sentence:
+                old += sentence
+                result.write(sentence + ".\n")
+                learnedlist += sentence
             else:
                 result.write(sentence + ".\n")
                 learnedlist += sentence
@@ -38,13 +44,14 @@ for line in newscript.splitlines():
             result.write(sentence + ".\n")
 
     for extra in extras:
-        if extra in learnedlist:
-                result.write("yes.\n")# ASSUME unique names for test noyesalways
+        if extra in learnedlist and extra not in forget:
+                result.write("yes.\n")
                 continue
-        elif "is matched" in sentence and "is matched" in learnedlist:
+        elif "is matched" in extra and "is matched" in learnedlist:
                 #for nontransfer concepts, only have matched now
                 result.write("no.\n")
-                result.write(sentence + ".\n")
-                learnedlist += sentence
+                result.write(extra + ".\n")
+                forget+= old
+                learnedlist += extra
 
 result.close();
