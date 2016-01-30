@@ -651,12 +651,11 @@ public class AgentMessageParser
 				continue;
 			if(att.equals("name")){
 				root = val;
-			} else if(att.equals("shape")){
-				root = val;
-			} else if (val.equals("block"))
+			} else if ((att.equals("shape")) || (val.equals("block")) || (val.equals("location")))
 			{
 				root = val;
-			} else {
+			} else
+			{
 				adjectives.add(val);
 			}
 		}

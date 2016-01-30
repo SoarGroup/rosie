@@ -42,6 +42,24 @@ sp {interpret-message*apply*interpret-unknown-word*store-sentence
     (<st> ^complete-sentence <cs> ^next (deep-copy <n1>) ^spelling *)#^sentence-number (+ 3 <sn>) 
 }
 
+#if learning is stacked
+sp {interpret-message*apply*interpret-unknown-word*store-sentence*first*store
+   (state <s> ^name interpret-message
+            #  ^top-state.dialog-context <dc>
+              ^top-state <ts> 
+              ^operator <o>)
+   (<ts> ^io.input-link.language.sentence <se> ^stored-sentence -^stored-sentence.complete-sentence <cs> -^game-scripting true)
+   (<o> ^name interpret-unknown-word)
+   (<se> ^next <n1> ^complete-sentence <cs>)
+    (<ts> ^dialog-context <dc>)
+    (<dc> ^learning-predicate.name <name1>)
+    (<dc> ^learning-predicate.name > <name1>) #only if two
+-->
+    (<ts> ^next-stored-sentence <st>)
+    (<st> ^complete-sentence <cs> ^next (deep-copy <n1>) ^spelling *)#^sentence-number (+ 3 <sn>) 
+}
+
+
 sp {interpret-message*apply*interpret-unknown-word*store-sentence*game-scripting
    (state <s> ^name interpret-message
             #  ^top-state.dialog-context <dc>
@@ -70,6 +88,22 @@ sp {interpret-message*apply*interpret-unknown-word*store-sentence*processed
     (<st> ^processing-result <pr> -)
 }
 
+sp {interpret-message*apply*interpret-unknown-word*next-store-sentence*processed
+   (state <s> ^name interpret-message
+              ^top-state <ts> 
+              ^operator <o>)
+   (<ts> ^next-stored-sentence <st> ^unprocessed-next <n>)
+   (<o> ^name interpret-unknown-word)
+   (<st> ^processed <t> ^processed-sentence <pt>
+       ^processing-result <pr>)
+-->
+    (interrupt)
+    (<ts> ^unprocessed-next <n> -)
+    (<st> ^processed <t> -)
+    (<st> ^processed-sentence <pt> -)
+    (<st> ^processing-result <pr> -)
+}
+
 
 
 
@@ -91,8 +125,8 @@ sp {interpret-message*apply*interpret-unknown-word*create*segment
    (<o> ^name interpret-unknown-word
         ^word <word>
         ^message <msg>)
-  -{(<dc> ^learning-predicate <lp2>)
-    (<lp2> ^name <> <word>)}
+ # -{(<dc> ^learning-predicate <lp2>)
+ #   (<lp2> -^name <word>)}
 -->
    (<dc> ^learning-predicate <lp>)
    (<lp> ^name <word>)
@@ -101,27 +135,29 @@ sp {interpret-message*apply*interpret-unknown-word*create*segment
    (<out-msg> ^type unknown-word
               ^fields.word <word>)
 }
+
 ## stacked unknown words, in future need to have a stack handling
-sp {interpret-message*apply*interpret-unknown-word*create*segment*stacked-unknowns
-   (state <s> ^name interpret-message
-              #^unprocessed-next nil
-              ^top-state.dialog-context <dc>
-              ^operator <o>)
-   (<o> ^name interpret-unknown-word
-        ^word <word>
-        ^message <msg>)
-   (<dc> ^learning-predicate <lp2>)
-   (<lp2> ^name <> <word>)
--->
-    (<dc> ^stored-learning-predicate <lp2>)
-   (<dc> ^learning-predicate <lp2> -)
-   (<dc> ^learning-predicate <lp>)
-   (<lp> ^name <word>)
-   (<s> ^mark-interpreted <msg>)
-   (<s> ^outgoing-message <out-msg>)
-   (<out-msg> ^type unknown-word
-              ^fields.word <word>)
-}
+#sp {interpret-message*apply*interpret-unknown-word*create*segment*stacked-unknowns
+#   (state <s> ^name interpret-message
+#              #^unprocessed-next nil
+#              ^top-state.dialog-context <dc>
+#              ^operator <o>)
+#   (<o> ^name interpret-unknown-word
+#        ^word <word>
+#        ^message <msg>)
+#   (<dc> ^learning-predicate <lp2>)
+#   (<lp2> -^name <word>)
+#-->
+#    (interrupt)
+#    (<dc> ^stored-learning-predicate <lp2>)
+#   (<dc> ^learning-predicate <lp2> -)
+#   (<dc> ^learning-predicate <lp>)
+#   (<lp> ^name <word>)
+#   (<s> ^mark-interpreted <msg>)
+#   (<s> ^outgoing-message <out-msg>)
+#   (<out-msg> ^type unknown-word
+#              ^fields.word <word>)
+#}
 
 
 #sp {interpret-message*apply*interpret-unknown-word*copy-old-learn-link
