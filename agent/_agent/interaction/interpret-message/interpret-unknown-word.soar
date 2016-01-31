@@ -28,6 +28,18 @@ sp {interpret-message*prefer*interpret-unknown-word*clear
 -->
     (<s> ^operator <o> > <o2>)
 }
+#prefer adjacent last
+sp {interpret-message*prefer*interpret-unknown-word*adjacent
+   (state <s> ^name interpret-message
+              ^operator <o2> +
+                ^operator <o> +)
+   (<o> ^name interpret-unknown-word
+        -^word adjacent)
+   (<o2> ^name interpret-unknown-word
+        ^word adjacent)
+-->
+    (<s> ^operator <o> > <o2>)
+}
 
 sp {interpret-message*apply*interpret-unknown-word*store-sentence
    (state <s> ^name interpret-message
@@ -55,12 +67,30 @@ sp {interpret-message*apply*interpret-unknown-word*store-sentence*first*store
     (<dc> ^learning-predicate.name <name1>)
     (<dc> ^learning-predicate.name > <name1>) #only if two
 -->
+ #   (interrupt)
+    (<ts> ^next-stored-sentence <st>)
+    (<st> ^complete-sentence <cs> ^next (deep-copy <n1>) ^spelling *)#^sentence-number (+ 3 <sn>) 
+}
+
+sp {interpret-message*apply*interpret-unknown-word*store-sentence*first*store*game-scripting
+   (state <s> ^name interpret-message
+            #  ^top-state.dialog-context <dc>
+              ^top-state <ts> 
+              ^operator <o>)
+   (<ts> ^current-sentence <se> ^stored-sentence -^stored-sentence.complete-sentence <cs> ^game-scripting true)
+   (<o> ^name interpret-unknown-word)
+   (<se> ^next <n1> ^complete-sentence <cs>)
+    (<ts> ^dialog-context <dc>)
+    (<dc> ^learning-predicate.name <name1>)
+    (<dc> ^learning-predicate.name > <name1>) #only if two
+-->
     (<ts> ^next-stored-sentence <st>)
     (<st> ^complete-sentence <cs> ^next (deep-copy <n1>) ^spelling *)#^sentence-number (+ 3 <sn>) 
 }
 
 
 sp {interpret-message*apply*interpret-unknown-word*store-sentence*game-scripting
+  #  :interrupt
    (state <s> ^name interpret-message
             #  ^top-state.dialog-context <dc>
               ^top-state <ts> 
@@ -97,7 +127,7 @@ sp {interpret-message*apply*interpret-unknown-word*next-store-sentence*processed
    (<st> ^processed <t> ^processed-sentence <pt>
        ^processing-result <pr>)
 -->
-    (interrupt)
+ #   (interrupt)
     (<ts> ^unprocessed-next <n> -)
     (<st> ^processed <t> -)
     (<st> ^processed-sentence <pt> -)

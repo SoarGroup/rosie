@@ -1,8 +1,9 @@
 import random, re, string
 
+#gamelist = ["othello"]
 #gamelist = ["3tower","8puzzle","5puzzle","mens3"]
-#gamelist=["3tower","tictactoe","9holes","4tower","5puzzle","8puzzle","mens3", "picaria", "iso8puzzle"]
-gamelist=["mens3", "iso8puzzle", "4tower", "5puzzle", "8puzzle", "9holes", "picaria", "tictactoe", "3tower"]
+gamelist=["8puzzle","iso8puzzle","othello","3tower","tictactoe","9holes","4tower","5puzzle","mens3", "picaria"]
+#gamelist=["mens3", "iso8puzzle", "4tower", "5puzzle", "8puzzle", "9holes", "picaria", "tictactoe", "3tower"]
 shuffled = gamelist#random.sample(gamelist, len(gamelist))
 
 newscript = ""

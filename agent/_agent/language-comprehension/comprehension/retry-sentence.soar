@@ -11,6 +11,47 @@ sp {comprehension*propose*retry-sentence
    (<s> ^operator <op> + =, >)
    (<op> ^name retry-sentence)
 }
+#sp {comprehension*apply*retry-sentence*external*clear-processing-result
+#   (state <s> ^operator.name retry-sentence
+#              ^process-next.next nil
+#              ^segment <seg>)
+#   (<seg> ^retry-sentence <x>
+#          ^original-sentence <sentence>)
+#   (<sentence> ^processing-result failure)
+#-->
+#   (<sentence> ^processing-result failure -
+#               ^processed true -)
+#}
+##JK remove processed true
+#sp {comprehension*apply*retry-sentence*process-next
+#   (state <s> ^operator.name retry-sentence
+#              ^segment <seg>)
+#   (<seg> ^retry-sentence <x>
+#          ^original-sentence <sentence>)
+#   (<sentence> ^next <n>)
+#-->
+#   (<s> ^process-next <n>)
+#}
+#sp {comprehension*apply*retry-sentence*process-next*remove
+#   (state <s> ^operator.name retry-sentence
+#              ^process-next <pn>
+#              ^segment <seg>)
+#   (<pn> ^next {<n> <> nil})
+#-->
+#    (<pn> ^processed true -)
+#   (<s> ^process-next <n>)
+#}
+#sp {comprehension*apply*retry-sentence*process-next*nil
+#   (state <s> ^operator.name retry-sentence
+#              ^process-next <pn>
+#              ^segment <seg>)
+#   (<pn> ^next nil)
+#-->
+#   (<seg> ^retried-sentence true)
+#   (<s> ^process-next <n>)
+#}
+
+
 
 sp {comprehension*compare*retry-sentence
    (state <s> ^name comprehension
@@ -26,11 +67,13 @@ sp {comprehension*apply*retry-sentence*internal
  #:interrupt
    (state <s> ^operator.name retry-sentence
               ^top-state.world-usage internal
+             # ^process-next.next nil
               ^segment <seg>)
    (<seg> ^retry-sentence <x>
           ^original-sentence <sentence>)
   # (<sentence> ^processing-result failure)
 -->
+    #(interrupt)
   # (<sentence> ^processing-result failure -)
    (<s> ^segment <seg> -
         ^segment <nseg>)
