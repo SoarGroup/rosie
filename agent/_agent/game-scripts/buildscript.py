@@ -1,5 +1,6 @@
 import random, re, string
-gamelist=["8puzzleno","iso8puzzleno","othello","3towerno","tictactoe","9holes","4towerno","5puzzleno","mens3", "picaria"]
+#"othello"
+gamelist=["8puzzleno","iso8puzzleno","3towerno","tictactoe","9holes","4towerno","5puzzleno","mens3", "picaria"]
 #gamelist=["8puzzle","iso8puzzle","othello","3tower","tictactoe","9holes","4tower","5puzzle","mens3", "picaria"]
 
 shuffled = random.sample(gamelist, len(gamelist))
