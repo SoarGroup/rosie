@@ -1,45 +1,104 @@
+### Elaborate the candidate-set
 sp {match-world-object*elaborate*candidate-set
    (state <s> ^name match-world-object)
 -->
    (<s> ^candidate-set <set>)
 }
 
-sp {match-world-object*elaborate*candidate-set*candidate
+### Elaborate the candidates based on match-visible
+
+# If match-visible=true, add all world objects with a belief-obj
+sp {match-world-object*elaborate*candidate-set*candidate*match-visible*true
    (state <s> ^name match-world-object
+              ^match-visible true
               ^candidate-set <set>
               ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
-   (<obj-info> -^perception-obj)
+   (<obj-info> ^belief-obj)
 -->
    (<set> ^candidate <cand>)
    (<cand> ^object-info <obj-info>)
 }
 
+# If match-visible=false, add all world objects with a belief-obj and without a perception-obj
+sp {match-world-object*elaborate*candidate-set*candidate*match-visible*false
+   (state <s> ^name match-world-object
+              ^match-visible false
+              ^candidate-set <set>
+              ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
+   (<obj-info> -^perception-obj
+                ^belief-obj)
+-->
+   (<set> ^candidate <cand>)
+   (<cand> ^object-info <obj-info>)
+}
+
+### Elaborate if a candidate is valid
+
+# If there is a predicate-conflict mark the candidate as valid=false
+sp {match-world-world*elaborate*candidate-set*candidate*valid*false*predicate-conflict
+   (state <s> ^name match-world-object
+              ^candidate-set.candidate <cand>)
+   (<cand> ^predicate-conflict true)
+-->
+   (<cand> ^valid false)
+}
+
+# If there is no distance, the candidate is not valid
+sp {match-world-world*elaborate*candidate-set*candidate*valid*false*no*distnace
+   (state <s> ^name match-world-object
+              ^candidate-set.candidate <cand>)
+   (<cand> -^distance <d>)
+-->
+   (<cand> ^valid false)
+}
+
+# If there is no valid=false, then mark valid=true
+sp {match-world-object*elaborate*candidate-set*candidate*valid*true*none*false
+   (state <s> ^name match-world-object
+              ^candidate-set.candidate <cand>)
+   (<cand> -^valid false)
+-->
+   (<cand> ^valid true)
+}
+
+### Check for a predicate conflict
+
+# Predicate on the candidate is different
 sp {match-world-object*elaborate*predicate-conflict*1
    (state <s> ^name match-world-object
               ^candidate-set.candidate <cand>
-              ^input-link-obj.classifications <cfs>)
-   (<cand> ^object-info.wm-obj.predicates <preds>)
-   (<cfs> ^<prop> <pred>)
-   (<preds> ^<prop> <> <pred>)
+              ^object-predicates <obj-preds>
+              ^top-state.agent-params.object-rep-info <rep-info>)
+   (<cand> ^object-info.wm-obj.predicates <cand-preds>)
+   (<obj-preds> ^<prop> <pred>)
+   (<cand-preds> ^<prop> <> <pred>)
+   (<rep-info> -^ignore-level2 <prop>)
 -->
    (<cand> ^predicate-conflict true)
 }
 
+# Predicate on the matching object is different
 sp {match-world-object*elaborate*predicate-conflict*2
    (state <s> ^name match-world-object
               ^candidate-set.candidate <cand>
-              ^input-link-obj.classifications <cfs>)
-   (<cand> ^object-info.wm-obj.predicates <preds>)
-   (<preds> ^<prop> <pred>)
-   (<cfs> ^<prop> <> <pred>)
+              ^object-predicates <obj-preds>
+              ^top-state.agent-params.object-rep-info <rep-info>)
+   (<cand> ^object-info.wm-obj.predicates <cand-preds>)
+   (<cand-preds> ^<prop> <pred>)
+   (<obj-preds> ^<prop> <> <pred>)
+   (<rep-info> -^ignore-level2 <prop>)
 -->
    (<cand> ^predicate-conflict true)
 }
 
-sp {match-world-object*elaborate*type-conflict
+# If debug-perception is on, print a message about a conflict
+sp {match-world-object*predicate-conflict*debug-perception*print
    (state <s> ^name match-world-object
-              ^candidate-set.candidate <cand>)
-   (<cand> ^object-info.wm-obj.item-type <> object)
+              ^object-handle <handle>
+              ^candidate-set.candidate <cand>
+              ^top-state.agent-params.debug-perception true)
+   (<cand> ^object-info.object-handle <cand-handle>
+           ^predicate-conflict true)
 -->
-   (<cand> ^type-conflict true)
+   (write |Matching | <handle> | against | <cand-handle> | failed: predicate conflict| (crlf))
 }

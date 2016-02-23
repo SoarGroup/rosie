@@ -1,99 +1,59 @@
 sp {attend-to-new-object*propose*create-world-object
    (state <s> ^name attend-to-new-object
-             -^created-world true)
+             -^wm-obj)
 -->
    (<s> ^operator <o> +)
    (<o> ^name create-world-object)
 }
 
-sp {attend-to-new-object*elaborate*create-world-object*object-handle
+# Create the bare version as world-obj
+sp {attend-to-new-object*apply*create-world-object*create*world-obj
    (state <s> ^name attend-to-new-object
-              ^operator <o> +
-              ^{ << smem-obj epmem-obj >> }.handle <obj-handle>)
-   (<o> ^name create-world-object)
--->
-   (<o> ^object-handle <obj-handle>)
-}
-
-sp {attend-to-new-object*elaborate*create-world-object*object-handle*perception
-   (state <s> ^name attend-to-new-object
-              ^operator <o> +
-              ^perception-obj.id <obj-handle>
-             -^smem-obj.handle
-             -^epmem-obj.handle)
-   (<o> ^name create-world-object)
--->
-   (<o> ^object-handle <obj-handle>)
-}
-
-sp {attend-to-new-object*apply*create-world-object*create*body
-   (state <s> ^name attend-to-new-object
-              ^operator.name create-world-object)
+              ^operator.name create-world-object
+              ^object-handle <handle>)
 -->
    (<s> ^world-obj <obj>)
-   (<obj> ^item-type object
+   (<obj> ^handle <handle>
+          ^item-type object
           ^predicates <preds>)
 }
 
-sp {attend-to-new-object*apply*create-world-object*copy*handle
-   (state <s> ^name attend-to-new-object
-              ^operator <o>
-              ^world-obj <obj>)
-   (<o> ^name create-world-object
-        ^object-handle <obj-handle>)
--->
-   (<obj> ^handle <obj-handle>)
-}
-
-sp {attend-to-new-object*apply*create-world-object*copy*predicates*perception-obj
+# Copy world-obj as wm-obj (will retract operator)
+sp {attend-to-new-object*apply*create-world-object*copy*as*wm-obj
    (state <s> ^name attend-to-new-object
               ^operator.name create-world-object
-              ^input-link-obj.classifications.<prop> <pred>
-              ^world-obj.predicates <preds>)
+              ^world-obj <obj>)
+-->
+   (<s> ^wm-obj <obj>)
+}
+
+# Copy predicates onto object
+sp {attend-to-new-object*apply*create-world-object*copy*predicates
+   (state <s> ^name attend-to-new-object
+              ^operator.name create-world-object
+              ^world-obj.predicates <preds>
+              ^predicates.{ <prop> <> from-perception <> from-smem <> from-epmem } <pred>)
 -->
    (<preds> ^<prop> <pred>)
 }
 
+# Copy properties onto the object from smem
 sp {attend-to-new-object*apply*create-world-object*copy*predicates*smem-obj*level2
    (state <s> ^name attend-to-new-object
               ^operator.name create-world-object
-              ^smem-obj.{ <prop> <> handle <> item-type <> object-instance <> waypoint } <pred>
-              ^world-obj.predicates <preds>)
+              ^smem-obj.<prop> <pred>
+              ^world-obj <obj>
+              ^top-state.agent-params.object-rep-info.copy-level1 <prop>)
 -->
-   (<preds> ^<prop> <pred>)
+   (<obj> ^<prop> <pred>)
 }
 
-sp {attend-to-new-object*apply*create-world-object*copy*waypoint*smem-obj*level1
-   (state <s> ^name attend-to-new-object
-              ^operator.name create-world-object
-              ^smem-obj.{ <att> << waypoint >> } <val>
-              ^world-obj <obj>)
--->
-   (<obj> ^<att> <val>)
-}
-
+# Mark the object as in-smem
 sp {attend-to-new-object*apply*create-world-object*mark*in-smem
    (state <s> ^name attend-to-new-object
               ^operator.name create-world-object
-              ^smem-obj.handle <any>
+              ^smem-obj <smem>
               ^world-obj <obj>)
 -->
    (<obj> ^in-smem true)
-}
-
-sp {attend-to-new-object*apply*create-world-object*copy*predicates*epmem-obj
-   (state <s> ^name attend-to-new-object
-              ^operator.name create-world-object
-              ^epmem-obj.predicates.{ <prop> <> visible <> object-status <> arm-status } <pred>
-              ^world-obj.predicates <preds>)
--->
-   (<preds> ^<prop> <pred>)
-}
-
-sp {attend-to-new-object*apply*create-world-object*mark*created
-   (state <s> ^name attend-to-new-object
-              ^operator.name create-world-object
-              ^world-obj.predicates.<any>)
--->
-   (<s> ^created-world true)
 }

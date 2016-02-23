@@ -1,9 +1,10 @@
 ##################################################################
 #
-# Monitoring for need to copy an object
+# Update the pose of the object
 #
 ##################################################################
 
+# Send the command to svs
 sp {anystate*apply*attend-to-scene-change*update-pose*svs*copy_node
    (state <s> ^operator <o>
               ^top-state.svs.command <cmd>)
@@ -22,6 +23,7 @@ sp {anystate*apply*attend-to-scene-change*update-pose*svs*copy_node
    (<obj-info> ^copy-command <copy>)
 }
 
+# Once the command is finished, clean up the flags
 sp {anystate*apply*attend-to-scene-change*update-pose*cleanup
    (state <s> ^operator <o>
               ^top-state.svs.command <cmd>)
@@ -34,16 +36,18 @@ sp {anystate*apply*attend-to-scene-change*update-pose*cleanup
 -->
    (<obj-info> ^update-pose true -
                ^copy-command <copy> -)
+   (<cmd> ^copy_transform <copy> -)
 }
    
-sp {anystate*apply*attend-to-scene-change*update-pose*report
+# If debug-perception is on, print a message
+sp {anystate*apply*attend-to-scene-change*update-pose*debug-perception*print
    (state <s> ^operator <o>
-              ^top-state.agent-params.debug-mode on
               ^top-state.agent-params.debug-perception true)
    (<o> ^name attend-to-scene-change
-        ^change.type update-pose
-        ^change.object-info.object-handle <obj-handle>)
+        ^change <c>)
+   (<c> ^type update-pose
+        ^object-info.object-handle <obj-handle>)
 -->
-   (write |Updating Object | <obj-handle>)
+   (write |Object | <obj-handle> |: updated pose| (crlf))
 }
    

@@ -23,40 +23,54 @@ sp {delete-object*apply*update-smem-object*mark*updated
    (<s> ^updated-smem-object true)
 }
 
+# Copy everything under wm-obj listed in object-rep-info.copy-level1
 sp {delete-object*apply*update-smem-object*add*level1*predicates
    (state <s> ^name delete-object
               ^operator.name update-smem-object
               ^smem-obj <obj>
-              ^world-obj.{ <prop> << waypoint >> } <pred>)
+              ^object-info.wm-obj.<prop> <pred>
+              ^top-state.agent-params.object-rep-info <obj-rep>)
+   (<obj-rep> ^copy-level1 <prop>)
 -->
    (<obj> ^<prop> <pred>)
 }
 
+# Copy everything under wm-obj.predicates not listed in object-rep-info.ignore-level2
 sp {delete-object*apply*update-smem-object*add*level2*predicates
    (state <s> ^name delete-object
               ^operator.name update-smem-object
               ^smem-obj <obj>
-              ^world-obj.predicates.{ <prop> <> object-status <> arm-status <> visible } <pred>)
+              ^object-info.wm-obj.predicates.<prop> <pred>
+              ^top-state.agent-params.object-rep-info <obj-rep>)
+   (<obj-rep> -^ignore-level2 <prop>)
 -->
    (<obj> ^<prop> <pred>)
 }
 
+# Remove from smem object if not on wm-obj and listed in object-rep-info.copy-level1
 sp {delete-object*apply*update-smem-object*remove*level1*predicates
    (state <s> ^name delete-object
               ^operator.name update-smem-object
               ^smem-obj <obj>
-             -^world-obj.<prop> <pred>)
-   (<obj> ^{ <prop> << waypoint >> } <pred>)
+             -^object-info.wm-obj.<prop> <pred>
+              ^top-state.agent-params.object-rep-info <obj-rep>)
+   (<obj> ^<prop> <pred>)
+   (<obj-rep> ^copy-level1 <prop>)
 -->
    (<obj> ^<prop> <pred> -)
 }
 
+# Remove from smem object if not on wm-obj.predicates and not on ignore/copy list
 sp {delete-object*apply*update-smem-object*remove*level2*predicates
    (state <s> ^name delete-object
               ^operator.name update-smem-object
               ^smem-obj <obj>
-             -^world-obj.predicates.<prop> <pred>)
-   (<obj> ^{ <prop> <> handle <> item-type <> object-instance <> waypoint } <pred>)
+             -^object-info.wm-obj.predicates.<prop> <pred>
+              ^top-state.agent-params.object-rep-info <obj-rep>)
+   (<obj> ^<prop> <pred>)
+   (<obj-rep> -^copy-level1 <prop>
+              -^ignore-level1 <prop> 
+              -^ignore-level2 <prop>)
 -->
    (<obj> ^<prop> <pred> -)
 }

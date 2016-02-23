@@ -1,18 +1,68 @@
+# If all the pieces we need are together, then propose create-object-info
 sp {attend-to-new-object*propose*create-object-info
    (state <s> ^name attend-to-new-object
-              ^created-world true
-              ^world-obj.handle <obj-handle>)
+              ^object-handle <obj-handle>
+              ^wm-obj <wm-obj>
+              ^perception-id <perc-id>
+              ^belief-id <bel-id>)
 -->
    (<s> ^operator <o> +)
    (<o> ^name create-object-info
-        ^object-handle <obj-handle>)
+        ^object-handle <obj-handle>
+        ^perception-id <perc-id>
+        ^belief-id <bel-id>
+        ^wm-obj <wm-obj>)
+   (<s> ^object-info <obj-info>)
 }
 
+# Create a new id for the root of the object-info
+sp {attend-to-new-object*elaborate*create-object-info*object-info
+   (state <s> ^name attend-to-new-object
+              ^operator.name create-object-info)
+-->
+   (<s> ^object-info <obj-info>)
+}
+   
+# Copy the object-info onto object-monitor
+sp {attend-to-new-object*apply*create-object-info*copy*object-info
+   (state <s> ^name attend-to-new-object
+              ^operator <o>
+              ^object-info <obj-info>
+              ^top-state.perception-monitor.object-monitor <obj-mon>)
+   (<o> ^name create-object-info
+        ^object-handle <obj-handle>
+        ^perception-id <perc-id>
+        ^belief-id <bel-id>
+        ^wm-obj <wm-obj>)
+-->
+   (<obj-mon> ^object-info <obj-info>)
+   (<obj-info> ^object-handle <obj-handle>
+               ^perception-id <perc-id>
+               ^belief-id <bel-id>
+               ^wm-obj <wm-obj>)
+}
+
+# Remove the change from the changes list
+sp {attend-to-new-object*apply*create-object-info*remove*attend*change
+   (state <s> ^name attend-to-new-object
+              ^operator.name create-object-info
+              ^object-info <info>
+              ^top-state.perception-monitor.changes <chs>
+              ^superstate.change-info <info>)
+   (<chs> ^change <c>)
+   (<c> ^info <info>)
+-->
+   (<chs> ^change <c> -)
+}
+
+#### Visibility/object status 
+
+# mark confirmed
 sp {attend-to-new-object*apply*create-object-info*mark*object-status*confirmed
    (state <s> ^name attend-to-new-object
               ^operator.name create-object-info
-              ^world-obj.predicates <preds>
-              ^perception-obj)
+              ^visible true
+              ^wm-obj.predicates <preds>)
 -->
    (<preds> ^object-status confirmed
             ^object-status unconfirmed -
@@ -20,11 +70,12 @@ sp {attend-to-new-object*apply*create-object-info*mark*object-status*confirmed
             ^visible false -)
 }
 
+# mark unconfirmed
 sp {attend-to-new-object*apply*create-object-info*mark*object-status*unconfirmed
    (state <s> ^name attend-to-new-object
               ^operator.name create-object-info
-              ^world-obj.predicates <preds>
-              -^perception-obj)
+              ^visible false
+              ^wm-obj.predicates <preds>)
 -->
    (<preds> ^object-status unconfirmed
             ^object-status confirmed -
@@ -32,72 +83,13 @@ sp {attend-to-new-object*apply*create-object-info*mark*object-status*unconfirmed
             ^visible true -)
 }
 
-sp {attend-to-new-object*apply*create-object-info
-   (state <s> ^name attend-to-new-object
-              ^operator <o>)
-   (<o> ^name create-object-info
-        ^object-handle <obj-handle>)
--->
-   (<s> ^object-info <obj-info>)
-   (<obj-info> ^object-handle <obj-handle>)
-}
-
-sp {attend-to-new-object*apply*create-object-info*wm-obj
-   (state <s> ^name attend-to-new-object
-              ^operator.name create-object-info
-              ^object-info <obj-info>
-              ^world-obj <wm-obj>)
--->
-   (<obj-info> ^wm-obj <wm-obj>)
-}
-
-sp {attend-to-new-object*apply*create-object-info*perception-id
-   (state <s> ^name attend-to-new-object
-              ^operator.name create-object-info
-              ^perception-obj.id <id>
-              ^object-info <obj-info>)
--->
-   (<obj-info> ^perception-id <id>)
-}
-
-sp {attend-to-new-object*apply*create-object-info*create-belief-id
-   (state <s> ^name attend-to-new-object
-              ^operator <o>
-              ^object-info <obj-info>)
-   (<o> ^name create-object-info
-        ^object-handle <obj-handle>)
--->
-   (<obj-info> ^belief-id (concat |bel-| <obj-handle>))
-}
-   
-sp {attend-to-new-object*apply*create-object-info*copy*object-info
-   (state <s> ^name attend-to-new-object
-              ^operator.name create-object-info
-              ^object-info <obj-info>
-              ^top-state.perception-monitor.object-monitor <obj-mon>)
-   (<obj-info> ^wm-obj <wm-obj>)
--->
-   (<obj-mon> ^object-info <obj-info>)
-}
-
-sp {attend-to-new-object*apply*create-object-info*remove*attend*change
-   (state <s> ^name attend-to-new-object
-              ^operator.name create-object-info
-              ^top-state.perception-monitor.changes <chs>
-              ^superstate.change-info <info>
-              ^object-info.wm-obj)
-   (<chs> ^change <c>)
-   (<c> ^info <info>)
--->
-   (<chs> ^change <c> -)
-}
-
+# Add in predicate for visible object
 sp {attend-to-new-object*apply*create-object-info*visible*add*in*predicate
    (state <s> ^name attend-to-new-object
               ^operator.name create-object-info
-              ^perception-obj <pobj>
-              ^top-state.world <world>
-              ^world-obj <wm-obj>)
+              ^visible true
+              ^wm-obj <wm-obj>
+              ^top-state.world <world>)
    (<world> ^robot.current-location <cur-loc>
             ^predicates.predicate <in-pred>)
    (<in-pred> ^handle in1)
@@ -108,12 +100,16 @@ sp {attend-to-new-object*apply*create-object-info*visible*add*in*predicate
     (<i> ^1 <wm-obj> ^2 <cur-loc>)
 }
 
+#### Create a belief object
+
+# Create belief object by copying perception
 sp {attend-to-new-object*apply*create-object-info*create*belief-object*from*perception
    (state <s> ^name attend-to-new-object
               ^operator.name create-object-info
-              ^top-state.svs.command <cmd>
-              ^object-info.belief-id <bel-id>
-              ^perception-obj.id <perc-id>)
+              ^visible true
+              ^belief-id <bel-id>
+              ^perception-id <perc-id>
+              ^top-state.svs.command <cmd>)
 -->
    (<cmd> ^copy_node <copy>)
    (<copy> ^id <bel-id>
@@ -121,13 +117,14 @@ sp {attend-to-new-object*apply*create-object-info*create*belief-object*from*perc
            ^adjust false)     
 }
 
+# Create belief object from epmem information
 sp {attend-to-new-object*apply*create-object-info*create*belief-object*from*epmem
    (state <s> ^name attend-to-new-object
               ^operator.name create-object-info
-              ^top-state.svs.command <cmd>
-              ^object-info.belief-id <bel-id>
-             -^perception-obj
-              ^epmem-obj <obj>)
+              ^epmem-obj <obj>
+              ^belief-id <bel-id>
+              ^visible false
+              ^top-state.svs.command <cmd>)
    (<obj> ^position <pos>
           ^rotation <rot>
           ^scale <scl>)
@@ -141,8 +138,10 @@ sp {attend-to-new-object*apply*create-object-info*create*belief-object*from*epme
           ^geometry box
           ^position <npos>
           ^rotation <nrot>
-          ^scale <nscl>)
+          ^scale <nscl>
+          ^tags <tags>)
    (<npos> ^x <px> ^y <py> ^z <pz>)
    (<nrot> ^x <rx> ^y <ry> ^z <rz>)
    (<nscl> ^x <sx> ^y <sy> ^z <sz>)
+   (<tags> ^object-source belief)
 }
