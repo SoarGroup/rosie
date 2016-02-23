@@ -29,12 +29,12 @@ echo $findreplace
 find ./ -type f -print0 | xargs -0 sed -i "$findreplace"
 
 # Replace standalone words ending a line -  ' example\n'
-findreplace="s/ "$1"$/ "$2"$/g"
+findreplace="s/ "$1"$/ "$2"/g"
 echo $findreplace
 find ./ -type f -print0 | xargs -0 sed -i "$findreplace"
 
 # Replace standalone words ending in a parenthesis - ' example)' 
-findreplace="s/ "$1"[)]/ "$2"[)]/g"
+findreplace="s/ "$1"[)]/ "$2")/g"
 echo $findreplace
 find ./ -type f -print0 | xargs -0 sed -i "$findreplace"
 
