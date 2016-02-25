@@ -1,0 +1,83 @@
+sp {leave-old-waypoint*propose*extract-metric-info
+   (state <s> ^name leave-old-waypoint
+              ^confirmed-objects true
+             -^extracted-metric-info true)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name extract-metric-info)
+}
+
+# For each confirmed object, extract its metric info from svs
+sp {leave-old-waypoint*apply*extract-metric-info*create*filters
+   (state <s> ^name leave-old-waypoint
+              ^operator.name extract-metric-info
+              ^confirmed-object.svs-obj.id <id>
+              ^top-state.svs.command <cmd>)
+-->
+   (<cmd> ^extract_once <pos> <rot> <scale>)
+   (<pos> ^type node_position
+          ^a <node>)
+   (<rot> ^type node_rotation
+          ^a <node>)
+   (<scale> ^type node_scale
+            ^a <node>)
+   (<node> ^type node
+           ^id <id>)
+   (<s> ^position-filter <pos>
+        ^rotation-filter <rot>
+        ^scale-filter <scale>)
+}
+
+# Once we get a status from the command mark extracted-metric-info true
+sp {leave-old-waypoint*apply*extract-metric-info
+   (state <s> ^name leave-old-waypoint
+              ^operator.name extract-metric-info
+              ^{ <type> << position-filter rotation-filter scale-filter >> } <filter>)
+   (<filter> ^status <any>)
+-->
+   (<s> ^extracted-metric-info true)
+}
+
+
+# Copy the position info onto the object
+sp {leave-old-waypoint*apply*extract-metric-info*copy*position
+   (state <s> ^name leave-old-waypoint
+              ^operator.name extract-metric-info
+              ^confirmed-object <obj>
+              ^position-filter.result.record <r>)
+   (<r> ^params.a <id> ^value <pos>)
+   (<pos> ^x <x> ^y <y> ^z <z>)
+   (<obj> ^svs-obj.id <id>)
+-->
+   (<obj> ^position <npos>)
+   (<npos> ^x <x> ^y <y> ^z <z>)
+}
+
+# Copy the rotation info onto the object
+sp {leave-old-waypoint*apply*extract-metric-info*copy*rotation
+   (state <s> ^name leave-old-waypoint
+              ^operator.name extract-metric-info
+              ^confirmed-object <obj>
+              ^rotation-filter.result.record <r>)
+   (<r> ^params.a <id> ^value <rot>)
+   (<rot> ^x <x> ^y <y> ^z <z>)
+   (<obj> ^svs-obj.id <id>)
+-->
+   (<obj> ^rotation <nrot>)
+   (<nrot> ^x <x> ^y <y> ^z <z>)
+}
+
+# Copy the scale information onto the object
+sp {leave-old-waypoint*apply*extract-metric-info*copy*scale
+   (state <s> ^name leave-old-waypoint
+              ^operator.name extract-metric-info
+              ^confirmed-object <obj>
+              ^scale-filter.result.record <r>)
+   (<r> ^params.a <id> ^value <scale>)
+   (<scale> ^x <x> ^y <y> ^z <z>)
+   (<obj> ^svs-obj.id <id>)
+-->
+   (<obj> ^scale <nscale>)
+   (<nscale> ^x <x> ^y <y> ^z <z>)
+}
+   

@@ -1,0 +1,55 @@
+##### Superoperator Rep #####
+
+^old-waypoint - reference to the waypoint we are leaving 
+	from top-state.world.maps.map.waypoint
+
+##### Substate Results ######
+
+Removes ^current-waypoint from world.robot
+Removes old objects from the world state
+Makes sure proper information is stored in epmem for future use
+
+###### State Representation #####
+
+^old-waypoint - reference to the waypoint we are leaving 
+	Elaborated from superstate.operator.old-waypoint
+	
+^old-location - the location we are leaving (if any)
+	Elaborated from world.robot.current-location
+
+^confirmed-object <obj> - all world objects with predicates.object-status confirmed
+	(We for sure saw them in the old location at some point)
+
+^unconfirmed-object <obj> - all world objects with predicates.object-status unconfirmed
+	(We never saw them in the old location)
+
+^confirmed-objects true - Flag is present if there is at least 1 confirmed-object
+^unconfirmed-objects true - Flag is present if there is at least 1 unconfirmed-object
+
+^position-filter - svs filter of type node_position
+^rotation-filter - svs filter of type node_rotation
+^scale-filter - svs filter of type node_scale
+	A set of these filters is created for each confirmed object and placed on the top-state.svs.command link
+	These are used so the metric info of each object is stored in epmem
+	Result of extract-metric-info
+^extracted-metric-info true - Flag created once the results of the filters are present
+
+
+###### Operators + Order #####
+
+# remove-unconfirmed-objects
+	For each unconfirmed object - delete from working memory 
+	We don't want information about them in our episodic memory snapshot
+	This will probably cause the substate to retract while the objects are delete
+		(creates a delete-object change on the perception-monitor.changes)
+
+# extract-metric-info
+	For each confirmed object, create svs filters to get the metric info (pos/rot/scale)
+		And copy onto the world object so its included in episodic memory snapshot
+
+# remove-old-information
+	Removes all objects from the world
+	Removes current-waypoint and current-location from robot
+
+
+

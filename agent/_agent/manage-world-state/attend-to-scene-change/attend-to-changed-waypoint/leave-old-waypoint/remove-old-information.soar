@@ -1,32 +1,33 @@
+# Removes information about the previous location from working memory
+#   (Causes the substate to be removed)
 sp {leave-old-waypoint*propose*remove-old-information
-   (state <s> ^name leave-old-waypoint
-             -^unconfirmed-objects true
-             -^waiting-for-filters true)
+   (state <s> ^name leave-old-waypoint)
 -->
    (<s> ^operator <o> +)
    (<o> ^name remove-old-information)
 }
 
-# Remove all non-task objects
-sp {leave-old-waypoint*elaborate*remove-old-information*remove-object*confirmed*non-task*object
-   (state <s> ^name leave-old-waypoint
-              ^operator <o> +
-              ^top-state.world.objects.object <obj>
-             -^top-state.action-stack.object-set.object <obj>)
-   (<o> ^name remove-old-information)
-   (<obj> -^predicates.category location
-          -^predicates.visible true)
--->
-   (<o> ^remove-object <obj>)
-}
+# TASKOP
+## Remove all non-task objects
+#sp {leave-old-waypoint*elaborate*remove-old-information*remove-object*confirmed*non-task*object
+#   (state <s> ^name leave-old-waypoint
+#              ^operator <o> +
+#              ^top-state.world.objects.object <obj>
+#             -^top-state.action-stack.object-set.object <obj>)
+#   (<o> ^name remove-old-information)
+#   (<obj> -^predicates.category location
+#          -^predicates.visible true)
+#-->
+#   (<o> ^remove-object <obj>)
+#}
 
+# Delete all objects from working memory
 sp {leave-old-waypoint*apply*remove-old-information*attend*delete-object
    (state <s> ^name leave-old-waypoint
-              ^operator <o>
+              ^operator.name remove-old-information
               ^top-state.perception-monitor.changes <chgs>
+              ^confirmed-object <obj>
               ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
-   (<o> ^name remove-old-information
-        ^remove-object <obj>)
    (<obj-info> ^wm-obj <obj>)
 -->
    (<chgs> ^change <c>)
@@ -34,7 +35,7 @@ sp {leave-old-waypoint*apply*remove-old-information*attend*delete-object
         ^object-info <obj-info>)
 }
 
-# Remove information from robot
+# Remove current-waypoint from robot
 sp {leave-old-waypoint*apply*remove-old-information*remove*old-waypoint
    (state <s> ^name leave-old-waypoint
               ^operator.name remove-old-information
@@ -45,6 +46,7 @@ sp {leave-old-waypoint*apply*remove-old-information*remove*old-waypoint
    (<rob> ^current-waypoint <wp> -)
 }
 
+# Remove current-location from robot
 sp {leave-old-waypoint*apply*remove-old-information*remove*old-location
    (state <s> ^name leave-old-waypoint
               ^operator.name remove-old-information
@@ -55,43 +57,58 @@ sp {leave-old-waypoint*apply*remove-old-information*remove*old-location
    (<rob> ^current-location <loc> -)
 }
 
-sp {leave-old-waypoint*apply*remove-old-information*remove*scanned*flags
+# Remove svs filters from command
+sp {leave-old-waypoint*apply*remove-old-information*cleanup*svs*filters
    (state <s> ^name leave-old-waypoint
               ^operator.name remove-old-information
-              ^top-state.world.robot <rob>)
-   (<rob> ^{ <att> << havent-scanned scanned >> } <loc> )
+              ^{ <type> << position-filter rotation-filter scale-filter >> } <filter>
+              ^top-state.svs.command <cmd>)
+   (<cmd> ^extract_once <filter>)
 -->
-   (<rob> ^<att> <loc> -)
+   (<cmd> ^extract_once <filter> -)
 }
+
+# SCANOP
+#sp {leave-old-waypoint*apply*remove-old-information*remove*scanned*flags
+#   (state <s> ^name leave-old-waypoint
+#              ^operator.name remove-old-information
+#              ^top-state.world.robot <rob>)
+#   (<rob> ^{ <att> << havent-scanned scanned >> } <loc> )
+#-->
+#   (<rob> ^<att> <loc> -)
+#}
    
 # Change the rest of the objects
-sp {leave-old-waypoint*apply*remove-old-information*set*not-visible
-   (state <s> ^name leave-old-waypoint
-              ^operator.name remove-old-information
-              ^top-state.world.objects.object <obj>)
-   (<obj> ^predicates <preds>)
-   (<preds> ^visible true)
--->
-   (<preds> ^visible true -
-            ^visible false)
-}
+# TASKOP
+#sp {leave-old-waypoint*apply*remove-old-information*set*not-visible
+#   (state <s> ^name leave-old-waypoint
+#              ^operator.name remove-old-information
+#              ^top-state.world.objects.object <obj>)
+#   (<obj> ^predicates <preds>)
+#   (<preds> ^visible true)
+#-->
+#   (<preds> ^visible true -
+#            ^visible false)
+#}
 
-sp {leave-old-waypoint*apply*remove-old-information*set*unconfirmed
-   (state <s> ^name leave-old-waypoint
-              ^operator.name remove-old-information
-              ^top-state.world.objects.object <obj>)
-   (<obj> ^predicates <preds>)
-   (<preds> ^object-status confirmed)
--->
-   (<preds> ^object-status confirmed -
-            ^object-status unconfirmed)
-}
+# TASKOP
+#sp {leave-old-waypoint*apply*remove-old-information*set*unconfirmed
+#   (state <s> ^name leave-old-waypoint
+#              ^operator.name remove-old-information
+#              ^top-state.world.objects.object <obj>)
+#   (<obj> ^predicates <preds>)
+#   (<preds> ^object-status confirmed)
+#-->
+#   (<preds> ^object-status confirmed -
+#            ^object-status unconfirmed)
+#}
 
-sp {leave-old-waypoint*remove*any*metric*info
-   (state <s> ^name leave-old-waypoint
-              ^operator.name remove-old-information
-              ^top-state.world.objects.object <obj>)
-   (<obj> ^{ <att> << position rotation scale >> } <val>)
--->
-   (<obj> ^<att> <val> -)
-}
+# TASKOP
+#sp {leave-old-waypoint*remove*any*metric*info
+#   (state <s> ^name leave-old-waypoint
+#              ^operator.name remove-old-information
+#              ^top-state.world.objects.object <obj>)
+#   (<obj> ^{ <att> << position rotation scale >> } <val>)
+#-->
+#   (<obj> ^<att> <val> -)
+#}

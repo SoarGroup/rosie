@@ -1,0 +1,229 @@
+### DEFUALT RULES
+
+# substate of operator no-change named after operator
+sp {operator*no-change*elaborate*state*name*from*superoperator
+   (state <s> ^impasse no-change
+              ^attribute operator
+              ^superstate.operator.name <name>)
+-->
+   (<s> ^name <name>)
+}
+
+# elaborate top-state
+sp {top-state*elaborate*top-state
+   (state <s> ^superstate nil)
+-->
+   (<s> ^top-state <s>)
+}
+
+# elaborate top-state on substates
+sp {substate*elaborate*top-state
+   (state <s> ^superstate.top-state <top>)
+-->
+   (<s> ^top-state <top>)
+}
+
+### ELABORATIONS
+
+# elaborate empty world structure
+sp {top-state*elaborate*world
+   (state <s> ^superstate nil)
+-->
+   (<s> ^world <world>)
+   (<world> ^robot <rob>
+            ^objects <objs>)
+}
+
+##### Operator create-object
+
+# propose operator to create object 1
+sp {create-object*propose*create-object*1
+   (state <s> ^superstate nil
+             -^world.objects.object.handle 1)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name create-object
+        ^object-handle 1
+        ^visible true)
+}
+
+##### create-object substate #####
+
+# copy the object-handle from superoperator
+sp {create-object*elaborate*object-handle
+   (state <s> ^name create-object
+              ^superstate.operator.object-handle <h>)
+-->
+   (<s> ^object-handle <h>)
+}
+
+# copy the visible flag from superoperator
+sp {create-object*elaborate*visible
+   (state <s> ^name create-object
+              ^superstate.operator.visible <bool>)
+-->
+   (<s> ^visible <bool>)
+}
+              
+## operator create-world-object
+
+# Create the basic world object representation
+sp {create-object*propose*create-world-object
+   (state <s> ^name create-object
+             -^wm-obj)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name create-world-object)
+}
+
+# Create the bare version as world-obj
+sp {create-object*apply*create-world-object*create*world-obj
+   (state <s> ^name create-object
+              ^operator.name create-world-object
+              ^object-handle <handle>)
+-->
+   (<s> ^world-obj <obj>)
+   (<obj> ^handle <handle>
+          ^item-type object
+          ^predicates <preds>)
+}
+
+# Copy world-obj as wm-obj (will retract operator)
+sp {create-object*apply*create-world-object*copy*as*wm-obj
+   (state <s> ^name create-object
+              ^operator.name create-world-object
+              ^world-obj <obj>)
+-->
+   (<s> ^wm-obj <obj>)
+}
+
+# Copy predicates onto object
+sp {create-object*apply*create-world-object*copy*predicates*level2
+   (state <s> ^name create-object
+              ^operator.name create-world-object
+              ^world-obj.predicates <preds>)
+-->
+   (<preds> ^color red
+            ^shape box)
+}
+
+## operator copy-object-to-world
+
+sp {create-object*propose*copy-object-to-world
+   (state <s> ^name create-object
+              ^wm-obj <obj>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name copy-object-to-world)
+}
+
+# Add object to world
+sp {create-object*apply*copy-object-to-world*add*object*to*world
+   (state <s> ^name create-object
+              ^operator.name copy-object-to-world
+              ^wm-obj <wm-obj>
+              ^top-state.world.objects <objs>)
+-->
+   (<objs> ^object <wm-obj>)
+}
+
+#### Visibility/object status 
+
+# mark confirmed
+sp {create-object*apply*copy-object-to-world*mark*object-status*confirmed
+   (state <s> ^name create-object
+              ^operator.name copy-object-to-world
+              ^visible true
+              ^wm-obj.predicates <preds>)
+-->
+   (<preds> ^object-status confirmed
+            ^visible true)
+}
+
+sp {create-object*apply*copy-object-to-world*visible*remove*visible*false
+   (state <s> ^name create-object
+              ^operator.name copy-object-to-world
+              ^visible true
+              ^wm-obj.predicates <preds>)
+   (<preds> ^visible false)
+-->
+   (<preds> ^visible false -)
+}
+
+sp {create-object*apply*copy-object-to-world*visible*remove*object-status*unconfirmed
+   (state <s> ^name create-object
+              ^operator.name copy-object-to-world
+              ^visible true
+              ^wm-obj.predicates <preds>)
+   (<preds> ^object-status unconfirmed)
+-->
+   (<preds> ^object-status unconfirmed -)
+}
+
+# mark unconfirmed
+sp {create-object*apply*copy-object-to-world*mark*object-status*unconfirmed
+   (state <s> ^name create-object
+              ^operator.name copy-object-to-world
+              ^visible false
+              ^wm-obj.predicates <preds>)
+-->
+   (<preds> ^object-status unconfirmed
+            ^visible false)
+}
+
+sp {create-object*apply*copy-object-to-world*not-visible*remove*visible*true
+   (state <s> ^name create-object
+              ^operator.name copy-object-to-world
+              ^visible false
+              ^wm-obj.predicates <preds>)
+   (<preds> ^visible true)
+-->
+   (<preds> ^visible true -)
+}
+
+sp {create-object*apply*copy-object-to-world*not-visible*remove*object-status*confirmed
+   (state <s> ^name create-object
+              ^operator.name copy-object-to-world
+              ^visible false
+              ^wm-obj.predicates <preds>)
+   (<preds> ^object-status confirmed)
+-->
+   (<preds> ^object-status confirmed -)
+}
+
+# if debug-perception is on, print 
+sp {create-object*apply*copy-object-to-world*debug-perception*print
+   (state <s> ^name create-object
+              ^operator.name copy-object-to-world
+              ^object-handle <handle>
+              ^wm-obj <obj>
+              ^superstate.world.objects.object <obj>)
+-->
+   (write |Adding object | <handle> (crlf))
+   (write (cmd print <obj> -d 2) (crlf))
+}
+
+#### top-state operator print-object
+
+sp {top-state*propose*print-object
+   (state <s> ^superstate nil
+              ^world.objects.object <obj>
+             -^printed <obj>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name print-object
+        ^object <obj>)
+}
+
+sp {top-state*apply*print-object
+   (state <s> ^superstate nil
+              ^operator <o>)
+   (<o> ^name print-object
+        ^object <obj>)
+   (<obj> ^handle <handle>)
+-->
+   (write |Object | <handle> | after create-object substate goes away| (crlf))
+   (write (cmd print <obj> -d 2) (crlf))
+   (<s> ^printed <obj>)
+}
+   

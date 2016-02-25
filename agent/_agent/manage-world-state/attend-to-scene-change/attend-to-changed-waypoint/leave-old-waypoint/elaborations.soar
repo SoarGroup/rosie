@@ -1,3 +1,4 @@
+# old-waypoint: the waypoint we are leaving (elaborated from superoperator)
 sp {leave-old-waypoint*elaborate*old-waypoint
    (state <s> ^name leave-old-waypoint
               ^superstate.operator.old-waypoint <wp>)
@@ -5,6 +6,7 @@ sp {leave-old-waypoint*elaborate*old-waypoint
    (<s> ^old-waypoint <wp>)
 }
 
+# old-location: the location (if any) we are leaving
 sp {leave-old-waypoint*elaborate*old-location
    (state <s> ^name leave-old-waypoint
               ^top-state.world.robot.current-location <old-loc>)
@@ -12,23 +14,27 @@ sp {leave-old-waypoint*elaborate*old-location
    (<s> ^old-location <old-loc>)
 }
 
-# An unconfirmed object not relevant to the current task
+#### Group objects into confirmed and unconfirmed (did see in the old loction)
+
+# List unconfirmed objects
 sp {leave-old-waypoint*elaborate*unconfirmed-object
    (state <s> ^name leave-old-waypoint
-              ^top-state.world.objects.object <obj>
-             -^top-state.action-stack.object-set.object <obj>)
+              ^top-state.world.objects.object <obj>)
+             #-^top-state.action-stack.object-set.object <obj>) # TASKOP
    (<obj> ^predicates.object-status unconfirmed)
 -->
    (<s> ^unconfirmed-object <obj>)
 }
 
+# Flag if there exists at least 1 unconfirmed object
 sp {leave-old-waypoint*elaborate*unconfirmed-objects*true
-   (state <s> ^name leave-waypoint
+   (state <s> ^name leave-old-waypoint
               ^unconfirmed-object <any>)
 -->
    (<s> ^unconfirmed-objects true)
 }
 
+# List confirmed objects
 sp {leave-old-waypoint*elaborate*confirmed-objects
    (state <s> ^name leave-old-waypoint
               ^top-state.world.objects.object <obj>)
@@ -38,37 +44,10 @@ sp {leave-old-waypoint*elaborate*confirmed-objects
    (<s> ^confirmed-object <obj>)
 }
 
-sp {leave-old-waypoint*elaborate*svs*filter*object*info
+# Flag if there exists at least 1 confirmed object
+sp {leave-old-waypoint*elaborate*confirmed-objects*true
    (state <s> ^name leave-old-waypoint
-              ^confirmed-object.svs-obj.id <id>
-              ^top-state.svs.command <cmd>)
+              ^confirmed-object <any>)
 -->
-   (<cmd> ^extract_once <pos> <rot> <scale>)
-   (<pos> ^type node_position
-          ^a <node>)
-   (<rot> ^type node_rotation
-          ^a <node>)
-   (<scale> ^type node_scale
-            ^a <node>)
-   (<node> ^type node
-           ^id <id>)
-   (<s> ^position-filter <pos>
-        ^rotation-filter <rot>
-        ^scale-filter <scale>)
+   (<s> ^confirmed-objects true)
 }
-
-sp {leave-old-waypoint*elaborate*object-info-available
-   (state <s> ^name leave-old-waypoint
-              ^position-filter.result.record <any>)
--->
-   (<s> ^object-info-available true)
-}
-
-sp {leave-old-waypoint*elaborate*waiting-for-filters*true
-   (state <s> ^name leave-old-waypoint
-              ^{ << position-filter rotation-filter scale-filter >> } <any>)
-   (<any> -^result)
--->
-   (<s> ^waiting-for-filters true)
-}
-              
