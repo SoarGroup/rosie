@@ -1,5 +1,5 @@
 svs --enable
-svs connect_viewer 2000
+svs connect_viewer 2001
 
 sp {topstate*propose*wait
    (state <s> ^superstate nil
@@ -9,42 +9,170 @@ sp {topstate*propose*wait
    (<o> ^name wait)
 }
 
-sp {topstate*apply*wait*print
-   (state <s> ^superstate nil
-              ^operator.name wait
-              ^svs.command.extract.result.record <rec>)
-   (<rec> ^params.b <id> ^value <v>)
+#sp {topstate*apply*wait*print
+#   (state <s> ^superstate nil
+#              ^operator.name wait
+#              ^svs.command.extract.result.record <rec>)
+#   (<rec> ^params.b <id> ^value <v>)
+#-->
+#   (write |Distance to | <id> | is | <v> (crlf))
+#}
+
+
+sp {topstate*elaborate*tests
+   (state <s> ^superstate nil)
 -->
-   (write |Distance to | <id> | is | <v> (crlf))
+   (<s> ^tests <t>)
+   (<t> ^test <t1> <t2> <t3> <t4> <t5> <t6> <t7> <t8>)
+   (<t1> ^id on
+         ^reference-frame global
+         ^x_axis_separation 0
+         ^y_axis_separation 0
+         ^z_axis_separation .1)
+   (<t2> ^id in
+         ^reference-frame global
+         ^x_axis_separation 0
+         ^y_axis_separation 0
+         ^z_axis_separation 0)
+   (<t3> ^id right
+         ^reference-frame local
+         ^x_axis_separation 0
+         ^y_axis_separation -1 
+         ^z_axis_separation 0)
+   (<t4> ^id left
+         ^reference-frame local
+         ^x_axis_separation 0 
+         ^y_axis_separation .5 
+         ^z_axis_separation 0)
+   (<t5> ^id front-right
+         ^reference-frame local
+         ^x_axis_separation 2
+         ^y_axis_separation -2
+         ^z_axis_separation 0)
+   (<t6> ^id back-right
+         ^reference-frame local
+         ^x_axis_separation -.5
+         ^y_axis_separation -2
+         ^z_axis_separation 0)
+   (<t7> ^id corner
+         ^reference-frame local
+         ^x_axis_separation .5 
+         ^y_axis_separation .5
+         ^z_axis_separation .5)
+   (<t8> ^id random
+         ^reference-frame global
+         ^x_axis_separation 1
+         ^y_axis_separation -2
+         ^z_axis_separation 3)
 }
 
-sp {extract*rotation*filters
+sp {extract*add_node*filters*for*tests
    (state <s> ^superstate nil
-              ^svs.command <cmd>)
+              ^tests.test <t>
+              ^svs.command <cmd>
+             -^svs.spatial-scene.child.id <id>)
+   (<t> ^id <id>)
 -->
-   (<cmd> ^extract_once <rot>)
-   (<rot> ^type node_rotation
-          ^a <a>)
-   (<a> ^type node
-        ^id |9|)
+   (<cmd> ^add_node <add>)
+   (<add> ^id <id>
+          ^parent world
+          ^geometry box
+          ^scale <scale>)
+   (<scale> ^x .4 ^y .4 ^z .4)
 }
 
-sp {extract*axis*filters
+sp {svs-test*extract*calculate-placement*global
    (state <s> ^superstate nil
+              ^tests.test <t>
+              ^svs.spatial-scene.child.id <id>
               ^svs.command <cmd>)
+   (<t> ^id <id>
+        ^reference-frame global
+        ^x_axis_separation <x>
+        ^y_axis_separation <y>
+        ^z_axis_separation <z>)
 -->
    (<cmd> ^extract <e>)
-   (<e> ^type axis_distance
+   (<e> ^type calculate_placement
         ^a <a>
         ^b <b>
-        ^axis x
-        ^reference <rob>)
+        ^x_axis_separation <x>
+        ^y_axis_separation <y>
+        ^z_axis_separation <z>)
    (<a> ^type node
-        ^id |7|)
-   (<b> ^type tag_select
-        ^a.type all_nodes
-        ^tag_name object-source
-        ^tag_value perception)
-   (<rob> ^type node
-          ^id |7|)
+        ^id <id>)
+   (<b> ^type node
+        ^id robot_body)
+   (<t> ^filter <e>)
 }
+
+sp {svs-test*extract*calculate-placement*local
+   (state <s> ^superstate nil
+              ^tests.test <t>
+              ^svs.spatial-scene.child.id <id>
+              ^svs.command <cmd>)
+   (<t> ^id <id>
+        ^reference-frame local
+        ^x_axis_separation <x>
+        ^y_axis_separation <y>
+        ^z_axis_separation <z>)
+-->
+   (<cmd> ^extract <e>)
+   (<e> ^type calculate_placement
+        ^a <a>
+        ^b <b>
+        ^reference <ref>
+        ^x_axis_separation <x>
+        ^y_axis_separation <y>
+        ^z_axis_separation <z>)
+   (<a> ^type node
+        ^id <id>)
+   (<b> ^type node
+        ^id robot_body)
+   (<ref> ^type node
+          ^id robot)
+   (<t> ^filter <e>)
+}
+
+sp {svs-test*move*object*using*filter*results
+   (state <s> ^superstate nil
+              ^tests.test <t>
+              ^svs.command <cmd>)
+   (<t> ^id <id>
+        ^filter.result.record.value <pos>)
+-->
+   (<cmd> ^set_transform <set>)
+   (<set> ^id <id>
+          ^position <pos>)
+}
+
+#sp {extract*rotation*filters
+#   (state <s> ^superstate nil
+#              ^svs.command <cmd>)
+#-->
+#   (<cmd> ^extract_once <rot>)
+#   (<rot> ^type node_rotation
+#          ^a <a>)
+#   (<a> ^type node
+#        ^id |9|)
+#}
+#
+#sp {extract*axis*filters
+#   (state <s> ^superstate nil
+#              ^svs.command <cmd>)
+#-->
+#   (<cmd> ^extract <e>)
+#   (<e> ^type axis_distance
+#        ^a <a>
+#        ^b <b>
+#        ^axis x
+#        ^reference <rob>)
+#   (<a> ^type node
+#        ^id |7|)
+#   (<b> ^type tag_select
+#        ^a.type all_nodes
+#        ^tag_name object-source
+#        ^tag_value perception)
+#   (<rob> ^type node
+#          ^id |7|)
+#}
