@@ -1,0 +1,73 @@
+##### Action Stack Rep ######
+Representation of the top-state.action-stack
+
+Initialized during init-agent (see init-action-stack.soar)
+
+^action-stack
+	^changes
+		^<change-name> <change-info>   (See section on Stack Changes)
+			Created when a change should happen to the stack
+	^top <action> - the top action on the stack (or none)
+	^bottom <action> - the bottom action on the stack (or none)
+	^actions - a set of all actions on the stack
+		^action <action> 
+	^object-set <objs> - a set of all objects used in the current action
+	
+# action representation
+^action
+	^first-appearance true  # only present when the action is first added to the stack
+	^policy-learning-needed # true if it needs to do retrospective learning
+	^execution-operator <action-op> # the action-operator for the action, 
+		see generate-action-operator for a description
+	^remembered <rem> - something we remembered during the action that must be cleaned up
+		^object  <obj>
+		^attribute <att>
+		^value <val>
+		# will remove ^object.predicates.<att> <val>
+	^added <obj> - objects added to the world during the action that should be removed
+
+
+##### Superoperator Rep #####
+
+^change-name <name> - from ^action-stack.changes.<change-name> <info>
+^change-info <info> - from ^action-stack.changes.<change-name> <info>
+
+
+##### Substate Results ######
+
+
+
+###### State Representation #####
+
+^change-name <name> - from ^superstate.operator.change-name
+^change-info <info> - from ^superstate.operator.change-info
+^action-stack <stack> - from ^top-state.action-stack
+
+
+###### Stack Changes ######
+
+# clear-action-stack true
+    Causes all actions to be popped from the stack
+    
+# pop-action <action>
+	Pops the action from the stack, assuming it is the top action
+	
+# push-action <action>
+	Pushes the given action structure onto the stack
+	
+
+
+###### Operator Info ######
+
+# push-action - does the following
+	- pushes the action onto the stack
+	- removes the push command from the changes list
+
+# pop-action - does the following
+	- removes the action from the stack
+	- removes the pop command from the changes list
+	- reports a performed action-event to the interaction.status
+	- adds a retrospective learning segment if the ^policy-learning-needed true flag is on the action
+	- removes any information marked added or remembered on the action
+	- marks the action as performed to the parent action if ^perform once flag is there
+
