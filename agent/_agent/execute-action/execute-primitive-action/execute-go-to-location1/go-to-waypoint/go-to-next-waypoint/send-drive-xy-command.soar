@@ -6,23 +6,28 @@
 
 sp {go-to-next-waypoint*propose*send-drive-xy-command
    (state <s> ^name go-to-next-waypoint
-             -^drive-command)
+              ^current-action.position-set.next { <next> <> none }
+              ^current-action.face-command.status success
+             -^current-action.drive-command)
 -->
    (<s> ^operator <o> + >)
-   (<o> ^name send-drive-xy-command)
+   (<o> ^name send-drive-xy-command
+        ^position <next>)
 }
 
-sp {go-to-next-waypoint*apply*send-drive-xy-command*no*until
+sp {go-to-next-waypoint*apply*send-drive-xy-command
    (state <s> ^name go-to-next-waypoint
               ^operator.name send-drive-xy-command
-              ^waypoint <wp>
-              ^top-state.io.output-link <out>)
-   (<wp> ^x <x> ^y <y>)
+              ^top-state.io.output-link <out>
+              ^current-action <a>)
+   (<o> ^name send-drive-xy-command
+        ^position <pos>)
+   (<pos> ^x <x> ^y <y>)
 -->
    (<out> ^do-control-law <law>)
    (<law> ^name drive-xy
           ^parameters <params>
           ^termination-condition.name stabilized)
    (<params> ^x <x> ^y <y>)
-   (<s> ^drive-command <law>)
+   (<a> ^drive-command <law>)
 }

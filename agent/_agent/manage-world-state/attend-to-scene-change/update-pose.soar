@@ -4,7 +4,21 @@
 #
 ##################################################################
 
-# Send the command to svs
+sp {anystate*apply*attend-to-scene-change*update-pose*remove*update*flag*no*perception
+   (state <s> ^operator <o>
+              ^top-state.svs.command <cmd>)
+   (<o> ^name attend-to-scene-change
+        ^change.type update-pose
+        ^change.object-info <obj-info>)
+   (<obj-info> -^perception-obj <any>
+               -^wm-obj.predicates.arm-status grabbed
+                ^update-pose true)
+-->
+   (<obj-info> ^update-pose true -)
+}
+
+
+# Send command to svs (not grabbed)
 sp {anystate*apply*attend-to-scene-change*update-pose*svs*copy_node
    (state <s> ^operator <o>
               ^top-state.svs.command <cmd>)
@@ -12,7 +26,8 @@ sp {anystate*apply*attend-to-scene-change*update-pose*svs*copy_node
         ^change.type update-pose
         ^change.object-info <obj-info>)
    (<obj-info> ^perception-obj.id <perc-id>
-               ^belief-obj.id <bel-id>)
+               ^belief-obj.id <bel-id>
+               -^wm-obj.predicates.arm-status grabbed)
 -->
    (<cmd> ^copy_transform <copy>)
    (<copy> ^source <perc-id>
@@ -20,6 +35,25 @@ sp {anystate*apply*attend-to-scene-change*update-pose*svs*copy_node
            ^position yes
            ^rotation yes
            ^scale yes)
+   (<obj-info> ^copy-command <copy>)
+}
+
+# Send the command to svs
+sp {anystate*apply*attend-to-scene-change*update-pose*svs*copy_node*grabbed
+   (state <s> ^operator <o>
+              ^top-state.svs.command <cmd>)
+   (<o> ^name attend-to-scene-change
+        ^change.type update-pose
+        ^change.object-info <obj-info>)
+   (<obj-info> ^belief-obj.id <bel-id>
+               ^wm-obj.predicates.arm-status grabbed)
+-->
+   (<cmd> ^copy_transform <copy>)
+   (<copy> ^source robot
+           ^destination <bel-id>
+           ^position yes
+           ^rotation no
+           ^scale no)
    (<obj-info> ^copy-command <copy>)
 }
 

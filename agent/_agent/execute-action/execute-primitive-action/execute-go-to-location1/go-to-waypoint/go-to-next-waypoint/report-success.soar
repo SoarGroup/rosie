@@ -1,30 +1,12 @@
-sp {go-to-next-waypoint*propose*report-success
-   (state <s> ^name go-to-next-waypoint
-              ^center-command.status success)
--->
-   (<s> ^operator <o> +)
-   (<o> ^name report-success)
-}
-
 sp {go-to-next-waypoint*propose*report-success*drive-xy
    (state <s> ^name go-to-next-waypoint
-              ^drive-command <cmd>)
-   (<cmd> ^name drive-xy
-          ^status success)
+              ^current-action.drive-command.status success
+              ^current-action.position-set.next.next none)
 -->
    (<s> ^operator <o> +)
    (<o> ^name report-success)
 }
 
-sp {go-to-next-waypoint*prefer*attend
-   (state <s> ^name go-to-next-waypoint
-              ^operator <o1> +
-              ^operator <o2> +)
-   (<o1> ^name attend-to-scene-change)
-   (<o2> ^name report-success)
--->
-   (<s> ^operator <o1> > <o2>)
-}
 
 sp {go-to-next-waypoint*apply*report-success
    (state <s> ^name go-to-next-waypoint
@@ -33,14 +15,32 @@ sp {go-to-next-waypoint*apply*report-success
    (<s> ^status complete)
 }
 
+sp {go-to-next-waypoint*apply*report-success*remove*position-set
+   (state <s> ^name go-to-next-waypoint
+              ^operator.name report-success
+              ^current-action <a>)
+   (<a> ^position-set <set>)
+-->
+   (<a> ^position-set <set> -)
+}
+
 sp {go-to-next-waypoint*apply*report-success*cleanup*command
    (state <s> ^name go-to-next-waypoint
               ^operator.name report-success
               ^io.output-link <out>)
-   (<s> ^{ <cmd-type> << face-command drive-command turn-command center-command >> } <cmd>)
+   (<a> ^{ <cmd-type> << face-command drive-command >> } <cmd>)
    (<out> ^<cmd-name> <cmd>)
 -->
-   (<s> ^<cmd-type> <cmd> -)
+   (<a> ^<cmd-type> <cmd> -)
    (<out> ^<cmd-name> <cmd> -)
+}
+
+sp {go-to-next-waypoint*apply*report-success*remove*next-waypoint
+   (state <s> ^name go-to-next-waypoint
+              ^operator.name report-success
+              ^current-action <a>)
+   (<a> ^next-waypoint <wp>)
+-->
+   (<a> ^next-waypoint <wp> -)
 }
    

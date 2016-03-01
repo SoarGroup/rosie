@@ -36,7 +36,8 @@ sp {composite-action*propose*driving-operator*op_turn1
 sp {composite-action*propose*driving-operator*op_follow-wall1
    (state <s> ^problem-space <ps>)
    (<ps> ^name action
-         ^action.propose-action-operators true)
+         ^action.propose-action-operators true
+         ^action.propose-driving-operators true)
 -->
    (<s> ^operator <left-op> +
         ^operator <right-op> +)
@@ -107,33 +108,117 @@ sp {composite-action*propose*driving-operator*op_stop1
         ^action-type primitive)
 }
 
+####### propose external actions #######
+
+## op_go-to-location1
+sp {action*propose*op_go-to-location1
+   (state <s> ^problem-space <ps>
+              ^world.objects.object <loc>
+             -^world.robot.current-location <loc>)
+   (<ps> ^name action
+         ^action.propose-action-operators true)
+  (<loc> ^predicates.category location)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name op_go-to-location1
+        ^action-handle go-to-location1
+         ^action-type primitive
+         ^arg2 <arg2>)
+   (<arg2> ^arg-type predicate
+           ^handle in1
+           ^2 <loc>)
+}
 
 
-######## propose pick-up for objects #########################################
-#sp {composite-action*propose*op_pick-up1*mobile
-#   (state <s> ^problem-space <ps>
-#              ^world.objects.object <obj>
-#              ^world.predicates.predicate <in-pred>
-#              ^world.robot.current-location <cur-loc>
-#             -^world.robot.holding-object <any>)
-#   (<ps> ^name action
-#         ^action.propose-action-operators true)
-#   (<obj> ^predicates <preds>)
-#   (<preds> ^category << object block >>
-#            ^arm-status not-grabbed)
-#   (<in-pred> ^handle in1
-#              ^instance <i>)
-#   (<i> ^1 <obj> ^2 <cur-loc>)
-#-->
-#   (<s> ^operator <op> +)
-#   (<op> ^name op_pick-up1 
-#         ^action-handle pick-up1
-#         ^arg1 <arg1>
-#         ^action-type primitive)
-#   (<arg1> ^arg-type object
-#           ^arg-status visible
-#           ^id <obj>)
-#}
+## op_pick-up1
+sp {composite-action*propose*op_pick-up1*mobile
+   (state <s> ^problem-space <ps>
+              ^world.objects.object <obj>
+              ^world.predicates.predicate <in-pred>
+              ^world.robot.current-location <cur-loc>
+             -^world.objects.object.predicates.arm-status grabbed)
+   (<ps> ^name action
+         ^action.propose-action-operators true)
+   (<obj> ^predicates <preds>)
+   (<preds> ^category object
+            ^visible true
+            ^arm-status not-grabbed)
+   (<in-pred> ^handle in1
+              ^instance <i>)
+   (<i> ^1 <obj> ^2 <cur-loc>)
+-->
+   (<s> ^operator <op> +)
+   (<op> ^name op_pick-up1 
+         ^action-handle pick-up1
+         ^arg1 <arg1>
+         ^action-type primitive)
+   (<arg1> ^arg-type object
+           ^id <obj>)
+}
+
+## op_put-down1
+sp {composite-action*propose*op_put-down1
+   (state <s> ^problem-space <ps>
+              ^world.objects.object <obj>)
+   (<ps> ^name action
+         ^action.propose-action-operators true)
+   (<obj> ^predicates.arm-status grabbed)
+-->
+   (<s> ^operator <op> +)
+   (<op> ^name op_put-down1
+         ^action-handle put-down1
+         ^arg1 <arg1>
+         ^action-type primitive)
+   (<arg1> ^arg-type object
+           ^id <obj>)
+}
+
+sp {composite-action*propose*op_put-down1*with*obj2
+   (state <s> ^problem-space <ps>
+              ^world.objects.object <obj1>
+              ^world.objects.object { <obj2> <> <obj1> })
+   (<ps> ^name action
+         ^action.propose-action-operators true)
+   (<obj1> ^predicates.arm-status grabbed)
+   (<obj2> ^predicates.visible true
+           ^predicates.category object)
+-->
+   (<s> ^operator <op> +)
+   (<op> ^name op_put-down1
+         ^action-handle put-down1
+         ^arg1 <arg1>
+         ^arg2 <arg2>
+         ^action-type primitive)
+   (<arg1> ^arg-type object
+           ^id <obj1>)
+   (<arg2> ^arg-type predicate
+           ^2 <obj2>)
+}
+
+## op_give1
+sp {composite-action*propose*op_give1
+   (state <s> ^problem-space <ps>
+              ^world.objects.object <obj1>
+              ^world.objects.object <person>)
+   (<ps> ^name action
+         ^action.propose-action-operators true)
+   (<obj1> ^predicates.arm-status grabbed)
+   (<person> ^predicates.visible true
+             ^predicates.category person)
+-->
+   (<s> ^operator <op> +)
+   (<op> ^name op_give1
+         ^action-handle give1
+         ^arg1 <arg1>
+         ^arg2 <arg2>
+         ^action-type primitive)
+   (<arg1> ^arg-type object
+           ^id <obj1>)
+   (<arg2> ^arg-type predicate
+           ^handle in1
+           ^2 <person>)
+}
+
 #
 ## HACK for now, so we can learn store (wont try to pick it up once its on the goal)
 #sp {composite-action*reject*op_pick-up1*achieved*goal
@@ -150,20 +235,7 @@ sp {composite-action*propose*driving-operator*op_stop1
 #   (<s> ^operator <o> -)
 #}
 #
-##sp {composite-action*mobile*propose*op_pick-up1*imagined*object
-##   (state <s> ^problem-space.name action
-##              ^problem-space.action.propose-action-operators true
-##              ^superstate.action-operator.arg1.id <obj>
-##             -^world.objects <obj>)
-##-->
-##   (<s> ^operator <op> +)
-##   (<op> ^name op_pick-up1 
-##         ^action-handle pick-up1
-##         ^arg1 <arg1>
-##         ^action-type primitive)
-##   (<arg1> ^arg-type object
-##           ^id <obj>)
-##}
+
 #
 ######## propose put-down for objects #########################################
 ## Mobile - put down on the floor
@@ -186,24 +258,6 @@ sp {composite-action*propose*driving-operator*op_stop1
 #
 #
 ########################## propose op_go ##################################
-#sp {action*propose*op_go-to-location1
-#   (state <s> ^problem-space <ps>
-#              ^world.objects.object <loc>
-#             -^world.robot.current-location <loc>)
-#   (<ps> ^name action
-#         ^action.propose-action-operators true)
-#  (<loc> ^predicates.category location)
-#-->
-#   (<s> ^operator <o> +)
-#   (<o> ^name op_go-to-location1
-#        ^action-handle go-to-location1
-#         ^action-type primitive
-#         ^arg2 <arg2>)
-#   (<arg2> ^arg-type predicate
-#           ^arg-status desired
-#           ^handle to1
-#           ^2 <loc>)
-#}
 ##
 #
 ######################## propose op_scan ##################################

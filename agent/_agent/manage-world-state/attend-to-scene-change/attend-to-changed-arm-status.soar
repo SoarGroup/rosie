@@ -1,58 +1,47 @@
 # Update world.robot.arm.action
 
-# ARMOP
-
-sp {anystate*apply*attend-to-changed-arm-status*add*current*action
+sp {anystate*apply*attend-to-changed-arm-status*mark*grabbed
    (state <s> ^operator <o>
-              ^top-state.world.robot.arm <arm>)
-   (<o> ^name attend-to-scene-change
-        ^change.type changed-arm-status
-        ^change.self-info.action <action>)
--->
-   (<arm> ^action <action>)
-}
-
-sp {anystate*apply*attend-to-changed-arm-status*remove*old*action
-   (state <s> ^operator <o>
-              ^top-state.world.robot.arm <arm>)
-   (<o> ^name attend-to-scene-change
-        ^change.type changed-arm-status
-        ^change.self-info.action <action>)
-   (<arm> ^action {<old-action> <> <action>})
--->
-   (<arm> ^action <old-action> -)
-}
-
-# When we move an object, remove all internal links associated with it
-sp {anystate*apply*attend-to-changed-arm-status*stopped*remove*moved-object*internal-links
-   (state <s> ^operator <o>
-              ^top-state.world.robot.arm <arm>
+              ^top-state.io.input-link.self.held-object { <handle> <> none }
               ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
    (<o> ^name attend-to-scene-change
-        ^change.type changed-arm-status
-        ^change.self-info.action wait)
-   (<arm> ^moving <handle1>)
-   (<obj-info> ^object-handle <handle1>
-                ^internal-link <handle2>)
+        ^change.type changed-arm-status)
+   (<obj-info> ^perception-id <handle>
+               ^object-handle <h>
+               ^wm-obj.predicates <preds>)
 -->
-   (<obj-info> ^internal-link <handle2> -)
-   (write |Moved object | <handle1> | and removed link to | <handle2> (crlf))
+   (<preds> ^arm-status grabbed
+            ^arm-status not-grabbed -)
+   (write |Marking object | <h> | as grabbed | (crlf))
 }
 
-sp {anystate*apply*attend-to-changed-arm-status*stopped*remove*other*internal-links
+sp {anystate*apply*attend-to-changed-arm-status*mark*not-grabbed*first
    (state <s> ^operator <o>
-              ^top-state.world.robot.arm <arm>
-              ^top-state.perception-monitor.object-monitor <mon>)
+              -^top-state.io.input-link.self.held-object <handle>
+              ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
    (<o> ^name attend-to-scene-change
-        ^change.type changed-arm-status
-        ^change.self-info.action wait)
-   (<arm> ^moving <id>)
-   (<mon> ^object <src-obj>
-          ^object <dest-obj>)
-   (<src-obj> ^id <id>)
-   (<dest-obj> ^id <id2>
-               ^internal-link <id>)
+        ^change.type changed-arm-status)
+   (<obj-info> ^perception-id <handle>
+               ^object-handle <h>
+               ^wm-obj.predicates <preds>)
+   (<preds> -^arm-status)
 -->
-   (<dest-obj> ^internal-link <id> -)
-   (write |Moved object | <id> | and removed link from | <id2> (crlf))
+   (<preds> ^arm-status not-grabbed)
+   (write |Marking object | <h> | as not-grabbed | (crlf))
+}
+
+sp {anystate*apply*attend-to-changed-arm-status*mark*not-grabbed*changed
+   (state <s> ^operator <o>
+              -^top-state.io.input-link.self.held-object <handle>
+              ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
+   (<o> ^name attend-to-scene-change
+        ^change.type changed-arm-status)
+   (<obj-info> ^perception-id <handle>
+               ^object-handle <h>
+               ^wm-obj.predicates <preds>)
+   (<preds> ^arm-status grabbed)
+-->
+   (<preds> ^arm-status not-grabbed
+            ^arm-status grabbed -)
+   (write |Marking object | <h> | as not-grabbed | (crlf))
 }
