@@ -3,17 +3,31 @@
 
 sp {interpret-message*propose*interpret-unknown-word
    (state <s> ^name interpret-message
+              
           #   -^top-state.dialog-context.learning-predicate.name <word>
               ^instructor-message <msg>)
    (<msg> ^interaction-status.failure <f> 
          -^interpreted true)
    (<f> ^type unknown-word ^word <word>)
 -->
+#    (interrupt)
    (<s> ^operator <o> + > =)
    (<o> ^name interpret-unknown-word
         ^word <word>
         ^message <msg>)
 }
+
+#sp {interpret-message*elaborate*topstate*unknown-word
+#    :o-support
+#   (state <s> ^name interpret-message
+#              ^top-state.dialog-context <dc>
+#              ^operator <o> +)
+#   (<o> ^name interpret-unknown-word
+#        ^word <word>)
+#-->
+#    (<dc> ^new-unknown <word>)
+#}
+
 sp {interpret-message*prefer*interpret-unknown-word*alphabetic*ordering
    (state <s> ^name interpret-message
               ^operator <o2> +
@@ -145,6 +159,20 @@ sp {interpret-message*apply*interpret-unknown-word*next-store-sentence*processed
 
 # Mark the message as interpreted (retracts operator)
 #   And send message to human
+
+sp {interpret-message*apply*interpret-unknown-word*remove-new-unknown
+   (state <s> ^name interpret-message
+              #^unprocessed-next nil
+              ^top-state.dialog-context <dc>
+              ^operator <o>)
+   (<o> ^name interpret-unknown-word
+        ^word <word>
+        ^message <msg>)
+   (<dc> ^new-unknown <word>)
+-->
+    (<dc> ^new-unknown <word> -)
+ }
+
 sp {interpret-message*apply*interpret-unknown-word*create*segment
    (state <s> ^name interpret-message
               #^unprocessed-next nil

@@ -1,10 +1,6 @@
 import csv, re, string
 import numpy as np
 
-#automate here
-#gFile = "mp83549t"
-#gFile = "t94538pm"
-#gFile = "tp538m94"
 gFile = "9i8pt5m43"
 with open(gFile + ".csv", 'rb') as f:
     reader = csv.reader(f)

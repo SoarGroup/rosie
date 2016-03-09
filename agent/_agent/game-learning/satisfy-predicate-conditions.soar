@@ -92,7 +92,7 @@ sp {satisfy-predicate-conditions*elaborate-finished-learning
 
 sp {satisfy-predicate-conditions*elaborate-finished-learning*goal
     (state <s1> ^top-state.dialog-context.learning true ^superstate.superstate <sss> ^superstate <ss>)
-    (<s1> ^main-type {<type> << goal >>} ^operator <o> ^<type> <a1>)
+    (<s1> ^main-type {<type> << goal failure >>} ^operator <o> ^<type> <a1>)
     (<o> ^type <type> -^duplicate-of) 
     (<a1> ^parameter-set <p1> ^handle <c1>)
     (<p1> ^set <i1>)
@@ -102,17 +102,17 @@ sp {satisfy-predicate-conditions*elaborate-finished-learning*goal
     (<ss> ^finished-learning <type>)
 }
 
-sp {satisfy-predicate-conditions*elaborate-finished-learning*failure
-    (state <s1> ^top-state.dialog-context.learning true ^superstate.superstate <sss> ^superstate <ss>)
-    (<s1> ^main-type {<type> << failure >>} ^operator <o> ^<type> <a1>)
-    (<o> ^type <type> -^duplicate-of) 
-    (<a1> ^parameter-set <p1> ^handle <c1>)
-    (<p1> ^set <i1>)
-    -->
-  #  (<s1> ^operator <o> -)
-    (<sss> ^finished-learning <type>)
-    (<ss> ^finished-learning <type>)
-}
+#sp {satisfy-predicate-conditions*elaborate-finished-learning*failure
+#    (state <s1> ^top-state.dialog-context.learning true ^superstate.superstate <sss> ^superstate <ss>)
+#    (<s1> ^main-type {<type> << failure >>} ^operator <o> ^<type> <a1>)
+#    (<o> ^type <type> -^duplicate-of) 
+#    (<a1> ^parameter-set <p1> ^handle <c1>)
+#    (<p1> ^set <i1>)
+#    -->
+#  #  (<s1> ^operator <o> -)
+#    (<sss> ^finished-learning <type>)
+#    (<ss> ^finished-learning <type>)
+#}
 
 sp {satisfy-predicate-conditions*propose*finished-learning*actiongoal
     (state <s1> ^top-state.dialog-context.learning true)
@@ -207,25 +207,48 @@ sp {finished-learning*propose*store*primary*rtype
 
 sp {finished-learning*propose*store-next-level
    (state <s> ^name finished-learning
-             -^to-store <something2>
-              ^to-store <ts>)
-   (<ts> ^{<something> <> final <> goal-state <> initial } {<something2> <=> <s>})#<> set <> instance
+             -^all-stored
+              ^store-link <ts>)
+           #  -^to-store <something2>
+             # ^to-store <ts>)
+   #(<ts> ^{<something> <> final <> goal-state <> initial } {<something2> <=> <s>})#<> set <> instance
 -->
    (<s> ^operator <o> + =)
    (<o> ^name store-game-level
-        ^to-store <something2>)
+        ^to-store <ts>)
+        #^to-store <something2>)
 }
-
-sp {finished-learning*apply*store-next-level
+sp {finished-learning*apply*store-next-level*finished
+   (state <s> ^name finished-learning
+              ^operator <o>)
+   (<o> ^name store-game-level)
+   -{(<s> ^to-store.<something> {<t2> <=> <s>})
+    -{(<s> ^to-store <t2>)}}
+-->
+   (<s> ^all-stored true)
+}
+sp {finished-learning*apply*store-next-level2
    (state <s> ^name finished-learning
               ^operator <o>
+              ^to-store <ts>
               ^smem.command <sc>)
-   (<o> ^name store-game-level
-        ^to-store <something2>)
+   (<o> ^name store-game-level)
+   (<ts> ^{<something> <> final <> goal-state <> initial } {<something2> <=> <s>})
 -->
    (<s> ^to-store <something2>)
    (<sc> ^store <something2>)
 }
+
+#sp {finished-learning*apply*store-next-level
+#   (state <s> ^name finished-learning
+#              ^operator <o>
+#              ^smem.command <sc>)
+#   (<o> ^name store-game-level
+#        ^to-store <something2>)
+#-->
+#   (<s> ^to-store <something2>)
+#   (<sc> ^store <something2>)
+#}
 
 sp {finished-learning*propose*complete
    (state <s> ^name finished-learning)
