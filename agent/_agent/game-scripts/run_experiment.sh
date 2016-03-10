@@ -25,15 +25,15 @@ do
 	java SentencesToSoar soar-game.script
 	cp soar-game.soar /home/jrkirk/rosie2/rosie-project/rosie/agent/_agent/language-comprehension/comprehension/test-sentences/
 	/home/jrkirk/rosie2/rosie-project/soar/out/./cli < game-data-agent.soar
-	cp stats.txt results4/$rfilename$stats
-	cp statsmax.txt results4/$rfilename$maxstats
-	cp stats.csv results4/$rfilename$csv
-	cp s1.txt results4/$rfilename$topstate
-	cp soar-game.script results4/$rfilename$dialog
+	cp stats.txt results5/$rfilename$stats
+	cp statsmax.txt results5/$rfilename$maxstats
+	cp stats.csv results5/$rfilename$csv
+	cp s1.txt results5/$rfilename$topstate
+	cp soar-game.script results5/$rfilename$dialog
 	
-	cp pertaskstats.txt results4/$rfilename$pertaskstats
-	cp smemuse.txt results4/$rfilename$smem
-	cp statsdc.txt results4/$rfilename$dc
+	cp pertaskstats.txt results5/$rfilename$pertaskstats
+	cp smemuse.txt results5/$rfilename$smem
+	cp statsdc.txt results5/$rfilename$dc
 	
 	
 	rm pertaskstats.txt
