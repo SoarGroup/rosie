@@ -1,3 +1,8 @@
+### state.deep-copy-subactions
+
+# Support structure used when deep copying a list of subactions
+#   Elaborated automatically [see copy-type.soar]
+
 sp {anystate*deep-copy-subactions*elaborate*copy
    (state <s> ^deep-copy-subactions <dcs>)
    (<dcs> ^source <source>)
@@ -52,10 +57,19 @@ sp {anystate*deep-copy-subactions*copy*subaction*name
    (state <s> ^deep-copy-subactions.copy-subactions-map.entry <e>)
    (<e> ^source <src-sub>
         ^copy <sub>)
-   (<src-sub> ^action-handle <handle>)
+   (<src-sub> ^action-handle <handle>
+              ^action-type <type>)
 -->
    (<sub> ^action-handle <handle>
-          ^action-type primitive)
+          ^action-type <type>)
+}
+
+sp {anystate*deep-copy-subactions*copy*subaction*argument*arg-status
+   (state <s> ^deep-copy-subactions.copy-subactions-map.entry <e>)
+   (<e> ^source.<arg-name>.arg-status <status>
+        ^copy.<arg-name> <copy-arg>)
+-->
+   (<copy-arg> ^arg-status <status>)
 }
 
 ##### COPY OBJECT/LOCATION ARG #####
@@ -87,6 +101,7 @@ sp {anystate*deep-copy-subactions*copy*subaction*object*arg*abstract
 -->
    (<sub> ^<arg-name> <new-arg>)
    (<new-arg> ^arg-type object
+              ^arg-status abstract
               ^id <new-obj>)
    (<new-obj> ^item-type object
               ^predicates <preds>)
@@ -152,6 +167,7 @@ sp {anystate*deep-copy-subactions*copy*subaction*predicate*arg*abstract
 -->
    (<sub> ^<arg-name> <new-arg>)
    (<new-arg> ^arg-type predicate
+              ^arg-status abstract
               ^handle <pred-handle>
               ^2 <new-obj>)
    (<src-obj> ^item-type object
@@ -177,20 +193,16 @@ sp {anystate*deep-copy-subactions*copy*until-clause
    (state <s> ^deep-copy-subactions.copy-subactions-map.entry <sub-e>)
    (<sub-e> ^source <src-sub>
             ^copy <sub>)
-   (<src-sub> ^<arg-name> <src-arg>)
-   (<src-arg> ^arg-type until-clause)
+   (<src-sub> ^until-clause <src-until>)
 -->
-   (<sub> ^<arg-name> <new-arg>)
-   (<new-arg> ^arg-type until-clause)
+   (<sub> ^until-clause <new-until>)
 }
    
 sp {anystate*deep-copy-subactions*copy*until-clause*state*predicate
    (state <s> ^deep-copy-subactions.copy-subactions-map.entry <sub-e>
               ^deep-copy-world.copy-objects-map <objs-map>)
-   (<sub-e> ^source.<arg-name> <src-arg>
-            ^copy <sub>)
-   (<src-arg> ^arg-type until-clause
-              ^predicate <src-pred>)
+   (<sub-e> ^source.until-clause.predicate <src-pred>
+            ^copy.until-clause <new-until>)
    (<src-pred> ^type state
                ^handle <pred-handle>
                ^property-handle <prop-handle>
@@ -198,9 +210,8 @@ sp {anystate*deep-copy-subactions*copy*until-clause*state*predicate
    (<objs-map> ^entry <obj-e>)
    (<obj-e> ^source <src-obj>
             ^copy <obj>)
-   (<sub> ^<arg-name> <new-arg>)
 -->
-   (<new-arg> ^predicate <new-pred>)
+   (<new-until> ^predicate <new-pred>)
    (<new-pred> ^type state
                ^handle <pred-handle>
                ^property-handle <prop-handle>
@@ -210,10 +221,8 @@ sp {anystate*deep-copy-subactions*copy*until-clause*state*predicate
 sp {anystate*deep-copy-subactions*copy*until-clause*relation*predicate
    (state <s> ^deep-copy-subactions.copy-subactions-map.entry <sub-e>
               ^deep-copy-world.copy-objects-map <objs-map>)
-   (<sub-e> ^source.<arg-name> <src-arg>
-            ^copy <sub>)
-   (<src-arg> ^arg-type until-clause
-              ^predicate <src-pred>)
+   (<sub-e> ^source.until-clause.predicate <src-pred>
+            ^copy.until-clause <new-until>)
    (<src-pred> ^type relation
                ^handle <pred-handle>
                ^1 <src-obj1>
@@ -223,9 +232,8 @@ sp {anystate*deep-copy-subactions*copy*until-clause*relation*predicate
             ^copy <obj1>)
    (<obj2-e> ^source <src-obj2>
             ^copy <obj2>)
-   (<sub> ^<arg-name> <new-arg>)
 -->
-   (<new-arg> ^predicate <new-pred>)
+   (<new-until> ^predicate <new-pred>)
    (<new-pred> ^type relation
                ^handle <pred-handle>
                ^1 <obj1>

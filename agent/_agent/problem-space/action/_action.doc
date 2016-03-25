@@ -1,0 +1,98 @@
+These are rules for the action problem-space
+They are organized by the problem-space structure
+
+
+problem-space
+	^name action
+	^action
+		^propose-action-operators << true false >>
+			If true, proposes operators for the primitive actions [see propose-action-operators.soar]
+		^propose-driving-operators << true false >>
+			If true, proposes operators for the driving actions [see propose-driving-operators.soar]
+			These have no preconditions/action models 
+			
+			
+######################## State Elaborations ##########################
+			[see files in state-elaborations folder]
+
+These rules are general elaboration rules that can apply to any state that has the proper structures
+
+## action-id
+ The smem lti and substructure with information about the current action
+ By default, elaborated from the superstate
+ 
+## action-operator
+ The superoperator for the action being executed
+ By default, its from superstate.operator
+   But it can be deep copied if there is a ^deep-copy-action-operator <op> on the state
+   (for example, during evaluate-operator)
+ 
+## generalize-argument
+ These rules take a specific instance of an action argument
+   and generates a generalized-rep to be stored in smem
+
+ They fire if a generalize-argument structure is on the state
+   (state <s> ^generalize-argument <gen-arg>)
+   (<gen-arg> ^arg-type << object concept predicate until-clause >>
+              ^instance <ins>) # usually from the action-operator
+   Also expects the following on the state: 
+      action-operator, action-id
+   Will create a ^generalized-rep <rep> of the argument under <gen-arg>
+
+
+## ground-argument
+ These rules take a general representation of an action argument (smem rep)
+   and generate an instance grounded in the world
+
+ They fire if a ground-argument structure is on the state
+   (state <s> ^ground-argument <ground-arg>)
+   (<ground-arg> ^arg-type << object concept predicate until-clause >>
+                 ^arg-status abstract # Optional: generate new rep instead of connecting to world
+                 ^generalized-rep <rep>) # usually the smem representation of the argument
+   Also expects the following on the state: 
+     action-operator, action-id, world
+   Will create an ^instance <ins> rep of the argument under <ground-arg>
+   
+   
+## match-action
+ These rules will attempt to match an action-operator 
+   against the currently proposed set of actions and find a match
+
+ They fire if an match-action structure is on the state
+   (state <s> ^match-action <ma>)
+   (<ma> ^action-operator <action>)  # action-operator representation
+ Will elaborate ^matched <op> under match-action for each 
+   proposed operator (or evaluate-operator) which matches the action-operator
+   
+     
+## until-clause
+ These rules will check if an until-clause on the state is satisfed
+   By default, elaborated from action-operator.until-clause
+
+ They fire if an until-clause structure is on the state
+   (state <s> ^until-clause <until>)
+   (<until> ^prediate <pred>)  # Can be more than 1 predicate
+   (<pred> ^type << state relation >>
+           ^handle <pred-handle>
+           ^1 <obj1>
+           ^2 <obj2>) # may have 2 or more arguments if a relation
+  Also expects the following on the state: 
+     world
+  Will elaborate each predicate with ^satisfied true, 
+     and elaborates the until-clause with ^satisfied true if all predicates are satisfied
+
+
+## desired
+ These rules will check if a desired structure (goal) is satisfied
+
+ They fire is a desired structure is on the state in an action problem-space
+   (state <s> ^desired <des>)
+   (<des> ^predicate <pred>)   # Can be more than 1 predicate
+   (<pred> ^type << state relation >>
+           ^handle <pred-handle>
+           ^1 <obj1>
+           ^2 <obj2>) # may have 2 or more arguments if a relation
+ Also expects the following on the state: 
+     world
+ Will elaborate each predicate with ^satisfied true, 
+     and elaborates the desired structure with ^satisfied true if all predicates are satisfied
