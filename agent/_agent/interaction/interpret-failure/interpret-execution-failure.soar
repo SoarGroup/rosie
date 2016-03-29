@@ -1,36 +1,45 @@
-
 sp {interpret-failure*propose*interpret-execution-failure
    (state <s> ^name interpret-failure
-              ^failure.type execution-failure
-             -^handled <failure>)
+              ^failure <f>
+             -^handled <f>)
+   (<f> ^type execution-failure
+        ^failure-type <type>
+        ^failure-info <info>)
 -->
    (<s> ^operator <o> +)
-   (<o> ^name interpret-execution-failure)
+   (<o> ^name interpret-execution-failure
+        ^failure-type <type>
+        ^failure-info <info>)
 }
 
 sp {interpret-failure*apply*interpret-execution-failure*mark*handled
    (state <s> ^name interpret-failure
               ^operator.name interpret-execution-failure
-              ^failure <failure>)
+              ^failure <f>)
+   (<f> ^type execution-failure)
 -->
-   (<s> ^handled <failure>)
+   (<s> ^handled <f>)
 }
 
 sp {interpret-failure*apply*interpret-execution-failure*create*message
    (state <s> ^name interpret-failure
-              ^operator.name interpret-execution-failure)
+              ^operator <o>)
+   (<o> ^name interpret-execution-failure
+        ^failure-type <type>
+        ^failure-info <info>)
 -->
    (<s> ^outgoing-message <msg>)
-   (<msg> ^type simple-message
-          ^message-type execution-failure )
+   (<msg> ^type execution-failure
+          ^failure-type <type>
+          ^failure-info <info>)
 }
 
+# If the action was the bottom action, terminate the segment
 sp {interpret-failure*apply*interpret-execution-failure*terminate*segment
    (state <s> ^name interpret-failure
+              ^failure.bottom-action true
               ^operator.name interpret-execution-failure
               ^top-state.interaction.changes <c>)
 -->
    (<c> ^terminate-segment true)
 }
-
-   

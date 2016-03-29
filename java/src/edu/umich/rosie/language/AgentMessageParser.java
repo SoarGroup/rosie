@@ -43,7 +43,7 @@ public class AgentMessageParser
 			simpleMessages.put("get-next-subaction", "What do I do next?");
 			simpleMessages.put("confirm-pick-up", "I have picked up the object.");
 			simpleMessages.put("confirm-put-down", "I have put down the object.");
-			simpleMessages.put("execution-failure", "I failed to complete the action.");
+
 		}
 		
 		String type = SoarUtil.getValueOfAttribute(id, "type");
@@ -79,6 +79,8 @@ public class AgentMessageParser
 			return translateFinalGoalState(fieldsId);
 	    } else if(type.equals("say-sentence")){
 	    	return translateSaySentence(fieldsId);
+	    } else if(type.equals("execution-failure")){
+	    	return translateExecutionFailure(fieldsId);
 	    }
 		return null;
 	}
@@ -246,6 +248,25 @@ public class AgentMessageParser
 			return sentence;
 		}
 		return null;
+	}	
+	
+	public static String translateExecutionFailure(Identifier fieldsId){
+		String info = SoarUtil.getValueOfAttribute(fieldsId, "failure-info");
+		String type = SoarUtil.getValueOfAttribute(fieldsId, "failure-type");
+		if(info == null || type == null){
+			return "I was not able to perform the action";
+		}
+		if(type.equals("command-error")){
+			return "There was a problem sending the " + info + " command";
+		} else if(type.equals("execution-failed")){
+			return "There was an error while executing the " + info + " command";
+		} else if(type.equals("direction-retrieval-failure")){
+			return "I do not know about the turn direction " + info;
+		} else if(type.equals("invalid-direction-failure")){
+			return "The given turn direction " + info + " was not a valid direction";
+		} else {
+			return "I was not able to perform the action";
+		}
 	}	
 	
 //    public static String translateAgentMessage(Identifier id){
