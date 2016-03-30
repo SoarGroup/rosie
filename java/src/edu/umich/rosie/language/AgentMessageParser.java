@@ -264,6 +264,8 @@ public class AgentMessageParser
 			return "I do not know about the turn direction " + info;
 		} else if(type.equals("invalid-direction-failure")){
 			return "The given turn direction " + info + " was not a valid direction";
+		} else if(type.equals("unsatisfied-until-clause")){
+			return "I had to terminate the " + info + " command early";
 		} else {
 			return "I was not able to perform the action";
 		}

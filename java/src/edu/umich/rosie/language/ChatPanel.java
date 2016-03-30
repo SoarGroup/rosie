@@ -269,6 +269,9 @@ public class ChatPanel extends JPanel implements IMessagePasser.IMessageListener
     
     private void sendButtonClicked(){
     	String msg = chatField.getText().trim();
+    	if(msg.length() == 0){
+    		return;
+    	}
     	history.add(msg);
     	historyIndex = history.size();
     	messageLogger.sendMessage(msg, MessageType.INSTRUCTOR_MESSAGE);
