@@ -17,11 +17,12 @@ do
 	
 	cp $rfile soar-game.script
 	rfilename=${rfile%$suffix}
-	#b="zf4gpt5r9o83jm"
-	#if [ "$rfilename" \< "$b" ]; then
-	#	echo $rfilename
-	#	continue
-	#fi
+	
+	b="fg34z8mrjb95top"
+	if [ "$rfilename" \< "$b" ]; then
+		echo $rfilename
+		continue
+	fi
 	#echo "oops"
 	java SentencesToSoar soar-game.script
 	cp soar-game.soar /home/jrkirk/rosie2/rosie-project/rosie/agent/_agent/language-comprehension/comprehension/test-sentences/
