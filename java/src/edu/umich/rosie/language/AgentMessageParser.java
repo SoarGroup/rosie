@@ -266,6 +266,12 @@ public class AgentMessageParser
 			return "The given turn direction " + info + " was not a valid direction";
 		} else if(type.equals("unsatisfied-until-clause")){
 			return "I had to terminate the " + info + " command early";
+		} else if(type.equals("svs-filter-error")){
+			return "Something went wrong with the " + info + " filter";
+		} else if(type.equals("missing-object")){
+			return "I didn't see the object I expected to";
+		} else if(type.equals("unknown-location")){
+			return "I don't know how to get to the " + info + ".";
 		} else {
 			return "I was not able to perform the action";
 		}

@@ -1,0 +1,53 @@
+#### Different failure cases that can arise during pick-up
+
+# svs-filter-error: One of the position filters had an error
+sp {op_pick-up1*propose*report-failure*svs-filter-error
+   (state <s> ^name op_pick-up1
+              ^current-action.execution-operator.action-handle <handle>
+              ^object-position-filter <pos-filter>)
+   (<pos-filter> ^result <res>)
+   (<res> -^record.value)
+-->
+   (<s> ^operator <o> + > =)
+   (<o> ^name report-failure
+        ^failure-type svs-filter-error
+        ^failure-info object-position-filter)
+}
+
+# missing-object: no input-link rep for the object we are trying to pick up
+sp {op_pick-up1*propose*report-failure*missing-object
+   (state <s> ^name op_pick-up1
+             -^current-action.pick-up-command
+              -^target-object.input-link-obj
+               ^target-object.handle <handle>)
+-->
+   (<s> ^operator <o> + > =)
+   (<o> ^name report-failure
+        ^failure-type missing-object
+        ^failure-info <handle>)
+}
+
+# command-error: The pick-up command got an error status
+sp {op_pick-up1*propose*report-failure*command-error
+   (state <s> ^name op_pick-up1
+              ^current-action.execution-operator.action-handle <handle>
+              ^current-action.{ << drive-command pick-up-command >> }.status error)
+-->
+   (<s> ^operator <o> + > =)
+   (<o> ^name report-failure
+        ^failure-type command-error
+        ^failure-info <handle>)
+}
+
+# execution-failed: The pick-up command got a failure status
+sp {op_pick-up1*propose*report-failure*execution-failed
+   (state <s> ^name op_pick-up1
+              ^current-action.execution-operator.action-handle <handle>
+              ^current-action.{ << drive-command pick-up-command >> }.status failure)
+-->
+   (<s> ^operator <o> + > =)
+   (<o> ^name report-failure
+        ^failure-type execution-failed
+        ^failure-info <handle>)
+}
+

@@ -1,32 +1,48 @@
 #### Different failure cases that can arise during orient
 
-# direction-retrieval-failure: No LTI was found with the given direction-handle
-sp {op_orient1*propose*report-failure*direction-retrieval-failure
-   (state <s> ^name op_orient1
-              ^smem-query.result failure
-              ^direction-handle <handle>)
+# svs-filter-error: One of the position filters had an error
+sp {op_face1*propose*report-failure*svs-filter-error
+   (state <s> ^name op_face1
+              ^current-action.execution-operator.action-handle <handle>
+              ^{ << target-position-filter robot-position-filter >> <filter-name> } <pos-filter>)
+   (<pos-filter> ^result <res>)
+   (<res> -^record.value)
 -->
    (<s> ^operator <o> + > =)
    (<o> ^name report-failure
-        ^failure-type direction-retrieval-failure
-        ^failure-info <handle>)
+        ^failure-type svs-filter-error
+        ^failure-info <filter-name>)
 }
 
-# invalid-direction-failure: The LTI found for the direction-handle is not a relative-direction
-sp {op_orient1*propose*report-failure*invalid-direction-failure
-   (state <s> ^name op_orient1
-              ^direction-handle <handle>
-              ^direction-id.property.handle <> cardinal-direction1)
+sp {op_face1*apply*report-failure*svs-filter-error*remove*commands
+   (state <s> ^name op_face1
+              ^operator.name report-failure
+              ^robot-position-filter <rob-pos>
+              ^target-position-filter <obj-pos>
+              ^top-state.svs.command <cmd>)
+   (<cmd> ^extract_once <rob-pos>
+          ^extract_once <obj-pos>)
+-->
+   (<cmd> ^extract_once <rob-pos> -
+          ^extract_once <obj-pos> -)
+}
+
+# missing-object: We faced where we thought the object was, but it wasn't there
+sp {op_face1*propose*report-failure*missing-object
+   (state <s> ^name op_face1
+              ^current-action.execution-operator.action-handle <handle>
+              ^current-action.orient-command.status success
+              ^target-object.predicates.visible false)
 -->
    (<s> ^operator <o> + > =)
    (<o> ^name report-failure
-        ^failure-type invalid-direction-failure
+        ^failure-type missing-object
         ^failure-info <handle>)
 }
 
 # command-error: The orient command got an error status
-sp {op_orient1*propose*report-failure*command-error
-   (state <s> ^name op_orient1
+sp {op_face1*propose*report-failure*command-error
+   (state <s> ^name op_face1
               ^current-action.execution-operator.action-handle <handle>
               ^current-action.orient-command.status error)
 -->
@@ -37,8 +53,8 @@ sp {op_orient1*propose*report-failure*command-error
 }
 
 # execution-failed: The orient command got a failure status
-sp {op_orient1*propose*report-failure*execution-failed
-   (state <s> ^name op_orient1
+sp {op_face1*propose*report-failure*execution-failed
+   (state <s> ^name op_face1
               ^current-action.execution-operator.action-handle <handle>
               ^current-action.orient-command.status failure)
 -->
@@ -47,4 +63,3 @@ sp {op_orient1*propose*report-failure*execution-failed
         ^failure-type execution-failed
         ^failure-info <handle>)
 }
-
