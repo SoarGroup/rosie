@@ -241,6 +241,13 @@ public class ChatPanel extends JPanel implements IMessagePasser.IMessageListener
 				LanguageConnector lang = (LanguageConnector)soarAgent.getLanguageConnector();
 				lang.getSTT().stopListening();
 			}
+			if(arg0.getKeyCode() == KeyEvent.VK_F1 && soarAgent != null){
+				if(soarAgent.isRunning()){
+					soarAgent.stop();
+				} else {
+					soarAgent.start();
+				}
+			}
 		}
     }; 
 

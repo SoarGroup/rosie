@@ -81,6 +81,8 @@ public class AgentMessageParser
 	    	return translateSaySentence(fieldsId);
 	    } else if(type.equals("execution-failure")){
 	    	return translateExecutionFailure(fieldsId);
+	    } else if(type.equals("cant-find-object")){
+	    	return translateCantFindObject(fieldsId);
 	    }
 		return null;
 	}
@@ -250,6 +252,14 @@ public class AgentMessageParser
 		return null;
 	}	
 	
+	public static String translateCantFindObject(Identifier fieldsId){
+		Identifier obj = SoarUtil.getIdentifierOfAttribute(fieldsId, "object");
+		if(obj == null){
+			return "I can't find the object. Can you help?";
+		}
+		return "I can't find " + worldObjectToString(obj) + ". Can you help?";
+	}
+	
 	public static String translateExecutionFailure(Identifier fieldsId){
 		String info = SoarUtil.getValueOfAttribute(fieldsId, "failure-info");
 		String type = SoarUtil.getValueOfAttribute(fieldsId, "failure-type");
@@ -272,6 +282,10 @@ public class AgentMessageParser
 			return "I didn't see the object I expected to";
 		} else if(type.equals("unknown-location")){
 			return "I don't know how to get to the " + info + ".";
+		} else if(type.equals("no-ask-sentence")){
+			return "I don't know what to ask";
+		} else if(type.equals("no-say-sentence")){
+			return "I don't know what to say";
 		} else {
 			return "I was not able to perform the action";
 		}
@@ -445,6 +459,45 @@ public class AgentMessageParser
 		
 		return desc;
 	}
+	
+	public static String worldObjectToString(Identifier objId){
+		ArrayList<String> predicates = new ArrayList<String>();
+		
+		String name = null;
+		String shape = null;
+		String category = "object";
+		
+		Identifier predsId = SoarUtil.getIdentifierOfAttribute(objId, "predicates");
+		for(int p = 0; p < predsId.GetNumberChildren(); p++){
+			WMElement el = predsId.GetChild(p);
+			String att = el.GetAttribute().replaceAll("\\d", "");
+			String val = el.GetValueAsString().replaceAll("\\d",  "");
+			if(att.equals("category")){
+				category = val;
+			} else if(att.equals("name")){
+				name = val;
+			} else if(att.equals("shape")){
+				shape = val;
+			} else if(att.equals("color") || att.equals("modifier")){
+				predicates.add(val);
+			}
+		}
+		
+		StringBuilder rep = new StringBuilder();
+		for(String pred : predicates){
+			rep.append(pred + " ");
+		}
+		if(shape != null){
+			rep.append(shape + " ");
+		}
+		if(name != null){
+			rep.append(name);
+		} else if(shape == null){
+			rep.append(category);
+		}
+		return rep.toString();
+	}
+
 	public static String generateObjectDescriptionNew(Identifier descId){
 		String root = SoarUtil.getValueOfAttribute(descId, "type");
 		if (root == null)
