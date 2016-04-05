@@ -1,0 +1,75 @@
+sp {op_recall*propose*retrieve-episode
+   (state <s> ^name op_recall1
+              ^epmem-query <q>
+             -^retrieved-episode)
+-->
+   (<s> ^operator <o> + )
+   (<o> ^name retrieve-episode
+        ^query <q>)
+}
+sp {op_recall*apply*retrieve-episode*do*query
+   (state <s> ^name op_recall1
+              ^operator <o>
+              ^epmem.command <cmd>)
+   (<o> ^name retrieve-episode
+        ^query <q>)
+-->
+   (<cmd> ^query <q>)
+}
+
+sp {op_recall*apply*retrieve-episode*success
+   (state <s> ^name op_recall1
+              ^operator.name retrieve-episode
+              ^epmem <epmem>)
+   (<epmem> ^result <res>
+            ^command <cmd>)
+   (<res> ^success <q>
+          ^retrieved <episode>
+          ^normalized-match-score 1.0)
+   (<cmd> ^query <q>)
+-->
+   (<s> ^retrieved-episode <episode>)
+   (<cmd> ^query <q> -)
+}
+
+sp {op_recall*apply*retrieve-episode*success*elaborate*object*epmem*mapping
+   (state <s> ^name op_recall1
+              ^operator.name retrieve-episode
+              ^epmem <epmem>
+              ^deep-copy-object <dco>)
+   (<epmem> ^result <res>
+            ^command <cmd>)
+   (<res> ^success <q>
+          ^retrieved <episode>
+          ^mapping.node <node>
+          ^normalized-match-score 1.0)
+   (<node> ^cue <obj>
+           ^retrieved <ret>)
+   (<dco> ^copy <obj>)
+-->
+   (<dco> ^epmem <ret>)
+}
+
+sp {op_recall*apply*retrieve-episode*failure*no*exact*match
+   (state <s> ^name op_recall1
+              ^operator.name retrieve-episode
+              ^epmem <epmem>)
+   (<epmem> ^result.normalized-match-score < 1.0
+            ^command <cmd>)
+   (<cmd> ^query <q>)
+-->
+   (<s> ^retrieved-episode none)
+   (<cmd> ^query <q> -)
+}
+        
+sp {op_recall*apply*retrieve-episode*failure*no*match
+   (state <s> ^name op_recall1
+              ^operator.name retrieve-episode
+              ^epmem <epmem>)
+   (<epmem> ^result.failure
+            ^command <cmd>)
+   (<cmd> ^query <q>)
+-->
+   (<s> ^retrieved-episode none)
+   (<cmd> ^query <q> -)
+}
