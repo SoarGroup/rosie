@@ -18,24 +18,24 @@ do
 	cp $rfile soar-game.script
 	rfilename=${rfile%$suffix}
 	
-	b="fg34z8mrjb95top"
-	if [ "$rfilename" \< "$b" ]; then
-		echo $rfilename
-		continue
-	fi
+	#b="fg34z8mrjb95top"
+	#if [ "$rfilename" \< "$b" ]; then
+	#	echo $rfilename
+	#	continue
+	#fi
 	#echo "oops"
 	java SentencesToSoar soar-game.script
 	cp soar-game.soar /home/jrkirk/rosie2/rosie-project/rosie/agent/_agent/language-comprehension/comprehension/test-sentences/
 	/home/jrkirk/rosie2/rosie-project/soar/out/./cli < game-data-agent.soar
-	cp stats.txt results6/$rfilename$stats
-	cp statsmax.txt results6/$rfilename$maxstats
-	cp stats.csv results6/$rfilename$csv
-	cp s1.txt results6/$rfilename$topstate
-	cp soar-game.script results6/$rfilename$dialog
+	cp stats.txt results7/$rfilename$stats
+	cp statsmax.txt results7/$rfilename$maxstats
+	cp stats.csv results7/$rfilename$csv
+	cp s1.txt results7/$rfilename$topstate
+	cp soar-game.script results7/$rfilename$dialog
 	
-	cp pertaskstats.txt results6/$rfilename$pertaskstats
-	cp smemuse.txt results6/$rfilename$smem
-	cp statsdc.txt results6/$rfilename$dc
+	cp pertaskstats.txt results7/$rfilename$pertaskstats
+	cp smemuse.txt results7/$rfilename$smem
+	cp statsdc.txt results7/$rfilename$dc
 	
 	
 	rm pertaskstats.txt
