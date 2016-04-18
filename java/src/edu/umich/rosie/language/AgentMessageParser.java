@@ -26,7 +26,6 @@ public class AgentMessageParser
 //			simpleMessages.put("missing-object", "I lost the object I was using");
 //			simpleMessages.put("index-object-failure", "I couldn't find the referenced object");
 //			simpleMessages.put("no-proposed-action", "I couldn't perform the requested action");
-//			simpleMessages.put("multiple-arguments", "Could you be more specific?");
 //			simpleMessages.put("learn-location-failure", "I was not able to identify my current location");
 //			simpleMessages.put("get-goal-info", "What is the goal of that action?");
 //			simpleMessages.put("no-action-context-for-goal", "I don't know what action that goal is for");
@@ -36,7 +35,6 @@ public class AgentMessageParser
 			simpleMessages.put("missing-object", "I lost the object I was using. Can you help me find it?");
 			simpleMessages.put("index-object-failure", "I couldn't find the referenced object");
 			simpleMessages.put("no-proposed-action", "I couldn't do that");
-			simpleMessages.put("multiple-arguments", "Could you be more specific?");
 			simpleMessages.put("learn-location-failure", "I don't know where I am.");
 			simpleMessages.put("get-goal-info", "What is the goal?");
 			simpleMessages.put("no-action-context-for-goal", "I don't know what action that goal is for");
@@ -84,6 +82,8 @@ public class AgentMessageParser
 	    	return translateExecutionFailure(fieldsId);
 	    } else if(type.equals("cant-find-object")){
 	    	return translateCantFindObject(fieldsId);
+	    } else if(type.equals("multiple-arguments")){
+	    	return translateMultipleArguments(fieldsId);
 	    }
 		return null;
 	}
@@ -259,6 +259,15 @@ public class AgentMessageParser
 			return "I can't find the object. Can you help?";
 		}
 		return "I can't find " + worldObjectToString(obj) + ". Can you help?";
+	}
+	
+	public static String translateMultipleArguments(Identifier fieldsId){
+		Identifier obj = SoarUtil.getIdentifierOfAttribute(fieldsId, "argument-info");
+		if(obj == null){
+			return "Can you be more specific? Which object?";
+		}
+		return "Can you be more specific? Which " + worldObjectToString(obj) + "?";
+		
 	}
 	
 	public static String translateExecutionFailure(Identifier fieldsId){
