@@ -34,11 +34,14 @@ public class TranslateSentence extends RegressBaseListener {
 	
 	static final String PRODUCTION_TEXT =
 			"sp {elaborate*state*sentence-%d*%s\r\n"
-			+ "   (state <s> ^name comprehension\r\n"
-			+ "              ^superstate <ss>\r\n"
-			+ "              ^segment <seg>)\r\n"
-			+ "   (<ss> ^current-sentence-number %d)\r\n"
+		//	+ "   (state <s> ^name comprehension\r\n"
+		//		+ "              ^superstate <ss>\r\n"
+			+ "   (state <s> ^name rosie)\r\n"
+		//   + "              ^superstate <ss>\r\n"
+		//+ "              ^segment <seg>)\r\n"
+			+ "   (<s> ^current-sentence-number %d)\r\n"
 			+ "-->\r\n"
+		    + "   (<s> ^current-sentence <seg>)\r\n"
 			+ "   (<seg> ^input-sentence <first>\r\n"
 			+ "          ^current-word <first>\r\n"
 			+ "          ^original-sentence <first>\r\n"
