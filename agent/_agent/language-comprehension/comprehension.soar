@@ -16,7 +16,7 @@
 #   (<op> ^name comprehension)
 #}
 
-sp {mNL-Soar*propose*comprehension-stack
+sp {rosie*propose*comprehension-stack
    (state <s> ^name rosie
               ^io.input-link.language.sentence <sentence>)
    (<sentence> -^segment-proposed true)
@@ -26,7 +26,7 @@ sp {mNL-Soar*propose*comprehension-stack
          ^sentence <sentence>)
 }
 
-sp {mNL-Soar*propose*comprehension-stack*internal
+sp {rosie*propose*comprehension-stack*internal
    (state <s> ^world-usage internal
               ^current-sentence <sentence>
               ^current-sentence-number <csn>
@@ -62,47 +62,11 @@ sp {dialog-event*propose*comprehension
    (state <s> ^name dialog-event
               ^purpose <p>)
    (<p> ^type process-sentence ^parameters.sentence <sentence>)
-  # (<sentence> -^processed-sentence true)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name comprehension
-        ^sentence (deep-copy <sentence>))
+        ^sentence <sentence>)
 }
-
-#sp {dialog-event*apply*game-state-change-respond
-#   (state <s> ^name dialog-event
-#              ^operator <o>
-#              ^top-state.interaction.status <status>
-#              ^top-state.interaction.changes <changes>)
-#   (<o> ^name game-state-change-respond
-#        ^type <type>)
-#-->
-#   (<status> ^performed.dialog-event <de>)
-#   (<de> ^type game-state-change
-#         ^originator agent)
-#   (<changes> ^outgoing-message <msg1>)
-#   (<msg1> ^type simple-message
-#          ^message-type ok)
-#}
-
-#sp {dialog-event*apply*game-state-change-respond
-#   (state <s> ^name dialog-event
-#              ^operator <o>
-#              ^top-state.interaction.status <status>
-#              ^top-state.interaction.changes <changes>)
-#   (<o> ^name game-state-change-respond
-#        ^type <type>)
-#-->
-#   (<status> ^performed.dialog-event <de>)
-#   (<de> ^type game-state-change
-#         ^originator agent)
-#   (<changes> ^outgoing-message <msg1>)
-#   (<msg1> ^type simple-message
-#          ^message-type ok)
-#}
-
-
-
 
 
 ## For alternative structures that could be retried, keep the most recent.
@@ -115,132 +79,20 @@ sp {apply*comprehension*save-most-recent-alternative-structure
 -->
    (<seg> ^alternative-structure-receiver <nmr>)}
 
-##HUH? defunct
-#sp {rosie*apply*interaction*stored-new-unknowns*create-message
-#   (state <s> ^name interaction
-#              ^operator <o>
-#              ^top-state <ts>)
-#   (<ts> ^interaction.status <is>
-#         ^unprocessed-next nil
-#             ^dialog-context.new-unknown #<unknown>
-#              -^dialog-context.learning-predicate.name)
-#   (<o> ^name pop-segment )#^change-type terminate-segment)
-#             # ^stored-sentence <sentence>)
-#  # (<sentence> -^processed-sentence true)
-#-->
-#    (interrupt)
-#    (<is> ^new-message <nw>)
-#}
 
-#JK no longer need
-#sp {rosie*apply*interaction*stored-new-unknowns*unknown-word-failure
-#    :o-support
-#   (state <s> ^name rosie
-#              ^interaction.status.new-message <nw>
-#              ^unprocessed-next nil
-#              ^dialog-context.new-unknown <word>
-#             -^dialog-context.learning-predicate.name)
-#-->
-#   (<nw> ^interaction-status.failure <f>)
-#   (<f> ^type unknown-word ^word <word>)
-#}
-
-#fix this cleaning
-sp {mNL-Soar*apply*comprehension*stored*clean*dialog-world
-:o-support
-   (state <s> ^name rosie
-        #      ^current-sentence-number <csn>
-              #^unprocessed-next nil
-              -^dialog-context.new-unknown
-              -^dialog-context.learning-predicate.name
-              -^operator <o>
-              ^stored-sentence <sentence>
-              ^dialog-world.<< objects predicates >> <dw>)
-#   (<o> ^sentence <sentence>)
-   (<sentence> -^processed-sentence true)
+#clean dialog-world
+sp {apply*performed-event*clean*dialog-world
+#:interrupt
+    (state <s1> ^name interaction
+                ^operator <o>
+                ^top-state.dialog-world.<< objects predicates >> <dw>)
+    (<o> ^name performed-event
+         -^event.dialog-event.type process-unknown-word
+        -^event.dialog-event.type process-sentence)
    (<dw> ^<something> <obj>)
 -->
    (<dw> ^<something> <obj> -)
 }
-
-sp {mNL-Soar*propose*comprehension*stored
-   (state <s> ^name rosie
-              #^current-sentence-number <csn>
-              ^unprocessed-next nil
-             -^dialog-context.new-unknown
-              -^dialog-context.learning-predicate.name
-              ^stored-sentence <sentence>)
-   (<sentence> -^processed-sentence true)
--->
-#    (interrupt)
-   (<s> ^operator <op> + =)
-   (<op> ^name comprehension
-         ^sentence <sentence>)
-}
-
-#also check for new-unknown?
-#sp {mNL-Soar*propose*comprehension*another-sentence
-#   (state <s> ^name rosie
-#              #^current-sentence-number <csn>
-#              ^unprocessed-next nil
-#              ^next-stored-sentence <sentence2>
-#              ^top-state.dialog-context.learning-predicate.name)
-#   (<sentence2> -^processed-sentence true)
-#-->
-#   (<s> ^operator <op> + =)
-#   (<op> ^name comprehension
-#         ^sentence <sentence2>)
-#}
-
-
-#HUH defunct
-#sp {rosie*store-sentence*remove-processed*next-stored-sentence
-#    :o-support
-#   (state <s> ^name rosie
-#              -^unprocessed-next nil
-#              ^top-state <ts>
-#              ^next-stored-sentence <st>)
-#   (<ts> ^dialog-context.learning-predicate <lp2>)
-#   (<st> ^next <n1>)
-#   (<n1> ^next <n2> ^processed <p> ^first-word <fw>) 
-#  -{(<ts> ^dialog-context.learning-predicate {<lp1> <> <lp2>})} #only one left
-#-->
-#    (<n1> ^processed <p> -) 
-#    (<n1> ^first-word <fw> -) 
-#    (<s> ^unprocessed-next <n2>)
-#}
-
-#HUH defunct
-#sp {rosie*store-sentence*remove-processed
-#    :o-support
-#   (state <s> ^name rosie
-#              -^unprocessed-next nil
-#              -^top-state.dialog-context.learning-predicate.name
-#              ^stored-sentence <st>)
-#  # (<o> ^name interpret-unknown-word)
-#   (<st> ^next <n1>)
-#   (<n1> ^next <n2> ^processed <p> ^first-word <fw>) 
-#-->
-#    (<n1> ^processed <p> -) 
-#    (<n1> ^first-word <fw> -) 
-#    (<s> ^unprocessed-next <n2>)
-#}
-
-##HUH defunct
-#sp {rosie*interpret-unknown-word*store-sentence*remove-processed2
-#    :o-support
-#   (state <s> ^name rosie
-#              ^unprocessed-next <n1>)
-#  #            ^operator <o>)
-#  # (<o> ^name interpret-unknown-word)
-#   (<n1> ^next <n2> ^processed <p>) 
-#-->
-#(interrupt)
-#    (<n1> ^processed <p> -)
-#    (<s> ^unprocessed-next <n1> -)
-#    (<s> ^unprocessed-next <n2>)
-#}
-   
 
 sp {apply*comprehension*save-most-recent-alternative-meaning
    (state <s> ^operator.name comprehension
