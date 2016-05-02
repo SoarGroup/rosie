@@ -1,3 +1,10 @@
+sp {generate-action-operator*elaborate*world*from*superstate
+  (state <s> ^name generate-action-operator
+             ^superstate.world <world>)
+-->
+  (<s> ^world <world>)
+}
+
 # command-message: the parsed command representation from language comprehension
 sp {generate-action-operator*elaborate*message*from*superoperator
    (state <s> ^name generate-action-operator
@@ -6,13 +13,7 @@ sp {generate-action-operator*elaborate*message*from*superoperator
    (<s> ^command-message <msg>)
 }
 
-## action-id: the smem lti for the desired action
-#sp {generate-action-operator*elaborate*action-id
-#   (state <s> ^name generate-action-operator
-#              ^command-message.action <id>)
-#-->
-#   (<s> ^action-id <id>)
-#}
+### action-id - the lti for the action
 
 # look up the action in smem
 sp {generate-action-operator*elaborate*smem-query*action
@@ -21,9 +22,10 @@ sp {generate-action-operator*elaborate*smem-query*action
 -->
    (<s> ^smem-query <q>)
    (<q> ^cue.handle <action-handle>
-        ^depth 4)
+        ^depth 8)
 }
 
+# copy the result as action-id
 sp {generate-action-operator*elaborate*smem-query*result*action-id
    (state <s> ^name generate-action-operator
               ^command-message.action.handle <action-handle>
@@ -34,16 +36,7 @@ sp {generate-action-operator*elaborate*smem-query*result*action-id
    (<s> ^action-id <action-lti>)
 }
 
-
-# retrieve the action lti so we have all substructure
-sp {generate-action-operator*elaborate*retrieve-lti*command-message*action
-   (state <s> ^name generate-action-operator
-              ^action-id <id>)
--->
-  (<s> ^smem-retrieve <ret>)
-  (<ret> ^identifier <id>
-          ^depth 8)
-}
+### predicate-lti 
 
 # retrieve smem information for any concepts/predicates/properties
 sp {generate-action-operator*elaborate*smem-query*predicate
@@ -72,22 +65,6 @@ sp {generate-action-operator*elaborate*smem-query*result*predicate-lti
 
 ###### argument-info ######
 
-sp {generate-action-operator*elaborate*argument-info*message
-   (state <s> ^name generate-action-operator
-              ^command-message <msg>)
-   (<msg> ^action.handle << say1 ask1 >>
-          ^arg1.sentence <sentence>)
--->
-   (<s> ^argument-info <ask-msg-info>)
-   (<ask-msg-info> ^original-name arg1
-                   ^value <new-obj1>)
-   (<new-obj1> ^handle (make-constant-symbol |obj-hand|)
-   	           ^predicates <obj1-preds>)
-   (<obj1-preds> ^category message
-                 ^sentence <sentence>)
-}
-
-
 # argument-info
 #   original-name <arg-name>
 #   value <arg>
@@ -100,19 +77,103 @@ sp {generate-action-operator*elaborate*argument-info*message
 #   ^procedural <parg>        # from action-id.procedrual.<arg-name> <parg>
 #   ^arg-name <name>          # the name to use for the argument on the operator
 
-# elaborate argument-info, original-name, value
-sp {generate-action-operator*elaborate*argument-info
+## argument-info for messages (say or ask commands)
+sp {generate-action-operator*elaborate*argument-info*message
    (state <s> ^name generate-action-operator
               ^command-message <msg>)
-   (<msg> ^{ <arg-name> << arg1 arg2 arg3 arg4 arg5 arg6 relation predicate >> } <arg>)
-   (<arg> -^sentence)
+   (<msg> ^action.handle << say1 ask1 >>
+          ^arg1.sentence <sentence>)
 -->
-   (<s> ^argument-info <arg-info>)
-   (<arg-info> ^original-name <arg-name> 
-               ^value <arg>)
+  (<s> ^argument-info <arg-info>)
+  (<arg-info> ^arg-name arg1
+              ^arg-type object
+              ^id <new-obj>)
+   (<new-obj> ^handle (make-constant-symbol |obj-hand|)
+   	          ^predicates <obj-preds>)
+   (<obj-preds> ^category message
+                ^sentence <sentence>)
 }
 
-# procedural <parg> - from procedural.<arg-name>
+## argument-info for objects 
+sp {generate-action-operator*elaborate*argument-info*object
+   (state <s> ^name generate-action-operator
+              ^command-message <msg>)
+  (<msg> ^<arg-name> <arg>)
+  (<arg> ^item-type object)
+-->
+  (<s> ^argument-info <arg-info>)
+  (<arg-info> ^arg-name <arg-name>
+              ^arg-type object
+              ^obj-source.id <arg>)
+}
+
+## argument-info for concepts
+sp {generate-action-operator*elaborate*argument-info*concept
+   (state <s> ^name generate-action-operator
+              ^command-message <msg>)
+  (<msg> ^<arg-name> <arg>)
+  (<arg> ^item-type concept
+         ^handle <handle>)
+-->
+  (<s> ^argument-info <arg-info>)
+  (<arg-info> ^arg-name <arg-name>
+              ^arg-type concept
+              ^handle <handle>)
+}
+
+## argument-info for predicate arg
+sp {generate-action-operator*elaborate*argument-info*predicate*arg
+   (state <s> ^name generate-action-operator
+              ^command-message <msg>)
+  (<msg> ^{ <arg-name> << arg1 arg2 arg3 arg4 arg5 >> } <arg>)
+  (<arg> ^item-type predicate
+        -^until-clause
+         ^handle <handle>
+         ^2 <obj2>)
+-->
+  (<s> ^argument-info <arg-info>)
+  (<arg-info> ^arg-name <arg-name>
+              ^arg-type predicate
+              ^handle <handle>
+              ^obj-source.2 <obj2>)
+}
+
+sp {generate-action-operator*elaborate*argument-info*predicate*pred*rel*arg2
+   (state <s> ^name generate-action-operator
+              ^command-message <msg>)
+  (<msg> ^{ << predicate relation >> } <arg>)
+  (<arg> ^item-type predicate
+        -^until-clause
+         ^handle <handle>
+         ^2 <obj2>)
+-->
+  (<s> ^argument-info <arg-info>)
+  (<arg-info> ^arg-name arg2
+              ^arg-type predicate
+              ^handle <handle>
+              ^obj-source.2 <obj2>)
+}
+
+## argument-info for until-clause
+
+sp {generate-action-operator*elaborate*argument-info*until-clause*predicate*visible
+   (state <s> ^name generate-action-operator
+              ^command-message.<arg-name>.until-clause <until>)
+   (<until> ^action.handle sense1
+            ^agent.handle rosie
+            ^arg1 <obj>)
+-->
+   (<s> ^argument-info <arg-info>)
+   (<arg-info> ^arg-name until-clause
+               ^arg-type until-clause
+               ^predicate <pred>)
+   (<pred> ^type state
+           ^handle true
+           ^property-handle visible
+           ^obj-source.1 <obj>)
+}
+
+### procedural <parg> - from procedural.<arg-name>
 sp {generate-action-operator*elaborate*argument-info*procedural
    (state <s> ^name generate-action-operator
               ^argument-info <arg-info>
@@ -122,295 +183,43 @@ sp {generate-action-operator*elaborate*argument-info*procedural
    (<arg-info> ^procedural <parg>)
 }
 
-# arg-type << object predicate concept until-clause >>
-#   from argument-info.value.item-type
-# arg-name 
-#   The name to use for the argument when creating the operator
-
-# default arg-type: object
-sp {generate-action-operator*elaborate*argument-info*arg-type*none*object
-   (state <s> ^name generate-action-operator
-              ^argument-info <arg-info>)
-   (<arg-info> ^original-name <arg-name> 
-              -^value.item-type
-              -^value.until-clause)
+### object elaboration
+sp {generate-action-operator*elaborate*object*from*world*matches*source*handle
+  (state <s> ^name generate-action-operator
+             ^argument-info <arg-info>
+             ^world.objects.object <wobj>)
+  (<arg-info> ^obj-source.<name>.handle <handle>)
+  (<wobj> ^handle <handle>)
 -->
-   (<arg-info> ^arg-name <arg-name> 
-               ^arg-type object)
+  (<arg-info> ^<name> <wobj>)
 }
 
-# arg-type object: looks for item-type object
-sp {generate-action-operator*elaborate*argument-info*arg-type*object
-   (state <s> ^name generate-action-operator
-              ^argument-info <arg-info>)
-   (<arg-info> ^original-name <arg-name>
-                ^value.item-type object)
+sp {generate-action-operator*elaborate*object*from*world*matches*source*handle*until-clause
+  (state <s> ^name generate-action-operator
+             ^argument-info <arg-info>
+             ^world.objects.object <wobj>)
+  (<arg-info> ^arg-type until-clause
+              ^predicate <pred>)
+  (<pred> ^obj-source.<name>.handle <handle>)
+  (<wobj> ^handle <handle>)
 -->
-   (<arg-info> ^arg-name <arg-name> 
-               ^arg-type object)
+  (<pred> ^<name> <wobj>)
 }
 
-# arg-type concept: looks for item-type concept
-sp {generate-action-operator*elaborate*arugment-info*arg-type*concept
-   (state <s> ^name generate-action-operator
-              ^argument-info <arg-info>)
-   (<arg-info> ^original-name <arg-name>
-               ^value.item-type concept)
+sp {generate-action-operator*elaborate*object*from*world*matches*source*handle*abstract
+  (state <s> ^name generate-action-operator
+             ^argument-info <arg-info>
+             -^world.objects.object.handle <handle>)
+  (<arg-info> ^arg-status abstract 
+              ^obj-source.<name> <src>)
+  (<src> ^handle <handle>
+         -^object-instance)
 -->
-   (<arg-info> ^arg-name <arg-name> 
-               ^arg-type concept)
+  (<arg-info> ^<name> <src>)
 }
 
-# arg-type predicate: looks for item-type predicate
-sp {generate-action-operator*elaborate*arugment-info*arg-type*predicate
-   (state <s> ^name generate-action-operator
-              ^argument-info <arg-info>)
-   (<arg-info> ^original-name << arg2 relation predicate >>
-               ^value.item-type predicate
-              -^value.until-clause)
--->
-   (<arg-info> ^arg-name arg2
-               ^arg-type predicate)
-}
 
-# arg-type predicate: looks for item-type predicate
-sp {generate-action-operator*elaborate*arugment-info*arg-type*predicate*arg1
-   (state <s> ^name generate-action-operator
-              ^argument-info <arg-info>)
-   (<arg-info> ^original-name arg1
-               ^value.item-type predicate
-              -^value.until-clause)
--->
-   (<arg-info> ^arg-name arg1
-               ^arg-type predicate)
-}
-
-# arg-type until-clause: looks for value.until-clause
-sp {generate-action-operator*elaborate*arugment-info*arg-type*until-clause
-   (state <s> ^name generate-action-operator
-              ^argument-info <arg-info>)
-   (<arg-info> ^original-name <any>
-               ^value.until-clause)
--->
-   (<arg-info> ^arg-name until-clause
-               ^arg-type until-clause)
-}
-
-#
-####### until-clause ######
-
-sp {generate-action-operator*elaborate*argument-info*until-clause*predicate*visible
-   (state <s> ^name generate-action-operator
-              ^argument-info <arg-info>)
-   (<arg-info> ^arg-type until-clause
-               ^value.until-clause <until>)
-   (<until> ^action.handle sense1
-            ^agent.handle rosie
-            ^arg1 <obj>)
--->
-   (<arg-info> ^predicate <pred>)
-   (<pred> ^type state
-           ^handle true
-           ^property-handle visible
-           ^1 <obj>)
-}
-
-sp {generate-action-operator*elaborate*argument-info*until-clause*predicate*object-id
-   (state <s> ^name generate-action-operator
-              ^argument-info <arg-info>
-              ^top-state.world.objects.object <obj>)
-   (<arg-info> ^arg-type until-clause
-               ^predicate <pred>)
-   (<pred> ^{ <num> << 1 2 >> } <obj>)
--->
-   (<pred> ^object-id.<num> <obj>)
-}
-          
-#
-## until-clause has a predicate.handle and arg1 <obj>
-#sp {generate-action-operator*elaborate*argument-info*until-clause*clause-type*detect-predicate
-#   (state <s> ^name generate-action-operator
-#              ^argument-info <arg-info>)
-#   (<arg-info> ^arg-type until-clause
-#               ^value.until-clause.predicate.handle <pred-handle>
-#               ^value.until-clause.arg1 <obj>)
-#-->
-#   (<arg-info> ^clause-type detect-predicate
-#               ^predicate-handle <pred-handle>
-#               ^object <obj>)
-#}
-#
-#
-#sp {generate-action-operator*elaboarte*argument-info*until-clause*clause-type*count-shape
-#   (state <s> ^name generate-action-operator
-#              ^argument-info <arg-info>)
-#   (<arg-info> ^arg-type until-clause
-#               ^value.until-clause.arg1.predicates.spatial-shape <shape>)
-#-->
-#   (<arg-info> ^clause-type count-shape
-#               ^shape <shape>)
-#}
-
-#sp {generate-action-operator*elaborate*argument-info*until-clause*count-shape*at*shape
-#   (state <s> ^name generate-action-operator
-#              ^argument-info <arg-info>
-#              ^top-state.io.input-link.self.current-waypoint.classification <shape>)
-#   (<arg-info> ^arg-type until-clause
-#               ^clause-type count-shape
-#               ^shape <shape>)
-#-->
-#   (<arg-info> ^at-shape true)
-#}
-#
-#sp {generate-action-operator*elaborate*argument-info*until-clause*count-shape*from*quantity
-#   (state <s> ^name generate-action-operator
-#              ^argument-info <arg-info>)
-#   (<arg-info> ^arg-type until-clause
-#               ^clause-type count-shape
-#               ^value.until-clause.arg1.predicates.quantity.handle <num>)
-#-->
-#   (<arg-info> ^count <num>)
-#}
-#
-#sp {generate-action-operator*elaborate*argument-info*until-clause*count-shape*default*1
-#   (state <s> ^name generate-action-operator
-#              ^argument-info <arg-info>)
-#   (<arg-info> ^arg-type until-clause
-#               ^clause-type count-shape
-#               ^value.until-clause.arg1.predicates <preds>)
-#   (<preds> -^quantity.handle <num>)
-#-->
-#   (<arg-info> ^count 1)
-#}
-#
-#sp {generate-action-operator*elaborate*argument-info*until-clause*count-shape*final-count*at-shape
-#   (state <s> ^name generate-action-operator
-#              ^argument-info <arg-info>)
-#   (<arg-info> ^arg-type until-clause
-#               ^clause-type count-shape
-#               ^at-shape true
-#               ^count <c>)
-#-->
-#   (<arg-info> ^final-count (+ <c> 1))
-#}
-#
-#sp {generate-action-operator*elaborate*argument-info*until-clause*count-shape*final-count*not*at-shape
-#   (state <s> ^name generate-action-operator
-#              ^argument-info <arg-info>)
-#   (<arg-info> ^arg-type until-clause
-#               ^clause-type count-shape
-#              -^at-shape
-#               ^count <c>)
-#-->
-#   (<arg-info> ^final-count <c>)
-#}
-
-
-#### object-id (a pointer to the object) ####
-
-# handle matches a top-state.world.object
-sp {generate-action-operator*elaborate*argument-info*object-id*handle*matches
-   (state <s> ^name generate-action-operator
-              ^argument-info <arg-info>
-              ^top-state.world.objects.object <obj>)
-   (<arg-info> ^arg-type object
-               ^value.handle <handle>)
-   (<obj> ^handle <handle>)
-#   (<obj> -^linked-to) # LINKING
--->
-   (<arg-info> ^object-id <obj>)
-}
-
-# imagined object for an abstract argument not on the top-state.world, use it
-sp {generate-action-operator*elaborate*argument-info*object-id*abstract*imagined
-   (state <s> ^name generate-action-operator
-              ^argument-info <arg-info>
-             -^top-state.world.objects.object.handle <handle>)
-   (<arg-info> ^arg-type object
-               ^arg-status abstract
-               ^value <obj>)
-   (<obj> ^handle <handle>
-         -^object-instance true)
-#   (<obj> -^linked-to) # LINKING
--->
-   (<arg-info> ^object-id <obj>)
-}
-
-# predicate obj2 handle matches top-state.world-object
-sp {generate-action-operator*elaborate*argument-info*object-id2*predicate*object
-   (state <s> ^name generate-action-operator
-              ^argument-info <arg-info>
-              ^top-state.world.objects.object <obj2>)
-   (<arg-info> ^arg-type predicate
-               ^value <pred>)
-   (<pred> ^{2}.handle <handle2>)
-   (<obj2> ^handle <handle2>)
-#   (<obj> -^linked-to)  # LINKING
--->
-   (<arg-info> ^object-id2 <obj2>)
-}
-
-sp {generate-action-operator*elaborate*argument-info*object-id2*predicate*object*abstract
-   (state <s> ^name generate-action-operator
-              ^argument-info <arg-info>
-              -^top-state.world.objects.object.handle <handle2>)
-   (<arg-info> ^arg-type predicate
-               ^arg-status abstract
-               ^value.{2} <obj2>)
-   (<obj2> ^handle <handle2>)
--->
-   (<arg-info> ^object-id2 <obj2>)
-}
-
-sp {generate-action-operator*elaborate*argument-info*predicate-handle
-   (state <s> ^name generate-action-operator
-              ^argument-info <arg-info>
-              ^predicate-lti <pred-info>)
-   (<arg-info> ^arg-type predicate
-               ^value.handle <pred-handle>)
-   (<pred-info> ^handle <pred-handle>)
---> 
-   (<arg-info> ^predicate-handle <pred-handle>)
-}
-
-sp {generate-action-operator*elaborate*argument-info*spatial-relation
-   (state <s> ^name generate-action-operator
-              ^argument-info <arg-info>
-              ^predicate-lti <pred-info>)
-   (<arg-info> ^arg-type predicate
-               ^value.handle <pred-handle>)
-   (<pred-info> ^handle <pred-handle>
-                ^spatial-relation.handle <rel-handle>)
---> 
-  (<arg-info> ^spatial-relation <rel-handle>)
-}
-
-# LINKING
-#sp {generate-action-operator*elaborate*argument-info*object-id*object*linked
-#   (state <s> ^name generate-action-operator
-#              ^argument-info <arg-info>)
-#   (<arg-info> ^arg-type object
-#               ^value <obj>)
-#   (<obj> ^linked-to <link>)
-#-->
-#   (<arg-info> ^object-id <link>)
-#}
-
-# LINKING
-#sp {generate-action-operator*elaborate*argument-info*object-id*predicate*object*linked
-#   (state <s> ^name generate-action-operator
-#              ^argument-info <arg-info>)
-#   (<arg-info> ^arg-type predicate
-#               ^value <pred>)
-#   (<pred> ^2 <obj>)
-#   (<obj> ^linked-to <link>)
-#-->
-#   (<arg-info> ^object-id2 <link>)
-#}
-
-##### object arg-status << real abstract >> ####
-
-####### arg-status #######
+### arg-status
 # Information about the status of the argument
 
 # in general - copy from procedural
@@ -470,221 +279,3 @@ sp {generate-action-operator*elaborate*argument-info*predicate*arg-status*desire
    (<arg-info> ^arg-status desired)
 }
 
-#
-## If the object is on the top-state world and is visible, mark visible
-#sp {generate-action-operator*elaborate*argument-info*arg-status*visible
-#   (state <s> ^name generate-action-operator
-#              ^argument-info <arg-info>
-#              ^top-state.world.objects.object <obj>)
-#   (<arg-info> ^arg-type object
-#               ^value <obj>)
-#   (<obj> ^predicates.visible true)
-#-->
-#   (<arg-info> ^arg-status visible)
-#}
-#
-## Object is on top-state world but not visible - imagined
-#sp {generate-action-operator*elaborate*argument-info*arg-status*imagined*not*visible
-#   (state <s> ^name generate-action-operator
-#              ^argument-info <arg-info>
-#              ^top-state.world.objects.object <obj>)
-#   (<arg-info> ^arg-type object
-#               ^value <obj>)
-#   (<obj> ^predicates.visible false)
-#-->
-#   (<arg-info> ^arg-status imagined)
-#}
-#
-## Object is not on the world - imagined
-#sp {generate-action-operator*elaborate*argument-info*arg-status*imagined*not*on*world
-#   (state <s> ^name generate-action-operator
-#              ^argument-info <arg-info>
-#              -^top-state.world.objects.object <obj>)
-#   (<arg-info> ^arg-type object
-#              -^procedural.arg-status abstract
-#               ^value <obj>)
-#-->
-#   (<arg-info> ^arg-status imagined)
-#}
-#
-## Object is not on the world and is labeled as abstract - abstract
-#sp {generate-action-operator*elaborate*argument-info*arg-status*abstract*not*on*world
-#   (state <s> ^name generate-action-operator
-#              ^argument-info <arg-info>
-#              -^top-state.world.objects.object <obj>)
-#   (<arg-info> ^arg-type object
-#               ^procedural.arg-status abstract
-#               ^value <obj>)
-#-->
-#   (<arg-info> ^arg-status abstract)
-#}
-
-
-#### predicate arg-status << visible imagined abstract desired >> #####
-
-## predicate by default is visible
-#sp {generate-action-operator*elaborate*argument-info*predicate*arg-status*default*visible
-#   (state <s> ^name generate-action-operator
-#              ^argument-info <arg-info>)
-#   (<arg-info> ^arg-type predicate
-#              -^arg-status <> visible)
-#-->
-#   (<arg-info> ^arg-status visible)
-#}
-#
-## If the predicate exists on the top-state, mark as visible
-#sp {generate-action-operator*elaborate*argument-info*predicate*arg-status*visible
-#   (state <s> ^name generate-action-operator
-#              ^predicate-lti <pred-info>
-#              ^argument-info <arg1-info>
-#              ^argument-info <arg2-info>
-#              ^top-state.world.predicates.predicate <ts-pred>)
-#   (<pred-info> ^handle <pred-handle>
-#               -^spatial-relation
-#                ^relation-type existing)
-#   (<arg1-info> ^arg-name arg1
-#                ^value <obj1>)
-#   (<arg2-info> ^arg-name arg2
-#                ^arg-type predicate
-#                ^value.handle <pred-handle>
-#                ^value.{2} <obj2>)
-#   (<ts-pred> ^handle <pred-handle>
-#              ^instance <i>)
-#   (<i> ^1 <obj1> ^2 <obj2>)
-#-->
-#   (<arg2-info> ^arg-status visible)
-#}
-#
-## If the predicate exists on the top-state (in the form of the spatial-relation it is an alias for) - mark as visible
-#sp {generate-action-operator*elaborate*argument-info*predicate*arg-status*visible*2
-#   (state <s> ^name generate-action-operator
-#              ^predicate-lti <pred-info>
-#              ^argument-info <arg1-info>
-#              ^argument-info <arg2-info>
-#              ^top-state.world.predicates.predicate <ts-pred>)
-#   (<pred-info> ^handle <pred-handle>
-#                ^spatial-relation.handle <rel-handle>
-#                ^relation-type existing)
-#   (<arg1-info> ^arg-name arg1
-#                ^value <obj1>)
-#   (<arg2-info> ^arg-name arg2
-#                ^arg-type predicate
-#                ^value.handle <pred-handle>
-#                ^value.{2} <obj2>)
-#   (<ts-pred> ^handle <rel-handle>
-#              ^instance <i>)
-#   (<i> ^1 <obj1> ^2 <obj2>)
-#-->
-#   (<arg2-info> ^arg-status visible)
-#}
-#
-## If the predicate is not on the top-state, mark as imagined
-#sp {generate-action-operator*elaborate*argument-info*predicate*arg-status*imagined
-#   (state <s> ^name generate-action-operator
-#              ^predicate-lti <pred-info>
-#              ^argument-info <arg1-info>
-#              ^argument-info <arg2-info>
-#              ^top-state.world.predicates.predicate <ts-pred>)
-#   (<pred-info> ^handle <pred-handle>
-#               -^spatial-relation
-#                ^relation-type existing)
-#   (<arg1-info> ^arg-name arg1
-#                ^value <obj1>)
-#   (<arg2-info> ^arg-name arg2
-#                ^arg-type predicate
-#               -^procedural.arg-status abstract
-#                ^value.handle <pred-handle>
-#                ^value.{2} <obj2>)
-#   (<ts-pred> ^handle <pred-handle>)
-#   -{(<ts-pred> ^instance <i>)
-#     (<i> ^1 <obj1> ^2 <obj2>)}
-#-->
-#   (<arg2-info> ^arg-status imagined)
-#}
-#
-## If the predicate is not on the top-state (in the form of the one it is an alias for) - imagined
-#sp {generate-action-operator*elaborate*argument-info*predicate*arg-status*imagined*2
-#   (state <s> ^name generate-action-operator
-#              ^predicate-lti <pred-info>
-#              ^argument-info <arg1-info>
-#              ^argument-info <arg2-info>
-#              ^top-state.world.predicates.predicate <ts-pred>)
-#   (<pred-info> ^handle <pred-handle>
-#                ^spatial-relation.handle <rel-handle>
-#                ^relation-type existing)
-#   (<arg1-info> ^arg-name arg1
-#                ^value <obj1>)
-#   (<arg2-info> ^arg-name arg2
-#                ^arg-type predicate
-#               -^procedural.arg-status abstract
-#                ^value.handle <pred-handle>
-#                ^value.{2} <obj2>)
-#   (<ts-pred> ^handle <rel-handle>)
-#   -{(<ts-pred> ^instance <i>)
-#     (<i> ^1 <obj1> ^2 <obj2>)}
-#-->
-#   (<arg2-info> ^arg-status imagined)
-#}
-#
-## If the predicate is not on the top-state and is noted as abstract, mark as abstract
-#sp {generate-action-operator*elaborate*argument-info*predicate*arg-status*abstract
-#   (state <s> ^name generate-action-operator
-#              ^predicate-lti <pred-info>
-#              ^argument-info <arg1-info>
-#              ^argument-info <arg2-info>
-#              ^top-state.world.predicates.predicate <ts-pred>)
-#   (<pred-info> ^handle <pred-handle>
-#               -^spatial-relation
-#                ^relation-type existing)
-#   (<arg1-info> ^arg-name arg1
-#                ^value <obj1>)
-#   (<arg2-info> ^arg-name arg2
-#                ^arg-type predicate
-#                ^procedural.arg-status abstract
-#                ^value.handle <pred-handle>
-#                ^value.{2} <obj2>)
-#   (<ts-pred> ^handle <pred-handle>)
-#   -{(<ts-pred> ^instance <i>)
-#     (<i> ^1 <obj1> ^2 <obj2>)}
-#-->
-#   (<arg2-info> ^arg-status abstract)
-#}
-#
-## If the predicate is not on the top-state (in the form of the one it is an alias for) 
-##    and is marked in procedural memory as abstract - mark as abstract
-#sp {generate-action-operator*elaborate*argument-info*predicate*arg-status*abstract*2
-#   (state <s> ^name generate-action-operator
-#              ^predicate-lti <pred-info>
-#              ^argument-info <arg1-info>
-#              ^argument-info <arg2-info>
-#              ^top-state.world.predicates.predicate <ts-pred>)
-#   (<pred-info> ^handle <pred-handle>
-#                ^spatial-relation.handle <rel-handle>
-#                ^relation-type existing)
-#   (<arg1-info> ^arg-name arg1
-#                ^value <obj1>)
-#   (<arg2-info> ^arg-name arg2
-#                ^arg-type predicate
-#                ^procedural.arg-status abstract
-#                ^value.handle <pred-handle>
-#                ^value.{2} <obj2>)
-#   (<ts-pred> ^handle <rel-handle>)
-#   -{(<ts-pred> ^instance <i>)
-#     (<i> ^1 <obj1> ^2 <obj2>)}
-#-->
-#   (<arg2-info> ^arg-status abstract)
-#}
-#
-## If the predicate represents a desired relation - mark as desired
-#sp {generate-action-operator*elaborate*argument-info*predicate*arg-status*desired
-#   (state <s> ^name generate-action-operator
-#              ^argument-info <arg-info>
-#              ^predicate-lti <pred-info>)
-#   (<arg-info> ^arg-type predicate
-#               ^value.handle <pred-handle>)
-#   (<pred-info> ^handle <pred-handle>
-#                ^relation-type desired)
-#-->
-#   (<arg-info> ^arg-status desired)
-#}
-#

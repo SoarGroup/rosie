@@ -47,6 +47,19 @@ sp {pop-action*apply*complete-pop-action*clear*changes
    (<changes> ^pop <action> -)
 }
 
+sp {pop-action*apply*complete-pop-action*pop*segment
+   (state <s> ^name pop-action
+               ^operator.name complete-pop-action
+               ^top-state.interaction.stack.segment.purpose <p>
+               ^action-to-pop.execution-operator <op>
+               ^top-state.interaction.changes <chgs>)
+  (<p> ^type execute-action
+       ^parameters.action-operator <op>)
+-->
+  (<chgs> ^terminate-segment true)
+}
+
+
 # Report an action-event as having been performed if the action was successful
 sp {pop-action*apply*complete-pop-action*report*performed*action-event
    (state <s> ^name pop-action
@@ -130,6 +143,7 @@ sp {pop-action*apply*complete-pop-action*push*learning*segment
               ^action-to-pop <action>
               ^top-state.interaction.changes <changes>)
    (<action> ^policy-learning-needed true
+             ^status success
              ^execution-operator.action-handle <> find1)
 -->
    (<changes> ^new-segment-info <info>)
@@ -154,16 +168,6 @@ sp {pop-action*apply*complete-pop-action*remove*remembered*things
    (<preds> ^<att> <val> -)
 }
 
-sp {pop-action*apply*complete-pop-action*remove*object-set*bottom
-   (state <s> ^name pop-action
-              ^operator.name complete-pop-action
-              ^action-to-pop <a>
-              ^action-stack.bottom <a>
-              ^action-stack.object-set <objs>)
-   (<objs> ^object <obj>)
--->
-   (<objs> ^object <obj> -)
-}
    
    
 ## Remove any objects added to the world during the action
@@ -200,4 +204,37 @@ sp {pop-action*apply*complete-pop-action*mark*performed*once*subaction
          ^perform once)
 -->
    (<parent-op> ^performed <sub-handle>)
+}
+
+sp {pop-action*apply*complete-pop-action*delete*non-confirmed*task*object
+  (state <s> ^name pop-action
+             ^operator.name complete-pop-action
+             ^action-to-pop <action>
+             ^action-stack.actions <actions>
+             ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
+   (<action> ^task-objects.object <obj>)
+   (<obj> -^predicates.object-status confirmed
+          -^predicates.arm-status grabbed)
+  (<obj-info> ^wm-obj <obj>)
+  -{(<actions> ^action { <other> <> <action> })
+    (<other> ^task-objects.object <obj>)}
+-->
+  (<obj-info> ^delete-object true)
+}
+
+sp {pop-action*apply*complete-pop-action*delete*dialog*info
+  (state <s> ^name pop-action
+             ^operator.name complete-pop-action
+             ^action-to-pop <bottom>
+             ^action-stack.bottom <bottom>
+             ^top-state <top>)
+  (<top> ^dialog-object-list <list>
+         ^dialog-world <w>)
+-->
+  (<top> ^dialog-object-list <list> -
+         ^dialog-world <w> -
+         ^dialog-object-list nil
+         ^dialog-object-list-saved nil
+         ^dialog-world <new>)
+  (<new> ^objects <objs> ^predicates <preds>)
 }

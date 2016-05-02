@@ -35,6 +35,7 @@ public class AgentMessageParser
 			simpleMessages.put("missing-object", "I lost the object I was using. Can you help me find it?");
 			simpleMessages.put("index-object-failure", "I couldn't find the referenced object");
 			simpleMessages.put("no-proposed-action", "I couldn't do that");
+			simpleMessages.put("missing-argument", "I need more information to do that action");
 			simpleMessages.put("learn-location-failure", "I don't know where I am.");
 			simpleMessages.put("get-goal-info", "What is the goal?");
 			simpleMessages.put("no-action-context-for-goal", "I don't know what action that goal is for");
@@ -43,6 +44,7 @@ public class AgentMessageParser
 			simpleMessages.put("confirm-put-down", "I have put down the object.");
 			simpleMessages.put("find-success", "SUCCESS");
 			simpleMessages.put("find-failure", "FAILURE");
+      simpleMessages.put("stop-leading", "You can stop following me");
 		}
 		
 		String type = SoarUtil.getValueOfAttribute(id, "type");
@@ -84,7 +86,9 @@ public class AgentMessageParser
 	    	return translateCantFindObject(fieldsId);
 	    } else if(type.equals("multiple-arguments")){
 	    	return translateMultipleArguments(fieldsId);
-	    }
+	    } else if(type.equals("start-leading-request")){
+        return translateStartLeadingRequest(fieldsId);
+      }
 		return null;
 	}
 	
@@ -156,6 +160,15 @@ public class AgentMessageParser
 		return result;
 		
 	}
+
+  public static String translateStartLeadingRequest(Identifier fields){
+    String name = SoarUtil.getValueOfAttribute(fields, "person");
+    if (name == null){
+      return "Please follow me.";
+    } else {
+      return "Please follow me, " + name.replaceAll("\\d", "");
+    }
+  }
 	
 	public static String getGoalState(Identifier fields){
 		Identifier relationships = SoarUtil.getIdentifierOfAttribute(fields, "relationships");

@@ -11,7 +11,38 @@
 #   Also expects the following on the state: 
 #     action-operator, action-id, world
 
-sp {anystate*elaborate*ground-argument*until-predicate*expand*state*predicate
+sp {anystate*elaborate*ground-argument*expand*predicate*obj*2
+  (state <s> ^ground-argument <arg>)
+  (<arg> ^arg-type predicate
+         ^generalized-rep <pred>)
+  (<pred> ^id <pred-rep>
+          ^2 <obj2-rep>)
+-->
+  (<s> ^ground-argument <ground-obj2>)
+  (<ground-obj2> ^generalized-rep <obj2-rep>
+                 ^arg-type object)
+  (<arg> ^2 <ground-obj2>)
+}
+
+sp {anystate*elaborate*ground-argument*predicate*elaborate*arg-status*obj2*real
+  (state <s> ^ground-argument <arg>)
+  (<arg> ^arg-type predicate
+          ^arg-status << real desired >> 
+          ^2 <obj2>)
+-->
+  (<obj2> ^arg-status real)
+}
+
+sp {anystate*elaborate*ground-argument*predicate*elaborate*arg-status*obj2*abstract
+  (state <s> ^ground-argument <arg>)
+  (<arg> ^arg-type predicate
+          ^arg-status abstract
+          ^2 <obj2>)
+-->
+  (<obj2> ^arg-status abstract)
+}
+
+sp {anystate*elaborate*ground-argument*expand*until-predicate*state
    (state <s> ^ground-argument <arg>)
    (<arg> ^arg-type until-predicate
           ^generalized-rep <until-pred>)
@@ -19,16 +50,14 @@ sp {anystate*elaborate*ground-argument*until-predicate*expand*state*predicate
                  ^id <pred-rep>
                  ^1 <obj-rep>)
 -->
-   (<arg> ^id <ground-pred>
-          ^1 <ground-obj>)
-   (<s> ^ground-argument <ground-pred> <ground-obj>)
-   (<ground-pred> ^generalized-rep <pred-rep>
-                  ^arg-type predicate)
+   (<s> ^ground-argument <ground-obj>)
    (<ground-obj> ^generalized-rep <obj-rep>
-                 ^arg-type object)
+                 ^arg-type object
+                 ^arg-status real)
+   (<arg> ^1 <ground-obj>)
 }
 
-sp {anystate*elaborate*ground-argument*until-predicate*expand*relation*predicate
+sp {anystate*elaborate*ground-argument*expand*until-predicate*relation
    (state <s> ^ground-argument <arg>)
    (<arg> ^arg-type until-predicate
           ^generalized-rep <until-pred>)
@@ -37,125 +66,90 @@ sp {anystate*elaborate*ground-argument*until-predicate*expand*relation*predicate
                  ^1 <obj1-rep>
                  ^2 <obj2-rep>)
 -->
-   (<arg> ^id <ground-pred>
-          ^1 <ground-obj1>
-          ^2 <ground-obj2>)
-   (<s> ^ground-argument <ground-pred> <ground-obj1> <ground-obj2>)
-   (<ground-pred> ^generalized-rep <pred-rep>
-                  ^arg-type predicate)
+   (<s> ^ground-argument <ground-obj1> <ground-obj2>)
    (<ground-obj1> ^generalized-rep <obj1-rep>
-                  ^arg-type object)
+                  ^arg-type object
+                  ^arg-status real)
    (<ground-obj2> ^generalized-rep <obj2-rep>
-                  ^arg-type object)
+                  ^arg-type object
+                  ^arg-status real)
+   (<arg> ^id <ground-obj1>
+          ^2 <ground-obj2>)
 }
 
-##### For predicate arguments, lookup the smem structure by the handle ####
-sp {anystate*ground-argument*elaborate*smem-query*predicate
-   (state <s> ^ground-argument <arg>)
-   (<arg> ^arg-type predicate
-          ^instance <pred-handle>)
--->
-   (<s> ^smem-query <q>)
-   (<q> ^cue.handle <pred-handle>
-        ^depth 2)
-}
 
-sp {anystate*ground-argument*elaborate*predicate-lti
-   (state <s> ^ground-argument <arg>
-              ^smem-query <q>)
-   (<arg> ^arg-type predicate
-          ^instance <pred-handle>)
-   (<q> ^cue.handle <pred-handle>
-        ^result { <res> <> none })
--->
-   (<arg> ^predicate-lti <res>)
-}
+##############################################################
+#####              ground-object-argument                #####
 
-##### Try to match the argument against procedural slots #####
-   
-sp {anystate*elaborate*ground-argument*matches*object*depth*1
+## object procedural match depth 1
+sp {anystate*propose*ground-object-argument*matches*procedural*depth*1
    (state <s> ^ground-argument <arg>
               ^procedural-id.<arg-name> <parg>
               ^action-operator.<arg-name>.id <obj>)
    (<arg> ^arg-type object
-          ^generalized-rep <obj-slot>)
+          ^arg-status real
+          ^generalized-rep <obj-slot>
+          -^instance)
    (<parg> ^arg-type object
            ^id <obj-slot>)
 -->
-   (<arg> ^matches-procedural <obj>)
+  (<s> ^operator <o> + =)
+  (<o> ^name ground-object-argument
+       ^match-type procedural
+       ^argument <arg>
+       ^id <obj>)
 }
 
-sp {anystate*elaborate*ground-argument*matches*object*depth*2
+## object procedural match depth 2
+sp {anystate*propose*ground-object-argument*matches*procedural*depth*2
    (state <s> ^ground-argument <arg>
               ^procedural-id.<arg-name> <parg>
               ^action-operator.<arg-name>.{2} <obj>)
    (<arg> ^arg-type object
-          ^generalized-rep <obj-slot>)
+          ^arg-status real
+          ^generalized-rep <obj-slot>
+          -^instance)
    (<parg> ^arg-type predicate
            ^2 <obj-slot>)
 -->
-   (<arg> ^matches-procedural <obj>)
-}
-
-sp {anystate*elaborate*ground-argument*matches*concept
-   (state <s> ^ground-argument <arg>
-              ^procedural-id.<arg-name> <parg>
-              ^action-operator.<arg-name>.handle <concept-handle>)
-   (<arg> ^arg-type concept
-          ^generalized-rep <conc-slot>)
-   (<parg> ^arg-type concept
-           ^id <conc-slot>)
--->
-   (<arg> ^matches-procedural <conc-handle>)
-}
-
-sp {anystate*elaborate*ground-argument*matches*predicate
-   (state <s> ^ground-argument <arg>
-              ^procedural-id.<arg-name> <parg>
-              ^action-operator.<arg-name>.handle <pred-handle>)
-   (<arg> ^arg-type predicate
-          ^generalized-rep <pred-slot>)
-   (<parg> ^arg-type predicate
-           ^id <pred-slot>)
--->
-   (<arg> ^matches-procedural <pred-handle>)
+  (<s> ^operator <o> + =)
+  (<o> ^name ground-object-argument
+       ^match-type procedural
+       ^argument <arg>
+       ^id <obj>)
 }
 
 
-##### Elaborate the default matches #######
+# ENUMERATE: 1-6 predicates on default rep
 
-sp {anystate*elaborate*ground-argument*matches-default*concept
-   (state <s> ^ground-argument <arg>)
-   (<arg> ^arg-type concept
-          ^generalized-rep.default.predicate-handle <handle>)
--->
-   (<arg> ^matches-default <handle>)
-}
-
-sp {anystate*elaborate*ground-argument*matches-default*predicate
-   (state <s> ^ground-argument <arg>)
-   (<arg> ^arg-type predicate
-          ^generalized-rep.default.predicate-handle <handle>)
--->
-   (<arg> ^matches-default <handle>)
-}
-
-sp {anystate*elaborate*ground-argument*matches-default*matches*object*1*predicate
+## object default match with 1 predicate
+sp {anystate*propose*ground-object-argument*matches*default*1
    (state <s> ^ground-argument <arg>
               ^world.objects.object <obj>)
-   (<arg> ^generalized-rep.default <def>)
+   (<arg> ^arg-type object
+          ^arg-status real
+          ^generalized-rep.default <def>
+          -^instance)
    (<def> ^<prop1> <pred1>)
    -{(<def> ^{ <prop2> <> <prop1> })}
    (<obj> ^predicates <preds>)
    (<preds> ^<prop1> <pred1>)
 -->
-   (<arg> ^matches-default <obj>)
+  (<s> ^operator <o> + =)
+  (<o> ^name ground-object-argument
+       ^match-type default
+       ^argument <arg>
+       ^id <obj>)
 }
 
-sp {anystate*elaborate*ground-argument*matches-default*matches*object*2*predicate
+## object default match with 2 predicate
+sp {anystate*propose*ground-object-argument*matches*default*2
    (state <s> ^ground-argument <arg>
               ^world.objects.object <obj>)
-   (<arg> ^generalized-rep.default <def>)
+   (<arg> ^arg-type object
+          ^arg-status real
+          ^generalized-rep.default <def>
+          -^instance)
    (<def> ^<prop1> <pred1>
           ^{<prop2> > <prop1>} <pred2>)
    -{(<def> ^{ <prop3> <> <prop1> <> <prop2> })}
@@ -163,13 +157,21 @@ sp {anystate*elaborate*ground-argument*matches-default*matches*object*2*predicat
    (<preds> ^<prop1> <pred1>
             ^<prop2> <pred2>)
 -->
-   (<arg> ^matches-default <obj>)
+  (<s> ^operator <o> + =)
+  (<o> ^name ground-object-argument
+       ^match-type default
+       ^argument <arg>
+       ^id <obj>)
 }
 
-sp {anystate*elaborate*ground-argument*matches-default*matches*object*3*predicate
+## object default match with 3 predicate
+sp {anystate*propose*ground-object-argument*matches*default*3
    (state <s> ^ground-argument <arg>
               ^world.objects.object <obj>)
-   (<arg> ^generalized-rep.default <def>)
+   (<arg> ^arg-type object
+          ^arg-status real
+          ^generalized-rep.default <def>
+          -^instance)
    (<def> ^<prop1> <pred1>
           ^{<prop2> > <prop1>} <pred2>
           ^{<prop3> > <prop2>} <pred3>)
@@ -179,13 +181,21 @@ sp {anystate*elaborate*ground-argument*matches-default*matches*object*3*predicat
             ^<prop2> <pred2>
             ^<prop3> <pred3>)
 -->
-   (<arg> ^matches-default <obj>)
+  (<s> ^operator <o> + =)
+  (<o> ^name ground-object-argument
+       ^match-type default
+       ^argument <arg>
+       ^id <obj>)
 }
 
-sp {anystate*elaborate*ground-argument*matches-default*matches*object*4*predicate
+## object default match with 4 predicate
+sp {anystate*propose*ground-object-argument*matches*default*4
    (state <s> ^ground-argument <arg>
               ^world.objects.object <obj>)
-   (<arg> ^generalized-rep.default <def>)
+   (<arg> ^arg-type object
+          ^arg-status real
+          ^generalized-rep.default <def>
+          -^instance)
    (<def> ^<prop1> <pred1>
           ^{<prop2> > <prop1>} <pred2>
           ^{<prop3> > <prop2>} <pred3>
@@ -197,13 +207,21 @@ sp {anystate*elaborate*ground-argument*matches-default*matches*object*4*predicat
             ^<prop3> <pred3>
             ^<prop4> <pred4>)
 -->
-   (<arg> ^matches-default <obj>)
+  (<s> ^operator <o> + =)
+  (<o> ^name ground-object-argument
+       ^match-type default
+       ^argument <arg>
+       ^id <obj>)
 }
 
-sp {anystate*elaborate*ground-argument*matches-default*matches*object*5*predicate
+## object default match with 5 predicate
+sp {anystate*propose*ground-object-argument*matches*default*5
    (state <s> ^ground-argument <arg>
               ^world.objects.object <obj>)
-   (<arg> ^generalized-rep.default <def>)
+   (<arg> ^arg-type object
+          ^arg-status real
+          ^generalized-rep.default <def>
+          -^instance)
    (<def> ^<prop1> <pred1>
           ^{<prop2> > <prop1>} <pred2>
           ^{<prop3> > <prop2>} <pred3>
@@ -217,7 +235,352 @@ sp {anystate*elaborate*ground-argument*matches-default*matches*object*5*predicat
             ^<prop4> <pred4>
             ^<prop5> <pred5>)
 -->
-   (<arg> ^matches-default <obj>)
+  (<s> ^operator <o> + =)
+  (<o> ^name ground-object-argument
+       ^match-type default
+       ^argument <arg>
+       ^id <obj>)
+}
+
+## object default match with 6 predicate
+sp {anystate*propose*ground-object-argument*matches*default*6
+   (state <s> ^ground-argument <arg>
+              ^world.objects.object <obj>)
+   (<arg> ^arg-type object
+          ^arg-status real
+          ^generalized-rep.default <def>
+          -^instance)
+   (<def> ^<prop1> <pred1>
+          ^{<prop2> > <prop1>} <pred2>
+          ^{<prop3> > <prop2>} <pred3>
+          ^{<prop4> > <prop3>} <pred4>
+          ^{<prop5> > <prop4>} <pred5>
+          ^{<prop6> > <prop5>} <pred6>)
+  -{(<def> ^{ <prop6> <> <prop1> <> <prop2> <> <prop3> <> <prop4> <> <prop5> <> <prop6> })}
+   (<obj> ^predicates <preds>)
+   (<preds> ^<prop1> <pred1>
+            ^<prop2> <pred2>
+            ^<prop3> <pred3>
+            ^<prop4> <pred4>
+            ^<prop5> <pred5>
+            ^<prop6> <pred6>)
+-->
+  (<s> ^operator <o> + =)
+  (<o> ^name ground-object-argument
+       ^match-type default
+       ^argument <arg>
+       ^id <obj>)
+}
+
+## object abstract match
+sp {anystate*propose*ground-object-argument*matches*abstract
+  (state <s> ^ground-argument <arg>)
+  (<arg> ^arg-type object
+         ^arg-status abstract
+         ^generalized-rep.default <rep>
+         -^instance)
+-->
+  (<s> ^operator <o> + =)
+  (<o> ^name ground-object-argument
+       ^match-type abstract
+       ^argument <arg>
+       ^object-rep <rep>)
+}
+
+### APPLICATION ###
+
+sp {anystate*apply*ground-object-argument*procedural*default*create*instance
+  (state <s> ^operator <o>)
+  (<o> ^name ground-object-argument
+       ^match-type << procedural default >>
+       ^argument <arg>
+       ^id <obj>)
+-->
+  (<arg> ^instance <i>)
+  (<i> ^arg-type object
+       ^arg-status real
+       ^id <obj>)
+}
+
+## ENUMERATE: abstract objects with 1-6 predicates in default rep
+
+# ground-object-argument abstract with 1 predicate
+sp {anystate*apply*ground-object-argument*abstract*1*predicate
+  (state <s> ^operator <o>)
+  (<o> ^name ground-object-argument
+       ^match-type abstract
+       ^argument <arg>
+       ^object-rep <rep>)
+  (<rep> ^<prop1> <pred1>)
+  -{(<rep> ^{ <prop2> <> <prop1> })}
+-->
+  (<arg> ^instance <i>)
+  (<i> ^arg-type object
+       ^arg-status abstract
+       ^id <obj>)
+  (<obj> ^item-type object
+         ^predicates <preds>)
+  (<preds> ^<prop1> <pred1>)
+}
+
+# ground-object-argument abstract with 2 predicates
+sp {anystate*apply*ground-object-argument*abstract*2*predicate
+  (state <s> ^operator <o>)
+  (<o> ^name ground-object-argument
+       ^match-type abstract
+       ^argument <arg>
+       ^object-rep <rep>)
+   (<rep> ^<prop1> <pred1>
+          ^{<prop2> > <prop1>} <pred2>)
+   -{(<rep> ^{ <prop3> <> <prop1> <> <prop2> })}
+-->
+  (<arg> ^instance <i>)
+  (<i> ^arg-type object
+       ^arg-status abstract
+       ^id <obj>)
+   (<obj> ^item-type object
+           ^predicates <preds>)
+   (<preds> ^<prop1> <pred1>
+            ^<prop2> <pred2>)
+}
+
+# ground-object-argument abstract with 3 predicates
+sp {anystate*apply*ground-object-argument*abstract*3*predicate
+  (state <s> ^operator <o>)
+  (<o> ^name ground-object-argument
+       ^match-type abstract
+       ^argument <arg>
+       ^object-rep <rep>)
+   (<rep> ^<prop1> <pred1>
+          ^{<prop2> > <prop1>} <pred2>
+          ^{<prop3> > <prop2>} <pred3>)
+   -{(<rep> ^{ <prop4> <> <prop1> <> <prop2> <> <prop3>})}
+-->
+  (<arg> ^instance <i>)
+  (<i> ^arg-type object
+       ^arg-status abstract
+       ^id <obj>)
+   (<obj> ^item-type object
+           ^predicates <preds>)
+   (<preds> ^<prop1> <pred1>
+            ^<prop2> <pred2>
+            ^<prop3> <pred3>)
+}
+
+# ground-object-argument abstract with 4 predicates
+sp {anystate*apply*ground-object-argument*abstract*4*predicate
+  (state <s> ^operator <o>)
+  (<o> ^name ground-object-argument
+       ^match-type abstract
+       ^argument <arg>
+       ^object-rep <rep>)
+   (<rep> ^<prop1> <pred1>
+          ^{<prop2> > <prop1>} <pred2>
+          ^{<prop3> > <prop2>} <pred3>
+          ^{<prop4> > <prop3>} <pred4>)
+   -{(<rep> ^{ <prop5> <> <prop1> <> <prop2> <> <prop3> <> <prop4>})}
+-->
+  (<arg> ^instance <i>)
+  (<i> ^arg-type object
+       ^arg-status abstract
+       ^id <obj>)
+   (<obj> ^item-type object
+           ^predicates <preds>)
+   (<preds> ^<prop1> <pred1>
+            ^<prop2> <pred2>
+            ^<prop3> <pred3>
+            ^<prop4> <pred4>)
+}
+
+# ground-object-argument abstract with 5 predicates
+sp {anystate*apply*ground-object-argument*abstract*5*predicate
+  (state <s> ^operator <o>)
+  (<o> ^name ground-object-argument
+       ^match-type abstract
+       ^argument <arg>
+       ^object-rep <rep>)
+   (<rep> ^<prop1> <pred1>
+          ^{<prop2> > <prop1>} <pred2>
+          ^{<prop3> > <prop2>} <pred3>
+          ^{<prop4> > <prop3>} <pred4>
+          ^{<prop5> > <prop4>} <pred5>)
+   -{(<rep> ^{ <prop5> <> <prop1> <> <prop2> <> <prop3> <> <prop4> <> <prop5>})}
+-->
+  (<arg> ^instance <i>)
+  (<i> ^arg-type object
+       ^arg-status abstract
+       ^id <obj>)
+   (<obj> ^item-type object
+           ^predicates <preds>)
+   (<preds> ^<prop1> <pred1>
+            ^<prop2> <pred2>
+            ^<prop3> <pred3>
+            ^<prop4> <pred4>
+            ^<prop5> <pred5>)
+}
+
+# ground-object-argument abstract with 6 predicates
+sp {anystate*apply*ground-object-argument*abstract*6*predicate
+  (state <s> ^operator <o>)
+  (<o> ^name ground-object-argument
+       ^match-type abstract
+       ^argument <arg>
+       ^object-rep <rep>)
+   (<rep> ^<prop1> <pred1>
+          ^{<prop2> > <prop1>} <pred2>
+          ^{<prop3> > <prop2>} <pred3>
+          ^{<prop4> > <prop3>} <pred4>
+          ^{<prop5> > <prop4>} <pred5>
+          ^{<prop6> > <prop5>} <pred6>)
+  -{(<rep> ^{ <prop6> <> <prop1> <> <prop2> <> <prop3> <> <prop4> <> <prop5> <> <prop6> })}
+-->
+  (<arg> ^instance <i>)
+  (<i> ^arg-type object
+       ^arg-status abstract
+       ^id <obj>)
+   (<obj> ^item-type object
+           ^predicates <preds>)
+   (<preds> ^<prop1> <pred1>
+            ^<prop2> <pred2>
+            ^<prop3> <pred3>
+            ^<prop4> <pred4>
+            ^<prop5> <pred5>
+            ^<prop6> <pred6>)
+}
+
+
+###############################################################
+#####              ground-concept-argument                #####
+
+sp {anystate*propose*ground-concept-argument*matches*procedural
+   (state <s> ^ground-argument <arg>
+              ^procedural-id.<arg-name> <parg>
+              ^action-operator.<arg-name>.handle <conc-handle>)
+   (<arg> ^arg-type concept
+          ^generalized-rep <conc-slot>
+          -^instance)
+   (<parg> ^arg-type concept
+           ^id <conc-slot>)
+-->
+  (<s> ^operator <o> + =)
+  (<o> ^name ground-concept-argument
+       ^match-type procedural
+       ^argument <arg>
+       ^handle <conc-handle>)
+}
+
+sp {anystate*propose*ground-concept-argument*matches*default
+   (state <s> ^ground-argument <arg>)
+   (<arg> ^arg-type concept
+          ^generalized-rep.default.predicate-handle <conc-handle>
+          -^instance)
+-->
+  (<s> ^operator <o> + =)
+  (<o> ^name ground-concept-argument
+       ^match-type default
+       ^argument <arg>
+       ^handle <conc-handle>)
+}
+
+sp {anystate*apply*ground-concept-argument*create*instance
+  (state <s> ^operator <o>)
+  (<o> ^name ground-concept-argument
+       ^argument <arg>
+       ^handle <conc-handle>)
+-->
+  (<arg> ^instance <i>)
+  (<i> ^arg-type concept
+       ^arg-status real
+       ^handle <conc-handle>)
+}
+
+###############################################################
+#####              ground-predicate-argument              #####
+
+sp {anystate*propose*ground-predicate-argument*matches*procedural
+   (state <s> ^ground-argument <arg>
+              ^procedural-id.<arg-name> <parg>
+              ^action-operator.<arg-name>.handle <pred-handle>)
+   (<arg> ^arg-type predicate
+          ^{2}.instance.id <obj2>
+          ^generalized-rep <pred-slot>
+          -^instance)
+   (<parg> ^arg-type predicate
+           ^id <pred-slot>)
+-->
+  (<s> ^operator <o> + =)
+  (<o> ^name ground-predicate-argument
+       ^match-type procedural
+       ^argument <arg>
+       ^handle <pred-handle>
+       ^2 <obj2>)
+}
+
+sp {anystate*propose*ground-predicate-argument*matches*default
+   (state <s> ^ground-argument <arg>)
+   (<arg> ^arg-type predicate
+          ^{2}.instance.id <obj2>
+          ^generalized-rep.default.predicate-handle <pred-handle>
+          -^instance)
+-->
+  (<s> ^operator <o> + =)
+  (<o> ^name ground-predicate-argument
+       ^match-type default
+       ^argument <arg>
+       ^handle <pred-handle>
+       ^2 <obj2>)
+}
+
+sp {anystate*apply*ground-predicate-argument*create*instance
+  (state <s> ^operator <o>)
+  (<o> ^name ground-predicate-argument
+       ^argument <arg>
+       ^handle <pred-handle>
+       ^2 <obj2>)
+  (<arg> ^arg-status <status>)
+-->
+  (<arg> ^instance <i>)
+  (<i> ^arg-type predicate
+       ^arg-status <status>
+       ^handle <pred-handle>
+       ^2 <obj2>)
+}
+
+###############################################################
+#####                ground-until-argument                #####
+
+sp {anystate*propose*ground-until-argument*state*matches*procedural
+   (state <s> ^ground-argument <arg>
+              ^procedural-id.<arg-name> <parg>
+              ^action-operator.<arg-name>.handle <pred-handle>)
+   (<arg> ^arg-type until-predicate
+          ^{1}.instance.id <obj1>
+          ^generalized-rep <slot>
+          -^instance)
+   (<parg> ^arg-type predicate
+           ^id <pred-slot>)
+-->
+  (<s> ^operator <o> + =)
+  (<o> ^name ground-until-argument
+       ^match-type procedural
+       ^argument <arg>
+       ^handle <pred-handle>
+       ^2 <obj2>)
+}
+
+sp {anystate*propose*ground-until-argument*state*matches*default
+   (state <s> ^ground-argument <arg>)
+   (<arg> ^arg-type predicate
+          ^{2}.instance.id <obj2>
+          ^generalized-rep.default.predicate-handle <pred-handle>
+          -^instance)
+-->
+  (<s> ^operator <o> + =)
+  (<o> ^name ground-until-argument
+       ^match-type default
+       ^argument <arg>
+       ^handle <pred-handle>
+       ^2 <obj2>)
 }
 
 ###### elaborate the abstract matches #####
@@ -238,107 +601,6 @@ sp {anystate*elaborate*ground-argument*generate-abstract*from*matches-procedural
           ^matches-procedural <proc>)
 -->
    (<arg> ^generate-abstract <new>)
-}
-
-sp {anystate*elaborate*ground-argument*generate-abstract*from*matches-procedural*predicates
-   (state <s> ^ground-argument <arg>)
-   (<arg> ^arg-type object
-          ^arg-status abstract
-          ^matches-procedural.predicates <preds>
-          ^generate-abstract <gen>)
-   (<preds> ^{ <prop-name> << modifier1 name category property shape >> } <pred-name>)
--->
-   (<gen> ^<prop-name> <pred-name>)
-}
-
-sp {anystate*elaborate*ground-argument*matches-abstract*object*1*predicate
-   (state <s> ^ground-argument <arg>)
-   (<arg> ^arg-type object
-          ^arg-status abstract
-          ^generate-abstract <gen>)
-   (<gen> ^<prop1> <pred1>)
-   -{(<gen> ^{ <prop2> <> <prop1> })}
--->
-   (<arg> ^matches-abstract <obj>)
-   (<obj> ^item-type object
-          ^predicates <preds>)
-   (<preds> ^<prop1> <pred1>)
-}
-
-sp {anystate*elaborate*ground-argument*matches-abstract*object*2*predicate
-   (state <s> ^ground-argument <arg>)
-   (<arg> ^arg-type object
-          ^arg-status abstract
-          ^generate-abstract <gen>)
-   (<gen> ^<prop1> <pred1>
-          ^{<prop2> > <prop1>} <pred2>)
-   -{(<gen> ^{ <prop3> <> <prop1> <> <prop2> })}
--->
-   (<arg> ^matches-abstract <obj>)
-   (<obj> ^item-type object
-          ^predicates <preds>)
-   (<preds> ^<prop1> <pred1>
-            ^<prop2> <pred2>)
-}
-
-sp {anystate*elaborate*ground-argument*matches-abstract*object*3*predicate
-   (state <s> ^ground-argument <arg>)
-   (<arg> ^arg-type object
-          ^arg-status abstract
-          ^generate-abstract <gen>)
-   (<gen> ^<prop1> <pred1>
-          ^{<prop2> > <prop1>} <pred2>
-          ^{<prop3> > <prop2>} <pred3>)
-   -{(<gen> ^{ <prop4> <> <prop1> <> <prop2> <> <prop3>})}
--->
-   (<arg> ^matches-abstract <obj>)
-   (<obj> ^item-type object
-          ^predicates <preds>)
-   (<preds> ^<prop1> <pred1>
-            ^<prop2> <pred2>
-            ^<prop3> <pred3>)
-}
-
-sp {anystate*elaborate*ground-argument*matches-abstract*object*4*predicate
-   (state <s> ^ground-argument <arg>)
-   (<arg> ^arg-type object
-          ^arg-status abstract
-          ^generate-abstract <gen>)
-   (<gen> ^<prop1> <pred1>
-          ^{<prop2> > <prop1>} <pred2>
-          ^{<prop3> > <prop2>} <pred3>
-          ^{<prop4> > <prop3>} <pred4>)
-   -{(<gen> ^{ <prop5> <> <prop1> <> <prop2> <> <prop3> <> <prop4>})}
--->
-   (<arg> ^matches-abstract <obj>)
-   (<obj> ^item-type object
-          ^predicates <preds>)
-   (<preds> ^<prop1> <pred1>
-            ^<prop2> <pred2>
-            ^<prop3> <pred3>
-            ^<prop4> <pred4>)
-}
-
-sp {anystate*elaborate*ground-argument*matches-abstract*object*5*predicate
-   (state <s> ^ground-argument <arg>)
-   (<arg> ^arg-type object
-          ^arg-status abstract
-          ^generate-abstract <gen>)
-   (<gen> ^<prop1> <pred1>
-          ^{<prop2> > <prop1>} <pred2>
-          ^{<prop3> > <prop2>} <pred3>
-          ^{<prop4> > <prop3>} <pred4>
-          ^{<prop5> > <prop4>} <pred5>)
-   -{(<gen> ^{ <prop5> <> <prop1> <> <prop2> <> <prop3> <> <prop4> <> <prop5>})}
--->
-   (<arg> ^matches-abstract <obj>)
-   (<obj> ^item-type object
-          ^predicates <preds>)
-   (<preds> ^<prop1> <pred1>
-            ^<prop2> <pred2>
-            ^<prop3> <pred3>
-            ^<prop4> <pred4>
-            ^<prop5> <pred5>)
 }
 
 #### Elaborate the instance #####
