@@ -1,3 +1,4 @@
+
 ####################### generalize-argument ###########################
 #
 # These rules take a specific instance of an action argument
@@ -11,213 +12,622 @@
 #     action-operator, action-id
 
 
-## Expand out any until-clause predicates to generalize the sub-parts
-sp {anystate*elaborate*generalize-argument*until-predicate*expand*state*predicate
-   (state <s> ^generalize-argument <arg>)
-   (<arg> ^arg-type until-predicate
-          ^instance <until-pred>)
-   (<until-pred> ^type state
-                 ^handle <pred>
-                 ^1 <obj>)
+sp {anystate*generalize-argument*prefer*procedural*over*default
+  (state <s> ^generalize-argument <arg>
+              ^operator <o1> +
+              ^operator <o2> +)
+  (<o1> ^name generalize-argument
+        ^argument <arg>
+        ^match-type procedural)
+  (<o2> ^name generalize-argument
+        ^argument <arg>
+        ^match-type default)
 -->
-   (<arg> ^id <gen-pred>
-          ^1 <gen-obj>)
-   (<s> ^generalize-argument <gen-pred> <gen-obj>)
-   (<gen-pred> ^instance <pred>
-               ^arg-type predicate)
-   (<gen-obj> ^instance <obj>
-              ^arg-type object)
+  (<s> ^operator <o1> > <o2>)
 }
 
-sp {anystate*elaborate*generalize-argument*until-predicate*expand*relation*predicate
-   (state <s> ^generalize-argument <arg>)
-   (<arg> ^arg-type until-predicate
-          ^instance <until-pred>)
-   (<until-pred> ^type relation
-                 ^handle <pred>
-                 ^1 <obj1>
-                 ^2 <obj2>)
+####################### object ###########################
+# 
+# ^arg-type object
+# ^instance <obj-rep>
+
+# procedural match - the object matches one on the action-operator
+sp {anystate*propose*generalize-argument*object*procedural*level1
+  (state <s> ^generalize-argument <arg>
+             ^action-id.procedural.<arg-name> <parg>
+             ^action-operator.<arg-name>.id <obj>)
+  (<arg> ^arg-type object
+         ^instance <obj>
+        -^generalized-rep)
+  (<parg> ^arg-type object
+          ^id <obj-slot>)
 -->
-   (<arg> ^id <gen-pred>
-          ^1 <gen-obj1>
-          ^2 <gen-obj2>)
-   (<s> ^generalize-argument <gen-pred> <gen-obj1> <gen-obj2>)
-   (<gen-pred> ^instance <pred>
-               ^arg-type predicate)
-   (<gen-obj1> ^instance <obj1>
-               ^arg-type object)
-   (<gen-obj2> ^instance <obj2>
-               ^arg-type object)
+  (<s> ^operator <o> + =)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type object
+       ^match-type procedural
+       ^id <obj-slot>)
 }
 
-##### Elaborate a default representation for the argument #######
-
-sp {anystate*elaborate*generalize-argument*default-rep
-   (state <s> ^generalize-argument <arg>)
-   (<arg> -^arg-type until-predicate)
+sp {anystate*propose*generalize-argument*object*procedural*level2
+  (state <s> ^generalize-argument <arg>
+             ^action-id.procedural.<arg-name> <parg>
+             ^action-operator.<arg-name>.{2} <obj>)
+  (<arg> ^arg-type object
+         ^instance <obj>
+        -^generalized-rep)
+  (<parg> ^arg-type predicate
+          ^2 <obj-slot>)
 -->
-   (<arg> ^default-rep <def>)
+  (<s> ^operator <o> + =)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type object
+       ^match-type procedural
+       ^id <obj-slot>)
 }
 
-sp {anystate*elaborate*generalize-argument*object*default-rep*predicates
-   (state <s> ^generalize-argument <arg>)
-   (<arg> ^arg-type object
-          ^instance.predicates <preds>
-          ^default-rep <def>)
-   (<preds> ^{ <prop-handle> << modifier1 color shape size category property spatial-shape >> } <pred-handle>)
+sp {anystate*apply*generalize-argument*object*procedural
+  (state <s> ^generalize-argument <arg>
+             ^operator <o>)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type object
+       ^match-type procedural
+       ^id <obj-slot>)
 -->
-   (<def> ^<prop-handle> <pred-handle>)
+  (<arg> ^generalized-rep <gen>)
+  (<gen> ^arg-type object
+         ^id <obj-slot>)
 }
 
-## HACK: dont' copy setnence if it's an answer
-#sp {anystate*elaborate*generalize-argument*object*default-rep*predicates*sentence
-#   (state <s> ^generalize-argument <arg>)
-#   (<arg> ^arg-type object
-#          ^instance.predicates <preds>
-#          ^default-rep <def>)
-#   (<preds> ^sentence <sent>
-#           -^modifier1 answer1)
-#-->
-#   (<def> ^sentence <sent>)
-#}
-
-sp {anystate*elaborate*generalize-argument*concept*default-rep*predicate-handle
-   (state <s> ^generalize-argument <arg>)
-   (<arg> ^arg-type concept
-          ^instance <concept-handle>
-          ^default-rep <def>)
+# default match - copy the predicates onto a default rep
+sp {anystate*propose*generalize-argument*object*default
+  (state <s> ^generalize-argument <arg>)
+  (<arg> ^arg-type object
+         ^instance <obj>
+         -^generalized-rep)
 -->
-   (<def> ^predicate-handle <concept-handle>)
+  (<s> ^operator <o> + =)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type object
+       ^match-type default
+       ^instance <obj>
+       ^predicates <preds>)
 }
 
-sp {anystate*elaborate*generalize-argument*predicate*default-rep*predicate-handle
-   (state <s> ^generalize-argument <arg>)
-   (<arg> ^arg-type predicate
-          ^instance <predicate-handle>
-          ^default-rep <def>)
+sp {anystate*elaborate*generalize-argument*object*default*predicates
+  (state <s> ^generalize-argument <arg>
+             ^operator <o> +)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type object
+       ^match-type default
+       ^instance.predicates <preds>
+       ^predicates <def-preds>)
+  (<preds> ^{ <prop-handle> << modifier1 color shape size category property spatial-shape >> } <pred-handle>)
 -->
-   (<def> ^predicate-handle <predicate-handle>)
+  (<def-preds> ^<prop-handle> <pred-handle>)
 }
 
-##### Try to match the argument against existing procedural slots #####
-   
-sp {anystate*elaborate*generalize-argument*object*procedural-slot*depth*1
-   (state <s> ^generalize-argument <arg>
-              ^action-id.procedural.<arg-name> <parg>
-              ^action-operator.<arg-name>.id <obj>)
-   (<arg> ^arg-type object
-          ^instance <obj>)
-   (<parg> ^arg-type object
-           ^id <obj-slot>)
+# ENUMERATE: 1-5 predicates
+
+sp {anystate*apply*generalize-argument*object*default*1*predicate
+  (state <s> ^generalize-argument <arg>
+             ^operator <o>)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type object
+       ^match-type default
+       ^predicates <def-preds>)
+  (<def-preds> ^{ <prop1>             } <pred1>
+               -^{ <prop2> <> <prop1> } <pred2>)
 -->
-   (<arg> ^procedural-slot <obj-slot>)
+  (<arg> ^generalized-rep <rep>)
+  (<rep> ^arg-type object
+         ^id <obj-slot>)
+  (<obj-slot> ^default <def>)
+  (<def> ^<prop1> <pred1>)
 }
 
-sp {anystate*elaborate*generalize-argument*object*procedural-slot*depth*2
-   (state <s> ^generalize-argument <arg>
-              ^action-id.procedural.<arg-name> <parg>
-              ^action-operator.<arg-name>.{2} <obj>)
-   (<arg> ^arg-type object
-          ^instance <obj>)
-   (<parg> ^arg-type predicate
-           ^2 <obj-slot>)
+sp {anystate*apply*generalize-argument*object*default*2*predicates
+  (state <s> ^generalize-argument <arg>
+             ^operator <o>)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type object
+       ^match-type default
+       ^predicates <def-preds>)
+  (<def-preds> ^{ <prop1>           } <pred1>
+               ^{ <prop2> > <prop1> } <pred2>
+               -^{ <prop3> <> <prop2> <> <prop1> } <pred3>)
 -->
-   (<arg> ^procedural-slot <obj-slot>)
-}
-   
-sp {anystate*elaborate*generalize-argument*object*procedural-slot*depth*1*abstract
-   (state <s> ^generalize-argument <arg>
-              ^action-id.procedural.<arg-name> <parg>
-              ^action-operator.<arg-name>.id.predicates <obj-preds>
-             -^world.objects.object <obj>)
-   (<arg> ^arg-type object
-          ^instance <obj>
-          ^instance.predicates <abs-preds>)
-   (<parg> ^arg-type object
-           ^id <obj-slot>)
-   -{(<abs-preds> ^<prop-name> <pred-name>)
-     (<obj-preds> -^<prop-name> <pred-name>)}
--->
-   (<arg> ^procedural-slot <obj-slot>)
+  (<arg> ^generalized-rep <rep>)
+  (<rep> ^arg-type object
+         ^id <obj-slot>)
+  (<obj-slot> ^default <def>)
+  (<def> ^<prop1> <pred1>
+         ^<prop2> <pred2>)
 }
 
-sp {anystate*elaborate*generalize-argument*object*procedural-slot*depth*2*abstract
-   (state <s> ^generalize-argument <arg>
-              ^action-id.procedural.<arg-name> <parg>
-              ^action-operator.<arg-name>.{2}.predicates <obj-preds>
-             -^world.objects.object <obj>)
-   (<arg> ^arg-type object
-          ^instance <obj>
-          ^instance.predicates <abs-preds>)
-   (<parg> ^arg-type predicate
-           ^2 <obj-slot>)
-   -{(<abs-preds> ^<prop-name> <pred-name>)
-     (<obj-preds> -^<prop-name> <pred-name>)}
+sp {anystate*apply*generalize-argument*object*default*3*predicates
+  (state <s> ^generalize-argument <arg>
+             ^operator <o>)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type object
+       ^match-type default
+       ^predicates <def-preds>)
+  (<def-preds> ^{ <prop1>           } <pred1>
+               ^{ <prop2> > <prop1> } <pred2>
+               ^{ <prop3> > <prop2> } <pred3>
+               -^{ <prop4> <> <prop3> <> <prop2> <> <prop1> } <pred4>)
 -->
-   (<arg> ^procedural-slot <obj-slot>)
+  (<arg> ^generalized-rep <rep>)
+  (<rep> ^arg-type object
+         ^id <obj-slot>)
+  (<obj-slot> ^default <def>)
+  (<def> ^<prop1> <pred1>
+         ^<prop2> <pred2>
+         ^<prop3> <pred3>)
 }
 
-sp {anystate*elaborate*generalize-argument*concept*procedural-slot
-   (state <s> ^generalize-argument <arg>
-              ^action-id.procedural.<arg-name> <parg>
-              ^action-operator.<arg-name>.handle <concept>)
-   (<arg> ^arg-type concept
-          ^instance <concept>)
-   (<parg> ^arg-type concept
-           ^id <conc-slot>)
+sp {anystate*apply*generalize-argument*object*default*4*predicates
+  (state <s> ^generalize-argument <arg>
+             ^operator <o>)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type object
+       ^match-type default
+       ^predicates <def-preds>)
+  (<def-preds> ^{ <prop1>           } <pred1>
+               ^{ <prop2> > <prop1> } <pred2>
+               ^{ <prop3> > <prop2> } <pred3>
+               ^{ <prop4> > <prop3> } <pred4>
+               -^{ <prop5> <> <prop4> <> <prop3> <> <prop2> <> <prop1> } <pred5>)
 -->
-   (<arg> ^procedural-slot <conc-slot>)
+  (<arg> ^generalized-rep <rep>)
+  (<rep> ^arg-type object
+         ^id <obj-slot>)
+  (<obj-slot> ^default <def>)
+  (<def> ^<prop1> <pred1>
+         ^<prop2> <pred2>
+         ^<prop3> <pred3>
+         ^<prop4> <pred4>)
 }
 
-sp {anystate*elaborate*generalize-argument*predicate*procedural-slot
-   (state <s> ^generalize-argument <arg>
-              ^action-id.procedural.<arg-name> <parg>
-              ^action-operator.<arg-name>.handle <pred>)
-   (<arg> ^arg-type predicate
-          ^instance <pred>)
-   (<parg> ^arg-type predicate
-           ^id <pred-slot>)
+sp {anystate*apply*generalize-argument*object*default*5*predicates
+  (state <s> ^generalize-argument <arg>
+             ^operator <o>)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type object
+       ^match-type default
+       ^predicates <def-preds>)
+  (<def-preds> ^{ <prop1>           } <pred1>
+               ^{ <prop2> > <prop1> } <pred2>
+               ^{ <prop3> > <prop2> } <pred3>
+               ^{ <prop4> > <prop3> } <pred4>
+               ^{ <prop5> > <prop4> } <pred5>
+               -^{ <prop6> <> <prop5> <> <prop4> <> <prop3> <> <prop2> <> <prop1> } <pred6>)
 -->
-   (<arg> ^procedural-slot <pred-slot>)
+  (<arg> ^generalized-rep <rep>)
+  (<rep> ^arg-type object
+         ^id <obj-slot>)
+  (<obj-slot> ^default <def>)
+  (<def> ^<prop1> <pred1>
+         ^<prop2> <pred2>
+         ^<prop3> <pred3>
+         ^<prop4> <pred4>
+         ^<prop5> <pred5>)
 }
 
-#### Elaborate the generalized-rep #####
+####################### concept ###########################
+#
+# ^arg-type concept
+# ^instance <concept-handle>
 
-sp {anystate*elaborate*generalize-argument*generalized-rep*procedural-slot
-   (state <s> ^generalize-argument <arg>)
-   (<arg> ^procedural-slot <slot>)
+# procedural match - the concept matches one on the action-operator
+sp {anystate*propose*generalize-argument*concept*procedural
+  (state <s> ^generalize-argument <arg>
+             ^action-id.procedural.<arg-name> <parg>
+             ^action-operator.<arg-name>.handle <handle>)
+  (<arg> ^arg-type concept
+         ^instance <handle>
+        -^generalized-rep)
+  (<parg> ^arg-type concept
+          ^id <conc-slot>)
 -->
-   (<arg> ^generalized-rep <slot>)
+  (<s> ^operator <o> + =)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type concept
+       ^match-type procedural
+       ^id <conc-slot>)
 }
 
-sp {anystate*elaborate*generalize-argument*generalized-rep*default
-   (state <s> ^generalize-argument <arg>)
-   (<arg> -^procedural-slot
-           ^default-rep <def>)
+sp {anystate*apply*generalize-argument*concept*procedural
+  (state <s> ^generalize-argument <arg>
+             ^operator <o>)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type concept
+       ^match-type procedural
+       ^id <conc-slot>)
 -->
-   (<arg> ^generalized-rep <gen>)
-   (<gen> ^default <def>)
+  (<arg> ^generalized-rep <gen>)
+  (<gen> ^arg-type concept
+         ^id <conc-slot>)
 }
 
-sp {anystate*elaborate*generalize-argument*generalized-rep*state*until-predicate
-   (state <s> ^generalize-argument <arg>)
-   (<arg> ^arg-type until-predicate
-          ^instance.type state
-          ^id.generalized-rep <id-rep>
-          ^{1}.generalized-rep <obj1-rep>)
+# default match - copy the predicates onto a default rep
+sp {anystate*propose*generalize-argument*concept*default
+  (state <s> ^generalize-argument <arg>)
+  (<arg> ^arg-type concept
+         ^instance <handle>
+        -^generalized-rep)
 -->
-   (<arg> ^generalized-rep <gen>)
-   (<gen> ^type state ^id <id-rep> ^1 <obj1-rep>)
+  (<s> ^operator <o> + =)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type concept
+       ^match-type default
+       ^predicate-handle <handle>)
 }
 
-sp {anystate*elaborate*generalize-argument*generalized-rep*relation*until-predicate
-   (state <s> ^generalize-argument <arg>)
-   (<arg> ^arg-type until-predicate
-          ^instance.type relation
-          ^id.generalized-rep <id-rep>
-          ^{1}.generalized-rep <obj1-rep>
-          ^{2}.generalized-rep <obj2-rep>)
+sp {anystate*apply*generalize-argument*concept*default
+  (state <s> ^generalize-argument <arg>
+             ^operator <o>)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type concept
+       ^match-type default
+       ^predicate-handle <handle>)
 -->
-   (<arg> ^generalized-rep <gen>)
-   (<gen> ^type relation ^id <id-rep> ^1 <obj1-rep> ^2 <obj2-rep>)
+  (<arg> ^generalized-rep <rep>)
+  (<rep> ^arg-type concept
+         ^id <conc-slot>)
+  (<conc-slot> ^default <def>)
+  (<def> ^predicate-handle <handle>)
 }
+
+####################### predicate-handle ###########################
+#
+# ^arg-type predicate-handle
+# ^instance <pred-handle>
+
+
+# procedural match - the predicate-handle matches one on the action-operator
+sp {anystate*propose*generalize-argument*predicate-handle*procedural
+  (state <s> ^generalize-argument <arg>
+             ^action-id.procedural.<arg-name> <parg>
+             ^action-operator.<arg-name>.handle <handle>)
+  (<arg> ^arg-type predicate-handle
+         ^instance <handle>
+        -^generalized-rep)
+  (<parg> ^arg-type predicate
+          ^id <pred-slot>)
+-->
+  (<s> ^operator <o> + =)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type predicate-handle
+       ^match-type procedural
+       ^id <pred-slot>)
+}
+
+sp {anystate*apply*generalize-argument*predicate-handle*procedural
+  (state <s> ^generalize-argument <arg>
+             ^operator <o>)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type predicate-handle
+       ^match-type procedural
+       ^id <pred-slot>)
+-->
+  (<arg> ^generalized-rep <gen>)
+  (<gen> ^arg-type predicate-handle
+         ^id <pred-slot>)
+}
+
+# default match - copy the predicates onto a default rep
+sp {anystate*propose*generalize-argument*predicate-handle*default
+  (state <s> ^generalize-argument <arg>)
+  (<arg> ^arg-type predicate-handle
+         ^instance <handle>
+        -^generalized-rep)
+-->
+  (<s> ^operator <o> + =)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type predicate-handle
+       ^match-type default
+       ^predicate-handle <handle>)
+}
+
+sp {anystate*apply*generalize-argument*predicate-handle*default
+  (state <s> ^generalize-argument <arg>
+             ^operator <o>)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type predicate-handle
+       ^match-type default
+       ^predicate-handle <handle>)
+-->
+  (<arg> ^generalized-rep <rep>)
+  (<rep> ^arg-type predicate-handle
+         ^id <conc-slot>)
+  (<conc-slot> ^default <def>)
+  (<def> ^predicate-handle <handle>)
+}
+
+####################### predicate ###########################
+# 
+# ^arg-type predicate
+# ^instance 
+#    ^handle <pred-handle>
+#    ^2 <obj2>
+
+sp {anystate*generalize-argument*expand*predicate*generalize*object
+  (state <s> ^generalize-argument <arg>)
+  (<arg> ^arg-type predicate
+         ^instance <i>)
+  (<i> ^handle <pred-handle>
+       ^2 <obj>)
+-->
+  (<s> ^generalize-argument <gen-obj> <gen-pred>)
+  (<gen-obj> ^arg-type object
+             ^instance <obj>)
+  (<gen-pred> ^arg-type predicate-handle
+              ^instance <handle>)
+  (<arg> ^generalize-handle <gen-pred>
+         ^generalize-obj2 <obj-pred>)
+}
+
+sp {anystate*propose*generalize-argument*predicate
+  (state <s> ^generalize-argument <arg>)
+  (<arg> ^arg-type predicate
+         ^generalize-handle.generalized-rep.id <pred-slot>
+         ^generalize-obj2.generalized-rep.id <obj-slot>
+        -^generalized-rep)
+-->
+  (<s> ^operator <o> + =)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type predicate
+       ^id <pred-slot>
+       ^2 <obj-slot>)
+}
+
+sp {anystate*apply*generalize-argument*predicate*procedural
+  (state <s> ^generalize-argument <arg>
+             ^operator <o>)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type predicate
+       ^id <pred-slot>
+       ^2 <obj-slot>)
+-->
+  (<arg> ^generalized-rep <gen>)
+  (<gen> ^arg-type predicate
+         ^id <pred-slot>
+         ^2 <obj-slot>)
+}
+
+####################### single-predicate ###########################
+
+# State Predicate
+#
+# ^arg-type single-predicate
+# ^instance
+#    ^type state
+#    ^handle <pred-handle>
+#    ^1 <obj1-rep>
+
+sp {anystate*generalize-argument*expand*single-predicate*state
+  (state <s> ^generalize-argument <arg>)
+  (<arg> ^arg-type single-predicate
+         ^instance <i>)
+  (<i> ^type state
+       ^handle <pred-handle>
+       ^1 <obj1>)
+-->
+  (<s> ^generalize-argument <gen-pred> <gen-obj1>)
+  (<gen-pred> ^arg-type predicate-handle
+              ^instance <pred-handle>)
+  (<gen-obj1> ^arg-type object
+             ^instance <obj1>)
+  (<arg> ^generalize-handle <gen-pred>
+         ^generalize-obj1 <gen-obj1>)
+}
+
+sp {anystate*propose*generalize-argument*single-predicate*state
+  (state <s> ^generalize-argument <arg>)
+  (<arg> ^arg-type single-predicate
+         ^instance.type state
+         ^generalize-handle.generalized-rep.id <pred-slot>
+         ^generalize-obj1.generalized-rep.id <obj1-slot>
+         -^generalized-rep)
+-->
+  (<s> ^operator <o> + =)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type single-argument
+       ^pred-type state
+       ^id <pred-slot>
+       ^1 <obj1-slot>)
+}
+
+sp {anystate*apply*generalize-argument*single-predicate*state
+  (state <s> ^generalize-argument <arg>
+             ^operator <o>)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type single-argument
+       ^pred-type state
+       ^id <pred-slot>
+       ^1 <obj1-slot>)
+-->
+  (<arg> ^generalized-rep <rep>)
+  (<rep> ^type state
+         ^id <pred-slot>
+         ^1 <obj1-slot>)
+}
+
+# Relation Predicate
+#
+# ^arg-type single-predicate
+# ^instance
+#    ^type relation
+#    ^handle <pred-handle>
+#    ^1 <obj1-rep>
+#    ^2 <obj2-rep>
+
+sp {anystate*generalize-argument*expand*single-predicate*relation
+  (state <s> ^generalize-argument <arg>)
+  (<arg> ^arg-type single-predicate
+         ^instance <i>)
+  (<i> ^type relation
+       ^handle <pred-handle>
+       ^1 <obj1>
+       ^2 <obj2>)
+-->
+  (<s> ^generalize-argument <gen-pred> <gen-obj1> <gen-obj2>)
+  (<gen-pred> ^arg-type predicate-handle
+              ^instance <pred-handle>)
+  (<gen-obj1> ^arg-type object
+             ^instance <obj1>)
+  (<gen-obj2> ^arg-type object
+             ^instance <obj2>)
+  (<arg> ^generalize-handle <gen-pred>
+         ^generalize-obj1 <gen-obj1>
+         ^generalize-obj2 <gen-obj2>)
+}
+
+sp {anystate*propose*generalize-argument*single-predicate*relation
+  (state <s> ^generalize-argument <arg>)
+  (<arg> ^arg-type single-predicate
+         ^instance.type relation
+         ^generalize-handle.generalized-rep.id <pred-slot>
+         ^generalize-obj1.generalized-rep.id <obj1-slot>
+         ^generalize-obj2.generalized-rep.id <obj2-slot>
+         -^generalized-rep)
+-->
+  (<s> ^operator <o> + =)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type single-argument
+       ^pred-type relation
+       ^id <pred-slot>
+       ^1 <obj1-slot>
+       ^2 <obj2-slot>)
+}
+
+sp {anystate*apply*generalize-argument*single-predicate*relation
+  (state <s> ^generalize-argument <arg>
+             ^operator <o>)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type single-argument
+       ^pred-type relation
+       ^id <pred-slot>
+       ^1 <obj1-slot>
+       ^2 <obj2-slot>)
+-->
+  (<arg> ^generalized-rep <rep>)
+  (<rep> ^type relation
+         ^id <pred-slot>
+         ^1 <obj1-slot>
+         ^2 <obj2-slot>)
+}
+
+####################### predicate-set ###########################
+#
+# ^arg-type predicate-set
+# ^instance
+#   ^predicate * 
+
+sp {anystate*generalize-argument*expand*predicate-set
+  (state <s> ^generalize-argument <arg>)
+  (<arg> ^arg-type predicate-set
+         ^instance.predicate <pred>)
+-->
+  (<s> ^generalize-argument <gen-pred>)
+  (<gen-pred> ^arg-type single-predicate
+              ^instance <pred>)
+  (<arg> ^generalize-pred <gen-pred>)
+}
+
+sp {anystate*elaborate*generalize-argument*predicate-set*ungeneralized-pred
+  (state <s> ^generalize-argument <arg>)
+  (<arg> ^arg-type predicate-set
+         ^generalize-pred <gen-pred>)
+  (<gen-pred> -^generalized-rep)
+-->
+  (<arg> ^ungeneralized-preds true)
+}
+
+sp {anystate*propose*generalize-argument*predicate-set
+  (state <s> ^generalize-argument <arg>)
+  (<arg> ^arg-type predicate-set
+         -^generalized-rep
+         -^ungeneralized-preds true)
+-->
+  (<s> ^operator <o> + =)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type predicate-set)
+}
+
+# ENUMERATE: 1-3 predicates
+
+sp {anystate*apply*generalize-argument*predicate-set*1
+  (state <s> ^generalize-argument <arg>
+             ^operator <o>)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type predicate-set)
+  (<arg> ^generalize-pred { <pred1> }
+         -^generalize-pred { <pred2> <> <pred1> })
+  (<pred1> ^generalized-rep <rep1>)
+-->
+  (<arg> ^generalized-rep <rep>)
+  (<rep> ^predicate <rep1>)
+}
+
+sp {anystate*apply*generalize-argument*predicate-set*2
+  (state <s> ^generalize-argument <arg>
+             ^operator <o>)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type predicate-set)
+  (<arg> ^generalize-pred { <pred1>           }
+         ^generalize-pred { <pred2> > <pred1> }
+         -^generalize-pred { <pred3> <> <pred2> <> <pred1> })
+  (<pred1> ^generalized-rep <rep1>)
+  (<pred2> ^generalized-rep <rep2>)
+-->
+  (<arg> ^generalized-rep <rep>)
+  (<rep> ^predicate <rep1> <rep2>)
+}
+
+sp {anystate*apply*generalize-argument*predicate-set*3
+  (state <s> ^generalize-argument <arg>
+             ^operator <o>)
+  (<o> ^name generalize-argument
+       ^argument <arg>
+       ^arg-type predicate-set)
+  (<arg> ^generalize-pred { <pred1>           }
+         ^generalize-pred { <pred2> > <pred1> }
+         ^generalize-pred { <pred3> > <pred2> }
+         -^generalize-pred { <pred4> <> <pred3> <> <pred2> <> <pred1> })
+  (<pred1> ^generalized-rep <rep1>)
+  (<pred2> ^generalized-rep <rep2>)
+  (<pred3> ^generalized-rep <rep3>)
+-->
+  (<arg> ^generalized-rep <rep>)
+  (<rep> ^predicate <rep1> <rep2> <rep3>)
+}
+             
