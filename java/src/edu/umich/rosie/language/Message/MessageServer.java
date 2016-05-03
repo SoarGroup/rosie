@@ -1,6 +1,7 @@
 package edu.umich.rosie.language.Message;
 
 import java.io.IOException;
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -77,12 +78,12 @@ public class MessageServer implements IMessagePasser
 		}
 	}
 
-	public MessageServer()
+	public MessageServer(String ipAddress, int port)
 	{
 		try
 		{
-			serverSocket = new ServerSocket();
-			serverSocket.bind(new InetSocketAddress("192.168.2.3", 9999));
+			serverSocket = new ServerSocket(port);
+			System.out.println("HELLO");
 		}
 		catch (IOException ioe)
 		{
@@ -90,16 +91,16 @@ public class MessageServer implements IMessagePasser
 			System.exit(1);
 		}
 
-		serviceDescription = new ServiceDescription();
-		serviceDescription.setAddress(serverSocket.getInetAddress());
-		serviceDescription.setPort(serverSocket.getLocalPort());
-		serviceDescription.setInstanceName(static_ServiceInstanceName);
-		
-		serviceResponder = new ServiceResponder(static_ServiceName);
-		serviceResponder.setDescriptor(serviceDescription);
-		serviceResponder.addShutdownHandler();
-		serviceResponder.startResponder();
-
+//		serviceDescription = new ServiceDescription();
+//		serviceDescription.setAddress(serverSocket.getInetAddress());
+//		serviceDescription.setPort(serverSocket.getLocalPort());
+//		serviceDescription.setInstanceName(static_ServiceInstanceName);
+//		
+//		serviceResponder = new ServiceResponder(static_ServiceName);
+//		serviceResponder.setDescriptor(serviceDescription);
+//		serviceResponder.addShutdownHandler();
+//		serviceResponder.startResponder();
+//
 		acceptorThread = new ServerAcceptorThread();
 		acceptorThread.start();
 	}

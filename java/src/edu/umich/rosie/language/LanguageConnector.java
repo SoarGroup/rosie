@@ -36,8 +36,8 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
 		
 		String speechFile = props.getProperty("speech-file", "audio_file/sample");
 		
-        this.tts = new TextToSpeech();
-        this.stt = new SpeechToText(speechFile, agent);
+        //this.tts = new TextToSpeech();
+        //this.stt = new SpeechToText(speechFile, agent);
         
         curMessage = null;
         messagesToRemove = new HashSet<Message>();
@@ -68,6 +68,7 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
 	}
 	
 	public void sendMessage(String message, MessageType type){
+		System.out.println("SENDING MESSAGE: " + message);
 		messagePasser.sendMessage(message, type);
 	}
 	
@@ -75,15 +76,7 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
 		switch(message.type){
     	case INSTRUCTOR_MESSAGE:
     		System.out.println("Instructor Message: |" + message.message + "|");
-    		if(message.message.startsWith("S: ")){
-    			String command = message.message.substring(3);
-    			if(command.equals("stop")){
-    				soarAgent.stop();
-    			} else if(command.equals("run")){
-    				soarAgent.start();
-    			} else {
-    				System.out.println(soarAgent.sendCommand(command));
-    			}
+    		if(message.message.startsWith("CMD: ")){
     			return;
     		}
     		if(curMessage != null){
@@ -92,7 +85,7 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
     		curMessage = new Message(message.message, nextMessageId++);
     		break;
     	case AGENT_MESSAGE:
-    		tts.speak(message.message);
+    		//tts.speak(message.message);
     		break;
     	}
 	}

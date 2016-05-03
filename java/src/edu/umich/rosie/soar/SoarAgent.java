@@ -219,6 +219,8 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
     	// SBW removed DestroyAgent call, it hangs in headless mode for some reason
     	// (even when the KillDebugger isn't there)
     	// I don't think there's any consequence to simply exiting instead.
+        kernel.Shutdown();
+        
 	}
 
 
