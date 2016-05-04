@@ -70,6 +70,8 @@ public class AgentMessageParser
 			return translateGetLocationInfo(fieldsId);
 		} else if(type.equals("get-item-request")){
 			return translateGetItemRequest(fieldsId);
+    } else if(type.equals("put-down-item-request")){
+      return translatePutDownItemRequest(fieldsId);
 		} else if(type.equals("give-item-request")){
 			return translateGiveItemRequest(fieldsId);
 		} else if(type.equals("ask-about-item")){
@@ -101,11 +103,22 @@ public class AgentMessageParser
 		return null;
 	}	
 
+  public static String translatePutDownItemRequest(Identifier fieldsId){
+		String item = SoarUtil.getValueOfAttribute(fieldsId, "item");
+		String loc = SoarUtil.getValueOfAttribute(fieldsId, "location");
+    if (item != null && loc != null){
+      return ("Please place the " + item + " on the " + loc + ".").replaceAll("\\d", "");
+    } else if(item != null){
+      return ("Please place the " + item + " on the ground.").replaceAll("\\d", "");
+    }
+    return null;
+  }
+
 	public static String translateGiveItemRequest(Identifier fieldsId){
 		String item = SoarUtil.getValueOfAttribute(fieldsId, "item");
-		if (item != null){
-			item = item.replace("1", "");
-			return "Please take the " + item;
+		String name = SoarUtil.getValueOfAttribute(fieldsId, "person");
+		if (item != null && name != null){
+			return (name + ", please take the " + item).replaceAll("\\d", "");
 		}
 		return null;
 	}	
@@ -309,7 +322,9 @@ public class AgentMessageParser
 			return "I don't know what to ask";
 		} else if(type.equals("no-say-sentence")){
 			return "I don't know what to say";
-		} else {
+		} else if(type.equals("unknown-current-location")){
+      return "I don't know where I am";
+    } else {
 			return "I was not able to perform the action";
 		}
 	}	
