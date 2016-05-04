@@ -16,17 +16,8 @@
 #   (<op> ^name comprehension)
 #}
 
-sp {rosie*propose*comprehension-stack
-   (state <s> ^name rosie
-              ^io.input-link.language.sentence <sentence>)
-   (<sentence> -^segment-proposed true)
--->
-   (<s> ^operator <op> + >)
-   (<op> ^name comprehension-stack
-         ^sentence <sentence>)
-}
-
-sp {rosie*propose*comprehension-stack*internal
+#process new sentence from script or input link by creating a new segment that will get pushed onto stack
+sp {rosie*propose*process-new-sentence*scripted
    (state <s> ^world-usage internal
               ^current-sentence <sentence>
               ^current-sentence-number <csn>
@@ -34,15 +25,24 @@ sp {rosie*propose*comprehension-stack*internal
    (<sentence> -^segment-proposed true)
 -->
    (<s> ^operator <op> + >) # allow I/O
-   (<op> ^name comprehension-stack
+   (<op> ^name process-new-sentence
          ^sentence <sentence>)
 }
+sp {rosie*propose*process-new-sentence*input-link
+   (state <s> ^name rosie
+              ^io.input-link.language.sentence <sentence>)
+   (<sentence> -^segment-proposed true)
+-->
+   (<s> ^operator <op> + >)
+   (<op> ^name process-new-sentence
+         ^original-sentence <sentence>)
+}
 
-sp {rosie*apply*comprehension-stack*copy*new-segment-info
+sp {rosie*apply*process-new-sentence*copy*new-segment-info*from-script
    (state <s> ^name rosie
               ^operator <op>
               ^top-state.interaction.changes <c>)
-   (<op> ^name comprehension-stack
+   (<op> ^name process-new-sentence
          ^sentence <sentence>)
    (<sentence> ^original-sentence <os>)
 -->
@@ -58,6 +58,26 @@ sp {rosie*apply*comprehension-stack*copy*new-segment-info
           ^originator agent)
 }
 
+sp {rosie*apply*process-new-sentence*copy*new-segment-info*from-input-link
+   (state <s> ^name rosie
+              ^operator <op>
+              ^top-state.interaction.changes <c>)
+   (<op> ^name process-new-sentence
+         ^original-sentence <os>)
+-->
+   (<os> ^segment-proposed true)
+   (<c> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type process-sentence 
+        ^parameters.sentence (deep-copy <os>)
+        ^satisfaction <sat>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type process-sentence
+          ^originator agent)
+}
+
+#satisfaction of stack calls comprehension
 sp {dialog-event*propose*comprehension
    (state <s> ^name dialog-event
               ^purpose <p>)
@@ -82,7 +102,6 @@ sp {apply*comprehension*save-most-recent-alternative-structure
 
 #clean dialog-world
 sp {apply*performed-event*clean*dialog-world
-#:interrupt
     (state <s1> ^name interaction
                 ^operator <o>
                 ^top-state.dialog-world.<< objects predicates >> <dw>)
