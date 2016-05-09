@@ -78,7 +78,7 @@ public class MessageServer implements IMessagePasser
 		}
 	}
 
-	public MessageServer(String ipAddress, int port)
+	public MessageServer(int port)
 	{
 		try
 		{

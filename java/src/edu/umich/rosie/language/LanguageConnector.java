@@ -16,7 +16,7 @@ import sml.WMElement;
 
 public class LanguageConnector extends AgentConnector implements IMessagePasser.IMessageListener{
 	public enum MessageType{
-		AGENT_MESSAGE, INSTRUCTOR_MESSAGE
+		AGENT_MESSAGE, INSTRUCTOR_MESSAGE, SOAR_COMMAND, SOAR_OUTPUT, AGENT_COMMAND
 	};
 	
 	private int nextMessageId = 1;

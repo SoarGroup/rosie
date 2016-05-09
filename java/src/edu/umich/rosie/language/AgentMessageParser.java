@@ -42,8 +42,8 @@ public class AgentMessageParser
 			simpleMessages.put("get-next-subaction", "What do I do next?");
 			simpleMessages.put("confirm-pick-up", "I have picked up the object.");
 			simpleMessages.put("confirm-put-down", "I have put down the object.");
-			simpleMessages.put("find-success", "SUCCESS");
-			simpleMessages.put("find-failure", "FAILURE");
+			simpleMessages.put("find-success", null);//"SUCCESS");
+			simpleMessages.put("find-failure", null);//"FAILURE");
       simpleMessages.put("stop-leading", "You can stop following me");
 		}
 		
@@ -311,7 +311,8 @@ public class AgentMessageParser
 		} else if(type.equals("invalid-direction-failure")){
 			return "The given turn direction " + info + " was not a valid direction";
 		} else if(type.equals("unsatisfied-until-clause")){
-			return "I had to terminate the " + info + " command early";
+			return null;
+      //"I had to terminate the " + info + " command early";
 		} else if(type.equals("svs-filter-error")){
 			return "Something went wrong with the " + info + " filter";
 		} else if(type.equals("missing-object")){

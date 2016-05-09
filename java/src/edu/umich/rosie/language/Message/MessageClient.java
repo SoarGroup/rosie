@@ -30,33 +30,45 @@ public class MessageClient implements ServiceBrowserListener, IMessagePasser
 	public MessageClient()
 			throws IOException
 	{
-		try
-		{
-			browser = new ServiceBrowser();
-			browser.addServiceBrowserListener(this);
-			browser.setServiceName(MessageServer.static_ServiceName);
-			browser.startListener();
-			browser.startLookup();
+//		try
+//		{
+//			browser = new ServiceBrowser();
+//			browser.addServiceBrowserListener(this);
+//			browser.setServiceName(MessageServer.static_ServiceName);
+//			browser.startListener();
+//			browser.startLookup();
+//
+//			try
+//			{
+//				Thread.sleep(2000);
+//			}
+//			catch (InterruptedException ie)
+//			{
+//			} // ignore
+//
+//			browser.stopLookup();
+//			browser.stopListener();
+//		}
+//		catch (SocketException e)
+//		{
+//		}
+//
+//		if (!isConnected())
+//		{
+//			System.err.println("MessageClient: Failed to find server broadcasting.");
+//		}
+	}
 
-			try
-			{
-				Thread.sleep(2000);
-			}
-			catch (InterruptedException ie)
-			{
-			} // ignore
+	public void newConnection(String name, int port)
+			throws IOException
+	{
+		mySocket = new Socket(name, port);
 
-			browser.stopLookup();
-			browser.stopListener();
-		}
-		catch (SocketException e)
-		{
-		}
+		server = new MessageSendingThread(mySocket);
+		responder = new MessageResponseThread(mySocket, listeners, listenerMutex);
 
-		if (!isConnected())
-		{
-			System.err.println("MessageClient: Failed to find server broadcasting.");
-		}
+		server.start();
+		responder.start();
 	}
 
 	public void newConnection(InetAddress ip, int port)

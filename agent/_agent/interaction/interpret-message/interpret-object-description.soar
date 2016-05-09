@@ -64,6 +64,17 @@ sp {interpret-message*elaborate*interpret-object-description*object
    (<o> ^object <obj>)
 }
 
+# object2: REQUIRED - the object being told is equivalent
+sp {interpret-message*elaborate*interpret-object-description*object2
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-object-description
+        ^message.arg2 <obj>)
+   (<obj> ^item-type object)
+-->
+   (<o> ^object2 <obj>)
+}
+
 # predicate: OPTIONAL - tells something that is true about the object (e.g. color=red)
 sp {interpret-message*elaborate*interpret-object-description*predicate
    (state <s> ^name interpret-message
@@ -89,6 +100,7 @@ sp {interpret-message*elaborate*interpret-object-description*arg2
               ^operator <o> +)
    (<o> ^name interpret-object-description
         ^message.arg2 <rel>)
+   (<rel> ^item-type predicate)
 -->
    (<o> ^relation <rel>)
 }
@@ -132,8 +144,8 @@ sp {interpret-message*elaborate*interpret-object-description*purpose*give-answer
    (state <s> ^name interpret-message
               ^operator <o> +)
    (<o> ^name interpret-object-description
-        ^message.arg1.handle message1
-        ^predicate.handle <sent>)
+        ^message.arg1.predicates.category message
+        ^message.arg2.sentence <sent>)
 -->
    (<o> ^purpose give-answer)
 }
@@ -180,6 +192,17 @@ sp {interpret-message*elaborate*interpret-object-description*purpose*teach-relat
 -->
    (<o> ^purpose teach-relation)
 }
+   
+sp {interpret-message*elaborate*interpret-object-description*purpose*equate-objects
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-object-description
+        ^object <obj>
+        ^object2 <obj2>)
+-->
+   (<o> ^purpose equate-objects)
+}
+
 
 #####
 # OPERATOR APPLICATION
@@ -227,11 +250,11 @@ sp {interpret-message*apply*interpret-object-description*mark*answer
               ^top-state.action-stack.top <top-action>)
    (<o> ^name interpret-object-description
         ^purpose give-answer
-        ^message <msg>
-        ^predicate.handle <message>)
+        ^message <msg>)
+  (<msg> ^arg2.sentence <sentence>)
 -->
    (<s> ^mark-interpreted <msg>)
-   (<top-action> ^answer <message>)
+   (<top-action> ^answer <sentence>)
 }
 
 ###########################
@@ -447,6 +470,32 @@ sp {interpret-message*apply*interpret-object-description*create*segment*learn-pr
         ^satisfaction <sat>)
    (<sat> ^learning-event.type game)
 }
+
+###########################
+# Purpose: equate-objects
+
+sp {interpret-message*apply*interpret-object-description*create*segment*equate-objects
+   (state <s> ^name interpret-message
+              -^top-state.dialog-context.type game-learning
+              ^operator <o>)
+   (<o> ^name interpret-object-description
+        ^purpose equate-objects
+        ^object <obj1>
+        ^object2 <obj2>
+        ^message <msg>)
+-->
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type equate-objects
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<sat> ^learning-event.type object)
+   (<params> ^object1 <obj1>
+             ^object2 <obj2>)
+}
+
 
 ###########################
 # Purpose: learn-goal-definition

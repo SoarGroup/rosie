@@ -168,6 +168,30 @@ sp {pop-action*apply*complete-pop-action*remove*remembered*things
    (<preds> ^<att> <val> -)
 }
 
+# Remove answers during the action
+sp {pop-action*apply*complete-pop-action*remove*answers
+   (state <s> ^name pop-action
+              ^operator.name complete-pop-action
+              ^top-state.world.objects <objs>
+              ^action-to-pop <bottom>
+              ^action-stack.bottom <bottom>)
+  (<objs> ^object <obj>)
+  (<obj> ^predicates.modifier1 answer1)
+-->
+  (<objs> ^object <obj> -)
+}
+   
+# Clear robot-status
+sp {pop-action*apply*complete-pop-action*remove*robot-status
+   (state <s> ^name pop-action
+              ^operator.name complete-pop-action
+              ^top-state.world.objects.object.predicates <preds>
+              ^action-to-pop <bottom>
+              ^action-stack.bottom <bottom>)
+  (<preds> ^robot-status <status>)
+-->
+  (<preds> ^robot-status <status> -)
+}
    
    
 ## Remove any objects added to the world during the action
@@ -206,20 +230,30 @@ sp {pop-action*apply*complete-pop-action*mark*performed*once*subaction
    (<parent-op> ^performed <sub-handle>)
 }
 
+sp {pop-action*apply*complete-pop-action*bottom*clear*task-objects
+  (state <s> ^name pop-action
+             ^operator.name complete-pop-action
+             ^action-to-pop <action>
+             ^action-stack.bottom <action>
+             ^action-stack <stack>)
+  (<stack> ^task-objects <objs>)
+-->
+  (<stack> ^task-objects <objs> -
+           ^task-objects <new>)
+}
+
 sp {pop-action*apply*complete-pop-action*delete*non-confirmed*task*object
   (state <s> ^name pop-action
              ^operator.name complete-pop-action
              ^action-to-pop <action>
-             ^action-stack.actions <actions>
+             ^action-stack.bottom <action>
+             ^action-stack.task-objects.object <obj>
              ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
-   (<action> ^task-objects.object <obj>)
    (<obj> -^predicates.object-status confirmed
           -^predicates.arm-status grabbed)
-  (<obj-info> ^wm-obj <obj>)
-  -{(<actions> ^action { <other> <> <action> })
-    (<other> ^task-objects.object <obj>)}
+   (<obj-info> ^wm-obj <obj>)
 -->
-  (<obj-info> ^delete-object true)
+   (<obj-info> ^delete-object true)
 }
 
 sp {pop-action*apply*complete-pop-action*delete*dialog*info

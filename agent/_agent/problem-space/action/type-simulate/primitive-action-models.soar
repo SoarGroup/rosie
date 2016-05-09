@@ -12,6 +12,77 @@ sp {action*apply*subaction*mark*performed
    (<op> ^performed <sub-handle>)
 }
 
+######################################################
+# custom action models
+
+sp {action*simulate*apply*subcation*add*object*1
+   (state <s> ^problem-space.name action
+              ^problem-space.action.type simulate
+              ^operator <o>
+              ^action-id.procedural.subaction <sub>
+              ^world.objects <objs>)
+   (<sub> ^handle <handle>
+          ^model.add-object <obj>)
+   (<o> ^subaction-handle <handle>)
+  (<obj> ^{ <prop1>             } <pred1>
+         -^{ <prop2> <> <prop1> } <pred2>)
+-->
+   (<objs> ^object <new>)
+   (<new> ^handle (make-constant-symbol |obj-hand|)
+          ^item-type object
+          ^predicates <preds>)
+   (<preds> ^<prop1> <pred1>
+            ^visible true
+            ^arm-status not-grabbed)
+}
+
+sp {action*simulate*apply*subcation*add*object*2
+   (state <s> ^problem-space.name action
+              ^problem-space.action.type simulate
+              ^operator <o>
+              ^action-id.procedural.subaction <sub>
+              ^world.objects <objs>)
+   (<sub> ^handle <handle>
+          ^model.add-object <obj>)
+   (<o> ^subaction-handle <handle>)
+  (<obj> ^{ <prop1>           } <pred1>
+         ^{ <prop2> > <prop1> } <pred2>
+         -^{ <prop3> <> <prop2> <> <prop1> } <pred3>)
+-->
+   (<objs> ^object <new>)
+   (<new> ^handle (make-constant-symbol |obj-hand|)
+          ^item-type object
+          ^predicates <preds>)
+   (<preds> ^<prop1> <pred1>
+            ^<prop2> <pred2>
+            ^visible true
+            ^arm-status not-grabbed)
+}
+
+sp {action*simulate*apply*subcation*add*object*3
+   (state <s> ^problem-space.name action
+              ^problem-space.action.type simulate
+              ^operator <o>
+              ^action-id.procedural.subaction <sub>
+              ^world.objects <objs>)
+   (<sub> ^handle <handle>
+          ^model.add-object <obj>)
+   (<o> ^subaction-handle <handle>)
+  (<obj> ^{ <prop1>           } <pred1>
+         ^{ <prop2> > <prop1> } <pred2>
+         ^{ <prop3> > <prop2> } <pred3>
+         -^{ <prop4> <> <prop3> <> <prop2> <> <prop1> } <pred4>)
+-->
+   (<objs> ^object <new>)
+   (<new> ^handle (make-constant-symbol |obj-hand|)
+          ^item-type object
+          ^predicates <preds>)
+   (<preds> ^<prop1> <pred1>
+            ^<prop2> <pred2>
+            ^<prop3> <pred3>
+            ^visible true
+            ^arm-status not-grabbed)
+}
 
 #######################################################
 ## op_go-to-location1
@@ -199,6 +270,58 @@ sp {action*apply*give*do*action-model*add*holding*relation
    (<i> ^1 <person> ^2 <obj>)
 }
 
+###############################################
+# find
+sp {action*apply*find*do*action-model*mark*visible
+   (state <s> ^problem-space.name action
+              ^problem-space.action.type simulate
+              ^operator <o>)
+   (<o> ^name op_find1
+        ^arg1.id <obj>)
+   (<obj> ^predicates <preds>)
+-->
+   (<preds> ^visible true
+           ^visible false -)
+}
+
+sp {action*apply*find*do*action-model*mark*invisible
+   (state <s> ^problem-space.name action
+              ^problem-space.action.type simulate
+              ^operator <o>
+              ^world.objects.object { <other> <> <obj> })
+   (<o> ^name op_find1
+        ^arg1.id <obj>)
+   (<other> ^predicates <preds>)
+-->
+   (<preds> ^visible false
+           ^visible true -)
+}
+
+
+sp {action*apply*op_find*do*action-model*remove*old*location
+   (state <s> ^problem-space.name action
+              ^problem-space.action.type simulate
+              ^operator.name op_find1
+              ^world.robot <robot>)
+   (<robot> ^current-location <loc>)
+-->
+   (<robot> ^current-location <loc> -)
+}
+
+sp {action*apply*op_find*do*action-model*remove*in*preds
+   (state <s> ^problem-space.name action
+              ^problem-space.action.type simulate
+              ^operator.name op_find1
+              ^world.robot <robot>
+              ^world.predicates.predicate <in-pred>)
+   (<robot> ^current-location <loc>)
+   (<in-pred> ^handle in1
+              ^instance <i>)
+   (<i> ^2 <loc>)
+-->
+   (<in-pred> ^instance <i> -)
+}
+
 ##################################################
 # remember
 
@@ -267,6 +390,45 @@ sp {action*simulate*apply*stop-leading*do*action-model*add*in*predicate
   (<pred> ^instance <i>)
   (<i> ^1 <person> ^2 <loc>)
 }
+
+#####################################################
+# say
+
+sp {action*apply*say*do*action-model
+   (state <s> ^problem-space.name action
+              ^problem-space.action.type simulate
+              ^operator <o>
+              ^world.predicates.predicate <heard>)
+   (<o> ^name op_say1
+        ^arg1.id <msg>
+        ^arg2.{2} <person>)
+   (<msg> ^predicates.sentence <any>)
+   (<person> ^predicates.category person)
+   (<heard> ^handle heard2)
+   -{(<heard> ^instance <heard-i>)
+     (<heard-i> ^1 <person> ^2 <msg>)}
+-->
+   (<heard> ^instance <i>)
+   (<i> ^1 <person> ^2 <msg>)
+}
+
+#####################################################
+# ask
+#
+#sp {action*apply*ask*do*action-model
+#   (state <s> ^problem-space.name action
+#              ^problem-space.action.type simulate
+#              ^operator <o>
+#              ^world.objects <objs>)
+#   (<o> ^name op_ask1
+#
+#        ^arg1.id.predicates.sentence <sent>)
+#-->
+#   (<objs> ^object <answer>)
+#   (<answer> ^item-type object ^predicates <preds>)
+#   (<preds> ^category message ^modifier1 answer1 ^sentence |answer placeholder|)
+#}
+#
 
 ###############################################
 ## open
@@ -514,22 +676,6 @@ sp {action*simulate*apply*stop-leading*do*action-model*add*in*predicate
 #          ^id <obj>)
 #-->
 #   (<objs> ^object <obj>)
-#}
-#
-######################################################
-## ask
-#
-#sp {action*apply*ask*do*action-model
-#   (state <s> ^problem-space.name action
-#              ^problem-space.action.type simulate
-#              ^operator <o>
-#              ^world.objects <objs>)
-#   (<o> ^name op_ask1
-#        ^arg1.id.predicates.sentence <sent>)
-#-->
-#   (<objs> ^object <answer>)
-#   (<answer> ^item-type object ^predicates <preds>)
-#   (<preds> ^category message ^modifier1 answer1 ^sentence |answer placeholder|)
 #}
 #
 #sp {action*apply*ask*do*action-model*mark*asked
