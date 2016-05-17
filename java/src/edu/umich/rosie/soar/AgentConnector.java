@@ -68,6 +68,9 @@ public abstract class AgentConnector implements OutputEventInterface, RunEventIn
 		
 		soarAgent.getAgent().GetKernel().UnregisterForAgentEvent(initAgentCallbackId);
 		initAgentCallbackId = 0;
+
+    // Release all soar pointers
+    onInitSoar();
 		
 		connected = false;
 	}
