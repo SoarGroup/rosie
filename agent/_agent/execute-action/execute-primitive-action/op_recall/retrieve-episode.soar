@@ -1,6 +1,6 @@
 sp {op_recall*propose*retrieve-episode
    (state <s> ^name op_recall1
-              ^epmem-query <q>
+              ^epmem-cue <q>
              -^retrieved-episode)
 -->
    (<s> ^operator <o> + )
@@ -17,6 +17,17 @@ sp {op_recall*apply*retrieve-episode*do*query
    (<cmd> ^query <q>)
 }
 
+sp {op_recall*apply*retrieve-episodie*print*result
+   (state <s> ^name op_recall1
+              ^operator.name retrieve-episode
+              ^epmem <epmem>)
+   (<epmem> ^result <res>
+            ^command <cmd>)
+  (<res> ^normalized-match-score)
+-->
+  (write (cmd print <res> -d 2) (crlf))
+}
+
 sp {op_recall*apply*retrieve-episode*success
    (state <s> ^name op_recall1
               ^operator.name retrieve-episode
@@ -25,6 +36,7 @@ sp {op_recall*apply*retrieve-episode*success
             ^command <cmd>)
    (<res> ^success <q>
           ^retrieved <episode>
+          ^graph-match 1
           ^normalized-match-score 1.0)
    (<cmd> ^query <q>)
 -->
@@ -35,19 +47,20 @@ sp {op_recall*apply*retrieve-episode*success
 sp {op_recall*apply*retrieve-episode*success*elaborate*object*epmem*mapping
    (state <s> ^name op_recall1
               ^operator.name retrieve-episode
-              ^epmem <epmem>
-              ^deep-copy-object <dco>)
+              ^query-object <qo>
+              ^epmem <epmem>)
    (<epmem> ^result <res>
             ^command <cmd>)
    (<res> ^success <q>
           ^retrieved <episode>
           ^mapping.node <node>
+          ^graph-match 1
           ^normalized-match-score 1.0)
-   (<node> ^cue <obj>
+   (<node> ^cue <cue>
            ^retrieved <ret>)
-   (<dco> ^copy <obj>)
+   (<qo> ^cue <cue>)
 -->
-   (<dco> ^epmem <ret>)
+   (<qo> ^epmem <ret>)
 }
 
 sp {op_recall*apply*retrieve-episode*failure*no*exact*match
@@ -55,6 +68,18 @@ sp {op_recall*apply*retrieve-episode*failure*no*exact*match
               ^operator.name retrieve-episode
               ^epmem <epmem>)
    (<epmem> ^result.normalized-match-score < 1.0
+            ^command <cmd>)
+   (<cmd> ^query <q>)
+-->
+   (<s> ^retrieved-episode none)
+   (<cmd> ^query <q> -)
+}
+
+sp {op_recall*apply*retrieve-episode*failure*no*graph-match
+   (state <s> ^name op_recall1
+              ^operator.name retrieve-episode
+              ^epmem <epmem>)
+   (<epmem> ^result.graph-match 0
             ^command <cmd>)
    (<cmd> ^query <q>)
 -->
