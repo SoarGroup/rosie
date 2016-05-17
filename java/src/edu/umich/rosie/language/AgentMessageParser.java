@@ -45,6 +45,7 @@ public class AgentMessageParser
 			simpleMessages.put("find-success", null);//"SUCCESS");
 			simpleMessages.put("find-failure", null);//"FAILURE");
       simpleMessages.put("stop-leading", "You can stop following me");
+      simpleMessages.put("retrospective-learning-failure", "I was unable to learn the task policy");
 		}
 		
 		String type = SoarUtil.getValueOfAttribute(id, "type");
