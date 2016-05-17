@@ -83,7 +83,6 @@ public class MessageServer implements IMessagePasser
 		try
 		{
 			serverSocket = new ServerSocket(port);
-			System.out.println("HELLO");
 		}
 		catch (IOException ioe)
 		{
@@ -101,7 +100,7 @@ public class MessageServer implements IMessagePasser
 //		serviceResponder.addShutdownHandler();
 //		serviceResponder.startResponder();
 //
-		acceptorThread = new ServerAcceptorThread();
+        acceptorThread = new ServerAcceptorThread();
 		acceptorThread.start();
 	}
 

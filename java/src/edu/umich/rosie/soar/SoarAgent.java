@@ -158,9 +158,9 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         }
 
 
-		agent.ExecuteCommandLine(String.format("watch %d", config.watchLevel));
 
         sourceAgent();
+		agent.ExecuteCommandLine(String.format("w %d", config.watchLevel));
         
         if(perceptionConn != null){
         	perceptionConn.connect();
@@ -306,19 +306,19 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 	}
 
 	@Override
-	public void runEventHandler(int arg0, Object arg1, Agent arg2, int arg3) {
-		smlRunEventId eventId = smlRunEventId.swigToEnum(arg0);
+	public void runEventHandler(int id, Object data, Agent agent, int phase) {
+		smlRunEventId eventId = smlRunEventId.swigToEnum(id);
 		switch(eventId){
 		case smlEVENT_BEFORE_INPUT_PHASE:
 			// Stop the agent
 			if(queueStop){
-				sendCommand("stop");
+                agent.StopSelf();
 				queueStop = false;
 			}
 			if(time.isAdded()){
 				time.updateWM();
 			} else {
-				time.addToWM(arg2.GetInputLink());
+				time.addToWM(agent.GetInputLink());
 			}
 			if(config.throttleMS > 0){
 				try {

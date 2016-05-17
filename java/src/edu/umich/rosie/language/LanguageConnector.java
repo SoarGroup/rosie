@@ -76,9 +76,6 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
 		switch(message.type){
     	case INSTRUCTOR_MESSAGE:
     		System.out.println("Instructor Message: |" + message.message + "|");
-    		if(message.message.startsWith("CMD: ")){
-    			return;
-    		}
     		if(curMessage != null){
     			messagesToRemove.add(curMessage);
     		}

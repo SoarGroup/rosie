@@ -110,6 +110,9 @@ public class ChatPanel extends JPanel implements IMessagePasser.IMessageListener
 			case AGENT_MESSAGE:
 				fullMessage += "Agent: " ;
 				break;
+            default:
+                // Don't handle other types
+                return;
 			}
 			
 			fullMessage += message.message + "\n";
