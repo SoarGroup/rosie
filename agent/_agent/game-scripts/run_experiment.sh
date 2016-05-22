@@ -3,15 +3,15 @@ stats=".stats"
 maxstats=".maxstats"
 smem=".smem"
 topstate=".top"
-csv=".csv"
+#csv=".csv"
 dialog=".dialog"
 pertaskstats=".pertaskstats"
 
-dc=".dc"
+#dc=".dc"
 
 rm pertaskstats.txt
 rm smemuse.txt
-rm statsdc.txt
+#rm statsdc.txt
 for rfile in *.preparse
 do
 	
@@ -28,18 +28,18 @@ do
 	cp soar-game.soar /home/jrkirk/rosie2/rosie-project/rosie/agent/_agent/language-comprehension/comprehension/test-sentences/
 	/home/jrkirk/rosie2/rosie-project/soar/out/./cli < game-data-agent.soar
 	cp stats.txt resultsZ/$rfilename$stats
-	cp statsmax.txt resultsZ/$rfilename$maxstats
-	cp stats.csv resultsZ/$rfilename$csv
+	cp statsm.txt resultsZ/$rfilename$maxstats
+	#cp stats.csv resultsZ/$rfilename$csv
 	cp s1.txt resultsZ/$rfilename$topstate
 	cp soar-game.script resultsZ/$rfilename$dialog
 	
-	#cp pertaskstats.txt results7/$rfilename$pertaskstats
-	#cp smemuse.txt results7/$rfilename$smem
+	cp pertaskstats.txt resultsZ/$rfilename$pertaskstats
+	cp smemuse.txt resultsZ/$rfilename$smem
 	#cp statsdc.txt results7/$rfilename$dc
 	
 	
-	#rm pertaskstats.txt
-	#rm smemuse.txt
+	rm pertaskstats.txt
+	rm smemuse.txt
 	#rm statsdc.txt
 	
 done
