@@ -67,12 +67,14 @@ public class AgentMessageParser
 			return translateReportSuccessfulTraining(fieldsId);
 		} else if(type.equals("object-description")){
 			return translateObjectDescription(fieldsId);
+		} else if(type.equals("predicate-description")){
+			return translatePredicateDescription(fieldsId);
 		} else if(type.equals("get-location-info")){
 			return translateGetLocationInfo(fieldsId);
 		} else if(type.equals("get-item-request")){
 			return translateGetItemRequest(fieldsId);
-    } else if(type.equals("put-down-item-request")){
-      return translatePutDownItemRequest(fieldsId);
+		} else if(type.equals("put-down-item-request")){
+			return translatePutDownItemRequest(fieldsId);
 		} else if(type.equals("give-item-request")){
 			return translateGiveItemRequest(fieldsId);
 		} else if(type.equals("ask-about-item")){
@@ -90,11 +92,38 @@ public class AgentMessageParser
 	    } else if(type.equals("multiple-arguments")){
 	    	return translateMultipleArguments(fieldsId);
 	    } else if(type.equals("start-leading-request")){
-        return translateStartLeadingRequest(fieldsId);
+	    	return translateStartLeadingRequest(fieldsId);
       }
 		return null;
 	}
 	
+	public static String translatePredicateDescription(Identifier fieldsId) {
+		Identifier descId = SoarUtil.getIdentifierOfAttribute(fieldsId, "predicate");
+		if(descId == null){
+			return "The value of this predicate is unknown";
+		}
+		String obj_att="", obj_attribute_val="";
+		
+		for(int c = 0; c < descId.GetNumberChildren(); c++){
+			WMElement el = descId.GetChild(c);
+			String att = el.GetAttribute().toLowerCase();
+			String val = el.GetValueAsString().toLowerCase();
+			if(att.equals("attribute")){
+				obj_att = val;
+			}
+			else if(att.equals("value")){
+				val = val.replace("1", "");
+				obj_attribute_val = val;
+			}
+			else{
+				continue;
+			}
+		}
+		
+		String desc = "The " + obj_att + " is " + obj_attribute_val + ".";
+		return desc;
+		
+	}
 	public static String translateGetItemRequest(Identifier fieldsId){
 		String item = SoarUtil.getValueOfAttribute(fieldsId, "item");
 		if (item != null){
@@ -257,7 +286,7 @@ public class AgentMessageParser
 		if(descId == null){
 			return "An object";
 		}
-		String desc = generateObjectDescription(descId);
+		String desc = generateObjectDescription(descId); 
 		if(desc.charAt(0) == 'a' || desc.charAt(0) == 'e' || desc.charAt(0) == 'i' || 
 				desc.charAt(0) == 'o' || desc.charAt(0) == 'u'){
 			return "An " + desc + ".";
@@ -466,10 +495,12 @@ public class AgentMessageParser
 	}
 	
 	public static String generateObjectDescription(Identifier descId){
-		String root = "block";
+		String root = "block"; // PR - Verify if block is a correct default option
 		ArrayList<String> adjectives = new ArrayList<String>();
-		for(int c = 0; c < descId.GetNumberChildren(); c++){
-			WMElement el = descId.GetChild(c);
+		Identifier predsId = SoarUtil.getIdentifierOfAttribute(descId, "predicates");
+		
+		for(int c = 0; c < predsId.GetNumberChildren(); c++){
+			WMElement el = predsId.GetChild(c);
 			String att = el.GetAttribute().toLowerCase();
 			String val = el.GetValueAsString().toLowerCase();
 			if(att.equals("name")){
@@ -479,20 +510,25 @@ public class AgentMessageParser
 				root = val;
 			} else if(att.equals("shape")){
 				if (root.equals("block")){
+					val = val.replace("1", "");
 					root = val;
 				} else {
 					adjectives.add(val);
 				}
-			} else {
+			} else if(att.equals("color") || att.equals("size")) {
 				adjectives.add(val);
+			} else {
+				continue;
 			}
 		}
 		
-		String desc = root;
+		String desc = "";
 		for(String adj : adjectives){
-			desc = adj + " " + root;
+			adj = adj.replace("1", "");
+			desc += adj + " ";
 		}
 		
+		desc = desc + root;
 		return desc;
 	}
 	

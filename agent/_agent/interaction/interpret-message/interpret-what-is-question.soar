@@ -1,11 +1,13 @@
 ###################################################################
 #
 # interpret-what-is-question
-#   Occurs when the intructor wishes to give additional information about an object
-#   Construction: *-What-is-DP-QT 
-#   	E.g. 'What is this?'
+#   Occurs when the instructor wishes to know the object in a location or its description 
+#   Construction: *-What-is-DP-QT or What-is-DP-QT-PP
+#   	E.g. 'What is this?','What is the color of the block on the stove?'
 #
 ###################################################################
+
+# PR - Future - handle ambiguous references. "What is on the small triangle" returns two small triangles. Send response asking to specify which object.
 
 #######
 # OPERATOR PROPOSAL
@@ -36,6 +38,19 @@ sp {interpret-message*elaborate*interpret-what-is-question*object
    (<o> ^object <obj>)
 }
 
+# Retrieving the predicate for which details are being asked by the instructor
+sp {interpret-message*elaborate*interpret-what-is-question*predicate-object
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-what-is-question
+        ^message.arg1 <arg1>)
+   (<arg1> ^item-type predicate
+           ^2 <pred>)
+   (<pred> ^2 <obj>)
+-->
+   (<o> ^property <pred>
+        ^object <obj>)
+}
 
 #####
 # OPERATOR APPLICATION
@@ -47,7 +62,8 @@ sp {interpret-message*apply*interpret-what-is-question*create*message
               ^operator <o>)
    (<o> ^name interpret-what-is-question
         ^message <in-msg>
-        ^object <obj>)
+        ^object <obj>
+        -^property)
 -->
    (<in-msg> ^interpreted true)
    (<s> ^outgoing-message <msg>)
@@ -55,4 +71,19 @@ sp {interpret-message*apply*interpret-what-is-question*create*message
           ^object <obj>)
 }
 
+# The following sets the message to be handled by the create-predicate-description rule given the property and the object
+sp {interpret-message*apply*interpret-what-is-question*create*predicate-message
+   (state <s> ^name interpret-message
+              ^operator <o>)
+   (<o> ^name interpret-what-is-question
+        ^message <in-msg>
+        ^property <prop>
+        ^object <obj>)
+-->
+   (<in-msg> ^interpreted true)
+   (<s> ^outgoing-message <msg>)
+   (<msg> ^type predicate-description
+          ^property <prop>
+          ^object <obj>)
+}
               
