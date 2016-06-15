@@ -2,10 +2,17 @@ sp {find-solution*propose*game-search*elab-depth-limit
    (state <s> ^name find-solution
               ^superstate.operator.game-name <name>)
 -->
-   (<s> ^depth-limit 10
+   (<s> ^depth-limit 8
         ^game <name>
+        ^retrieve-game <name>
         ^gtype goal action failure)
 }
+
+#sp {find-solution*elaborate*problem-space*worldasdfasdf
+#(state <s> ^name find-solution)
+#-->
+#(interrupt)
+#}
 
 sp {find-solution*elaborate*problem-space*world
 (state <s> ^name find-solution
@@ -16,12 +23,66 @@ sp {find-solution*elaborate*problem-space*world
             ^copy-type shallow)
 }
 
+sp {find-solution*propose*chunk-game
+   (state <s> ^name find-solution
+              -^chunked
+              -^found-action
+              ^top-state.dialog-context.structure <st>)
+   (<st> ^handle <h>)
+-->
+    (<s> ^operator <o> + =)
+    (<o> ^name chunk-game
+         ^predicate-handle <h>)
+}
+
+sp {find-solution*propose*chunk-game-structure
+   (state <s> ^name find-solution
+              -^retrieve-handle
+              -^found-action
+              ^top-state.dialog-context.structure <st>)
+   (<st> ^handle <h>)
+-->
+    (<s> ^operator <o> + =)
+    (<o> ^name chunk-game-structure
+         ^predicate-handle <h>)
+}
+
+sp {chunk-game*game-handle
+   (state <s> ^name chunk-game
+              ^smem.command <sc>
+              ^top-state.dialog-context.structure.handle <gname>)
+-->
+(<s> ^game-struct <g>)
+(<g> ^handle <gname>)
+}
+sp {chunk-game*retrieve-handles
+   (state <s> ^name chunk-game
+              ^smem.command <sc>
+              ^game-struct <g>
+              ^top-state.dialog-context.structure.<< actions goals failures >>.retrieve-handle <gname>)
+-->
+(<g> ^retrieve-handle <gname>)
+}
+
+sp {fchunk-game*chunk-game-structure
+   (state <s> ^name chunk-game
+              ^smem.command <sc>
+              ^superstate <ss>
+              ^game-struct <g>)
+             # ^operator.name chunk-game-structure)
+   -{(state <s>)
+     (<g> -^retrieve-handle)}
+-->
+    (<sc> ^store <g>)
+    (<ss> ^chunked true)
+}
+
 
 sp {find-solution*propose*chunk-predicate-structure*action
    (state <s> ^name find-solution
              -^action.handle <h>
               -^found-action
-              ^top-state.dialog-context.structure.actions.handle <h>)
+              ^top-state.dialog-context.structure.actions.retrieve-handle <h>)
 -->
     (<s> ^operator <o> + =)
     (<o> ^name chunk-predicate-structure
@@ -33,7 +94,7 @@ sp {find-solution*propose*chunk-predicate-structure*goal
    (state <s> ^name find-solution
              -^goal.handle <h>
               -^found-action
-              ^top-state.dialog-context.structure.goals.handle <h>)
+              ^top-state.dialog-context.structure.goals.retrieve-handle <h>)
 -->
     (<s> ^operator <o> + =)
     (<o> ^name chunk-predicate-structure
@@ -45,7 +106,7 @@ sp {find-solution*propose*chunk-predicate-structure*failure
    (state <s> ^name find-solution
              -^failure.handle <h>
               -^found-action
-              ^top-state.dialog-context.structure.failures.handle <h>)
+              ^top-state.dialog-context.structure.failures.retrieve-handle <h>)
 -->
     (<s> ^operator <o> + =)
     (<o> ^name chunk-predicate-structure
@@ -93,6 +154,55 @@ sp {find-solution*prefer*chunk-predicate-structure*over*game-learning-complete
               ^operator <o2> +
               ^operator <o> +)
    (<o> ^name chunk-predicate-structure)
+   (<o2> ^name game-learning-complete)
+-->
+   (<s> ^operator <o> > <o2>)
+}
+
+sp {find-solution*prefer*chunk-game-structure*over*game-learning-complete
+   (state <s> ^name find-solution
+              ^operator <o2> +
+              ^operator <o> +)
+   (<o> ^name chunk-game-structure)
+   (<o2> ^name game-learning-complete)
+-->
+   (<s> ^operator <o> > <o2>)
+}
+
+sp {find-solution*prefer*chunk-game-structure*over*chunk-predicate-structure
+   (state <s> ^name find-solution
+              ^operator <o2> +
+              ^operator <o> +)
+   (<o> ^name chunk-game-structure)
+   (<o2> ^name chunk-predicate-structure)
+-->
+   (<s> ^operator <o> < <o2>)
+}
+sp {find-solution*prefer*chunk-game*over*chunk-predicate-structure
+   (state <s> ^name find-solution
+              ^operator <o2> +
+              ^operator <o> +)
+   (<o> ^name chunk-game)
+   (<o2> ^name chunk-predicate-structure)
+-->
+   (<s> ^operator <o> > <o2>)
+}
+
+sp {find-solution*prefer*chunk-game*over*chunk-game-structure
+   (state <s> ^name find-solution
+              ^operator <o2> +
+              ^operator <o> +)
+   (<o> ^name chunk-game)
+   (<o2> ^name chunk-game-structure)
+-->
+   (<s> ^operator <o> > <o2>)
+}
+
+sp {find-solution*prefer*chunk-game*over*game-learning-complete
+   (state <s> ^name find-solution
+              ^operator <o2> +
+              ^operator <o> +)
+   (<o> ^name chunk-game)
    (<o2> ^name game-learning-complete)
 -->
    (<s> ^operator <o> > <o2>)

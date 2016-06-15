@@ -334,6 +334,7 @@ public class AgentMessageParser
 		    result+= " and ";
 
 		    WMElement wme = relationships.GetChild(index);
+		    
 		    Identifier function = wme.ConvertToIdentifier();
 		    
             String of1 = SoarUtil.getValueOfAttribute(function, "of1");

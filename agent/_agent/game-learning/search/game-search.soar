@@ -45,7 +45,7 @@ sp {game-search*elaborate*goal #for only at depth
 
 sp {game-search*increment-goal-delay #for only at depth
    (state <s> ^name game-search
-              ^goal-search-delay {<d> < 20})
+              ^goal-search-delay {<d> < 10})
 -->
    (<s> ^goal-search-delay (+ 1 <d>))
 }
@@ -292,7 +292,7 @@ sp {game-search*elaborate*nlp-set*verb-structure
 sp {game-search*elaborate*predicate-handle
    (state <s> ^name game-search
               ^top-state.dialog-context.structure <dcs>)  
-   (<dcs> ^actions.handle <name>)
+   (<dcs> ^actions.retrieve-handle <name>)
 -->
     (<s> ^retrieve-handle <name>)
     }
@@ -301,7 +301,7 @@ sp {game-search*elaborate*predicate-handle*goal
    (state <s> ^name game-search
               ^gtype goal
               ^top-state.dialog-context.structure <dcs>)  
-   (<dcs> ^goals.handle <name>)
+   (<dcs> ^goals.retrieve-handle <name>)
 -->
     (<s> ^retrieve-handle <name>)
     }
@@ -310,7 +310,7 @@ sp {game-search*elaborate*predicate-handle*failure
    (state <s> ^name game-search
               ^gtype failure
               ^top-state.dialog-context.structure <dcs>)  
-   (<dcs> ^failures.handle <name>)
+   (<dcs> ^failures.retrieve-handle <name>)
 -->
     (<s> ^retrieve-handle <name>)
     }
@@ -456,7 +456,7 @@ sp {game-search*apply*failure
 sp {game-search*depth-limit
    (state <s> ^name game-search
               ^desired <d>
-              ^goal-search-delay 20
+              ^goal-search-delay 10
               ^operator <o> +
              -^goal.parameter-set.set
               ^simulated true
@@ -751,24 +751,24 @@ sp {game-search*equivalent-action*reject4*ordering
 #}
 
 #
-#sp {game-search*heuristic*reject
-#   (state <s> ^name game-search
-#              ^superstate.operator.superoperator <so>
-#              ^action <act>
-#          #    ^action <act2>
-#          #    ^operator <o2>
-#              ^operator <o> +)
-#   (<act> ^handle <cname> ^verb-structure.{1}.{1} <ind>)
-#   (<so> ^parameters <p2> ^verb-structure.{1}.{1} <ind2>)
-#   (<o> ^type action -^duplicate-of ^parameters <p> ^name <cname>)
-#   (<p> ^<ind>.handle <h1>)
-#   (<p2> ^<ind2>.handle <h1>)
-# #  (<act2> ^handle <cname2> ^verb-structure.{1} <ind>)
-#  # (<o2> ^type action -^duplicate-of ^parameters <p4> ^name <cname>)
-#   #(<p4> ^<ind>.handle {<h2> <> <h1>}) #as long as one action of that type still there
-#-->
-#   (<s> ^operator <o> -)
-#}
+sp {game-search*heuristic*reject
+   (state <s> ^name game-search
+              ^superstate.operator.superoperator <so>
+              ^action <act>
+          #    ^action <act2>
+          #    ^operator <o2>
+              ^operator <o> +)
+   (<act> ^handle <cname> ^verb-structure.{1}.{1} <ind>)
+   (<so> ^parameters <p2> ^verb-structure.{1}.{1} <ind2>)
+   (<o> ^type action -^duplicate-of ^parameters <p> ^name <cname>)
+   (<p> ^<ind>.handle <h1>)
+   (<p2> ^<ind2>.handle <h1>)
+ #  (<act2> ^handle <cname2> ^verb-structure.{1} <ind>)
+  # (<o2> ^type action -^duplicate-of ^parameters <p4> ^name <cname>)
+   #(<p4> ^<ind>.handle {<h2> <> <h1>}) #as long as one action of that type still there
+-->
+   (<s> ^operator <o> -)
+}
 
 
 sp {game-search*propose*default
@@ -803,6 +803,24 @@ sp {game-search*apply*default*top-select-random-action
    (<s> ^operator <o> > =)
 }
 
+#sp {game-search*apply*default*depth-limit-increaseasdfasdf
+##:interrupt
+#   (state <s> ^name game-search
+#              ^depth-limit <dc>
+#              ^dcount <dc>
+#              ^world.predicates.predicate <p>)
+#   (<p> ^handle on1 ^instance <in> <in2> <in3> <in4> <in5> <in6>)
+#   (<in> ^{1}.handle object-2 ^2 <bank2>)
+#   (<in2> ^{1}.handle object-3 ^2 <bank2>)
+#   (<in3> ^{1}.handle object-4 ^2 <bank2>)
+#   (<in4> ^{1}.handle object-5 ^2 <bank2>)
+#   (<in5> ^{1}.handle object-6 ^2 <bank2>)
+#   (<in6> ^{1}.handle object-7 ^2 <bank2>)
+#   (<bank2> ^handle object-1)
+#-->
+#(write (crlf) (cmd print <s> -d 3))
+#}
+
 #puzzle, increase depth
 sp {game-search*apply*default*depth-limit-increase
    (state <s> ^name game-search
@@ -812,7 +830,7 @@ sp {game-search*apply*default*depth-limit-increase
               ^operator.name default)
    (<ss> ^depth-limit <d>)
 -->
- #   (interrupt)
+  #  (interrupt)
    (<ss> ^depth-limit <d> -)
    (<ss> ^depth-limit (+ <d> 1))
 }
@@ -823,6 +841,21 @@ sp {selection*prefer*evaluate*action*over*default
               ^operator <o2> +)
    (<o1> ^name evaluate-operator ^superoperator.type action)
    (<o2> ^name evaluate-operator ^superoperator.name default)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+
+sp {selection*prefer*evaluate*action*over*hackforcannibals
+#:interrupt
+   (state <s> ^name selection
+              ^superstate.dcount 0
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name evaluate-operator ^superoperator <so>)
+   (<o2> ^name evaluate-operator ^superoperator <so2>)
+   (<so> ^type action -^verb-structure.{3})
+   (<so2> ^type action ^verb-structure.{3})
 -->
    (<s> ^operator <o1> > <o2>)
 }
