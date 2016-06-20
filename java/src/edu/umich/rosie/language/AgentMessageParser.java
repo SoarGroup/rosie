@@ -10,6 +10,7 @@ import java.util.Set;
 import sml.Identifier;
 import sml.WMElement;
 import edu.umich.rosie.soar.SoarUtil;
+import edu.umich.rosie.soar.StringWME;
 
 public class AgentMessageParser
 {
@@ -68,6 +69,8 @@ public class AgentMessageParser
 			return translateObjectDescription(fieldsId);
 		} else if(type.equals("predicate-description")){
 			return translatePredicateDescription(fieldsId);
+		} else if(type.equals("feature-relation-description")){
+			return translateGetFeatureRelationDescription(fieldsId);
 		} else if(type.equals("get-location-info")){
 			return translateGetLocationInfo(fieldsId);
 		} else if(type.equals("get-item-request")){
@@ -96,10 +99,88 @@ public class AgentMessageParser
 		return null;
 	}
 	
+	
+	public static String translateGetFeatureRelationDescription(Identifier fieldsId){
+		Identifier descSetId = SoarUtil.getIdentifierOfAttribute(fieldsId, "object");
+		if(descSetId == null) {
+			return "I do not know this object. Can you describe it for me?";
+		}
+		String returnDescription = "";
+		
+		// Verifying if object description was generated successfully
+		String generated = SoarUtil.getValueOfAttribute(descSetId, "generated");
+		if(generated.equals("yes"))	{
+			Identifier objectId = SoarUtil.getIdentifierOfAttribute(descSetId, "object");
+			returnDescription = generatePropertyDescription(objectId);
+			String object_desc = generateObjectDescription(objectId);
+			
+			// Counter for individual description WMEs
+			int i = 0;
+			WMElement desc = descSetId.FindByAttribute("description",i);
+
+			// Getting individual relation descriptions for given object
+			while (desc != null) {
+				int position=0, other_object_position=0;
+				String relation_handle = "";
+				
+				// Get values of position of given object and relation handle
+				Identifier descId = desc.ConvertToIdentifier();
+				position = Integer.parseInt(SoarUtil.getValueOfAttribute(descId, "position"));
+				relation_handle = (SoarUtil.getValueOfAttribute(descId, "handle")).replace("1","");
+				
+				// Relation of given object w.r.t other objects in the world (this includes location as well)
+				if (position == 1) {
+					other_object_position = 2;
+				} else {
+					other_object_position = 1;
+				}
+				
+				// Get other object identifier
+				Identifier other_object_Id = SoarUtil.getIdentifierOfAttribute(descId, Integer.toString(other_object_position));
+	
+				// Description of the related object in terms of size, shape and color
+				String other_object_desc = generateObjectDescription(other_object_Id);			
+				switch(other_object_desc.charAt(0)) 
+				{
+					case 'a':
+					case 'e':
+					case 'i':
+					case 'o':
+					case 'u':
+						other_object_desc = "An " + other_object_desc;
+						break;
+					default:
+						other_object_desc = "A " + other_object_desc;
+						break;
+				}
+				
+				if (other_object_position == 2)	
+				{
+					other_object_desc = " a" + other_object_desc.substring(1,other_object_desc.length());
+				}
+				
+				if (position == 1) 
+				{
+					returnDescription += "The " + object_desc + " is " + relation_handle + other_object_desc + ". ";
+				} else 
+				{
+					returnDescription += other_object_desc + " is " + relation_handle + " the " + object_desc + ". ";
+				}
+				
+				desc = descSetId.FindByAttribute("description",++i);
+			}
+		}
+		else {
+			returnDescription =  "I do not know this object. If it exists, can you describe it for me?";
+		}
+		
+		return returnDescription;
+	}
+	
 	public static String translatePredicateDescription(Identifier fieldsId) {
 		Identifier descId = SoarUtil.getIdentifierOfAttribute(fieldsId, "predicate");
 		if(descId == null){
-			return "The value of this predicate is unknown";
+			return "The value of this predicate is unknown"; // PR - This object does not have this property
 		}
 		String obj_att="", obj_attribute_val="";
 		
@@ -120,9 +201,9 @@ public class AgentMessageParser
 		}
 		
 		String desc = "The " + obj_att + " is " + obj_attribute_val + ".";
-		return desc;
-		
+		return desc;		
 	}
+	
 	public static String translateGetItemRequest(Identifier fieldsId){
 		String item = SoarUtil.getValueOfAttribute(fieldsId, "item");
 		if (item != null){
@@ -497,6 +578,33 @@ public class AgentMessageParser
 			return "Test me or give me another task.";
 	}
 	
+	// This function lists out the properties of a given object.
+	public static String generatePropertyDescription(Identifier descId) {
+		
+		Identifier predsId = SoarUtil.getIdentifierOfAttribute(descId, "predicates");
+		String propertyDesc = "";
+		for(int c = 0; c < predsId.GetNumberChildren(); c++){
+			WMElement el = predsId.GetChild(c);
+			String att = el.GetAttribute().toLowerCase();
+			String val = el.GetValueAsString().toLowerCase().replace("1","");
+			if (att.equals("shape")) {
+				propertyDesc += "The shape is " + val + ". ";
+			} else if (att.equals("size")) {
+				propertyDesc += "The size is " + val + ". ";
+			} else if(att.equals("color")) {
+				propertyDesc += "The color is " + val + ". ";
+			}			
+		}
+		
+		// This object is a location with no descriptive properties.
+		if (propertyDesc.equals(""))
+		{
+			propertyDesc = "This is the " + predsId.GetParameterValue("name") + ". ";
+		}
+		
+		return propertyDesc;
+	}
+	
 	public static String generateObjectDescription(Identifier descId){
 		String root = "block"; // PR - Verify if block is a correct default option
 		ArrayList<String> adjectives = new ArrayList<String>();
@@ -510,7 +618,7 @@ public class AgentMessageParser
 				if (!root.equals("block")){
 					adjectives.add(root);
 				}
-				root = val;
+				root = val.replace("1","");
 			} else if(att.equals("shape")){
 				if (root.equals("block")){
 					val = val.replace("1", "");
