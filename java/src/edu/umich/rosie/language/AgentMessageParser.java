@@ -115,6 +115,8 @@ public class AgentMessageParser
 			return translateFinalGoalState(fieldsId);
 	    } else if(type.equals("unknown-word")){
 			return translateUnknownWord(fieldsId);
+	    } else if(type.equals("unknown-defined-word")){
+			return translateUnknownDefinedWord(fieldsId);
 	    } else if(type.equals("learned-unknown-word")){
 			return translateLearnedUnknownWord(fieldsId);
 	    } else if(type.equals("transfer-concept")){
@@ -196,6 +198,17 @@ public class AgentMessageParser
 	    		word = word.replaceAll("\\d", "");
 	    		result += word;
 	    	}
+	    	return result;
+	 }
+	 public static String translateUnknownDefinedWord(Identifier fieldsId){
+	    	String result = "I cannot satisfy the concept ";
+	    	String word = SoarUtil.getValueOfAttribute(fieldsId, "word");
+	    	if (word != null)
+	    	{
+	    		word = word.replaceAll("\\d", "");
+	    		result += word;
+	    	}
+	    	result+= ". Can you give another definition?";
 	    	return result;
 	 }
 	    	
