@@ -6,48 +6,30 @@
 
 ###################################################################
 
-#PR - probably a hack, find ways to edit top state dialog context to do the following
-sp {interpret-message*propose*interpret-describe-object
+#############################################################
+# Apply rule from interpret-action-command
+#############################################################
+
+# When the object is parsed correctly
+          
+sp {interpret-message*apply*interpret-action-command*handle-describe
    (state <s> ^name interpret-message
+              ^operator.name interpret-action-command
               ^instructor-message <msg>)
-   (<msg> ^message-type command
-          ^action.handle describe
-          -^interpreted true)
--->
-   (<s> ^operator <o> +)
-   (<o> ^name interpret-describe-object
-        ^message <msg>)
-}
-
-# Elaborate useful information from the message onto the operator
-# object: REQUIRED - the object asked about
-sp {interpret-message*elaborate*interpret-describe-object
-   (state <s> ^name interpret-message
-              ^operator <o> +)
-   (<o> ^name interpret-describe-object
-        ^message <msg>)
    (<msg> ^arg1 <obj>
-          ^action.handle <handle>)
+          ^action.handle describe)
 -->
-   (<o> ^object <obj>
-        ^handle <handle>)
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type feature-relation-description
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type explanation
+         ^originator agent)
+   (<params> ^object <obj>)
 }
 
-# here <handle> refers to the action command handle i.e. describe
-
-sp {interpret-message*apply*interpret-describe-object
-   (state <s> ^name interpret-message
-              ^operator <o>)
-   (<o> ^name interpret-describe-object
-        ^message <in-msg> 
-        ^object <obj>
-        ^handle <handle>)
--->
-   (<in-msg> ^interpreted true)
-   (<s> ^outgoing-message <msg>)
-   (<msg> ^type feature-relation-description
-          ^object <obj>
-          ^handle <handle>)
-}
-
-
+#PR - Add apply rule for when multiple objects are retrieved when user asks to describe said object.
