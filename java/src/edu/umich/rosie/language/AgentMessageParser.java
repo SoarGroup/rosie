@@ -110,7 +110,7 @@ public class AgentMessageParser
     if (item != null && loc != null){
       return ("Please place the " + item + " on the " + loc + ".").replaceAll("\\d", "");
     } else if(item != null){
-      return ("Please place the " + item + " on the ground.").replaceAll("\\d", "");
+      return ("Please take the " + item + ".").replaceAll("\\d", "");
     }
     return null;
   }
@@ -462,11 +462,7 @@ public class AgentMessageParser
 //	}
 //
 	private static String translateNextTaskPrompt() {
-		counter++;
-		if (counter == 1)
-			return "Give me a task.";
-		else 
-			return "Test me or give me another task.";
+        return "I am ready for a new task";
 	}
 	
 	public static String generateObjectDescription(Identifier descId){
