@@ -65,12 +65,14 @@ public class AgentMessageParser
 			return translateGetPredicateInfo(fieldsId);
 		} else if(type.equals("report-successful-training")){
 			return translateReportSuccessfulTraining(fieldsId);
-		} else if(type.equals("object-description")){
+		} else if(type.equals("agent-object-description")){
 			return translateObjectDescription(fieldsId);
-		} else if(type.equals("predicate-description")){
+		} else if(type.equals("agent-predicate-description")){
 			return translatePredicateDescription(fieldsId);
 		} else if(type.equals("feature-relation-description")){
 			return translateGetFeatureRelationDescription(fieldsId);
+		} else if(type.equals("agent-location-description")){
+			return translateLocationDescription(fieldsId);
 		} else if(type.equals("get-location-info")){
 			return translateGetLocationInfo(fieldsId);
 		} else if(type.equals("get-item-request")){
@@ -178,30 +180,43 @@ public class AgentMessageParser
 	}
 	
 	public static String translatePredicateDescription(Identifier fieldsId) {
-		Identifier descId = SoarUtil.getIdentifierOfAttribute(fieldsId, "predicate");
+		Identifier descId = SoarUtil.getIdentifierOfAttribute(fieldsId, "object");
+		String desc = "";
 		if(descId == null){
-			return "The value of this predicate is unknown"; // PR - This object does not have this property
+			return "The value of this predicate is unknown"; 
 		}
-		String obj_att="", obj_attribute_val="";
-		
-		for(int c = 0; c < descId.GetNumberChildren(); c++){
-			WMElement el = descId.GetChild(c);
-			String att = el.GetAttribute().toLowerCase();
-			String val = el.GetValueAsString().toLowerCase();
-			if(att.equals("attribute")){
-				obj_att = val;
+		else {
+			// Verifying if object description was generated successfully
+			String generated = SoarUtil.getValueOfAttribute(descId, "generated");
+			if(generated.equals("yes"))	{			
+				Identifier predicateId = SoarUtil.getIdentifierOfAttribute(descId, "predicate");
+				String obj_att = SoarUtil.getValueOfAttribute(predicateId, "attribute");
+				String obj_attribute_val = (SoarUtil.getValueOfAttribute(predicateId, "value")).replace("1", "");
+				desc = "The " + obj_att + " is " + obj_attribute_val + ".";
 			}
-			else if(att.equals("value")){
-				val = val.replace("1", "");
-				obj_attribute_val = val;
+			else {
+				String reason = SoarUtil.getValueOfAttribute(descId, "reason");
+				if(reason.equals("unknown-attribute")) {
+					desc = "This object does not have this property.";
+				} else {
+					desc = "This object does not exist.";
+				}
 			}
-			else{
-				continue;
-			}
+			
+			return desc;
 		}
+	}
+	
+	public static String translateLocationDescription(Identifier fieldsId) {
+		Identifier descId = SoarUtil.getIdentifierOfAttribute(fieldsId, "location-description");
 		
-		String desc = "The " + obj_att + " is " + obj_attribute_val + ".";
-		return desc;		
+		// Get location
+		Identifier locationId = SoarUtil.getIdentifierOfAttribute(descId, "location");
+		String locationDesc = generateObjectDescription(locationId);
+		
+		// Get the handle in/on
+		String preposition = (SoarUtil.getValueOfAttribute(descId, "handle")).replace("1","");
+		return "It is " + preposition +" the " + locationDesc + ".";
 	}
 	
 	public static String translateGetItemRequest(Identifier fieldsId){
@@ -362,19 +377,59 @@ public class AgentMessageParser
 	}
 	
 	public static String translateObjectDescription(Identifier fields){
-		Identifier descId = SoarUtil.getIdentifierOfAttribute(fields, "object");
-		if(descId == null){
+		Identifier descSetId = SoarUtil.getIdentifierOfAttribute(fields, "object");
+		if(descSetId == null){
 			return "An object";
 		}
-		String desc = generateObjectDescription(descId); 
-		if(desc.charAt(0) == 'a' || desc.charAt(0) == 'e' || desc.charAt(0) == 'i' || 
-				desc.charAt(0) == 'o' || desc.charAt(0) == 'u'){
-			return "An " + desc + ".";
-		} else {
-			return "A " + desc + ".";
-		}
 		
+		// Verifying if object description was generated successfully
+		String generated = SoarUtil.getValueOfAttribute(descSetId, "generated");
+		if(generated.equals("yes"))	{
+			String desc="", returnDesc = "";
+			
+			if (descSetId.GetNumberChildren() == 2)
+			{
+				Identifier descId = SoarUtil.getIdentifierOfAttribute(descSetId, "object");
+				desc = generateObjectDescription(descId); 
+				if(desc.charAt(0) == 'a' || desc.charAt(0) == 'e' || desc.charAt(0) == 'i' || 
+						desc.charAt(0) == 'o' || desc.charAt(0) == 'u'){
+					return "An " + desc;
+				} else {
+					return "A " + desc;
+				}
+			}
+			
+			// Counter for individual description WMEs
+			int i = 0;
+			WMElement descWME = descSetId.FindByAttribute("object",i);
+			
+			// Retrieving multiple objects if they exist
+			while (descWME != null)
+			{
+				Identifier descId = descWME.ConvertToIdentifier();
+				desc = generateObjectDescription(descId); 
+				if(desc.charAt(0) == 'a' || desc.charAt(0) == 'e' || desc.charAt(0) == 'i' || 
+						desc.charAt(0) == 'o' || desc.charAt(0) == 'u'){
+					desc = "An " + desc;
+				} else {
+					desc = "A " + desc;
+				}
+				
+				returnDesc += desc + ", ";
+				descWME = descSetId.FindByAttribute("object",++i);
+			}
+			
+			returnDesc = returnDesc.substring(0,returnDesc.length()-2); // removing unnecessary comma
+			// replacing last comma by and
+			int lastcomma = returnDesc.lastIndexOf(',');
+			returnDesc = returnDesc.substring(0, lastcomma) + " and" + returnDesc.substring(lastcomma+1);
+			return "A" + returnDesc.substring(1).toLowerCase();			
+		}
+		else {
+			return "Nothing";
+		}	
 	}
+	
 	public static boolean startsWithVowel(String adj){
 		return (adj.startsWith(" a") || adj.startsWith(" e") || adj.startsWith(" i") || 
 				adj.startsWith(" o") || adj.startsWith(" u"));
