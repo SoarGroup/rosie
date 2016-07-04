@@ -2,6 +2,7 @@ sp {find-solution*propose*game-search*elab-depth-limit
    (state <s> ^name find-solution
               ^superstate.operator.game-name <name>)
 -->
+#(interrupt)
    (<s> ^depth-limit 1
         ^game <name>
         ^retrieve-game <name>
@@ -24,11 +25,22 @@ sp {find-solution*propose*chunk-game
               ^top-state.dialog-context.structure <st>)
    (<st> ^handle <h>)
 -->
+(interrupt)
     (<s> ^operator <o> + =)
     (<o> ^name chunk-game
          ^predicate-handle <h>)
 }
-
+sp {find-solution*elaborate*opponent
+   (state <s> ^name find-solution
+              ^action <a>
+              ^top-state.dialog-context.structure <st>)
+   (<st> ^handle <h>)
+   (<a> ^handle <r> ^opponent <o>)
+-->
+	(<s> ^opponent true false)
+}
+              
+              
 sp {find-solution*propose*chunk-game-structure
    (state <s> ^name find-solution
               -^retrieve-handle
@@ -47,7 +59,26 @@ sp {chunk-game*game-handle
               ^top-state.dialog-context.structure.handle <gname>)
 -->
 (<s> ^game-struct <g>)
-(<g> ^handle <gname>)
+(<g> ^handle <gname> ^retrieve game)
+}
+sp {chunk-game*elaborate*opponent
+   (state <s> ^name chunk-game
+              ^game-struct <g>
+              ^superstate.action <a>
+              ^top-state.dialog-context.structure.actions.retrieve-handle <name>)
+   (<a> ^handle <name> ^opponent true)
+-->
+(<g> ^opponent <name>)
+}
+
+sp {chunk-game*elaborate*opponent*goals
+   (state <s> ^name chunk-game
+              ^game-struct <g>
+              ^superstate.action <a>
+              ^top-state.dialog-context.structure.goals.retrieve-handle <name>)
+   (<a> ^opponent true)
+-->
+(<g> ^opponent <name>)
 }
 
 sp {chunk-game*retrieve-handles
@@ -128,6 +159,7 @@ sp {find-solution*propose*game-search
         ^game <name>)
    (<g> ^game <name> ^type action goal failure)
 }
+
 sp {find-solution*elaborate*depth-limit-1-less
    (state <s> ^name find-solution
               ^depth-limit <dl>)
@@ -180,7 +212,7 @@ sp {find-solution*prefer*chunk-game*over*chunk-predicate-structure
    (<o> ^name chunk-game)
    (<o2> ^name chunk-predicate-structure)
 -->
-   (<s> ^operator <o> > <o2>)
+   (<s> ^operator <o> < <o2>)
 }
 
 sp {find-solution*prefer*chunk-game*over*chunk-game-structure
@@ -260,7 +292,7 @@ sp {find-solution*propose*game-search*muliplayer
    (<s> ^operator <o> + = <)
    (<o> ^name game-search
         ^dcount 0
-        ^depth-limit 1
+        ^depth-limit 3
         ^list.game <g>
         ^current <g> 
         ^game <name>)
