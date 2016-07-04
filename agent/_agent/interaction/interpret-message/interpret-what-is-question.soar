@@ -38,6 +38,18 @@ sp {interpret-message*elaborate*interpret-what-is-question*object
    (<o> ^object <obj>)
 }
 
+# Elaborating for "What is this" question where object is already generated
+sp {interpret-message*elaborate*interpret-what-is-question*object-given
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-what-is-question
+        ^message.arg1 <arg1>)
+   (<arg1> ^item-type object)
+-->
+   (<o> ^generated yes
+        ^object <arg1>)
+}
+ 
 # Retrieving the predicate for which details are being asked by the instructor
 sp {interpret-message*elaborate*interpret-what-is-question*predicate-object
    (state <s> ^name interpret-message
@@ -59,31 +71,68 @@ sp {interpret-message*elaborate*interpret-what-is-question*predicate-object
 # Don't even need to do any special processing, just create a response
 sp {interpret-message*apply*interpret-what-is-question*create*message
    (state <s> ^name interpret-message
+              ^instructor-message <msg>
               ^operator <o>)
    (<o> ^name interpret-what-is-question
-        ^message <in-msg>
         ^object <obj>
-        -^property)
+        -^property
+        -^generated)
 -->
-   (<in-msg> ^interpreted true)
-   (<s> ^outgoing-message <msg>)
-   (<msg> ^type object-description
-          ^object <obj>)
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type agent-object-description
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<params> ^object <obj>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type explanation
+         ^originator agent)
+}
+
+sp {interpret-message*apply*interpret-what-is-question*create*message*given-object
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>
+              ^operator <o>)
+   (<o> ^name interpret-what-is-question
+        ^object <obj>
+        ^generated <gen>)
+-->
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type agent-object-description
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<params> ^object <obj>
+             ^generated <gen>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type explanation
+         ^originator agent)
 }
 
 # The following sets the message to be handled by the create-predicate-description rule given the property and the object
 sp {interpret-message*apply*interpret-what-is-question*create*predicate-message
    (state <s> ^name interpret-message
+              ^instructor-message <msg>
               ^operator <o>)
    (<o> ^name interpret-what-is-question
-        ^message <in-msg>
         ^property <prop>
         ^object <obj>)
 -->
-   (<in-msg> ^interpreted true)
-   (<s> ^outgoing-message <msg>)
-   (<msg> ^type predicate-description
-          ^property <prop>
-          ^object <obj>)
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type agent-predicate-description
+   		^parameters <params>
+        ^satisfaction <sat>)
+   (<params> ^object <obj>
+             ^property <prop>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type explanation
+         ^originator agent)
 }
               

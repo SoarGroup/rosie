@@ -1,0 +1,124 @@
+sp {dialog-event*propose*answer-what-is-predicate
+   (state <s> ^name dialog-event
+              ^purpose <p>)
+   (<p> ^type agent-predicate-description
+        ^parameters <params>)
+   (<params> ^object <obj>
+             ^property <prop>) 
+   (<prop> ^handle <att>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name answer-what-is-predicate
+        ^object <obj>
+        ^attribute <att>)
+}
+          
+###################################################
+# Apply operator answer what-is-predicate-question
+###################################################
+
+sp {dialog-event*agent-predicate-description*apply*answer-what-is-predicate
+   (state <s> ^name dialog-event
+              ^operator <o>
+              -^predicate-description
+              ^top-state.world.objects.object <obj>)
+   (<o> ^name answer-what-is-predicate
+        ^object <obj>
+        ^attribute <att>)
+   (<obj> ^predicates.<att> <val>)
+-->
+   (<s> ^generated yes
+        ^predicate-description <desc>)
+   (<desc> ^attribute <att>
+           ^value <val>)
+}
+
+sp {dialog-event*agent-predicate-description*apply*answer-what-is-predicate*unknown-attribute
+   (state <s> ^name dialog-event
+              ^operator <o>
+              -^predicate-description
+              ^top-state.world.objects.object <obj>)
+   (<o> ^name answer-what-is-predicate
+        ^object <obj>
+        ^attribute <att>)
+   (<obj> -^predicates.<att>)
+-->
+   (<s> ^generated no
+        ^reason unknown-attribute)
+}
+
+sp {dialog-event*agent-predicate-description*apply*answer-what-is-predicate*unknown-object
+   (state <s> ^name dialog-event
+              ^operator <o>
+              -^predicate-description
+              ^top-state.world.objects <objects>)
+   (<o> ^name answer-what-is-predicate
+        ^object <obj>
+        ^attribute <att>)
+   (<objects> -^object <obj>)
+-->
+   (<s> ^generated no
+        ^reason unknown-object)
+}
+
+########################################################
+# Report answer using complete-answer-what-is-predicate
+########################################################
+
+sp {answer-what-is-predicate*propose*complete-answer-what-is-predicate
+   (state <s> ^name answer-what-is-predicate
+              ^superstate <ss>)
+   (<ss> ^generated <gen>)
+-->
+   (<s> ^operator <o> + <)
+   (<o> ^name complete-answer-what-is-predicate
+        ^generated <gen>)
+}
+
+sp {answer-what-is-predicate*apply*complete-answer-what-is-predicate*generated*send-message
+   (state <s> ^name answer-what-is-predicate
+              ^operator <o>
+              ^superstate <ss>       
+              ^io.output-link <out>)
+   (<ss> ^predicate-description <pred>)
+   (<o> ^name complete-answer-what-is-predicate
+        ^generated <gen>)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type agent-predicate-description
+          ^fields.object <desc>)
+   (<desc> ^generated <gen>
+  		   ^predicate <pred>)  
+}        
+
+sp {answer-what-is-predicate*apply*complete-answer-what-is-predicate*not-generated*send-message
+   (state <s> ^name answer-what-is-predicate
+              ^operator <o>
+              ^superstate <ss>       
+              ^io.output-link <out>)
+   (<ss> -^predicate-description
+         ^reason <res>)
+   (<o> ^name complete-answer-what-is-predicate
+        ^generated <gen>)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type agent-predicate-description
+          ^fields.object <desc>)
+   (<desc> ^generated <gen>
+   		   ^reason <res>)  
+}        
+ 
+sp {answer-what-is-predicate*apply*complete-answer-what-is-predicate*mark*performed
+   (state <s> ^name answer-what-is-predicate
+              ^operator.name complete-answer-what-is-predicate
+              ^top-state.interaction.status <status>)
+-->
+   (<status> ^performed.dialog-event <de>)
+   (<de> ^type explanation
+         ^originator agent)
+}       
+        
+         
+
+
+
