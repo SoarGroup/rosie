@@ -28,6 +28,7 @@ sp {game-search*elaborate*operator
 sp {game-search*elaborate*goal #for only at depth
    (state <s> ^name game-search
               ^simulated true
+             -^multiplayer true
               ^dcount <dc>
               ^depth-limit <dc>)
 -->
@@ -35,9 +36,18 @@ sp {game-search*elaborate*goal #for only at depth
         ^goal-search-delay 1)
 }
 
+sp {game-search*elaborate*goal*multiplayer #for only at depth
+   (state <s> ^name game-search
+              ^multiplayer true
+              ^simulated true)
+-->
+   (<s> ^gtype goal
+        ^goal-search-delay 1)
+}
+
 sp {game-search*increment-goal-delay #for only at depth
    (state <s> ^name game-search
-              ^goal-search-delay {<d> < 10})
+              ^goal-search-delay {<d> < 50})
 -->
    (<s> ^goal-search-delay (+ 1 <d>))
 }
@@ -339,13 +349,32 @@ sp {game-search*elaborate*input-args*set-to-single*objects
    (<i15> ^1 <obj>)
 }
 
+#sp {game-search*apply*action*success
+#   (state <s> ^name selection
+#              ^evaluation <e>
+#              ^superstate <ss>
+#              ^top-state <ts>
+#              ^problemspace games)
+#   (<ss> ^dcount <dc> ^multiplayer true)
+#   (<e> ^symbolic-value success ^superoperator <so>)
+#   (<so> ^parameters <p> ^verb-structure <vs>)
+#   (<vs> ^<num> <vs2>)
+#   (<p> ^<i1> <o1> ^<i2> <o2>)
+#  # (<v> ^1 <v1>)#for now only handle 1 verb actions
+#   (<vs2> ^verb-prep <vp> ^verb-name <vname> ^1 <i1> ^2 <i2>)
+#-->
+#   (<ts> ^perform-action <fa>)
+#   (<fa> ^dcount (- (+ (* 2 <dc>) <num>) 1) ^obj1 <o1> ^obj2 <o2> ^pname <vp> ^vname <vname>)
+#}
+
 
 sp {game-search*apply*action*perform-action
    (state <s> ^name selection
               ^evaluation <e>
-              ^superstate.dcount <dc>
+              ^superstate <ss>
               ^top-state <ts>
               ^problemspace games)
+   (<ss> ^dcount <dc> -^multiplayer true)
    (<e> ^symbolic-value success ^superoperator <so>)
    (<so> ^parameters <p> ^verb-structure <vs>)
    (<vs> ^<num> <vs2>)
@@ -358,16 +387,55 @@ sp {game-search*apply*action*perform-action
 }
 
 sp {game-search*apply*action-success
+#:interrupt
    (state <s> ^name game-search
+              ^multiplayer true
               ^desired <d>
+             -^dcount 0
+              ^opponent false
               ^operator <o>)
-   (<o> ^name action -^duplicate-of)
+   (<o> ^type action -^duplicate-of)
 -->
-   (<s> ^success <d>)
+#(halt)
+(<s> ^success <d>)
+#   (<s> ^partial-failure <d>)
 }
 
+sp {game-search*apply*action-failure
+#:interrupt
+   (state <s> ^name game-search
+              ^multiplayer true
+              ^desired <d>
+             -^dcount 0
+             -^fail <o>
+              ^opponent true
+              ^operator <o>)
+   (<o> ^type action -^duplicate-of)
+-->
+#(halt)
+(<s> ^partial-failure <d>)
+#   (<s> ^success <d>)
+}
 
+sp {game-search*apply*action-failure*success
+#:interrupt
+   (state <s> ^name game-search
+              ^multiplayer true
+              ^desired <d>
+             -^dcount 0
+              ^fail <o>
+              ^opponent true
+              ^operator <o>)
+   (<o> ^type action -^duplicate-of)
+-->
+#(halt)
+(<s> ^success <d>)
+#   (<s> ^success <d>)
+}
+
+#^failure
 sp {game-search*apply*action*perform-action*top
+#:interrupt
    (state <s> ^name game-search
               ^top-state <ts>
               ^superstate <sss>
@@ -381,6 +449,7 @@ sp {game-search*apply*action*perform-action*top
    (<v1> ^verb-prep <vp> ^verb-name <vname> ^1 <i1> ^2 <i2>)
 -->
    (<sss> ^found-action true)
+
  #  (<a> ^verb <vname> ^pname <vp>)
 #   (<ts> ^perform-action <fa>)
 #   (<fa> ^dcount 0 ^obj1 <o1> ^obj2 <o2> ^mark done ^pname <vp>)
@@ -388,6 +457,7 @@ sp {game-search*apply*action*perform-action*top
 
 #???????????????? for multiplayer
 sp {game-search*apply*action*perform-action*top*singleaction
+#:interrupt
    (state <s> ^name game-search
               ^top-state <ts>
               ^superstate <sss>
@@ -408,23 +478,55 @@ sp {game-search*apply*action*perform-action*top*singleaction
 sp {game-search*apply*game-won
    (state <s> ^name game-search
               ^multiplayer true
+              ^dcount 1
               ^top-state.dialog-context <dc>
               ^desired <d>
               ^operator.type goal)
 -->
    (<dc> ^game-won true)
 }
+
 sp {game-search*apply*goal
+#:interrupt
    (state <s> ^name game-search
               ^desired <d>
+             -^multiplayer true
               ^operator.type goal)
 -->
    (<s> ^success <d>)
 }
 
+sp {game-search*apply*goal*multiplayer*depth0
+#:interrupt
+   (state <s> ^name game-search
+              ^dcount << 0 1 >>
+              ^desired <d>
+              ^multiplayer true
+              ^operator.type goal)
+-->
+   (<s> ^success <d>)
+}
+
+sp {game-search*apply*goal*multiplayer
+#:interrupt
+   (state <s> ^name game-search
+              -^dcount 1
+              -^dcount 0
+               ^superstate.superstate <ss>
+              ^multiplayer true
+              ^operator.type goal)
+   (<ss> ^desired <d> ^superstate <sss>)
+   (<sss> ^superstate <ts> ^operator.superoperator <sop>)
+-->
+   (<ss> ^failure <d>)
+   (<ts> ^fail <sop>)
+}
+
+
 sp {game-search*apply*game-lost
    (state <s> ^name game-search
               ^multiplayer true
+              ^dcount 0
               ^top-state.dialog-context <dc>
               ^desired <d>
               ^operator.type failure)
@@ -435,28 +537,61 @@ sp {game-search*apply*game-lost
 sp {game-search*apply*failure
    (state <s> ^name game-search
               ^desired <d>
+             -^multiplayer true
               ^operator.type failure)
 -->
    (<s> ^partial-failure <d>)
 }
 
+sp {game-search*apply*failure*multiplayer
+   (state <s> ^name game-search
+       #       ^desired <d>
+             ^multiplayer true
+             ^superstate.superstate <ss>
+              ^operator.type failure)
+   (<ss> ^desired <d>)
+-->
+   (<ss> ^failure <d>)
+}
+
 
 sp {game-search*depth-limit
+#:interrupt
    (state <s> ^name game-search
               ^desired <d>
               ^goal-search-delay 10
               ^operator <o> +
+             -^multiplayer true
              -^goal.parameter-set.set
               ^simulated true
               ^dcount <dc>
               ^depth-limit <dc>)
-   (<o> ^type action -^duplicate-of)
+   (<o> ^type action -^duplicate-of) #is this bad?
  -{(<s> ^operator <o2> +)
    (<o2> ^type goal)}
 -->
    (<s> ^partial-failure <d>)
 }
+
+sp {game-search*depth-limit*multiplayer
+   (state <s> ^name game-search
+              ^desired <d>
+              ^goal-search-delay 50
+             # ^operator <o> +
+              ^multiplayer true
+             -^goal.parameter-set.set
+              ^simulated true
+              ^dcount <dc>
+              ^depth-limit <dc>)
+ # (<o> -^duplicate-of -^type goal) #is this bad?
+ -{(<s> ^operator <o2> +)
+   (<o2> ^type goal)}
+-->
+   (<s> ^partial-failure <d>)
+}
+
 sp {game-search*prefer*goal
+#:interrupt
    (state <s> ^name game-search
               ^operator <o1> +)
    (<o1> ^type goal)
@@ -755,6 +890,7 @@ sp {game-search*heuristic*reject
 
 
 sp {game-search*propose*default
+#:interrupt
    (state <s> ^name game-search)
    -{(<s> ^action <a>)
      (<a> -^parameter-set.argnum)}
@@ -766,6 +902,7 @@ sp {game-search*propose*default
 sp {game-search*apply*default
    (state <s> ^name game-search
               ^desired <d>
+             -^multiplayer true
              -^dcount 0
               ^operator.name default)
 -->
@@ -773,8 +910,47 @@ sp {game-search*apply*default
 }
 
 
+sp {game-search*apply*default*multiplayer*success
+#:interrupt
+   (state <s> ^name game-search
+              ^desired <d>
+             -^opponent true
+              ^multiplayer true
+             -^dcount 0
+              ^operator.name default)
+-->
+   (<s> ^partial-failure <d>)
+}
+
+#
+#sp {game-search*apply*default*multiplayer
+##:interrupt
+#   (state <s> ^name game-search
+#              ^desired <d>
+#              ^opponent true
+#             ^multiplayer true
+#             -^dcount 0
+#              ^operator.name default)
+#-->
+#   (<s> ^partial-failure <d>)
+#}
+
 #multiplayer, take random of best actions
 sp {game-search*apply*default*top-select-random-action
+#:interrupt
+   (state <s> ^name game-search
+              ^operator <o> +
+              ^multiplayer true
+              ^opponent true
+              #^dcount 0
+              ^operator.name default)
+   (<o> ^type action)
+-->
+   (<s> ^operator <o> = >) # >
+}
+
+sp {game-search*apply*default*top-select-random-action*top*pick*random
+#:interrupt
    (state <s> ^name game-search
               ^operator <o> +
               ^multiplayer true
@@ -782,7 +958,7 @@ sp {game-search*apply*default*top-select-random-action
               ^operator.name default)
    (<o> ^type action)
 -->
-   (<s> ^operator <o> > =)
+   (<s> ^operator <o> = >) # >
 }
 
 
