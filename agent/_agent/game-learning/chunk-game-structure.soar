@@ -5,18 +5,20 @@ sp {chunk-game-structure*elaborate*predicate-handle
 -->
    (<s> ^retrieve-game <handle>)
 }
+
 sp {chunk-game-structure*elaborate*opponent
    (state <s> ^name chunk-game-structure
               ^superstate.opponent <op>)
 -->
 (<s> ^opponent <op>)
 }
+
 sp {chunk-game-structure*impasse*actiongoal
    (state <s> ^superstate <ss>
               ^choices none
               ^attribute state
               ^impasse no-change)
-   (<ss> ^retrieve-game <handle>)
+   (<ss> ^retrieve-game <handle> ^opponent)
 -->
    (force-learn <s>) #JAMES UNCHUNKED VERSION
    (<s> ^name chunk-game-impasse
@@ -25,9 +27,33 @@ sp {chunk-game-structure*impasse*actiongoal
         ^handle <handle>)
 }
 
+sp {chunk-puzzle-structure*impasse*actiongoal
+   (state <s> ^superstate <ss>
+              ^choices none
+              ^attribute state
+              ^impasse no-change)
+   (<ss> ^retrieve-game <handle> -^opponent)
+-->
+   (force-learn <s>) #JAMES UNCHUNKED VERSION
+   (<s> ^name chunk-puzzle-impasse
+        ^linkstate <ss>
+      #  ^gtype action goal failure
+        ^handle <handle>)
+}
 
 sp {chunk-game-impasse*propose*retrieve-predicate-structure*action
    (state <s> ^name chunk-game-impasse
+        ^handle <name>
+       -^retrieve-handle)
+-->
+#    (interrupt)
+   (<s> ^operator <o> + >)
+   (<o> ^name retrieve-game-structure
+        ^handle <name>)
+}
+
+sp {chunk-puzzle-impasse*propose*retrieve-predicate-structure*action
+   (state <s> ^name chunk-puzzle-impasse
         ^handle <name>
        -^retrieve-handle)
 -->
@@ -76,8 +102,23 @@ sp {chunk-game-impasse*apply*complete*opponent
     (<ss> ^retrieve-handle <r>)
 }
 
+sp {chunk-puzzle-impasse*apply*complete
+   (state <s> ^name chunk-puzzle-impasse
+              ^operator.name complete
+              ^superstate <ss>
+              ^retrieve-handle <r>)
+-->
+    (<ss> ^retrieve-handle <r>)
+}
+
 sp {chunk-game-impasse*propose*complete
    (state <s> ^name chunk-game-impasse)
+-->
+    (<s> ^operator <o> + <)
+    (<o> ^name complete)
+}
+sp {chunk-puzzle-impasse*propose*complete
+   (state <s> ^name chunk-puzzle-impasse)
 -->
     (<s> ^operator <o> + <)
     (<o> ^name complete)
