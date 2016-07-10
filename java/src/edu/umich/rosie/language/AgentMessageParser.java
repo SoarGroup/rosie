@@ -129,6 +129,8 @@ public class AgentMessageParser
 		    return translateLearnedGame(fieldsId);
         } else if(type.equals("current-time")){
 		    return translateCurrentTime(fieldsId);
+        } else if(type.equals("reset-state")){
+		    return translateResetState(fieldsId);
         } 
 		//conversational messages
 		else if(type.equals("generic"))
@@ -164,6 +166,14 @@ public class AgentMessageParser
 		result+= time;
 		
 		return result;	
+	}
+	
+	public static String translateResetState(Identifier fieldsId){
+		String result = "I couldn't detect the ";
+		String word = SoarUtil.getValueOfAttribute(fieldsId, "word");
+		result+= word;
+		result+= ". Please set it up again.";
+		return result;
 	}
 	
 	 public static String translateLearnedUnknownWord(Identifier fieldsId){

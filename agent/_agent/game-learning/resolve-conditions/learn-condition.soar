@@ -122,15 +122,78 @@ sp {learn-condition-impasse*propose*attribute-of
          ^parameter <p>)
 }
 
-sp {learn-condition*propose*resolve-satisfaction-failure
+sp {learn-condition*propose*retry-condition-setup*stillunrseolved
+   (state <s> ^operator.name wait
+              ^impasse no-change
+              ^superstate <sss>)
+   (<sss> ^name learn-condition)
+-->
+(<sss> ^operator <o> + >)
+(<o> ^name retry-condition-setup)
+}
+
+sp {learn-condition*propose*retry-condition-setup
    (state <s> ^operator.name wait
               ^impasse no-change
               ^superstate.superstate <sss>)
    (<sss> ^name learn-condition)
 -->
 (<sss> ^operator <o> + >)
-(<o> ^name resolve-satisfaction-failure)
+(<o> ^name retry-condition-setup)
 }
+
+sp {retry-condition-setup*propose*complete
+   (state <s> ^name retry-condition-setup)
+-->
+(<s> ^operator <o> + =)
+(<o> ^name complete)
+}
+
+sp {retry-condition-setup*apply*complete
+   (state <s> ^name retry-condition-setup
+              ^quiescence t #QUIESCENCE T to not chunk through this rule (failure case)
+              ^top-state.dialog-context <dc>
+              ^linkstate <ls>
+              ^top-state <ts>
+              ^top-state.interaction.changes <c>
+              ^operator.name complete)
+   (<ls> ^main-type <type> ^<type> <t> ^parsed-structure <ps>)
+   (<t> ^nlp-set <nlp> ^formated)
+(<dc> ^learn-link <ll>)
+(<ll> ^argnum <an>)
+-->
+    (<ll> ^argnum <an> -)
+    (<dc> ^needs-reset true)
+    (<c> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator agent)
+   (<p> ^type process-reset-state
+        ^parameters.word <word>
+        ^satisfaction <sat>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type single-word-response
+          ^originator instructor)
+   (<c> ^outgoing-message <out-msg>)
+   (<out-msg> ^type reset-state
+              ^fields.word <type>)
+   (<ps> ^learned-structure <nlp>)
+}
+
+
+#TODO ADD BACK FOR ISOMORPHIC DETECTION
+#sp {learn-condition*propose*resolve-satisfaction-failure
+#   (state <s> ^operator.name wait
+#              ^impasse no-change
+#              ^superstate.superstate <sss>)
+#   (<sss> ^name learn-condition)
+#-->
+#(interrupt)
+#(<sss> ^operator <o> + >)
+#(<o> ^name resolve-satisfaction-failure)
+#}
+
+
+
 
 sp {resolve-satisfaction-failure*elaborate*unresolved
    (state <s> ^name resolve-satisfaction-failure
