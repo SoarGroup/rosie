@@ -31,20 +31,20 @@ do
 	java SentencesToSoar soar-game.script
 	cp soar-game.soar /home/jrkirk/rosie2/rosie-project/rosie/agent/_agent/language-comprehension/comprehension/test-sentences/
 	/home/jrkirk/rosie2/rosie-project/soar/out/./cli < game-data-agent.soar
-	cp stats.txt newresults2/$rfilename$stats
-	cp statsm.txt newresults2/$rfilename$maxstats
-	cp s1.txt newresults2/$rfilename$topstate
-	cp soar-game.script newresults2/$rfilename$dialog
+	cp stats.txt newresults3/$rfilename$stats
+	cp statsm.txt newresults3/$rfilename$maxstats
+	cp s1.txt newresults3/$rfilename$topstate
+	cp soar-game.script newresults3/$rfilename$dialog
 	
-	cp pertaskstats.txt newresults2/$rfilename$pertaskstats
-	cp smemuse.txt newresults2/$rfilename$smem
+	cp pertaskstats.txt newresults3/$rfilename$pertaskstats
+	cp smemuse.txt newresults3/$rfilename$smem
 	
-	#cp smemquery.txt newresults2/$rfilename$smemq
-	#cp smemstore.txt newresults2/$rfilename$smems
-	#cp smemtimestore.txt newresults2/$rfilename$smemts
-	#cp smemtimequery.txt newresults2/$rfilename$smemtq
-	#cp smemtimeret.txt newresults2/$rfilename$smemtr
-	#cp smemtimethree.txt newresults2/$rfilename$smemt3
+	#cp smemquery.txt newresults3/$rfilename$smemq
+	#cp smemstore.txt newresults3/$rfilename$smems
+	#cp smemtimestore.txt newresults3/$rfilename$smemts
+	#cp smemtimequery.txt newresults3/$rfilename$smemtq
+	#cp smemtimeret.txt newresults3/$rfilename$smemtr
+	#cp smemtimethree.txt newresults3/$rfilename$smemt3
 
 	#rm smemtimethree.txt
 	#rm smemtimeret.txt
