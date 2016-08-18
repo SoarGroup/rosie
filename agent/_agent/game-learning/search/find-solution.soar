@@ -2,12 +2,19 @@ sp {find-solution*propose*game-search*elab-depth-limit
    (state <s> ^name find-solution
               ^superstate.operator.game-name <name>)
 -->
-#(interrupt)
    (<s> ^depth-limit 1
         ^game <name>
         ^retrieve-game <name>
-        ^gtype goal action failure)
+        ^gtype goal action failure heuristic)
 }
+
+sp {find-solution*elab*opponent*finished
+   (state <s> ^name find-solution
+              ^top-state.dialog-context.finished-game-teaching true)
+-->
+(<s> ^opponent true false)
+}
+
 sp {find-solution*propose*game-search*elab-replay-true
    (state <s> ^name find-solution
               ^superstate.operator.replay true)
@@ -31,7 +38,6 @@ sp {find-solution*propose*chunk-game
               ^top-state.dialog-context.structure <st>)
    (<st> ^handle <h>)
 -->
-#(interrupt)
     (<s> ^operator <o> + =)
     (<o> ^name chunk-game
          ^predicate-handle <h>)
@@ -68,6 +74,7 @@ sp {chunk-game*game-handle
 (<s> ^game-struct <g>)
 (<g> ^handle <gname> ^retrieve game)
 }
+
 sp {chunk-game*elaborate*opponent
    (state <s> ^name chunk-game
               ^game-struct <g>
@@ -92,7 +99,7 @@ sp {chunk-game*retrieve-handles
    (state <s> ^name chunk-game
               ^smem.command <sc>
               ^game-struct <g>
-              ^top-state.dialog-context.structure.<< actions goals failures >>.retrieve-handle <gname>)
+              ^top-state.dialog-context.structure.<< actions goals failures heuristics >>.retrieve-handle <gname>)
 -->
 (<g> ^retrieve-handle <gname>)
 }
@@ -102,7 +109,6 @@ sp {fchunk-game*chunk-game-structure
               ^smem.command <sc>
               ^superstate <ss>
               ^game-struct <g>)
-             # ^operator.name chunk-game-structure)
    -{(state <s>)
      (<g> -^retrieve-handle)}
 -->
@@ -110,7 +116,19 @@ sp {fchunk-game*chunk-game-structure
     (<ss> ^chunked true)
 }
 
-
+#moved to be performed immediately after learning for re-reference
+#chunk predicate will complete immediately if already learned, hard to predict
+sp {find-solution*propose*chunk-predicate-structure*heuristics
+   (state <s> ^name find-solution
+             -^heuristic.handle <h>
+              -^found-action
+              ^top-state.dialog-context.structure.heuristics.retrieve-handle <h>)
+-->
+    (<s> ^operator <o> + =)
+    (<o> ^name chunk-predicate-structure
+         ^gtype heuristic
+         ^predicate-handle <h>)
+}
 sp {find-solution*propose*chunk-predicate-structure*action
    (state <s> ^name find-solution
              -^action.handle <h>
@@ -122,7 +140,6 @@ sp {find-solution*propose*chunk-predicate-structure*action
          ^gtype action
          ^predicate-handle <h>)
 }
-
 sp {find-solution*propose*chunk-predicate-structure*goal
    (state <s> ^name find-solution
              -^goal.handle <h>
@@ -134,7 +151,6 @@ sp {find-solution*propose*chunk-predicate-structure*goal
          ^gtype goal
          ^predicate-handle <h>)
 }
-
 sp {find-solution*propose*chunk-predicate-structure*failure
    (state <s> ^name find-solution
              -^failure.handle <h>
@@ -160,11 +176,11 @@ sp {find-solution*propose*game-search
    (<s> ^operator <o> + = <)
    (<o> ^name game-search
         ^dcount 0
-        ^depth-limit <dl> #todo fix
+        ^depth-limit <dl> 
         ^list.game <g>
         ^current <g> 
         ^game <name>)
-   (<g> ^game <name> ^type action goal failure)
+   (<g> ^game <name> ^type action goal failure heuristic)
 }
 
 sp {find-solution*elaborate*depth-limit-1-less
@@ -173,6 +189,7 @@ sp {find-solution*elaborate*depth-limit-1-less
 -->
     (<s> ^depth-limit-1-less (- <dl> 1))
 }
+
 sp {find-solution*elaborate*found-true
    (state <s> ^name find-solution
               ^depth-limit-1-less <dl>
@@ -181,7 +198,6 @@ sp {find-solution*elaborate*found-true
 -->
     (<s> ^found-action true)
 }
-
 
 sp {find-solution*prefer*chunk-predicate-structure*over*game-learning-complete
    (state <s> ^name find-solution
@@ -305,7 +321,7 @@ sp {find-solution*propose*game-search*muliplayer
         ^list.game <g>
         ^current <g> 
         ^game <name>)
-   (<g> ^game <name> ^type action goal failure)
+   (<g> ^game <name> ^type action goal failure heuristic)
 }
 
 sp {find-solution*mark*found-action
@@ -372,7 +388,6 @@ sp {find-solution*apply*execute-action
    (<o> ^name execute-action
        ^action-ref <fa>)
 -->
-#    (interrupt)
     (<fa> ^started true)
 }
 
@@ -405,7 +420,6 @@ sp {find-solution*propose*completed-all-actions*game-lost
    (<s> ^operator <o> + > =)
    (<o> ^name completed-all-actions)
 }
-
 
 sp {find-solution*apply*completed-all-actions*remove*found-action
    (state <s> ^name find-solution
@@ -630,7 +644,6 @@ sp {find-solution*apply*complete-finding-solution*send-message*lose
    (<de> ^type game
          ^originator agent)
  }
-
 
 sp {clean-up*top-state*found-action-aftersolve
    (state <s> ^operator.name complete-interaction

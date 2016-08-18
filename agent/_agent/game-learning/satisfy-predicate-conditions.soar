@@ -69,7 +69,8 @@ sp {satisfy-predicate-conditions*propose*predicate-operator*action
 
 sp {satisfy-predicate-conditions*propose*finished-learning
     (state <s1> ^main-type predicate ^gtype predicate ^list <l1> ^predicate <a1>
-                ^top-state.dialog-context.learning true)
+                ^top-state.dialog-context <dc>)
+    (<dc> ^learn-link.handle <c1> ^learning true)
     (<l1> ^game <g1>)
     (<a1> ^parameter-set <p1> ^handle <c1>)
     (<p1> ^set <i1>)
@@ -89,6 +90,16 @@ sp {satisfy-predicate-conditions*elaborate-finished-learning
     (<ss> ^finished-learning <type>)
 }
 
+sp {satisfy-predicate-conditions*elaborate-finished-learning*heuristic
+    (state <s1> ^top-state.dialog-context.learning true ^superstate <ss>)
+    (<s1> ^main-type {<type> << heuristic >>} ^operator <o> ^<type> <a1>)
+    (<o> ^type action -^duplicate-of) 
+    (<a1> ^parameter-set <p1> ^handle <c1>)
+    (<p1> ^set <i1>)
+    -->
+    (<ss> ^finished-learning <type>)
+}
+
 sp {satisfy-predicate-conditions*elaborate-finished-learning*goal
     (state <s1> ^top-state.dialog-context.learning true ^superstate.superstate <sss> ^superstate <ss>)
     (<s1> ^main-type {<type> << goal failure >>} ^operator <o> ^<type> <a1>)
@@ -100,7 +111,8 @@ sp {satisfy-predicate-conditions*elaborate-finished-learning*goal
     (<ss> ^finished-learning <type>)
 }
 
-sp {satisfy-predicate-conditions*propose*finished-learning*actiongoal
+sp {satisfy-predicate-conditions*propose*finished-learning*actiongoalDEPRICATED
+:interrupt
     (state <s1> ^top-state.dialog-context.learning true)
     (<s1> ^main-type {<type> << action goal failure >>} ^<type> <a1> ^finished-learning <type>)
 -->
@@ -127,8 +139,8 @@ sp {satisfy-predicate-conditions*apply*finished-learning*elaborate*source
 -->
     (<ll> ^from <name>)
 }
-#HACK TO FIX MIRROR JUSTIFICATTION PROBLEM
-##dummmmb 
+
+#HACK TO FIX MIRROR JUSTIFICATTION PROBLEM 
 sp {satisfy-predicate-conditions*apply*finished-learning*remove-instance
     (state <s1> ^top-state.dialog-context.learning true
                 ^store-link <ll>
@@ -251,7 +263,6 @@ sp {finished-learning*apply*complete*remove-learn-link
 
 
 sp {satisfy-purpose*finished-learning*apply*complete*remove-learn-link
-#:interrupt
     (state <s1> ^name interaction
                 ^operator <o> 
                 ^top-state.dialog-context <dc>)
@@ -324,7 +335,7 @@ sp {finished-learning*apply*complete*send-message*predicate
                 ^top-state.dialog-context <dc>
                 ^top-state.interaction.status <status>
                 ^top-state.interaction.changes <changes>)
-    (<dc> ^learning-predicate <lp> ^learn-link.handle <word>)# -^stored-learning-predicate)
+    (<dc> ^learning-predicate <lp> ^learn-link.handle <word>)
     (<lp> ^name <word>)
 -->
    (<dc> ^learning-predicate <lp> -)
@@ -356,25 +367,51 @@ sp {finished-learning*apply*complete*send-message*predicate
 #}
 
 
+sp {finished-learning*apply*complete*send-message*heuristic
+    (state <s1> ^name finished-learning
+                ^operator.name complete
+                ^store-link <sl>
+                ^top-state.dialog-context <dc>)
+                #^top-state.interaction.status <status>
+                #^top-state.interaction.changes <changes>)
+    (<dc> ^structure.heuristics <act> -^learning-predicate)
+    (<sl> ^handle <name> ^ntype heuristic)
+-->
+   (<act> ^retrieve-handle <name>)
+#   (<ss> ^finalize-chunk <name>)
+   (<dc> ^finalize-chunk <name>)
+#   (<changes> ^outgoing-message <msg>)
+#   (<msg> ^type simple-message
+#          ^message-type learned-action)
+#   (<status> ^performed.learning-event <de>)
+#   (<de> ^type game
+#         ^originator agent)
+}
+
 sp {finished-learning*apply*complete*send-message*action
     (state <s1> ^name finished-learning
                 ^operator.name complete
-                ^top-state.dialog-context <dc>
-                ^top-state.interaction.status <status>
-                ^top-state.interaction.changes <changes>)
+                ^superstate <ss>
+                ^top-state.dialog-context <dc>)
+                #^top-state.interaction.status <status>
+                #^top-state.interaction.changes <changes>)
     (<dc> ^structure.actions <act> -^learning-predicate)
     (<act> ^action <a>)
     (<a> ^handle <name>)
 -->
    (<act> ^action <a> -)
    (<act> ^retrieve-handle <name>)
-   (<changes> ^outgoing-message <msg>)
-   (<msg> ^type simple-message
-          ^message-type learned-action)
-   (<status> ^performed.learning-event <de>)
-   (<de> ^type game
-         ^originator agent)
+#   (<ss> ^finalize-chunk <name>)
+   (<dc> ^finalize-chunk <name>)
+#   (<changes> ^outgoing-message <msg>)
+#   (<msg> ^type simple-message
+#          ^message-type learned-action)
+#   (<status> ^performed.learning-event <de>)
+#   (<de> ^type game
+#         ^originator agent)
 }
+
+
 
 sp {finished-learning*apply*complete*send-message*goal
     (state <s1> ^name finished-learning
@@ -388,12 +425,13 @@ sp {finished-learning*apply*complete*send-message*goal
 -->
    (<act> ^goal <a> -)
    (<act> ^retrieve-handle <name>)
-   (<changes> ^outgoing-message <msg>)
-   (<msg> ^type simple-message
-          ^message-type learned-goal)
-   (<status> ^performed.learning-event <de>)
-   (<de> ^type game
-         ^originator agent)
+   (<dc> ^finalize-chunk <name>)
+#   (<changes> ^outgoing-message <msg>)
+#   (<msg> ^type simple-message
+#          ^message-type learned-goal)
+#   (<status> ^performed.learning-event <de>)
+#   (<de> ^type game
+#         ^originator agent)
 }
 
 
@@ -409,12 +447,13 @@ sp {finished-learning*apply*complete*send-message*failure
 -->
    (<act> ^failure <a> -)
    (<act> ^retrieve-handle <name>)
-   (<changes> ^outgoing-message <msg>)
-   (<msg> ^type simple-message
-          ^message-type learned-failure)
-   (<status> ^performed.learning-event <de>)
-   (<de> ^type game
-         ^originator agent)
+   (<dc> ^finalize-chunk <name>)
+#   (<changes> ^outgoing-message <msg>)
+#   (<msg> ^type simple-message
+#          ^message-type learned-failure)
+#   (<status> ^performed.learning-event <de>)
+#   (<de> ^type game
+#         ^originator agent)
 }
 
 #describe here too
@@ -503,6 +542,19 @@ sp {satisfy-predicate-conditions*elaborate*condition-instance*single-to-set*copy
     (<set> ^<object> <obj>)
 }
 
+#any/generic action
+sp {satisfy-predicate-conditions*elaborate*condition-instance*action*any
+    (state <s1> ^gtype <c3> ^list <l1> ^<c3> <a1> ^action <t1>)
+    (<l1> ^game <g1>)
+    (<a1> ^condition <c4>)
+    (<c4> ^type concept ^result <r1> ^name any ^attribute action)
+    (<r1> ^set <s2>)
+    (<t1> ^nlp-set <n1> ^instance <i1>)# ^link <c4>)
+   # (<n1> ^aname <c2>)
+    -->
+    (<s2> ^instance <i1> +)
+}
+
 sp {satisfy-predicate-conditions*elaborate*condition-instance*action #TODO fix no link issue
     (state <s1> ^gtype <c3> ^list <l1> ^<c3> <a1> ^action <t1>)
     (<l1> ^game <g1>)
@@ -513,6 +565,19 @@ sp {satisfy-predicate-conditions*elaborate*condition-instance*action #TODO fix n
     (<n1> ^aname <c2>)
     -->
     (<s2> ^instance <i1> +)
+}
+
+sp {satisfy-predicate-conditions*action*results
+    (state <s> ^ntype heuristic ^heuristic <p> ^action <t> ^list <l1> ^gtype action heuristic)
+    (<p> ^condition <c>)
+    (<c> ^type concept ^attribute action ^verb <verb> ^name <name>
+          ^result <r1>)
+    (<t> ^verb-structure <v1> ^instance <in>)
+    (<v1> ^1 <vs>)
+    (<vs> ^verb-prep <verb> ^verb-name <name>)
+    (<r1> ^set <rset>)
+    -->
+    (<rset> ^instance <in> +)
 }
 
 ##TODO may not need this once we have ewave working
@@ -574,7 +639,6 @@ sp {satisfy-predicate-conditions*elaborate*calculate2
 
 #test that all conditions have an instance with a result
 sp {satisfy-predicate-conditions*elaborate*calculate1
-   # :interrupt
     (state <s1> ^simulated true ^gtype <c1> ^list <l1> ^<c1> <a1>)
     (<l1> ^game <g1>)
     (<a1> ^potential-args <p1> ^parameter-set <p2>)
@@ -592,11 +656,10 @@ sp {satisfy-predicate-conditions*elaborate*calculate1
 
 sp {satisfy-predicate-conditions*elaborate*instance*from-predicate-results
     (state <s1> ^gtype predicate ^predicate <p1> ^list <l1>)
-    (<p1>  ^parameter-set <p2> ^potential-args <p3>)#^aname <name>
+    (<p1>  ^parameter-set <p2> ^potential-args <p3>)
     (<p2>  ^tested calculate5 ^tested calculate2
           ^tested calculate6 ^tested calculate1 ^set <s2>)
     (<l1> ^game <g1>)
-  #  (<g1> ^type predicate)
     -->
     (<p1> ^instance <s2> +)
 }
@@ -622,6 +685,7 @@ sp {satisfy-predicate-conditions*elaborate*result*set
     -->
     (<p2> ^set <i1> +)
 }
+
 sp {satisfy-predicate-conditions*elaborate*initial-set*3-arguments
     (state <s1> ^gtype <c1> ^list <l1> ^<c1> <a1>)
     (<l1> ^game <g1>)
@@ -838,7 +902,6 @@ sp {satisfy-predicate-conditions*elaborate*initial-set*8-arguments
     (<p2> ^iset <i1> +)
     (<i1> ^8 <o8> + ^7 <o7> + ^6 <o6> + ^5 <o5> + ^4 <o4> + ^1 <o1> + ^2 <o2> + ^3 <o3> +)
 }
-
 
 sp {satisfy-predicate-conditions*elaborate*initial-set*16-arguments
     (state <s1> ^gtype <c1> ^list <l1> ^<c1> <a1>)
@@ -1205,7 +1268,6 @@ sp {satisfy-predicate-conditions*elaborate*negative-condition-instance*3-argumen
     (<p1> ^negpair3 <n1> +)
     (<n1> ^<ar1> <*6> + ^<ar2> <*5> + ^<ar3> <*4> +)
 }
-
 
 sp {satisfy-predicate-conditions*elaborate*negative-condition-instance*1-argument
     (state <s1> ^gtype <c2> ^list <l1> ^<c2> <a1>)

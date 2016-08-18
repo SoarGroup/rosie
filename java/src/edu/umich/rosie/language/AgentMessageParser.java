@@ -76,6 +76,7 @@ public class AgentMessageParser
 			simpleMessages.put("learned-goal", "Ok, I've learned the goal.");
 			simpleMessages.put("learned-action", "Ok, I've learned the action.");
 			simpleMessages.put("learned-failure", "Ok, I've learned the failure condition.");
+			simpleMessages.put("learned-heuristic", "Ok, I've learned the heuristic.");
 			simpleMessages.put("already-learned-goal", "I know that goal.");
 			simpleMessages.put("already-learned-action", "I know that action.");
 			simpleMessages.put("already-learned-failure", "I know that failure condition.");

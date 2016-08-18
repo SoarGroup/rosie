@@ -362,15 +362,18 @@ sp {learning-event*propose*learn-failure-name
 }
 sp {learning-event*propose*finished-learning
    (state <s> ^name learning-event
+            -^top-state.dialog-context.finalize-chunk
              ^finished-learning <type>)
 -->
     (<s> ^operator <o1> + >)
     (<o1> ^name finished-learning
           ^type <type>)
 }
+
 sp {learning-event*propose*learn-predicate*goal
    (state <s> ^name learning-event
              -^finished-learning goal
+              -^top-state.dialog-context.finalize-chunk
             # -^top-state.dialog-context.needs-goal-setup
               ^purpose <p>)
    (<p> ^type learn-goal-predicate ^parameters.message <msg>)
@@ -384,6 +387,7 @@ sp {learning-event*propose*learn-predicate*goal
 sp {learning-event*propose*learn-predicate*failure
    (state <s> ^name learning-event
              -^finished-learning failure
+             -^top-state.dialog-context.finalize-chunk
             # -^top-state.dialog-context.needs-failure-setup
               ^purpose <p>)
    (<p> ^type learn-failure-predicate ^parameters.message <msg>)
@@ -418,6 +422,7 @@ sp {learning-event*apply*learn-predicate*failure*clean-setup
 
 sp {learning-event*propose*learn-predicate*action
    (state <s> ^name learning-event
+             -^top-state.dialog-context.finalize-chunk
              -^finished-learning action
               ^purpose <p>)
    (<p> ^type learn-action-predicate ^parameters.message <msg>)
@@ -426,6 +431,134 @@ sp {learning-event*propose*learn-predicate*action
    (<o> ^name learn-predicate
         ^message <msg>
         ^type action)
+}
+sp {learning-event*apply*chunk-predicate-structure
+   (state <s> ^name learning-event
+              ^operator.name chunk-predicate-structure
+              ^store-link <dd>)
+-->
+(<s> ^store-link <dd> -)
+}
+   
+sp {learning-event*propose*chunk-predicate-structure
+   (state <s> ^name learning-event
+              -^<type>.handle <h>
+              ^finished-learning <type>
+              ^top-state.dialog-context.finalize-chunk <h>
+              ^purpose <p>)
+   (<p> ^type << learn-action-predicate learn-heuristic-predicate learn-goal-predicate learn-failure-predicate >> )
+-->
+    (<s> ^operator <o> + =)
+    (<o> ^name chunk-predicate-structure
+         ^gtype <type>
+         ^predicate-handle <h>)
+}
+
+sp {learning-event*apply*chunk-predicate-structure*finished*heuristic
+:o-support
+   (state <s> ^name learning-event
+              ^finished-learning heuristic
+              ^finished-learning <type>
+              ^<type>.handle <h>
+              ^top-state <ts>)
+   (<ts> ^dialog-context <dc> 
+         ^interaction.status <status>
+         ^interaction.changes <changes>)
+   (<dc> ^finalize-chunk <name>)        
+-->
+   (<dc> ^finalize-chunk <name> -)
+   (<changes> ^outgoing-message <msg>)
+   (<msg> ^type simple-message
+          ^message-type learned-heuristic)
+   (<status> ^performed.learning-event <de>)
+   (<de> ^type game
+         ^originator agent)
+}
+sp {learning-event*apply*chunk-predicate-structure*finished*action
+:o-support
+   (state <s> ^name learning-event
+              ^finished-learning action
+              ^finished-learning <type>
+              ^<type>.handle <h>
+              ^top-state <ts>)
+   (<ts> ^dialog-context <dc> 
+         ^interaction.status <status>
+         ^interaction.changes <changes>)
+   (<dc> ^finalize-chunk <name>)        
+-->
+   (<dc> ^finalize-chunk <name> -)
+   (<changes> ^outgoing-message <msg>)
+   (<msg> ^type simple-message
+          ^message-type learned-action)
+   (<status> ^performed.learning-event <de>)
+   (<de> ^type game
+         ^originator agent)
+}
+sp {learning-event*apply*chunk-predicate-structure*finished*goal
+:o-support
+   (state <s> ^name learning-event
+              ^finished-learning goal
+              ^finished-learning <type>
+              ^<type>.handle <h>
+              ^top-state <ts>)
+   (<ts> ^dialog-context <dc> 
+         ^interaction.status <status>
+         ^interaction.changes <changes>)
+   (<dc> ^finalize-chunk <name>)        
+-->
+   (<dc> ^finalize-chunk <name> -)
+   (<changes> ^outgoing-message <msg>)
+   (<msg> ^type simple-message
+          ^message-type learned-goal)
+   (<status> ^performed.learning-event <de>)
+   (<de> ^type game
+         ^originator agent)
+}
+sp {learning-event*apply*chunk-predicate-structure*finished*failure
+:o-support
+   (state <s> ^name learning-event
+              ^finished-learning failure
+              ^finished-learning <type>
+              ^<type>.handle <h>
+              ^top-state <ts>)
+   (<ts> ^dialog-context <dc> 
+         ^interaction.status <status>
+         ^interaction.changes <changes>)
+   (<dc> ^finalize-chunk <name>)        
+-->
+   (<dc> ^finalize-chunk <name> -)
+   (<changes> ^outgoing-message <msg>)
+   (<msg> ^type simple-message
+          ^message-type learned-failure)
+   (<status> ^performed.learning-event <de>)
+   (<de> ^type game
+         ^originator agent)
+}
+
+
+
+#
+#sp {satisfy-predicate-conditions*propose*chunk-predicate-structure
+#    (state <s> ^top-state.dialog-context.learning true
+#                -^<type>.handle <h>)
+#    (<s> ^main-type {<type> << action goal failure >>} ^<type> <a1> ^finished-learning <type> ^finalize-chunk <h>)
+#-->
+#    (<s> ^operator <o> + =)
+#    (<o> ^name chunk-predicate-structure
+#         ^gtype action
+#         ^predicate-handle <h>)
+#}
+
+sp {learning-event*propose*learn-predicate*heuristic
+   (state <s> ^name learning-event
+             -^finished-learning heuristic
+              ^purpose <p>)
+   (<p> ^type learn-heuristic-predicate ^parameters.message <msg>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name learn-predicate
+        ^message <msg>
+        ^type heuristic)
 }
 
 sp {learning-event*propose*learn-predicate*property
