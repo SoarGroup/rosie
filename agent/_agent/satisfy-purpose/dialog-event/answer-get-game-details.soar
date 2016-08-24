@@ -1,39 +1,41 @@
 sp {dialog-event*agent-game-action-description*propose*get-game-details
    (state <s> ^name dialog-event
+              -^generated
               ^gtype <gtype>
               ^<gtype> <p1>)
-   (<p1> ^handle <action-handle>)
 -->
    (<s> ^operator <o> +)
    (<o> ^name get-game-details
-        ^<gtype> <p1>)
-}
-
-sp {dialog-event*agent-game-action-description*elaborate*get-game-details
-   (state <s> ^name dialog-event
-              ^gtype <gtype>
-              ^operator <o> +
-              ^<gtype> <p1>)
-   (<o> ^name get-game-details)
--->
-   (<s> ^descriptions <descs>)
+        ^<gtype> <p1>
+        ^descriptions <descs>)
 }
 
 ###################################################################
 # Apply operator get-game-details
 ###################################################################
 
+sp {dialog-event*apply*get-game-details*add-descriptions-to-state
+   (state <s> ^name dialog-event
+              ^operator <o>
+              ^gtype <gtype>
+              ^<gtype> <p1>)
+   (<o> ^name get-game-details
+        ^<gtype> <p1>
+        ^descriptions <descs>)
+-->              
+   (<s> ^descriptions <descs>)
+}
+
 # if there is only one argument, it is typically a property
 sp {dialog-event*apply*get-game-details*retrieve-one-argument-predicates
    (state <s> ^name dialog-event
-              ^descriptions <descs>
+   		      ^descriptions <descs>
               ^operator <o>
               ^gtype <gtype>
-              #^action <p1>
               ^<gtype> <p1>)
    (<o> ^name get-game-details
-        #^action <p1>
-        ^<gtype> <p1>)
+        ^<gtype> <p1>
+        ^descriptions <descs>)
    (<p1> ^handle <handle>
          ^nlp-set <set>)
    (<set> ^conditions <cond>)
@@ -86,9 +88,8 @@ sp {dialog-event*apply*get-game-details*retrieve-PP-predicate
 }
 
 # More than one param-id in a prepositional phrase indicates the object in the PP is used somewhere else?
-sp {dialog-event*agent-game-action-description*apply*get-action-steps*retrieve-PP-and-individual-objects
+sp {dialog-event*apply*get-game-details*retrieve-PP-and-individual-objects
    (state <s> ^name dialog-event
-              #^retrieve-handle <handle>
               ^descriptions <descs>
               ^operator <o>
               ^gtype <gtype>
@@ -126,9 +127,8 @@ sp {dialog-event*agent-game-action-description*apply*get-action-steps*retrieve-P
 # PR -  this only handles equal values - greater than, lesser than must be handled 
 # The following rule handles predicates with the same param-id for a given condition for e.g. Color of object A is color of object B, here both colors will have the same param-id
 # both predicates would have return-type number
-sp {dialog-event*agent-game-action-description*apply*get-action-steps*retrieve-attribute-based-conditions
+sp {dialog-event*apply*get-game-details*retrieve-attribute-based-conditions
    (state <s> ^name dialog-event
-              ^retrieve-handle <handle>
               ^descriptions <descs>
               ^operator <o>
               ^gtype <gtype>
@@ -173,9 +173,8 @@ sp {dialog-event*agent-game-action-description*apply*get-action-steps*retrieve-a
 
 # The following rule handles predicates with the same param-id where one of the predicates is an attribute and the other is a value (String/number), both predicates have
 # return-type number for e.g. The number of matched locations is 5
-sp {dialog-event*agent-game-action-description*apply*get-action-steps*retrieve-attribute-based-condition-and-value
+sp {dialog-event*apply*get-game-details*retrieve-attribute-based-condition-and-value
    (state <s> ^name dialog-event
-              ^retrieve-handle <handle>
               ^descriptions <descs>
               ^operator <o>
               ^gtype <gtype>
@@ -214,10 +213,9 @@ sp {dialog-event*agent-game-action-description*apply*get-action-steps*retrieve-a
 }
 
 # The following rule will fire only in case of actions that have verbs present in them       
-sp {dialog-event*agent-game-action-description*apply*get-action-steps*retrieve-verbs
+sp {dialog-event*apply*get-game-details*retrieve-verbs
    (state <s> ^name dialog-event
               ^descriptions <descs>
-              ^retrieve-handle <handle>
               ^operator <o>
               ^action <p1>)
    (<o> ^name get-game-details
@@ -233,6 +231,11 @@ sp {dialog-event*agent-game-action-description*apply*get-action-steps*retrieve-v
 -->
    (<descs> ^verb <verb>)
 }
+
+######################################
+# Propose add generated attribute
+######################################
+# Adding generated attribute after the completion of retrieved game details
 
 sp {dialog-event*op-no-change*propose*add-generated-attribute
    (state <s> ^superstate.name dialog-event
@@ -266,6 +269,7 @@ sp {dialog-event*op-no-change*apply*add-generated-attribute*yes
    (<ss> ^name dialog-event
          ^descriptions <descs>)
    (<descs> ^<< description obj-desc verb >> <desc>)
+   -{ (<descs> ^<< description obj-desc verb >> {> <desc> <desc2>})}
 -->
    (<ss> ^generated yes)
 }
@@ -274,16 +278,19 @@ sp {dialog-event*op-no-change*apply*add-generated-attribute*yes
 # Report answer using complete-answer-get-game-details
 ########################################################
 
+# PR - TODO: Add a ^status complete to ^<gtype> in the apply-get-game-details rule and then on that basis it completes 
 sp {dialog-event*propose*complete-answer-get-game-details
    (state <s> ^name dialog-event
               ^generated <gen>
+              ^combined
               ^descriptions <descs>)
 -->
-   (<s> ^operator <o> + >)
+   (<s> ^operator <o> +)
    (<o> ^name complete-answer-get-game-details
         ^descriptions <descs>
         ^generated <gen>)   
 }
+
 
 sp {dialog-event*apply*complete-answer-get-game-details*send-message
    (state <s> ^name dialog-event
