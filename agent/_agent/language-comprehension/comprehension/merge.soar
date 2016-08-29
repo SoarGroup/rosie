@@ -44,6 +44,37 @@ sp {comprehension*elaborate*possible-merge
    (write (crlf) |Possible Merge: | <stype>)
 }
 
+sp {comprehension*elaborate*possible-merge*directional-maybe 
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^not-merged-receiver <receiver>
+          ^not-merged-assigner <assigner>)
+   (<assigner> ^structure-type <stype>
+               ^lt <lt>
+              -^lt.lexical-item-spelling)
+   (<receiver> ^structure-type <stype>
+              -^dont-merge true)
+  -(<assigner> ^parent-receiver <receiver>) # Cannot fulfill itself
+ -{(<assigner> ^lt.after <after>
+               ^parent-receiver <pr>)           # enforce after - seems like it over enforces it
+   (<seg> ^not-merged-assigner <nma>)
+   (<nma> ^parent-receiver <pr>
+          ^lt <after>)}
+ -{(<receiver> ^decision-count > <dl-dc>)   # enforce before
+   (<assigner> ^lt.relative-position before
+               ^decision-count <dl-dc>)}
+ -{(<receiver> ^decision-count < <dl-dc2>)   # enforce after on DC
+   (<assigner> ^lt.relative-position after
+               ^decision-count <dl-dc2>)}
+      # Do not match prepositions that have different directional values - for example onto is directional, but the PP in a determiner is not directional
+  (<receiver> ^lt.directional maybe)
+-->
+   (<s> ^possible-merge <pm>)
+   (<pm> ^receiver <receiver>
+         ^assigner <assigner>
+         ^type normal)
+   (write (crlf) |Possible Merge (directional maybe): | <stype>)
+}
 sp {comprehension*elaborate*possible-merge*lexical-item*match*required
    (state <s> ^name comprehension
               ^segment <seg>)
@@ -228,6 +259,7 @@ sp {comprehension*propose*merge
 
 ### Reject if there is a before that hasn't merged
 ##   and that before isn't waiting on the same possible merge
+## And current one isn't required
 sp {comprehension*reject*possible-merge
    (state <s> ^name comprehension
               ^operator <op1> +
@@ -236,6 +268,7 @@ sp {comprehension*reject*possible-merge
           ^receiver <receiver>
           ^assigner <assigner>)
    (<assigner> ^lt <lt>)
+   (<lt> -^required true)
    (<nma> ^lt <ass2>)
    (<ass2> ^required true
            ^before <lt>)
@@ -287,12 +320,16 @@ sp {comprehension*reject*possible-merge*exclusive-earlier
           ^assigner <assigner>)
    (<receiver> ^decision-count <dc>
               -^lt.attachment immediate)
-   (<assigner> ^lt.exclusive <lt2>)
+   (<assigner> ^lt.exclusive <lt2>
+               ^parent-receiver <pr>)      # need to include so don't cross instance of same construction used in multiple places
    (<s> ^possible-future-merge <pm>)
    (<pm> ^receiver <receiver2>
          ^assigner {<> <assigner> <assigner2> })
    (<receiver2> ^decision-count < <dc>)
-   (<assigner2> ^lt <lt2>)
+   (<assigner2> ^lt <lt2>
+                ^parent-receiver <pr>)
+ -{(<s> ^possible-future-merge { <> <pm> <pfm> })
+   (<pfm> ^receiver <receiver2>)} # unless another possible merge for that receiver
 -->
    (<s> ^operator <op1> -)
    (write (crlf) |Reject: | <op1> | because earlier receiver probably is better for exclusive.|)
@@ -308,7 +345,7 @@ sp {comprehension*compare*merge*prefer-directional-maybe
           ^assigner <assigner>
           ^receiver <receiver>)
   (<assigner> ^parent-receiver.lt.directional true)      
-  (<receiver> ^lt.directional-maybe true)
+  (<receiver> ^lt.directional maybe)
 -->
    (<s> ^operator <op1> >)
 }
@@ -475,6 +512,28 @@ sp {comprehension*compare*merge*prefer*most-recent*same-parent-receiver2
 -->
    (<s> ^operator <op1> > <op2>)
 }
+
+#sp {comprehension*compare*merge*prefer*most-recent*same-parent-receiver3
+#   (state <s> ^name comprehension
+##              ^operator <op1> +
+ #             ^operator <op2> +
+ #             ^segment.not-merged-assigner { <> <ass1> <nma> } )
+#  (<nma> ^parent-receiver <ps>
+#          ^structure-type <bt>
+#         ^lt.before <ltass1>)
+#  (<op1> ^name merge
+#          ^assigner <ass1>
+#          ^receiver <rec>)
+#   (<ass1> ^parent-receiver <ps>
+##          ^structure-type <bt>
+ #          ^lt <ltass1>)
+ #  (<op2> ^name merge
+ #         ^assigner <ass1>
+ #         ^receiver <> <rec>)#
+#
+#-->
+#   (<s> ^operator <op1> > <op2>)
+#}
 
 sp {comprehension*compare*merge*prefer*most-recent*not-pp2
    (state <s> ^name comprehension
