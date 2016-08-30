@@ -2,6 +2,7 @@
 #retrieve structure
 
 sp {evaluate-predicate*eval-condition*impasse
+#:interrupt
    (state <s> ^superstate  <ss>
               ^choices none
               ^attribute state
@@ -28,6 +29,7 @@ sp {evaluate-predicate*elaborate*problemspace*games
 -->
    (<s> ^problemspace <ps>)
 }
+
 sp {learn-predicate*elaborate*learned-actions
    (state <s> ^name learn-predicate
               ^top-state.dialog-context.structure.actions.retrieve-handle <name>
@@ -83,17 +85,67 @@ sp {chunk-parameters*propose*new-operatorDEPRICATED
    (<t> ^pair <set>)
 }
 
+#sp {elaborate*chunk-preferences*eval-condition*impasse
+#:interrupt
+#   (state <s> ^superstate  <ss>
+#              #^choices none
+#              ^attribute operator
+#              ^impasse tie)
+#   (<ss> ^list.game ^heuristic <pred> -^problemspace games ^quiescence t)
+#   (<pred> ^ntype heuristic ^prefer)
+#-->
+#   (<s> ^chunking preferences)
+#}
+
+sp {chunk-preferences*eval-condition*impasseasdfas
+#:interrupt
+   (state <s> ^superstate  <ss>
+              #^choices none
+              #^quiescence t
+              #^chunking preferences
+              ^attribute operator
+              ^impasse tie)
+   (<ss> ^list.game ^heuristic <pred> -^problemspace games)
+   (<pred> ^ntype heuristic ^prefer)
+-->
+   (force-learn <s>)
+}
+
 sp {chunk-preferences*eval-condition*impasse
+#:interrupt
+   (state <s> ^superstate  <ss>
+              #^choices none
+              #^quiescence t
+              ^attribute operator
+              ^impasse tie)
+   (<ss> ^list.game ^heuristic <pred>)# -^problemspace games)
+   (<pred> ^ntype heuristic ^prefer)
+-->
+   (<s> ^name chunk-delay
+        ^linkstate <ss>)
+}
+
+sp {chunk-delay*chunk-preferences
+   (state <s> ^superstate <ss> ^attribute state ^choices none ^impasse no-change)
+   (<ss> ^linkstate <ls> ^name chunk-delay)
+-->
+   (<s> ^name chunk-preferences
+        ^linkstate <ls>)
+}
+
+              
+sp {chunk-preferences*eval-condition*impasse*consider
    (state <s> ^superstate  <ss>
               #^choices none
               ^attribute operator
               ^impasse tie)
-   (<ss> ^list.game ^heuristic <pred>)
-   (<pred> ^ntype heuristic)
+   (<ss> ^name selection ^heuristic <pred>)
+   (<pred> ^ntype heuristic ^consider)
 -->
-   (force-learn <s>)
-   (<s> ^name chunk-preferences
-        ^linkstate <ss>)
+(interrupt)
+#   (force-learn <s>)
+#   (<s> ^name chunk-preferences
+#        ^linkstate <ss>)
 }
 
 
@@ -107,13 +159,11 @@ sp {chunk-preferences*eval-condition*impasse
     (<p1> ^instance <s2> +)
 }
 
-#for now assume parameters are ordered first action mentioned, then second, then ancilary parameters
-#assume parameters capture whole action (for now)
-sp {chunk-parameters*preference*prefer*single-operators*2args
+sp {chunk-parameters*considerence*consider*single-operators*2args
    (state <s> ^name chunk-preferences
-              ^superstate <ss>)
-   (<ss> ^operator <o1> + ^heuristic <pred>)# + ^operator <o2> +)
-   (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+              ^linkstate <ss>)
+   (<ss> ^operator <o1> + ^heuristic <pred>)
+   (<pred> ^consider <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
    (<pref> ^1 <co> -^2)
    (<ps> ^set <set>)
    (<o1> ^parameters <set1> ^verb-structure.{1} <vs>) #^aname <name> 
@@ -126,9 +176,31 @@ sp {chunk-parameters*preference*prefer*single-operators*2args
    (<ss> ^operator <o1> >)
 }
 
+
+
+#for now assume parameters are ordered first action mentioned, then second, then ancilary parameters
+#assume parameters capture whole action (for now)
+sp {chunk-parameters*preference*prefer*single-operators*2args
+   (state <s> ^name chunk-preferences
+              ^linkstate <ss>)
+   (<ss> ^operator <o1> + ^heuristic <pred> ^operator {<o2> <> <o1>} +)
+   (<o2> ^type action)
+   (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+   (<pref> ^1 <co> -^2)
+   (<ps> ^set <set>)
+   (<o1> ^parameters <set1> ^verb-structure.{1} <vs>) #^aname <name> 
+   (<vs> ^verb-name <name> ^1 <v1> ^2 <v2> ^verb-prep <vp>)
+   (<set1> ^<v1> <obj1> ^<v2> <obj2>)
+   (<set> ^<i1> <obj1> ^<i2> <obj2>)
+   (<co> ^parameter <pa1> ^type concept ^attribute action ^result.set.instance <set1> ^name <name> ^verb <vp>)
+   (<pa1> ^num 2 ^{1}.param-id <i1> ^{2}.param-id <i2>)
+-->
+   (<ss> ^operator <o1> > <o2>)
+}
+
 sp {chunk-parameters*preference*prefer*single-operators*1args
    (state <s> ^name chunk-preferences
-              ^superstate <ss>)
+              ^linkstate <ss>)
    (<ss> ^operator <o1> + ^heuristic <pred>)# + ^operator <o2> +)
    (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
    (<pref> ^1 <co> -^2)
@@ -144,7 +216,7 @@ sp {chunk-parameters*preference*prefer*single-operators*1args
 }
 sp {chunk-parameters*preference*disprefer*single-operators*2args
    (state <s> ^name chunk-preferences
-              ^superstate <ss>)
+              ^linkstate <ss>)
    (<ss> ^operator <o1> + ^heuristic <pred>)# + ^operator <o2> +)
    (<pred> ^disprefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
    (<pref> ^1 <co> -^2)
@@ -176,7 +248,7 @@ sp {chunk-parameters*preference*disprefer*single-operators*2args
 #}
 sp {chunk-parameters*preference*disprefer*single-operators*1args*any
    (state <s> ^name chunk-preferences
-              ^superstate <ss>)
+              ^linkstate <ss>)
    (<ss> ^operator <o1> + ^heuristic <pred>)# + ^operator <o2> +)
    (<pred> ^disprefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
    (<pref> ^1 <co> -^2)
@@ -193,7 +265,7 @@ sp {chunk-parameters*preference*disprefer*single-operators*1args*any
 
 sp {chunk-parameters*preference*prefer*two-operators*2args2 #how in general?
    (state <s> ^name chunk-preferences
-              ^superstate <ss>)
+              ^linkstate <ss>)
    (<ss> ^operator <o1> + ^operator <o2> + ^heuristic <pred>)
    (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)
    (<pref> ^1 <co1> ^2 <co2>)   
@@ -215,7 +287,7 @@ sp {chunk-parameters*preference*prefer*two-operators*2args2 #how in general?
 
 sp {chunk-parameters*preference*disprefer*two-operators*2args2 #how in general?
    (state <s> ^name chunk-preferences
-              ^superstate <ss>)
+              ^linkstate <ss>)
    (<ss> ^operator <o1> + ^operator <o2> + ^heuristic <pred>)
    (<pred> ^disprefer <pref> ^ntype heuristic ^parameter-set <ps>)
    (<pref> ^1 <co1> ^2 <co2>)   
@@ -260,7 +332,7 @@ sp {chunk-parameters*preference*disprefer*two-operators*2args2 #how in general?
 
 sp {chunk-parameters*preference*disprefer*two-operators*2args1 #how in general?
    (state <s> ^name chunk-preferences
-              ^superstate <ss>)
+              ^linkstate <ss>)
    (<ss> ^operator <o1> + ^operator <o2> + ^heuristic <pred>)
    (<pred> ^disprefer <pref> ^ntype heuristic ^parameter-set <ps>)
    (<pref> ^1 <co1> ^2 <co2>)   
@@ -281,7 +353,7 @@ sp {chunk-parameters*preference*disprefer*two-operators*2args1 #how in general?
 }
 sp {chunk-parameters*preference*prefer*two-operators*2args1 #how in general?
    (state <s> ^name chunk-preferences
-              ^superstate <ss>)
+              ^linkstate <ss>)
    (<ss> ^operator <o1> + ^operator <o2> + ^heuristic <pred>)
    (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)
    (<pref> ^1 <co1> ^2 <co2>)   
@@ -327,7 +399,7 @@ sp {chunk-parameters*apply*wait*complete*select*one
    (state <s> ^operator.name wait
               ^quiescence t 
               ^superstate <ss>)
-   (<ss> ^name chunk-preferences ^superstate <sss> ^quiescence t)
+   (<ss> ^name chunk-preferences ^linkstate <sss> ^quiescence t)
    (<sss> ^quiescence t ^operator <o> +)
 -->
    (<sss> ^operator <o> + =)
@@ -335,7 +407,7 @@ sp {chunk-parameters*apply*wait*complete*select*one
 
 sp {chunk-parameters*preference*disprefer*two-operators*1args2 #how in general?
    (state <s> ^name chunk-preferences
-              ^superstate <ss>)
+              ^linkstate <ss>)
    (<ss> ^operator <o1> + ^operator <o2> + ^heuristic <pred>)
    (<pred> ^disprefer <pref> ^ntype heuristic ^parameter-set <ps>)
    (<pref> ^1 <co1> ^2 <co2>)   
@@ -356,7 +428,7 @@ sp {chunk-parameters*preference*disprefer*two-operators*1args2 #how in general?
 }
 sp {chunk-parameters*preference*prefer*two-operators*1args2 #how in general?
    (state <s> ^name chunk-preferences
-              ^superstate <ss>)
+              ^linkstate <ss>)
    (<ss> ^operator <o1> + ^operator <o2> + ^heuristic <pred>)
    (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)
    (<pref> ^1 <co1> ^2 <co2>)   
@@ -400,7 +472,7 @@ sp {chunk-parameters*preference*prefer*two-operators*1args2 #how in general?
 
 sp {chunk-parameters*preference*prefer*two-operators*1args1 #how in general?
    (state <s> ^name chunk-preferences
-              ^superstate <ss>)
+              ^linkstate <ss>)
    (<ss> ^operator <o1> + ^operator <o2> + ^heuristic <pred>)
    (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)
    (<pref> ^1 <co1> ^2 <co2>)   
@@ -444,7 +516,7 @@ sp {chunk-parameters*preference*prefer*two-operators*1args1 #how in general?
 
 sp {chunk-parameters*preference*disprefer*two-operators*1args1 #how in general?
    (state <s> ^name chunk-preferences
-              ^superstate <ss>)
+              ^linkstate <ss>)
    (<ss> ^operator <o1> + ^operator <o2> + ^heuristic <pred>)
    (<pred> ^disprefer <pref> ^ntype heuristic ^parameter-set <ps>)
    (<pref> ^1 <co1> ^2 <co2>)   
