@@ -131,7 +131,7 @@ public class AgentMessageParser
 				// Counter for individual verb WMEs
 				int j = 0;
 				WMElement verbWME = descSetId.FindByAttribute("verb", j);
-				while(verbWME !=  null)
+				while (verbWME !=  null)
 				{
 					Identifier verbId = verbWME.ConvertToIdentifier();
 					String verbName = SoarUtil.getValueOfAttribute(verbId, "verb-name").replace("1","");
@@ -142,10 +142,29 @@ public class AgentMessageParser
 						verbPrep += "to";
 					}
 					
-					Integer param1 = Integer.parseInt(SoarUtil.getValueOfAttribute(verbId, "1"));
-					Integer param2 = Integer.parseInt(SoarUtil.getValueOfAttribute(verbId, "2"));
+					// Retrieving multiple objects that need to be moved to the destination
+					int k = 0;
+					List<Integer> param1_list = new ArrayList<Integer>();
+					WMElement param1_WME = verbId.FindByAttribute("1", k);
+					while (param1_WME != null)
+					{
+						param1_list.add(Integer.parseInt(param1_WME.GetValueAsString()));
+						param1_WME = verbId.FindByAttribute("1", ++k);
+					}
 					
-					actionDescription += verbName + " " + object_descs.get(param1) + verbPrep + " " + object_descs.get(param2) + "and ";
+					Integer param2 = Integer.parseInt(SoarUtil.getValueOfAttribute(verbId, "2"));
+					// Generating action sentence
+					actionDescription += verbName + " ";
+					k = 0;
+					while(k < param1_list.size())
+					{
+						actionDescription += object_descs.get(param1_list.get(k++)) + "and ";
+					}
+					
+					// PR - Make the following into remove "and" function or something.
+					actionDescription = actionDescription.substring(0, actionDescription.length() - 5);
+					actionDescription += " " + verbPrep + " " + object_descs.get(param2) + "and ";
+					
 					verbWME = descSetId.FindByAttribute("verb", ++j);
 				}
 				
@@ -154,6 +173,7 @@ public class AgentMessageParser
 				{
 					actionDescription = actionDescription.substring(0, actionDescription.length() - 5) + ". ";
 				}
+				
 				return actionDescription;
 			}
 			else
