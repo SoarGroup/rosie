@@ -159,12 +159,20 @@ public class AgentMessageParser
 					while(k < param1_list.size())
 					{
 						List<String> objDesc1 = object_descs.get(param1_list.get(k++));
+						if ((objDesc1.get(1)).equals("is ") && Integer.parseInt(objDesc1.get(2)) > 0)
+						{
+							objDesc1.set(0, "the " + objDesc1.get(0).substring(2));
+						}
 						actionDescription += objDesc1.get(0) + "and ";
 					}
 					
 					// PR - Make the following into remove "and" function or something.
 					actionDescription = actionDescription.substring(0, actionDescription.length() - 5);
 					List<String> objDesc2 = object_descs.get(param2);
+					if ((objDesc2.get(1)).equals("is ") && Integer.parseInt(objDesc2.get(2)) > 0)
+					{
+						objDesc2.set(0, "the " + objDesc2.get(0).substring(2));
+					}
 					actionDescription += " " + verbPrep + " " + objDesc2.get(0) + "and ";
 					
 					verbWME = descSetId.FindByAttribute("verb", ++j);
@@ -883,21 +891,32 @@ public class AgentMessageParser
 	public static String getObjectDescriptionForGames(Identifier objId)
 	{
 		String description = "";
-		String objDesc = SoarUtil.getValueOfAttribute(objId, "attribute");
+		String attribute_value = SoarUtil.getValueOfAttribute(objId, "attribute");
+		String prev_attribute = "";
 		String set = SoarUtil.getValueOfAttribute(objId, "rtype");
 		
-		while (!objDesc.equals("primitive"))
+		while (!attribute_value.equals("primitive"))
 		{
 			description += SoarUtil.getValueOfAttribute(objId, "name").replaceAll("\\d+.*","") + " ";
 			Identifier arg = SoarUtil.getIdentifierOfAttribute(objId, "args");
 			Identifier arg1 = SoarUtil.getIdentifierOfAttribute(arg, "1");
-			objDesc = SoarUtil.getValueOfAttribute(arg1, "attribute");
+			prev_attribute = attribute_value;
+			attribute_value = SoarUtil.getValueOfAttribute(arg1, "attribute");
 			objId = arg1;
 		}
 		
+		// PR - figure this object thing out, this may not be worth it in this case.
+		// This is in case the "object" is directly referred in the statement, it must not be ignored. For e.g. in stack-block, a clear object is larger-than a clear block.
+		/*if(!prev_attribute.equals("category"))
+		{
+			description += SoarUtil.getValueOfAttribute(objId, "name").replaceAll("\\d+.*","") + " ";
+		}*/
+		
+		// PR - remove the a/an/the setting here before you commit the 13) code
 		if(set.equals("set"))
 		{
 			description = "the " + description.substring(0,description.length() - 1) + "s ";
+			//description = description.substring(0,description.length() - 1) + "s ";
 		}
 		else
 		{			
@@ -936,21 +955,20 @@ public class AgentMessageParser
 			String auxiliaryVerb = SoarUtil.getValueOfAttribute(objDescId, "aux-verb");
 			objectDescription += getObjectDescriptionForGames(objId1);
 					 
-			// Adding preposition to the description
-			
+			// Adding preposition to the description			
 			String prep = SoarUtil.getValueOfAttribute(objDescId, "prep");
 			if (prep == null)
 			{
 				if (!object_descs.containsKey(param_id))
 				{
-					List<String> object_descs_values = Arrays.asList(objectDescription, auxiliaryVerb);
+					List<String> object_descs_values = Arrays.asList(objectDescription, auxiliaryVerb, "0");
 					object_descs.put(param_id, object_descs_values);
 				}
 				objDescWME = descSetId.FindByAttribute("obj-desc", ++i);
 				continue;
 			}
-			// Continue in case that the description is a prepositional phrase
 			
+			// Continue in case that the description is a prepositional phrase
 			prep = prep.replace("1","");
 			/*if(negative.equals("true"))
 			{	
@@ -964,7 +982,8 @@ public class AgentMessageParser
 			objectDescription += getObjectDescriptionForGames(objId2);
 			if (!object_descs.containsKey(param_id))
 			{
-				List<String> object_descs_values = Arrays.asList(objectDescription, auxiliaryVerb);
+				// The elements are object_description, associated auxiliary verb and the number of times it is mentioned in the condition predicate is initialized with a zero
+				List<String> object_descs_values = Arrays.asList(objectDescription, auxiliaryVerb, "0");
 				object_descs.put(param_id, object_descs_values);
 			}
 			objDescWME = descSetId.FindByAttribute("obj-desc", ++i);
@@ -973,7 +992,7 @@ public class AgentMessageParser
 		return object_descs;
 	}
 	
-	// Creates english statements based on the conditions and relations between objects specified as a part of conditions attribute in nlp-set in teh games.
+	// Creates english statements based on the conditions and relations between objects specified as a part of conditions attribute in nlp-set in the games.
 	public static String getConditionPredicateForGames(Identifier descSetId, HashMap<Integer, List<String>> object_descs)
 	{
 		String description = "";
@@ -988,6 +1007,12 @@ public class AgentMessageParser
 			
 			// Retrieving object descriptions and their corresponding auxiliary verbs
 			List<String> objDesc1 = object_descs.get(paramid1);
+			Integer numberOfMentions = Integer.parseInt(objDesc1.get(2));
+			if(numberOfMentions > 0 && (objDesc1.get(1)).equals("is "))
+			{
+				objDesc1.set(0, "the " + objDesc1.get(0).substring(2));
+			}
+			objDesc1.set(2, (++numberOfMentions).toString()); // The third element indicates the number of times the object has been mentioned
 
 			// When the condition is represented using only one param-id hence only one predicate is in the condition for e.g.  block on a clear location in one predicate retrieved in the object description
 			String param2_string = SoarUtil.getValueOfAttribute(conditionId, "2");
@@ -1001,6 +1026,18 @@ public class AgentMessageParser
 			
 			Integer paramid2 = Integer.parseInt(param2_string);
 			List<String> objDesc2 = object_descs.get(paramid2);
+		
+			if(objDesc2 != null)
+			{
+				numberOfMentions = Integer.parseInt(objDesc2.get(2));
+				// PR - make this into a function? this might conflict with the verb replacement of "a" by "the"
+				if(numberOfMentions > 0 && (objDesc2.get(1)).equals("is "))
+				{
+					objDesc2.set(0, "the " + objDesc2.get(0).substring(2));
+				}
+				objDesc2.set(2, (++numberOfMentions).toString());
+			}
+			
 			String prep = SoarUtil.getValueOfAttribute(conditionId, "prep");
 			
 			// When the condition involves two object descriptions w.r.t one that have been combined to form a predicate for e.g. a block on a location that is next to a clear location
@@ -1011,6 +1048,12 @@ public class AgentMessageParser
 				
 				Integer paramid3 = Integer.parseInt(SoarUtil.getValueOfAttribute(conditionId, "3"));
 				List<String> objDesc3 = object_descs.get(paramid3);
+				numberOfMentions = Integer.parseInt(objDesc3.get(2));
+				if(numberOfMentions > 0 && (objDesc3.get(1)).equals("is "))
+				{
+					objDesc3.set(0, "the " + objDesc3.get(0).substring(2));
+				}
+				objDesc3.set(2, (++numberOfMentions).toString()); // PR - check if this works
 				
 				description +=  objDesc1.get(0) + objDesc1.get(1) + prep1 + " " + objDesc2.get(0) + "that " + objDesc2.get(1) + prep2 + " " + objDesc3.get(0);
 
