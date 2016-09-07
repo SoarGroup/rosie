@@ -133,20 +133,68 @@ sp {chunk-delay*chunk-preferences
         ^linkstate <ls>)
 }
 
-              
+
 sp {chunk-preferences*eval-condition*impasse*consider
+   (state <s> ^name selection 
+              ^superstate  <ss>
+              #^choices none
+              ^attribute operator
+              ^impasse tie)
+   (<ss> ^name learn-predicate ^heuristic <pred>)
+   (<pred> ^ntype heuristic ^consider)
+-->
+#(interrupt)
+ (<s> ^operator-selection not-indifferent)             
+}
+
+#complete learning chunk! just apply one operator to exit
+ sp {chunk-preferences*apply*evaluate-operator
+   (state <s> ^name selection 
+              ^operator-selection not-indifferent 
+              ^superstate <ss>
+              ^operator <o>
+              ^attribute operator
+              ^impasse tie)
+(<o> ^name evaluate-operator ^superoperator <so>)
+   (<ss> ^name learn-predicate ^heuristic <pred> ^operator <so> +)
+   (<pred> ^ntype heuristic ^consider)
+-->
+   (<ss> ^operator <so> > =)         
+}
+
+sp {chunk-preferences*eval-condition*impasse*consider*force-learn
    (state <s> ^superstate  <ss>
               #^choices none
               ^attribute operator
               ^impasse tie)
-   (<ss> ^name selection ^heuristic <pred>)
+   (<ss> ^name selection ^superstate.heuristic <pred>)
    (<pred> ^ntype heuristic ^consider)
 -->
-(interrupt)
-#   (force-learn <s>)
-#   (<s> ^name chunk-preferences
-#        ^linkstate <ss>)
+#(interrupt)
+   (force-learn <s>)
 }
+
+sp {chunk-prefer-consider*eval-condition*impasse*consider*chunk-pause
+   (state <s> ^superstate  <ss>
+              #^choices none
+              ^attribute operator
+              ^impasse tie)
+   (<ss> ^name selection ^superstate.heuristic <pred>)
+   (<pred> ^ntype heuristic ^consider)
+-->
+   (<s> ^operator-selection not-indifferent)      
+   (<s> ^name chunk-prefer-consider#chunk-pause
+        ^linkstate <ss>)
+}
+
+#sp {chunk-pause*chunk-prefer-consider
+#   (state <s> ^superstate <ss> ^attribute state ^choices none ^impasse no-change)
+#   (<ss> ^linkstate <ls> ^name chunk-pause)
+#-->
+#(interrupt)
+#   (<s> ^name chunk-prefer-consider
+#        ^linkstate <ls>)
+#}
 
 
  sp {chunk-preferences*chunk-parameters*propose*new-operator*snc*t71-4
@@ -159,14 +207,15 @@ sp {chunk-preferences*eval-condition*impasse*consider
     (<p1> ^instance <s2> +)
 }
 
-sp {chunk-parameters*considerence*consider*single-operators*2args
-   (state <s> ^name chunk-preferences
+sp {chunk-prefer-consider*considerence*consider*single-operators*2args
+   (state <s> ^name chunk-prefer-consider
               ^linkstate <ss>)
-   (<ss> ^operator <o1> + ^heuristic <pred>)
+   (<ss> ^operator <o1> + ^superstate.heuristic <pred>)
    (<pred> ^consider <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
    (<pref> ^1 <co> -^2)
    (<ps> ^set <set>)
-   (<o1> ^parameters <set1> ^verb-structure.{1} <vs>) #^aname <name> 
+   (<o1> ^name evaluate-operator ^superoperator <so>)
+   (<so> ^parameters <set1> ^verb-structure.{1} <vs>) #^aname <name> 
    (<vs> ^verb-name <name> ^1 <v1> ^2 <v2> ^verb-prep <vp>)
    (<set1> ^<v1> <obj1> ^<v2> <obj2>)
    (<set> ^<i1> <obj1> ^<i2> <obj2>)
