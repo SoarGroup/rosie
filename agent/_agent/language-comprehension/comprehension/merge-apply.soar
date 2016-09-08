@@ -11,7 +11,7 @@ sp {apply*merge
          ^assigner <assigner>)
    (<assigner> ^parent-receiver <pword>
               -^lt.repeatable true
-               ^lt.syntactic-structure { <> nil <> reverse-merge <stype> })
+               ^lt.syntactic-structure { <> nil <> reverse-merge <stype> <> conj-predicate })
 -->
    (<seg> ^not-merged-receiver <receiver> -
           ^not-merged-assigner <assigner> -
@@ -73,6 +73,24 @@ sp {apply*merge*filler-word*repeatable
    (<assigner> ^merged-receiver <receiver>)
 }
 
+sp {apply*merge*conj-predicate
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<seg> ^not-merged-receiver <receiver>
+          ^not-merged-assigner <assigner>)
+   (<op> ^name merge
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^parent-receiver <pword>
+              -^lt.repeatable true
+               ^lt.syntactic-structure conj-predicate)
+-->
+   (<seg> ^not-merged-receiver <receiver> -
+          ^not-merged-assigner <assigner> -
+          ^merged-assigner <assigner>)
+   (<assigner> ^merged-receiver <receiver>)
+   (<pword> ^predicate <receiver>)
+}
 ## Merging receiver that has unfilled assigner - remove it.
 
 sp {apply*merge*remove-unfilled-assigner
@@ -115,6 +133,7 @@ sp {apply*merge*copy-semantics
          ^assigner <ass>)
    (<ass> ^parent-receiver.semantics <sem2>)
    (<sem> ^<att> <value>)
+   -(<value> ^handle by1)            ### ADD JEL 8/23
    -(<ass> ^lt.semantic-structure)   ### ADD JEL
 -->
    #(write (crlf) |Copy ^semantics ^| <att> | | <value> | from | <sem> | to | <sem2>)
@@ -186,7 +205,42 @@ sp {apply*merge*relation-value
    #(write (crlf) |Inherited relation-source | <relation> | usually for THAT IS.|)
    (<lla> ^relation <relation>)
 }
+ 
+sp {apply*merge*relation-value*inherit*2
+#  :interrupt
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<seg> ^not-merged-receiver <receiver>
+          ^not-merged-assigner <assigner>)
+   (<op> ^name merge
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^parent-receiver <pword>)
+   (<pword> ^lt <lla>
+            ^structure-type CONJ-C-ADJ)
+   (<receiver> ^lt.relation <relation>)
+-->
+   (write (crlf) |Inherited relation-source | <relation> | usually for THAT IS.|)
+   (<lla> ^relation <relation>)
+}
 
+                 
+sp {apply*merge*relation-value*semantics
+   #:interrupt
+   (state <s> ^operator <op>)
+   (<op> ^name merge
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^parent-receiver <pword>)
+   (<receiver> ^semantics <sem> 
+               ^lt-referent <con>)
+   (<relation> ^handle by1) 
+   (<sem> ^<att> <relation>)
+-->
+   (write (crlf) |Inherited relation-source | <relation> | usually for THAT IS.... by|)
+   (<sem> ^<att> <relation> -)
+   (<con> ^relation <relation>)
+}
 ### Strip assigner - preposition is something like "named" that wants a raw token - no meaning
              
 sp {apply*merge*strip-assigners
@@ -258,6 +312,7 @@ sp {apply*merge*push-constraint*receiver-assigner*RCP-D
    #(write (crlf) |Add RCP constraint | <con> | to D parent-receiver | <pr> | from receiver.|)
    (<pr> ^constraint <con>)
 }
+
 
 sp {apply*merge*push-constraint*clear-ground-tested
   #:interrupt
@@ -446,6 +501,34 @@ sp {apply*merge*constraint*preposition-noun
 #          ^handle <sr>)
 #   #(write (crlf) |Add new constraint to | <pword> | relation: | <sr> | object: | <obj>)
 #}
+
+sp {apply*merge*constraint*preposition-noun*CONJ-C
+  #:interrupt
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<op> ^name merge
+         ^receiver <receiver>
+         ^assigner <assigner>)
+   (<assigner> ^parent-receiver <pword>
+               ^structure-type << CONJ-C-ADJ-P >>)
+   (<pword> ^structure-type << D DP CN RC >>
+           -^head.lt.semantic-structure relation) # don't do this if part of 'to the left of'
+   (<receiver> ^structure-type << PP CONJP CONJ-C-ADJ-P >>
+              -^lt.relation-type ternary
+              -^lt.directional true
+               ^lt.relation.handle { <> of1 <sr> }  # Of is a special case...
+               ^head.head <head>)
+   (<head> ^referent <obj>)   
+-->
+   (<seg> ^new-constraint <nc>)
+   (<nc> ^object <pword> #<head>  # was <pword>
+         ^constraint <c>)
+   (<pword> ^constraint <c>) #<head> # was <pword>
+   (<c> ^relation <srx>)
+   (<srx> ^2 <obj>
+          ^handle <sr>)
+   (write (crlf) |Add new constraint to | <pword> | relation: | <sr> | object: | <obj>)
+}
 
 sp {apply*merge*constraint*preposition-noun*ternary
   #:interrupt
