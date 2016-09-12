@@ -78,6 +78,8 @@ public class AgentMessageParser
 			return translateGetFeatureRelationDescription(fieldsId);
 		} else if(type.equals("agent-goal-description")){
 			return translateGetAgentGoalDescription(fieldsId);
+		} else if(type.equals("agent-failure-description")){
+			return translateGetAgentFailureDescription(fieldsId);
 		} else if(type.equals("agent-game-action-description")){
 			return translateGetAgentGameActionDescription(fieldsId);
 		} else if(type.equals("agent-location-description")){
@@ -153,27 +155,21 @@ public class AgentMessageParser
 					}
 					
 					Integer param2 = Integer.parseInt(SoarUtil.getValueOfAttribute(verbId, "2"));
+					
 					// Generating action sentence
 					actionDescription += verbName + " ";
 					k = 0;
 					while(k < param1_list.size())
 					{
 						List<String> objDesc1 = object_descs.get(param1_list.get(k++));
-						if ((objDesc1.get(1)).equals("is ") && Integer.parseInt(objDesc1.get(2)) > 0)
-						{
-							objDesc1.set(0, "the " + objDesc1.get(0).substring(2));
-						}
-						actionDescription += objDesc1.get(0) + "and ";
+						actionDescription += addArticleForObjectDescription(objDesc1) + objDesc1.get(0) + "and ";						
 					}
 					
 					// PR - Make the following into remove "and" function or something.
 					actionDescription = actionDescription.substring(0, actionDescription.length() - 5);
+					
 					List<String> objDesc2 = object_descs.get(param2);
-					if ((objDesc2.get(1)).equals("is ") && Integer.parseInt(objDesc2.get(2)) > 0)
-					{
-						objDesc2.set(0, "the " + objDesc2.get(0).substring(2));
-					}
-					actionDescription += " " + verbPrep + " " + objDesc2.get(0) + "and ";
+					actionDescription += " " + verbPrep + " " + addArticleForObjectDescription(objDesc2) + objDesc2.get(0) + "and ";
 					
 					verbWME = descSetId.FindByAttribute("verb", ++j);
 				}
@@ -215,6 +211,33 @@ public class AgentMessageParser
 			}
 			else
 				return "The goal of this game is unknown.";
+		}
+	}
+	
+	public static String translateGetAgentFailureDescription(Identifier fieldsId) {
+		Identifier descSetId = SoarUtil.getIdentifierOfAttribute(fieldsId, "descriptions");
+		String failureDescription = "If ";
+		HashMap<Integer, List<String>> object_descs = new HashMap<Integer, List<String>>();
+		if (descSetId == null)
+		{
+			return "The failure points of this game are unknown.";
+		}
+		else {
+			String generated = SoarUtil.getValueOfAttribute(descSetId, "generated");
+			if (generated.equals("yes"))	{
+				object_descs = getObjectPredicateForGames(descSetId);
+				failureDescription += getConditionPredicateForGames(descSetId, object_descs);
+				
+				if ((failureDescription.length()-5) > 0)
+				{
+					failureDescription = failureDescription.substring(0, failureDescription.length() - 5);
+				}
+				
+				failureDescription += ", then you lose.";
+				return failureDescription;				
+			}
+			else
+				return "The failure points of this game are unknown.";
 		}
 	}
 	
@@ -887,6 +910,31 @@ public class AgentMessageParser
 		return desc;
 	}
 	
+	public static String addArticleForObjectDescription(List<String> objDesc)
+	{
+		String article = "";
+		Integer numberOfMentions = Integer.parseInt(objDesc.get(3));
+		if((numberOfMentions > 0 && (objDesc.get(2)).equals("single")) || (objDesc.get(2)).equals("set"))
+		{
+			article = "the ";
+		}
+		else
+		{
+			if (startsWithVowel(objDesc.get(0)))
+			{
+				article = "an ";
+			}
+			else
+			{
+				article = "a ";
+			}
+		}
+		
+		objDesc.set(3, (++numberOfMentions).toString()); // The fourth element indicates the number of times the object has been mentioned
+		
+		return article;
+	}
+	
 	// Get english description based on the object structures retrieved from smem
 	public static String getObjectDescriptionForGames(Identifier objId)
 	{
@@ -912,23 +960,9 @@ public class AgentMessageParser
 			description += SoarUtil.getValueOfAttribute(objId, "name").replaceAll("\\d+.*","") + " ";
 		}*/
 		
-		// PR - remove the a/an/the setting here before you commit the 13) code
 		if(set.equals("set"))
 		{
-			description = "the " + description.substring(0,description.length() - 1) + "s ";
-			//description = description.substring(0,description.length() - 1) + "s ";
-		}
-		else
-		{			
-			if(description.charAt(0) == 'a' || description.charAt(0) == 'e' || description.charAt(0) == 'i' || 
-					description.charAt(0) == 'o' || description.charAt(0) == 'u')
-			{
-				description = "an " + description;
-			}
-			else
-			{
-				description = "a " + description;
-			}
+			description = description.substring(0,description.length() - 1) + "s ";
 		}
 		
 		return description;
@@ -946,13 +980,17 @@ public class AgentMessageParser
 		while (objDescWME != null)
 		{					
 			String objectDescription = "";
+			String article = "";
+			String rtype = "";
 			Identifier objDescId = objDescWME.ConvertToIdentifier();
-			//String negative = SoarUtil.getValueOfAttribute(descId, "negative");
+			String negative = SoarUtil.getValueOfAttribute(objDescId, "negative");
 			Identifier objId1 = SoarUtil.getIdentifierOfAttribute(objDescId, "1");
 			Integer param_id = Integer.parseInt(SoarUtil.getValueOfAttribute(objDescId, "param-id"));
 			
 			// Based on if the rtype is set or single, auxiliaryVerb will be set as "are" or "is"
 			String auxiliaryVerb = SoarUtil.getValueOfAttribute(objDescId, "aux-verb");
+			rtype = auxiliaryVerb.equals("are ")?"set":"single";
+			
 			objectDescription += getObjectDescriptionForGames(objId1);
 					 
 			// Adding preposition to the description			
@@ -961,7 +999,8 @@ public class AgentMessageParser
 			{
 				if (!object_descs.containsKey(param_id))
 				{
-					List<String> object_descs_values = Arrays.asList(objectDescription, auxiliaryVerb, "0");
+					// The elements are object_description, associated auxiliary verb,rtype(single,set) and the number of times it is mentioned in the condition predicate is initialized with a zero
+					List<String> object_descs_values = Arrays.asList(objectDescription, auxiliaryVerb, rtype, "0");
 					object_descs.put(param_id, object_descs_values);
 				}
 				objDescWME = descSetId.FindByAttribute("obj-desc", ++i);
@@ -970,20 +1009,38 @@ public class AgentMessageParser
 			
 			// Continue in case that the description is a prepositional phrase
 			prep = prep.replace("1","");
-			/*if(negative.equals("true"))
-			{	
-				prep += "not " + prep;
-			}*/
+			if(negative.equals("true"))
+			{
+				prep = "not " + prep;
+			}
 			
 			objectDescription += auxiliaryVerb + prep + " ";
 			
 			// Adding the second object in the condition to the object description
-			Identifier objId2 = SoarUtil.getIdentifierOfAttribute(objDescId, "2");	
-			objectDescription += getObjectDescriptionForGames(objId2);
+			Identifier objId2 = SoarUtil.getIdentifierOfAttribute(objDescId, "2");
+			String object2_Desc = getObjectDescriptionForGames(objId2);
+			
+			// Setting article for the second object in the predicate in cases where the second object is not referred more than once.
+			if(auxiliaryVerb.equals("are "))
+			{
+				article = "the ";
+			}
+			else
+			{
+				if (startsWithVowel(object2_Desc))
+				{
+					article = "an ";
+				}
+				else
+				{
+					article = "a ";
+				}
+			}
+			objectDescription += article + object2_Desc;
+			
 			if (!object_descs.containsKey(param_id))
 			{
-				// The elements are object_description, associated auxiliary verb and the number of times it is mentioned in the condition predicate is initialized with a zero
-				List<String> object_descs_values = Arrays.asList(objectDescription, auxiliaryVerb, "0");
+				List<String> object_descs_values = Arrays.asList(objectDescription, auxiliaryVerb, rtype, "0");
 				object_descs.put(param_id, object_descs_values);
 			}
 			objDescWME = descSetId.FindByAttribute("obj-desc", ++i);
@@ -993,6 +1050,7 @@ public class AgentMessageParser
 	}
 	
 	// Creates english statements based on the conditions and relations between objects specified as a part of conditions attribute in nlp-set in the games.
+	// This function combines multiple object predicates together when necessary
 	public static String getConditionPredicateForGames(Identifier descSetId, HashMap<Integer, List<String>> object_descs)
 	{
 		String description = "";
@@ -1003,22 +1061,19 @@ public class AgentMessageParser
 		while(conditionVarWME != null)
 		{
 			Identifier conditionId = conditionVarWME.ConvertToIdentifier();
+			String negative = SoarUtil.getValueOfAttribute(conditionId, "negative");
+			String article1 = "", article2="",article3="";
 			Integer paramid1 = Integer.parseInt(SoarUtil.getValueOfAttribute(conditionId, "1"));
 			
 			// Retrieving object descriptions and their corresponding auxiliary verbs
 			List<String> objDesc1 = object_descs.get(paramid1);
-			Integer numberOfMentions = Integer.parseInt(objDesc1.get(2));
-			if(numberOfMentions > 0 && (objDesc1.get(1)).equals("is "))
-			{
-				objDesc1.set(0, "the " + objDesc1.get(0).substring(2));
-			}
-			objDesc1.set(2, (++numberOfMentions).toString()); // The third element indicates the number of times the object has been mentioned
-
+			article1 = addArticleForObjectDescription(objDesc1);
+			
 			// When the condition is represented using only one param-id hence only one predicate is in the condition for e.g.  block on a clear location in one predicate retrieved in the object description
 			String param2_string = SoarUtil.getValueOfAttribute(conditionId, "2");
 			if(param2_string == null)
 			{
-				description += objDesc1.get(0);
+				description += article1 + objDesc1.get(0);
 				conditionVarWME = descSetId.FindByAttribute("description", ++k);
 				description += "and ";
 				continue;
@@ -1029,13 +1084,7 @@ public class AgentMessageParser
 		
 			if(objDesc2 != null)
 			{
-				numberOfMentions = Integer.parseInt(objDesc2.get(2));
-				// PR - make this into a function? this might conflict with the verb replacement of "a" by "the"
-				if(numberOfMentions > 0 && (objDesc2.get(1)).equals("is "))
-				{
-					objDesc2.set(0, "the " + objDesc2.get(0).substring(2));
-				}
-				objDesc2.set(2, (++numberOfMentions).toString());
+				article2 = addArticleForObjectDescription(objDesc2);
 			}
 			
 			String prep = SoarUtil.getValueOfAttribute(conditionId, "prep");
@@ -1048,14 +1097,9 @@ public class AgentMessageParser
 				
 				Integer paramid3 = Integer.parseInt(SoarUtil.getValueOfAttribute(conditionId, "3"));
 				List<String> objDesc3 = object_descs.get(paramid3);
-				numberOfMentions = Integer.parseInt(objDesc3.get(2));
-				if(numberOfMentions > 0 && (objDesc3.get(1)).equals("is "))
-				{
-					objDesc3.set(0, "the " + objDesc3.get(0).substring(2));
-				}
-				objDesc3.set(2, (++numberOfMentions).toString()); // PR - check if this works
+				article3 = addArticleForObjectDescription(objDesc3);
 				
-				description +=  objDesc1.get(0) + objDesc1.get(1) + prep1 + " " + objDesc2.get(0) + "that " + objDesc2.get(1) + prep2 + " " + objDesc3.get(0);
+				description +=  article1 + objDesc1.get(0) + objDesc1.get(1) + prep1 + " " + article2 + objDesc2.get(0) + "that " + objDesc2.get(1) + prep2 + " " + article3 + objDesc3.get(0);
 
 				conditionVarWME = descSetId.FindByAttribute("description", ++k);
 				description += "and ";
@@ -1063,26 +1107,30 @@ public class AgentMessageParser
 			}
 
 			prep = prep.replace("1","");
+			if(negative != null && negative.equals("true"))
+			{	
+				prep = "not " + prep;
+			}
 			String name = SoarUtil.getValueOfAttribute(conditionId, "name");
 								
 			// When the condition involves the param-ids/values of two predicates being the same for e.g. the color of A is red/the color of A is the color of B
 			if (name != null)
 			{
-				String article = SoarUtil.getValueOfAttribute(conditionId, "article");
+				String equalcondition_article = SoarUtil.getValueOfAttribute(conditionId, "article");
 				if (prep.equals("number"))
 				{
-					description += article + name + " of " + objDesc1.get(0) + "is " + param2_string + " ";
+					description += equalcondition_article + name + " of " + article1 + objDesc1.get(0) + "is " + param2_string + " ";
 				}
 				else
 				{
-					description += article + name + " of " + objDesc1.get(0) + "is " + article + name + " of " + objDesc2.get(0);
+					description += equalcondition_article + name + " of " + article1 + objDesc1.get(0) + "is " + equalcondition_article + name + " of " + article2 + objDesc2.get(0);
 				}
 				conditionVarWME = descSetId.FindByAttribute("description", ++k);
 				description += "and ";
 				continue;
 			}
 			
-			description += objDesc1.get(0) + objDesc1.get(1) + prep + " " + objDesc2.get(0);
+			description += article1 + objDesc1.get(0) + objDesc1.get(1) + prep + " " + article2 + objDesc2.get(0);
 			
 			conditionVarWME = descSetId.FindByAttribute("description", ++k);
 			description += "and ";
