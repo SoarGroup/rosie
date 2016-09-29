@@ -17,6 +17,7 @@ import sml.Agent.RunEventInterface;
 public class SoarAgent implements RunEventInterface, PrintEventInterface {
     public static class AgentConfig{
         public String agentName;
+        public String environment;
 
         public String agentSource;
         public String smemSource;
@@ -37,6 +38,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
            
 
             agentName = props.getProperty("agent-name", "SoarAgent");
+            environment = props.getProperty("environment", "arm");
             agentSource = props.getProperty("agent-source", null);
             smemSource = props.getProperty("smem-source", null);
             verbose = props.getProperty("verbose", "true").equals("true");
@@ -70,6 +72,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 
     private AgentConfig config;
 
+    private boolean debuggerSpawned = false;
     private boolean isRunning = false;
 
     private boolean queueStop = false;
@@ -136,6 +139,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
     }
     
     public void createAgent(){
+        System.out.println("SoarAgent::createAgent()");
         // Initialize Soar Agent
         agent = kernel.CreateAgent(config.agentName);
         if (agent == null){
@@ -143,8 +147,8 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         }
 
         if (config.spawnDebugger){
-            boolean success = agent.SpawnDebugger(kernel.GetListenerPort());
-            System.out.println("Spawn Debugger: " + (success ? "SUCCESS" : "FAIL"));
+            debuggerSpawned = agent.SpawnDebugger(kernel.GetListenerPort());
+            System.out.println("Spawn Debugger: " + (debuggerSpawned ? "SUCCESS" : "FAIL"));
         }
 
         runEventCallbackIds.add(agent.RegisterForRunEvent(smlRunEventId.smlEVENT_BEFORE_INPUT_PHASE, this, null));
@@ -163,6 +167,11 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
             printCallbackId = agent.RegisterForPrintEvent(smlPrintEventId.smlEVENT_PRINT, this, null);
         }
 
+        // enable TCL and set the rosie_env variable
+        agent.ExecuteCommandLine("cli tcl on");
+        agent.ExecuteCommandLine("global rosie_env");
+        agent.ExecuteCommandLine("set rosie_env \"" + config.environment + "\"");
+
         sourceAgent();
         agent.ExecuteCommandLine(String.format("w %d", config.watchLevel));
         
@@ -175,6 +184,8 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         if(languageConn != null){
             languageConn.connect();
         }
+
+        System.out.print("\n");
     }
 
     /**
@@ -200,6 +211,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
     }
 
     public void kill(){
+        System.out.println("SoarAgent::kill()");
         queueStop = true;
         while(isRunning){
             try {
@@ -219,7 +231,6 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         }
         printCallbackId = -1;
 
-        //agent.KillDebugger();
         time.removeFromWM();
         if(perceptionConn != null){
             perceptionConn.disconnect();
@@ -229,6 +240,11 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         }
         if(languageConn != null){
             languageConn.disconnect();
+        }
+
+        if(debuggerSpawned){
+            agent.KillDebugger();
+            debuggerSpawned = false;
         }
         kernel.DestroyAgent(agent);
 
@@ -310,16 +326,51 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         agent.ExecuteCommandLine("epmem --set database memory");
         if(config.smemSource != null){
             String res = agent.ExecuteCommandLine("source " + config.smemSource);
-            System.out.println(res);
+            parseSmemSourceInfo(res);
         }
         if(config.agentSource != null){
             String res = agent.ExecuteCommandLine("source " + config.agentSource + " -v");
             if(config.verbose){
-                System.out.println(res);
+                parseAgentSourceInfo(res);
             } else {
                 System.out.println("Sourced Productions");
             }
         }
+    }
+
+    private void parseSmemSourceInfo(String info){
+        String[] lines = info.split("\n");
+        for(String line : lines){
+            line = line.trim();
+            if(line.length() == 0){
+                continue;
+            }
+            if(line.startsWith("Knowledge")){
+                continue;
+            }
+            System.out.println(line);
+        }
+        System.out.println("Loaded Semantic Memory");
+    }
+
+    private void parseAgentSourceInfo(String info){
+        String[] lines = info.split("\n");
+        for(String line : lines){
+            if(line.trim().length() == 0){
+                continue;
+            }
+            if(line.startsWith("*") || line.startsWith("#")){
+                continue;
+            }
+            if(line.startsWith("Knowledge added")){
+                continue;
+            }
+            if(line.startsWith("Sourcing")){
+                continue;
+            }
+            System.out.println(line);
+        }
+
     }
 
     @Override
