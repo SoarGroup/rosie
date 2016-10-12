@@ -155,15 +155,14 @@ public class AgentMessageParser
 					}
 					
 					Integer param2 = Integer.parseInt(SoarUtil.getValueOfAttribute(verbId, "2"));
-					
+
 					// Generating action sentence
 					actionDescription += verbName + " ";
 					k = 0;
 					while(k < param1_list.size())
 					{
 						List<String> objDesc1 = object_descs.get(param1_list.get(k++));
-						actionDescription += addArticleForObjectDescription(objDesc1) + objDesc1.get(0) + "and ";						
-					}
+ 						actionDescription += addArticleForObjectDescription(objDesc1) + objDesc1.get(0) + "and ";					       }
 					
 					// PR - Make the following into remove "and" function or something.
 					actionDescription = actionDescription.substring(0, actionDescription.length() - 5);
@@ -795,6 +794,33 @@ public class AgentMessageParser
 		return propertyDesc;
 	}
 	
+	// This function lists out the properties of a given object.
+	public static String generatePropertyDescription(Identifier descId) {
+		
+		Identifier predsId = SoarUtil.getIdentifierOfAttribute(descId, "predicates");
+		String propertyDesc = "";
+		for(int c = 0; c < predsId.GetNumberChildren(); c++){
+			WMElement el = predsId.GetChild(c);
+			String att = el.GetAttribute().toLowerCase();
+			String val = el.GetValueAsString().toLowerCase().replace("1","");
+			if (att.equals("shape")) {
+				propertyDesc += "The shape is " + val + ". ";
+			} else if (att.equals("size")) {
+				propertyDesc += "The size is " + val + ". ";
+			} else if(att.equals("color")) {
+				propertyDesc += "The color is " + val + ". ";
+			}			
+		}
+		
+		// This object is a location with no descriptive properties.
+		if (propertyDesc.equals(""))
+		{
+			propertyDesc = "This is the " + predsId.GetParameterValue("name") + ". ";
+		}
+		
+		return propertyDesc;
+	}
+	
 	public static String generateObjectDescription(Identifier descId){
 		String root = "block"; // PR - Verify if block is a correct default option
 		ArrayList<String> adjectives = new ArrayList<String>();
@@ -1068,7 +1094,7 @@ public class AgentMessageParser
 			// Retrieving object descriptions and their corresponding auxiliary verbs
 			List<String> objDesc1 = object_descs.get(paramid1);
 			article1 = addArticleForObjectDescription(objDesc1);
-			
+
 			// When the condition is represented using only one param-id hence only one predicate is in the condition for e.g.  block on a clear location in one predicate retrieved in the object description
 			String param2_string = SoarUtil.getValueOfAttribute(conditionId, "2");
 			if(param2_string == null)
@@ -1111,6 +1137,7 @@ public class AgentMessageParser
 			{	
 				prep = "not " + prep;
 			}
+
 			String name = SoarUtil.getValueOfAttribute(conditionId, "name");
 								
 			// When the condition involves the param-ids/values of two predicates being the same for e.g. the color of A is red/the color of A is the color of B
