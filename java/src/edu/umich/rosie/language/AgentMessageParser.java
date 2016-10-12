@@ -82,6 +82,8 @@ public class AgentMessageParser
 			return translateGetAgentFailureDescription(fieldsId);
 		} else if(type.equals("agent-game-action-description")){
 			return translateGetAgentGameActionDescription(fieldsId);
+		} else if(type.equals("agent-game-concept-definition")){
+			return translateGetAgentGameConceptDefinition(fieldsId);
 		} else if(type.equals("agent-location-description")){
 			return translateLocationDescription(fieldsId);
 		} else if(type.equals("get-location-info")){
@@ -155,14 +157,15 @@ public class AgentMessageParser
 					}
 					
 					Integer param2 = Integer.parseInt(SoarUtil.getValueOfAttribute(verbId, "2"));
-
+					
 					// Generating action sentence
 					actionDescription += verbName + " ";
 					k = 0;
 					while(k < param1_list.size())
 					{
 						List<String> objDesc1 = object_descs.get(param1_list.get(k++));
- 						actionDescription += addArticleForObjectDescription(objDesc1) + objDesc1.get(0) + "and ";					       }
+                                                actionDescription += addArticleForObjectDescription(objDesc1) + objDesc1.get(0) + "and ";						
+					}
 					
 					// PR - Make the following into remove "and" function or something.
 					actionDescription = actionDescription.substring(0, actionDescription.length() - 5);
@@ -184,6 +187,43 @@ public class AgentMessageParser
 			else
 				return "The action is unknown.";
 		}
+	}
+	
+	public static String translateGetAgentGameConceptDefinition(Identifier fieldsId) {
+		Identifier descSetId = SoarUtil.getIdentifierOfAttribute(fieldsId, "descriptions");
+		String conceptDefinition = "If ";
+		String conceptName = SoarUtil.getValueOfAttribute(descSetId, "sentence");
+		HashMap<Integer, List<String>> object_descs = new HashMap<Integer, List<String>>();
+		if (descSetId == null)
+		{
+			return "This concept is not defined.";
+		}
+		else 
+		{
+			String generated = SoarUtil.getValueOfAttribute(descSetId, "generated");
+			if (generated.equals("yes"))	{
+				object_descs = getObjectPredicateForGames(descSetId);
+				conceptDefinition += getConditionPredicateForGames(descSetId, object_descs);
+				if ((conceptDefinition.length()-5) > 0)
+				{
+					conceptDefinition = conceptDefinition.substring(0, conceptDefinition.length() - 5);
+				}
+				if(SoarUtil.getValueOfAttribute(descSetId, "pronoun") != null)
+				{
+					conceptDefinition += ", then it is " + conceptName + ".";
+				}
+				else
+				{
+					List<String> objDesc1 = (List<String>)object_descs.values().toArray()[0];
+					List<String> objDesc2 = (List<String>)object_descs.values().toArray()[1];
+					conceptDefinition += ", then " +  addArticleForObjectDescription(objDesc1) + objDesc1.get(0)  + "and " + addArticleForObjectDescription(objDesc2)+ objDesc2.get(0) + "are " + conceptName + ".";
+				}
+				
+				return conceptDefinition;
+			}
+			else
+				return conceptName + "is not defined.";
+		}		
 	}
 	
 	public static String translateGetAgentGoalDescription(Identifier fieldsId) {
@@ -569,8 +609,8 @@ public class AgentMessageParser
 	}
 	
 	public static boolean startsWithVowel(String adj){
-		return (adj.startsWith(" a") || adj.startsWith(" e") || adj.startsWith(" i") || 
-				adj.startsWith(" o") || adj.startsWith(" u"));
+		return (adj.startsWith("a") || adj.startsWith("e") || adj.startsWith("i") || 
+				adj.startsWith("o") || adj.startsWith("u"));
 	}
 	
 	public static String translateSaySentence(Identifier fieldsId){
@@ -794,33 +834,6 @@ public class AgentMessageParser
 		return propertyDesc;
 	}
 	
-	// This function lists out the properties of a given object.
-	public static String generatePropertyDescription(Identifier descId) {
-		
-		Identifier predsId = SoarUtil.getIdentifierOfAttribute(descId, "predicates");
-		String propertyDesc = "";
-		for(int c = 0; c < predsId.GetNumberChildren(); c++){
-			WMElement el = predsId.GetChild(c);
-			String att = el.GetAttribute().toLowerCase();
-			String val = el.GetValueAsString().toLowerCase().replace("1","");
-			if (att.equals("shape")) {
-				propertyDesc += "The shape is " + val + ". ";
-			} else if (att.equals("size")) {
-				propertyDesc += "The size is " + val + ". ";
-			} else if(att.equals("color")) {
-				propertyDesc += "The color is " + val + ". ";
-			}			
-		}
-		
-		// This object is a location with no descriptive properties.
-		if (propertyDesc.equals(""))
-		{
-			propertyDesc = "This is the " + predsId.GetParameterValue("name") + ". ";
-		}
-		
-		return propertyDesc;
-	}
-	
 	public static String generateObjectDescription(Identifier descId){
 		String root = "block"; // PR - Verify if block is a correct default option
 		ArrayList<String> adjectives = new ArrayList<String>();
@@ -969,7 +982,7 @@ public class AgentMessageParser
 		String prev_attribute = "";
 		String set = SoarUtil.getValueOfAttribute(objId, "rtype");
 		
-		while (!attribute_value.equals("primitive"))
+		while (!(attribute_value.equals("primitive") ||  attribute_value.equals("input-arg")))
 		{
 			description += SoarUtil.getValueOfAttribute(objId, "name").replaceAll("\\d+.*","") + " ";
 			Identifier arg = SoarUtil.getIdentifierOfAttribute(objId, "args");
@@ -985,6 +998,11 @@ public class AgentMessageParser
 		{
 			description += SoarUtil.getValueOfAttribute(objId, "name").replaceAll("\\d+.*","") + " ";
 		}*/
+
+		if(attribute_value.equals("input-arg"))
+		{
+			description += "object ";
+		}
 		
 		if(set.equals("set"))
 		{
@@ -1026,6 +1044,12 @@ public class AgentMessageParser
 				if (!object_descs.containsKey(param_id))
 				{
 					// The elements are object_description, associated auxiliary verb,rtype(single,set) and the number of times it is mentioned in the condition predicate is initialized with a zero
+					// PR - Hack, this should be able to be done using lambda expressions object_descs.values().stream().anymatch(l -> l.contains(objectDescription)) in java 1.8
+					if(object_descs.values().toString().contains(objectDescription))
+					{
+						objectDescription = "other " + objectDescription;
+					}
+
 					List<String> object_descs_values = Arrays.asList(objectDescription, auxiliaryVerb, rtype, "0");
 					object_descs.put(param_id, object_descs_values);
 				}
@@ -1066,6 +1090,12 @@ public class AgentMessageParser
 			
 			if (!object_descs.containsKey(param_id))
 			{
+				// PR - Hack, this should be able to be done using lambda expressions object_descs.values().stream().anymatch(l -> l.contains(objectDescription)) in java 1.8
+				if(object_descs.values().toString().contains(objectDescription))
+				{
+					objectDescription = "other " + objectDescription;
+				}
+
 				List<String> object_descs_values = Arrays.asList(objectDescription, auxiliaryVerb, rtype, "0");
 				object_descs.put(param_id, object_descs_values);
 			}
@@ -1094,7 +1124,7 @@ public class AgentMessageParser
 			// Retrieving object descriptions and their corresponding auxiliary verbs
 			List<String> objDesc1 = object_descs.get(paramid1);
 			article1 = addArticleForObjectDescription(objDesc1);
-
+			
 			// When the condition is represented using only one param-id hence only one predicate is in the condition for e.g.  block on a clear location in one predicate retrieved in the object description
 			String param2_string = SoarUtil.getValueOfAttribute(conditionId, "2");
 			if(param2_string == null)
@@ -1137,7 +1167,6 @@ public class AgentMessageParser
 			{	
 				prep = "not " + prep;
 			}
-
 			String name = SoarUtil.getValueOfAttribute(conditionId, "name");
 								
 			// When the condition involves the param-ids/values of two predicates being the same for e.g. the color of A is red/the color of A is the color of B
