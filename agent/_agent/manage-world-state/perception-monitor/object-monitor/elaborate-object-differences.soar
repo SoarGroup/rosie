@@ -1,3 +1,15 @@
+# object-monitor.object-info.differences <diffs>
+#   Contains information about the differences between the perception information 
+#      and the belief state information (changes in pos/volume/etc)
+
+# Elaborate the differences identifier
+sp {top-state*perception-monitor*object-monitor*object-info*elaborate*differences
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.{ << object-info new-object-info >> } <obj-info>)
+-->
+   (<s> ^differences <diffs>)
+}
+
 ###################################################
 #
 # position differences
@@ -63,4 +75,166 @@ sp {top-state*perception-monitor*object-monitor*object-info*differences*elaborat
    (<diffs> ^pos-diff > <thresh>)
 -->
    (<diffs> ^has-moved true)
+}
+
+###################################################
+#
+# stability-timer-satisfied true
+#   created when the stability-check-time is passed
+#
+###################################################
+
+sp {top-state*perception-monitor*object-monitor*new-object-info*stability-timer*satisfied
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.new-object-info <obj-info>
+              ^io.input-link.time.seconds <cur-t>)
+   (<obj-info> ^stability-check-time <= <cur-t>)
+-->
+   (<obj-info> ^stability-timer-satisfied true)
+}
+
+
+##################################################################
+#
+# Monitoring occluded objects
+#   is-occluded << true false >> - based on the last time occlusion was checked
+#   occlusion-time-expired true - if recheck-occlusion-time is passed
+#
+##################################################################
+
+sp {top-state*perception-monitor*object-monitor*object-info*differences*elaborate*is-occluded*false
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info.differences <diffs>)
+   (<diffs> -^is-occluded true)
+-->
+   (<diffs> ^is-occluded false)
+}
+
+sp {top-state*perception-monitor*object-monitor*object-info*differences*elaborate*occlusion-time-expired*true
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info.differences <diffs>
+              ^io.input-link.time.seconds <t>)
+   (<diffs> ^is-occluded true
+            ^recheck-occlusion-time < <t>)
+-->
+   (<diffs> ^occlusion-time-expired true)
+}
+
+###################################################
+#
+# position differences
+#   compare-position <compare> - svs filter
+#   pos-diff <diff> - svs filter result 
+#   has-moved true - true if pos-diff > threshold
+#
+###################################################
+
+sp {top-state*perception-monitor*object-monitor*elaborate*svs-command*compare-position
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info <obj-info>
+              ^svs.command <cmd>)
+   (<obj-info> ^perception-obj.id <perc-id>
+               ^belief-obj.id <bel-id>
+               ^differences <diffs>)
+-->
+   (<cmd> ^extract <compare>)
+   (<compare> ^type distance 
+              ^a <a>
+              ^b <b>
+              ^distance_type centroid)
+   (<a> ^type node
+        ^id <perc-id>)
+   (<b> ^type node
+        ^id <bel-id>)
+   (<diffs> ^compare-position <compare>)
+}
+
+sp {top-state*perception-monitor*object-monitor*object-info*differences*elaborate*pos-diff
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info.differences <diffs>)
+   (<diffs> ^compare-position.result.record.value <val>)
+-->
+   (<diffs> ^pos-diff <val>)
+}
+
+sp {top-state*perception-monitor*object-monitor*object-info*differences*elaborate*has-moved
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info.differences <diffs>
+              ^agent-params.pos-diff-threshold <thresh>)
+   (<diffs> ^pos-diff > <thresh>)
+-->
+   (<diffs> ^has-moved true)
+}
+
+##################################################################
+#
+# Monitoring change in volumes
+#   belief-vol <vol> - filter to extract belief-obj volume
+#   perception-vol <vol> - filter to extract perception-obj volume
+#   vol-diff <diff> - perception-vol/belief-vol
+#   has-grown true - true if vol-diff > vol-high-diff-threshold
+#   has-shrunk true - true if vol-diff < vol-low-diff-threshold
+#   growth-wait true - true if not yet time recheck-growth-at <t> 
+#
+##################################################################
+
+sp {top-state*perception-monitor*object-monitor*elaborate*svs-command*compare-volume
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info <obj-info>
+              ^svs.command <cmd>)
+   (<obj-info> ^perception-obj.id <perc-id>
+               ^belief-obj.id <bel-id>
+               ^differences <diffs>)
+-->
+   (<cmd> ^extract <perc-vol> <bel-vol>)
+   (<perc-vol> ^type volume
+               ^a <pa>
+               ^volume_type scale)
+   (<pa> ^type node
+         ^id <perc-id>)
+   (<bel-vol> ^type volume
+              ^a <ba>
+              ^volume_type scale)
+   (<ba> ^type node
+         ^id <bel-id>)
+   (<diffs> ^belief-vol <bel-vol>
+            ^perception-vol <perc-vol>)
+}
+
+sp {top-state*perception-monitor*object-monitor*object-info*differences*elaborate*vol-diff
+   (state <s> ^superstate nil 
+              ^perception-monitor.object-monitor.object-info.differences <diffs>)
+   (<diffs> ^belief-vol.result.record.value <bel-vol>
+            ^perception-vol.result.record.value <perc-vol>)
+-->
+   # Add a cubic mm to each to avoid divide by 0
+   (<diffs> ^vol-diff (/ (+ <perc-vol> 0.000000001) (+ <bel-vol> 0.000000001)))
+}
+
+sp {top-state*perception-monitor*object-monitor*object-info*differences*elaborate*has-shrunk
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info.differences <diffs>
+              ^agent-params.vol-low-diff-threshold <low>)
+   (<diffs> ^vol-diff < <low>)
+-->
+   (<diffs> ^has-shrunk true)
+}
+
+sp {top-state*perception-monitor*object-monitor*object-info*differences*elaborate*has-grown
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info.differences <diffs>
+              ^agent-params.vol-high-diff-threshold <high>)
+   (<diffs> ^vol-diff > <high>)
+-->
+   (<diffs> ^has-grown true)
+}
+
+sp {top-state*perception-monitor*object-monitor*object-info*differences*elaborate*growth-wait*true
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info.differences <diffs>
+              ^io.input-link.time.seconds <t>)
+   (<diffs> ^has-grown true
+            ^recheck-growth-at > <t>)
+-->
+   (<diffs> ^growth-wait true)
 }
