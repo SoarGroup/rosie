@@ -46,10 +46,64 @@ sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*vis
 
 ##################################################################
 #
+# Monitoring occluded objects
+#   is-occluded << true false >> - based on the last time occlusion was checked
+#   occlusion-timer-expired true - if check-occlusion-time is passed
+#
+##################################################################
+
+sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*is-occluded*false
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info.status <status>)
+   (<status> -^is-occluded true)
+-->
+   (<status> ^is-occluded false)
+}
+
+sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*occlusion-timer-expired*true
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info <obj-info>
+              ^io.input-link.time.seconds <t>)
+   (<obj-info> ^status <status>
+               ^check-occlusion-time <= <t>)
+   (<status> ^is-occluded true)
+-->
+   (<status> ^occlusion-timer-expired true)
+}
+
+###################################################
+#
+# stability-timer-expired true
+#   created when the check-stability-time is passed
+#
+###################################################
+
+sp {top-state*perception-monitor*object-monitor*new-object-info*stability-timer-expired
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.new-object-info <obj-info>
+              ^io.input-link.time.seconds <t>)
+   (<obj-info> ^status <status>
+               ^check-stability-time <= <t>)
+-->
+   (<status> ^stability-timer-expired true)
+}
+
+##################################################################
+#
 # in-view << true false >>
 #   true if the belief object is in the robot's view volume
 #
 #################################################################
+
+# Objects are always in view in the tabletop domain
+sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*in-view*true*tabletop*domain
+   (state <s> ^superstate nil
+              ^agent-params.domain tabletop
+              ^perception-monitor.object-monitor.object-info <obj-info>)
+   (<obj-info> ^status <status>)
+-->
+   (<status> ^in-view true)
+}
 
 sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*in-view*true
    (state <s> ^superstate nil

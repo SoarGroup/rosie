@@ -25,7 +25,6 @@ sp {top-state*perception-monitor*object-monitor*elaborate*svs-command*compare-po
               ^svs.command <cmd>)
    (<obj-info> ^perception-obj.id <perc-id>
                ^belief-obj.id <bel-id>
-              -^wm-obj.predicates.arm-status grabbed
                ^differences <diffs>)
 -->
    (<cmd> ^extract <compare>)
@@ -40,11 +39,14 @@ sp {top-state*perception-monitor*object-monitor*elaborate*svs-command*compare-po
    (<diffs> ^compare-position <compare>)
 }
 
-sp {top-state*perception-monitor*object-monitor*elaborate*svs-command*compare-position*grabbed
+# Note: with magicbot, we compare the object's position to the robot (we don't perceive it when holding it)
+sp {top-state*perception-monitor*object-monitor*elaborate*svs-command*compare-position*grabbed*magicbot
    (state <s> ^superstate nil
+              ^agent-params.domain magicbot
               ^perception-monitor.object-monitor.object-info <obj-info>
               ^svs.command <cmd>)
-   (<obj-info> ^belief-obj.id <bel-id>
+   (<obj-info> -^perception-obj
+               ^belief-obj.id <bel-id>
                ^wm-obj.predicates.arm-status grabbed
                ^differences <diffs>)
 -->
@@ -55,95 +57,6 @@ sp {top-state*perception-monitor*object-monitor*elaborate*svs-command*compare-po
               ^distance_type centroid)
    (<a> ^type node
         ^id robot)
-   (<b> ^type node
-        ^id <bel-id>)
-   (<diffs> ^compare-position <compare>)
-}
-
-sp {top-state*perception-monitor*object-monitor*object-info*differences*elaborate*pos-diff
-   (state <s> ^superstate nil
-              ^perception-monitor.object-monitor.object-info.differences <diffs>)
-   (<diffs> ^compare-position.result.record.value <val>)
--->
-   (<diffs> ^pos-diff <val>)
-}
-
-sp {top-state*perception-monitor*object-monitor*object-info*differences*elaborate*has-moved
-   (state <s> ^superstate nil
-              ^perception-monitor.object-monitor.object-info.differences <diffs>
-              ^agent-params.pos-diff-threshold <thresh>)
-   (<diffs> ^pos-diff > <thresh>)
--->
-   (<diffs> ^has-moved true)
-}
-
-###################################################
-#
-# stability-timer-satisfied true
-#   created when the stability-check-time is passed
-#
-###################################################
-
-sp {top-state*perception-monitor*object-monitor*new-object-info*stability-timer*satisfied
-   (state <s> ^superstate nil
-              ^perception-monitor.object-monitor.new-object-info <obj-info>
-              ^io.input-link.time.seconds <cur-t>)
-   (<obj-info> ^stability-check-time <= <cur-t>)
--->
-   (<obj-info> ^stability-timer-satisfied true)
-}
-
-
-##################################################################
-#
-# Monitoring occluded objects
-#   is-occluded << true false >> - based on the last time occlusion was checked
-#   occlusion-time-expired true - if recheck-occlusion-time is passed
-#
-##################################################################
-
-sp {top-state*perception-monitor*object-monitor*object-info*differences*elaborate*is-occluded*false
-   (state <s> ^superstate nil
-              ^perception-monitor.object-monitor.object-info.differences <diffs>)
-   (<diffs> -^is-occluded true)
--->
-   (<diffs> ^is-occluded false)
-}
-
-sp {top-state*perception-monitor*object-monitor*object-info*differences*elaborate*occlusion-time-expired*true
-   (state <s> ^superstate nil
-              ^perception-monitor.object-monitor.object-info.differences <diffs>
-              ^io.input-link.time.seconds <t>)
-   (<diffs> ^is-occluded true
-            ^recheck-occlusion-time < <t>)
--->
-   (<diffs> ^occlusion-time-expired true)
-}
-
-###################################################
-#
-# position differences
-#   compare-position <compare> - svs filter
-#   pos-diff <diff> - svs filter result 
-#   has-moved true - true if pos-diff > threshold
-#
-###################################################
-
-sp {top-state*perception-monitor*object-monitor*elaborate*svs-command*compare-position
-   (state <s> ^superstate nil
-              ^perception-monitor.object-monitor.object-info <obj-info>
-              ^svs.command <cmd>)
-   (<obj-info> ^perception-obj.id <perc-id>
-               ^belief-obj.id <bel-id>
-               ^differences <diffs>)
--->
-   (<cmd> ^extract <compare>)
-   (<compare> ^type distance 
-              ^a <a>
-              ^b <b>
-              ^distance_type centroid)
-   (<a> ^type node
-        ^id <perc-id>)
    (<b> ^type node
         ^id <bel-id>)
    (<diffs> ^compare-position <compare>)
@@ -238,3 +151,5 @@ sp {top-state*perception-monitor*object-monitor*object-info*differences*elaborat
 -->
    (<diffs> ^growth-wait true)
 }
+
+
