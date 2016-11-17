@@ -1,0 +1,96 @@
+#########################################################
+#
+# Change: new-perception-object
+#   Occurs when a new object comes on the svs link
+# Params: object-info - Information about the new object
+#
+#########################################################
+
+sp {top-state*perception-monitor*elaborate*change-info*new-perception-object
+   (state <s> ^superstate nil
+              ^perception-monitor.change-info <info>)
+-->
+   (<info> ^change <new-obj>)
+   (<new-obj> ^type new-perception-object
+              ^category object
+              ^op-name attend-to-new-perception-object)
+}
+
+sp {top-state*perception-monitor*object-monitor*elaborate*change*new-perception-object
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^changes <changes>
+               ^object-monitor.new-object-info <obj-info>)
+   (<obj-info> ^perception-obj <perc-obj>
+              -^confirmed <bool>)
+-->
+   (<changes> ^change <change>)
+   (<change> ^type new-perception-object
+             ^object-info <obj-info>)
+}
+
+###########################################################################
+#
+# Change: stability-timer-expired
+#   When the stability timer expires on a new perception object, 
+#       then we need to check the new object out
+#   If the object is stable (hasn't drastically changed in size or position)
+#       we know it's actually there (as opposed to noise)
+# Params:
+#    object-info # object-monitor.new-object-info
+#
+##########################################################################
+
+sp {top-state*perception-monitor*elaborate*change-info*stability-timer-expired
+   (state <s> ^superstate nil
+              ^perception-monitor.change-info <info>)
+-->
+   (<info> ^change <stability-timer-expired>)
+   (<stability-timer-expired> ^type stability-timer-expired
+                              ^category object
+                              ^op-name check-object-stability)
+}
+
+sp {top-state*perception-monitor*object-monitor*elaborate*change*evaluate-new-object
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^changes <changes>
+               ^object-monitor.new-object-info <obj-info>)
+   (<obj-info> ^status.stability-timer-expired true)
+-->
+   (<changes> ^change <change>)
+   (<change> ^type stability-timer-expired
+             ^object-info <obj-info>)
+}
+
+###########################################################################
+#
+# Change: new-object
+#   Adds a new object to the perception-monitor and world
+#   May be done from internal sources (epmem/smem/hypothetical)
+#       Or once a new perceptual object is confirmed
+#
+##########################################################################
+
+sp {top-state*perception-monitor*elaborate*change-info*new-object
+   (state <s> ^superstate nil
+              ^perception-monitor.change-info <info>)
+-->
+   (<info> ^change <new-obj>)
+   (<new-obj> ^type new-object
+              ^category object
+              ^op-name attend-to-new-object)
+}
+
+sp {top-state*perception-monitor*object-monitor*elaborate*change*new-object
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^changes <changes>
+               ^object-monitor.new-object-info <obj-info>)
+   (<obj-info> ^confirmed true
+               ^perception-obj <p-obj>)
+-->
+   (<changes> ^change <change>)
+   (<change> ^type new-object
+             ^perception-obj <p-obj>)
+}

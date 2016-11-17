@@ -2,3 +2,78 @@ The perception-monitor is a top-state structure that monitors perceptual informa
    both the input-link and svs,
 It will detect discrepancies between the top-state world and perception
    and propose, investigate, and take actions to resolve those discrepancies
+
+perception-monitor
+    changes
+        change-info
+            change
+                type <change-type>
+        change
+            type <change-type>
+            info <info> # Links to change-info.change <info> that matches on the type
+    robot-view-filter <f> # Link to svs filter for extracting which objects intersect the view volume [magicbot]
+    object-monitor
+        object-info
+            # only for new objects
+            status << uncertain >>
+            check-stability-time <t>
+            number-checks <n>
+            
+            # All established objects
+            object-handle <h> # handle for the object
+            input-link-obj <obj> # from input-link.objects.object that matches handle
+            belief-id  # created by soar |bel-h|
+            belief-obj # from svs.spatial-scene.child with object-source belief
+            perception-id # from svs
+            perception-obj # from svs.spatial-scene-child with object-source perception
+                           # or copied from other object-info.perception-obj with internal-link <obj-handle>
+                           #
+            internal-link <obj-handle> # Whether the object is linked to another one (2 objects for 1 perception obj)
+                # auto removed if visible again, and reset occlusion info
+                # auto removed if the linked-to object becomes stale
+                # make sure you periodically check for occlusion (if not occluded, remove internal-link)
+                
+            check-occlusion-time <t> # The time to recheck whether the object is occluded
+            check-growth-time <t>    # The time to recheck whether the object has grown
+
+            properties
+                property-info # for each property under input-link-obj
+                    property-handle <prop>
+                    type << state linguistic visual >>
+                    predicate-handle <pred> # for visual, must be highest confidence and no others more than 80%
+                    input-link-prop # link to input-link-obj.property
+                    hypothesis
+                        predicate-handle <pred>
+                        confidence <#> # greater than .1
+                        best true # if highest confidence
+                        lower-threshold # 80% of confidence for best
+            
+            status
+                visible << true false >>
+                in-view << true false >>
+                is-occluded << true false >>
+                
+                stability-timer-expired true # if input-link.time.seconds >= check-stability-time
+                occlusion-timer-expired true # if input-link.time.seconds >= check-occlusion-time
+                growth-timer-expired true    # if input-link.time.seconds >= check-growth-time
+
+            differences
+                compare-position  # link to the svs filter extracting distance between belief + perception objs in svs
+                pos-diff <meters> # Difference in meters between centroids copied from compare-position filter
+                has-moved true    # If pos-diff > agent-params.pos-diff-threshold
+
+                belief-vol        # volume svs filter for the belief object
+                perception-vol    # volume svs filter for the perception object
+                vol-diff <ratio>  # perception-vol / belief-vol
+                has-grown true    # true if vol-diff > agent-params.vol-high-diff-threshold
+                has-shrunk true   # true if vol-diff < agent-params.vol-low-diff-threshold
+    predicate-monitor
+        predicate-info
+            predicate-handle <pred-handle>
+            smem-info <pred-lti>
+            object-test
+                object <obj>
+                match <obj2>
+            
+
+                
