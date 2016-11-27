@@ -7,8 +7,6 @@ sp {convert-parsed-format*elaborate*sentence
               ^superstate.operator <sop>)
    (<sop> ^structure <t>)
 -->
-#	(write (crlf) (cmd print -d 5 <t>))
-#(interrupt)
    (<s> ^sentence <t>)
 }
 
@@ -115,6 +113,18 @@ sp {convert-parsed-format*elaborate*clause*prefer1
 (<s> ^preference-rule true)
 }
 
+sp {convert-parsed-format*elaborate*clause*avoid1
+   (state <s> ^name convert-parsed-format
+              ^clause <c>)
+   (<c> ^action.handle avoid ^subclause1 <sb> -^subclause2)
+   (<sb> ^action <act> ^arg1 <a1> ^arg2 <a2>)
+-->
+#(interrupt)
+(<s> ^pref-action <sb> ^clause <a2> ^parameter <a1>)
+(<sb> ^avoid single)
+(<s> ^preference-rule true)
+}
+
 sp {convert-parsed-format*elaborate*clause*prefer1onearg
    (state <s> ^name convert-parsed-format
               ^clause <c>)
@@ -126,6 +136,20 @@ sp {convert-parsed-format*elaborate*clause*prefer1onearg
 (<sb> ^prefer single)
 (<s> ^preference-rule true)
 }
+
+sp {convert-parsed-format*elaborate*clause*avoid1onearg
+   (state <s> ^name convert-parsed-format
+              ^clause <c>)
+   (<c> ^action.handle avoid ^subclause1 <sb> -^subclause2)
+   (<sb> ^action <act> ^arg1 <a1> -^arg2)
+-->
+#(interrupt)
+(<s> ^pref-action <sb> ^clause <a1> ^parameter <a1>)
+(<sb> ^avoid single)
+(<s> ^preference-rule true)
+}
+
+#no need for to arguments for avoid
 
 sp {convert-parsed-format*elaborate*clause*consider1
    (state <s> ^name convert-parsed-format
@@ -704,6 +728,8 @@ sp {create-object*propose*unary-predicate
               ^parameter <c>)
    (<c> ^predicates <p>)
    (<p> ^{<att> <> category <> quantified <> property-modifier <> dialog-object <> value <> handle <> type <> visible <> visibility <> multiple <> number} {<val> <> linear})
+  -{(<p> ^<att> {<val> << moved >>})
+    (<s> ^moved <mov>)}
 -->
    (<s> ^operator <o> + =)
    (<o> ^name unary-predicate
@@ -761,6 +787,7 @@ sp {create-object*elaborate*condition
    (<s> ^last-condition <cond> -)
    (<s> ^last-condition <co>)
 }
+
 sp {create-object*elaborate*condition*negative
    (state <s> ^name create-object
               ^operator <o>
@@ -818,6 +845,32 @@ sp {create-object*elaborate*condition*relation*negative
    (<s> ^last-condition <co>)
 }
 
+
+sp {create-object*elaborate*condition*learned-predicate*moved
+   (state <s> ^name create-object
+              ^operator <o>
+             # ^superstate <ss>
+              ^last-condition <cond>
+              ^parameter <c>)
+ #  (<cond> ^rtype <rtype>)
+   (<o> ^name unary-predicate
+        ^value moved
+        ^attribute property)
+   -{(<s> ^property-modifier <m>)
+	 (<m> ^handle negation ^modifying.handle <val>)}
+-->
+   (<s> ^condition <co> ^moved <co>)
+  # (<ss> ^moved <co>)
+   (<co> ^name move1 ^args <a> ^parameter <para> ^type concept ^attribute action ^rtype single)
+  # (<a> ^1 <p> ^2 <p2>) #need args?
+   #(<para> ^1 <para1>)
+   #(<para1> ^param-id <id> ^type <rtype>) 
+   #(<co> ^name <val> ^parameter <p> ^type concept ^attribute predicate ^args <a> ^rtype single)#^rtype <rtype>
+   #(<a> ^1 <cond>)
+   (<s> ^last-condition <cond> -)
+   (<s> ^last-condition <co>)
+}
+
 sp {create-object*elaborate*condition*learned-predicate
    (state <s> ^name create-object
               ^operator <o>
@@ -825,6 +878,7 @@ sp {create-object*elaborate*condition*learned-predicate
               ^parameter <c>)
  #  (<cond> ^rtype <rtype>)
    (<o> ^name unary-predicate
+        -^value moved
         ^attribute property
         ^value <val>)
    -{(<s> ^property-modifier <m>)
@@ -845,6 +899,7 @@ sp {create-object*elaborate*condition*learned-predicate*negative
  #  (<cond> ^rtype <rtype>)
    (<o> ^name unary-predicate
         ^attribute property
+       -^value moved
         ^value <val>)
    (<s> ^property-modifier <m>)
    (<m> ^handle negation ^modifying.handle <val>)
@@ -971,6 +1026,7 @@ sp {create-object*apply*complete*single
    (state <s> ^name create-object
               ^operator.name complete
               ^complete true
+              -^moved
               ^last-condition <cond>
               ^superstate.operator.parameter <c>)
    (<c> -^predicates.multiple true)
@@ -980,7 +1036,23 @@ sp {create-object*apply*complete*single
    (<cond> ^rtype single)
 }
 
-   
+sp {create-object*apply*complete*single*moved
+   (state <s> ^name create-object
+              ^operator.name complete
+              ^complete true
+              ^moved <mov>
+              ^last-condition <cond>
+              ^superstate <ss>)
+   (<ss> ^operator.parameter <c>)
+   (<c> -^predicates.multiple true)
+   -{(<c> ^predicates.number <> singular ^relation)}
+-->
+   (<ss> ^moved <mov>)
+   (<c> ^formatted <cond>)
+   (<cond> ^rtype single)
+}
+
+
 #problems
 #indefinite?
 #easy for negation and one usage
@@ -1035,6 +1107,33 @@ sp {convert-parsed-format*propose*handle-pref-action
         ^arg2 <a2>)
 }
 
+sp {convert-parsed-format*propose*handle-pref-action*avoid
+   (state <s> ^name convert-parsed-format
+              ^pref-action <c>)
+   (<c> ^action <a> ^arg1 <a1> ^arg2 <a2> ^avoid single)
+   (<a> -^formatted)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name handle-pref-action
+        ^action <a>
+        ^avoid single
+        ^arg1 <a1>
+        ^arg2 <a2>)
+}
+
+sp {convert-parsed-format*propose*handle-pref-action*avoid*arg1
+   (state <s> ^name convert-parsed-format
+              ^pref-action <c>)
+   (<c> ^action <a> ^arg1 <a1> -^arg2 <a2> ^avoid single)
+   (<a> -^formatted)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name handle-pref-action
+        ^action <a>
+        ^avoid single
+        ^arg1 <a1>)
+}
+
 
 sp {convert-parsed-format*propose*handle-pref-action*arg1
    (state <s> ^name convert-parsed-format
@@ -1050,6 +1149,7 @@ sp {convert-parsed-format*propose*handle-pref-action*arg1
 }
 sp {convert-parsed-format*apply*handle-pref-action
    (state <s> ^name convert-parsed-format
+              -^modifier previously
               ^operator <o>)
    (<o> ^name handle-pref-action ^action <c> ^arg1 <a1> ^arg2 <a2> ^prefer single)
    (<c> ^handle <name>)
@@ -1070,9 +1170,86 @@ sp {convert-parsed-format*apply*handle-pref-action
    
 }
 
+sp {convert-parsed-format*apply*handle-pref-action*avoid
+   (state <s> ^name convert-parsed-format
+              -^modifier previously
+              ^operator <o>)
+   (<o> ^name handle-pref-action ^action <c> ^arg1 <a1> ^arg2 <a2> ^avoid single)
+   (<c> ^handle <name>)
+   (<a1> ^formatted <p> ^parameter-index <id>)
+   (<a2> ^handle <prep> ^item-type predicate ^2 <a22>)
+   (<a22> ^formatted <p2> ^parameter-index <id2>)
+   (<p> ^rtype <rtype>)
+   (<p2> ^rtype <rtype2>)
+-->
+   (<c> ^formatted true)
+   (<s> ^avoid <n12> ^nlp <n>)
+   (<n12> ^1 <n>)
+   (<n> ^name <name> ^args <a> ^parameter <para> ^type concept ^attribute action ^rtype <rtype> ^verb <prep>)
+  # (<a> ^1 <p> ^2 <p2>) #need args?
+   (<para> ^1 <para1> ^2 <para2>)
+   (<para1> ^param-id <id> ^type <rtype>)
+   (<para2> ^param-id <id2> ^type <rtype2>)
+   
+}
+
+sp {convert-parsed-format*apply*handle-pref-action*arg1*previously
+   (state <s> ^name convert-parsed-format
+              ^modifier previously
+              ^operator <o>)
+   (<o> ^name handle-pref-action ^action <c> ^arg1 <a1> -^arg2 <a2> ^prefer single)
+   (<c> ^handle <name>)
+   (<a1> ^formatted <p> ^parameter-index <id>)
+   (<p> ^rtype <rtype>)
+-->
+   (<c> ^formatted true)
+   (<s> ^prefer <n12>)# ^nlp <n>)
+   (<n12> ^1 <n>)
+   (<n> ^name <name> ^args <a> ^parameter <para> ^type concept ^attribute action ^rtype <rtype>)# ^verb <prep>)
+  # (<a> ^1 <p> ^2 <p2>) #need args?
+   (<para> ^1 <para1>)
+   (<para1> ^param-id <id> ^type <rtype>) 
+}
+
+sp {convert-parsed-format*apply*handle-pref-action*avoid*arg1*previously
+   (state <s> ^name convert-parsed-format
+              ^modifier previously
+              ^operator <o>)
+   (<o> ^name handle-pref-action ^action <c> ^arg1 <a1> -^arg2 <a2> ^avoid single)
+   (<c> ^handle <name>)
+   (<a1> ^formatted <p> ^parameter-index <id>)
+   (<p> ^rtype <rtype>)
+-->
+   (<c> ^formatted true)
+   (<s> ^avoid <n12>)# ^nlp <n>)
+   (<n12> ^1 <n>)
+   (<n> ^name <name> ^args <a> ^parameter <para> ^type concept ^attribute action ^rtype <rtype>)# ^verb <prep>)
+  # (<a> ^1 <p> ^2 <p2>) #need args?
+   (<para> ^1 <para1>)
+   (<para1> ^param-id <id> ^type <rtype>) 
+}
+
+sp {convert-parsed-format*apply*handle-pref-action*avoid*arg1
+   (state <s> ^name convert-parsed-format
+             -^modifier previously
+              ^operator <o>)
+   (<o> ^name handle-pref-action ^action <c> ^arg1 <a1> -^arg2 <a2> ^avoid single)
+   (<c> ^handle <name>)
+   (<a1> ^formatted <p> ^parameter-index <id>)
+   (<p> ^rtype <rtype>)
+-->
+   (<c> ^formatted true)
+   (<s> ^avoid <n12> ^nlp <n>)
+   (<n12> ^1 <n>)
+   (<n> ^name <name> ^args <a> ^parameter <para> ^type concept ^attribute action ^rtype <rtype>)# ^verb <prep>)
+  # (<a> ^1 <p> ^2 <p2>) #need args?
+   (<para> ^1 <para1>)
+   (<para1> ^param-id <id> ^type <rtype>) 
+}
 
 sp {convert-parsed-format*apply*handle-pref-action*arg1
    (state <s> ^name convert-parsed-format
+             -^modifier previously
               ^operator <o>)
    (<o> ^name handle-pref-action ^action <c> ^arg1 <a1> -^arg2 <a2> ^prefer single)
    (<c> ^handle <name>)
@@ -2132,6 +2309,7 @@ sp {convert-parsed-format*apply*handle-clause*concept*arg3*between
    (<para2> ^param-id <id2> ^type <rtype2>)
    (<para3> ^param-id <id3> ^type <rtype3>)
 }
+
 sp {convert-parsed-format*apply*handle-clause*concept*arg3*between*new-format
    (state <s> ^name convert-parsed-format
              -^superstate.world.predicates.predicate.handle <name>
@@ -2244,6 +2422,7 @@ sp {convert-parsed-format*apply*handle-clause*indef2*arg3
    (<para1> ^param-id <id> ^type <rtype>)
    (<para2> ^param-id <id2> ^type <rtype2>) 
 }
+
 ##does this even work??
 ##no not yet
 #sp {convert-parsed-format*apply*handle-clause*indef3*arg3
@@ -2652,6 +2831,7 @@ sp {convert-parsed-format*apply*complete*superstate*copy
               ^superstate <ss>
               ^nlp-set <nps>
              -^prefer
+             -^avoid
              -^consider
               ^complete-flag true
               ^top-state.dialog-context.learn-link.handle <name>
@@ -2686,12 +2866,76 @@ sp {convert-parsed-format*apply*complete*superstate*copy*prefererence
   #      ^aname <aname>)
 }
 
+sp {convert-parsed-format*apply*complete*superstate*copy*prefererence*avoid
+#:interrupt
+   (state <s> ^name convert-parsed-format
+              ^superstate <ss>
+              ^nlp-set <nps>
+              ^avoid <pref>
+             -^modifier <m>
+              ^complete-flag true
+              ^top-state.dialog-context.learn-link.handle <name>
+              ^operator.name complete)
+ #  (<nps> ^aname <aname>)
+   -{(<s> ^nlp <nlp>)
+     (<nps> -^nlp <nlp>)}
+(<ss> ^<type> <a> ^gtype <type>)
+-->
+   (<a> ^nlp-set <nps> ^aname <name> ^avoid <pref>)
+   (<nps> ^aname <name>)
+  #      ^aname <aname>)
+}
+
+
+sp {convert-parsed-format*apply*complete*superstate*copy*prefererence*avoid*modifier*moved
+#:interrupt
+   (state <s> ^name convert-parsed-format
+              ^superstate <ss>
+              ^nlp-set <nps>
+              ^avoid <pref>
+              ^moved <mov>
+              ^modifier <m>
+              ^complete-flag true
+              ^top-state.dialog-context.learn-link.handle <name>
+              ^operator.name complete)
+ #  (<nps> ^aname <aname>)
+   -{(<s> ^nlp <nlp>)
+     (<nps> -^nlp <nlp>)}
+(<ss> ^<type> <a> ^gtype <type>)
+-->
+   (<a> ^nlp-set <nps> ^aname <name> ^avoid <pref> ^modifier <m> ^moved <mov>)
+   (<nps> ^aname <name>)
+  #      ^aname <aname>)
+}
+
+sp {convert-parsed-format*apply*complete*superstate*copy*prefererence*modifier*moved
+#:interrupt
+   (state <s> ^name convert-parsed-format
+              ^superstate <ss>
+              ^nlp-set <nps>
+              ^prefer <pref>
+              ^moved <mov>
+              ^modifier <m>
+              ^complete-flag true
+              ^top-state.dialog-context.learn-link.handle <name>
+              ^operator.name complete)
+ #  (<nps> ^aname <aname>)
+   -{(<s> ^nlp <nlp>)
+     (<nps> -^nlp <nlp>)}
+(<ss> ^<type> <a> ^gtype <type>)
+-->
+   (<a> ^nlp-set <nps> ^aname <name> ^prefer <pref> ^modifier <m> ^moved <mov>)
+   (<nps> ^aname <name>)
+  #      ^aname <aname>)
+}
+
 sp {convert-parsed-format*apply*complete*superstate*copy*prefererence*modifier
 #:interrupt
    (state <s> ^name convert-parsed-format
               ^superstate <ss>
               ^nlp-set <nps>
               ^prefer <pref>
+             -^moved
               ^modifier <m>
               ^complete-flag true
               ^top-state.dialog-context.learn-link.handle <name>
@@ -2702,6 +2946,27 @@ sp {convert-parsed-format*apply*complete*superstate*copy*prefererence*modifier
 (<ss> ^<type> <a> ^gtype <type>)
 -->
    (<a> ^nlp-set <nps> ^aname <name> ^prefer <pref> ^modifier <m>)
+   (<nps> ^aname <name>)
+  #      ^aname <aname>)
+}
+
+sp {convert-parsed-format*apply*complete*superstate*copy*prefererence*avoid*modifier
+#:interrupt
+   (state <s> ^name convert-parsed-format
+              ^superstate <ss>
+              ^nlp-set <nps>
+              ^avoid <pref>
+             -^moved
+              ^modifier <m>
+              ^complete-flag true
+              ^top-state.dialog-context.learn-link.handle <name>
+              ^operator.name complete)
+ #  (<nps> ^aname <aname>)
+   -{(<s> ^nlp <nlp>)
+     (<nps> -^nlp <nlp>)}
+(<ss> ^<type> <a> ^gtype <type>)
+-->
+   (<a> ^nlp-set <nps> ^aname <name> ^avoid <pref> ^modifier <m>)
    (<nps> ^aname <name>)
   #      ^aname <aname>)
 }
