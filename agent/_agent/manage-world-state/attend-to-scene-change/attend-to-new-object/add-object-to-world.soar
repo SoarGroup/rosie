@@ -1,0 +1,120 @@
+######## Add the new-object-rep to the world
+sp {attend-to-new-object*apply*add-object-to-world*add*object*to*world
+   (state <s> ^name attend-to-new-object
+              ^operator <o>
+              ^top-state.world.objects <objs>)
+   (<o> ^name add-object-to-world
+        ^new-object-rep <obj>)
+-->
+   (<objs> ^object <obj>)
+}
+
+# Add in predicate for visible object
+sp {attend-to-new-object*apply*add-object-to-world*visible*add*in*predicate
+   (state <s> ^name attend-to-new-object
+              ^operator <o>
+              ^source-type perception-obj
+              ^top-state.world <world>)
+   (<o> ^name add-object-to-world
+        ^new-object-rep <obj>)
+   (<world> ^robot.current-location <cur-loc>
+            ^predicates.predicate <in-pred>)
+   (<in-pred> ^handle in1)
+   -{(<in-pred> ^instance <curi>)
+     (<curi> ^1 <wm-obj> ^2 <cur-loc>)}
+-->
+    (<in-pred> ^instance <i>)
+    (<i> ^1 <wm-obj> ^2 <cur-loc>)
+}
+
+######## Remove the change from the perception-monitor
+sp {attend-to-new-object*apply*add-object-to-world*remove*attend*change
+   (state <s> ^name attend-to-new-object
+              ^operator.name add-object-to-world
+              ^top-state.perception-monitor.changes <chgs>
+              ^superstate.scene-change <chg>)
+   (<chgs> ^change <chg>)
+-->
+   (<chgs> ^change <chg> -)
+}
+
+######## Create an object-info on the object-monitor
+sp {attend-to-new-object*apply*add-object-to-world*create*object-info
+   (state <s> ^name attend-to-new-object
+              ^operator <o>
+              ^object-monitor <obj-mon>)
+   (<o> ^name add-object-to-world
+        ^new-object-rep <obj>)
+   (<obj> ^handle <h>)
+-->
+   (<obj-mon> ^object-info <obj-info>)
+   (<obj-info> ^object-handle <h>
+               ^wm-obj <obj>
+               ^belief-id (concat |bel-| <h>)
+               ^perception-id <h>)
+}
+
+###### if debug-perception is on, print info
+sp {attend-to-new-object*apply*add-object-to-world*debug-perception*print
+   (state <s> ^name attend-to-new-object
+              ^operator <o>
+              ^top-state.agent-params.debug-mode on
+              ^top-state.agent-params.debug-perception true)
+   (<o> ^name add-object-to-world
+        ^new-object-rep <obj>)
+   (<obj> ^handle <h>)
+-->
+   (write |Adding object | <h> (crlf))
+   (write (cmd print <obj> -d 2) (crlf))
+}
+
+###### create a belief object in SVS if the information is available
+
+# Case: for epmem-obj if it matches a smem object with an existing object-info that has no belief, 
+#   Create the belief object
+sp {attend-to-new-object*apply*add-object-to-world*create*belief*object*from*epmem-obj
+   (state <s> ^name attend-to-new-object
+              ^operator <o>
+              ^source-type epmem-obj
+              ^source-obj <src>
+              ^top-state.svs.command <svs-cmd>)
+   (<o> ^name add-object-to-world
+        ^new-object-rep.handle <h>)
+   (<src> ^position <pos>
+          ^rotation <rot>
+          ^scale <scl>)
+   (<pos> ^x <px> ^y <py> ^z <pz>)
+   (<rot> ^x <rx> ^y <ry> ^z <rz>)
+   (<scl> ^x <sx> ^y <sy> ^z <sz>)
+-->
+   (<svs-cmd> ^add_node <add>)
+   (<add> ^id (concat |bel-| <handle>)
+          ^parent world
+          ^geometry box
+          ^position <npos>
+          ^rotation <nrot>
+          ^scale <nscl>
+          ^tags <tags>)
+   (<npos> ^x <px> ^y <py> ^z <pz>)
+   (<nrot> ^x <rx> ^y <ry> ^z <rz>)
+   (<nscl> ^x <sx> ^y <sy> ^z <sz>)
+   (<tags> ^object-source belief)
+}
+   
+# Case: if from perception, copy the info from the source object
+sp {attend-to-new-object*apply*add-object-to-world*create*belief*object*from*perception-obj
+   (state <s> ^name attend-to-new-object
+              ^operator <o>
+              ^source-type perception-obj
+              ^source-obj.id <src-id>
+              ^top-state.svs.command <svs-cmd>)
+   (<o> ^name add-object-to-world
+        ^new-object-rep.handle <h>)
+-->
+   (<svs-cmd> ^copy_node <copy>)
+   (<copy> ^id (concat |bel-| <bel-id>)
+           ^source <src-id>
+           ^adjust false)     
+}
+
+
