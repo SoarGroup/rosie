@@ -215,3 +215,130 @@ sp {top-state*perception-monitor*object-monitor*elaborate*change*delete-object
    (<change> ^type delete-object
              ^object-info <obj-info>)
 }
+
+###########################################################################
+#
+# Change: moved-object
+#   If an object's position significantly changes, investigate
+#
+##########################################################################
+
+sp {top-state*perception-monitor*elaborate*change-info*moved-object
+   (state <s> ^superstate nil
+              ^perception-monitor.change-info <info>)
+-->
+   (<info> ^change <moved-object>)
+   (<moved-object> ^type moved-object
+                   ^category object
+                   ^op-name attend-to-moved-object)
+}
+
+sp {top-state*perception-monitor*object-monitor*elaborate*change*moved-object
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^changes <changes>
+               ^object-monitor.object-info <obj-info>)
+   (<obj-info> ^differences <diffs>)
+   (<diffs> ^has-moved true)
+-->
+   (<changes> ^change <change>)
+   (<change> ^type moved-object
+             ^object-info <obj-info>)
+}
+
+#########################################################
+#
+# Change: update-pose
+#   Occurs when a ^update-pose true flag appears on object-info
+#
+#########################################################
+
+sp {top-state*perception-monitor*elaborate*change-info*update-pose
+   (state <s> ^superstate nil
+              ^perception-monitor.change-info <info>)
+-->
+   (<info> ^change <update-obj>)
+   (<update-obj> ^type update-pose
+                 ^category object
+                 ^op-name update-object-pose)
+}
+
+sp {top-state*perception-monitor*object-monitor*elaborate*change*update-object
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^changes <changes>
+               ^object-monitor.object-info <obj-info>)
+   (<obj-info> ^update-pose true)
+-->
+   (<changes> ^change <change>)
+   (<change> ^type update-pose
+             ^object-info <obj-info>)
+}
+
+#########################################################
+#
+# Change: missing-object
+#   Occurs when a belief object is no longer visible 
+#     and should be in view
+#
+#########################################################
+
+sp {top-state*perception-monitor*elaborate*change-info*attend-to-missing-object
+   (state <s> ^superstate nil
+              ^perception-monitor.change-info <info>)
+-->
+   (<info> ^change <missing-obj>)
+   (<missing-obj> ^type missing-object 
+                ^category object
+                ^op-name attend-to-missing-object)
+}
+
+sp {top-state*perception-monitor*object-monitor*elaborate*change*missing-object
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^changes <changes>
+               ^object-monitor.object-info <obj-info>)
+   (<obj-info> ^status <status>)
+   (<status> ^visible false
+            ^in-view true)
+-->
+   (<changes> ^change <change>)
+   (<change> ^type missing-object
+             ^object-info <obj-info>)
+}
+
+############################################################################################
+#
+# Change: new-object-predicate
+#    When a unary predicate for a given category is on the perception object
+#      and not on the belief object
+#
+#############################################################################################
+
+sp {top-state*perception-monitor*elaborate*change-info*new-object-predicate
+   (state <s> ^superstate nil
+              ^perception-monitor.change-info <info>)
+-->
+   (<info> ^change <new-obj-pred>)
+   (<new-obj-pred> ^type new-object-predicate
+                   ^category object
+                   ^op-name attend-to-new-object-predicate)
+}
+
+sp {top-state*perception-monitor*object-monitor*elaborate*changes*new-object-predicate
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^changes <changes>
+               ^object-monitor.object-info <obj-info>)
+   (<obj-info> ^properties.property-info <prop-info>
+               ^wm-obj.predicates <wm-preds>)
+   (<wm-preds> -^<prop> <pred>)
+   (<prop-info> ^property-handle <prop>
+                ^predicate-handle <pred>)
+-->
+   (<changes> ^change <change>)
+   (<change> ^type new-object-predicate
+             ^object-info <obj-info>
+             ^property-handle <prop>
+             ^predicate-handle <pred>)
+}
