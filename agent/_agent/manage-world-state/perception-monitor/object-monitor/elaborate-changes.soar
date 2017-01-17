@@ -223,14 +223,26 @@ sp {top-state*perception-monitor*object-monitor*elaborate*change*delete-object
 #
 ##########################################################################
 
-sp {top-state*perception-monitor*elaborate*change-info*moved-object
+sp {top-state*perception-monitor*elaborate*change-info*moved-object*tabletop
    (state <s> ^superstate nil
+              ^agent-params.domain tabletop
               ^perception-monitor.change-info <info>)
 -->
    (<info> ^change <moved-object>)
    (<moved-object> ^type moved-object
                    ^category object
-                   ^op-name attend-to-moved-object)
+                   ^op-name check-for-occlusion)
+}
+
+sp {top-state*perception-monitor*elaborate*change-info*moved-object*magicbot
+   (state <s> ^superstate nil
+              ^agent-params.domain magicbot
+              ^perception-monitor.change-info <info>)
+-->
+   (<info> ^change <moved-object>)
+   (<moved-object> ^type moved-object
+                   ^category object
+                   ^op-name update-pose)
 }
 
 sp {top-state*perception-monitor*object-monitor*elaborate*change*moved-object
@@ -238,8 +250,8 @@ sp {top-state*perception-monitor*object-monitor*elaborate*change*moved-object
               ^perception-monitor <perc-mon>)
    (<perc-mon> ^changes <changes>
                ^object-monitor.object-info <obj-info>)
-   (<obj-info> ^differences <diffs>)
-   (<diffs> ^has-moved true)
+   (<obj-info> ^differences.has-moved true
+               ^status.is-occluded false)
 -->
    (<changes> ^change <change>)
    (<change> ^type moved-object
@@ -283,8 +295,9 @@ sp {top-state*perception-monitor*object-monitor*elaborate*change*update-object
 #
 #########################################################
 
-sp {top-state*perception-monitor*elaborate*change-info*attend-to-missing-object
+sp {top-state*perception-monitor*elaborate*change-info*missing-object*tabletop
    (state <s> ^superstate nil
+              ^agent-params.domain tabletop
               ^perception-monitor.change-info <info>)
 -->
    (<info> ^change <missing-obj>)
@@ -293,8 +306,35 @@ sp {top-state*perception-monitor*elaborate*change-info*attend-to-missing-object
                 ^op-name attend-to-missing-object)
 }
 
-sp {top-state*perception-monitor*object-monitor*elaborate*change*missing-object
+sp {top-state*perception-monitor*elaborate*change-info*missing-object*magicbot
    (state <s> ^superstate nil
+              ^agent-params.domain magicbot
+              ^perception-monitor.change-info <info>)
+-->
+   (<info> ^change <stale-obj>)
+   (<stale-obj> ^type missing-object 
+                ^category object
+                ^op-name attend-to-stale-object)
+}
+
+sp {top-state*perception-monitor*object-monitor*elaborate*change*missing-object*tabletop
+   (state <s> ^superstate nil
+              ^agent-params.domain tabletop
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^changes <changes>
+               ^object-monitor.object-info <obj-info>)
+   (<obj-info> ^status <status>)
+   (<status> ^visible false
+             ^is-occluded false)
+-->
+   (<changes> ^change <change>)
+   (<change> ^type missing-object
+             ^object-info <obj-info>)
+}
+
+sp {top-state*perception-monitor*object-monitor*elaborate*change*missing-object*magicbot
+   (state <s> ^superstate nil
+              ^agent-params.domain magicbot
               ^perception-monitor <perc-mon>)
    (<perc-mon> ^changes <changes>
                ^object-monitor.object-info <obj-info>)
@@ -306,6 +346,7 @@ sp {top-state*perception-monitor*object-monitor*elaborate*change*missing-object
    (<change> ^type missing-object
              ^object-info <obj-info>)
 }
+
 
 ############################################################################################
 #
@@ -325,16 +366,18 @@ sp {top-state*perception-monitor*elaborate*change-info*new-object-predicate
                    ^op-name attend-to-new-object-predicate)
 }
 
-sp {top-state*perception-monitor*object-monitor*elaborate*changes*new-object-predicate
+sp {top-state*perception-monitor*object-monitor*elaborate*changes*new-object-predicate*visual
    (state <s> ^superstate nil
               ^perception-monitor <perc-mon>)
    (<perc-mon> ^changes <changes>
                ^object-monitor.object-info <obj-info>)
    (<obj-info> ^properties.property-info <prop-info>
-               ^wm-obj.predicates <wm-preds>)
-   (<wm-preds> -^<prop> <pred>)
+               ^wm-obj.predicates <wm-preds>
+               ^status.is-occluded false)
    (<prop-info> ^property-handle <prop>
+                ^type visual
                 ^predicate-handle <pred>)
+   (<wm-preds> -^<prop> <pred>)
 -->
    (<changes> ^change <change>)
    (<change> ^type new-object-predicate
@@ -342,3 +385,115 @@ sp {top-state*perception-monitor*object-monitor*elaborate*changes*new-object-pre
              ^property-handle <prop>
              ^predicate-handle <pred>)
 }
+
+sp {top-state*perception-monitor*object-monitor*elaborate*changes*new-object-predicate*non-visual
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^changes <changes>
+               ^object-monitor.object-info <obj-info>)
+   (<obj-info> ^properties.property-info <prop-info>
+               ^wm-obj.predicates <wm-preds>)
+   (<prop-info> ^property-handle <prop>
+                -^type visual
+                ^predicate-handle <pred>)
+   (<wm-preds> -^<prop> <pred>)
+-->
+   (<changes> ^change <change>)
+   (<change> ^type new-object-predicate
+             ^object-info <obj-info>
+             ^property-handle <prop>
+             ^predicate-handle <pred>)
+}
+
+###########################################################################
+#
+# Change: shrunken-object
+#   If an object's volume drastrically lowers, investigate
+#
+##########################################################################
+
+sp {top-state*perception-monitor*elaborate*change-info*shrunken-object
+   (state <s> ^superstate nil
+              ^perception-monitor.change-info <info>)
+-->
+   (<info> ^change <shrunk-obj>)
+   (<shrunk-obj> ^type shrunken-object
+                 ^category object
+                 ^op-name evaluate-shrunken-object)
+}
+
+sp {top-state*perception-monitor*object-monitor*elaborate*change*shurnken-object
+   (state <s> ^superstate nil
+              ^agent-params.domain tabletop
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^changes <changes>
+               ^object-monitor.object-info <obj-info>)
+   (<obj-info> ^differences.has-shrunk true
+               ^status.is-occluded false)
+-->
+   (<changes> ^change <change>)
+   (<change> ^type shrunken-object
+             ^object-info <obj-info>)
+}
+
+
+###########################################################################
+#
+# Change: grown-object
+#   If an object's volume drastrically increases, investigate
+#
+##########################################################################
+
+sp {top-state*perception-monitor*elaborate*change-info*grown-object
+   (state <s> ^superstate nil
+              ^perception-monitor.change-info <info>)
+-->
+   (<info> ^change <grown-obj>)
+   (<grown-obj> ^type grown-object
+                ^category object
+                ^op-name evaluate-grown-object)
+}
+
+sp {top-state*perception-monitor*object-monitor*elaborate*change*grown-object
+   (state <s> ^superstate nil
+              ^agent-params.domain tabletop
+              ^world.robot.arm.moving-status stopped
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^changes <changes>
+               ^object-monitor.object-info <obj-info>)
+   (<obj-info> ^differences <diffs>)
+   (<diffs> ^has-grown true
+           -^growth-wait true)
+-->
+   (<changes> ^change <change>)
+   (<change> ^type grown-object
+             ^object-info <obj-info>)
+}
+
+#############################################################################
+# Change: recheck-occlusion
+#   Periodically check occluded objects to see if they are still occluded
+#############################################################################
+
+sp {top-state*perception-monitor*elaborate*change-info*recheck-occlusion
+   (state <s> ^superstate nil
+              ^perception-monitor.change-info <info>)
+-->
+   (<info> ^change <recheck-occlusion>)
+   (<recheck-occlusion> ^type recheck-occlusion
+                        ^category object
+                        ^op-name check-for-occlusion)
+}
+
+sp {top-state*perception-monitor*object-monitor*elaborate*change*recheck-occlusion
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^changes <changes>
+               ^object-monitor.object-info <obj-info>)
+   (<obj-info> ^status.occlusion-timer-expired true)
+-->
+   (<changes> ^change <change>)
+   (<change> ^type recheck-occlusion
+             ^object-info <obj-info>)
+}
+
