@@ -1,0 +1,728 @@
+sp {learn-predicate*elaborate*learned-actions
+   (state <s> ^name learn-predicate
+              ^top-state.dialog-context.structure.actions.retrieve-handle <name>
+              ^ntype heuristic)
+-->
+	(<s> ^gtype action ^retrieve-handle <name>)
+}
+
+#JK USE AS MODEL FOR BAD FLAG CHUNKING
+sp {selection*impasse*heuristic*prefer*force-learn
+   (state <s> ^superstate  <ss>
+              ^attribute operator
+              ^linked-heuristic <pred>
+              ^impasse tie)
+   (<ss> ^list.game ^heuristic <pred> -^problemspace games)
+   (<pred> ^ntype heuristic -^consider -^modifier)
+-->
+   (force-learn <s>)
+}
+
+sp {selection*impasse*heuristic*chunk-previous*force-learn
+   (state <s> ^superstate  <ss>
+              ^attribute operator
+              ^impasse tie)
+   (<ss> ^list.game ^superstate.problemspace game-heuristics)# ^superstate.superstate.heuristic <pred>
+   #(<pred> ^ntype heuristic ^prefer -^modifier)
+-->
+   (force-learn <s>)
+}
+
+sp {selection*impasse*chunk-previous-delay
+   (state <s> ^superstate <ss>
+              ^attribute operator
+              ^impasse tie)
+   (<ss> ^list.game ^superstate.superstate.heuristic <pred>)#^superstate.problemspace game-heuristics)
+   (<pred> ^ntype heuristic -^consider ^modifier previously)
+-->
+   (<s> ^name chunk-previous-delay
+        ^linked-heuristic <pred>
+        ^linkstate <ss>)
+}
+
+sp {chunk-previous-delay*elaborate*chunk-previous
+   (state <s> ^superstate <ss> 
+              ^attribute state 
+              ^choices none 
+              ^impasse no-change)
+   (<ss> ^linkstate <ls> ^name chunk-previous-delay ^linked-heuristic <pred>)
+-->
+   (<s> ^name chunk-previous
+        ^linked-heuristic <pred>
+        ^linkstate <ls>)
+}
+
+#Use chunk delay as a way to bypass chunking code during search
+sp {selection*impasse*prefer*chunk-delay
+   (state <s> ^superstate  <ss>
+              #^linked-heuristic <pred>
+              ^attribute operator
+              ^impasse tie)
+   (<ss> ^list.game ^heuristic <pred>)# -^problemspace games)
+   (<pred> ^ntype heuristic -^consider -^modifier)
+-->
+   (<s> ^name chunk-delay
+        ^linked-heuristic <pred>
+        ^linkstate <ss>)
+}
+
+sp {chunk-delay*elaborate*learn-heuristic
+   (state <s> ^superstate <ss> 
+              ^attribute state 
+              ^choices none 
+              ^impasse no-change)
+   (<ss> ^linkstate <ls> ^name chunk-delay ^linked-heuristic <pred>)
+-->
+   (<s> ^name learn-heuristic
+        ^linked-heuristic <pred>
+        ^linkstate <ls>)
+}
+
+sp {learn-predicate*apply*simulate
+   (state <s> ^name learn-predicate
+              ^copy-objects-map <com>
+              ^world.predicates <p2>
+              ^operator <o>)
+   (<o> ^type action
+        ^name <cname>
+        ^verb-structure.<num> <v1>
+        ^parameters <p>)
+   (<p2> ^predicate <prep> ^predicate <prep2>)
+   (<prep> ^handle below1 ^instance <instance>)
+   (<instance> ^2 <obja>)
+   (<prep2> ^handle on1 ^instance <instance2>)
+   (<instance2> ^1 <obja>)
+   (<p> ^<i1> <obj> ^<i2> <obj1>)
+   (<obj> ^handle <ha>)
+   (<com> ^<obj> <obja> ^<obj1> <objb>)
+   (<v1> ^verb-prep on1 ^1 <i1> ^2 <i2>)
+   
+-->
+(<s> ^simulated true ^gtype action)
+   (<prep> ^instance <instance> -
+           ^instance <instance3>)
+   (<prep2> ^instance <instance2> -
+            ^instance <instance4>)
+   (<instance3> ^1 <objb> ^2 <obja>)
+   (<instance4> ^1 <obja> ^2 <objb>)
+}
+
+sp {selection*learn-heuristic*elaborate*operator-selection*not-indifferent
+   (state <s> ^name selection 
+              ^superstate  <ss>
+              ^attribute operator
+              ^impasse tie)
+   (<ss> ^name learn-predicate ^heuristic <pred>)
+   (<pred> ^ntype heuristic -^prefer -^avoid)
+-->
+#(<s> ^linked-heuristic <pred>)
+ (<s> ^operator-selection not-indifferent)          
+}
+
+sp {learn-predicate*heuristic*elaborate*previous-action
+   (state <s> ^name selection 
+              ^superstate <ss>
+              ^attribute operator
+              ^impasse tie)
+   (<ss> ^name learn-predicate ^heuristic <pred> ^retrieve-handle <rh>)
+   (<pred> ^ntype heuristic ^modifier previously)
+-->
+ (<s> ^retrieve-action <rh>)             
+}
+
+sp {learn-predicate*heuristic*previous*action*copy
+   (state <s> ^name learn-predicate 
+              ^superstate <ss>)
+   (<ss> ^name selection ^retrieve-action <rh>)
+-->
+ (<s> ^retrieve-handle <rh>)             
+}
+
+sp {learn-predicate*heuristic*previous*action*copy*heuristicntype
+   (state <s> ^name learn-predicate 
+              ^superstate <ss>)
+   (<ss> ^name selection ^retrieve-action <rh>)
+-->
+	(<s> ^ntype heuristic ^list <li>)
+	(<li> ^game <g1>)
+}
+
+#complete learning chunk! just apply one operator to exit
+ sp {learn-heuristic*apply*evaluate-operator
+   (state <s> ^name selection 
+              ^operator-selection not-indifferent 
+              ^superstate <ss>
+              ^quiescence t 
+              ^operator <o>
+              ^attribute operator
+              ^impasse tie)
+   (<o> ^name evaluate-operator ^superoperator <so>)
+   (<ss> ^name learn-predicate ^heuristic <pred> ^operator <so> +)
+   (<pred> ^ntype heuristic ^consider)
+-->
+   (<ss> ^operator <so> > =)         
+}
+
+#TODO need something similar for operator conflict prefer/consider
+
+#select indifferently once an operator has changed (non-numeric)
+ sp {learn-heuristic*apply*chunk-previous-delay*complete
+   (state <s> ^name chunk-previous
+              ^superstate.superstate <ss>
+              ^quiescence t)
+   (<ss> ^operator <op> + ^operator {<so> <> <op>} +)
+   -{(<s> ^non-numeric <op>)}
+-->
+   (<ss> ^operator <so> > =)         
+}            
+
+#complete learning two layer chunks (just select random operator at top)
+ sp {learn-heuristic*apply*action*learn-heuristic
+   (state <s> ^name learn-predicate evaluate-operator
+              ^ntype heuristic 
+              ^superstate.superstate <ss>
+              ^operator <o>)
+   (<o> ^type action -^duplicate-of)
+   (<ss> ^name learn-predicate ^operator <so> +)
+-->
+   (<ss> ^operator <so> > =)         
+}
+
+sp {learn-heuristic*eval-condition*impasse*consider*force-learn
+   (state <s> ^superstate  <ss>
+              #^choices none
+              #^lo-heuristic <pred> #this breaks it for some reason...
+              ^attribute operator
+              ^impasse tie)
+   (<ss> ^name selection ^superstate.heuristic <pred>)
+   (<pred> ^ntype heuristic -^prefer -^avoid)
+-->
+   (force-learn <s>)
+}
+
+sp {chunk-prefer-consider*eval-condition*impasse*consider*chunk-pause
+   (state <s> ^superstate  <ss>
+              ^attribute operator
+              ^impasse tie)
+   (<ss> ^name selection ^superstate.heuristic <pred>)# ^linked-heuristic <pred>)
+   (<pred> ^ntype heuristic -^prefer -^avoid)
+-->
+   (<s> ^operator-selection not-indifferent)      
+   (<s> ^name chunk-prefer-consider
+        ^lo-heuristic <pred>
+        ^linkstate <ss>)
+}
+
+sp {learn-heuristic*chunk-parameters*propose*new-operator*snc*t71-4
+    (state <s1> ^gtype action ^action <p1> ^list <l1>)# ^ntype heuristic)
+    (<p1> ^parameter-set <p2> ^potential-args <p3> ^verb-structure.{1} <vs>)
+    (<p2> ^tested calculate3 ^tested calculate2 ^tested calculate5 ^tested calculate6 
+          ^tested calculate4 ^tested calculate1 ^set <s2>)
+    (<l1> ^game <g1>)
+    (<vs> ^1 <v1> ^2 <v2>)
+    (<s2> ^<v1> <ob1> ^<v2> <ob2>)
+    -->
+   # (<p1> ^instance <s2> +)
+(<p1> ^instance <s4>)
+(<s4> ^1 <ob1> ^2 <ob2>)
+}
+
+sp {chunk-prefer-consider*considerence*consider*single-operators*2args
+   (state <s> ^name chunk-prefer-consider
+              ^lo-heuristic <pred>
+              ^linkstate <ss>)
+   (<ss> ^operator <o1> + ^superstate.heuristic <pred>)# ^linked-heuristic <pred>)
+   (<pred> ^consider <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+   (<pref> ^1 <co> -^2)
+   (<ps> ^set <set>)
+   (<o1> ^name evaluate-operator ^superoperator <so>)
+   (<so> ^parameters <set3> ^verb-structure.{1} <vs>) #^aname <name> 
+   (<vs> ^verb-name <name> ^1 <v1> ^2 <v2> ^verb-prep <vp>)
+   (<set3> ^<v1>.handle <obj1> ^<v2>.handle <obj2>)
+   (<set1> ^<v1>.handle <obj1> ^<v2>.handle <obj2>)
+   (<set> ^<i1>.handle <obj1> ^<i2>.handle <obj2>)
+   (<co> ^parameter <pa1> ^type concept ^attribute action ^result.set.instance <set1> ^name <name> ^verb <vp>)
+   (<pa1> ^num 2 ^{1}.param-id <i1> ^{2}.param-id <i2>)
+-->
+   (<ss> ^operator <o1> >)
+}
+
+sp {chunk-previous*preference*prefer*single-operators*1args
+   (state <s> ^name chunk-previous
+              ^linked-heuristic <pred>
+              ^linkstate <ss>)
+   (<ss> ^operator <o1> + ^operator <o2> + ^superstate.superstate <sss>)
+   (<sss> ^heuristic <pred>)
+   (<o2> ^type action -^parameters <set1>)
+   (<pred> ^prefer <pref> ^ntype heuristic ^modifier previously ^parameter-set <ps> -^moved)
+   (<pref> ^1 <co> -^2)
+   (<ps> ^set <set> ^argnum 1)
+   (<o1> ^parameters <set1> ^verb-structure.{1} <vs>) #^aname <name> 
+   (<vs> ^verb-name <name> ^1 <v1>)# ^verb-prep <vp>)
+   (<set1> ^<v1>.handle <obj1>)# ^<v2> <obj2>)
+   (<set> ^<i1>.handle <obj1>)# ^<i2> <obj2>) #TODO use object map
+   (<co> ^parameter <pa1> ^type concept ^attribute action ^name <name> -^verb)# ^result.set.instance <set3>)
+  # (<set3> ^{1}.handle <obj1>)
+   (<pa1> -^2 ^{1}.param-id <i1>)
+-->
+   (<ss> ^operator <o1> > <o2>)
+}
+
+sp {chunk-previous*preference*avoid*single-operators*1args
+   (state <s> ^name chunk-previous
+              ^linked-heuristic <pred>
+              ^linkstate <ss>)
+   (<ss> ^operator <o1> + ^superstate.superstate <sss>)
+   (<sss> ^heuristic <pred>)
+   (<pred> ^avoid <pref> ^ntype heuristic ^modifier previously ^parameter-set <ps> -^moved)
+   (<pref> ^1 <co> -^2)
+   (<ps> ^set <set> ^argnum 1)
+   (<o1> ^parameters <set1> ^verb-structure.{1} <vs> -^duplicate-of) #^aname <name> 
+   (<vs> ^verb-name <name> ^1 <v1>)# ^verb-prep <vp>)
+   (<set1> ^<v1>.handle <obj1>)# ^<v2> <obj2>)
+   (<set> ^<i1>.handle <obj1>)# ^<i2> <obj2>) #TODO use object map
+   (<co> ^parameter <pa1> ^type concept ^attribute action ^name <name> -^verb)# ^result.set.instance <set3>)
+  # (<set3> ^{1}.handle <obj1>)
+   (<pa1> -^2 ^{1}.param-id <i1>)
+-->
+   (<ss> ^operator <o1> -)
+}
+
+
+
+# ick these rules, expand now that chunking is better
+sp {chunk-previous*preference*prefer*single-operators*1args*moved
+   (state <s> ^name chunk-previous
+              ^linked-heuristic <pred>
+              ^linkstate <ss>)
+   (<ss> ^operator <o1> + ^operator <o2> + ^superstate.superstate <sss> ^superstate.operator.superoperator <sso>)
+   (<sso> ^parameters <pset4>)
+   (<pset4> ^<v1>.handle <obj1>) #i7
+   (<sss> ^heuristic <pred>)
+   (<o2> ^type action -^parameters <set1>)
+   (<pred> ^prefer <pref> ^ntype heuristic ^modifier previously ^parameter-set <ps> ^moved <mov>)
+   (<mov> ^parameter <para2> ^type concept ^attribute action)
+   (<para2> -^2 ^{1}.param-id <v1>) #i7
+   (<pref> ^1 <co> -^2)
+   (<ps> ^set <set> ^argnum 1)
+   (<o1> ^parameters <set1> ^verb-structure.{1} <vs>) #^aname <name> 
+   (<vs> ^verb-name <name> ^1 <v1>)# ^verb-prep <vp>)
+   (<set1> ^<v1>.handle <obj1>)# ^<v2> <obj2>)
+   (<set> ^<i1>.handle <obj1>)# ^<i2> <obj2>) #TODO use object map
+   (<co> ^parameter <pa1> ^type concept ^attribute action ^name <name> -^verb)# ^result.set.instance <set3>)
+  # (<set3> ^{1}.handle <obj1>)
+   (<pa1> -^2 ^{1}.param-id <i1>)
+-->
+   (<ss> ^operator <o1> > <o2>)
+}
+
+sp {chunk-previous*preference*avoid*single-operators*1args*moved
+   (state <s> ^name chunk-previous
+              ^linked-heuristic <pred>
+              ^linkstate <ss>)
+   (<ss> ^operator <o1> + ^superstate <su>)
+   (<su> ^superstate <sss> ^operator.superoperator <sso>)
+   (<sso> ^parameters <pset4>)
+   (<pset4> ^<v1>.handle <obj1>) #i7
+   (<sss> ^heuristic <pred>)
+   (<pred> ^avoid <pref> ^ntype heuristic ^modifier previously ^parameter-set <ps> ^moved <mov>)
+   (<mov> ^parameter <para2> ^type concept ^attribute action)
+   (<para2> -^2 ^{1}.param-id <v1>) #i7
+   (<pref> ^1 <co> -^2)
+   (<ps> ^set <set> ^argnum 1)
+   (<o1> ^parameters <set1> ^verb-structure.{1} <vs> -^duplicate-of) #^aname <name> 
+   (<vs> ^verb-name <name> ^1 <v1>)# ^verb-prep <vp>)
+   (<set1> ^<v1>.handle <obj1>)# ^<v2> <obj2>)
+   (<set> ^<i1>.handle <obj1>)# ^<i2> <obj2>) #TODO use object map
+   (<co> ^parameter <pa1> ^type concept ^attribute action ^name <name> -^verb)# ^result.set.instance <set3>)
+  # (<set3> ^{1}.handle <obj1>)
+   (<pa1> -^2 ^{1}.param-id <i1>)
+-->
+   (<ss> ^operator <o1> -)
+}
+
+
+#for now assume parameters are ordered first action mentioned, then second, then ancilary parameters
+#assume parameters capture whole action (for now)
+sp {chunk-parameters*preference*prefer*single-operators*2args
+   (state <s> ^name learn-heuristic
+              ^linked-heuristic <pred>
+              ^linkstate <ss>)
+   (<ss> ^operator <o1> + ^heuristic <pred> ^operator <o2> +)
+   (<o2> ^type action -^parameters <set1>)
+   (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+   (<pref> ^1 <co> -^2)
+   (<ps> ^set <set>)
+   (<o1> ^parameters <set3> ^verb-structure.{1} <vs>) #^aname <name> 
+   (<vs> ^verb-name <name> ^1 <v1> ^2 <v2> ^verb-prep <vp>)
+   (<set3> ^<v1>.handle <obj1> ^<v2>.handle <obj2>)
+   (<set1> ^<v1>.handle <obj1> ^<v2>.handle <obj2>)
+   (<set> ^<i1>.handle <obj1> ^<i2>.handle <obj2>)
+   (<co> ^parameter <pa1> ^type concept ^attribute action ^result.set.instance <set1> ^name <name> ^verb <vp>)
+   (<pa1> ^num 2 ^{1}.param-id <i1> ^{2}.param-id <i2>)
+-->
+   (<ss> ^operator <o1> > <o2>)
+}
+
+sp {chunk-parameters*preference*prefer*single-operators*1args
+   (state <s> ^name learn-heuristic
+              ^linkstate <ss>)
+   (<ss> ^operator <o1> + ^heuristic <pred>)# + ^operator <o2> +)
+   (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+   (<pref> ^1 <co> -^2)
+   (<ps> ^set <set>)
+   (<o1> ^parameters <set1> ^verb-structure.{1} <vs>) #^aname <name> 
+   (<vs> ^verb-name <name> ^1 <v1> ^verb-prep <vp>)
+   (<set1> ^<v1> <obj1>)
+   (<set> ^<i1> <obj1>)
+   (<co> ^parameter <pa1> ^type concept ^attribute action ^result.set.instance <set1> ^name <name> ^verb <vp>)
+   (<pa1> ^num 1 ^{1}.param-id <i1>)
+-->
+   (<ss> ^operator <o1> >)
+}
+
+sp {chunk-parameters*preference*disprefer*single-operators*2args
+   (state <s> ^name learn-heuristic
+              ^linkstate <ss>)
+   (<ss> ^operator <o1> + ^heuristic <pred>)# + ^operator <o2> +)
+   (<pred> ^disprefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+   (<pref> ^1 <co> -^2)
+   (<ps> ^set <set>)
+   (<o1> ^parameters <set1> ^verb-structure.{1} <vs>) #^aname <name> 
+   (<vs> ^verb-name <name> ^1 <v1> ^2 <v2> ^verb-prep <vp>)
+   (<set1> ^<v1> <obj1> ^<v2> <obj2>)
+   (<set> ^<i1> <obj1> ^<i2> <obj2>)
+   (<co> ^parameter <pa1> ^type concept ^attribute action ^result.set.instance <set1> ^name <name> ^verb <vp>)
+   (<pa1> ^num 2 ^{1}.param-id <i1> ^{2}.param-id <i2>)
+-->
+   (<ss> ^operator <o1> <)
+}
+
+#name not needed? #set should bind (even if another action has same arguments, set wont match
+#sp {chunk-parameters*preference*disprefer*single-operators*1args
+#   (state <s> ^name learn-heuristic
+#              ^superstate <ss>)
+#   (<ss> ^operator <o1> + ^heuristic <pred>)# + ^operator <o2> +)
+#   (<pred> ^disprefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+#   (<pref> ^1 <co> -^2)
+#   (<ps> ^set <set>)
+#   (<o1> ^aname <name> ^parameters <set1>)
+#   (<set1> ^1 <obj1>)
+#   (<set> ^<i1> <obj1>)
+#   (<co> ^parameter <pa1> ^type concept ^attribute action ^name <name> ^result.set.instance <set1>)
+#   (<pa1> ^num 1 ^{1}.param-id <i1>)
+#-->
+#   (<ss> ^operator <o1> <)
+#}
+
+sp {chunk-parameters*preference*disprefer*single-operators*1args*any
+   (state <s> ^name learn-heuristic
+              ^linkstate <ss>)
+   (<ss> ^operator <o1> + ^heuristic <pred>)# + ^operator <o2> +)
+   (<pred> ^disprefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+   (<pref> ^1 <co> -^2)
+   (<ps> ^set <set>)
+   (<o1> ^parameters <set1> ^verb-structure.{1} <vs>) #^aname <name> 
+   (<vs> ^verb-name <name> ^1 <v1> ^verb-prep <vp>)
+   (<set1> ^<v1> <obj1>)
+   (<set> ^<i1> <obj1>)
+   (<co> ^parameter <pa1> ^type concept ^attribute action ^result.set.instance <set1> ^name <name> ^verb <vp>)
+   (<pa1> ^num 1 ^{1}.param-id <i1>)
+-->
+   (<ss> ^operator <o1> <)
+}
+
+sp {chunk-parameters*preference*prefer*two-operators*2args2 #how in general?
+   (state <s> ^name learn-heuristic
+              ^linkstate <ss>)
+   (<ss> ^operator <o1> + ^operator <o2> + ^heuristic <pred>)
+   (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)
+   (<pref> ^1 <co1> ^2 <co2>)   
+   (<ps> ^set <set>)
+   (<o1> ^parameters <set1> ^verb-structure.{1} <vs>)
+   (<vs> ^verb-name <name> ^1 <v1> ^2 <v2> ^verb-prep <vp>)
+   (<set1> ^<v1> <obj1> ^<v2> <obj2>)
+   (<o2> ^parameters <set2> ^verb-structure.{1} <vs2>)
+   (<vs2> ^verb-name <name> ^1 <v3> ^2 <v4> ^verb-prep <vp>)
+   (<set2> ^<v3> <obj3> ^<v4> <obj4>)
+   (<set> ^<i1> <obj1> ^<i2> <obj2> ^<i3> <obj3> ^<i4> <obj4>)
+   (<co1> ^parameter <pa1> ^type concept ^attribute action ^result.set.instance <set1> ^name <name> ^verb <vp>)
+   (<co2> ^parameter <pa2> ^type concept ^attribute action ^result.set.instance <set2> ^name <name> ^verb <vp>)
+   (<pa1> ^num 2 ^{1}.param-id <i1> ^{2}.param-id <i2>)
+   (<pa2> ^num 2 ^{1}.param-id <i3> ^{2}.param-id <i4>)
+-->
+   (<ss> ^operator <o1> > <o2>)
+}
+
+sp {chunk-parameters*preference*disprefer*two-operators*2args2 #how in general?
+   (state <s> ^name learn-heuristic
+              ^linkstate <ss>)
+   (<ss> ^operator <o1> + ^operator <o2> + ^heuristic <pred>)
+   (<pred> ^disprefer <pref> ^ntype heuristic ^parameter-set <ps>)
+   (<pref> ^1 <co1> ^2 <co2>)   
+   (<ps> ^set <set>)
+   (<o1> ^parameters <set1> ^verb-structure.{1} <vs>)
+   (<vs> ^verb-name <name> ^1 <v1> ^2 <v2> ^verb-prep <vp>)
+   (<set1> ^<v1> <obj1> ^<v2> <obj2>)
+   (<o2> ^parameters <set2> ^verb-structure.{1} <vs2>)
+   (<vs2> ^verb-name <name> ^1 <v3> ^2 <v4> ^verb-prep <vp>)
+   (<set2> ^<v3> <obj3> ^<v4> <obj4>)
+   (<set> ^<i1> <obj1> ^<i2> <obj2> ^<i3> <obj3> ^<i4> <obj4>)
+   (<co1> ^parameter <pa1> ^type concept ^attribute action ^result.set.instance <set1> ^name <name> ^verb <vp>)
+   (<co2> ^parameter <pa2> ^type concept ^attribute action ^result.set.instance <set2> ^name <name> ^verb <vp>)
+   (<pa1> ^num 2 ^{1}.param-id <i1> ^{2}.param-id <i2>)
+   (<pa2> ^num 2 ^{1}.param-id <i3> ^{2}.param-id <i4>)
+-->
+   (<ss> ^operator <o1> < <o2>)
+}
+
+#sp {chunk-parameters*preference*disprefer*two-operators*2args2 #how in general?
+#   (state <s> ^name learn-heuristic
+#              ^superstate <ss>)
+#   (<ss> ^operator <o1> + ^operator <o2> + ^heuristic <pred>)# + ^operator <o2> +)
+#   (<pred> ^disprefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+#   (<pref> ^1 <co1> ^2 <co2>)
+#   
+#   (<ps> ^set <set>)
+#  (<o1> ^parameters <set1>)# ^aname <name> 
+#   (<o2> ^parameters <set2>)#^aname <name2> 
+#   (<set1> ^1 <obj1> ^2 <obj2>)
+#   (<set2> ^1 <obj3> ^2 <obj4>)
+#   (<set> ^<i1> <obj1> ^<i2> <obj2> ^<i3> <obj3> ^<i4> <obj4>)
+#   
+#   (<co1> ^parameter <pa1> ^type concept ^attribute action ^name <name> ^result.set.instance <set1>)
+#   (<co2> ^parameter <pa2> ^type concept ^attribute action ^name <name2> ^result.set.instance <set2>)
+#   (<pa1> ^num 2 ^{1}.param-id <i1> ^{2}.param-id <i2>)
+#   (<pa2> ^num 2 ^{1}.param-id <i3> ^{2}.param-id <i4>)
+#-->
+#   (<ss> ^operator <o1> < <o2>)
+#}
+
+sp {chunk-parameters*preference*disprefer*two-operators*2args1 #how in general?
+   (state <s> ^name learn-heuristic
+              ^linkstate <ss>)
+   (<ss> ^operator <o1> + ^operator <o2> + ^heuristic <pred>)
+   (<pred> ^disprefer <pref> ^ntype heuristic ^parameter-set <ps>)
+   (<pref> ^1 <co1> ^2 <co2>)   
+   (<ps> ^set <set>)
+   (<o1> ^parameters <set1> ^verb-structure.{1} <vs>)
+   (<vs> ^verb-name <name> ^1 <v1> ^2 <v2> ^verb-prep <vp>)
+   (<set1> ^<v1> <obj1> ^<v2> <obj2>)
+   (<o2> ^parameters <set2> ^verb-structure.{1} <vs2>)
+   (<vs2> ^verb-name <name> ^1 <v3> ^verb-prep <vp>)
+   (<set2> ^<v3> <obj3>)
+   (<set> ^<i1> <obj1> ^<i2> <obj2> ^<i3> <obj3>)
+   (<co1> ^parameter <pa1> ^type concept ^attribute action ^result.set.instance <set1> ^name <name> ^verb <vp>)
+   (<co2> ^parameter <pa2> ^type concept ^attribute action ^result.set.instance <set2> ^name <name> ^verb <vp>)
+   (<pa1> ^num 2 ^{1}.param-id <i1> ^{2}.param-id <i2>)
+   (<pa2> ^num 1 ^{1}.param-id <i3>)
+-->
+   (<ss> ^operator <o1> < <o2>)
+}
+sp {chunk-parameters*preference*prefer*two-operators*2args1 #how in general?
+   (state <s> ^name learn-heuristic
+              ^linkstate <ss>)
+   (<ss> ^operator <o1> + ^operator <o2> + ^heuristic <pred>)
+   (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)
+   (<pref> ^1 <co1> ^2 <co2>)   
+   (<ps> ^set <set>)
+   (<o1> ^parameters <set1> ^verb-structure.{1} <vs>)
+   (<vs> ^verb-name <name> ^1 <v1> ^2 <v2> ^verb-prep <vp>)
+   (<set1> ^<v1> <obj1> ^<v2> <obj2>)
+   (<o2> ^parameters <set2> ^verb-structure.{1} <vs2>)
+   (<vs2> ^verb-name <name> ^1 <v3> ^verb-prep <vp>)
+   (<set2> ^<v3> <obj3>)
+   (<set> ^<i1> <obj1> ^<i2> <obj2> ^<i3> <obj3>)
+   (<co1> ^parameter <pa1> ^type concept ^attribute action ^result.set.instance <set1> ^name <name> ^verb <vp>)
+   (<co2> ^parameter <pa2> ^type concept ^attribute action ^result.set.instance <set2> ^name <name> ^verb <vp>)
+   (<pa1> ^num 2 ^{1}.param-id <i1> ^{2}.param-id <i2>)
+   (<pa2> ^num 1 ^{1}.param-id <i3>)
+-->
+   (<ss> ^operator <o1> > <o2>)
+}
+
+#^above
+#sp {chunk-parameters*preference*prefer*two-operators*2args1 #how in general?
+#   (state <s> ^name learn-heuristic
+#              ^superstate <ss>)
+#   (<ss> ^operator <o1> + ^operator <o2> + ^heuristic <pred>)# + ^operator <o2> +)
+#   (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+#   (<pref> ^1 <co1> ^2 <co2>)
+#   
+#   (<ps> ^set <set>)
+#   (<o1> ^parameters <set1>)# ^aname <name> 
+#   (<o2> ^parameters <set2>)#^aname <name2> 
+#   (<set1> ^1 <obj1> ^2 <obj2>)
+#   (<set2> ^1 <obj3>)
+#   (<set> ^<i1> <obj1> ^<i2> <obj2> ^<i3> <obj3>)
+#   
+#   (<co1> ^parameter <pa1> ^type concept ^attribute action ^name <name> ^result.set.instance <set1>)
+#   (<co2> ^parameter <pa2> ^type concept ^attribute action ^name <name2> ^result.set.instance <set2>)
+#   (<pa1> ^num 2 ^{1}.param-id <i1> ^{2}.param-id <i2>)
+#   (<pa2> ^num 1 ^{1}.param-id <i3>)
+#-->
+#   (<ss> ^operator <o1> > <o2>)
+#}
+
+sp {chunk-parameters*apply*wait*complete*select*one
+   (state <s> ^operator.name wait
+              ^quiescence t 
+              ^superstate <ss>)
+   (<ss> ^name learn-heuristic ^linkstate <sss> ^quiescence t)
+   (<sss> ^quiescence t ^operator <o> +)
+-->
+   (<sss> ^operator <o> + =)
+}
+
+sp {chunk-parameters*preference*disprefer*two-operators*1args2 #how in general?
+   (state <s> ^name learn-heuristic
+              ^linkstate <ss>)
+   (<ss> ^operator <o1> + ^operator <o2> + ^heuristic <pred>)
+   (<pred> ^disprefer <pref> ^ntype heuristic ^parameter-set <ps>)
+   (<pref> ^1 <co1> ^2 <co2>)   
+   (<ps> ^set <set>)
+   (<o1> ^parameters <set1> ^verb-structure.{1} <vs>)
+   (<vs> ^verb-name <name> ^1 <v1> ^verb-prep <vp>)
+   (<set1> ^<v1> <obj1>)
+   (<o2> ^parameters <set2> ^verb-structure.{1} <vs2>)
+   (<vs2> ^verb-name <name> ^1 <v3> ^2 <v4> ^verb-prep <vp>)
+   (<set2> ^<v3> <obj3> ^<v4> <obj4>)
+   (<set> ^<i1> <obj1> ^<i3> <obj3> ^<i4> <obj4>)
+   (<co1> ^parameter <pa1> ^type concept ^attribute action ^result.set.instance <set1> ^name <name> ^verb <vp>)
+   (<co2> ^parameter <pa2> ^type concept ^attribute action ^result.set.instance <set2> ^name <name> ^verb <vp>)
+   (<pa1> ^num 1 ^{1}.param-id <i1>)
+   (<pa2> ^num 2 ^{1}.param-id <i3> ^{2}.param-id <i4>)
+-->
+   (<ss> ^operator <o1> < <o2>)
+}
+sp {chunk-parameters*preference*prefer*two-operators*1args2 #how in general?
+   (state <s> ^name learn-heuristic
+              ^linkstate <ss>)
+   (<ss> ^operator <o1> + ^operator <o2> + ^heuristic <pred>)
+   (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)
+   (<pref> ^1 <co1> ^2 <co2>)   
+   (<ps> ^set <set>)
+   (<o1> ^parameters <set1> ^verb-structure.{1} <vs>)
+   (<vs> ^verb-name <name> ^1 <v1> ^verb-prep <vp>)
+   (<set1> ^<v1> <obj1>)
+   (<o2> ^parameters <set2> ^verb-structure.{1} <vs2>)
+   (<vs2> ^verb-name <name> ^1 <v3> ^2 <v4> ^verb-prep <vp>)
+   (<set2> ^<v3> <obj3> ^<v4> <obj4>)
+   (<set> ^<i1> <obj1> ^<i3> <obj3> ^<i4> <obj4>)
+   (<co1> ^parameter <pa1> ^type concept ^attribute action ^result.set.instance <set1> ^name <name> ^verb <vp>)
+   (<co2> ^parameter <pa2> ^type concept ^attribute action ^result.set.instance <set2> ^name <name> ^verb <vp>)
+   (<pa1> ^num 1 ^{1}.param-id <i1>)
+   (<pa2> ^num 2 ^{1}.param-id <i3> ^{2}.param-id <i4>)
+-->
+   (<ss> ^operator <o1> > <o2>)
+}
+#above
+#sp {chunk-parameters*preference*prefer*two-operators*1args2 #how in general?
+#   (state <s> ^name learn-heuristic
+#              ^superstate <ss>)
+#   (<ss> ^operator <o1> + ^operator <o2> + ^heuristic <pred>)# + ^operator <o2> +)
+#   (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+#   (<pref> ^1 <co1> ^2 <co2>)
+#   
+#   (<ps> ^set <set>)
+#   (<o1> ^parameters <set1>)# ^aname <name> 
+#   (<o2> ^parameters <set2>)#^aname <name2> 
+#   (<set1> ^1 <obj1>)
+#   (<set2> ^1 <obj3> ^2 <obj4>)
+#   (<set> ^<i1> <obj1> ^<i3> <obj3> ^<i4> <obj4>)
+#   
+#   (<co1> ^parameter <pa1> ^type concept ^attribute action ^name <name> ^result.set.instance <set1>)
+#   (<co2> ^parameter <pa2> ^type concept ^attribute action ^name <name2> ^result.set.instance <set2>)
+#   (<pa1> ^num 1 ^{1}.param-id <i1>)
+#   (<pa2> ^num 2 ^{1}.param-id <i3> ^{2}.param-id <i4>)
+#-->
+#   (<ss> ^operator <o1> > <o2>)
+#}
+
+sp {chunk-parameters*preference*prefer*two-operators*1args1 #how in general?
+   (state <s> ^name learn-heuristic
+              ^linkstate <ss>)
+   (<ss> ^operator <o1> + ^operator <o2> + ^heuristic <pred>)
+   (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)
+   (<pref> ^1 <co1> ^2 <co2>)   
+   (<ps> ^set <set>)
+   (<o1> ^parameters <set1> ^verb-structure.{1} <vs>)
+   (<vs> ^verb-name <name> ^1 <v1> ^verb-prep <vp>)
+   (<set1> ^<v1> <obj1>)
+   (<o2> ^parameters <set2> ^verb-structure.{1} <vs2>)
+   (<vs2> ^verb-name <name> ^1 <v2> ^verb-prep <vp>)
+   (<set2> ^<v2> <obj2>)
+   (<set> ^<i1> <obj1> ^<i2> <obj2>)
+   (<co1> ^parameter <pa1> ^type concept ^attribute action ^result.set.instance <set1> ^name <name> ^verb <vp>)
+   (<co2> ^parameter <pa2> ^type concept ^attribute action ^result.set.instance <set2> ^name <name> ^verb <vp>)
+   (<pa1> ^num 1 ^{1}.param-id <i1>)
+   (<pa2> ^num 1 ^{1}.param-id <i2>)
+-->
+   (<ss> ^operator <o1> > <o2>)
+}
+#above
+#sp {chunk-parameters*preference*prefer*two-operators*1args1 #how in general?
+#   (state <s> ^name learn-heuristic
+#              ^superstate <ss>)
+#   (<ss> ^operator <o1> + ^operator <o2> + ^heuristic <pred>)# + ^operator <o2> +)
+#   (<pred> ^prefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+#   (<pref> ^1 <co1> ^2 <co2>)
+#   
+#   (<ps> ^set <set>)
+#   (<o1> ^parameters <set1>)# ^aname <name> 
+#   (<o2> ^parameters <set2>)#^aname <name2> 
+#   (<set1> ^1 <obj1>)
+#   (<set2> ^1 <obj2>)
+#   (<set> ^<i1> <obj1> ^<i2> <obj2>)
+#   
+#   (<co1> ^parameter <pa1> ^type concept ^attribute action ^result.set.instance <set1>)
+#   (<co2> ^parameter <pa2> ^type concept ^attribute action ^result.set.instance <set2>)
+#   (<pa1> ^num 1 ^{1}.param-id <i1>)
+#   (<pa2> ^num 1 ^{1}.param-id <i2>)
+#-->
+#   (<ss> ^operator <o1> > <o2>)
+#}
+
+sp {chunk-parameters*preference*disprefer*two-operators*1args1 #how in general?
+   (state <s> ^name learn-heuristic
+              ^linkstate <ss>)
+   (<ss> ^operator <o1> + ^operator <o2> + ^heuristic <pred>)
+   (<pred> ^disprefer <pref> ^ntype heuristic ^parameter-set <ps>)
+   (<pref> ^1 <co1> ^2 <co2>)   
+   (<ps> ^set <set>)
+   (<o1> ^parameters <set1> ^verb-structure.{1} <vs>)
+   (<vs> ^verb-name <name> ^1 <v1> ^verb-prep <vp>)
+   (<set1> ^<v1> <obj1>)
+   (<o2> ^parameters <set2> ^verb-structure.{1} <vs2>)
+   (<vs2> ^verb-name <name> ^1 <v2> ^verb-prep <vp>)
+   (<set2> ^<v2> <obj2>)
+   (<set> ^<i1> <obj1> ^<i2> <obj2>)
+   (<co1> ^parameter <pa1> ^type concept ^attribute action ^result.set.instance <set1> ^name <name> ^verb <vp>)
+   (<co2> ^parameter <pa2> ^type concept ^attribute action ^result.set.instance <set2> ^name <name> ^verb <vp>)
+   (<pa1> ^num 1 ^{1}.param-id <i1>)
+   (<pa2> ^num 1 ^{1}.param-id <i2>)
+-->
+   (<ss> ^operator <o1> > <o2>)
+}
+#above
+#sp {chunk-parameters*preference*disprefer*two-operators*1args1
+#   (state <s> ^name learn-heuristic
+#              ^superstate <ss>)
+#   (<ss> ^operator <o1> + ^operator <o2> + ^heuristic <pred>)# + ^operator <o2> +)
+#   (<pred> ^disprefer <pref> ^ntype heuristic ^parameter-set <ps>)# ^condition <co>)
+#   (<pref> ^1 <co1> ^2 <co2>)
+#   
+#   (<ps> ^set <set>)
+#   (<o1> ^parameters <set1>)# ^aname <name> 
+#   (<o2> ^parameters <set2>)#^aname <name2> 
+#   (<set1> ^1 <obj1>)
+#   (<set2> ^1 <obj2>)
+#   (<set> ^<i1> <obj1> ^<i2> <obj2>)
+#   
+#   (<co1> ^parameter <pa1> ^type concept ^attribute action ^result.set.instance <set1>)#^name <name> 
+#   (<co2> ^parameter <pa2> ^type concept ^attribute action ^result.set.instance <set2>)#^name <name2> 
+#   (<pa1> ^num 1 ^{1}.param-id <i1>)
+#   (<pa2> ^num 1 ^{1}.param-id <i2>)
+#-->
+#   (<ss> ^operator <o1> < <o2>)
+#}

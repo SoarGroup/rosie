@@ -38,13 +38,16 @@ public class TextToSpeech
 	        	try 
 	        	{
 	        		// Offline TTS option uses pico2wave program and temp test.wav file
+	        	
 	        		ProcessBuilder pb = new ProcessBuilder("pico2wave", "-l=en-GB", "-w=test.wav", words);
 	        		
 	        		Process p = pb.start();
 	        		p.waitFor();
 	        		File file = new File("test.wav");
 	        		
-	        		/* ONLINE GOOGLE Text to Speech Services
+	        		
+	        		//ONLINE GOOGLE Text to Speech Services
+	        		/*
 	        		words = java.net.URLEncoder.encode(words, "UTF-8");
 	        		URL url = new URL("http://translate.google.com/translate_tts?ie=UTF-8&tl=" + "en-UK" + "&q="+words);
 	        		HttpURLConnection urlConn =(HttpURLConnection) url.openConnection();
@@ -64,8 +67,8 @@ public class TextToSpeech
 	        			outstream.write(buffer, 0, len);                
 	        		}
 	        		outstream.close();
-	        		*/
 	        		
+	        		*/
 	        		AudioInputStream in = AudioSystem.getAudioInputStream(file);
 	        		AudioFormat baseFormat = in.getFormat();
 	        		AudioFormat decodedFormat = new AudioFormat(

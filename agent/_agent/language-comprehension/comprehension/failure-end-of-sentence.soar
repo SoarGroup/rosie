@@ -3,6 +3,7 @@ sp {comprehension*propose*failure-end-of-sentence
    (state <s> ^name comprehension
               ^segment <seg>)
    (<seg> ^parse-failed-end-of-sentence true
+         -^semantics.interaction-status.failure.type unknown-word
          -^original-sentence.processing-result failure
           ^not-merged-receiver <nmr>
          -^retry-sentence 
@@ -11,15 +12,16 @@ sp {comprehension*propose*failure-end-of-sentence
    (<s> ^operator <op> + =, >)
    (<op> ^name failure-end-of-sentence)}
 
-sp {comprehension*apply*failure-end-of-sentence2
+sp {comprehension*apply*failure-end-of-sentence*retry
    (state <s> ^operator.name failure-end-of-sentence
               ^segment <seg>)
    (<seg> ^not-merged-receiver <nmr>
          -^retry-sentence <nmr>
-         -^retried)
+         -^retried
+         -^unknown-word )
    (<nmr> ^lt.alternative-structure <structure-new>)
 -->
-   (write (crlf) |Failed hitting end of sentence without valid parse. Have an ambiguous word that didn't merge. Will attempt local retry.|)
+   #(write (crlf) |Failed hitting end of sentence without valid parse. Have an ambiguous word that didn't merge. Will attempt local retry.|)
    (<seg> ^retry <nmr>)}
 
 sp {comprehension*apply*failure-end-of-sentence*saved-alternative
@@ -27,9 +29,10 @@ sp {comprehension*apply*failure-end-of-sentence*saved-alternative
    (state <s> ^operator.name failure-end-of-sentence
               ^segment <seg>)
    (<seg> -^not-merged-receiver.lt.alternative-structure <structure-new>
-           ^alternative-structure-receiver <asr>)
+           ^alternative-structure-receiver <asr>
+          -^unknown-word )
 -->
-  (write (crlf) |Failed hitting end of sentence without valid parse. Have an ambiguous word that merged. Will attempt retry sentence.|)
+  #(write (crlf) |Failed hitting end of sentence without valid parse. Have an ambiguous word that merged. Will attempt retry sentence.|)
   (<seg> ^retry-sentence <asr>)}
 
 sp {comprehension*apply*failure-end-of-sentence*saved-alternative*retried
@@ -37,10 +40,12 @@ sp {comprehension*apply*failure-end-of-sentence*saved-alternative*retried
    (state <s> ^operator.name failure-end-of-sentence
               ^segment <seg>)
    (<seg> ^retried <asr>
-          ^alternative-structure-receiver <asr>)
+          ^alternative-structure-receiver <asr>
+          -^unknown-word )
 -->
-  (write (crlf) |Failed hitting end of sentence without valid parse. Have an ambiguous word that didn't work on local retry. Will attempt retry sentence.|)
-  (<seg> ^retry-sentence <asr>)}
+  #(write (crlf) |Failed hitting end of sentence without valid parse. Have an ambiguous word that didn't work on local retry. Will attempt retry sentence.|)
+  (<seg> ^retry-sentence <asr>)
+  (<asr> ^retried true)}
 
 sp {comprehension*apply*failure-end-of-sentence
    (state <s> ^operator.name failure-end-of-sentence
@@ -49,27 +54,24 @@ sp {comprehension*apply*failure-end-of-sentence
           -^merged-receiver.lt.alternative-structure
           -^alternative-structure-receiver
            ^original-sentence <os>
+          -^unknown-word #JK causing bad failures
            ^current-word.spelling <spell>
            ^semantics <sem>)
 -->
-   (write (crlf) |Failed hitting end of sentence without valid parse. No unmerged ambiguous word. Will not retry parsing sentence.|)
+   #(write (crlf) |Failed hitting end of sentence without valid parse. No unmerged ambiguous word. Will not retry parsing sentence.|)
    (<os> ^processing-result failure)
    (<sem> ^interaction-status.failure <is>)
    (<is> ^type failed-to-interpret-message
          ^word <spell>)}
 
-
-sp {comprehension*apply*failure-end-of-sentence
+sp {comprehension*apply*failure-end-of-sentence*unknown-word
    (state <s> ^operator.name failure-end-of-sentence
               ^segment <seg>)
-   (<seg> -^not-merged-receiver.lt.alternative-structure
-          -^merged-receiver.lt.alternative-structure
-          -^alternative-structure-receiver
-           ^original-sentence <os>
-           ^current-word.spelling <spell>
-           ^semantics <sem>)
+   (<seg> ^original-sentence <os>
+          ^unknown-word <spell>
+          ^semantics <sem>)
 -->
-   (write (crlf) |Failed hitting end of sentence without valid parse. No unmerged ambiguous word. Will not retry parsing sentence.|)
+   #(write (crlf) |Failed hitting end of sentence without valid parse. Unknown word. Will not retry parsing sentence.|)
    (<os> ^processing-result failure)
    (<sem> ^interaction-status.failure <is>)
    (<is> ^type failed-to-interpret-message
@@ -84,7 +86,7 @@ sp {comprehension*apply*failure-end-of-sentence*retried*failure
            ^current-word.spelling <spell>
            ^semantics <sem>)
 -->
-   (write (crlf) |Failed hitting end of sentence without valid parse. No unmerged ambiguous word worth reparsing sentence over. Will not retry parsing sentence.|)
+   #(write (crlf) |Failed hitting end of sentence without valid parse. No unmerged ambiguous word worth reparsing sentence over. Will not retry parsing sentence.|)
    (<os> ^processing-result failure)
    (<sem> ^interaction-status.failure <is>)
    (<is> ^type failed-to-interpret-message
@@ -99,8 +101,31 @@ sp {comprehension*apply*failure-end-of-sentence*retried*failure2
            ^current-word.spelling <spell>
            ^semantics <sem>)
 -->
-   (write (crlf) |Failed hitting end of sentence without valid parse. Failed with reparse.|)
+   #(write (crlf) |Failed hitting end of sentence without valid parse. Failed with reparse.|)
    (<os> ^processing-result failure)
    (<sem> ^interaction-status.failure <is>)
    (<is> ^type failed-to-interpret-message
          ^word <spell>)}
+###############
+
+sp {comprehension*propose*failure-end-of-sentence2
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^parse-failed-end-of-sentence true
+          ^semantics.interaction-status.failure.type unknown-word
+         -^original-sentence.processing-result failure
+          ^not-merged-receiver <nmr>
+         -^retry-sentence 
+         -^retry)
+-->
+   (<s> ^operator <op> + =, >)
+   (<op> ^name failure-end-of-sentence2)}
+
+sp {comprehension*apply*failure-end-of-sentence2
+   (state <s> ^operator.name failure-end-of-sentence2
+              ^segment <seg>)
+   (<seg>  ^original-sentence <os>)
+-->
+  # (write (crlf) |Failed hitting end of sentence without valid parse. Failed with unknown word.|)
+   (<os> ^processing-result failure)
+}

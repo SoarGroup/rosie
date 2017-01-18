@@ -29,6 +29,7 @@ sp {interpret-message*propose*interpret-yes-no-message
 # Don't even need to do any special processing, just create a response
 sp {interpret-message*apply*interpret-yes-no-message*mark
    (state <s> ^name interpret-message
+              ^top-state.current-action
               ^operator <o>)
    (<o> ^name interpret-yes-no-message
         ^message <msg>)
@@ -71,3 +72,200 @@ sp {interpret-message*apply*interpret-yes-no-message*yes*mark*object*visible
             ^visible false -)
 }
     
+sp {interpret-message*apply*interpret-yes-no-message*reset-state
+   (state <s> ^name interpret-message
+              ^top-state <ts>
+              ^operator <o>)
+   (<ts> ^dialog-context <dc> ^interaction.status <status>)
+   (<o> ^name interpret-yes-no-message
+        ^message <msg>
+        ^message-type yes)
+   (<dc> ^needs-reset <t> ^learning true)
+-->
+   (<msg> ^interpreted true)
+   (<dc> ^needs-reset <t> -)
+   (<status> ^performed.dialog-event <de>)
+   (<de> ^type single-word-response
+         ^originator instructor)
+}
+
+sp {interpret-message*apply*interpret-yes-no-message*yes**create*segment*learn-goal-initiate-state
+   (state <s> ^name interpret-message
+              ^top-state.dialog-context <dc>
+              ^operator <o>)
+   (<o> ^name interpret-yes-no-message
+        ^message-type yes)
+   (<dc> ^needs-setup true ^learning true)
+-->
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type learn-goal-initial-state
+        ^parameters.message <msg>
+        ^satisfaction <sat>)
+   (<sat> ^learning-event.type game)
+}
+#started by naming, not describing
+sp {interpret-message*apply*interpret-yes-no-message*yes**create*segment*learn-goal
+   (state <s> ^name interpret-message
+              ^top-state <ts>
+              ^operator <o>)
+   (<ts> ^dialog-context <dc> ^interaction.changes <changes>)
+   (<o> ^name interpret-yes-no-message
+        ^message <msg>
+        ^message-type yes)
+   (<dc> ^needs-goal-setup <t> ^learning true -^parsed-goal)
+-->
+   (<msg> ^interpreted true)
+   (<dc> ^needs-goal-setup <t> -)
+   (<changes> ^outgoing-message <msg2>)
+   (<msg2> ^type simple-message
+              ^message-type describe-goal)
+}
+sp {interpret-message*apply*interpret-yes-no-message*yes**create*segment*learn-failure
+   (state <s> ^name interpret-message
+              ^top-state <ts>
+              ^operator <o>)
+   (<ts> ^dialog-context <dc> ^interaction.changes <changes>)
+   (<o> ^name interpret-yes-no-message
+        ^message <msg>
+        ^message-type yes)
+   (<dc> ^needs-failure-setup <t> ^learning true -^parsed-failure)
+-->
+   (<msg> ^interpreted true)
+   (<dc> ^needs-failure-setup <t> -)
+   (<changes> ^outgoing-message <msg2>)
+   (<msg2> ^type simple-message
+              ^message-type describe-failure)
+}
+
+#started by describing
+sp {interpret-message*apply*interpret-yes-no-message*yes**create*segment*learn-goal*predescribed
+   (state <s> ^name interpret-message
+              ^top-state <ts>
+              ^operator <o>)
+   (<ts> ^dialog-context <dc>)
+   (<o> ^name interpret-yes-no-message
+        ^message <msg>
+        ^message-type yes)
+   (<dc> ^needs-goal-setup <t> ^learning true ^parsed-goal <msg2>)
+-->
+   (<msg> ^interpreted true)
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type learn-goal-predicate
+        ^parameters.message <msg2>
+        ^satisfaction <sat>)
+   (<sat> ^learning-event.type game)
+}
+
+sp {interpret-message*apply*interpret-yes-no-message*yes**create*segment*learn-failure*predescribed
+   (state <s> ^name interpret-message
+              ^top-state <ts>
+              ^operator <o>)
+   (<ts> ^dialog-context <dc>)
+   (<o> ^name interpret-yes-no-message
+        ^message <msg>
+        ^message-type yes)
+   (<dc> ^needs-failure-setup <t> ^learning true ^parsed-failure <msg2>)
+-->
+   (<msg> ^interpreted true)
+ #  (<dc> ^needs-failure-setup <t> -)
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type learn-failure-predicate
+        ^parameters.message <msg2>
+        ^satisfaction <sat>)
+   (<sat> ^learning-event.type game)
+}
+
+
+sp {interpret-message*apply*interpret-yes-no-message*yes*concept-transfer
+   (state <s> ^name interpret-message
+              ^top-state <ts>
+              ^smem.command <sc>
+              ^operator <o>)
+   (<ts> ^dialog-context <dc>)
+   (<dc> ^learning-predicate <lp> ^transfering <tf>)
+   (<lp> ^name <name>)
+   (<tf> ^name <name> ^lti <pred> ^to <game>)
+   (<o> ^name interpret-yes-no-message
+        ^message-type yes)
+-->
+   (<pred> ^from <game>)
+   (<sc> ^store <pred>)
+}
+
+
+
+sp {interpret-message*apply*interpret-yes-no-message*yes*concept-transfer2
+   (state <s> ^name interpret-message
+              ^top-state <ts>
+              #^smem.command <sc>
+              ^operator <o>)
+   (<ts> ^dialog-context <dc>)
+   (<dc> ^learning-predicate <lp> ^transfering <tf>)
+   (<lp> ^name <name>)
+   (<tf> ^name <name> ^lti <pred> ^to <game>)
+   (<pred> ^from <game>)
+   (<o> ^name interpret-yes-no-message
+        ^message <msg>
+        ^message-type yes)
+-->
+   (<msg> ^interpreted true)
+   (<dc> ^learning-predicate <lp> -)
+   (<dc> ^transfering <tf> -)
+}
+
+#CHUNK vs non chunk stat collection
+#sp {interpret-message*apply*interpret-yes-no-message*create*segment*finished-game-learning*datacollect
+#   (state <s> ^name interpret-message
+#              ^top-state.dialog-context.finished-game-teaching true
+#              ^operator <o>)
+#   (<o> ^name interpret-yes-no-message
+#        ^message-type yes)
+#-->
+#(write (cmd |ctf -a chunked-stats.txt stats|))
+#(halt)
+#}
+
+sp {interpret-message*apply*interpret-yes-no-message*create*segment*finished-game-learning
+   (state <s> ^name interpret-message
+              ^top-state.dialog-context.finished-game-teaching true
+              ^operator <o>)
+   (<o> ^name interpret-yes-no-message
+        ^message-type <yesno>
+        ^message <msg>)
+-->
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type finished-game-learning
+        ^parameters.message <yesno>
+        ^satisfaction <sat>)
+   (<sat> ^learning-event.type game)
+}
+
+#how make sure different handle??
+sp {interpret-message*apply*interpret-yes-no-message*no*concept-transfer
+   (state <s> ^name interpret-message
+              ^top-state <ts>
+              ^operator <o>)
+   (<ts> ^dialog-context <dc> ^interaction.changes <changes>)
+   (<dc> ^learning-predicate <lp> ^transfering <tf>)
+   (<lp> ^name <name>)
+   (<tf> ^name <name> ^lti <pred> ^to <game>)
+   (<o> ^name interpret-yes-no-message
+        ^message <msg>
+        ^message-type no)
+-->
+   (<msg> ^interpreted true)
+   (<dc> ^transfering <tf> -)
+   (<changes> ^outgoing-message <msg2>)
+   (<msg2> ^type unknown-word
+              ^fields.word <name>)
+}    

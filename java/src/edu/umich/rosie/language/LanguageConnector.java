@@ -44,7 +44,7 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
         
         this.messagePasser = messagePasser;
     	
-        this.setOutputHandlerNames(new String[]{ "send-message" });
+        this.setOutputHandlerNames(new String[]{ "send-message", "next-script-sentence" });
 	}
 	
 	@Override
@@ -111,6 +111,25 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
     	if (attName.equals("send-message")){
     		processOutputLinkMessage(id);
     	}
+    	if (attName.equals("next-script-sentence")){
+    		processOutputLinkScript(id);
+    	}
+    }
+    
+    private void processOutputLinkScript(Identifier messageId)
+    {	
+        if (messageId.GetNumberChildren() == 0)
+        {
+            messageId.CreateStringWME("status", "error");
+            throw new IllegalStateException("Message has no children");
+        }
+        int sentenceNumber = Integer.parseInt(SoarUtil.getValueOfAttribute(messageId, "current-sentence-number", "Error: No ^name attribute"));
+        
+        if(curMessage != null){
+			messagesToRemove.add(curMessage);
+		}
+        //TODO retrieve loaded script sentence with sentence number
+		curMessage = new Message("hi", nextMessageId++);
     }
 
 	private void processOutputLinkMessage(Identifier messageId)

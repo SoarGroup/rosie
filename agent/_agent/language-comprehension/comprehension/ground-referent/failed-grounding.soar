@@ -1,7 +1,7 @@
 sp {ground-referent*propose*failed-grounding
   #:interrupt
-   (state <s> ^name ground-referent
-              ^quiescence t                # no chunking because failure              
+   (state <s> ^name ground-referent   
+             # ^quiescence t          
               ^proto-referents none)
 -->
    (<s> ^operator <op> + =, >)
@@ -20,14 +20,14 @@ sp {ground-referent*apply*failed-grounding
              -^constraint.property.handle << name location category >>)
 -->
    (<s> ^proto-referent <pr>)
-   (<objs> ^object <pr>)
+ #  (<objs> ^object <pr>)
    (<pr> ^predicates <pred>
          ^handle (make-constant-symbol |new-object-id|)
          ^item-type object)
-   (<pred> ^visible false
+   (<pred> ^visibility not-visible
            ^dialog-object true
            ^category object)
-   (write (crlf) |Nothing passed all constraints for definite referent. Creating ^visible false object.|)
+  # (write (crlf) |Nothing passed all constraints for definite referent. Creating ^visibility not-visible object.|)
 }
 sp {ground-referent*apply*failed-grounding*category
    (state <s> ^operator.name failed-grounding
@@ -39,14 +39,14 @@ sp {ground-referent*apply*failed-grounding*category
           ^handle <cat>)
 -->
    (<s> ^proto-referent <pr>)
-   (<objs> ^object <pr>)
+  # (<objs> ^object <pr>)
    (<pr> ^predicates <pred>
          ^handle (make-constant-symbol |new-object-id|)
          ^item-type object) ## AM: all 'objects' are now ^item-type object, the category is used to differentiate
    (<pred> ^visible false
            ^dialog-object true
            ^category <cat>)
-   (write (crlf) |Nothing passed all constraints for definite referent. Creating ^visible false| <cat>)
+   #(write (crlf) |Nothing passed all constraints for definite referent. Creating ^visible false| <cat>)
 }
 
 # If location or named object then use it. Assume it is not visible (in ^world) 
@@ -64,7 +64,7 @@ sp {ground-referent*apply*failed-grounding*location
    (<prop> ^handle << location name >>)
 -->
    (<s> ^proto-referent <ref2>)
-   (<objs> ^object <ref2>)
+  # (<objs> ^object <ref2>)
    (<ref2> ^handle <handle>
           ^property <prop>
           ^item-type <item-type>
@@ -72,7 +72,7 @@ sp {ground-referent*apply*failed-grounding*location
    (<pred> ^dialog-object true
             ^visible false
            ^category object)
-   (write (crlf) |Location or named object found: | <ref> | for definite referent. Marking it ^visible false.|)
+   #(write (crlf) |Location or named object found: | <ref> | for definite referent. Marking it ^visibility not-visible.|)
 }
 
 # If location or named object then use it. Assume it is not visible (in ^world) 
@@ -83,12 +83,11 @@ sp {ground-referent*apply*failed-grounding*location2
               ^top-state.dialog-world.objects <objs>
               ^constraint <ref>)
    (<ref> ^property.handle << location name >>
-           ^predicates
-           ^visible false)
+          ^predicates.visible false)
 -->
    (<s> ^proto-referent <ref>)
-   (<objs> ^object <ref>)
-   (write (crlf) |Location or named object found: | <ref> | for definite referent. Previously found.|)
+ #  (<objs> ^object <ref>)
+ #  (write (crlf) |Location or named object found: | <ref> | for definite referent. Previously found.|)
 }
 
 # Generate a referent that will have all of the constraints added to it
@@ -103,8 +102,8 @@ sp {ground-referent*apply*failed-grounding*indefinite*non-category
              -^superstate.operator.<< double-constraints constraints >>.constraint.property.handle category
               ^top-state.dialog-world.objects <objs>)
 -->
-   (write (crlf) |Added indefinite object referent | <pr> | to dialog-world.|)
-   (<objs> ^object <pr>)
+ #  (write (crlf) |Added indefinite object referent | <pr> | to dialog-world.|)
+ #  (<objs> ^object <pr>)
    (<s> ^proto-referent <pr>)
    (<pr> ^predicates <pred>
          ^handle (make-constant-symbol |new-object-id|)
@@ -123,8 +122,8 @@ sp {ground-referent*apply*failed-grounding*indefinite*category
    (<con> ^handle <obj-type>
           ^property.handle category)
 -->
-   (write (crlf) |Added indefinite entity referent | <pr> | to dialog-world.|)
-   (<objs> ^object <pr>)
+  # (write (crlf) |Added indefinite entity referent | <pr> | to dialog-world.|)
+  # (<objs> ^object <pr>)
    (<s> ^proto-referent <pr>)
    (<pr> ^predicates <pred>
          ^handle (make-constant-symbol |new-object-id|)
@@ -134,27 +133,30 @@ sp {ground-referent*apply*failed-grounding*indefinite*category
             ^category <obj-type>)
 }
 
+# AM: EDIT: Included sm-proto-referent in all of these rules as well
+
 sp {ground-referent*apply*failed-grounding*property
    (state <s> ^operator.name << create-hypothetical quantifier failed-grounding index-semantic-memory >>
               ^{ << sm-proto-referent proto-referent >> } <pr>
+              #^top-state.dialog-world.objects.object <pr>
              -^superstate.name evaluate-operator
               ^superstate.operator.<< double-constraints constraints >>.constraint <constraint>)
    (<constraint> ^handle <value> 
                  ^property.<< name handle >> { <prop> <> category })
-   (<pr> ^predicates <pred>)
+    (<pr> ^predicates <pred>)
   -(<pred> ^<prop>)
    (<pr> -^<< handle name category >> <value>)
 -->
    (<pr> ^predicates-copied true)
    (<pred> ^<prop> <value>)
-   (write (crlf) |Add predicate: ^| <prop> | | <value>)
+   #(write (crlf) |Add predicate: ^| <prop> | | <value>)
 }
 
 sp {ground-referent*apply*failed-grounding*property1
    #:interrupt
    (state <s> ^operator.name  << create-hypothetical quantifier failed-grounding index-semantic-memory >>
               ^{ << sm-proto-referent proto-referent >> } <pr>
-#              ^proto-referent <pr>
+              #^top-state.dialog-world.objects.object <pr>
              -^superstate.name evaluate-operator
               ^superstate.operator.<< double-constraints constraints >>.constraint <constraint>)
    (<constraint> ^referent <ref>)
@@ -165,14 +167,14 @@ sp {ground-referent*apply*failed-grounding*property1
 -->
    (<pr> ^predicates-copied true)
    (<pred> ^<prop> <value>)
-   (write (crlf) |Add predicate: ^| <prop> | | <value>)
+   #(write (crlf) |Add predicate 1: ^| <prop> | | <value>)
 }
 
 sp {ground-referent*apply*failed-grounding*property15
   # :interrupt
    (state <s> ^operator.name << create-hypothetical quantifier failed-grounding index-semantic-memory >>
               ^{ << sm-proto-referent proto-referent >> } <pr>
-#              ^proto-referent <pr>
+              #^top-state.dialog-world.objects.object <pr>
              -^superstate.name evaluate-operator
               ^superstate.operator.<< double-constraints constraints >>.constraint <constraint>)
    (<constraint> ^referent <ref>)
@@ -183,63 +185,120 @@ sp {ground-referent*apply*failed-grounding*property15
 -->
    (<pr> ^predicates-copied true)
    (<pred> ^handle <value>)
-   (write (crlf) |Add predicate: ^handle | <value>)
+   #(write (crlf) |Add predicate 15: ^predicate.handle | <value>)
 }
 
 sp {ground-referent*apply*failed-grounding*property16
   # :interrupt
    (state <s> ^operator.name << create-hypothetical quantifier failed-grounding >>
               ^proto-referent <pr>
+              #^top-state.dialog-world.objects.object <pr>
              -^superstate.name evaluate-operator
               ^superstate.operator.<< double-constraints constraints >>.constraint <constraint>)
    (<constraint> ^handle { <value>  <> all <> some <> many <> your <> one }
                 -^item-type << predicate property >>
-                -^property.handle << property >>) 
-   (<pr> ^predicates <pred>)
+                -^property.handle << property shape >>
+                -^relation
+                -^modifier true) 
+   (<pr> ^predicates <pred>
+        -^predicates-copied true)
   -(<pred> ^category <value>)
    (<pr> -^<< handle name >> <value>)
 -->
    (<pr> ^predicates-copied true)
    (<pred> ^handle <value>)
-   (write (crlf) |Add predicate: ^handle | <value>)
+   #(write (crlf) |Add predicate 16: ^handle | <value>)
 }
 
+
+sp {ground-referent*apply*failed-grounding*property16-2*modi*relation
+  # :interrupt
+   (state <s> ^operator.name << create-hypothetical quantifier failed-grounding >>
+              ^proto-referent <pr>
+              #^top-state.dialog-world.objects.object <pr>
+             -^superstate.name evaluate-operator
+              ^superstate.operator.<< double-constraints constraints >>.constraint <constraint>              
+             ^superstate.operator.<< double-constraints constraints >>.constraint { <> <constraint> <constraint2> })
+   (<constraint> ^handle { <value>  <> all <> some <> many <> your <> one }
+                -^item-type << predicate property >>
+                -^property.handle << property shape >>
+                -^relation
+                 ^modifier true) 
+   (<pr> ^predicates <pred>
+        -^predicates-copied true)
+  -(<pred> ^category <value>)
+   (<pr> -^<< handle name >> <value>)
+   (<constraint2> ^relation <value2>)
+-->
+   (<pr> ^predicates-copied true)
+   (<value2> ^predicates <constraint>)
+   (write (crlf) |Add predicate 16-mod: | <value2> | ^property | <constraint>)
+}
+
+
+
+sp {ground-referent*apply*failed-grounding*property16-2*modi*property
+  # :interrupt
+   (state <s> ^operator.name << create-hypothetical quantifier failed-grounding >>
+              ^proto-referent <pr>
+              #^top-state.dialog-world.objects.object <pr>
+             -^superstate.name evaluate-operator
+              ^superstate.operator.<< double-constraints constraints >>.constraint <constraint>              
+              ^superstate.operator.<< double-constraints constraints >>.constraint { <> <constraint> <constraint2> })
+   (<constraint> ^handle { <value>  <> all <> some <> many <> your <> one }
+                -^item-type << predicate property >>
+                -^property.handle << property shape >>
+                -^relation
+                 ^modifier true) 
+   (<pr> ^predicates <pred>
+        -^predicates-copied true)
+  -(<pred> ^category <value>)
+   (<pr> -^<< handle name >> <value>)
+   (<constraint2> ^property <value2>)
+   (<value2> ^handle property)
+-->
+   (<pr> ^predicates-copied true)
+   (<pred> ^property-modifier <constraint>)
+   (<constraint> ^modifying <constraint2>)
+   (write (crlf) |Add predicate 16-mod-property: | <pred> | ^property-modifier | <constraint>)
+}
 
 sp {ground-referent*apply*failed-grounding*property17
    #:interrupt
    (state <s> ^operator.name  << create-hypothetical quantifier failed-grounding index-semantic-memory >>
               ^{ << sm-proto-referent proto-referent >> } <pr>
-#              ^proto-referent <pr>
+              #^top-state.dialog-world.objects.object <pr>
              -^superstate.name evaluate-operator
               ^superstate.operator.<< double-constraints constraints >>.constraint <constraint>)
    (<constraint> ^handle <value> 
+                -^<< movable category number quantity type multiple >> <x>
                 -^item-type << predicate property >>
                 -^property.handle << property >>) #category >>)
    (<pr> ^predicates <pred>)
    (<pred> ^category <value>)
 -->
    (<pr> ^predicates-copied true)
-   (write (crlf) |No properties to copy | <value>)
+   #(write (crlf) |No properties to copy 17 | <value>)
 }
 sp {ground-referent*apply*failed-grounding*property2
- #  :interrupt
+  #:interrupt
    (state <s> ^operator.name  << create-hypothetical quantifier failed-grounding index-semantic-memory >>
               ^{ << sm-proto-referent proto-referent >> } <pr>
-#              ^proto-referent <pr>
+              #^top-state.dialog-world.objects.object <pr>
              -^superstate.name evaluate-operator
               ^superstate.operator.<< double-constraints constraints >>.constraint.{ <prop> << movable category number quantity type multiple >> } <value>)
    (<pr> ^predicates <pred>)
 -->
    (<pr> ^predicates-copied true)
    (<pred> ^<prop> <value>)
-   (write (crlf) |Add predicate: ^| <prop> | | <value>)
+   #(write (crlf) |Add predicate 2: ^| <prop> | | <value>)
 }
 
 sp {ground-referent*apply*failed-grounding*property3
  # :interrupt
    (state <s> ^operator.name  << create-hypothetical quantifier failed-grounding  index-semantic-memory >>
               ^{ << sm-proto-referent proto-referent >> } <pr>
-#              ^proto-referent <pr>
+              #^top-state.dialog-world.objects.object <pr>
              -^superstate.name evaluate-operator
               ^superstate.operator.<< double-constraints constraints >>.constraint <constraint>)
   -{(<constraint> ^referent.handle <value>              ## Added referent
@@ -247,40 +306,135 @@ sp {ground-referent*apply*failed-grounding*property3
   -(<constraint> ^<< movable category type number quantity multiple handle >>)
 -->
    (<pr> ^predicates-copied true)
-   (write (crlf) |No predicates|)
+   #(write (crlf) |No predicates - 3|)
 }
 
 sp {ground-referent*apply*failed-grounding*property4
  # :interrupt
    (state <s> ^operator.name  << create-hypothetical quantifier failed-grounding index-semantic-memory >>
               ^{ << sm-proto-referent proto-referent >> } <pr>
-#              ^proto-referent <pr>
+              #^top-state.dialog-world.objects.object <pr>
              -^superstate.name evaluate-operator
               ^superstate.operator.<< double-constraints constraints >>.constraint <constraint>)
   -{(<constraint> ^referent.handle <value>              ## Added referent
                   ^property.<< name handle >>  <prop>)}
    (<constraint> ^handle)
+  -{(<constraint> ^{ <prop> << movable category number quantity type multiple >> } <value>)  #2
+    (<pr> ^predicates)}
+  -{(<constraint> ^handle <value> 
+                  ^property.<< name handle >> { <prop> <> category })}  # 1
+  -{(<s> ^constraints.quantifier.lt-referent <constraint>)}
 -->
    (<pr> ^predicates-copied true)
-   (write (crlf) |No predicates|)
+   #(write (crlf) |No predicates - 4|)
 }
+
+
+sp {ground-referent*apply*failed-grounding*property45
+ # :interrupt
+   (state <s> ^operator.name  << create-hypothetical quantifier failed-grounding index-semantic-memory >>
+              ^proto-referent <pr>
+              #^top-state.dialog-world.objects.object <pr>
+             -^superstate.name evaluate-operator
+              ^superstate.operator <so>)
+   (<so> ^constraint-count 1
+         ^<< double-constraints constraints >>.constraint <constraint>)
+  -{(<constraint> ^referent.handle <value>              ## Added referent
+                  ^property.<< name handle >>  <prop>)}
+   (<constraint> ^handle
+                 ^property.handle name)
+  -{(<constraint> ^{ <prop> << movable category number quantity type multiple >> } <value>)  #2
+    (<pr> ^predicates)}
+  -{(<s> ^constraints.quantifier.lt-referent <constraint>)}
+-->
+   (<pr> ^predicates-copied true)
+   #(write (crlf) |No predicates - 45|)
+}
+
 sp {ground-referent*apply*failed-grounding*relation
    (state <s> ^operator.name  << create-hypothetical quantifier failed-grounding index-semantic-memory >>
               ^{ << sm-proto-referent proto-referent >> } <pr>
 #              ^proto-referent <pr>
              -^superstate.name evaluate-operator
               ^superstate.operator.<< double-constraints constraints >>.constraint <constraint>)
-   (<constraint> ^relation <value>)
+   (<constraint> ^relation <value>
+                -^handle)
 -->
    (<pr> ^predicates-copied true
-         ^relations <value>)
-   (write (crlf) |Add relation: | <value>)
+         ^relation <value>)
+   #(write (crlf) |Add relation: | <value>)
 }
+
+sp {ground-referent*apply*failed-grounding*relation*multiple-constraint
+   (state <s> ^operator.name  << create-hypothetical quantifier failed-grounding index-semantic-memory >>
+              ^proto-referent <pr>
+             -^superstate.name evaluate-operator
+              ^superstate.operator.<< double-constraints constraints >>.constraint <constraint>)
+   (<constraint> ^relation <value>
+                 ^handle)
+-->
+   (<pr> ^predicates-copied true
+         ^predicates <constraint>)
+   (write (crlf) |Add predicates and relation structure: | <constraint>)
+}
+
+
+#sp {ground-referent*apply*failed-grounding*relation2
+#  # :interrupt
+#   (state <s> ^operator.name  << create-hypothetical quantifier failed-grounding index-semantic-memory >>
+#              ^proto-referent <pr>
+#              #^top-state.dialog-world.objects.object <pr>
+#             -^superstate.name evaluate-operator
+#              ^constraints.complement <comp>)
+#   (<comp> ^head.referent <ref>
+#           ^lt.relation.handle <arg>)
+#-->
+#   (<pr> ^predicates-copied true
+#         ^relation <rel>)
+#   (<rel> ^2 <ref> ^handle <arg>)
+#   #(write (crlf) |Add relation: | <ref> |: | <arg>)
+#}
+
+sp {ground-referent*apply*failed-grounding*relation2
+  # :interrupt
+   (state <s> ^operator.name  << create-hypothetical quantifier failed-grounding index-semantic-memory >>
+              ^proto-referent <pr>
+             -^superstate.name evaluate-operator
+              ^constraints.complement <comp>)
+   (<comp> ^head.referent <ref>
+          -^lt.directional true
+           ^lt.relation.handle <arg>)   
+  -{(<s> ^superstate.operator.<< double-constraints constraints >>.constraint.relation <value>)
+    (<value> ^2 <ref> ^handle <arg>)}
+-->
+   (<pr> ^predicates-copied true
+         ^relation <rel>)
+   (<rel> ^2 <ref> ^handle <arg>)
+   #(write (crlf) |Add relation: | <ref> |: | <arg>)
+}
+#sp {ground-referent*apply*failed-grounding*relation2
+#  # :interrupt
+#   (state <s> ^operator.name  << create-hypothetical quantifier failed-grounding index-semantic-memory >>
+#              ^proto-referent <pr>
+#             -^superstate.name evaluate-operator
+#              ^constraints.complement <comp>)
+#   (<comp> ^head.referent <ref>
+#           ^lt.relation.handle <arg>)   
+#  -{(<s> ^superstate.operator.<< double-constraints constraints >>.constraint.relation <value>)
+#    (<value> ^2 <ref> ^handle <arg>)}
+#-->
+#   (<pr> ^predicates-copied true
+#         ^relation <rel>)
+#   (<rel> ^2 <ref> ^handle <arg>)
+#   #(write (crlf) |Add relation: | <ref> |: | <arg>)
+#}
+
 sp {ground-referent*apply*failed-grounding*copy-possessive-flag
    (state <s> ^operator.name failed-grounding
              -^superstate.name evaluate-operator
              -^constraint-lt.specifier indefinite
               ^candidate-set.possessive true
+              #^top-state.dialog-world.objects.object <pr>
               ^proto-referent <pr>)
 -->
    (<pr> ^possessive true)
@@ -290,6 +444,7 @@ sp {ground-referent*apply*failed-grounding*copy-specifier-distinct
    (state <s> ^operator.name failed-grounding
              -^superstate.name evaluate-operator
               ^constraint-lt.specifier distinct
+              #^top-state.dialog-world.objects.object <pr>
               ^proto-referent <pr>)
 -->
    (<pr> ^specifier distinct)
@@ -301,7 +456,9 @@ sp {ground-referent*apply*failed-grounding*copy-specifier-distinct
 sp {ground-referent*apply*failed-grounding*finish
    (state <s> ^operator.name  << create-hypothetical quantifier failed-grounding >>
               ^superstate.operator.<< double-constraints constraints >> <c>
-              ^proto-referent <ref>)
+              ^proto-referent <ref>
+              ^quiescence t
+              )
    (<ref> ^predicates-copied true) 
 -->
    (<c> ^ground-tested <c>
@@ -311,28 +468,34 @@ sp {ground-referent*apply*failed-grounding*finish
 ## Add referent to dialog-object-list
 sp {ground-referent*apply*failed-grounding*finish2
    #:interrupt
-   (state <s> ^operator.name  << create-hypothetical quantifier failed-grounding >>
+   (state <s> ^operator.name  << create-hypothetical quantifier failed-grounding >> 
+               ^quiescence t         
               ^top-state <ts>
-              ^proto-referent <ref>)
+              ^proto-referent <ref>
+              ^top-state.dialog-world.objects <objs>)
    (<ref> ^predicates-copied true) 
    (<ts> ^dialog-object-list <dol>)
 -->
    (<ts> ^dialog-object-list <dol> -
                              <ndol>)
+   (<objs> ^object <ref>)
    (<ndol> ^referent <ref>
            ^next <dol>)
 }
 
 ## Add referent to dialog-object-list-access
 sp {ground-referent*apply*failed-grounding*finish3
-   (state <s> ^operator.name  << create-hypothetical quantifier failed-grounding >>
+   (state <s> ^operator.name  << create-hypothetical quantifier failed-grounding >> 
+               ^quiescence t         
               ^segment <ss>
-              ^proto-referent <ref>)
+              ^proto-referent <ref>
+              ^top-state.dialog-world.objects <objs>)
    (<ref> ^predicates-copied true) 
    (<ss> ^dialog-object-list-access <dol>)
 -->
    (<ss> ^dialog-object-list-access <dol> -
                                    <ndol>)
+   (<objs> ^object <ref>)
    (<ndol> ^referent <ref>
            ^next <dol>)
 }
@@ -340,7 +503,8 @@ sp {ground-referent*apply*failed-grounding*finish3
 ### Remove old referent
 
 sp {apply*failed-grounding*remove-current-referent
-   (state <s> ^operator.name  << create-hypothetical quantifier failed-grounding >>
+   (state <s> ^operator.name  << create-hypothetical quantifier failed-grounding >> 
+               ^quiescence t         
              -^proto-referent <obj>
               ^superstate.operator <so>
               ^constraints <cs>)
@@ -349,13 +513,14 @@ sp {apply*failed-grounding*remove-current-referent
    (<cs> ^referent <obj>)
 -->
    (<cs> ^referent <obj> -)
-   (write (crlf) |Remove prior referent | <obj> | from | <cs>)
+   #(write (crlf) |Remove prior referent | <obj> | from | <cs>)
 }
 
 #### For Grounding failures during evaluation
 
 sp {ground-referent*apply*failed-grounding*evaluate-operator
-   (state <s> ^operator.name  << create-hypothetical quantifier failed-grounding >>
+   (state <s> ^operator.name  << create-hypothetical quantifier failed-grounding >> 
+               ^quiescence t         
               ^superstate <ss>)
    (<ss> ^name evaluate-operator
          ^superstate <sss>)

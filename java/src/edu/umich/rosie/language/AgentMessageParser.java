@@ -1,10 +1,15 @@
 package edu.umich.rosie.language;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 import sml.Identifier;
@@ -14,6 +19,16 @@ import edu.umich.rosie.soar.SoarUtil;
 public class AgentMessageParser
 {
 	static int counter = 0;
+	
+	// Synonymous generic messages for more natural responses
+	private static final List<String> hiMsg = Arrays.asList("Hi", "Hey", "Hello", "Greetings", "What's up");
+	private static final List<String> byeMsg = Arrays.asList("bye!", "goodbye!", "so long");
+	private static final List<String> affirmMsg = Arrays.asList("ok", "I understand", "all right", "sure", "got it", "correct", "right", "affirmative");
+	private static final List<String> negateMsg = Arrays.asList("no", "wrong", "incorrect");
+	private static final List<String> uncertainMsg = Arrays.asList("I don't know", "I'm not sure", "I am uncertain");
+	private static final List<String> introMsg = Arrays.asList("Hi! My name is Rosie. I am an interactive learning task learning robot build on the soar cognitive architecture");
+	
+	private static Random rand = new Random();
 	
 	private static HashMap<String, String> simpleMessages = null;
 	
@@ -44,8 +59,30 @@ public class AgentMessageParser
 			simpleMessages.put("confirm-put-down", "I have put down the object.");
 			simpleMessages.put("find-success", null);//"SUCCESS");
 			simpleMessages.put("find-failure", null);//"FAILURE");
-      simpleMessages.put("stop-leading", "You can stop following me");
-      simpleMessages.put("retrospective-learning-failure", "I was unable to learn the task policy");
+			simpleMessages.put("stop-leading", "You can stop following me");
+			simpleMessages.put("retrospective-learning-failure", "I was unable to learn the task policy");
+			
+			//added for games and puzzles
+			simpleMessages.put("your-turn", "Your turn.");
+			simpleMessages.put("i-win", "I win!");
+			simpleMessages.put("i-lose", "I lose.");
+			simpleMessages.put("easy", "That was easy!");
+			simpleMessages.put("describe-game", "Please setup the game.");
+			simpleMessages.put("describe-puzzle", "Please setup the puzzle.");
+			simpleMessages.put("setup-goal", "Please setup the goal state.");
+			simpleMessages.put("tell-me-go", "Ok, tell me when to go.");
+			simpleMessages.put("setup-failure", "Please setup the failure condition.");
+			simpleMessages.put("define-actions", "Can you describe the legal actions?");
+			simpleMessages.put("describe-action", "What are the conditions of the action.");
+			simpleMessages.put("describe-goal", "Please describe or demonstrate the goal.");
+			simpleMessages.put("describe-failure", "Please describe the failure condition.");
+			simpleMessages.put("learned-goal", "Ok, I've learned the goal.");
+			simpleMessages.put("learned-action", "Ok, I've learned the action.");
+			simpleMessages.put("learned-failure", "Ok, I've learned the failure condition.");
+			simpleMessages.put("learned-heuristic", "Ok, I've learned the heuristic.");
+			simpleMessages.put("already-learned-goal", "I know that goal.");
+			simpleMessages.put("already-learned-action", "I know that action.");
+			simpleMessages.put("already-learned-failure", "I know that failure condition.");
 		}
 		
 		String type = SoarUtil.getValueOfAttribute(id, "type");
@@ -60,7 +97,8 @@ public class AgentMessageParser
 		
 		Identifier fieldsId = SoarUtil.getIdentifierOfAttribute(id, "fields");
 		if(type.equals("get-next-task")){
-			return translateNextTaskPrompt();
+			return null;
+			//return translateNextTaskPrompt();
 		} else if(type.equals("get-predicate-info")){
 			return translateGetPredicateInfo(fieldsId);
 		} else if(type.equals("report-successful-training")){
@@ -71,8 +109,8 @@ public class AgentMessageParser
 			return translateGetLocationInfo(fieldsId);
 		} else if(type.equals("get-item-request")){
 			return translateGetItemRequest(fieldsId);
-    } else if(type.equals("put-down-item-request")){
-      return translatePutDownItemRequest(fieldsId);
+		} else if(type.equals("put-down-item-request")){
+		  return translatePutDownItemRequest(fieldsId);
 		} else if(type.equals("give-item-request")){
 			return translateGiveItemRequest(fieldsId);
 		} else if(type.equals("ask-about-item")){
@@ -90,11 +128,151 @@ public class AgentMessageParser
 	    } else if(type.equals("multiple-arguments")){
 	    	return translateMultipleArguments(fieldsId);
 	    } else if(type.equals("start-leading-request")){
-        return translateStartLeadingRequest(fieldsId);
-      }
+			return translateStartLeadingRequest(fieldsId);
+	    } else if(type.equals("unknown-word")){
+			return translateUnknownWord(fieldsId);
+	    } else if(type.equals("unknown-defined-word")){
+			return translateUnknownDefinedWord(fieldsId);
+	    } else if(type.equals("learned-unknown-word")){
+			return translateLearnedUnknownWord(fieldsId);
+	    } else if(type.equals("transfer-concept")){
+			return translateTransferConcept(fieldsId);
+	    } else if(type.equals("already-know-concept")){
+			return translateAlreadyKnowConcept(fieldsId);
+	    } else if(type.equals("learned-teacher-name")){
+		    return translateLearnedTeacherName(fieldsId);
+        } else if(type.equals("learned-game")){
+		    return translateLearnedGame(fieldsId);
+        } else if(type.equals("current-time")){
+		    return translateCurrentTime(fieldsId);
+        } else if(type.equals("reset-state")){
+		    return translateResetState(fieldsId);
+        } 
+		//conversational messages
+		else if(type.equals("generic"))
+		{
+			return translateGeneric(fieldsId);
+	    }
+		
+		
 		return null;
 	}
 	
+	public static String translateLearnedGame(Identifier fieldsId){
+    	String result = "Ok, I've learned the rules of ";
+    	String word = SoarUtil.getValueOfAttribute(fieldsId, "game");
+  
+    	if (word != null)
+    	{
+    		word = word.replaceAll("\\d", "");
+    		result += word;
+    	}
+    	String type = SoarUtil.getValueOfAttribute(fieldsId, "type");
+    	if ((type != null) && type.equalsIgnoreCase("puzzle"))
+    		result += ". Should I try to solve the puzzle?";
+    	else
+    		result += ". Shall we play a game?";
+    	return result;
+    }
+	public static String translateCurrentTime(Identifier fieldsId){
+		String result = "The current time is ";
+		Date now = new Date();
+		
+		String time = new SimpleDateFormat("h:mm a").format(now);
+		result+= time;
+		
+		return result;	
+	}
+	
+	public static String translateResetState(Identifier fieldsId){
+		String result = "I couldn't detect the ";
+		String word = SoarUtil.getValueOfAttribute(fieldsId, "word");
+		result+= word;
+		result+= ". Please set it up again.";
+		return result;
+	}
+	
+	 public static String translateLearnedUnknownWord(Identifier fieldsId){
+	    	String result = "Ok, I've learned the concept ";
+	    	String word = SoarUtil.getValueOfAttribute(fieldsId, "word");
+	    	
+	    	if (word != null)
+	    	{
+	    		word = word.replaceAll("\\d", "");
+	    		result += word;
+	    	}
+	    	return result;
+	 }
+	 public static String translateLearnedTeacherName(Identifier fieldsId){
+		 
+	    	String result = hiMsg.get(rand.nextInt(hiMsg.size())) + " ";
+	    	String word = SoarUtil.getValueOfAttribute(fieldsId, "word");
+	    	if (word != null)
+	    	{
+	    		word = word.replaceAll("\\d", "");
+	    		result += word;
+	    	}
+	    	result += "! My name is Rosie. I am an interactive task learning robot.";
+	    	return result;
+	 }
+	 
+	 public static String translateUnknownWord(Identifier fieldsId){
+	    	String result = "I don't know the concept ";
+	    	String word = SoarUtil.getValueOfAttribute(fieldsId, "word");
+	    	if (word != null)
+	    	{
+	    		word = word.replaceAll("\\d", "");
+	    		result += word;
+	    	}
+	    	return result;
+	 }
+	 public static String translateUnknownDefinedWord(Identifier fieldsId){
+	    	String result = "I cannot satisfy the concept ";
+	    	String word = SoarUtil.getValueOfAttribute(fieldsId, "word");
+	    	if (word != null)
+	    	{
+	    		word = word.replaceAll("\\d", "");
+	    		result += word;
+	    	}
+	    	result+= ". Can you give another definition?";
+	    	return result;
+	 }
+	    	
+	    	
+
+    public static String translateGeneric(Identifier fieldsId){
+    	String result = null;
+    	String type = SoarUtil.getValueOfAttribute(fieldsId, "type");
+    	
+    	int size = 0;
+    	List<String> options = null;
+    	if (type.equals("affirmative"))
+    	{
+    		options = affirmMsg;
+    		size = affirmMsg.size();
+    	}
+    	else if (type.equals("negative"))
+    	{
+    		options = negateMsg;
+    		size = negateMsg.size();
+    	}
+    	else if (type.equals("hello"))
+    	{
+    		options = hiMsg;
+    		size = hiMsg.size();
+    	}
+    	else if (type.equals("bye"))
+    	{
+    		options = byeMsg;
+    		size = byeMsg.size();
+    	}
+    	
+    	if (options == null)
+    		return null;
+    	int randomInt = rand.nextInt(size);
+    	return options.get(randomInt);
+    	
+    }
 	public static String translateGetItemRequest(Identifier fieldsId){
 		String item = SoarUtil.getValueOfAttribute(fieldsId, "item");
 		if (item != null){
@@ -161,6 +339,26 @@ public class AgentMessageParser
 		return "I was unable to carry out that instruction";
 	}
 	
+	public static String translateTransferConcept(Identifier fields){
+		String concept = SoarUtil.getValueOfAttribute(fields, "concept-name");
+		concept = concept.replaceAll("\\d", "");
+		String result = "Does \'" + concept + "\' mean that ";
+		result += getGoalState(fields);
+		result += getGoalStateFunctions(fields);
+		result += "?";
+		return result;
+		
+    }
+	public static String translateAlreadyKnowConcept(Identifier fields){
+		String concept = SoarUtil.getValueOfAttribute(fields, "concept-name");
+		String type = SoarUtil.getValueOfAttribute(fields, "type");
+		concept = concept.replaceAll("\\d", "");
+		String result = "Ok, I already know the "+ type + " " + concept + ".";
+		
+		return result;
+		
+    }
+	
     public static String translateFinalGoalState(Identifier fields){
 		String result = "Ok, I've learned that the goal state is that ";
 		result += getGoalState(fields);
@@ -184,6 +382,46 @@ public class AgentMessageParser
     }
   }
 	
+	public static String getGoalStateFunctions(Identifier fields){
+		Identifier relationships = SoarUtil.getIdentifierOfAttribute(fields, "functions");
+		ArrayList<String> objects = new ArrayList<String>();
+		String result = "";
+		String definitive = SoarUtil.getValueOfAttribute(fields, "definitive");
+		
+	 
+		for(int index = 0; index < relationships.GetNumberChildren(); index++)
+		{
+		    result+= " and ";
+
+		    WMElement wme = relationships.GetChild(index);
+		    
+		    Identifier function = wme.ConvertToIdentifier();
+		    
+            String of1 = SoarUtil.getValueOfAttribute(function, "of1");
+            String of2 = SoarUtil.getValueOfAttribute(function, "of2");
+            of1 = of1.replaceAll("\\d", "");
+            of2 = of2.replaceAll("\\d", "");
+            
+            //expect more than one, loop
+            Identifier object1 = SoarUtil.getIdentifierOfAttribute(function, "1");
+            Identifier object2 = SoarUtil.getIdentifierOfAttribute(function, "2");
+            
+            String objDescription1 = generateObjectDescriptionNew(object1);
+            String objDescription2 = generateObjectDescriptionNew(object2);
+            
+	    	if (!objDescription1.equals("it"))
+	    	{
+	    		objDescription1 = "the " + objDescription1;
+	        }
+            if (!objDescription2.equals("it"))
+            {
+	    		objDescription2 = "the " + objDescription2;
+            }
+            	result += "the " + of1 + " of " + objDescription1 + " is " +  "the " + of2 + " of "+ objDescription2;
+		}
+		return result;
+	}
+
 	public static String getGoalState(Identifier fields){
 		Identifier relationships = SoarUtil.getIdentifierOfAttribute(fields, "relationships");
 		ArrayList<String> objects = new ArrayList<String>();
@@ -191,7 +429,7 @@ public class AgentMessageParser
 		String definitive = SoarUtil.getValueOfAttribute(fields, "definitive");
 		
 	    boolean allDefinitive = false;
-	    if (definitive.equals("yes"))
+	    if ((definitive != null) && (definitive.equals("yes")))
 	    	allDefinitive = true;
 		for(int index = 0; index < relationships.GetNumberChildren(); index++)
 		{
@@ -212,6 +450,12 @@ public class AgentMessageParser
             String objDescription1 = generateObjectDescriptionNew(object1);
             String objDescription2 = "";
             Identifier object2 = SoarUtil.getIdentifierOfAttribute(relation, "2");
+           
+            String negative = SoarUtil.getValueOfAttribute(relation, "negative");
+            
+            if ((negative != null) && (negative.equals("true")))
+            	preposition = "not " + preposition;
+            
             
             //may have only one object
             if (object2 != null)
@@ -224,8 +468,11 @@ public class AgentMessageParser
             }
             else
             {
+            	if (!objDescription1.equals("it"))
+            	{
             	if (objects.contains(object1.GetValueAsString()))
-            		objDescription1 = "the " + objDescription1;
+            		
+            			objDescription1 = "the " + objDescription1;
 	            else {
 	            	objects.add(object1.GetValueAsString());
 	    			if (startsWithVowel(objDescription1))
@@ -233,7 +480,9 @@ public class AgentMessageParser
 	    			else
 	    				objDescription1 = "a " + objDescription1;
 	            }
-	            
+            	}
+            	if (!objDescription2.equals("it"))
+            	{
 	            if (objects.contains(object2.GetValueAsString()))
 	            	objDescription2 = "the " + objDescription2;
 	            else {
@@ -243,6 +492,7 @@ public class AgentMessageParser
 	    			else
 	    				objDescription2 = "a " + objDescription2;
 	            }
+            	}
             }
             if (object2 != null)
             	result += objDescription1 + " is " + preposition + " " + objDescription2;
@@ -268,7 +518,9 @@ public class AgentMessageParser
 	}
 	public static boolean startsWithVowel(String adj){
 		return (adj.startsWith(" a") || adj.startsWith(" e") || adj.startsWith(" i") || 
-				adj.startsWith(" o") || adj.startsWith(" u"));
+				adj.startsWith(" o") || adj.startsWith(" u") ||
+				adj.startsWith("a") || adj.startsWith("e") || adj.startsWith("i") || 
+						adj.startsWith("o") || adj.startsWith("u"));
 	}
 	
 	public static String translateSaySentence(Identifier fieldsId){
@@ -542,6 +794,10 @@ public class AgentMessageParser
 		String root = SoarUtil.getValueOfAttribute(descId, "type");
 		if (root == null)
 			root = "object";
+		
+		if (root.equals("it"))
+			return root;
+		
 		//ArrayList<String> adjectives = (ArrayList<String>) SoarUtil.getAllValuesOfAttribute(descId, "value");
 		ArrayList<String> adjectives = new ArrayList<String>();
 		
@@ -550,13 +806,17 @@ public class AgentMessageParser
 			String att = el.GetAttribute().toLowerCase();
 			String val = el.GetValueAsString().toLowerCase();
 			val = val.replaceAll("\\d", "");//replace("1", "");
+			if (val.isEmpty())
+				continue;
 			if(att.equals("type"))
 				continue;
 			if(att.equals("name")){
 				root = val;
-			} else if(att.equals("shape")){
+			} else if ((att.equals("shape")) || (val.equals("block")) || (val.equals("location")))
+			{
 				root = val;
-			} else {
+			} else
+			{
 				adjectives.add(val);
 			}
 		}

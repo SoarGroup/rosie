@@ -16,6 +16,7 @@ sp {interpret-message*propose*interpret-object-description
    (state <s> ^name interpret-message
               ^instructor-message <msg>)
    (<msg> ^message-type object-description
+          -^interaction-status.failure
          -^interpreted true)
 -->
    (<s> ^operator <o> +)
@@ -89,6 +90,7 @@ sp {interpret-message*elaborate*interpret-object-description*predicate
 sp {interpret-message*elaborate*interpret-object-description*relation
    (state <s> ^name interpret-message
               ^operator <o> +)
+   (<rel> -^property.handle << color shape size >>)
    (<o> ^name interpret-object-description
         ^message.{ << relation predicate >> } <rel>)
    (<rel> ^2 <other>)
@@ -339,6 +341,25 @@ sp {interpret-message*apply*interpret-object-description*teach-location*terminat
 -->
    (<s> ^terminate-segment true)
 }
+#JK teach Rosie your name
+sp {interpret-message*apply*interpret-object-description*create*segment*learn-teacher-name
+   (state <s> ^name interpret-message
+              ^operator <o>)
+   (<o> ^name interpret-object-description
+        ^message <msg>)
+   (<msg> ^arg1 <q> ^predicate <p>)
+   (<q> ^handle name1)
+-->
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type learn-teacher-name
+        ^parameters.message <msg>
+        ^satisfaction <sat>)
+   (<sat> ^learning-event.type game)
+}
+
 
 #JK 'the name of the game is x"
 sp {interpret-message*apply*interpret-object-description*create*segment*learn-game-name
@@ -358,14 +379,34 @@ sp {interpret-message*apply*interpret-object-description*create*segment*learn-ga
         ^satisfaction <sat>)
    (<sat> ^learning-event.type game)
 }
-#JK 'the name of an action is x"
+
+#'the name of the puzzle is x"
+sp {interpret-message*apply*interpret-object-description*create*segment*learn-puzzle-name
+   (state <s> ^name interpret-message
+              ^operator <o>)
+   (<o> ^name interpret-object-description
+        ^message <msg>)
+   (<msg> ^arg1.{2} <q>)
+   (<q> ^handle name1 ^{2}.<< game handle >> puzzle1)
+-->
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type learn-puzzle-name
+        ^parameters.message <msg>
+        ^satisfaction <sat>)
+   (<sat> ^learning-event.type game)
+}
+
+#'the name of an action is x"
 sp {interpret-message*apply*interpret-object-description*create*segment*learn-action-name
    (state <s> ^name interpret-message
               ^operator <o>)
    (<o> ^name interpret-object-description
         ^message <msg>)
    (<msg> ^arg1.{2} <q>)
-   (<q> ^handle name1 ^{2}.handle action)
+   (<q> ^handle name1 ^{2}.<< action handle >> action)
 -->
    (<s> ^new-segment-info <info>
         ^mark-interpreted <msg>)
@@ -374,16 +415,16 @@ sp {interpret-message*apply*interpret-object-description*create*segment*learn-ac
    (<p> ^type learn-action-name
         ^parameters.message <msg>
         ^satisfaction <sat>)
-   (<sat> ^learning-event.type game)
+   (<sat> ^learning-event.type game-name)
 }
-#JK 'the name of an action is x"
+#'the name of the goal is x"
 sp {interpret-message*apply*interpret-object-description*create*segment*learn-goal-name
    (state <s> ^name interpret-message
               ^operator <o>)
    (<o> ^name interpret-object-description
         ^message <msg>)
    (<msg> ^arg1.{2} <q>)
-   (<q> ^handle name1 ^{2}.handle goal)
+   (<q> ^handle name1 ^{2}.<< goal handle >> goal)
 -->
    (<s> ^new-segment-info <info>
         ^mark-interpreted <msg>)
@@ -392,9 +433,28 @@ sp {interpret-message*apply*interpret-object-description*create*segment*learn-go
    (<p> ^type learn-goal-name
         ^parameters.message <msg>
         ^satisfaction <sat>)
-   (<sat> ^learning-event.type game)
+   (<sat> ^learning-event.type game-name)
 }
-#TODO JK handle goal demonstration -initial state
+
+#'the name of the failure is x"
+sp {interpret-message*apply*interpret-object-description*create*segment*learn-failure-name
+   (state <s> ^name interpret-message
+              ^operator <o>)
+   (<o> ^name interpret-object-description
+        ^message <msg>)
+   (<msg> ^arg1.{2} <q>)
+   (<q> ^handle name1 ^{2}.<< failure handle >> failure)
+-->
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type learn-failure-name
+        ^parameters.message <msg>
+        ^satisfaction <sat>)
+   (<sat> ^learning-event.type game-name)
+}
+
 sp {interpret-message*apply*interpret-object-description*create*segment*learn-goal-initiate-state
    (state <s> ^name interpret-message
               ^top-state.dialog-context.type game-learning
@@ -412,7 +472,7 @@ sp {interpret-message*apply*interpret-object-description*create*segment*learn-go
         ^satisfaction <sat>)
    (<sat> ^learning-event.type game)
 }
-#TODO JK handle goal demonstration -initial state
+
 sp {interpret-message*apply*interpret-object-description*create*segment*learn-goal-final-state
    (state <s> ^name interpret-message
               ^top-state.dialog-context.type game-learning
@@ -431,11 +491,11 @@ sp {interpret-message*apply*interpret-object-description*create*segment*learn-go
    (<sat> ^learning-event.type game)
 }
 
-#TODO JK handle goal
 sp {interpret-message*apply*interpret-object-description*create*segment*learn-goal-predicate
    (state <s> ^name interpret-message
-              ^top-state.dialog-context.type game-learning
+              ^top-state.dialog-context <dc>
               ^operator <o>)
+   (<dc> -^needs-goal-setup ^type game-learning ^learn-link)
    (<o> ^name interpret-object-description
         ^purpose learn-goal-definition
         ^message <msg>)
@@ -450,6 +510,24 @@ sp {interpret-message*apply*interpret-object-description*create*segment*learn-go
    (<sat> ^learning-event.type game)
 }
 
+
+
+sp {interpret-message*apply*interpret-object-description*create*segment*learn-goal-predicate*setup
+   (state <s> ^name interpret-message
+              ^top-state.interaction.changes <changes>
+              ^top-state.dialog-context <dc>
+              ^operator <o>)
+   (<dc> ^needs-goal-setup ^type game-learning ^learn-link)
+   (<o> ^name interpret-object-description
+        ^purpose learn-goal-definition
+        ^message <msg>)
+-->
+    (<dc> ^parsed-goal <msg>)
+    (<msg> ^interpreted true)
+   (<changes> ^outgoing-message <msg2>)
+   (<msg2> ^type simple-message
+              ^message-type setup-goal)
+}
 
 sp {interpret-message*apply*interpret-object-description*create*segment*learn-property-predicate
    (state <s> ^name interpret-message
