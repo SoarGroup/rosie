@@ -9,6 +9,28 @@ sp {op_pick-up1*tabletop*propose*report-failure
    (<o> ^name report-failure)
 }
 
+# Report failure if there are no more candidates for the missing object
+sp {op_pick-up1*tabletop*propose*report-failure*missing*object
+   (state <s> ^name op_pick-up1
+              ^current-action.reset-command.status complete
+             -^top-state.perception-monitor.object-monitor.new-object-info.status
+              ^target-object.predicates.visible false)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name report-failure)
+}
+
+# Report failure if there are no more candidates for the missing object
+sp {op_pick-up1*tabletop*propose*report-failure*missing*object
+   (state <s> ^name op_pick-up1
+              -^current-action.{ << reset-command pick-up-command >> }
+              ^target-object.predicates.visible false)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name report-failure)
+}
+
+
 sp {op_pick-up1*tabletop*apply*report-failure*remove-arm-status
    (state <s> ^name op_pick-up1
               ^operator.name report-failure
@@ -23,11 +45,22 @@ sp {op_pick-up1*tabletop*apply*report-failure*report*failure
    (state <s> ^name op_pick-up1
               ^operator.name report-failure
               ^target-object <obj>
+              -^current-action.stop-asking true
               ^top-state.interaction.status <status>)
 -->
    (<status> ^failure <f>)
    (<f> ^type missing-object
         ^missing-object <obj>)
+}
+
+# Mark the action as having failed
+sp {op_pick-up1*tabletop*apply*report-failure*report*failure*stop-asking
+   (state <s> ^name op_pick-up1
+              ^operator.name report-failure
+              ^current-action <a>)
+   (<a> ^stop-asking true)
+-->
+   (<a> ^status failure)
 }
 
 # Remove the commands from the output-link/current-action
