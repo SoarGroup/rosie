@@ -2,71 +2,58 @@ sp {top-state*elaborate*agent-params*debug
    (state <s> ^top-state <s>
               ^agent-params <params>)
 -->
-   (<params> ^debug-mode off)				# If on, additional print statements will be done
-   (<params> ^debug-perception true)		# If true, will print debug statements when events occur
-   (<params> ^debug-op-ties false)
-   (<params> ^debug-arm true)
-   (<params> ^debug-ids on)
-   (<params> ^enable-interrupts false)
+   (<params> ^debug-op-ties false)        # If true, will interrupt on an operator tie
+   (<params> ^debug-ids true)             # If true, will elaborate certain identifiers with debug-ids useful for printing
+   (<params> ^enable-interrupts true)    # If true, certain interrupts will fire
+
+   (<params> ^debug-perception true)      # If true, will print additional info about perception related things
+   (<params> ^debug-actions true)         # If true, will print additional info about action related things 
+   (<params> ^debug-arm false)            # If true, will print additional info about arm related things
+   (<params> ^debug-path-planning false)  # If true, will print additional info during path planning
+   (<params> ^debug-interaction false)    # If true, will print additional info about interactions
 }
 
 
-#sp {anystate*operator-tie*action*interrupt
-#   (state <s> ^top-state <top>
-#              ^impasse tie
-#              ^problemspace action)
-#   (<top> ^agent-params.debug-mode on
-#          ^agent-params.debug-op-ties true)
-#-->
-#   (interrupt)
-#}
+sp {anystate*operator-tie*action*interrupt
+   (state <s> ^top-state <top>
+              ^impasse tie
+              ^problemspace action)
+   (<top> ^agent-params.debug-op-ties true)
+-->
+   (interrupt)
+}
 
 sp {anystate*operator-tie*print*operators
    (state <s> ^type state
               ^impasse tie
               ^item.name <name>
               ^top-state <top>)
-   (<top> ^agent-params.debug-mode on
-          ^agent-params.debug-op-ties true)
+   (<top> ^agent-params.debug-op-ties true)
 -->
-   #(write |Operator tie on | <s> |: '| <name> |'| (crlf))
-}
-
-sp {anystate*print*self*info
-   (state <s> ^top-state <top>
-              ^io.input-link.self <self>
-              ^agent-params.debug-mode on
-              ^agent-params.debug-arm true)
-   (<self> ^action <a>
-           ^prev-action <pa>
-           ^grabbed-object <id>)
--->
-   #(write |Cur Action :| <a> (crlf))
-   #(write |Prev Action:| <pa> (crlf))
-   #(write |Holding    :| <id> (crlf))
+   (write |Operator tie on | <s> |: '| <name> |'| (crlf))
 }
 
 # Write messages when an svs filter or command fails
 
 sp {top-state*apply*any-op*report*svs*filter*errors
    (state <s> ^top-state <s>
-              ^agent-params.debug-mode on
+              ^agent-params.debug-perception true
               ^svs.command <cmd>)
    (<cmd> ^{ << extract extract_once >> } <val>)
    (<val> ^type <type>
           ^status {<status> <> success})
 -->
-   #(write |Filter Error (| <type> |): | <status> (crlf))
+   (write |Filter Error (| <type> |): | <status> (crlf))
 }
 
 sp {top-state*apply*any-op*report*svs*command*errors
    (state <s> ^top-state <s>
-              ^agent-params.debug-mode on
+              ^agent-params.debug-perception true
               ^svs.command <cmd>)
    (<cmd> ^{<type> <> extract <> extract_once } <val>)
    (<val> ^status {<status> <> success})
 -->
-   #(write |Command Error (| <type> |): | <status> (crlf))
+   (write |Command Error (| <type> |): | <status> (crlf))
 }
 
 #### Use Debug Id's ####
@@ -78,7 +65,7 @@ alias ppmon print (* ^debug-id percmon)
 alias pobjinfo print (* ^debug-id objmon)
 sp {top-state*elaborate*debug-ids*perception-monitor
    (state <s> ^superstate nil
-              ^agent-params.debug-ids on
+              ^agent-params.debug-ids true
               ^perception-monitor <pmon>)
    (<pmon> ^object-monitor <omon>
            ^predicate-monitor <prmon>)
@@ -94,7 +81,7 @@ alias ppreds print (* ^debug-id preds)
 alias probot print (* ^debug-id rob)           
 sp {top-state*elaborate*debug-ids*world
    (state <s> ^superstate nil
-              ^agent-params.debug-ids on
+              ^agent-params.debug-ids true
               ^world <w>)
    (<w> ^objects <objs>
         ^robot <rob>
