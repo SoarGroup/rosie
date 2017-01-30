@@ -44,7 +44,7 @@ public class SentencesToSoar {
     		outputFile = inputFile.substring(0, extension) + ".soar";
     	}
     	//	Report what we're doing
-		System.out.println(String.format("Translating '%s' to '%s'.", inputFile, outputFile));
+		// System.out.println(String.format("Translating '%s' to '%s'.", inputFile, outputFile));
 
 		//  First set up the machinery
         //  Create an input stream

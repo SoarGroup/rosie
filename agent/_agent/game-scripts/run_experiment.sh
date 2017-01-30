@@ -30,14 +30,14 @@ do
 	#echo "oops"
 	java SentencesToSoar soar-game.script
 	cp soar-game.soar /home/jrkirk/rosie2/rosie-project/rosie/agent/_agent/language-comprehension/comprehension/test-sentences/
-	/home/jrkirk/rosie2/rosie-project/soar/out/./cli < game-data-agent.soar
-	cp stats.txt newresults4/$rfilename$stats
-	cp statsm.txt newresults4/$rfilename$maxstats
-	cp s1.txt newresults4/$rfilename$topstate
-	cp soar-game.script newresults4/$rfilename$dialog
+	/home/jrkirk/rosie2/rosie-project/soar/out/./soar -s game-data-agent.soar stop
+	cp stats.txt testresult/$rfilename$stats
+	cp statsm.txt testresult/$rfilename$maxstats
+	cp s1.txt testresult/$rfilename$topstate
+	cp soar-game.script testresult/$rfilename$dialog
 	
-	cp pertaskstats.txt newresults4/$rfilename$pertaskstats
-	cp smemuse.txt newresults4/$rfilename$smem
+	cp pertaskstats.txt testresult/$rfilename$pertaskstats
+	cp smemuse.txt testresult/$rfilename$smem
 	
 	#cp smemquery.txt newresults4/$rfilename$smemq
 	#cp smemstore.txt newresults4/$rfilename$smems
