@@ -1,0 +1,52 @@
+# The object is stable, mark the object as confirmed and cleanup the structure
+sp {check-object-stability*propose*mark-stable
+   (state <s> ^name check-object-stability
+              ^obj-is-stable true
+              ^object-info <obj-info>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name mark-stable
+        ^object-info <obj-info>)
+}
+
+# Mark the new-object-info as confirmed
+sp {check-object-stability*apply*mark-stable*mark*confirmed
+   (state <s> ^name check-object-stability
+              ^operator <o>)
+   (<o> ^name mark-stable
+        ^object-info <obj-info>)
+   (<obj-info> ^confirmed false)
+-->
+   (<obj-info> ^confirmed false -
+               ^confirmed true)
+}
+
+# Remove attributes that are no longer needed
+sp {check-object-stability*apply*mark-stable*cleanup*object
+   (state <s> ^name check-object-stability
+              ^operator <o>)
+   (<o> ^name mark-stable
+		    ^object-info <obj-info>)
+   (<obj-info> ^number-checks <num>
+               ^check-stability-time <t>)
+-->
+   (<obj-info> ^number-checks <num> -
+               ^check-stability-time <t> -)
+}
+
+# Remove svs filters used to monitor the object's change in size/position
+sp {check-object-stability*apply*mark-stable*remove*filters
+   (state <s> ^name check-object-stability
+              ^operator <o>
+              ^top-state.svs.command <cmd>)
+   (<o> ^name mark-stable
+        ^object-info <obj-info>)
+   (<obj-info> ^perception-obj.id <id>
+               ^position-monitor <old-pos>
+               ^volume-monitor <old-vol>)
+-->
+   (<cmd> ^extract <old-pos> -
+          ^extract <old-vol> -)
+   (<obj-info> ^position-monitor <old-pos> -
+               ^volume-monitor <old-vol> -)   
+}

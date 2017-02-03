@@ -2,11 +2,30 @@ sp {comprehend-word*propose*create-receiver
  # :interrupt
    (state <s> ^name << comprehend-word comprehend-construction >>
               ^current-word <cw>
+              ^superstate <ss>
               ^retrieved-lexical-item <id>)
   -{(<s> ^comprehension-structure.not-merged-receiver <uri>
          ^receiver-created <uri>)
     (<uri> ^current-word <cw>)}
    (<ss> -^retry)
+   (<id> -^alternative-structure)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name create-receiver
+         ^item <item>)
+}
+
+sp {comprehend-word*propose*create-receiver*alternative-structure
+ # :interrupt
+   (state <s> ^name << comprehend-word comprehend-construction >>
+              ^current-word <cw>
+              ^quiescence t
+              ^retrieved-lexical-item <id>)
+  -{(<s> ^comprehension-structure.not-merged-receiver <uri>
+         ^receiver-created <uri>)
+    (<uri> ^current-word <cw>)}
+   (<ss> -^retry)
+   (<id> ^alternative-structure)
 -->
    (<s> ^operator <op> + =)
    (<op> ^name create-receiver
@@ -39,7 +58,7 @@ sp {comprehend-word*compare*create-receiver2
               ^operator <op1> +
                         <op2> +)
    (<op1> ^name create-receiver)
-   (<op2> ^name << remove-stale-receive >>)
+   (<op2> ^name << remove-stale-receiver >>)
 -->
    (<s> ^operator <op1> < <op2>)
 }
@@ -71,6 +90,8 @@ sp {apply*create-receiver*mark-hypothetical
 -->
    (<seg> ^hypothetical true)}
 
+
+
 ############## Super-type ####### Must merge <id> structures (spelling and referent) with all other structures from <st>
 
 sp {apply*create-receiver*create-item*super-type
@@ -88,6 +109,7 @@ sp {apply*create-receiver*create-item*super-type
    (<s> ^created-receiver true)
    (<cs> ^not-merged-receiver <item>)
    (<item> ^current-word <cw>
+           ^original-id <id>   ## JEL Added to maintain original ID for spreading
            ^super-type <st>
            ^proto-lt <proto-lt>
            ^semantics <sem>)
@@ -113,7 +135,7 @@ sp {apply*create-receiver*create-item*super-type*copy-can-be-part-of
          ^item <item>)
    (<item> ^proto-lt <proto>)
    (<id> ^{ << attachment can-be-part-of constraint relation referent referent2 quantity semantic-structure 
-               semantic-structure2 directional alternative-structure number tense possessive specifier >> <att> } <cbpo>)
+               semantic-structure2 directional directional-maybe alternative-structure number tense possessive specifier >> <att> } <cbpo>)
 -->
    (<proto> ^<att> <cbpo>)}
 
@@ -207,7 +229,7 @@ sp {apply*create-receiver*create-item*construction*none
         -^remove-receiver.decision-count < <dc>)
 -->
    (<s> ^created-receiver true)
-   (write (crlf) | use old decision-count | <dc>)
+   #(write (crlf) | use old decision-count | <dc>)
    (<cs> ^not-merged-receiver <item>)
    (<item> ^current-word <cw>
            ^lt <id>

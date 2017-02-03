@@ -145,7 +145,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         if (agent == null){
            throw new IllegalStateException("Kernel created null agent");
         }
-
+        
         if (config.spawnDebugger){
             debuggerSpawned = agent.SpawnDebugger(kernel.GetListenerPort());
             System.out.println("Spawn Debugger: " + (debuggerSpawned ? "SUCCESS" : "FAIL"));
@@ -168,9 +168,9 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         }
 
         // enable TCL and set the rosie_env variable
-        agent.ExecuteCommandLine("cli tcl on");
-        agent.ExecuteCommandLine("global rosie_env");
-        agent.ExecuteCommandLine("set rosie_env \"" + config.environment + "\"");
+        //agent.ExecuteCommandLine("tcl on");
+        //agent.ExecuteCommandLine("global rosie_env");
+        //agent.ExecuteCommandLine("set rosie_env \"" + config.environment + "\"");
 
         sourceAgent();
         agent.ExecuteCommandLine(String.format("w %d", config.watchLevel));

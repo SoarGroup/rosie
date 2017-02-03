@@ -1,25 +1,26 @@
 # Reject an attend-to-scene-change operator if attending to an object being moved
 
-#sp {anystate*reject*attend-to-scene-change*moving*object
-#   (state <s> ^operator <o> +)
-#   (<o> ^name attend-to-scene-change
-#        ^change.object-info.wm-obj.predicates.arm-status << moving grabbed >>
-#        ^change.type <> changed-object-status)
-#-->
-#   (<s> ^operator <o> -)
-#}
-
-
-
-sp {anystate*reject*delete-object*task*object
+sp {anystate*reject*attend-to-scene-change*moving*object
    (state <s> ^operator <o> +)
    (<o> ^name attend-to-scene-change
-        ^change.type << delete-object >>
-        ^change.object-info.wm-obj <obj>)
-   (<obj> ^task-object true)
+        ^change <chg>)
+   (<chg> ^info.category object
+          ^object-info.wm-obj.predicates.arm-status << moving grabbed >>
+          ^type <> newly-visible-object <> newly-not-visible-object)
 -->
    (<s> ^operator <o> -)
 }
+#
+## Don't delete objects that are part of the current task
+#sp {anystate*reject*delete-object*task*object
+#   (state <s> ^operator <o> +)
+#   (<o> ^name attend-to-scene-change
+#        ^change.type << delete-object >>
+#        ^change.object-info.wm-obj <obj>)
+#   (<obj> ^task-object true)
+#-->
+#   (<s> ^operator <o> -)
+#}
 
 # Ordering of scene change operators
 
@@ -59,9 +60,12 @@ sp {anystate*attend-to-scene-change*elaborate*default*preference-order
 # 200 update-pose
 # 200 delete-object 
 # 200 create-belief-object
+# 190 new-perception-object
 # 190 new-object
 # 180 changed-waypoint 
-# 160 changed-moving-state
+# 160 changed-moving-status
+# 160 changed-arm-moving-status
+# 140 stability-timer-expired
 # 120 moved-object
 # 100 newly-visible-object
 # 100 newly-not-visible-object
@@ -78,11 +82,11 @@ sp {anystate*scene-change*attend*preference*200
    (<o> ^preference-order 200)
 }
 
-# 190 new-object
+# 190 new-perception-object, new-object
 sp {anystate*scene-change*attend*preference*190
    (state <s> ^operator <o> +)
    (<o> ^name attend-to-scene-change
-        ^change.type << new-object >>)
+        ^change.type << new-perception-object new-object >>)
 -->
    (<o> ^preference-order 190)
 }
@@ -96,13 +100,22 @@ sp {anystate*scene-change*attend*preference*180
    (<o> ^preference-order 180)
 }
 
-# 160 changed-moving-state
+# 160 changed-moving-status, changed-arm-moving-status
 sp {anystate*scene-change*attend*preference*160
    (state <s> ^operator <o> +)
    (<o> ^name attend-to-scene-change
-        ^change.type << changed-moving-state >>)
+        ^change.type << changed-moving-status changed-arm-moving-status >>)
 -->
    (<o> ^preference-order 160)
+}
+
+# 140 stability-timer-expired
+sp {anystate*scene-change*attend*preference*140
+   (state <s> ^operator <o> +)
+   (<o> ^name attend-to-scene-change
+        ^change.type << stability-timer-expired >>)
+-->
+   (<o> ^preference-order 140)
 }
 
 # 120 moved-object

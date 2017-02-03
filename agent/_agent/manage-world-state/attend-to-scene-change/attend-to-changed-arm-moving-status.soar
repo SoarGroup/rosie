@@ -1,0 +1,70 @@
+# Update world.robot.arm.moving-status
+
+sp {anystate*apply*attend-to-changed-arm-moving-status*add*current*moving-status
+   (state <s> ^operator <o>
+              ^top-state.world.robot.arm <arm>)
+   (<o> ^name attend-to-scene-change
+        ^change.type changed-arm-moving-status
+        ^change.self-info.arm.moving-status <cur-status>)
+-->
+   (<arm> ^moving-status <cur-status>)
+}
+
+sp {anystate*apply*attend-to-changed-arm-moving-status*remove*old*moving-status
+   (state <s> ^operator <o>
+              ^top-state.world.robot.arm <arm>)
+   (<o> ^name attend-to-scene-change
+        ^change.type changed-arm-moving-status
+        ^change.self-info.arm.moving-status <cur-status>)
+   (<arm> ^moving-status { <old-status> <> <cur-status> })
+-->
+   (<arm> ^moving-status <old-status> -)
+}
+
+# If debug-perception is on, print the info
+sp {anystate*apply*attend-to-scene-change*monitor*changed-arm-moving-status
+   (state <s> ^operator <o>
+              ^agent-params.debug-perception true)
+   (<o> ^name attend-to-scene-change
+        ^change <c>)
+   (<c> ^type changed-arm-moving-status
+        ^self-info.arm.moving-status <status>)
+-->
+   (write |arm moving-status: | <status> (crlf))
+}
+
+#MOVING
+## When we move an object, remove all internal links associated with it
+#sp {anystate*apply*attend-to-changed-arm-moving-status*stopped*remove*moved-object*internal-links
+#   (state <s> ^operator <o>
+#              ^top-state.world.robot.arm <arm>
+#              ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
+#   (<o> ^name attend-to-scene-change
+#        ^change.type changed-arm-moving-status
+#        ^change.self-info.action wait)
+#   (<arm> ^moving <handle1>)
+#   (<obj-info> ^object-handle <handle1>
+#                ^internal-link <handle2>)
+#-->
+#   (<obj-info> ^internal-link <handle2> -)
+#   (write |Moved object | <handle1> | and removed link to | <handle2> (crlf))
+#}
+#
+#sp {anystate*apply*attend-to-changed-arm-moving-status*stopped*remove*other*internal-links
+#   (state <s> ^operator <o>
+#              ^top-state.world.robot.arm <arm>
+#              ^top-state.perception-monitor.object-monitor <mon>)
+#   (<o> ^name attend-to-scene-change
+#        ^change.type changed-arm-moving-status
+#        ^change.self-info.action wait)
+#   (<arm> ^moving <id>)
+#   (<mon> ^object <src-obj>
+#          ^object <dest-obj>)
+#   (<src-obj> ^id <id>)
+#   (<dest-obj> ^id <id2>
+#               ^internal-link <id>)
+#-->
+#   (<dest-obj> ^internal-link <id> -)
+#   (write |Moved object | <id> | and removed link from | <id2> (crlf))
+#}
+#

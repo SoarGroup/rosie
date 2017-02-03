@@ -20,12 +20,12 @@ public class InstructorMessagePanel extends JPanel{
 	
 	private ChatPanel chat;
 	private HashMap<String, JButton> messages;
-	
+	private String messageFile;
 	public InstructorMessagePanel(ChatPanel chat, Properties props){
 		this.chat = chat;
 		this.messages = new HashMap<String, JButton>();
 		
-		String messageFile = props.getProperty("messages-file", null);
+		messageFile = props.getProperty("messages-file", null);
 		if(messageFile != null){
 			try{
 				BufferedReader br = new BufferedReader(new FileReader(messageFile));
@@ -55,6 +55,28 @@ public class InstructorMessagePanel extends JPanel{
 		for(String message : messages){
 			addMessage(message);
 		}
+	}
+	public void setNewMessageFile(String file){
+		messageFile = file;
+		this.removeAll();
+		if(messageFile != null){
+			try{
+				BufferedReader br = new BufferedReader(new FileReader(messageFile));
+				try {
+					String line = br.readLine();
+					while(line != null){
+						addMessage(line);
+						line = br.readLine();
+					}
+				} finally {
+				    br.close();
+				}
+			} catch(IOException e){
+				System.err.println("InstructorMessagePanel: Failed to read file " + messageFile);
+			}
+		}
+
+		initPanel();
 	}
 	
 	private void initPanel(){

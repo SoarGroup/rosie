@@ -1,41 +1,54 @@
-# Propose match-smem-object using epmem object handle
-sp {attend-to-new-object*propose*match-smem-object*from*epmem
+# Propose match-smem-object using object handle
+sp {attend-to-new-object*propose*match-smem-object*using*handle
    (state <s> ^name attend-to-new-object
-              ^source-type epmem-obj
+              ^source-type <> perception-obj <> smem-obj
               ^source-obj.handle <obj-handle>
-             -^smem-obj
-             -^no-smem-object-retrieved true
-             -^matches-world-object <> none)
+             -^matches-smem-object)
 -->
    (<s> ^operator <o> +)
    (<o> ^name match-smem-object
         ^cue <cue>)
-   (<cue> ^handle <obj-handle>)
+   (<cue> ^object-instance true
+          ^handle <obj-handle>)
 }
+
+# For a perception object, if a handle match isn't found
+#    then try to match just based on predicates
 
 # Propose match-smem-object using perception-obj predicates
 sp {attend-to-new-object*propose*match-smem-object*from*perception
    (state <s> ^name attend-to-new-object
               ^source-type perception-obj
-              ^input-link-obj <il-obj>
-             -^smem-obj
-             -^no-smem-object-retrieved true
-             -^matches-world-object <> none)
+              ^perception-object-info <obj-info>
+              -^matches-smem-object)
 -->
    (<s> ^operator <o> +)
    (<o> ^name match-smem-object
-        ^input-link-obj <il-obj>
         ^cue <cue>)
    (<cue> ^object-instance true
           ^item-type object)
 }
 
+sp {attend-to-new-object*reject*match-smem-object*no*perceptual*properties
+   (state <s> ^name attend-to-new-object
+              ^operator <o> +
+              ^perception-object-info <obj-info>)
+   (<o> ^name match-smem-object)
+   (<obj-info> -^properties.property-info.predicate-handle)
+-->
+   (<s> ^operator <o> -)
+}
+
 sp {attend-to-new-object*elaborate*match-smem-object*cue*from*perception
    (state <s> ^name attend-to-new-object
+              ^source-type perception-obj
+              ^perception-object-info <obj-info>
               ^operator <o> +)
    (<o> ^name match-smem-object
-        ^input-link-obj.classifications.<prop> <pred>
         ^cue <cue>)
+   (<obj-info> ^properties.property-info <prop-info>)
+   (<prop-info> ^property-handle <prop>
+                ^predicate-handle <pred>)
 -->
    (<cue> ^<prop> <pred>)
 }
@@ -51,7 +64,7 @@ sp {attend-to-new-object*apply*match-smem-object*create*query
    (<cmd> ^query <cue>)
 }
 
-# Success: Copy the object as smem-obj
+# Success: Copy the object as matches-smem-object
 sp {attend-to-new-object*apply*match-smem-object*success*copy*object
    (state <s> ^name attend-to-new-object
               ^operator <o>
@@ -62,12 +75,12 @@ sp {attend-to-new-object*apply*match-smem-object*success*copy*object
    (<res> ^success <cue>
           ^retrieved <obj-lti>)
 -->
-   (<s> ^smem-obj <obj-lti>)
+   (<s> ^matches-smem-object <obj-lti>)
    (<cmd> ^query <cue> -)
 }
         
-# Failure: Create ^no-smem-object-retrieved true
-sp {attend-to-new-object*apply*match-smem-object*failure*mark*not*retrieved
+# Failure: Create ^matches-smem-object none
+sp {attend-to-new-object*apply*match-smem-object*failure*mark*matches*none
    (state <s> ^name attend-to-new-object
               ^operator <o>
               ^smem.result.failure <cue>
@@ -75,6 +88,6 @@ sp {attend-to-new-object*apply*match-smem-object*failure*mark*not*retrieved
    (<o> ^name match-smem-object
         ^cue <cue>)
 -->
-   (<s> ^no-smem-object-retrieved true)
+   (<s> ^matches-smem-object none)
    (<cmd> ^query <cue> -)
 }

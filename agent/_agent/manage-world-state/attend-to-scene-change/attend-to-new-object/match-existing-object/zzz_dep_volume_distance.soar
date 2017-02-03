@@ -1,0 +1,135 @@
+sp {match-missing-object*propose*compare-volume
+   (state <s> ^name match-missing-object
+             -^volume-diff
+              ^missing-object-info.belief-obj.id <bel-id>
+              ^candidate-info.perception-obj.id <cand-id>)
+-->
+   (<s> ^operator <op> +)
+   (<op> ^name compare-volume
+         ^missing-id <bel-id>
+         ^candidate-id <cand-id>)
+}
+
+sp {match-missing-object*apply*compare-volume*create*filter
+   (state <s> ^name match-missing-object
+              ^operator <op>
+              ^top-state.svs.command <cmd>)
+   (<op> ^name compare-volume
+         ^missing-id <bel-id>
+         ^candidate-id <cand-id>)
+-->
+   (<cmd> ^extract_once <bel-vol> <cand-vol>)
+   (<bel-vol> ^type volume
+              ^a <ba>
+              ^volume_type scale)
+   (<ba> ^type node
+         ^id <bel-id>)
+   (<cand-vol> ^type volume
+               ^a <ca>
+               ^volume_type scale)
+   (<ca> ^type node
+         ^id <cand-id>)
+   (<s> ^candidate-volume-filter <cand-vol>
+        ^belief-volume-filter <bel-vol>)
+}
+
+sp {match-missing-object*apply*compare-volume*copy*result
+   (state <s> ^name match-missing-object
+              ^operator <o> +
+              ^candidate-volume-filter.result.record.value <cand-vol>
+              ^belief-volume-filter.result.record.value <bel-vol>)
+   (<o> ^name compare-volume)
+-->
+   (<o> ^volume-diff (/ (+ <cand-vol> 0.000000001) (+ <bel-vol> 0.000000001)))
+}
+
+sp {match-missing-object*apply*compare-volume*no*result*belief
+   (state <s> ^name match-missing-object
+              ^operator <o> +
+              ^belief-volume-filter.result <res>)
+   (<o> ^name compare-volume)
+   (<res> -^record.value <val>)
+-->
+   (<o> ^volume-diff 0)
+}
+
+sp {match-missing-object*apply*compare-volume*no*result*candidate
+   (state <s> ^name match-missing-object
+              ^operator <o> +
+              ^candidate-volume-filter.result <res>)
+   (<o> ^name compare-volume)
+   (<res> -^record.value <val>)
+-->
+   (<o> ^volume-diff 0)
+}
+
+sp {match-missing-object*apply*compare-volume*cleanup
+   (state <s> ^name match-missing-object
+              ^operator <o>
+              ^candidate-volume-filter <cand-vol>
+              ^belief-volume-filter <bel-vol>
+              ^top-state.svs.command <cmd>)
+   (<o> ^name compare-volume
+        ^volume-diff <diff>)
+-->
+   (<cmd> ^extract_once <cand-vol> -
+          ^extract_once <bel-vol> -)
+   (<s> ^volume-diff <diff>)
+#   (<s> ^candidate-volume-filter <cand-vol> -
+#        ^belief-volume-filter <bel-vol> -)
+}
+
+
+
+# Create a filter to find distances from svs-obj to all belief objects
+sp {match-world-object*propose*extract-distances
+   (state <s> ^name match-world-object
+              ^svs-obj
+             -^distance-results true)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name extract-distances)
+}
+
+sp {match-world-object*apply*extract-distances*create*distance-filter
+   (state <s> ^name match-world-object
+              ^operator.name extract-distances
+              ^svs-obj.id <svs-id>
+              ^top-state.svs.command <svs-cmd>)
+-->
+   (<s> ^distance-filter <dist>)
+   (<dist> ^type distance
+           ^a <a>
+           ^b <belief>
+           ^distance_type centroid)
+   (<a> ^type node
+        ^id <svs-id>)
+   (<belief> ^type tag_select
+             ^a <all>
+             ^tag_name object-source
+             ^tag_value belief)
+   (<all> ^type all_nodes)
+   (<svs-cmd> ^extract_once <dist>)
+}
+
+sp {match-world-object*apply*extract-distances*result*copy*distance*info*candidate
+   (state <s> ^name match-world-object
+              ^operator.name extract-distances
+              ^candidate-set.candidate <cand>
+              ^distance-filter.result.record <r>)
+   (<cand> ^object-info.belief-obj.id <bel-id>)
+   (<r> ^value <d>
+        ^params.b <bel-id>)
+-->
+   (<cand> ^distance <d>)
+}
+
+sp {match-world-object*apply*extract-distances*result*mark*distance-results*true
+   (state <s> ^name match-world-object
+              ^operator.name extract-distances
+              ^distance-filter.result <res>)
+-->
+   (<s> ^distance-results true)
+}
+
+

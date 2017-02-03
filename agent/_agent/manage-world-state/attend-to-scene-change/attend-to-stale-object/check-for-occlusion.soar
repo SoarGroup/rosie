@@ -1,0 +1,61 @@
+# See svs-command-operators.check-for-occlusion
+
+sp {attend-to-stale-object*propose*check-for-occlusion
+   (state <s> ^name attend-to-stale-object
+              ^object-info <obj-info>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name check-for-occlusion
+        ^object-info <obj-info>
+        ^report-to-superstate true
+        ^report-to-top-state false)
+}
+
+sp {attend-to-stale-object*apply*check-for-occlusion*not-occluded*mark-for-deletion
+   (state <s> ^name attend-to-stale-object
+              ^operator.name check-for-occlusion
+             -^missing true
+              ^object-occluded false
+              ^object-info <obj-info>)
+-->
+   (<obj-info> ^mark-for-deletion true)
+}
+
+sp {attend-to-stale-object*apply*check-for-occlusion*not-occluded*cant-find
+   (state <s> ^name attend-to-stale-object
+              ^operator.name check-for-occlusion
+              ^missing true
+              ^object-occluded false
+              ^object-info <obj-info>)
+-->
+   (<obj-info> ^cant-find true)
+}
+
+
+## If the object is missing and we need it, ask the user for help
+#sp {attend-to-stale-object*apply*check-for-occlusion*not-occluded*missing-object*interaction
+#   (state <s> ^name attend-to-stale-object
+#              ^operator.name check-for-occlusion
+#              ^missing-object true
+#              ^object-occluded false
+#              ^object-info <obj-info>
+#              ^top-state.interaction.status <status>)
+#-->
+#   (<status> ^failure <f>)
+#   (<f> ^type missing-object
+#        ^missing-object <obj-info>)
+#   (<obj-info> ^searching-for-object true)
+#}
+
+sp {attend-to-stale-object*apply*check-for-occlusion*occluded*add*info
+   (state <s> ^name attend-to-stale-object
+              ^operator.name check-for-occlusion
+              ^object-occluded true
+              ^object-info <obj-info>
+              ^io.input-link.time.seconds <cur-t>
+              ^occlusion-check-period <period>)
+   (<obj-info> ^status <status>)
+-->
+   (<obj-info> ^check-occlusion-time (+ <cur-t> <period>))
+   (<status> ^is-occluded true)
+}

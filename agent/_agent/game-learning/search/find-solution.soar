@@ -1,0 +1,680 @@
+sp {find-solution*propose*game-search*elaborate*retrieve-game
+   (state <s> ^name find-solution
+              ^superstate.operator.game-name <name>)
+-->
+   (<s> ^game <name>
+        ^retrieve-game <name>
+        ^gtype goal action failure heuristic)
+}
+sp {find-solution*propose*game-search*elaborate*initial-depth-limit
+   (state <s> ^name find-solution
+             -^start-search-depth
+              ^retrieve-game <name>)
+-->
+(<s> ^depth-limit 1)
+}
+
+sp {find-solution*propose*game-search*elaborate*start-search-depth
+   (state <s> ^name find-solution
+              ^start-search-depth <d>
+              ^retrieve-game <name>)
+-->
+(<s> ^depth-limit <d>)
+}
+
+
+sp {find-solution*elab*opponent*finished
+   (state <s> ^name find-solution
+              ^top-state.dialog-context.structure.multiplayer true
+              ^top-state.dialog-context.finished-game-teaching true)
+-->
+(<s> ^opponent true false)
+}
+
+sp {find-solution*propose*game-search*elab-replay-true
+   (state <s> ^name find-solution
+              ^superstate.operator.replay true)
+-->
+(<s> ^chunked true ^replay true)
+}
+
+sp {find-solution*elaborate*problem-space*world
+(state <s> ^name find-solution
+            ^top-state.world <world2>)
+-->
+   (<s> ^problem-space.world <world>)
+   (<world> ^source <world2>
+            ^copy-type shallow)
+}
+
+sp {find-solution*propose*chunk-game
+   (state <s> ^name find-solution
+              -^chunked
+              -^found-action
+              ^top-state.dialog-context.structure <st>)
+   (<st> ^handle <h>)
+-->
+    (<s> ^operator <o> + =)
+    (<o> ^name chunk-game
+         ^predicate-handle <h>)
+}
+
+sp {find-solution*elaborate*opponent
+   (state <s> ^name find-solution
+              ^action <a>
+              ^top-state.dialog-context.structure <st>)
+   (<st> ^handle <h>)
+   (<a> ^handle <r> ^opponent <o>)
+-->
+	(<s> ^opponent true false)
+}
+            
+sp {find-solution*propose*chunk-game-structure
+   (state <s> ^name find-solution
+              -^retrieve-handle
+              -^found-action
+              ^top-state.dialog-context.structure <st>)
+   (<st> ^handle <h>)
+-->
+    (<s> ^operator <o> + =)
+    (<o> ^name chunk-game-structure
+         ^predicate-handle <h>)
+}
+
+sp {chunk-game*game-handle
+   (state <s> ^name chunk-game
+              ^smem.command <sc>
+              ^top-state.dialog-context.structure.handle <gname>)
+-->
+(<s> ^game-struct <g>)
+(<g> ^handle <gname> ^retrieve game)
+}
+
+sp {chunk-game*elaborate*opponent
+   (state <s> ^name chunk-game
+              ^game-struct <g>
+              ^superstate.action <a>
+              ^top-state.dialog-context.structure.actions.retrieve-handle <name>)
+   (<a> ^handle <name> ^opponent true)
+-->
+(<g> ^opponent <name>)
+}
+
+sp {chunk-game*elaborate*opponent*goals
+   (state <s> ^name chunk-game
+              ^game-struct <g>
+              ^superstate.action <a>
+              ^top-state.dialog-context.structure.goals.retrieve-handle <name>)
+   (<a> ^opponent true)
+-->
+(<g> ^opponent <name>)
+}
+
+sp {chunk-game*retrieve-handles
+   (state <s> ^name chunk-game
+              ^smem.command <sc>
+              ^game-struct <g>
+              ^top-state.dialog-context.structure.<< actions goals failures heuristics >>.retrieve-handle <gname>)
+-->
+(<g> ^retrieve-handle <gname>)
+}
+
+sp {chunk-game*start-search-depth
+   (state <s> ^name chunk-game
+              ^smem.command <sc>
+              ^game-struct <g>
+              ^top-state.dialog-context.structure.start-search-depth <d1>)
+-->
+(<g> ^start-search-depth <d1>)
+}
+
+sp {fchunk-game*chunk-game-structure
+   (state <s> ^name chunk-game
+              ^smem.command <sc>
+              ^superstate <ss>
+              ^game-struct <g>)
+   -{(state <s>)
+     (<g> -^retrieve-handle)}
+-->
+    (<sc> ^store <g>)
+    (<ss> ^chunked true)
+}
+
+#moved to be performed immediately after learning for re-reference
+#chunk predicate will complete immediately if already learned, hard to predict
+sp {find-solution*propose*chunk-predicate-structure*heuristics
+   (state <s> ^name find-solution
+             -^heuristic.handle <h>
+              -^found-action
+              ^top-state.dialog-context.structure.heuristics.retrieve-handle <h>)
+-->
+    (<s> ^operator <o> + =)
+    (<o> ^name chunk-predicate-structure
+         ^gtype heuristic
+         ^predicate-handle <h>)
+}
+sp {find-solution*propose*chunk-predicate-structure*action
+   (state <s> ^name find-solution
+             -^action.handle <h>
+              -^found-action
+              ^top-state.dialog-context.structure.actions.retrieve-handle <h>)
+-->
+    (<s> ^operator <o> + =)
+    (<o> ^name chunk-predicate-structure
+         ^gtype action
+         ^predicate-handle <h>)
+}
+sp {find-solution*propose*chunk-predicate-structure*goal
+   (state <s> ^name find-solution
+             -^goal.handle <h>
+              -^found-action
+              ^top-state.dialog-context.structure.goals.retrieve-handle <h>)
+-->
+    (<s> ^operator <o> + =)
+    (<o> ^name chunk-predicate-structure
+         ^gtype goal
+         ^predicate-handle <h>)
+}
+sp {find-solution*propose*chunk-predicate-structure*failure
+   (state <s> ^name find-solution
+             -^failure.handle <h>
+              -^found-action
+              ^top-state.dialog-context.structure.failures.retrieve-handle <h>)
+-->
+    (<s> ^operator <o> + =)
+    (<o> ^name chunk-predicate-structure
+         ^gtype failure
+         ^predicate-handle <h>)
+}
+
+sp {find-solution*propose*game-search
+   (state <s> ^name find-solution
+              -^superstate.multiplayer true
+              ^depth-limit <dl>
+              ^action
+              ^goal
+             -^found-action
+              ^superstate.operator <op>)
+   (<op> ^game-name <name>)
+-->
+   (<s> ^operator <o> + = <)
+   (<o> ^name game-search
+        ^dcount 0
+        ^depth-limit <dl> 
+        ^list.game <g>
+        ^current <g> 
+        ^game <name>)
+   (<g> ^game <name> ^type action goal failure heuristic)
+}
+
+sp {find-solution*elaborate*depth-limit-1-less
+   (state <s> ^name find-solution
+              ^depth-limit <dl>)
+-->
+    (<s> ^depth-limit-1-less (- <dl> 1))
+}
+
+sp {find-solution*elaborate*found-true
+   (state <s> ^name find-solution
+             # ^depth-limit-1-less <dl>
+             # ^top-state.perform-action.dcount <dl>
+              ^top-state.dialog-context.perform-action.dcount 0)
+-->
+    (<s> ^found-action true)
+}
+
+sp {find-solution*prefer*chunk-predicate-structure*over*game-learning-complete
+   (state <s> ^name find-solution
+              ^operator <o2> +
+              ^operator <o> +)
+   (<o> ^name chunk-predicate-structure)
+   (<o2> ^name game-learning-complete)
+-->
+   (<s> ^operator <o> > <o2>)
+}
+
+sp {find-solution*prefer*chunk-game-structure*over*game-learning-complete
+   (state <s> ^name find-solution
+              ^operator <o2> +
+              ^operator <o> +)
+   (<o> ^name chunk-game-structure)
+   (<o2> ^name game-learning-complete)
+-->
+   (<s> ^operator <o> > <o2>)
+}
+
+sp {find-solution*prefer*chunk-game-structure*over*chunk-predicate-structure
+   (state <s> ^name find-solution
+              ^operator <o2> +
+              ^operator <o> +)
+   (<o> ^name chunk-game-structure)
+   (<o2> ^name chunk-predicate-structure)
+-->
+   (<s> ^operator <o> < <o2>)
+}
+sp {find-solution*prefer*chunk-game*over*chunk-predicate-structure
+   (state <s> ^name find-solution
+              ^operator <o2> +
+              ^operator <o> +)
+   (<o> ^name chunk-game)
+   (<o2> ^name chunk-predicate-structure)
+-->
+   (<s> ^operator <o> < <o2>)
+}
+
+sp {find-solution*prefer*chunk-game*over*chunk-game-structure
+   (state <s> ^name find-solution
+              ^operator <o2> +
+              ^operator <o> +)
+   (<o> ^name chunk-game)
+   (<o2> ^name chunk-game-structure)
+-->
+   (<s> ^operator <o> > <o2>)
+}
+
+sp {find-solution*prefer*chunk-game*over*game-learning-complete
+   (state <s> ^name find-solution
+              ^operator <o2> +
+              ^operator <o> +)
+   (<o> ^name chunk-game)
+   (<o2> ^name game-learning-complete)
+-->
+   (<s> ^operator <o> > <o2>)
+}
+
+sp {find-solution*propose*game-learning-complete
+   (state <s> ^name find-solution
+              -^found-action
+              -^replay true
+             -^top-state.dialog-context.finished-game-teaching true
+              ^superstate.multiplayer true
+              ^superstate.operator <op>)
+   (<op> ^game-name <name>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name game-learning-complete
+        ^type game
+        ^game <name>)
+}
+sp {find-solution*propose*game-learning-complete*puzzle
+   (state <s> ^name find-solution
+              -^replay true
+              -^found-action
+             -^top-state.dialog-context.finished-game-teaching true
+             -^superstate.multiplayer true
+              ^superstate.operator <op>)
+   (<op> ^game-name <name>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name game-learning-complete
+        ^type puzzle
+        ^game <name>)
+}
+sp {find-solution*apply*game-learning-complete
+   (state <s> ^name find-solution
+              ^top-state.dialog-context <dc>
+               ^operator <o>
+               ^top-state.interaction.status <status>
+              ^top-state.interaction.changes <changes>)
+   (<o> ^name game-learning-complete
+        ^type <type>
+        ^game <name>)
+-->
+   (<changes> ^outgoing-message <msg>)
+   (<msg> ^type learned-game
+          ^fields <f>)
+   (<f> ^game <name> ^type <type>)
+   (<status> ^performed.learning-event <de>)
+   (<de> ^type game
+         ^originator agent)
+   (<dc> ^finished-game-teaching true)
+}
+
+
+sp {find-solution*propose*game-search*muliplayer
+   (state <s> ^name find-solution
+              -^found-action
+              ^superstate.multiplayer true
+              ^superstate.operator <op>)
+   (<op> ^game-name <name>)
+-->
+   (<s> ^operator <o> + = <)
+   (<o> ^name game-search
+        ^dcount 0
+        ^depth-limit 3
+        ^list.game <g>
+        ^current <g> 
+        ^game <name>)
+   (<g> ^game <name> ^type action goal failure heuristic)
+}
+
+#sp {find-solution*mark*found-action
+#   (state <s> ^superstate nil
+#              ^operator.name execute-put-down1
+#              ^dialog-context.perform-action <fa>)
+#   (<fa> ^started -^mark)
+#-->
+#    (<fa> ^mark done)
+#}
+
+#JK TODO temp re add for solving
+#sp {find-solution*propose*execute-action
+#   (state <s> ^name find-solution
+#              ^top-state <ts>
+#              ^world.objects <objs>
+#              ^found-action)
+#   (<ts> ^perform-action <fa> )#-^game-scripting true)
+#   #(<p> ^handle <pname>)
+#   (<fa> ^obj1 <oa> ^obj2 <ob> ^dcount <dc> -^mark ^pname <pname>)
+#  -{(<ts> ^perform-action <fa2>)
+#    (<fa2> -^mark ^dcount < <dc>)}
+#(<oa> ^handle <id1>)
+#(<ob> ^handle <id2>)
+#(<objs> ^object <obj1> ^object <obj2>)
+#(<obj1> ^handle <id1>)
+#(<obj2> ^handle <id2>)
+#-->
+#  (<s> ^operator <o> +)
+#  (<o> ^name execute-action
+#       ^action-ref <fa>
+#       ^dcount <dc>
+#       ^action-operator <op>)
+# (<op> ^name op_move1 ^action-handle move1 ^action-type composite ^arg1 <arg1> ^arg2 <arg2>)
+# (<arg1> ^arg-type object ^id <obj1>)
+# (<arg2> ^2 <obj2> ^arg-type predicate ^handle <pname>)
+#}
+
+#JK temp remove game-scripting
+sp {find-solution*propose*complete-finding-solution
+   (state <s> ^name find-solution
+              ^top-state <ts>
+              ^world.objects <objs>
+              ^found-action)
+   (<ts> ^dialog-context <d5>)# ^game-scripting true)
+   (<d5> ^perform-action <fa>)
+   #(<p> ^handle <pname>)
+   (<fa> ^obj1 <oa> ^obj2 <ob> ^dcount <dc> -^mark ^pname <pname>)
+  -{(<d5> ^perform-action <fa2>)
+    (<fa2> -^mark ^dcount < <dc>)}
+(<oa> ^handle <id1>)
+(<ob> ^handle <id2>)
+(<objs> ^object <obj1> ^object <obj2>)
+(<obj1> ^handle <id1>)
+(<obj2> ^handle <id2>)
+-->
+  (<s> ^operator <o> + = >)
+  (<o> ^name complete-finding-solution)
+}
+
+sp {find-solution*apply*execute-action
+   (state <s> ^name find-solution
+              ^operator <o>)
+   (<o> ^name execute-action
+       ^action-ref <fa>)
+-->
+    (<fa> ^started true)
+}
+
+sp {find-solution*elabroate*attend-to-arm 
+   (state <s> ^name find-solution
+              ^found-action
+              ^robot-state.arm.grabbed)
+-->
+   (<s> ^attend-to-arm true)
+}
+
+sp {find-solution*propose*completed-all-actions
+   (state <s> ^name find-solution
+              ^top-state <ts>
+              ^top-state.dialog-context.perform-action <fa>)
+   (<fa> ^obj1 <oa> ^obj2 <ob> ^dcount <dc> ^mark)
+  -{(<ts> ^perform-action <fa2>)
+    (<fa2> -^mark)}          
+-->
+   (<s> ^operator <o> + < =)
+   (<o> ^name completed-all-actions)
+}
+
+sp {find-solution*propose*completed-all-actions*game-lost
+   (state <s> ^name find-solution
+              ^top-state.game-status.game-lost true)       
+-->
+   (<s> ^operator <o> + > =)
+   (<o> ^name completed-all-actions)
+}
+
+sp {find-solution*apply*completed-all-actions*remove*found-action
+   (state <s> ^name find-solution
+              ^operator <o>
+			  ^top-state.world-usage external
+              ^top-state.dialog-context <ts>)
+   (<o> ^name completed-all-actions)
+   (<ts> ^perform-action <fa>)
+-->
+   (<ts> ^perform-action <fa> -)
+}
+
+sp {find-solution*apply*complete-finding-solution*remove*found-action
+   (state <s> ^name find-solution
+              ^operator <o>
+              ^game <game>
+              ^top-state <ts>)
+   (<o> ^name complete-finding-solution)
+   (<ts> ^world-usage external ^perform-action <fa> ^game-scripting true ^<game> <g1>)
+-->
+   (<ts> ^perform-action <fa> -)
+   (<g1> ^performed-action <fa>)
+}
+
+sp {find-solution*apply*complete-finding-solution*remove*dialog-context
+   (state <s> ^name find-solution
+              ^operator <o>         
+              ^top-state <ts>)
+   (<o> ^name complete-finding-solution)
+   (<ts> ^dialog-context <dc> ^world-usage external)
+-->
+   (<ts> ^dialog-context <dc> -)
+}
+
+sp {find-solution*apply*complete-finding-solution*remove*game-status
+   (state <s> ^name find-solution
+              ^operator <o>         
+              ^top-state <ts>)
+   (<o> ^name complete-finding-solution)
+   (<ts> ^game-status <dc>)
+-->
+   (<ts> ^game-status <dc> -)
+}
+
+sp {find-solution*apply*complete-finding-solution*remove*game-replay
+   (state <s> ^name find-solution
+              ^operator <o>         
+              ^top-state <ts>)
+   (<o> ^name complete-finding-solution)
+   (<ts> ^game-replay <dc>)
+-->
+   (<ts> ^game-replay <dc> -)
+}
+
+sp {find-solution*apply*completed-all-actions*remove*dialog-context
+   (state <s> ^name find-solution
+             -^superstate.multiplayer true
+              ^operator <o>         
+              ^top-state <ts>)
+   (<o> ^name completed-all-actions)
+   (<ts> ^dialog-context <dc>)
+-->
+   (<ts> ^dialog-context <dc> -)
+}
+
+sp {find-solution*apply*completed-all-actions*remove*game-status
+   (state <s> ^name find-solution
+             -^superstate.multiplayer true
+              ^operator <o>         
+              ^top-state <ts>)
+   (<o> ^name completed-all-actions)
+   (<ts> ^game-status <dc>)
+-->
+   (<ts> ^game-status <dc> -)
+}
+
+sp {find-solution*apply*completed-all-actions*remove*game-status*game
+   (state <s> ^name find-solution
+             ^superstate.multiplayer true
+             -^top-state.dialog-context
+             ^operator <o>         
+             ^top-state <ts>)
+   (<o> ^name completed-all-actions)
+   (<ts> ^game-status <gs>)
+   (<gs> ^<< game-lost game-won >> true)
+   
+-->
+   (<ts> ^game-status <gs> -)
+}
+
+sp {find-solution*apply*completed-all-actions*remove*game-replay*game
+   (state <s> ^name find-solution
+             ^superstate.multiplayer true
+             -^top-state.dialog-context
+             ^operator <o>         
+             ^top-state <ts>)
+   (<o> ^name completed-all-actions)
+   (<ts> ^game-status <gs> ^game-replay <g>)
+   (<gs> ^<< game-lost game-won >> true)
+   
+-->
+   (<ts> ^game-replay <g> -)
+}
+
+sp {find-solution*apply*completed-all-actions*remove*dialog-context*game
+   (state <s> ^name find-solution
+             ^superstate.multiplayer true
+             ^operator <o>         
+             ^top-state <ts>)
+   (<o> ^name completed-all-actions)
+   (<ts> ^dialog-context <dc> ^game-status <gs>)
+   (<gs> ^<< game-lost game-won >> true)
+   
+-->
+   (<ts> ^dialog-context <dc> -)
+   (<ts> ^game-status <gs> -)
+}
+
+sp {find-solution*apply*completed-all-actions*send-message
+   (state <s> ^name find-solution
+              ^operator <o>
+              ^superstate.multiplayer false
+              ^top-state.interaction.status <status>
+              ^top-state.interaction.changes <changes>)
+   (<o> ^name completed-all-actions)
+-->
+   (<changes> ^outgoing-message <msg>)
+   (<msg> ^type simple-message
+          ^message-type easy)
+   (<status> ^performed.learning-event <de>)
+   (<de> ^type game
+         ^originator agent)
+ }
+
+sp {find-solution*apply*completed-all-actions*send-message*your-turn
+   (state <s> ^name find-solution
+              ^operator <o>
+              -^top-state.game-status.game-lost true
+              -^top-state.game-status.game-won true
+              ^superstate.multiplayer true
+              ^top-state.interaction.status <status>
+              ^top-state.interaction.changes <changes>)
+   (<o> ^name completed-all-actions)
+-->
+   (<changes> ^outgoing-message <msg>)
+   (<msg> ^type simple-message
+          ^message-type your-turn)
+   (<status> ^performed.learning-event <de>)
+   (<de> ^type game
+         ^originator agent)
+ }
+
+sp {find-solution*apply*completed-all-actions*send-message*won
+   (state <s> ^name find-solution
+              ^operator <o>
+              ^top-state.game-status.game-won true
+              ^superstate.multiplayer true
+              ^top-state.interaction.status <status>
+              ^top-state.interaction.changes <changes>)
+   (<o> ^name completed-all-actions)
+-->
+   (<changes> ^outgoing-message <msg>)
+   (<msg> ^type simple-message
+          ^message-type i-win)
+   (<status> ^performed.learning-event <de>)
+   (<de> ^type game
+         ^originator agent)
+ }
+
+sp {find-solution*apply*completed-all-actions*send-message*lose
+   (state <s> ^name find-solution
+              ^operator <o>
+              ^top-state.game-status.game-lost true
+              ^superstate.multiplayer true
+              ^top-state.interaction.status <status>
+              ^top-state.interaction.changes <changes>)
+   (<o> ^name completed-all-actions)
+-->
+   (<changes> ^outgoing-message <msg>)
+   (<msg> ^type simple-message
+          ^message-type i-lose)
+   (<status> ^performed.learning-event <de>)
+   (<de> ^type game
+         ^originator agent)
+ }
+
+sp {find-solution*apply*complete-finding-solution*action-stack-push
+   (state <s> ^name find-solution
+              ^operator <o>
+              ^top-state.action-stack <as>
+              ^top-state.dialog-context <dc>)
+   (<o> ^name complete-finding-solution)
+   (<dc> ^perform-action <pa>)
+   (<pa> ^dcount <order> ^obj1 <obj1> ^obj2 <obj2> ^pname <prep> ^vname <verb>)
+   (<as> ^changes <a2>)
+-->
+	(<a2> ^push <eo>)
+    (<eo> ^execution-operator <eo1> ^order <order>)
+    (<eo1> ^action-handle <verb> ^arg1 <arg1> ^arg2 <arg2> ^name op_move1) #todo retrieve op_move1
+    (<arg1> ^arg-type object ^id <obj1>)
+    (<arg2> ^2 <obj2> ^arg-type predicate ^handle <prep>)
+}
+
+sp {find-solution*apply*complete-finding-solution*write-solution
+   (state <s> ^name find-solution
+              ^operator <o>)
+   (<o> ^name complete-finding-solution)
+-->
+(write (cmd |ctf solution.txt print (* ^dcount *) -d 2|))
+}
+
+#(F29 ^dcount 12 ^obj1 O2599 ^obj2 O2600 ^pname on1 ^vname move1)
+sp {find-solution*apply*complete-finding-solution*send-message*lose
+   (state <s> ^name find-solution
+              ^operator <o>
+              ^top-state.interaction.status <status>
+              ^top-state.interaction.changes <changes>)
+   (<o> ^name complete-finding-solution)
+-->
+   (<changes> ^outgoing-message <msg>)
+   (<msg> ^type simple-message
+          ^message-type easy)
+   (<status> ^performed.learning-event <de>)
+   (<de> ^type game
+         ^originator agent)
+ }
+
+sp {clean-up*top-state*found-action-aftersolve
+   (state <s> ^operator.name complete-interaction
+              ^name interaction
+              ^top-state.dialog-context <ts>)
+   (<ts> ^perform-action <fa>)
+   (<fa> ^mark done)
+-->
+   (<ts> ^perform-action <fa> -)
+}

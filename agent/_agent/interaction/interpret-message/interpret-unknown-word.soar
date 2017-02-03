@@ -1,0 +1,147 @@
+
+#temp quick version for games, predicates
+sp {interpret-message*propose*interpret-unknown-word
+   (state <s> ^name interpret-message 
+              ^instructor-message <msg>)
+   (<msg> ^type unknown-word ^word <word>)
+-->
+#(write (crlf) (cmd print <msg>))
+   (<s> ^operator <o> + > =)
+   (<o> ^name interpret-unknown-word
+        ^word <word>
+        ^message <msg>)
+}
+
+sp {interpret-message*prefer*interpret-unknown-word*alphabetic*ordering
+   (state <s> ^name interpret-message
+              ^operator <o2> +
+                ^operator <o> +)
+   (<o> ^name interpret-unknown-word
+        ^word <word> -^word adjacent)
+   (<o2> ^name interpret-unknown-word
+         ^word {<w> > <word>})
+-->
+    (<s> ^operator <o> > <o2>)
+}
+
+#prefer adjacent last #need to be able to detect it has two arguments.
+sp {interpret-message*prefer*interpret-unknown-word*adjacent
+   (state <s> ^name interpret-message
+              ^operator <o2> +
+                ^operator <o> +)
+   (<o> ^name interpret-unknown-word
+        -^word adjacent)
+   (<o2> ^name interpret-unknown-word
+        ^word adjacent)
+-->
+    (<s> ^operator <o> > <o2>)
+}
+
+
+# Mark the message as interpreted (retracts operator)
+#   And send message to human
+sp {interpret-message*apply*interpret-unknown-word*remove-new-unknown
+   (state <s> ^name interpret-message
+              #^unprocessed-next nil
+              ^top-state.dialog-context <dc>
+              ^operator <o>)
+   (<o> ^name interpret-unknown-word
+        ^word <word>
+        ^message <msg>)
+   (<dc> ^new-unknown <word>)
+-->
+    (<dc> ^new-unknown <word> -)
+ }
+
+sp {interpret-message*apply*interpret-unknown-word*create*segment
+   (state <s> ^name interpret-message
+              #^unprocessed-next nil
+              ^top-state.dialog-context <dc>
+              ^top-state.interaction.changes <c>
+              ^operator <o>)
+   (<o> ^name interpret-unknown-word
+        ^word <word>
+        ^message <msg>)
+ # -{(<dc> ^learning-predicate <lp2>)
+ #   (<lp2> -^name <word>)}
+-->
+    (<c> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator agent)
+   (<p> ^type process-unknown-word
+        ^parameters.word <word>
+        ^satisfaction <sat>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type process-unknown-word
+          ^originator instructor)
+   (<dc> ^learning-predicate <lp>)
+   (<lp> ^name <word>)
+   (<s> ^mark-interpreted <msg>)
+   (<s> ^outgoing-message <out-msg>)
+   (<out-msg> ^type unknown-word
+              ^fields.word <word>)
+}
+
+sp {interpret-message*apply*interpret-unknown-word*store-smem-word
+   (state <s> ^name interpret-message
+              ^smem.command <sc>
+              ^operator <o>)
+   (<o> ^name interpret-unknown-word
+        ^word <word>
+       -^word husband
+       -^word passenger       
+       -^word adjacent 
+        ^message <msg>)
+-->
+    (<sc> ^store <w1> <spell> <p3>)
+    (<w1> ^handle <word> ^property <p3>)
+    (<spell> ^spelling <word> ^structure-type ADJ ^referent <w1>)
+    (<p3> ^handle property ^type visual)  
+}
+
+#TODO hack lost information that preceeding word is of... need to recover
+sp {interpret-message*apply*interpret-unknown-word*store-smem-word*husband
+#:interrupt
+   (state <s> ^name interpret-message
+              ^smem.command <sc>
+              ^operator <o>)
+   (<o> ^name interpret-unknown-word
+        ^word <word>
+        ^word << passenger husband >>
+        ^message <msg>)
+-->
+    (<sc> ^store <w1> <spell> <p3>)
+    (<w1> ^handle <word> ^property <p3>)
+    (<spell> ^spelling <word> ^structure-type N ^syntactic-referent-type ADJ ^number singular ^referent <w1>)
+    (<p3> ^handle property ^type conceptual)
+}        
+
+sp {interpret-message*apply*interpret-unknown-word*store-smem-word*adjacent
+   (state <s> ^name interpret-message
+              ^smem.command <sc>
+              ^top-state.dialog-context <dc>
+              ^operator <o>)
+   (<o> ^name interpret-unknown-word
+        ^word <word>
+        ^word adjacent
+        ^message <msg>)
+-->
+    (<sc> ^store <w1> <spell> <next> <next-to1> )
+    (<w1> ^handle <word>)
+    (<spell> ^spelling <word> ^structure-type P ^converts-to PP ^relation <w1>)
+              (<next> ^prior-word <word>
+                   ^current-word |to|
+                   ^spelling |adjacent-to|  ## Construction?
+                   ^structure-type P
+                   ^relation <w1>
+                   ^assigners <next-to1>
+                   ^converts-to PP)
+           (<next-to1> ^structure-type DP
+                    ^relative-position after
+                    ^syntactic-structure head
+                    ^required true)
+    
+}
+
+    
+

@@ -1,55 +1,85 @@
 sp {game-search*elaborate*problem-space
-   (state <s> ^name game-search)
+#:interrupt
+   (state <s> ^name game-search
+              ^dcount <dc>
+             -^depth-limit <dc>
+              ^simulated true)
 -->
-   (<s> #^problem-space <p>
-        ^ntype action goal
-        ^gtype action)
-#   (<p> ^name action
-#        ^default-state-copy yes
-#        ^one-level-attributes depth-limit
-#        ^two-level-attributes objects list )
+   (<s> ^ntype action goal failure # heuristic
+        ^gtype action failure heuristic) #only failure on every
 }
+
+#don't propose new actions, heurisitcs at bottom depth of search
+sp {game-search*elaborate*problem-space*bottom
+   (state <s> ^name game-search
+              ^dcount <dc>
+              ^depth-limit <dc>
+              ^simulated true)
+-->
+   (<s> ^ntype action goal failure
+        ^gtype failure)
+}
+
 sp {game-search*elaborate*operator
    (state <s> ^name game-search
               ^superstate.operator <o>)
    (<o> ^name game-search
-        #^objects <objs>
         ^dcount <dc>
         ^depth-limit <dl>
         ^list <l>
         ^current <g> 
         ^game <name>)
 -->
-   (<s> #^objects <objs>
-        ^dcount <dc>
+   (<s> ^dcount <dc>
         ^depth-limit <dl>
         ^list <l>
-       # ^world.predicates <w>
+        ^problemspace games
         ^desired <d>
         ^current <g> 
         ^game <name>)
    (<d> ^found true)
 }
-#sp {game-search*elaborate*operator
-#   (state <s> ^name game-search
-#              ^world <w>
-#              ^objects <objs>)
-#-->
-#   (<w> ^objects <objs>)
-#}
-sp {game-search*elaborate*goal #for not only at depth
+
+sp {game-search*elaborate*goal #for only at depth
    (state <s> ^name game-search
+              ^simulated true
+             -^multiplayer true
               ^dcount <dc>
               ^depth-limit <dc>)
 -->
-   (<s> ^gtype goal)
+   (<s> ^gtype goal
+        ^goal-search-delay 1)
+}
+
+sp {game-search*elaborate*goal*multiplayer #for only at depth
+   (state <s> ^name game-search
+              ^multiplayer true
+              ^simulated true)
+-->
+   (<s> ^gtype goal
+        ^goal-search-delay 1)
+}
+
+sp {game-search*increment-goal-delay #for only at depth
+   (state <s> ^name game-search
+              ^goal-search-delay {<d> < 50})
+-->
+   (<s> ^goal-search-delay (+ 1 <d>))
 }
 
 sp {game-search*elaborate*multiplayer
    (state <s> ^name game-search
               ^superstate.superstate.multiplayer <m>)
 -->
+#(interrupt)
    (<s> ^multiplayer <m>)
+}
+
+sp {game-search*elaborate*game
+   (state <s> ^name game-search
+              ^superstate.superstate.game <m>)
+-->
+   (<s> ^game <m>)
 }
               
 sp {game-search*elaborate*depth-limit
@@ -58,12 +88,14 @@ sp {game-search*elaborate*depth-limit
 -->
    (<s> ^depth-limit <m>)
 }
+
 sp {game-search*elaborate*list
    (state <s> ^name game-search
               ^superstate.superstate.list <m>)
 -->
    (<s> ^list <m>)
 }
+
 sp {game-search*elaborate*dcount
    (state <s> ^name game-search
               ^superstate.superstate.dcount <dc>)
@@ -75,7 +107,8 @@ sp {game-search*elaborate*problem-space*world
    (state <s> ^name game-search
               ^superstate.superstate.world <world2>)
 -->
-   (<s> ^problem-space.world <world>)
+   (<s> ^problem-space <ps>)
+   (<ps> ^world <world> ^dont-copy-anything true ^name game)#^name action
    (<world> ^source <world2>
             ^copy-type deep)
 }
@@ -83,83 +116,163 @@ sp {game-search*elaborate*problem-space*world
 #need to make sure objects same?
 sp {game-search*apply*simulate
    (state <s> ^name game-search
-              ^action <act>
+              ^deep-copy-world.copy-objects-map <com>
               ^world.predicates <p2>
               ^operator <o>)
-   (<act> ^verb-structure <v1> ^handle <cname>)
    (<o> ^type action
         ^name <cname>
-     #   ^game << towers-of-hanoi tic-tac-toe eight-puzzle tic-tac-toe-stored >>
+        ^verb-structure.<num> <v1>  #multiple actions possible
         ^parameters <p>)
    (<p2> ^predicate <prep> ^predicate <prep2>)
    (<prep> ^handle below1 ^instance <instance>)
-   (<instance> ^2 <obj>)
+   (<instance> ^2 <obja>)
    (<prep2> ^handle on1 ^instance <instance2>)
-   (<instance2> ^1 <obj>)
+   (<instance2> ^1 <obja>)
    (<p> ^<i1> <obj> ^<i2> <obj1>)
-   #(<v> ^1 <v1>)#for now only handle 1 verb actions
-   (<v1> ^verb-prep on ^1 <i1> ^2 <i2>)
+   (<obj> ^handle <ha>)
+   (<com> ^<obj> <obja> ^<obj1> <objb>)
+  # (<com> ^entry <e1> ^entry <e2>)
+  # (<e1> ^source <obj> ^copy <obja>)
+  # (<e2> ^source <obj1> ^copy <objb>)
+   (<v1> ^verb-prep on1 ^1 <i1> ^2 <i2>)
    
 -->
    (<prep> ^instance <instance> -
            ^instance <instance3>)
    (<prep2> ^instance <instance2> -
             ^instance <instance4>)
-   (<instance3> ^1 <obj1> ^2 <obj>)
-   (<instance4> ^1 <obj> ^2 <obj1>)
+   (<instance3> ^1 <objb> ^2 <obja>)
+   (<instance4> ^1 <obja> ^2 <objb>)
 }
-sp {game-search*apply*simulate2
+
+sp {game-search*apply*simulate*right-of
    (state <s> ^name game-search
-              ^action <act>
-              ^prepositions <p2>
+              ^deep-copy-world.copy-objects-map <com>
+              ^world.predicates <p2>
               ^operator <o>)
-   (<act> ^verb-structure <v1> ^handle <cname>)
    (<o> ^type action
         ^name <cname>
+        ^verb-structure.<num> <v1>  #multiple actions possible
         ^parameters <p>)
-   (<p2> ^prep <prep> ^prep <prep2>)
-   (<prep> ^name below -^instance.{2} <obj>)
-   (<prep2> ^name on -^instance.{1} <obj>)
+   (<p2> ^predicate <prep>)
+   (<prep> ^handle right-of1 ^instance <instance>)
+   (<instance> ^<< 1 2 >> <obja>)
    (<p> ^<i1> <obj> ^<i2> <obj1>)
-   #(<v> ^1 <v1>)#for now only handle 1 verb actions
-   (<v1> ^verb-prep on ^1 <i1> ^2 <i2>)
+   (<obj> ^handle <ha>)
+   #(<com> ^<obj> <obja> ^<obj1> <objb>)
+   (<com> ^entry <e1> ^entry <e2>)
+   (<e1> ^source <obj> ^copy <obja>)
+   (<e2> ^source <obj1> ^copy <objb>)
+   (<v1> ^verb-prep on1 ^1 <i1> ^2 <i2>)
+   
+-->
+   (<prep> ^instance <instance> -)
+}
+
+#move set of objects
+sp {game-search*apply*simulate*set
+   (state <s> ^name game-search
+              ^deep-copy-world.copy-objects-map <com>
+              ^world.predicates <p2>
+              ^operator <o>)
+   (<o> ^type action
+        ^name <cname>
+        ^verb-structure.<num> <v1>  #multiple actions possible
+        ^parameters <p>)
+   (<p2> ^predicate <prep> ^predicate <prep2>)
+   (<prep> ^handle below1 ^instance <instance>)
+   (<instance> ^2 <obja>)
+   (<prep2> ^handle on1 ^instance <instance2>)
+   (<instance2> ^1 <obja>)
+   (<p> ^<i1> <objects> ^<i2> <obj1>)
+   (<objects> ^object <obj>)
+   (<obj> ^handle <ha>)
+   #(<com> ^<obj> <obja> ^<obj1> <objb>)
+   (<com> ^entry <e1> ^entry <e2>)
+   (<e1> ^source <obj> ^copy <obja>)
+   (<e2> ^source <obj1> ^copy <objb>)
+   (<v1> ^verb-prep on1 ^1 <i1> ^2 <i2>)
+   
+-->
+   (<prep> ^instance <instance> -
+           ^instance <instance3>)
+   (<prep2> ^instance <instance2> -
+            ^instance <instance4>)
+   (<instance3> ^1 <objb> ^2 <obja>)
+   (<instance4> ^1 <obja> ^2 <objb>)
+}
+
+sp {game-search*apply*simulate2
+   (state <s> ^name game-search
+              ^deep-copy-world.copy-objects-map <com>
+              ^world.predicates <p2>
+              ^operator <o>)
+   (<o> ^type action
+        ^name <cname>
+        ^verb-structure.<num> <v1>
+        ^parameters <p>)
+   (<p2> ^predicate <prep> ^predicate <prep2>)
+   (<prep> ^handle below1 -^instance.{2} <obja>)
+   (<prep2> ^handle on1 -^instance.{1} <obja>)
+   (<p> ^<i1> <obj> ^<i2> <obj1>)
+   (<obj> ^handle <ha>)
+   (<com> ^<obj> <obja> ^<obj1> <objb>)
+#   (<com> ^entry <e1> ^entry <e2>)
+#   (<e1> ^source <obj> ^copy <obja>)
+#   (<e2> ^source <obj1> ^copy <objb>)
+   (<v1> ^verb-prep on1 ^1 <i1> ^2 <i2>)
+   
 -->
    (<prep> ^instance <instance3>)
    (<prep2> ^instance <instance4>)
-   (<instance3> ^1 <obj1> ^2 <obj>)
-   (<instance4> ^1 <obj> ^2 <obj1>)
+   (<instance3> ^1 <objb> ^2 <obja>)
+   (<instance4> ^1 <obja> ^2 <objb>)
 }
 
-sp {game-search*elaborate*copy-stucture*elaborate*goal
+sp {game-search*apply*simulate2*set
    (state <s> ^name game-search
-              ^copy-count 20
-              #^gtype goal
-              ^copy-structure.destination <dest>)
-    (<dest> ^goal <goal>)
-    (<goal> ^argnum <an>)
+              ^deep-copy-world.copy-objects-map <com>
+              ^world.predicates <p2>
+              ^operator <o>)
+   (<o> ^type action
+        ^name <cname>
+        ^verb-structure.<num> <v1>
+        ^parameters <p>)
+   (<p2> ^predicate <prep> ^predicate <prep2>)
+   (<prep> ^handle below1 -^instance.{2} <obja>)
+   (<prep2> ^handle on1 -^instance.{1} <obja>)
+   (<p> ^<i1> <objects> ^<i2> <obj1>)
+   (<objects> ^object <obj>)
+   (<obj> ^handle <ha>)
+   #(<com> ^<obj> <obja> ^<obj1> <objb>)
+   (<com> ^entry <e1> ^entry <e2>)
+   (<e1> ^source <obj> ^copy <obja>)
+   (<e2> ^source <obj1> ^copy <objb>)
+   (<v1> ^verb-prep on1 ^1 <i1> ^2 <i2>)
+   
 -->
-	(<s> ^goal <goal>)
- (<goal> ^parameter-set <ps> ^potential-args <po>)
- (<ps> ^argnum <an>)
+   (<prep> ^instance <instance3>)
+   (<prep2> ^instance <instance4>)
+   (<instance3> ^1 <objb> ^2 <obja>)
+   (<instance4> ^1 <obja> ^2 <objb>)
 }
+
 sp {game-search*elaborate*top-level*simulated
    (state <s> ^name game-search
-              ^copy-count 20
               ^superstate.name find-solution)
+-->
+#(interrupt)
+   (<s> ^simulated true)
+}
+
+sp {game-search*elaborate*other-levels*simulated
+   (state <s> ^name game-search
+              ^operator <o>)
+   (<o> ^type action ^duplicate-of)
 -->
    (<s> ^simulated true)
 }
-sp {game-search*elaborate*copy-stucture*elaborate*action
-   (state <s> ^name game-search
-              ^copy-count 20
-              ^copy-structure.destination <dest>)
-    (<dest> ^action <act>)
-    (<act> ^argnum <an>)
--->
-	(<s> ^action <act>)
-  (<act> ^parameter-set <ps> ^potential-args <po>)
- (<ps> ^argnum <an>)
-}
+
 sp {game-search*elaborate*action*nlp-set
    (state <s> ^name game-search
               ^gtype <gtype>
@@ -168,6 +281,7 @@ sp {game-search*elaborate*action*nlp-set
 -->
 	(<act> ^nlp-set <p>)
 }
+
 sp {game-search*elaborate*sub-conditions
    (state <s> ^name game-search
               ^gtype <type>
@@ -196,28 +310,28 @@ sp {game-search*elaborate*nlp-set*verb-structure
 (<t> ^verb-structure <vs>)
 }
 
-sp {game-search*elaborate*action*nlp-set
+sp {game-search*elaborate*opponent
    (state <s> ^name game-search
-              ^gtype <gtype>
-              ^<gtype> <act>)
-   (<act> ^predicate-structure <p>)
+              ^multiplayer true
+              ^dcount << 1 3 5 7 9 >>)
 -->
-	(<act> ^nlp-set <p>)
+   (<s> ^opponent true)
 }
 
-sp {game-search*elaborate*copy-stucture
+sp {game-search*elaborate*opponent*false
    (state <s> ^name game-search
-              ^top-state.dialog-context.structure <dcs>)
-   (<dcs> ^actions.action <act> ^goals.goal <goal>)
+              ^multiplayer true
+              ^dcount << 0 2 4 6 8 >>)
 -->
-   (<s> ^copy-structure <copy> ^copy-count 0 ^copy-map <cm> ^pending-map <pm>)
-   (<copy> ^source <cg>
-           ^destination <dest>
-            ^copy-type deep)
-   (<cg> ^action <act>
-         ^goal <goal>)
+   (<s> ^opponent false)
 }
 
+sp {game-search*elaborate*retrieve-game
+   (state <s> ^name game-search
+              ^game <m>)
+-->
+   (<s> ^retrieve-game <m>)
+}
 
 sp {game-search*elaborate*input-args
    (state <s> ^name game-search
@@ -235,6 +349,7 @@ sp {game-search*elaborate*input-args
 -->
    (<res2> ^instance <in1>)
 }
+
 sp {game-search*elaborate*input-args*set-to-single*objects
    (state <s> ^name game-search
               ^gtype <gtype>
@@ -243,7 +358,7 @@ sp {game-search*elaborate*input-args*set-to-single*objects
    (<co> ^type concept ^attribute predicate ^name <name> ^args <args>)
    (<args> ^num > 0)
    (<args> ^<a1> <c1>)
-   (<c1> ^result.set.instance.{1}.<elem> <obj> ^rtype set ^parameter.num 0)
+   (<c1> ^result.set.instance.{1}.<elem> <obj> ^rtype set)# ^parameter.num 0)
    (<T5> ^link <co> ^condition <c> ^nlp-set <nlps> ^parameter-set <P124> ^potential-args <P125>)
    (<c> ^result.set <res> ^attribute input-arg ^parameter.{1}.param-id <a1> ^rtype single)
    (<nlps> ^aname <name>)
@@ -252,231 +367,274 @@ sp {game-search*elaborate*input-args*set-to-single*objects
    (<i15> ^1 <obj>)
 }
 
-
-
-#sp {game-search*elaborate*gtypes
-#   (state <s> ^name game-search
-#              ^ntype <type>
-#              ^superstate.superstate.<type> <a>)
-#-->
-#   (<s> ^<type> <b>)
-#   (<b> ^parameter-set <ps2> ^copy-of <a>
-#        ^potential-args <po2>)
-#}
-#
-#sp {game-search*elaborate*condition
-#   (state <s> ^name game-search
-#              ^ntype <type>
-#              ^<type> <t>
-#              ^superstate.superstate.<type> <t2>)
-#   (<t2> ^condition <co>)
-#   (<t> ^copy-of <t2>)
-#   (<co> ^name <name> ^parameter <p> ^negative <neg> ^rtype <rt>)
-#-->
-#   (<t> ^condition <c>)
-#   (<c> ^name <name> ^parameter <p> ^duplicate-of <co> ^negative <neg> ^rtype <rt>)
-#}
-#sp {game-search*propose*started
-#   (state <s> ^name game-search
-#              ^dcount 0
-#              ^ntype <type>
-#              ^<type>.condition <co>)
-#    (<co> -^args)
-#-->
-#   (<s> ^operator <o> + > =)
-#   (<o> ^name started)
-#}
-#sp {game-search*elaborate*condition*args2
-#   (state <s> ^name game-search
-#              ^ntype <type>  
-#              ^<type> <t>
-#              ^operator <oper>)#.name action)
-#   (<t> ^condition <c>
-#        ^condition <c1>
-#        ^condition <c2>)
-#   (<c>  ^duplicate-of <co1> -^args)
-#   (<co1> ^args <args> ^parameter.result.link.link.<s1>.<i2>.<o1> holder)
-#   (<args> ^num 2 ^1 <co2> ^2 <co3>)
-#   (<c1> ^duplicate-of <co2>)
-#   (<c2> ^duplicate-of <co3>)
-#-->
-#   (<c> ^args <args3> ^result.<s1>.<i2> <i>)
-#   (<args3> ^num 2 ^1 <c1> ^2 <c2>)
-#}
-#sp {game-search*elaborate*condition*args3
-#   (state <s> ^name game-search
-#              ^ntype <type>  
-#              ^<type> <t>
-#              ^operator <oper>)#.name action)
-#   (<t> ^condition <c>
-#        ^condition <c1>
-#        ^condition <c2>
-#        ^condition <c3>)
-#   (<c> ^duplicate-of <co1> -^args)
-#   (<co1> ^args <args> ^parameter.result.link.link.<s1>.<i2>.<o1> holder)
-#   (<args> ^num 3 ^1 <co2> ^2 <co3> ^3 <co4>)
-#   (<c1> ^duplicate-of <co2>)
-#   (<c2> ^duplicate-of <co3>)
-#   (<c3> ^duplicate-of <co4>)
-#-->
-#   (<c> ^args <args3> ^result.<s1>.<i2> <i>)
-#   (<args3> ^num 3 ^1 <c1> ^2 <c2> ^3 <c3>)
-#}
-#sp {game-search*elaborate*condition*args1
-#   (state <s> ^name game-search
-#              ^ntype <type>  
-#              ^<type> <t>
-#              ^operator <oper>)#.name action)
-#   (<t> ^condition <c>
-#        ^condition <c1>)
-#   (<c> ^duplicate-of <co1> -^args)
-#   (<co1> ^args <args> ^parameter.result.link.link.<s1>.<i2>.<o1> holder)
-#   (<args> ^num 1 ^1 <co2>)
-#   (<c1> ^duplicate-of <co2>)
-#-->
-#   (<c> ^args <args3> ^result.<s1>.<i2> <i>)
-#   (<args3> ^num 1 ^1 <c1>)
-#}
-#sp {game-search*elaborate*condition*noargs
-#   (state <s> ^name game-search
-#              ^ntype <type>  
-#              ^<type> <t>
-#              ^operator <oper>)#.name action)
-#   (<t> ^condition <c>)
-#   (<c> ^duplicate-of <co1> -^args)
-#   (<co1> ^args <args> ^parameter.result.link.link.<s1>.<i2>.<o1> holder)
-#   (<args> -^num)
-#-->
-#   (<c> ^args <args3> ^result.<s1>.<i2> <i>)
-#}
-#
-#
-#sp {game-search*elaborate*parameter-set*argnum
-#   (state <s> ^name game-search
-#              ^ntype <type>
-#              ^superstate.superstate.<type> <t2> 
-#              ^<type> <t> )
-#    (<t2> ^parameter-set.argnum <num>)
-#	(<t> ^parameter-set <ps> ^copy-of <t2>)
-#-->
-#   (<ps> ^argnum <num>)
-#}
-#
-#sp {game-search*elaborate*parameter-set*name
-#   (state <s> ^name game-search
-#              ^ntype <type>
-#              ^superstate.superstate.<type> <t2> 
-#              ^<type> <t> )
-#    (<t2> ^name <name>)
-#	(<t> ^copy-of <t2>)
-#-->
-#   (<t> ^name <name>)
-#}
-#sp {game-search*elaborate*parameter-set*verbs
-#   (state <s> ^name game-search
-#              ^gtype <type>
-#              ^superstate.superstate.<type> <t2> 
-#              ^<type> <t> )
-#    (<t2> ^parameter-set.verbs <v>)
-#	(<t> ^parameter-set <ps> ^copy-of <t2>)
-#-->
-#   (<ps> ^verbs <v>)
-#}
-
-
+sp {game-search*apply*action*perform-action
+   (state <s> ^name selection
+              ^evaluation <e>
+              ^superstate <ss>
+              ^top-state <ts>
+              ^problemspace games)
+   (<ss> ^dcount <dc> -^multiplayer true)
+   (<e> ^symbolic-value success ^superoperator <so>)
+   (<so> ^parameters <p> ^verb-structure <vs>)
+   (<vs> ^<num> <vs2>)
+   (<p> ^<i1> <o1> ^<i2> <o2>)
+  # (<v> ^1 <v1>)#for now only handle 1 verb actions
+   (<vs2> ^verb-prep <vp> ^verb-name <vname> ^1 <i1> ^2 <i2>)
+   (<o1> ^handle <handle1>)
+   (<o2> ^handle <handle2>)
+   (<ts> ^world.objects <objs> ^dialog-context <d5>)
+   (<objs> ^object <obja> <objb>)
+   (<obja> ^handle <handle1>)
+   (<objb> ^handle <handle2>)
+   
+-->
+   (<d5> ^perform-action <fa>)
+   (<fa> ^dcount (- (+ (* 2 <dc>) <num>) 1) ^obj1 <obja> ^obj2 <objb> ^pname <vp> ^vname <vname>)
+}
 
 sp {game-search*apply*action-success
    (state <s> ^name game-search
+              ^multiplayer true
               ^desired <d>
-              ^operator <o>)
-   (<o> ^name action -^duplicate-of)
--->
-   (<s> ^success <d>)
-}
-sp {game-search*apply*action*flound-action
-   (state <s> ^name game-search
-              ^top-state <ts>
-              ^dcount <dc>
-             -^multiplayer true
              -^dcount 0
-              ^action <act>
+              ^opponent false
               ^operator <o>)
-   (<o> ^type action -^duplicate-of ^parameters <p> ^name <cname>)
-   (<act> ^verb-structure <v1> ^handle <cname>)
-   (<p> ^<i1> <o1> ^<i2> <o2>)
-   (<o1> ^id <oa>)
-   (<o2> ^id <ob>)
-  # (<v> ^1 <v1>)#for now only handle 1 verb actions
-   (<v1> ^verb-prep <vp> ^verb-name <vname> ^1 <i1> ^2 <i2>)
+   (<o> ^type action -^duplicate-of)
 -->
-   (<ts> ^flound-action <fa>)
-   (<fa> ^dcount <dc> ^obj1 <oa> ^obj2 <ob> ^pname <vp>)
+(<s> ^success <d>)
 }
 
-sp {game-search*apply*action*flound-action*top
+sp {game-search*apply*action-failure
+   (state <s> ^name game-search
+              ^multiplayer true
+              ^desired <d>
+             -^dcount 0
+             -^fail <o>
+              ^opponent true
+              ^operator <o>)
+   (<o> ^type action -^duplicate-of)
+-->
+(<s> ^partial-failure <d>)
+}
+
+sp {game-search*apply*action-failure*success
+   (state <s> ^name game-search
+              ^multiplayer true
+              ^desired <d>
+             -^dcount 0
+              ^fail <o>
+              ^opponent true
+              ^operator <o>)
+   (<o> ^type action -^duplicate-of)
+-->
+(<s> ^success <d>)
+}
+
+sp {game-search*apply*action*perform-action*top
    (state <s> ^name game-search
               ^top-state <ts>
-              ^superstate.superstate.superstate <sss>
+              ^superstate <sss>
               ^dcount 0
               ^action <act>
               ^operator <o>)
    (<o> ^type action -^duplicate-of ^parameters <p> ^name <cname>)
-   (<act> ^verb-structure <v1> ^handle <cname>)
+   (<act> ^verb-structure.<num> <v1> ^handle <cname>)
    (<p> ^<i1> <o1> ^<i2> <o2>)
-   (<o1> ^id <oa>)
-   (<o2> ^id <ob>)
    #(<v> ^1 <v1>)#for now only handle 1 verb actions
    (<v1> ^verb-prep <vp> ^verb-name <vname> ^1 <i1> ^2 <i2>)
 -->
-   (<sss> ^valid-arg.<a1> <oa>
-         ^valid-arg.<a2> <ob>
-         ^action <a>)
-   (<a> ^verb <vname> ^pname <vp>)
-   (<ts> ^flound-action <fa>)
-   (<fa> ^dcount 0 ^obj1 <oa> ^obj2 <ob> ^mark done ^pname <vp>)
+   (<sss> ^found-action true)
+}
+
+#for multiplayer
+sp {game-search*apply*action*perform-action*top*singleaction
+   (state <s> ^name game-search
+              ^top-state <ts>
+              ^superstate <sss>
+              ^multiplayer true
+              ^dcount 0
+              ^action <act>
+              ^operator <o>)
+   (<o> ^type action -^duplicate-of ^parameters <p> ^name <cname>)
+   (<act> ^verb-structure.<num> <v1> ^handle <cname>)
+   (<p> ^<i1> <o1> ^<i2> <o2>)
+   #(<v> ^1 <v1>)#for now only handle 1 verb actions
+   (<v1> ^verb-prep <vp> ^verb-name <vname> ^1 <i1> ^2 <i2>)
+   (<o1> ^handle <handle1>)
+   (<o2> ^handle <handle2>)
+   (<ts> ^world.objects <objs> ^dialog-context <d5>)
+   (<objs> ^object <obja> <objb>)
+   (<obja> ^handle <handle1>)
+   (<objb> ^handle <handle2>)
+-->
+   (<d5> ^perform-action <fa>)
+   (<fa> ^dcount (- <num> 1) ^obj1 <obja> ^obj2 <objb> ^pname <vp> ^vname <vname>)
+}
+
+sp {game-search*apply*game-won
+   (state <s> ^name game-search
+              ^multiplayer true
+              ^dcount 1
+              ^top-state <ts>
+              ^desired <d>
+              ^operator.type goal)
+-->
+   (<ts> ^game-status <dc>)
+   (<dc> ^game-won true)
 }
 
 sp {game-search*apply*goal
+#:interrupt
    (state <s> ^name game-search
               ^desired <d>
-              ^operator.name goal)
+             -^multiplayer true
+              ^operator.type goal)
 -->
    (<s> ^success <d>)
 }
-sp {game-search*depth-limit
+
+sp {game-search*apply*goal*multiplayer*depth0
+   (state <s> ^name game-search
+              ^dcount << 0 1 >>
+              ^desired <d>
+              ^multiplayer true
+              ^operator.type goal)
+-->
+   (<s> ^success <d>)
+}
+
+sp {game-search*apply*goal*multiplayer
+   (state <s> ^name game-search
+              -^dcount 1
+              -^dcount 0
+               ^superstate.superstate <ss>
+              ^multiplayer true
+              ^operator.type goal)
+   (<ss> ^desired <d> ^superstate <sss>)
+   (<sss> ^superstate <ts> ^operator.superoperator <sop>)
+-->
+   (<ss> ^failure <d>)
+   (<ts> ^fail <sop>)
+}
+
+sp {game-search*apply*game-lost
+   (state <s> ^name game-search
+              ^multiplayer true
+              ^dcount 0
+              ^top-state <ts>
+              ^desired <d>
+              ^operator.type failure)
+-->
+ (<ts> ^game-status <dc>)
+   (<dc> ^game-lost true)
+}
+
+sp {game-search*apply*failure
    (state <s> ^name game-search
               ^desired <d>
-              ^operator <o> +
-             -^goal.parameter-set.set
-              ^action <act>
-              ^dcount <dc>
-              ^depth-limit <dc>)
-   (<o> -^duplicate-of ^name action ^cname <cname>)
-   (<act> ^parameter-set.set ^name <cname>)
- -{(<s> ^operator <o2> +)
-   (<o2> ^name goal)}
+             -^multiplayer true
+              ^operator.type failure)
 -->
    (<s> ^partial-failure <d>)
 }
+
+sp {game-search*apply*failure*multiplayer
+   (state <s> ^name game-search
+             ^multiplayer true
+             ^superstate.superstate <ss>
+              ^operator.type failure)
+   (<ss> ^desired <d>)
+-->
+   (<ss> ^failure <d>)
+}
+
+sp {selection*pass-back-success*puzzle
+   (state <s> ^superstate
+              ^superstate <ss>
+              ^evaluation.symbolic-value << success >>)
+   (<ss> ^superstate.operator <sso> ^multiplayer false)
+   (<sso> ^name evaluate-operator
+          ^evaluation <e2>
+          ^superoperator.name)
+-->
+   (<e2> ^symbolic-value success)
+ }
+
+sp {game-search*depth-limit
+   (state <s> ^name game-search
+              ^desired <d>
+              ^goal-search-delay 50#10
+              ^operator <o> +
+             -^multiplayer true
+             -^goal.parameter-set.set
+              ^simulated true
+              ^dcount <dc>
+              ^depth-limit <dc>)
+   (<o> ^type action -^duplicate-of) 
+ -{(<s> ^operator <o2> +)
+   (<o2> ^type goal)}
+-->
+   (<s> ^partial-failure <d>)
+}
+
+sp {game-search*depth-limit*multiplayer
+   (state <s> ^name game-search
+              ^desired <d>
+              ^goal-search-delay 50
+             # ^operator <o> +
+              ^multiplayer true
+             -^goal.parameter-set.set
+              ^simulated true
+              ^dcount <dc>
+              ^depth-limit <dc>)
+ -{(<s> ^operator <o2> +)
+   (<o2> ^type goal)}
+-->
+   (<s> ^partial-failure <d>)
+}
+
 sp {game-search*prefer*goal
    (state <s> ^name game-search
               ^operator <o1> +)
-   (<o1> ^name goal)
+   (<o1> ^type goal)
+-->
+#(interrupt)
+   (<s> ^operator <o1> > =)
+}
+
+sp {game-search*prefer*failure
+   (state <s> ^name game-search
+              ^operator <o1> +)
+   (<o1> ^type failure)
 -->
    (<s> ^operator <o1> > =)
 }
-sp {game-search*heuristic*reject
+
+sp {game-search*prefer*failure*to*goal
    (state <s> ^name game-search
-              ^superstate.operator.superoperator.parameters <p2>
-              ^action <act>
-              ^operator <o> +)
-   (<act> ^handle <cname> ^verb-structure.{1} <ind>)
-   (<o> ^type action -^duplicate-of ^parameters <p> ^name <cname>)
-   (<p> ^<ind> <obj1>)
-   (<p2> ^<ind> <obj1>)
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^type failure)
+   (<o2> ^type goal)
 -->
-   (<s> ^operator <o> -)
+   (<s> ^operator <o1> > <o2>)
 }
+
+sp {game-search*equivalent-action*reject4*ordering
+   (state <s> ^name game-search
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^type action -^duplicate-of ^parameters <p> ^name <cname> ^verb-structure <vs>)
+   (<o2> ^type action -^duplicate-of ^parameters {<p2> > <p>} ^name <cname>)
+   (<vs> ^1 <act1> ^3 <act3>)
+   (<act1> ^1 <in1> ^2 <in2>)
+   (<act3> ^1 <in3> ^2 <in4>)
+   (<p> ^<in1> <a> ^<in2> <b> ^<in3> <a1> ^<in4> <b1> )
+   (<p2> ^<in3> <a> ^<in4> <b> ^<in1> <a1> ^<in2> <b1> )
+-->
+(<s> ^operator <o2> -)
+}
+
 sp {game-search*propose*default
    (state <s> ^name game-search)
    -{(<s> ^action <a>)
@@ -489,24 +647,61 @@ sp {game-search*propose*default
 sp {game-search*apply*default
    (state <s> ^name game-search
               ^desired <d>
+             -^multiplayer true
              -^dcount 0
               ^operator.name default)
 -->
    (<s> ^partial-failure <d>)
 }
 
+sp {game-search*apply*default*multiplayer*success
+   (state <s> ^name game-search
+              ^desired <d>
+             -^opponent true
+              ^multiplayer true
+             -^dcount 0
+              ^operator.name default)
+-->
+   (<s> ^partial-failure <d>)
+}
 
+#multiplayer, take random of best actions
+sp {game-search*apply*default*top-select-random-action
+   (state <s> ^name game-search
+              ^operator <o> +
+              ^multiplayer true
+              ^opponent true
+              ^operator.name default)
+   (<o> ^type action)
+-->
+   (<s> ^operator <o> = >) 
+}
+
+sp {game-search*apply*default*top-select-random-action*top*pick*random
+   (state <s> ^name game-search
+              ^operator <o> +
+              ^multiplayer true
+              ^dcount 0
+              ^operator.name default)
+   (<o> ^type action)
+-->
+   (<s> ^operator <o> = >) 
+}
+
+#puzzle, increase depth
 sp {game-search*apply*default*depth-limit-increase
    (state <s> ^name game-search
+              ^multiplayer false
               ^dcount 0
               ^superstate <ss>
               ^operator.name default)
    (<ss> ^depth-limit <d>)
 -->
+	(write (crlf) (+ <d> 1))
+# (write (crlf) (cmd |fc game-search*elaborate*other-levels*simulated|))
    (<ss> ^depth-limit <d> -)
    (<ss> ^depth-limit (+ <d> 1))
-
-   }
+}
 
 sp {selection*prefer*evaluate*action*over*default
    (state <s> ^name selection
@@ -517,3 +712,32 @@ sp {selection*prefer*evaluate*action*over*default
 -->
    (<s> ^operator <o1> > <o2>)
 }
+
+sp {selection*prefer*evaluate*action*over*hackforcannibals
+   (state <s> ^name selection
+              ^superstate.dcount 0
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name evaluate-operator ^superoperator <so>)
+   (<o2> ^name evaluate-operator ^superoperator <so2>)
+   (<so> ^type action -^verb-structure.{3})
+   (<so2> ^type action ^verb-structure.{3})
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+#now teachable, no longer hack in
+#sp {game-search*heuristic*reject
+#   (state <s> ^name game-search
+#             -^top-state.dialog-context.structure.word-structure.spelling << tower-of-ha simple-maze push-maze family-cross missionaries-and-cannibals >>
+#              ^superstate.operator.superoperator <so>
+#              ^action <act>
+#              ^operator <o> +)
+#   (<act> ^handle <cname> ^verb-structure.{1}.{1} <ind>)
+#   (<so> ^parameters <p2> ^verb-structure.{1}.{1} <ind2>)
+#   (<o> ^type action -^duplicate-of ^parameters <p> ^name <cname>)
+#   (<p> ^<ind>.handle <h1>)
+#   (<p2> ^<ind2>.handle <h1>)
+#-->
+#   (<s> ^operator <o> -)
+#}

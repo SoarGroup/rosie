@@ -1,17 +1,19 @@
 sp {retrieve-predicate-structure*elaborate*predicate-handle
    (state <s> ^name retrieve-predicate-structure
               ^superstate.operator <o>)
-   (<o> ^predicate-handle <handle>
-        ^condition <co>)
+   (<o> ^handle <handle>)
 -->
-   (<s> ^predicate-handle <handle>
-        ^condition <co>)
+   (<s> ^handle <handle>)
 }
-sp {retrieve-predicate-structure*elaborate*nlp-set
-   (state <s> ^name retrieve-predicate-structure)
+
+sp {retrieve-predicate-structure*elaborate*condition
+   (state <s> ^name retrieve-predicate-structure
+              ^superstate.operator <o>)
+   (<o> ^condition <co>)
 -->
-   (<s> ^nlp-set <nset>)
+   (<s> ^condition <co>)
 }
+
 sp {retrieve-predicate-structure*elaborate*predicate-lti
    (state <s> ^name retrieve-predicate-structure
               ^superstate.operator <o>)
@@ -22,147 +24,311 @@ sp {retrieve-predicate-structure*elaborate*predicate-lti
 
 sp {retrieve-predicate-structure*elaborate*smem-query
    (state <s> ^name retrieve-predicate-structure
-              ^predicate-handle <handle>)
+              ^smem.command <c>
+              #^superstate.superstate.game <game> #TODO READD
+              ^handle <handle>)
 -->
-   (<s> ^smem-query <query>)
-   (<query> ^cue <cue>
-            ^depth 10)
-   (<cue> ^handle <handle>)
-}
-
-sp {retrieve-predicate-structure*elaborate*smem-retrieve
-   (state <s> ^name retrieve-predicate-structure
-              ^predicate-lti <lti>)
--->
-   (<s> ^smem-retrieve <query>)
-   (<query> ^identifier <lti>
-            ^depth 10)
+   (<c> ^query <cue>
+        ^link-to-ltm no  #only for latest 9.6 dev
+        ^depth 15)
+   (<cue> ^handle <handle> ^item-type predicate)# ^from <game>) #TODO READD
 }
 
 sp {retrieve-predicate-structure*propose*complete
    (state <s> ^name retrieve-predicate-structure
-              ^smem-query.result <pred>)
+              ^smem.result.retrieved <pred>)
 -->
    (<s> ^operator <o> + <)
    (<o> ^name complete)
 }
 
-
-sp {retrieve-predicate-structure*elaborate*smem-query*result
+sp {DEPRICATEDretrieve-predicate-structure*elaborate*smem-query*unknown
    (state <s> ^name retrieve-predicate-structure
-#              ^operator.name complete
-              #^condition <co>
-              ^nlp-set <nlps>)
-   (<s> ^smem-query.result <pred>)
-   (<pred> ^predicate-structure.conditions <cond>)# ^handle <name>)# ^argnum <an>)
+              ^smem.result.failure
+              ^superstate <ss>)
 -->
-  (<nlps> ^nlp <cond>)# ^aname <name>)#^nlp <cs> <cs1>
+    (halt)
+   (<ss> ^unknown true)
 }
 
-#TODO initiate teaching interaction
-sp {retrieve-predicate-structure*elaborate*smem-query*unknown
+sp {retrieve-predicate-structure*apply*complete*smem-query*result*no-condition-link
    (state <s> ^name retrieve-predicate-structure
-#              ^operator.name complete
-              #^condition <co>
-              ^nlp-set <nlps>)
-   (<s> ^smem-query.result <pred>)
-   (<pred> -^predicate-structure)
+              ^operator.name complete
+              ^smem.result.retrieved <pred>
+              ^copy-structure.destination <dest>
+              ^superstate <ss>)
+   (<ss> ^gtype action)
+   (<dest> -^opponent ^predicate-structure <ps> ^verb-structure <vs> ^handle <name> ^argnum <an> ^primary-rtype <rtype>)
 -->
-   (<s> ^unknown-concept <pred>)
+   (<ss> ^action <p>)
+   (<p> ^handle <name> ^aname <name> ^verb-structure <vs> ^nlp-set <ps> ^primary-rtype <rtype> ^formated predicate ^parameter-set <P124> ^potential-args <P125>)
+  (<P124> ^argnum <an>)
+  (<dest> ^aname <name>)
+(<ps> ^aname <name>)
+}
+
+sp {retrieve-predicate-structure*apply*complete*smem-query*result*no-condition-link*opponent
+   (state <s> ^name retrieve-predicate-structure
+              ^operator.name complete
+              ^smem.result.retrieved <pred>
+              ^copy-structure.destination <dest>
+              ^superstate <ss>)
+   (<ss> ^gtype action)
+   (<dest> ^opponent <o> ^predicate-structure <ps> ^verb-structure <vs> ^handle <name> ^argnum <an> ^primary-rtype <rtype>)
+-->
+   (<ss> ^action <p>)
+   (<p> ^opponent <o> ^handle <name> ^aname <name> ^verb-structure <vs> ^nlp-set <ps> ^primary-rtype <rtype> ^formated predicate ^parameter-set <P124> ^potential-args <P125>)
+  (<P124> ^argnum <an>)
+  (<dest> ^aname <name>)
+ (<ps> ^aname <name>)
+}
+
+sp {retrieve-predicate-structure*apply*complete*smem-query*result*no-condition-link*heuristic
+   (state <s> ^name retrieve-predicate-structure
+              ^operator.name complete
+              ^smem.result.retrieved <pred>
+              ^copy-structure.destination <dest>
+              ^superstate <ss>)
+   (<ss> ^gtype heuristic)
+   (<dest> ^predicate-structure <ps> ^handle <name> ^argnum <an> ^primary-rtype <rtype> ^ntype heuristic ^prefer <pref> -^moved -^modifier)
+-->
+   (<ss> ^heuristic <p>)
+   (<p> ^handle <name> ^aname <name> ^nlp-set <ps> ^primary-rtype <rtype> ^formated predicate ^parameter-set <P124> ^potential-args <P125> ^ntype heuristic ^prefer <pref>)
+  (<P124> ^argnum <an>)
+  (<dest> ^aname <name>)
+ (<ps> ^aname <name>)
+}
+
+sp {retrieve-predicate-structure*apply*complete*smem-query*result*no-condition-link*heuristic*avoid
+   (state <s> ^name retrieve-predicate-structure
+              ^operator.name complete
+              ^smem.result.retrieved <pred>
+              ^copy-structure.destination <dest>
+              ^superstate <ss>)
+   (<ss> ^gtype heuristic)
+   (<dest> ^predicate-structure <ps> ^handle <name> ^argnum <an> ^primary-rtype <rtype> ^ntype heuristic ^avoid <pref> -^moved -^modifier)
+-->
+   (<ss> ^heuristic <p>)
+   (<p> ^handle <name> ^aname <name> ^nlp-set <ps> ^primary-rtype <rtype> ^formated predicate ^parameter-set <P124> ^potential-args <P125> ^ntype heuristic ^avoid <pref>)
+  (<P124> ^argnum <an>)
+  (<dest> ^aname <name>)
+ (<ps> ^aname <name>)
+}
+
+sp {retrieve-predicate-structure*apply*complete*smem-query*result*no-condition-link*heuristic*consider
+   (state <s> ^name retrieve-predicate-structure
+              ^operator.name complete
+              ^smem.result.retrieved <pred>
+              ^copy-structure.destination <dest>
+              ^superstate <ss>)
+   (<ss> ^gtype heuristic)
+   (<dest> ^predicate-structure <ps> ^handle <name> ^argnum <an> ^primary-rtype <rtype> ^ntype heuristic ^consider <pref> -^moved -^modifier)
+-->
+   (<ss> ^heuristic <p>)
+   (<p> ^handle <name> ^aname <name> ^nlp-set <ps> ^primary-rtype <rtype> ^formated predicate ^parameter-set <P124> ^potential-args <P125> ^ntype heuristic ^consider <pref>)
+  (<P124> ^argnum <an>)
+  (<dest> ^aname <name>)
+ (<ps> ^aname <name>)
 }
 
 
+
+sp {retrieve-predicate-structure*apply*complete*smem-query*result*no-condition-link*heuristic*modifier
+   (state <s> ^name retrieve-predicate-structure
+              ^operator.name complete
+              ^smem.result.retrieved <pred>
+              ^copy-structure.destination <dest>
+              ^superstate <ss>)
+   (<ss> ^gtype heuristic)
+   (<dest> ^predicate-structure <ps> ^handle <name> ^argnum <an> ^primary-rtype <rtype> ^ntype heuristic ^prefer <pref> -^moved ^modifier <mod>)
+-->
+   (<ss> ^heuristic <p>)
+   (<p> ^handle <name> ^aname <name> ^nlp-set <ps> ^primary-rtype <rtype> ^formated predicate ^parameter-set <P124> ^potential-args <P125> ^ntype heuristic ^prefer <pref> ^modifier <mod>)
+  (<P124> ^argnum <an>)
+  (<dest> ^aname <name>)
+ (<ps> ^aname <name>)
+}
+
+sp {retrieve-predicate-structure*apply*complete*smem-query*result*no-condition-link*heuristic*avoid*modifier
+   (state <s> ^name retrieve-predicate-structure
+              ^operator.name complete
+              ^smem.result.retrieved <pred>
+              ^copy-structure.destination <dest>
+              ^superstate <ss>)
+   (<ss> ^gtype heuristic)
+   (<dest> ^predicate-structure <ps> ^handle <name> ^argnum <an> ^primary-rtype <rtype> ^ntype heuristic ^avoid <pref> -^moved ^modifier <mod>)
+-->
+   (<ss> ^heuristic <p>)
+   (<p> ^handle <name> ^aname <name> ^nlp-set <ps> ^primary-rtype <rtype> ^formated predicate ^parameter-set <P124> ^potential-args <P125> ^ntype heuristic ^avoid <pref> ^modifier <mod>)
+  (<P124> ^argnum <an>)
+  (<dest> ^aname <name>)
+ (<ps> ^aname <name>)
+}
+
+sp {retrieve-predicate-structure*apply*complete*smem-query*result*no-condition-link*heuristic*consider*modifier
+   (state <s> ^name retrieve-predicate-structure
+              ^operator.name complete
+              ^smem.result.retrieved <pred>
+              ^copy-structure.destination <dest>
+              ^superstate <ss>)
+   (<ss> ^gtype heuristic)
+   (<dest> ^predicate-structure <ps> ^handle <name> ^argnum <an> ^primary-rtype <rtype> ^ntype heuristic ^consider <pref> -^moved ^modifier <mod>)
+-->
+   (<ss> ^heuristic <p>)
+   (<p> ^handle <name> ^aname <name> ^nlp-set <ps> ^primary-rtype <rtype> ^formated predicate ^parameter-set <P124> ^potential-args <P125> ^ntype heuristic ^consider <pref> ^modifier <mod>)
+  (<P124> ^argnum <an>)
+  (<dest> ^aname <name>)
+ (<ps> ^aname <name>)
+}
+
+
+sp {retrieve-predicate-structure*apply*complete*smem-query*result*no-condition-link*heuristic*moved
+   (state <s> ^name retrieve-predicate-structure
+              ^operator.name complete
+              ^smem.result.retrieved <pred>
+              ^copy-structure.destination <dest>
+              ^superstate <ss>)
+   (<ss> ^gtype heuristic)
+   (<dest> ^predicate-structure <ps> ^handle <name> ^argnum <an> ^primary-rtype <rtype> ^ntype heuristic ^prefer <pref> ^moved <mo> -^modifier)
+-->
+   (<ss> ^heuristic <p>)
+   (<p> ^handle <name> ^aname <name> ^nlp-set <ps> ^primary-rtype <rtype> ^formated predicate ^parameter-set <P124> ^potential-args <P125> ^ntype heuristic ^prefer <pref> ^moved <mo>)
+  (<P124> ^argnum <an>)
+  (<dest> ^aname <name>)
+ (<ps> ^aname <name>)
+}
+
+sp {retrieve-predicate-structure*apply*complete*smem-query*result*no-condition-link*heuristic*moved*modifier
+   (state <s> ^name retrieve-predicate-structure
+              ^operator.name complete
+              ^smem.result.retrieved <pred>
+              ^copy-structure.destination <dest>
+              ^superstate <ss>)
+   (<ss> ^gtype heuristic)
+   (<dest> ^predicate-structure <ps> ^handle <name> ^argnum <an> ^primary-rtype <rtype> ^ntype heuristic ^prefer <pref> ^moved <mo> ^modifier <mod>)
+-->
+   (<ss> ^heuristic <p>)
+   (<p> ^handle <name> ^aname <name> ^nlp-set <ps> ^primary-rtype <rtype> ^formated predicate ^parameter-set <P124> ^potential-args <P125> ^ntype heuristic ^prefer <pref> ^moved <mo> ^modifier <mod>)
+  (<P124> ^argnum <an>)
+  (<dest> ^aname <name>)
+ (<ps> ^aname <name>)
+}
+
+sp {retrieve-predicate-structure*apply*complete*smem-query*result*no-condition-link*heuristic*avoid*moved
+   (state <s> ^name retrieve-predicate-structure
+              ^operator.name complete
+              ^smem.result.retrieved <pred>
+              ^copy-structure.destination <dest>
+              ^superstate <ss>)
+   (<ss> ^gtype heuristic)
+   (<dest> ^predicate-structure <ps> ^handle <name> ^argnum <an> ^primary-rtype <rtype> ^ntype heuristic ^avoid <pref> ^moved <mo> -^modifier)
+-->
+   (<ss> ^heuristic <p>)
+   (<p> ^handle <name> ^aname <name> ^nlp-set <ps> ^primary-rtype <rtype> ^formated predicate ^parameter-set <P124> ^potential-args <P125> ^ntype heuristic ^avoid <pref> ^moved <mo>)
+  (<P124> ^argnum <an>)
+  (<dest> ^aname <name>)
+ (<ps> ^aname <name>)
+}
+sp {retrieve-predicate-structure*apply*complete*smem-query*result*no-condition-link*heuristic*avoid*moved*modifier
+   (state <s> ^name retrieve-predicate-structure
+              ^operator.name complete
+              ^smem.result.retrieved <pred>
+              ^copy-structure.destination <dest>
+              ^superstate <ss>)
+   (<ss> ^gtype heuristic)
+   (<dest> ^predicate-structure <ps> ^handle <name> ^argnum <an> ^primary-rtype <rtype> ^ntype heuristic ^avoid <pref> ^moved <mo> ^modifier <mod>)
+-->
+   (<ss> ^heuristic <p>)
+   (<p> ^handle <name> ^aname <name> ^nlp-set <ps> ^primary-rtype <rtype> ^formated predicate ^parameter-set <P124> ^potential-args <P125> ^ntype heuristic ^avoid <pref> ^moved <mo> ^modifier <mod>)
+  (<P124> ^argnum <an>)
+  (<dest> ^aname <name>)
+ (<ps> ^aname <name>)
+}
+
+sp {retrieve-predicate-structure*apply*complete*smem-query*result*no-condition-link*heuristic*consider*moved
+   (state <s> ^name retrieve-predicate-structure
+              ^operator.name complete
+              ^smem.result.retrieved <pred>
+              ^copy-structure.destination <dest>
+              ^superstate <ss>)
+   (<ss> ^gtype heuristic)
+   (<dest> ^predicate-structure <ps> ^handle <name> ^argnum <an> ^primary-rtype <rtype> ^ntype heuristic ^consider <pref> ^moved <mo> -^modifier)
+-->
+   (<ss> ^heuristic <p>)
+   (<p> ^handle <name> ^aname <name> ^nlp-set <ps> ^primary-rtype <rtype> ^formated predicate ^parameter-set <P124> ^potential-args <P125> ^ntype heuristic ^consider <pref> ^moved <mo>)
+  (<P124> ^argnum <an>)
+  (<dest> ^aname <name>)
+ (<ps> ^aname <name>)
+}
+
+sp {retrieve-predicate-structure*apply*complete*smem-query*result*no-condition-link*heuristic*consider*moved*modifier
+   (state <s> ^name retrieve-predicate-structure
+              ^operator.name complete
+              ^smem.result.retrieved <pred>
+              ^copy-structure.destination <dest>
+              ^superstate <ss>)
+   (<ss> ^gtype heuristic)
+   (<dest> ^predicate-structure <ps> ^handle <name> ^argnum <an> ^primary-rtype <rtype> ^ntype heuristic ^consider <pref> ^moved <mo> ^modifier <mod>)
+-->
+   (<ss> ^heuristic <p>)
+   (<p> ^handle <name> ^aname <name> ^nlp-set <ps> ^primary-rtype <rtype> ^formated predicate ^parameter-set <P124> ^potential-args <P125> ^ntype heuristic ^consider <pref> ^moved <mo> ^modifier <mod>)
+  (<P124> ^argnum <an>)
+  (<dest> ^aname <name>)
+ (<ps> ^aname <name>)
+}
+
+sp {retrieve-predicate-structure*apply*complete*smem-query*result*no-condition-link*goal
+   (state <s> ^name retrieve-predicate-structure
+              ^operator.name complete
+              ^smem.result.retrieved <pred>
+              ^copy-structure.destination <dest>
+              ^superstate <ss>)
+   (<ss> ^gtype goal)
+   (<dest> ^predicate-structure <ps> ^handle <name> ^argnum <an> ^primary-rtype <rtype> ^type goal)
+-->
+   (<ss> ^goal <p>)
+   (<p> ^handle <name> ^aname <name> ^nlp-set <ps> ^primary-rtype <rtype> ^formated predicate ^parameter-set <P124> ^potential-args <P125>)
+  (<P124> ^argnum <an>)
+  (<dest> ^aname <name>)
+ (<ps> ^aname <name>)
+}
+
+sp {retrieve-predicate-structure*apply*complete*smem-query*result*no-condition-link*failure
+   (state <s> ^name retrieve-predicate-structure
+              ^operator.name complete
+              ^smem.result.retrieved <pred>
+              ^copy-structure.destination <dest>
+              ^superstate <ss>)
+   (<ss> ^gtype failure)
+   (<dest> ^predicate-structure <ps> ^handle <name> ^argnum <an> ^primary-rtype <rtype> ^type failure)
+-->
+   (<ss> ^failure <p>)
+   (<p> ^handle <name> ^aname <name> ^nlp-set <ps> ^primary-rtype <rtype> ^formated predicate ^parameter-set <P124> ^potential-args <P125>)
+  (<P124> ^argnum <an>)
+  (<dest> ^aname <name>)
+ (<ps> ^aname <name>)
+}
 
 sp {retrieve-predicate-structure*apply*complete*smem-query*result
    (state <s> ^name retrieve-predicate-structure
               ^operator.name complete
               ^condition <co>
-              ^copy-count 12
-              ^smem-query.result <pred>
+              ^smem.result.retrieved <pred>
               ^copy-structure.destination <dest>
               ^superstate <ss>)
-   (<pred> ^handle <name> ^argnum <an> ^primary-rtype <rtype>)
+   (<dest> ^predicate-structure <p2> ^argnum <an> ^primary-rtype <rtype> ^handle <name>)
 -->
    (<ss> ^predicate <p> ^gtype predicate)
-   (<p> ^aname <name> ^nlp-set <dest> ^primary-rtype <rtype> ^formated predicate ^parameter-set <P124> ^potential-args <P125> ^link <co>)
+   (<p> ^handle <name> ^aname <name> ^nlp-set <p2> ^primary-rtype <rtype> ^formated predicate ^parameter-set <P124> ^potential-args <P125> ^link <co>)
   (<P124> ^argnum <an>)
-  (<dest> ^aname <name>)#^nlp <cs> <cs1>
+  (<p2> ^aname <name>)
 }
 
 sp {retrieve-predicate-structure*copy*stucture
    (state <s> ^name retrieve-predicate-structure
-              ^nlp-set <pred>)
+              ^smem.result.retrieved <pred>)
 -->
-   (<s> ^copy-structure <copy> ^copy-count 0 ^copy-map <cm> ^pending-map <pm>)
+   (<s> ^copy-structure <copy>)
    (<copy> ^source <pred>
-           ^destination <dest>
-            ^copy-type deep)
+           ^destination <pred>)
 }
-sp {copy-structure*elaborate*copy-count
- #  :o-support
-   (state <s> ^copy-structure <copy>
-              ^copy-count {<cc> < 20})
--->
-#   (<s> ^copy-count <cc> -)
-   (<s> ^copy-count (+ 1 <cc>))
-   
-}
-
-#TODO a bit hacky of a copy, but works
-sp {copy-structure*elaborate*copy-pending
-   :o-support
-   (state <s> ^copy-structure <copy> ^copy-map <cm> ^pending-map <pm>)
-   (<pm> ^<src> <dest>)
-  -{(<pm> ^<src> {<dest2> <> <dest>})}
--->
-   (<cm> ^<src> <dest>)
-}
-sp {copy-structure*elaborate*copy-pending*double
-   :o-support
-   (state <s> ^copy-structure <copy> ^copy-map <cm> ^pending-map <pm>)
-   (<pm> ^<src> <dest>)
-   (<pm> ^<src> {<dest2> < <dest>})
--->
-   (<cm> ^<src> <dest>)
-}
-
-#check for instance to prevent effect from smem bug
-#first do pending-map to handle multiple refs to same wme
-sp {copy-structure*elaborate*copy
-   :o-support
-   (state <s> ^copy-structure <copy> ^copy-map <cm> ^pending-map <pm>)
-   (<copy> ^source <source> ^destination <dest>)
-   (<source> ^{<something> <> instance} {<x> <=> <s>})
-   (<cm> -^<x>)
--->
-   (<dest> ^<something> <x2>)
-   (<pm> ^<x> <x2>)
-}
-sp {copy-structure*elaborate*copy2
-   :o-support
-   (state <s> ^copy-map <cm> ^pending-map <pm>)
-   (<cm> ^<src> <new>)
-   (<src> ^{<something> <> instance}  {<x> <=> <s>})
-   (<cm> -^<x>)
--->
-   (<pm> ^<x> <x2>)
-}
-sp {copy-structure*elaborate*copy3
-   :o-support
-   (state <s> ^copy-map <cm>)
-   (<cm> ^<src> <new>)
-   (<src> ^{<something> <> instance} {<x> <=> <s>})
-   (<cm> ^<x> <x2>)
--->
-   (<new> ^<something> <x2>)
-}
-sp {copy-structure*elaborate*copy2*value
-   :o-support
-   (state <s> ^copy-map <cm>)
-   (<cm> ^<src> <new>)
-   (<src> ^<something> <x>)
-  -{(<src> ^<something> {<x> <=> <s>})}
--->
-   (<new> ^<something> <x>)
-}
-   

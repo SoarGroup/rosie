@@ -1,0 +1,86 @@
+# operator match-existing-object
+# Tries to match the new object against those already in the world
+# Returns a match as ^matches-existing-object <obj-info> or none
+sp {attend-to-new-object*propose*match-existing-object
+   (state <s> ^name attend-to-new-object
+              ^source-obj <source>
+              ^source-type <type>
+             -^matches-existing-object <any>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name match-existing-object
+        ^source-obj <source>
+        ^source-type <type>)
+}
+
+# operator update-existing-object
+# If ^matches-existing-object <> none, then updates the existing object
+# instead of creating a new one
+sp {attend-to-new-object*propose*update-existing-object
+   (state <s> ^name attend-to-new-object
+              ^source-obj <source>
+              ^source-type <type>
+              ^matches-existing-object { <obj> <> none })
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name update-existing-object
+        ^source-obj <source>
+        ^source-type <type>
+        ^existing-obj <obj>)
+}
+
+# operator create-new-object
+# If the object doesn't match an existing one, create a new representation for it
+sp {attend-to-new-object*propose*create-new-object
+   (state <s> ^name attend-to-new-object
+              ^source-obj <source>
+              ^source-type <type>
+              ^matches-existing-object none
+             -^new-object-rep)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name create-new-object
+        ^source-obj <source>
+        ^source-type <type>)
+}
+
+# elaborate smem-obj if one was retrieved
+sp {attend-to-new-object*elaborate*create-new-object*smem-obj*non*perception-obj
+   (state <s> ^name attend-to-new-object
+              ^source-type <> perception-obj
+              ^operator <o> +
+              ^matches-smem-object { <lti> <> none })
+   (<o> ^name create-new-object)
+-->
+   (<o> ^smem-obj <lti>)
+}
+
+# for a perception-obj, only add the smem info if it doesn't match an object already in the world 
+sp {attend-to-new-object*elaborate*create-new-object*smem-obj*perception-obj
+   (state <s> ^name attend-to-new-object
+              ^source-type perception-obj
+              ^operator <o> +
+              ^matches-smem-object { <lti> <> none }
+              ^object-monitor <obj-mon>)
+   (<o> ^name create-new-object)
+   (<lti> ^handle <handle>)
+   (<obj-mon> -^object-info.object-handle <handle>)
+-->
+   (<o> ^smem-obj <lti>)
+}
+
+# operator add-object-to-world
+# Takes the new object representation and adds it to the world and object-monitor
+sp {attend-to-new-object*propose*add-object-to-world
+   (state <s> ^name attend-to-new-object
+              ^source-obj <source>
+              ^source-type <type>
+              ^new-object-rep <obj>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name add-object-to-world
+        ^source-obj <obj>
+        ^source-type <type>
+        ^new-object-rep <obj>)
+}
+        
