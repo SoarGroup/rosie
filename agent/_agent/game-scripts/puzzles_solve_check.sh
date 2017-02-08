@@ -13,7 +13,7 @@ dot="."
 a="a"
 d="d"
 
-#declare -a arr=("lfamilycross")
+#declare -a arr=("cannibals")
 declare -a arr=("cannibals" "15ipuzzle" "3tower" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "jmahjong" "husbands")
 
 #modify less slow cannibals gbfox husbands 15ipuzzle
