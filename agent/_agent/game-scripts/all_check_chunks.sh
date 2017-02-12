@@ -45,9 +45,9 @@ do
 			../../../../soar/out/./soar -s game-data-agent.soar stop > out.txt 
 		done
 						
-		#cp chunks.txt $stored$game$chunks
-		diff -q chunks.txt $stored$game$chunks
-		diff -s chunks.txt $stored$game$chunks	
+		#cp chunks.txt $stored$rfile$chunks
+		diff -q chunks.txt $stored$rfile$chunks
+		diff -s chunks.txt $stored$rfile$chunks	
 	done
 done
 
@@ -59,7 +59,7 @@ for game in "${grr[@]}"
 do
 	echo "Testing game: " $game
 	
-	for rfile in $game.$game
+	for rfile in *.$game
 	do
 		rm chunks.txt
 		rm statesexp.txt
@@ -78,8 +78,8 @@ do
 			../../../../soar/out/./soar -s game-data-agent.soar stop > out.txt
 		done
 						
-		#cp chunks.txt $stored$game$chunks
-		diff -q chunks.txt $stored$game$chunks
-		diff -s chunks.txt $stored$game$chunks	
+		#cp chunks.txt $stored$rfile$chunks
+		diff -q chunks.txt $stored$rfile$chunks
+		diff -s chunks.txt $stored$rfile$chunks	
 	done
 done
