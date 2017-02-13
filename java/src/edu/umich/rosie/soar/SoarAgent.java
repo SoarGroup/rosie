@@ -21,6 +21,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 
         public String agentSource;
         public String smemSource;
+        public String tclSource;
 
         public boolean spawnDebugger;
         public int watchLevel;
@@ -41,6 +42,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
             environment = props.getProperty("environment", "arm");
             agentSource = props.getProperty("agent-source", null);
             smemSource = props.getProperty("smem-source", null);
+            tclSource = props.getProperty("tcl-source", null);
             verbose = props.getProperty("verbose", "true").equals("true");
 
             try{
@@ -166,11 +168,6 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         if(config.writeStandardOut || config.writeLog){
             printCallbackId = agent.RegisterForPrintEvent(smlPrintEventId.smlEVENT_PRINT, this, null);
         }
-
-        // enable TCL and set the rosie_env variable
-        //agent.ExecuteCommandLine("tcl on");
-        //agent.ExecuteCommandLine("global rosie_env");
-        //agent.ExecuteCommandLine("set rosie_env \"" + config.environment + "\"");
 
         sourceAgent();
         agent.ExecuteCommandLine(String.format("w %d", config.watchLevel));
@@ -324,6 +321,9 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
     private void sourceAgent(){
         agent.ExecuteCommandLine("smem --set database memory");
         agent.ExecuteCommandLine("epmem --set database memory");
+        if(config.tclSource != null){
+            agent.ExecuteCommandLine("source " + config.tclSource);
+        }
         if(config.smemSource != null){
             String res = agent.ExecuteCommandLine("source " + config.smemSource);
             parseSmemSourceInfo(res);
