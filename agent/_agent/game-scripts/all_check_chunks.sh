@@ -51,7 +51,7 @@ do
 	done
 done
 
-declare -a grr=("tictactoe" "kconnect3" "aconnect3" "econnect4" "othello" "risk")
+declare -a grr=("tictactoe" "kconnect3" "aconnect3" "econnect4" "othello" "risk" "president" "crazy8")
 #broken "ubreakthrough" "picaria" "9holes" "mens3"
 
 ## now loop through the above array
@@ -61,8 +61,13 @@ do
 	
 	for rfile in *.$game
 	do
-		rm chunks.txt
-		rm statesexp.txt
+		
+		rm chunks.txt -f
+		rm statesexp.txt -f
+		rm states.txt -f
+		rm startend.seconds -f
+		rm startend.decisions -f
+		
 		c=1
 		cp $rfile soar-game.script
 		rfilename=${rfile%$suffix}

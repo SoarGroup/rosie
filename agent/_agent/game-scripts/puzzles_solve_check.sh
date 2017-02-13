@@ -7,7 +7,7 @@ dec=".decisions"
 sol=".solution"
 stored="stored-"
 statesexp=".statesexp"
-repeat=4
+repeat=1
 no="no"
 dot="."
 a="a"
@@ -28,12 +28,9 @@ do
 	for rfile in *.$game
 	do
 		if [[ $rfile == *$no.$game* ]]; then
-			#echo skip1
 			continue
 		fi
-		
 		if [[ $rfile == *$d.$game* ]]; then
-			#echo skip2
 			continue
 		fi
 		
@@ -85,20 +82,15 @@ do
 			more startend.seconds
 			echo "States explored:"
 			more states.txt
-			
-			#compare against benchmark timing
+						
 			#store benchmark
 			#cp startend.seconds $rfile$tstats
 			#cp startend.decisions $rfile$dec
 			#cp states.txt $rfile$states
+			
+			#compare against benchmark timing
 			python compareSolutionTime.py $rfile
 			
 		done
-				
-		#todo add strip out all but number and then do states comparison notdiff
-		
-		
-		#store benchmark
-		
 	done
 done
