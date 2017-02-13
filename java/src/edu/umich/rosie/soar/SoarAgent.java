@@ -322,6 +322,8 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         agent.ExecuteCommandLine("smem --set database memory");
         agent.ExecuteCommandLine("epmem --set database memory");
         if(config.tclSource != null){
+        	System.out.println("READING TCL FILE");
+        	System.out.println(config.tclSource);
             agent.ExecuteCommandLine("source " + config.tclSource);
         }
         if(config.smemSource != null){
@@ -329,7 +331,8 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
             parseSmemSourceInfo(res);
         }
         if(config.agentSource != null){
-            String res = agent.ExecuteCommandLine("source " + config.agentSource + " -v");
+            String res = agent.ExecuteCommandLine("source " + config.agentSource);// + " -v");
+			System.out.println(res);
             if(config.verbose){
                 parseAgentSourceInfo(res);
             } else {
