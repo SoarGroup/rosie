@@ -25,7 +25,7 @@ do
 	
 	for rfile in $game$ffix.$game
 	do
-		git add $rfile
+		
 		rm chunks.txt -f
 		rm statesexp.txt -f
 		rm states.txt -f
@@ -62,7 +62,7 @@ do
 	
 	for rfile in *.$game
 	do
-		git add $rfile
+		
 		rm chunks.txt -f
 		rm statesexp.txt -f
 		rm states.txt -f

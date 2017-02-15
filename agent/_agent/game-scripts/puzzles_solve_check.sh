@@ -27,7 +27,6 @@ do
 	#for rfile in $game.$game
 	for rfile in *.$game
 	do
-		git add $rfile
 		if [[ $rfile == *$no.$game* ]]; then
 			continue
 		fi
