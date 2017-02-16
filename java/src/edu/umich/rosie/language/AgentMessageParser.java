@@ -149,6 +149,8 @@ public class AgentMessageParser
 	        	return translateStartLeadingRequest(fieldsId);
 	        } else if(type.equals("unknown-word")){
 		 	return translateUnknownWord(fieldsId);
+	        } else if(type.equals("unsatisfied-condition")){
+			return translateUnsatisfiedCondition(fieldsId);
 	        } else if(type.equals("unknown-defined-word")){
 			return translateUnknownDefinedWord(fieldsId);
                 } else if(type.equals("learned-unknown-word")){
@@ -237,8 +239,40 @@ public class AgentMessageParser
 	    	result += "! My name is Rosie. I am an interactive task learning robot.";
 	    	return result;
 	}
-	 
-	public static String translateUnknownWord(Identifier fieldsId){
+
+        public static String translateUnsatisfiedCondition(Identifier fieldsId)
+        {
+        	Identifier conditionId = SoarUtil.getIdentifierOfAttribute(fieldsId, "condition");
+        	String type = SoarUtil.getValueOfAttribute(conditionId, "type");
+        	String conditionDescription = "I do not see ";
+
+        	if (type.equals("attribute")) // or concept?
+        	{
+        		String objDesc = getObjectDescriptionForGames(conditionId);
+        		conditionDescription += startsWithVowel(objDesc)?"an ":"a " + objDesc;
+        	}
+        	else if (type.equals("state-pair"))
+        	{
+        		Identifier argsId = SoarUtil.getIdentifierOfAttribute(conditionId, "args");
+
+        		// Generating unsatisfied condition description
+        		String objDesc1 = getObjectDescriptionForGames(SoarUtil.getIdentifierOfAttribute(argsId, "1"));
+        		objDesc1 = startsWithVowel(objDesc1)?"an ":"a "+ objDesc1;
+
+        		// Preposition
+        		String name = SoarUtil.getValueOfAttribute(conditionId, "name");
+        		name = name.replace("1","") + " ";
+
+        		String objDesc2 = getObjectDescriptionForGames(SoarUtil.getIdentifierOfAttribute(argsId, "2"));
+        		objDesc2 = startsWithVowel(objDesc2)?"an ":"a " + objDesc2;
+
+        		conditionDescription += objDesc1 + name + objDesc2; // PR -won't work for plural or between (3 arguments). Use arg.num
+        	}
+
+        	return conditionDescription;
+       }	 
+
+       public static String translateUnknownWord(Identifier fieldsId){
 	    	String result = "I don't know the concept ";
 	    	String word = SoarUtil.getValueOfAttribute(fieldsId, "word");
 	    	if (word != null)
