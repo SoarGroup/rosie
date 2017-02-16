@@ -25,6 +25,7 @@ do
 	
 	for rfile in $game$ffix.$game
 	do
+		
 		rm chunks.txt -f
 		rm statesexp.txt -f
 		rm states.txt -f
