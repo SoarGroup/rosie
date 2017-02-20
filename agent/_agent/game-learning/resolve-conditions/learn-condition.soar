@@ -179,54 +179,119 @@ sp {learn-condition*propose*resolve-satisfaction-failure
               ^superstate.superstate <sss>)
    (<sss> ^name learn-condition)
 -->
+(interrupt)
 (<sss> ^operator <o> + >)
 (<o> ^name resolve-satisfaction-failure)
 }
 
+# PR - my version
+sp {learn-condition*apply*resolve-satisfaction-failure
+   (state <s> ^superstate <sss>)
+   (<sss> ^name learn-condition
+          ^operator.name resolve-satisfaction-failure)
+-->
+   (<s> ^unresolved-conditions <cos>
+        ^output-bottom-conditions <out-cond>)
+}
+
 sp {resolve-satisfaction-failure*elaborate*unresolved
    (state <s> ^name resolve-satisfaction-failure
-              ^superstate.superstate <sss>)
+              ^superstate.superstate <sss>
+              ^unresolved-conditions <cos>)
    (<sss> ^condition <co>)
    (<co> -^result.set.<x>)
 -->
-(<s> ^unresolved-condition <co>)
+   (<cos> ^condition <co>)
+ #  (<s> ^unresolved-condition <co>)
 }
 
+#sp {resolve-satisfaction-failure*propose*handle-unresolved-condition
+#   (state <s> ^name resolve-satisfaction-failure
+#              ^unresolved-condition <co>)
+#   (<co> ^name <name>)
+#-->
+#(<s> ^operator <o> + =)
+#(<o> ^name handle-unresolved-condition
+#     ^word (make-constant-symbol <name>)
+#     ^spelling <name>
+#     ^condition <co>)
+#}
+
+#sp {resolve-satisfaction-failure*elaborate*prefer-lowest-condition
+#   (state <s> ^name resolve-satisfaction-failure
+#              ^operator <o1> +
+#              ^operator <o2> +)
+#   (<o1> ^condition <co1>)
+#   (<o2> ^condition <co2>)
+#   (<co1> ^args.<< 1 2 >> <co2>) # PR - is could have just one arg or three, but we will handle it when it comes to it
+#-->
+#   (<s> ^operator <o1> < <o2>) #only letting bottom most condition remain
+#}   
+  
+#sp {resolve-satisfaction-failure*prefer*handle-unresolved-condition*concept
+#   (state <s> ^name resolve-satisfaction-failure
+#              ^operator <o1> +
+#              ^operator <o2> +)
+#   (<o1> ^condition.type concept)
+#   (<o2> -^condition.type concept)
+#-->
+#(<s> ^operator <o1> > <o2>)
+#}
+
+# PR - my version
 sp {resolve-satisfaction-failure*propose*handle-unresolved-condition
    (state <s> ^name resolve-satisfaction-failure
-              ^unresolved-condition <co>)
-   (<co> ^name <name>)
+              ^unresolved-conditions <cos>)
+   (<cos> ^condition <con>)
+  -{ (<cos> ^condition {> <con> <con2>})} # Ensuring this operator is proposed only once given a set of conditions and it consists of at least one. 
 -->
-(interrupt)
-(<s> ^operator <o> + =)
+(<s> ^operator <o> +) #=)
 (<o> ^name handle-unresolved-condition
-     ^word (make-constant-symbol <name>)
-     ^spelling <name>
-     ^condition <co>)
+     ^unresolved-conditions <cos>)
 }
 
 
-sp {resolve-satisfaction-failure*elaborate*prefer-lowest-condition
+sp {resolve-satisfaction-failure*elaborate*add-lowest-condition
    (state <s> ^name resolve-satisfaction-failure
-              ^operator <o1> +
-              ^operator <o2> +)
-   (<o1> ^condition <co1>)
-   (<o2> ^condition <co2>)
+    		  ^output-bottom-conditions <out-cond>
+              ^operator <o> +)
+   (<o> ^name handle-unresolved-condition
+        ^unresolved-conditions <cos>)
+   (<cos> ^condition <co1>
+          ^condition { <> <co1> <co2> })
    (<co1> ^args.<< 1 2 >> <co2>) # PR - is could have just one arg or three, but we will handle it when it comes to it
 -->
-   (<s> ^operator <o1> < <o2>) #only letting bottom most condition remain
-}   
-  
-
-sp {resolve-satisfaction-failure*prefer*handle-unresolved-condition*concept
-   (state <s> ^name resolve-satisfaction-failure
-              ^operator <o1> +
-              ^operator <o2> +)
-   (<o1> ^condition.type concept)
-   (<o2> -^condition.type concept)
--->
-(<s> ^operator <o1> > <o2>)
+   (<out-cond> ^condition <co2>) #only adding bottom most condition
+   (<co1> ^added yes)
 }
+
+sp {resolve-satisfaction-failure*elaborate*ignore-higher-conditions
+(state <s> ^name resolve-satisfaction-failure
+    		  ^output-bottom-conditions <out-cond>
+              ^operator <o> +)
+   (<o> ^name handle-unresolved-condition
+        ^unresolved-conditions <cos>)
+   (<cos> ^condition <co1>
+          ^condition { <> <co1> <co2> })
+   (<co1> ^args.<< 1 2 >> <co2>)
+   (<co2> ^added yes)
+-->
+   (<co1> ^added yes)
+} 
+
+sp {resolve-satisfaction-failure*elaborate*add-condition-without-subconditions
+   (state <s> ^name resolve-satisfaction-failure
+     		  ^output-bottom-conditions <out-cond>
+              ^operator <o> +)
+   (<o> ^name handle-unresolved-condition
+        ^unresolved-conditions <cos>)
+   (<cos> ^condition <co1>)
+   (<co1> -^added)
+-->
+   (<out-cond> ^condition <co1>)
+}
+
+# PR - end my  version
 
 #CASE 1 learned concept not detected, ask for another definition
 #sp {resolve-satisfaction-failure*apply*handle-unresolved-condition
@@ -289,11 +354,11 @@ sp {resolve-satisfaction-failure*prefer*handle-unresolved-condition*concept
 #case 3 inform instructor about condition not identified in the real world
 sp {resolve-satisfaction-failure*apply*handle-unresolved-condition*condition-unsatisfied
    (state <s> ^name resolve-satisfaction-failure
+        	  ^output-bottom-conditions <out-cond>
               ^quiescence t #do not chunk through this rule (failure case)
               ^top-state.interaction.changes <c>
               ^operator <o>)
-   (<o> ^name handle-unresolved-condition
-        ^condition <co>)
+   (<o> ^name handle-unresolved-condition)
 -->
    (<c> ^new-segment-info <info>)
    (<info> ^purpose <p>
@@ -306,7 +371,7 @@ sp {resolve-satisfaction-failure*apply*handle-unresolved-condition*condition-uns
           ^originator instructor)
    (<c> ^outgoing-message <out>)
    (<out> ^type unsatisfied-condition
-          ^fields.condition <co>)
+          ^fields.conditions <out-cond>)
 }
 
 

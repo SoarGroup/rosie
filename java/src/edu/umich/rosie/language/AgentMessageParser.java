@@ -242,32 +242,43 @@ public class AgentMessageParser
 
         public static String translateUnsatisfiedCondition(Identifier fieldsId)
         {
-        	Identifier conditionId = SoarUtil.getIdentifierOfAttribute(fieldsId, "condition");
-        	String type = SoarUtil.getValueOfAttribute(conditionId, "type");
-        	String conditionDescription = "I do not see ";
+        	Identifier conditionsId = SoarUtil.getIdentifierOfAttribute(fieldsId, "conditions");
+        	int count_condition = 0; // count for individual conditions
+        	String conditionDescription = ""; // Adding "I do not see" before individual conditions to avoid confusion. Can use condition numbering as well.
+        	WMElement conditionWME = conditionsId.FindByAttribute("condition", count_condition);
+    		
+    		// Retrieving multiple conditions if they exist
+    		while (conditionWME != null)
+    		{					
+    			Identifier conditionId = conditionWME.ConvertToIdentifier();
+	        	String type = SoarUtil.getValueOfAttribute(conditionId, "type");
+	        	conditionDescription += "I do not see ";
+	
+	        	if (type.equals("attribute")) // or concept?
+	        	{
+	        		String objDesc = getObjectDescriptionForGames(conditionId);
+	        		conditionDescription += startsWithVowel(objDesc)?"an ":"a " + objDesc + ". ";
+	        	}
+	        	else if (type.equals("state-pair"))
+	        	{
+	        		Identifier argsId = SoarUtil.getIdentifierOfAttribute(conditionId, "args");
+	
+	        		// Generating unsatisfied condition description
+	        		String objDesc1 = getObjectDescriptionForGames(SoarUtil.getIdentifierOfAttribute(argsId, "1"));
+	        		objDesc1 = startsWithVowel(objDesc1)?"an ":"a "+ objDesc1;
+	
+	        		// Preposition
+	        		String name = SoarUtil.getValueOfAttribute(conditionId, "name");
+	        		name = name.replace("1","") + " ";
+	
+	        		String objDesc2 = getObjectDescriptionForGames(SoarUtil.getIdentifierOfAttribute(argsId, "2"));
+	        		objDesc2 = startsWithVowel(objDesc2)?"an ":"a " + objDesc2;
+	
+	        		conditionDescription += objDesc1 + name + objDesc2 + ". "; // PR -won't work for plural or between (3 arguments). Use arg.num
+	        	}
 
-        	if (type.equals("attribute")) // or concept?
-        	{
-        		String objDesc = getObjectDescriptionForGames(conditionId);
-        		conditionDescription += startsWithVowel(objDesc)?"an ":"a " + objDesc;
-        	}
-        	else if (type.equals("state-pair"))
-        	{
-        		Identifier argsId = SoarUtil.getIdentifierOfAttribute(conditionId, "args");
-
-        		// Generating unsatisfied condition description
-        		String objDesc1 = getObjectDescriptionForGames(SoarUtil.getIdentifierOfAttribute(argsId, "1"));
-        		objDesc1 = startsWithVowel(objDesc1)?"an ":"a "+ objDesc1;
-
-        		// Preposition
-        		String name = SoarUtil.getValueOfAttribute(conditionId, "name");
-        		name = name.replace("1","") + " ";
-
-        		String objDesc2 = getObjectDescriptionForGames(SoarUtil.getIdentifierOfAttribute(argsId, "2"));
-        		objDesc2 = startsWithVowel(objDesc2)?"an ":"a " + objDesc2;
-
-        		conditionDescription += objDesc1 + name + objDesc2; // PR -won't work for plural or between (3 arguments). Use arg.num
-        	}
+	        	conditionWME = conditionsId.FindByAttribute("condition", ++count_condition);
+    		}
 
         	return conditionDescription;
        }	 
