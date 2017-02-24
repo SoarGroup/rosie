@@ -242,9 +242,14 @@ public class AgentMessageParser
 
         public static String translateUnsatisfiedCondition(Identifier fieldsId)
         {
+        	Identifier descSetId = SoarUtil.getIdentifierOfAttribute(fieldsId, "descriptions");
+        	String conditionDescription = ""; // Adding "I do not see" before individual conditions to avoid confusion. Can use condition numbering as well.
+    		HashMap<Integer, List<String>> object_descs = new HashMap<Integer, List<String>>();
+    		object_descs = getObjectPredicateForGames(descSetId);
+    		conditionDescription += getConditionPredicateForGames(descSetId, object_descs);
+    		/*
         	Identifier conditionsId = SoarUtil.getIdentifierOfAttribute(fieldsId, "conditions");
         	int count_condition = 0; // count for individual conditions
-        	String conditionDescription = ""; // Adding "I do not see" before individual conditions to avoid confusion. Can use condition numbering as well.
         	WMElement conditionWME = conditionsId.FindByAttribute("condition", count_condition);
     		
     		// Retrieving multiple conditions if they exist
@@ -279,7 +284,7 @@ public class AgentMessageParser
 
 	        	conditionWME = conditionsId.FindByAttribute("condition", ++count_condition);
     		}
-
+*/
         	return conditionDescription;
        }	 
 
@@ -1321,6 +1326,65 @@ public class AgentMessageParser
 		return description;
 	}
 	
+	
+	public static List<String> getIndividualObjectPredicateForGame(Identifier objDescId)
+	{
+		String objectDescription = "";
+		String article = "";
+		String rtype = "";
+		
+		String negative = SoarUtil.getValueOfAttribute(objDescId, "negative");
+		Identifier objId1 = SoarUtil.getIdentifierOfAttribute(objDescId, "1");
+		
+		// Based on if the rtype is set or single, auxiliaryVerb will be set as "are" or "is"
+		String auxiliaryVerb = SoarUtil.getValueOfAttribute(objDescId, "aux-verb");
+		rtype = auxiliaryVerb.equals("are ")?"set":"single";
+		
+		objectDescription += getObjectDescriptionForGames(objId1);
+				 
+		// Adding preposition to the description			
+		String prep = SoarUtil.getValueOfAttribute(objDescId, "prep");
+		if (prep == null)
+		{
+			List<String> object_descs_values = Arrays.asList(objectDescription, auxiliaryVerb, rtype, "0");
+			return object_descs_values;
+		}
+		
+		// Continue in case that the description is a prepositional phrase
+		prep = prep.replace("1","");
+		if(negative.equals("true"))
+		{
+			prep = "not " + prep;
+		}
+		
+		objectDescription += auxiliaryVerb + prep + " ";
+		
+		// Adding the second object in the condition to the object description
+		Identifier objId2 = SoarUtil.getIdentifierOfAttribute(objDescId, "2");
+		String object2_Desc = getObjectDescriptionForGames(objId2);
+		
+		// Setting article for the second object in the predicate in cases where the second object is not referred more than once.
+		if(auxiliaryVerb.equals("are "))
+		{
+			article = "the ";
+		}
+		else
+		{
+			if (startsWithVowel(object2_Desc))
+			{
+				article = "an ";
+			}
+			else
+			{
+				article = "a ";
+			}
+		}
+		
+		objectDescription += article + object2_Desc;
+		List<String> object_descs_values = Arrays.asList(objectDescription, auxiliaryVerb, rtype, "0");
+		return object_descs_values;
+	}
+	
 	// Creates object predicate phrases based on the predicates retrieved from specific games
 	public static HashMap<Integer, List<String>> getObjectPredicateForGames(Identifier descSetId)
 	{
@@ -1331,84 +1395,23 @@ public class AgentMessageParser
 		
 		// Retrieving multiple objects if they exist
 		while (objDescWME != null)
-		{					
-			String objectDescription = "";
-			String article = "";
-			String rtype = "";
-			Identifier objDescId = objDescWME.ConvertToIdentifier();
-			String negative = SoarUtil.getValueOfAttribute(objDescId, "negative");
-			Identifier objId1 = SoarUtil.getIdentifierOfAttribute(objDescId, "1");
-			Integer param_id = Integer.parseInt(SoarUtil.getValueOfAttribute(objDescId, "param-id"));
-			
-			// Based on if the rtype is set or single, auxiliaryVerb will be set as "are" or "is"
-			String auxiliaryVerb = SoarUtil.getValueOfAttribute(objDescId, "aux-verb");
-			rtype = auxiliaryVerb.equals("are ")?"set":"single";
-			
-			objectDescription += getObjectDescriptionForGames(objId1);
-					 
-			// Adding preposition to the description			
-			String prep = SoarUtil.getValueOfAttribute(objDescId, "prep");
-			if (prep == null)
-			{
+		{		Identifier objDescId = objDescWME.ConvertToIdentifier();
+				Integer param_id = Integer.parseInt(SoarUtil.getValueOfAttribute(objDescId, "param-id"));
+				List<String> object_descs_values = getIndividualObjectPredicateForGame(objDescId);
+				
 				if (!object_descs.containsKey(param_id))
 				{
-					// The elements are object_description, associated auxiliary verb,rtype(single,set) and the number of times it is mentioned in the condition predicate is initialized with a zero
 					// PR - Hack, this should be able to be done using lambda expressions object_descs.values().stream().anymatch(l -> l.contains(objectDescription)) in java 1.8
+					String objectDescription = object_descs_values.get(0);
 					if(object_descs.values().toString().contains(objectDescription))
 					{
 						objectDescription = "other " + objectDescription;
 					}
-
-					List<String> object_descs_values = Arrays.asList(objectDescription, auxiliaryVerb, rtype, "0");
+					object_descs_values.set(0,objectDescription);
+					//List<String> object_descs_values = Arrays.asList(objectDescription, auxiliaryVerb, rtype, "0");
 					object_descs.put(param_id, object_descs_values);
 				}
 				objDescWME = descSetId.FindByAttribute("obj-desc", ++i);
-				continue;
-			}
-			
-			// Continue in case that the description is a prepositional phrase
-			prep = prep.replace("1","");
-			if(negative.equals("true"))
-			{
-				prep = "not " + prep;
-			}
-			
-			objectDescription += auxiliaryVerb + prep + " ";
-			
-			// Adding the second object in the condition to the object description
-			Identifier objId2 = SoarUtil.getIdentifierOfAttribute(objDescId, "2");
-			String object2_Desc = getObjectDescriptionForGames(objId2);
-			
-			// Setting article for the second object in the predicate in cases where the second object is not referred more than once.
-			if(auxiliaryVerb.equals("are "))
-			{
-				article = "the ";
-			}
-			else
-			{
-				if (startsWithVowel(object2_Desc))
-				{
-					article = "an ";
-				}
-				else
-				{
-					article = "a ";
-				}
-			}
-			objectDescription += article + object2_Desc;
-			
-			if (!object_descs.containsKey(param_id))
-			{
-				// PR - Hack, this should be able to be done using lambda expressions object_descs.values().stream().anymatch(l -> l.contains(objectDescription)) in java 1.8
-				if(object_descs.values().toString().contains(objectDescription))
-				{
-					objectDescription = "other " + objectDescription;
-				}
-
-				List<String> object_descs_values = Arrays.asList(objectDescription, auxiliaryVerb, rtype, "0");
-				object_descs.put(param_id, object_descs_values);
-			}
-			objDescWME = descSetId.FindByAttribute("obj-desc", ++i);
 		}
 		
 		return object_descs;
@@ -1429,9 +1432,19 @@ public class AgentMessageParser
 			String negative = SoarUtil.getValueOfAttribute(conditionId, "negative");
 			String article1 = "", article2="",article3="";
 			Integer paramid1 = Integer.parseInt(SoarUtil.getValueOfAttribute(conditionId, "1"));
-			
+			List<String> objDesc1;
 			// Retrieving object descriptions and their corresponding auxiliary verbs
-			List<String> objDesc1 = object_descs.get(paramid1);
+			if (paramid1 != 0)
+			{
+				objDesc1 = object_descs.get(paramid1);
+			}
+			else
+			{
+				// This is for describing the unsatisfied object condition
+				Identifier objDescId = SoarUtil.getIdentifierOfAttribute(conditionId, "obj-desc");
+				objDesc1 = getIndividualObjectPredicateForGame(objDescId);
+			}
+			
 			article1 = addArticleForObjectDescription(objDesc1);
 			
 			// When the condition is represented using only one param-id hence only one predicate is in the condition for e.g.  block on a clear location in one predicate retrieved in the object description

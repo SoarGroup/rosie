@@ -176,10 +176,11 @@ sp {retry-condition-setup*apply*complete
 sp {learn-condition*propose*resolve-satisfaction-failure
    (state <s> ^operator.name wait
               ^impasse no-change
-              ^superstate.superstate <sss>)
+              ^superstate.superstate <sss>
+             # -^superstate.name resolve-satisfaction-failure
+              )
    (<sss> ^name learn-condition)
 -->
-(interrupt)
 (<sss> ^operator <o> + >)
 (<o> ^name resolve-satisfaction-failure)
 }
@@ -202,91 +203,74 @@ sp {resolve-satisfaction-failure*elaborate*unresolved
    (<co> -^result.set.<x>)
 -->
    (<cos> ^condition <co>)
- #  (<s> ^unresolved-condition <co>)
 }
 
-#sp {resolve-satisfaction-failure*propose*handle-unresolved-condition
-#   (state <s> ^name resolve-satisfaction-failure
-#              ^unresolved-condition <co>)
-#   (<co> ^name <name>)
-#-->
-#(<s> ^operator <o> + =)
-#(<o> ^name handle-unresolved-condition
-#     ^word (make-constant-symbol <name>)
-#     ^spelling <name>
-#     ^condition <co>)
-#}
+sp {resolve-satisfaction-failure*elaborate*select-bottom-most-conditions
+   (state <s> ^name resolve-satisfaction-failure
+              ^superstate.superstate <sss>
+              ^unresolved-conditions <cos>)
+   (<cos> ^condition <co1>
+          ^condition { <> <co1> <co2> })
+   (<co1> ^args.<< 1 2 >> <co2>)
+-->
+   (<co1> ^added yes)
+}
 
-#sp {resolve-satisfaction-failure*elaborate*prefer-lowest-condition
-#   (state <s> ^name resolve-satisfaction-failure
-#              ^operator <o1> +
-#              ^operator <o2> +)
-#   (<o1> ^condition <co1>)
-#   (<o2> ^condition <co2>)
-#   (<co1> ^args.<< 1 2 >> <co2>) # PR - is could have just one arg or three, but we will handle it when it comes to it
-#-->
-#   (<s> ^operator <o1> < <o2>) #only letting bottom most condition remain
-#}   
-  
-#sp {resolve-satisfaction-failure*prefer*handle-unresolved-condition*concept
-#   (state <s> ^name resolve-satisfaction-failure
-#              ^operator <o1> +
-#              ^operator <o2> +)
-#   (<o1> ^condition.type concept)
-#   (<o2> -^condition.type concept)
-#-->
-#(<s> ^operator <o1> > <o2>)
-#}
 
 # PR - my version
 sp {resolve-satisfaction-failure*propose*handle-unresolved-condition
    (state <s> ^name resolve-satisfaction-failure
+              -^output-bottom-conditions.condition
               ^unresolved-conditions <cos>)
    (<cos> ^condition <con>)
   -{ (<cos> ^condition {> <con> <con2>})} # Ensuring this operator is proposed only once given a set of conditions and it consists of at least one. 
 -->
-(<s> ^operator <o> +) #=)
-(<o> ^name handle-unresolved-condition
-     ^unresolved-conditions <cos>)
-}
-
-
-sp {resolve-satisfaction-failure*elaborate*add-lowest-condition
-   (state <s> ^name resolve-satisfaction-failure
-    		  ^output-bottom-conditions <out-cond>
-              ^operator <o> +)
+   (interrupt)
+   (<s> ^operator <o> +)
    (<o> ^name handle-unresolved-condition
         ^unresolved-conditions <cos>)
-   (<cos> ^condition <co1>
-          ^condition { <> <co1> <co2> })
-   (<co1> ^args.<< 1 2 >> <co2>) # PR - is could have just one arg or three, but we will handle it when it comes to it
--->
-   (<out-cond> ^condition <co2>) #only adding bottom most condition
-   (<co1> ^added yes)
 }
 
-sp {resolve-satisfaction-failure*elaborate*ignore-higher-conditions
-(state <s> ^name resolve-satisfaction-failure
-    		  ^output-bottom-conditions <out-cond>
-              ^operator <o> +)
-   (<o> ^name handle-unresolved-condition
-        ^unresolved-conditions <cos>)
-   (<cos> ^condition <co1>
-          ^condition { <> <co1> <co2> })
-   (<co1> ^args.<< 1 2 >> <co2>)
-   (<co2> ^added yes)
--->
-   (<co1> ^added yes)
-} 
+# PR - TODO - change it to ^conditions to merge with original get-game-details
+#sp {resolve-satisfaction-failure*apply*add-lowest-condition
+#   (state <s> ^name resolve-satisfaction-failure
+#   ^quiescence t #do not chunk through this rule (failure case)
+#    		  ^output-bottom-conditions <out-cond>
+#              ^operator <o>)
+#   (<o> ^name handle-unresolved-condition
+#        ^unresolved-conditions <cos>)
+#   (<cos> ^condition <co1>
+#          ^condition { <> <co1> <co2> })
+#   (<co1> ^args.<< 1 2 >> <co2>) # PR - is could have just one arg or three, but we will handle it when it comes to it
+#-->
+#   (<out-cond> ^condition <co2>) #only adding bottom most condition
+#   #(<co1> ^added yes)
+#}
 
-sp {resolve-satisfaction-failure*elaborate*add-condition-without-subconditions
+#sp {resolve-satisfaction-failure*apply*ignore-higher-conditions
+#(state <s> ^name resolve-satisfaction-failure
+#    		  ^output-bottom-conditions <out-cond>
+#    		  ^quiescence t #do not chunk through this rule (failure case)
+#              ^operator <o>)
+#   (<o> ^name handle-unresolved-condition
+#        ^unresolved-conditions <cos>)
+#   (<cos> ^condition <co1>
+#          ^condition { <> <co1> <co2> })
+#   (<co1> ^args.<< 1 2 >> <co2>)
+#   (<co2> ^added yes)
+#-->
+#   (<co1> ^added yes)
+#} 
+
+sp {resolve-satisfaction-failure*apply*add-condition-without-subconditions
    (state <s> ^name resolve-satisfaction-failure
      		  ^output-bottom-conditions <out-cond>
-              ^operator <o> +)
+     		  ^quiescence t #do not chunk through this rule (failure case)
+              ^operator <o>)
    (<o> ^name handle-unresolved-condition
         ^unresolved-conditions <cos>)
    (<cos> ^condition <co1>)
-   (<co1> -^added)
+   (<co1> -^added yes)
 -->
    (<out-cond> ^condition <co1>)
 }
@@ -352,13 +336,32 @@ sp {resolve-satisfaction-failure*elaborate*add-condition-without-subconditions
 #}
 
 #case 3 inform instructor about condition not identified in the real world
+
+sp {resolve-satisfaction-failure*propose*complete-answer-get-game-details
+   (state <s> ^name resolve-satisfaction-failure
+              ^PR-game-details  yes
+              ^generated <gen>
+              ^added yes
+        	  ^output-bottom-conditions <out-cond>
+              ^descriptions <descs>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name complete-handle-unresolved-condition
+        ^descriptions <descs>
+        ^generated <gen>)   
+}
+
 sp {resolve-satisfaction-failure*apply*handle-unresolved-condition*condition-unsatisfied
    (state <s> ^name resolve-satisfaction-failure
+              ^PR-game-details yes
+              ^descriptions <descs>
+              ^added yes
+              ^generated <gen>
         	  ^output-bottom-conditions <out-cond>
               ^quiescence t #do not chunk through this rule (failure case)
               ^top-state.interaction.changes <c>
               ^operator <o>)
-   (<o> ^name handle-unresolved-condition)
+   (<o> ^name complete-handle-unresolved-condition)
 -->
    (<c> ^new-segment-info <info>)
    (<info> ^purpose <p>
@@ -371,7 +374,7 @@ sp {resolve-satisfaction-failure*apply*handle-unresolved-condition*condition-uns
           ^originator instructor)
    (<c> ^outgoing-message <out>)
    (<out> ^type unsatisfied-condition
-          ^fields.conditions <out-cond>)
+          ^fields.descriptions <descs>)
 }
 
 
