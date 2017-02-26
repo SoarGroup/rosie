@@ -41,8 +41,7 @@ sp {resolve-satisfaction-failure*apply*get-game-details*get-single-object-descri
    (<set> ^condition <cond>)
    (<cond> ^name <name>
            ^args <args>
-           ^parameter <param>
-           ^negative <neg>)
+           ^parameter <param>)
    (<param> ^num 0)
 -->
    (<descs> ^description <desc>
@@ -50,8 +49,7 @@ sp {resolve-satisfaction-failure*apply*get-game-details*get-single-object-descri
    (<desc> ^1 0
            ^obj-desc <obj-desc>)
    (<obj-desc> ^1 <cond>
-               ^param-id 0
-               ^negative <neg>)
+               ^param-id 0)
 }
 
 # if there is only one argument, it is typically a property
@@ -119,7 +117,8 @@ sp {resolve-satisfaction-failure*apply*get-game-details*retrieve-PP-and-individu
    (<cond> ^name <name>
    	   ^args <args>
    	   ^parameter <param>
-   	   ^negative <neg>)
+   	   ^negative <neg>
+   	   -^return-type number)
    (<args> ^1 <obj1>
            ^2 <obj2>
            -^3) # PR - maybe remove -^3 and instead add a rule that adds a third value if it exists?
@@ -134,7 +133,7 @@ sp {resolve-satisfaction-failure*apply*get-game-details*retrieve-PP-and-individu
    (<desc> ^prep <name>
            ^1 <param-id-1>
            ^2 <param-id-2>
-   	   ^negative <neg>)
+   	   	   ^negative <neg>)
    (<obj-desc1> ^1 <obj1> 
                 ^param-id <param-id-1>)
    (<obj-desc2> ^1 <obj2>
@@ -178,6 +177,7 @@ sp {resolve-satisfaction-failure*apply*get-game-details*retrieve-attribute-based
             ^param-id <param-obj2-id>)
    (<desc> ^name <name>
    	   	   ^article |the |
+   	   	   ^negative false
            ^prep is
            ^1 <param-obj1-id>
            ^2 <param-obj2-id>)
@@ -216,11 +216,89 @@ sp {resolve-satisfaction-failure*apply*get-game-details*retrieve-attribute-based
             ^param-id <param-obj1-id>)
    (<desc> ^name <name>
            ^article |the |
+   	   	   ^negative false
            ^prep number
            ^1 <param-obj1-id>
            ^2 <res-val>)
 }
 
+# The following rule handles predicates with the same param-id where one of the predicates
+ #is an attribute and the other is a value (String/number), both predicates have
+ # The following rule handles predicates that are related using a function (greater-than,between)
+ #where both attributes are functions (count ) or objects
+sp {resolve-satisfaction-failure*apply*get-game-details*retrieve-function-based-comparative-values
+   (state <s> ^operator <o>
+              ^name resolve-satisfaction-failure
+         	  ^descriptions <descs>
+        	   ^output-bottom-conditions <set>)
+   (<o> ^name get-game-details)
+   (<set> ^condition <cond>) #for answer-game-details all three conditions here?, does it matter? i wonder
+   (<cond> ^name <relation>
+           ^return-type number
+           ^args <args>
+           ^parameter <param>
+           ^negative <neg>)
+   (<args> ^1 <cond1>
+           ^2 { <> <cond1> <cond2> })
+   (<param> ^1.param-id <param-cond1-id>
+            ^2.param-id <param-cond2-id>) 
+   (<cond1> ^name <name>
+            ^return-type number
+            ^args <args1>
+            ^parameter <param1>)
+   (<cond2> ^name <name>
+            ^return-type number
+            ^args <args2>
+            ^parameter <param2>)
+   (<args1> -^1
+            ^2 <obj1>)
+   (<param1> ^2.param-id <param-obj1-id>)
+   (<args2> -^1
+            ^2 <obj2>)
+   (<param2> ^2.param-id <param-obj2-id>)
+-->
+   (<descs> ^obj-desc <desc1>
+            ^obj-desc <desc2>
+            ^description <desc>)
+   (<desc1> ^1 <obj1>
+            ^param-id <param-obj1-id>)
+   (<desc2> ^1 <obj2>
+            ^param-id <param-obj2-id>)
+   (<desc> ^name <name>
+           ^relation <relation>
+           ^article |the |
+   	   	   ^negative <neg>
+           ^prep relation
+           ^1 <param-obj1-id>
+           ^2 <param-obj2-id>)
+}
+
+#Setting satisfied to the opposite value of existing negative
+sp {resolve-satisfaction-failure*op-no-change*apply*get-game-details*false-to-true
+   (state <s> ^name resolve-satisfaction-failure 
+              ^operator.name get-game-details
+              ^PR-game-details yes
+              ^output-bottom-conditions <set>
+              ^descriptions <descs>)
+   (<descs> ^<< description obj-desc >> <desc>)
+   (<desc> ^prep
+           ^negative false)
+-->
+   (<desc> ^satisfied true)
+}
+
+sp {resolve-satisfaction-failure*op-no-change*apply*get-game-details*true-to-false
+   (state <s> ^name resolve-satisfaction-failure 
+              ^operator.name get-game-details
+              ^PR-game-details yes
+              ^output-bottom-conditions <set>
+              ^descriptions <descs>)
+   (<descs> ^<< description obj-desc >> <desc>)
+   (<desc> ^prep
+           ^negative true)
+-->
+   (<desc> ^satisfied false)
+}
 
 ######################################
 # Propose add generated attribute

@@ -243,48 +243,11 @@ public class AgentMessageParser
         public static String translateUnsatisfiedCondition(Identifier fieldsId)
         {
         	Identifier descSetId = SoarUtil.getIdentifierOfAttribute(fieldsId, "descriptions");
-        	String conditionDescription = ""; // Adding "I do not see" before individual conditions to avoid confusion. Can use condition numbering as well.
+        	String conditionDescription = "";
     		HashMap<Integer, List<String>> object_descs = new HashMap<Integer, List<String>>();
     		object_descs = getObjectPredicateForGames(descSetId);
-    		conditionDescription += getConditionPredicateForGames(descSetId, object_descs);
-    		/*
-        	Identifier conditionsId = SoarUtil.getIdentifierOfAttribute(fieldsId, "conditions");
-        	int count_condition = 0; // count for individual conditions
-        	WMElement conditionWME = conditionsId.FindByAttribute("condition", count_condition);
-    		
-    		// Retrieving multiple conditions if they exist
-    		while (conditionWME != null)
-    		{					
-    			Identifier conditionId = conditionWME.ConvertToIdentifier();
-	        	String type = SoarUtil.getValueOfAttribute(conditionId, "type");
-	        	conditionDescription += "I do not see ";
-	
-	        	if (type.equals("attribute")) // or concept?
-	        	{
-	        		String objDesc = getObjectDescriptionForGames(conditionId);
-	        		conditionDescription += startsWithVowel(objDesc)?"an ":"a " + objDesc + ". ";
-	        	}
-	        	else if (type.equals("state-pair"))
-	        	{
-	        		Identifier argsId = SoarUtil.getIdentifierOfAttribute(conditionId, "args");
-	
-	        		// Generating unsatisfied condition description
-	        		String objDesc1 = getObjectDescriptionForGames(SoarUtil.getIdentifierOfAttribute(argsId, "1"));
-	        		objDesc1 = startsWithVowel(objDesc1)?"an ":"a "+ objDesc1;
-	
-	        		// Preposition
-	        		String name = SoarUtil.getValueOfAttribute(conditionId, "name");
-	        		name = name.replace("1","") + " ";
-	
-	        		String objDesc2 = getObjectDescriptionForGames(SoarUtil.getIdentifierOfAttribute(argsId, "2"));
-	        		objDesc2 = startsWithVowel(objDesc2)?"an ":"a " + objDesc2;
-	
-	        		conditionDescription += objDesc1 + name + objDesc2 + ". "; // PR -won't work for plural or between (3 arguments). Use arg.num
-	        	}
+    		conditionDescription += String.join("and ",getConditionPredicateForGames(descSetId, object_descs));
 
-	        	conditionWME = conditionsId.FindByAttribute("condition", ++count_condition);
-    		}
-*/
         	return conditionDescription;
        }	 
 
@@ -357,12 +320,12 @@ public class AgentMessageParser
 			String generated = SoarUtil.getValueOfAttribute(descSetId, "generated");
 			if (generated.equals("yes"))	{	
                 object_descs = getObjectPredicateForGames(descSetId);
-				actionDescription += getConditionPredicateForGames(descSetId, object_descs);
-				if((actionDescription.length()-5) > 0)
-				{
-					actionDescription = "If " + actionDescription.substring(0, actionDescription.length() - 5) + ", then ";
-				}
-				
+				actionDescription += String.join("and ",getConditionPredicateForGames(descSetId, object_descs));
+				//if((actionDescription.length()-5) > 0)
+				//{
+				//	actionDescription = "If " + actionDescription.substring(0, actionDescription.length() - 5) + ", then ";
+				//}
+				actionDescription = "If " + actionDescription + ", then ";
 				// Counter for individual verb WMEs
 				int j = 0;
 				WMElement verbWME = descSetId.FindByAttribute("verb", j);
@@ -434,11 +397,11 @@ public class AgentMessageParser
 			String generated = SoarUtil.getValueOfAttribute(descSetId, "generated");
 			if (generated.equals("yes"))	{
 				object_descs = getObjectPredicateForGames(descSetId);
-				conceptDefinition += getConditionPredicateForGames(descSetId, object_descs);
-				if ((conceptDefinition.length()-5) > 0)
-				{
-					conceptDefinition = conceptDefinition.substring(0, conceptDefinition.length() - 5);
-				}
+				conceptDefinition += String.join("and ",getConditionPredicateForGames(descSetId, object_descs));
+				//if ((conceptDefinition.length()-5) > 0)
+				//{
+				//	conceptDefinition = conceptDefinition.substring(0, conceptDefinition.length() - 5);
+				//}
 				if(SoarUtil.getValueOfAttribute(descSetId, "pronoun") != null)
 				{
 					conceptDefinition += ", then it is " + conceptName + ".";
@@ -469,12 +432,12 @@ public class AgentMessageParser
 			String generated = SoarUtil.getValueOfAttribute(descSetId, "generated");
 			if (generated.equals("yes"))	{
 				object_descs = getObjectPredicateForGames(descSetId);
-				goalDescription += getConditionPredicateForGames(descSetId, object_descs);
+				goalDescription += String.join("and ",getConditionPredicateForGames(descSetId, object_descs)) + ".";
 				
-				if ((goalDescription.length()-5) > 0)
-				{
-					goalDescription = goalDescription.substring(0, goalDescription.length() - 5) + ".";
-				}
+				//if ((goalDescription.length()-5) > 0)
+				//{
+				//	goalDescription = goalDescription.substring(0, goalDescription.length() - 5) + ".";
+				//}
 				
 				return goalDescription;
 				
@@ -496,12 +459,12 @@ public class AgentMessageParser
 			String generated = SoarUtil.getValueOfAttribute(descSetId, "generated");
 			if (generated.equals("yes"))	{
 				object_descs = getObjectPredicateForGames(descSetId);
-				failureDescription += getConditionPredicateForGames(descSetId, object_descs);
+				failureDescription += String.join("and ",getConditionPredicateForGames(descSetId, object_descs));
 				
-				if ((failureDescription.length()-5) > 0)
-				{
-					failureDescription = failureDescription.substring(0, failureDescription.length() - 5);
-				}
+				//if ((failureDescription.length()-5) > 0)
+				//{
+				//	failureDescription = failureDescription.substring(0, failureDescription.length() - 5);
+				//}
 				
 				failureDescription += ", then you lose.";
 				return failureDescription;				
@@ -1419,20 +1382,27 @@ public class AgentMessageParser
 	
 	// Creates english statements based on the conditions and relations between objects specified as a part of conditions attribute in nlp-set in the games.
 	// This function combines multiple object predicates together when necessary
-	public static String getConditionPredicateForGames(Identifier descSetId, HashMap<Integer, List<String>> object_descs)
+	public static List<String> getConditionPredicateForGames(Identifier descSetId, HashMap<Integer, List<String>> object_descs)
 	{
-		String description = "";
-		
+		List<String> descriptionList = new ArrayList<String>();
 		// Counter for individual description WMEs
 		int k = 0;
 		WMElement conditionVarWME = descSetId.FindByAttribute("description", k);
 		while(conditionVarWME != null)
 		{
+			String description = "";
 			Identifier conditionId = conditionVarWME.ConvertToIdentifier();
 			String negative = SoarUtil.getValueOfAttribute(conditionId, "negative");
+			String satisfied = SoarUtil.getValueOfAttribute(conditionId, "satisfied");
 			String article1 = "", article2="",article3="";
 			Integer paramid1 = Integer.parseInt(SoarUtil.getValueOfAttribute(conditionId, "1"));
-			List<String> objDesc1;
+			List<String> objDesc1 = new ArrayList<String>();
+			
+			if(satisfied != null)
+			{
+				negative = satisfied;
+			}
+			
 			// Retrieving object descriptions and their corresponding auxiliary verbs
 			if (paramid1 != 0)
 			{
@@ -1443,6 +1413,7 @@ public class AgentMessageParser
 				// This is for describing the unsatisfied object condition
 				Identifier objDescId = SoarUtil.getIdentifierOfAttribute(conditionId, "obj-desc");
 				objDesc1 = getIndividualObjectPredicateForGame(objDescId);
+				description += "I do not see ";
 			}
 			
 			article1 = addArticleForObjectDescription(objDesc1);
@@ -1453,7 +1424,8 @@ public class AgentMessageParser
 			{
 				description += article1 + objDesc1.get(0);
 				conditionVarWME = descSetId.FindByAttribute("description", ++k);
-				description += "and ";
+				descriptionList.add(description);
+				//description += "and ";
 				continue;
 			}
 			
@@ -1480,41 +1452,61 @@ public class AgentMessageParser
 				description +=  article1 + objDesc1.get(0) + objDesc1.get(1) + prep1 + " " + article2 + objDesc2.get(0) + "that " + objDesc2.get(1) + prep2 + " " + article3 + objDesc3.get(0);
 
 				conditionVarWME = descSetId.FindByAttribute("description", ++k);
-				description += "and ";
+				descriptionList.add(description);
+				//description += "and ";
 				continue;
 			}
 
-			prep = prep.replace("1","");
-			if(negative != null && negative.equals("true"))
-			{	
-				prep = "not " + prep;
-			}
 			String name = SoarUtil.getValueOfAttribute(conditionId, "name");
 								
 			// When the condition involves the param-ids/values of two predicates being the same for e.g. the color of A is red/the color of A is the color of B
 			if (name != null)
 			{
 				String equalcondition_article = SoarUtil.getValueOfAttribute(conditionId, "article");
-				if (prep.equals("number"))
+				String aux_verb = "";
+				if(negative.equals("true"))
 				{
-					description += equalcondition_article + name + " of " + article1 + objDesc1.get(0) + "is " + param2_string + " ";
+					aux_verb = "is not ";	
 				}
 				else
 				{
-					description += equalcondition_article + name + " of " + article1 + objDesc1.get(0) + "is " + equalcondition_article + name + " of " + article2 + objDesc2.get(0);
+					aux_verb = "is ";
 				}
+				
+				if (prep.equals("number"))
+				{
+					description += equalcondition_article + name + " of " + article1 + objDesc1.get(0) + aux_verb + param2_string + " ";
+				}
+				else if (prep.equals("relation"))
+				{
+					String relation = SoarUtil.getValueOfAttribute(conditionId, "relation") + " than ";
+					description += equalcondition_article + name + " of " + article1 + objDesc1.get(0) + aux_verb + relation + equalcondition_article + name + " of " + article2 + objDesc2.get(0);  	 			
+				}
+				else
+				{
+					description += equalcondition_article + name + " of " + article1 + objDesc1.get(0) + aux_verb + equalcondition_article + name + " of " + article2 + objDesc2.get(0);
+				}
+				
 				conditionVarWME = descSetId.FindByAttribute("description", ++k);
-				description += "and ";
+                descriptionList.add(description);
+				//description += "and ";
 				continue;
+			}
+			
+			prep = prep.replace("1","");
+			if(negative != null && negative.equals("true"))
+			{	
+				prep = "not " + prep;
 			}
 			
 			description += article1 + objDesc1.get(0) + objDesc1.get(1) + prep + " " + article2 + objDesc2.get(0);
 			
 			conditionVarWME = descSetId.FindByAttribute("description", ++k);
-			description += "and ";
+			descriptionList.add(description);
+			//description += "and ";
 		}
 		
-		return description;
+		return descriptionList;
 	}
 	
 //
