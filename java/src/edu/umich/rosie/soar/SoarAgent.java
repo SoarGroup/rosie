@@ -332,7 +332,6 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         }
         if(config.agentSource != null){
             String res = agent.ExecuteCommandLine("source " + config.agentSource);// + " -v");
-			System.out.println(res);
             if(config.verbose){
                 parseAgentSourceInfo(res);
             } else {
