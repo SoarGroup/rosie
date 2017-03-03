@@ -1,11 +1,11 @@
 import random, re, string
-#"othello" "solitaireno"
-gamelist=["8puzzleno","3towerno","tictactoe","9holes","4towerno","5puzzleno","mens3", "jmahjongno", "picaria", "zmazeno", "frogno", "othello", "risk", "gbfoxno", "blocksworldno"]
+#"othello" "solitaireno" "4towerno"
+gamelist=["8puzzleno","3towerno","tictactoe","5puzzleno", "jmahjongno", "zmazeno", "blocksworldno", "kconnect3", "aconnect3"]
 
 i = 0
 newscript = ""
 #scriptname = ""
-while (i<200):
+while (i<10):
     i+=1
     shuffled = random.sample(gamelist, len(gamelist))
 

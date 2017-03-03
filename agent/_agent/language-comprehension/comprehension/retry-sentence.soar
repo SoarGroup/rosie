@@ -7,6 +7,7 @@ sp {comprehension*propose*retry-sentence
    (<is> -^processed-sentence true)
 -->
 #(interrupt)
+(write |retry-sentence | (crlf))
    (<s> ^operator <op> + =, >)
    (<op> ^name retry-sentence
          ^new-segment <nseg>)
@@ -84,41 +85,64 @@ sp {comprehension*compare*retry-sentence
 
 ##JK need to clean lists between retries?
 #(causes GDS reset, sometimes many repeats
-#sp {comprehension*apply*retry-sentence*clean-dialog-list-objects
+sp {comprehension*apply*retry-sentence*clean-dialog-list-objects
+   (state <s> ^operator <o>
+              ^top-state <ts>
+             ^segment <seg>)
+   (<o> ^name retry-sentence
+        ^new-segment <nseg>)
+    (<ts> ^dialog-object-list {<dol> <=> <s>})
+-->
+	(<s> ^retry true)
+#(interrupt)
+   (<ts> ^dialog-object-list <dol> -)
+   (<ts> ^dialog-object-list nil)
+}
+sp {comprehension*apply*retry-sentence*removed-comprehension
+   (state <s> ^name comprehension
+              ^superstate <ss>
+              ^retry true)
+   (<ss> ^operator <op>)
+-->
+(<ss> ^operator <op> -)
+(<ss> ^operator <op> + >)
+}
+
+#sp {comprehension*apply*retry-sentence*removed-comprehension
 #   (state <s> ^operator <o>
 #              ^top-state <ts>
-#             ^segment <seg>)
-#   (<o> ^name retry-sentence
-#        ^new-segment <nseg>)
-#    (<ts> ^dialog-object-list {<dol> <=> <s>})
-#-->
-##(interrupt)
-#   (<ts> ^dialog-object-list <dol> -)
-#   (<ts> ^dialog-object-list nil)
-#}
-#
-#sp {comprehension*apply*retry-sentence*clean-dialog-list-objects-saved
-#   (state <s> ^operator <o>
-#              ^top-state <ts>
+#              ^superstate <ss>
 #              ^segment <seg>)
 #   (<o> ^name retry-sentence
 #        ^new-segment <nseg>)
 #    (<ts> ^dialog-object-list-saved {<dol> <=> <s>})
+#    (<ss> ^operator <op>)
+#    (<op> ^name comprehension)
 #-->
-#   (<ts> ^dialog-object-list-saved <dol> -)
-#   (<ts> ^dialog-object-list-saved nil)
+#(<ss> ^operator <op> -)
 #}
-#sp {comprehension*apply*retry-sentence*clean-dialog-world*objects*predicates
-#   (state <s> ^operator <o>
-#              ^top-state <ts>
-#              ^segment <seg>)
-#   (<o> ^name retry-sentence
-#        ^new-segment <nseg>)
-#    (<ts> ^dialog-world.<< objects predicates >> <dw>)
-#    (<dw> ^<something> <obj>)
-#-->
-#   (<dw> ^<something> <obj> -)
-#}
+sp {comprehension*apply*retry-sentence*clean-dialog-list-objects-saved
+   (state <s> ^operator <o>
+              ^top-state <ts>
+              ^segment <seg>)
+   (<o> ^name retry-sentence
+        ^new-segment <nseg>)
+    (<ts> ^dialog-object-list-saved {<dol> <=> <s>})
+-->
+   (<ts> ^dialog-object-list-saved <dol> -)
+   (<ts> ^dialog-object-list-saved nil)
+}
+sp {comprehension*apply*retry-sentence*clean-dialog-world*objects*predicates
+   (state <s> ^operator <o>
+              ^top-state <ts>
+              ^segment <seg>)
+   (<o> ^name retry-sentence
+        ^new-segment <nseg>)
+    (<ts> ^dialog-world.<< objects predicates >> <dw>)
+    (<dw> ^<something> <obj>)
+-->
+   (<dw> ^<something> <obj> -)
+}
 
 
 sp {comprehension*apply*retry-sentence

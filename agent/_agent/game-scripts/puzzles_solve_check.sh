@@ -1,5 +1,6 @@
 #!/bin/bash
 
+chunks=".chunks"
 tstats=".tstats"
 states=".states"
 top=".top"
@@ -12,16 +13,16 @@ no="no"
 dot="."
 a="a"
 d="d"
-
-declare -a arr=("3tower")
-#declare -a arr=("cannibals" "15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "jmahjong" "husbands")
+#3tower
+declare -a arr=("jigsawdoku")
+#declare -a arr=("cannibals" "15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "jmahjong" "husbands" "3tower" "sudoku" "logi5" "jigsawdoku")
 
 #modify less slow cannibals gbfox husbands 15ipuzzle
 #slow: x5tower 4tower
 #broken: frog, solitaire, 2pushmaze dsokoban 
 
 c=1
-rm out.txt
+rm out.txt -f
 for game in "${arr[@]}"
 do
 	#for rfile in $game.$game
@@ -33,7 +34,6 @@ do
 		if [[ $rfile == *$d.$game* ]]; then
 			continue
 		fi
-		
 				
 		c=1
 		cp $rfile soar-game.script
@@ -58,7 +58,7 @@ do
 			python soar-strip.py $rfile
 			
 			numsol=1
-			###cp $rfile$sol $stored$game$sol$dot$numsol
+			##cp $rfile$sol $stored$game$sol$dot$numsol
 			
 			newfile=$stored$game$sol$dot$numsol
 			
@@ -70,7 +70,6 @@ do
 					break
 				else
 					numsol=`expr $numsol + 1`
-					
 				fi
 			done
 			
@@ -82,11 +81,12 @@ do
 			more startend.seconds
 			echo "States explored:"
 			more states.txt
-						
+			
 			#store benchmark
 			#cp startend.seconds $rfile$tstats
 			#cp startend.decisions $rfile$dec
 			#cp states.txt $rfile$states
+			#cp chunks.txt $rfile$chunks
 			
 			#compare against benchmark timing
 			python compareSolutionTime.py $rfile
