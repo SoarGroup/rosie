@@ -17,8 +17,7 @@ import sml.Agent.RunEventInterface;
 public class SoarAgent implements RunEventInterface, PrintEventInterface {
     public static class AgentConfig{
         public String agentName;
-        public String environment;
-
+        public String rosieHome;
         public String agentSource;
         public String smemSource;
         public String tclSource;
@@ -37,9 +36,8 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
             spawnDebugger = props.getProperty("spawn-debugger", "true").equals("true");
             writeStandardOut = props.getProperty("write-to-stdout", "false").equals("true");
            
-
             agentName = props.getProperty("agent-name", "SoarAgent");
-            environment = props.getProperty("environment", "arm");
+            rosieHome = props.getProperty("rosie-home", null);
             agentSource = props.getProperty("agent-source", null);
             smemSource = props.getProperty("smem-source", null);
             tclSource = props.getProperty("tcl-source", null);
@@ -317,21 +315,36 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         //System.out.println("  init-soar: " + agent.ExecuteCommandLine("init-soar"));
         System.out.println("---------------------------");
     }
+    
+    public void setWorkingDir(){
+    	if(config.rosieHome != null){
+    		System.setProperty("user.dir", config.rosieHome);
+    		agent.ExecuteCommandLine("cd " + config.rosieHome);
+    	}
+    }
 
     private void sourceAgent(){
         agent.ExecuteCommandLine("smem --set database memory");
         agent.ExecuteCommandLine("epmem --set database memory");
+        
+        setWorkingDir();
         if(config.tclSource != null){
-        	System.out.println("READING TCL FILE");
-        	System.out.println(config.tclSource);
-            agent.ExecuteCommandLine("source " + config.tclSource);
+        	System.out.println("-------------- SOURCING TCL ---------------");
+            String res = agent.ExecuteCommandLine("source " + config.tclSource);
+            System.out.println(res);
         }
+
+        setWorkingDir();
         if(config.smemSource != null){
+        	System.out.println("------------- SOURCING SMEM ---------------");
             String res = agent.ExecuteCommandLine("source " + config.smemSource);
             parseSmemSourceInfo(res);
         }
+
+        setWorkingDir();
         if(config.agentSource != null){
-            String res = agent.ExecuteCommandLine("source " + config.agentSource);// + " -v");
+        	System.out.println("---------- SOURCING PRODUCTIONS -----------");
+            String res = agent.ExecuteCommandLine("source " + config.agentSource + " -v");
             if(config.verbose){
                 parseAgentSourceInfo(res);
             } else {
@@ -356,6 +369,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
     }
 
     private void parseAgentSourceInfo(String info){
+    	ArrayList<String> replaced = new ArrayList<String>();
         String[] lines = info.split("\n");
         for(String line : lines){
             if(line.trim().length() == 0){
@@ -370,7 +384,15 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
             if(line.startsWith("Sourcing")){
                 continue;
             }
+            if(line.startsWith("Replacing")){
+            	replaced.add(line.substring(21, line.length()));
+            	continue;
+            }
             System.out.println(line);
+        }
+        System.out.println("DUPLICATE RULES:");
+        for(String rule : replaced){
+        	System.out.println("  " + rule);
         }
 
     }
