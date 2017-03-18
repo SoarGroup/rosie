@@ -247,6 +247,7 @@ public class AgentMessageParser
     		HashMap<Integer, List<String>> object_descs = new HashMap<Integer, List<String>>();
     		object_descs = getObjectPredicateForGames(descSetId);
     		conditionDescription += String.join("and ",getConditionPredicateForGames(descSetId, object_descs));
+    		conditionDescription = conditionDescription.substring(0,1).toUpperCase() + conditionDescription.substring(1) + ".";
 
         	return conditionDescription;
        }	 
@@ -1271,10 +1272,10 @@ public class AgentMessageParser
 		
 		// PR - figure this object thing out, this may not be worth it in this case.
 		// This is in case the "object" is directly referred in the statement, it must not be ignored. For e.g. in stack-block, a clear object is larger-than a clear block.
-		/*if(!prev_attribute.equals("category"))
+		if(!prev_attribute.equals("category"))
 		{
 			description += SoarUtil.getValueOfAttribute(objId, "name").replaceAll("\\d+.*","") + " ";
-		}*/
+		}
 
 		if(attribute_value.equals("input-arg"))
 		{
@@ -1297,6 +1298,12 @@ public class AgentMessageParser
 		String rtype = "";
 		
 		String negative = SoarUtil.getValueOfAttribute(objDescId, "negative");
+		String satisfied = SoarUtil.getValueOfAttribute(objDescId, "satisfied");		
+		if(satisfied != null)
+		{
+			negative = satisfied;
+		}
+		
 		Identifier objId1 = SoarUtil.getIdentifierOfAttribute(objDescId, "1");
 		
 		// Based on if the rtype is set or single, auxiliaryVerb will be set as "are" or "is"
@@ -1413,7 +1420,14 @@ public class AgentMessageParser
 				// This is for describing the unsatisfied object condition
 				Identifier objDescId = SoarUtil.getIdentifierOfAttribute(conditionId, "obj-desc");
 				objDesc1 = getIndividualObjectPredicateForGame(objDescId);
-				description += "I do not see ";
+				if(objDesc1.get(2).equals("set"))
+				{
+					description += "I do not see all ";
+				}
+				else
+				{
+					description += "I do not see ";
+				}
 			}
 			
 			article1 = addArticleForObjectDescription(objDesc1);
