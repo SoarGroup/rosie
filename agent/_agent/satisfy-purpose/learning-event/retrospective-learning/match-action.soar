@@ -1,0 +1,504 @@
+####################### match-action ###########################
+#
+# These rules will attempt to match an action-operator 
+#   against the currently proposed set of actions and find a match
+#
+# They fire if an match-action structure is on the state
+#   (state <s> ^match-action <ma>)
+#   (<ma> ^action-operator <action>)  # action-operator representation
+# Will elaborate ^matched <op> under match-action for each 
+#   proposed operator (or evaluate-operator) which matches the action-operator
+
+sp {action*apply*matched*action*remove*unmatched*arguments
+  (state <s> ^problem-space.name
+             ^operator <o>
+             ^match-action <ma>)
+  (<ma> ^match-info.op-info <op-info>
+        ^action-operator <aop>)
+  (<op-info> ^operator <o>
+              ^argument-name <arg-name>
+              ^matches <arg-name>
+              -^matches-arg <arg>)
+  (<aop> ^<arg-name> <arg>)
+-->
+  (<aop> ^<arg-name> <arg> -)
+}
+
+
+sp {action*elaborate*operator*until-clause*from*action-operator
+   (state <s> ^problem-space.name action
+              ^problem-space.action.type <any>
+              ^match-action.matched <o>
+              ^match-action.action-operator.until-clause <until>
+              ^operator <o> +)
+-->
+   (<o> ^until-clause <until>)
+}
+
+sp {action*elaborate*put-down*relation*from*action-operator
+   (state <s> ^problem-space.name action
+              ^problem-space.action.type <any>
+              ^action-to-match.arg2.handle <rel-handle>
+              ^operator <o> +)
+   (<o> ^name op_put-down1
+        ^arg2 <arg2>)
+-->
+   (<arg2> ^handle <rel-handle>)
+}
+
+# If an operator is matched, best preference
+sp {action*best*preference*operator*matched
+   (state <s> ^problem-space.name action
+              ^operator <o> +
+              ^match-action.matched <o>)
+-->
+   (<s> ^operator <o> >)
+}
+
+
+# If an evaluate-operator is matched, best preference
+sp {action*best*preference*evaluate-operator*matched
+   (state <s> ^problem-space.name action
+              ^match-action.matched <eval-op>
+              ^operator <o> +)
+   (<o> ^name evaluate-operator
+        ^superoperator <eval-op>)
+-->
+   (<s> ^operator <o> >)
+}
+
+## If an operator isn't matched, reject it
+#sp {action*reject*non-matched*operators
+#   (state <s> ^problem-space.name action
+#              ^operator <o> +
+#              ^match-action <ma>)
+#   (<o> ^action-proposal true)
+#   (<ma> -^matched <o>)
+#-->
+#   (<s> ^operator <o> -)
+#}
+
+# Elaborate a root identifier for match info and scoring
+sp {action*problem-space*match-action*elaborate*operator-matches
+   (state <s> ^match-action <ma>)
+   (<ma> ^action-operator <aop>)
+-->
+   (<ma> ^match-info <info>)
+}
+
+##################################################
+# elaborate a set of valid operators to match (op-info)
+
+# For each action operator of a matching type, elaborate a op-info structure under match-info
+sp {action*problem-space*match-action*elaborate*match-info*op-info*operator
+   (state <s> ^match-action <ma>
+              ^operator <op> +)
+   (<ma> ^action-operator <a-op>
+         ^match-info <info>)
+   (<a-op> ^action-handle <handle>)
+   (<op> ^action-handle <handle>)
+-->
+   (<info> ^op-info <op-info>)
+   (<op-info> ^operator <op>)
+}
+
+# For each evaluate-operator of a matching type, elaborate an op-info structure under match-info
+sp {action*problem-space*match-action*elaborate*match-info*op-info*evaluate-operator
+   (state <s> ^match-action <ma>
+              ^operator <o> +)
+   (<ma> ^action-operator <a-op>
+         ^match-info <info>)
+   (<o> ^name evaluate-operator
+        ^superoperator <ss-op>)
+   (<a-op> ^action-handle <handle>)
+   (<ss-op> ^action-handle <handle>)
+-->
+   (<info> ^op-info <op-info>)
+   (<op-info> ^operator <ss-op>)
+}
+
+###################################################
+# match non-abstract argument
+#   op-info.matches <arg-name> 
+
+sp {action*problem-space*match-action*elaborate*match-info*op-info*matches*argument*object
+   (state <s> ^match-action <ma>)
+   (<ma> ^action-operator.<arg-name> <m-arg>
+         ^match-info.op-info <op-info>)
+   (<op-info> ^operator.<arg-name> <op-arg>)
+   (<m-arg> ^arg-type object
+            ^id <obj>)
+   (<op-arg> ^arg-type object
+             ^id <obj>)
+-->
+   (<op-info> ^matches <arg-name>
+               ^matches-arg <m-arg>)
+}
+
+# object argument match
+sp {action*problem-space*match-action*elaborate*match-info*op-info*matches*argument*remember*HACK
+   (state <s> ^match-action <ma>)
+   (<ma> ^action-operator <aop>
+         ^match-info.op-info <op-info>)
+   (<aop> ^action-handle remember1
+          ^arg1 <m-arg>)
+   (<op-info> ^operator.arg1 <op-arg>)
+   (<m-arg> ^arg-type object)
+   (<op-arg> ^arg-type object)
+-->
+   (<op-info> ^matches arg1
+               ^matches-arg <m-arg>)
+}
+
+# concept argument match
+sp {action*problem-space*match-action*elaborate*match-info*op-info*matches*argument*concept
+   (state <s> ^match-action <ma>)
+   (<ma> ^action-operator.<arg-name> <m-arg>
+         ^match-info.op-info <op-info>)
+   (<op-info> ^operator.<arg-name> <op-arg>)
+   (<m-arg> ^arg-type concept
+            ^handle <handle>)
+   (<op-arg> ^arg-type concept
+             ^handle <handle>)
+-->
+   (<op-info> ^matches <arg-name>
+               ^matches-arg <m-arg>)
+}
+
+# predicate argument match
+sp {action*problem-space*match-action*elaborate*match-info*op-info*matches*argument*predicate
+   (state <s> ^match-action <ma>)
+   (<ma> ^action-operator.<arg-name> <m-arg>
+         ^match-info.op-info <op-info>)
+   (<op-info> ^operator.<arg-name> <op-arg>)
+   (<m-arg> ^arg-type predicate
+            ^handle <handle>
+            ^2 <obj2>)
+   (<op-arg> ^arg-type predicate
+             ^handle <handle>
+             ^2 <obj2>)
+-->
+   (<op-info> ^matches <arg-name>
+               ^matches-arg <m-arg>)
+}
+
+# predicate argument match with any-predicate true
+sp {action*problem-space*match-action*elaborate*match-info*op-info*matches*argument*predicate*any-predicate
+   (state <s> ^match-action <ma>)
+   (<ma> ^action-operator.<arg-name> <m-arg>
+         ^match-info.op-info <op-info>)
+   (<op-info> ^operator.<arg-name> <op-arg>)
+   (<m-arg> ^arg-type predicate
+            ^handle <handle>
+            ^2 <obj2>)
+   (<op-arg> ^arg-type predicate
+             ^any-predicate true
+             ^2 <obj2>)
+-->
+   (<op-info> ^matches <arg-name>
+               ^matches-arg <m-arg>)
+}
+
+#####################################################
+# match abstract arguments
+#   op-info.matches <arg-name>
+
+# for an abstract object, try to match the object based on properties
+#    the object-info structure is used for this
+
+# abstract object argument
+sp {action*problem-space*match-action*elaborate*match-info*elaborate*object-info*object*arg
+   (state <s> ^match-action <ma>)
+   (<ma> ^action-operator.<arg-name> <m-arg>
+         ^match-info.op-info <op-info>)
+   (<op-info> ^operator.<arg-name> <op-arg>)
+   (<m-arg> ^arg-type object
+            ^id <obj>)
+   (<op-arg> ^arg-type object
+             ^arg-status abstract
+             ^id <cand>)
+-->
+   (<op-info> ^object-info <obj-info>)
+   (<obj-info> ^argument <arg-name> 
+               ^object <obj>
+               ^candidate <cand>
+               ^predicates <preds>)
+}
+
+# abstract predicate object
+sp {action*problem-space*match-action*elaborate*match-info*elaborate*object-info*predicate*arg
+   (state <s> ^match-action <ma>)
+   (<ma> ^action-operator.<arg-name> <m-arg>
+         ^match-info.op-info <op-info>)
+   (<op-info> ^operator.<arg-name> <op-arg>)
+   (<m-arg> ^arg-type predicate
+            ^2 <obj>)
+   (<op-arg> ^arg-type predicate
+             ^arg-status abstract
+             ^2 <cand>)
+-->
+   (<op-info> ^object-info <obj-info>)
+   (<obj-info> ^argument <arg-name>
+               ^object <obj>
+               ^candidate <cand>
+               ^predicates <preds>)
+}
+
+# elaborate predicates to match against
+sp {action*problem-space*match-action*elaborate*object-info*predicates*from*object
+   (state <s> ^match-action.match-info.op-info.object-info <obj-info>
+              ^agent-params.object-rep-info <rep-info>)
+   (<obj-info> ^object.predicates.<prop> <pred>
+               ^predicates <preds>)
+   (<rep-info> -^ignore-level2 <prop>)
+-->
+   (<preds> ^<prop> <pred>)
+}
+
+# make sure the object matches all the predicates in the description
+# Implementations for 1-5 predicates  #ENUMERATE
+sp {action*problem-space*match-action*elaborate*object-info*matches*1*predicate
+   (state <s> ^match-action.match-info.op-info.object-info <obj-info>)
+   (<obj-info> ^predicates <preds>
+               ^candidate.predicates <cand-preds>)
+   (<preds> ^{ <prop1> } <pred1>
+           -^{ <prop2> <> <prop1> })
+   (<cand-preds> ^<prop1> <pred1>)
+-->
+   (<obj-info> ^matches true)
+}
+
+sp {action*problem-space*match-action*elaborate*object-info*matches*2*predicate
+   (state <s> ^match-action.match-info.op-info.object-info <obj-info>)
+   (<obj-info> ^predicates <preds>
+               ^candidate.predicates <cand-preds>)
+   (<preds> ^{ <prop1>           } <pred1>
+            ^{ <prop2> > <prop1> } <pred2>
+           -^{ <prop3> <> <prop1> <> <prop2> })
+   (<cand-preds> ^<prop1> <pred1>
+                 ^<prop2> <pred2>)
+-->
+   (<obj-info> ^matches true)
+}
+
+sp {action*problem-space*match-action*elaborate*object-info*matches*3*predicate
+   (state <s> ^match-action.match-info.op-info.object-info <obj-info>)
+   (<obj-info> ^predicates <preds>
+               ^candidate.predicates <cand-preds>)
+   (<preds> ^{ <prop1>           } <pred1>
+            ^{ <prop2> > <prop1> } <pred2>
+            ^{ <prop3> > <prop2> } <pred3>
+           -^{ <prop4> <> <prop1> <> <prop2> <> <prop3> })
+   (<cand-preds> ^<prop1> <pred1>
+                 ^<prop2> <pred2>
+                 ^<prop3> <pred3>)
+-->
+   (<obj-info> ^matches true)
+}
+
+sp {action*problem-space*match-action*elaborate*object-info*matches*4*predicate
+   (state <s> ^match-action.match-info.op-info.object-info <obj-info>)
+   (<obj-info> ^predicates <preds>
+               ^candidate.predicates <cand-preds>)
+   (<preds> ^{ <prop1>           } <pred1>
+            ^{ <prop2> > <prop1> } <pred2>
+            ^{ <prop3> > <prop2> } <pred3>
+            ^{ <prop4> > <prop3> } <pred4>
+           -^{ <prop5> <> <prop1> <> <prop2> <> <prop3> <> <prop4> })
+   (<cand-preds> ^<prop1> <pred1>
+                 ^<prop2> <pred2>
+                 ^<prop3> <pred3>
+                 ^<prop4> <pred4> )
+-->
+   (<obj-info> ^matches true)
+}
+
+sp {action*problem-space*match-action*elaborate*object-info*matches*5*predicate
+   (state <s> ^match-action.match-info.op-info.object-info <obj-info>)
+   (<obj-info> ^predicates <preds>
+               ^candidate.predicates <cand-preds>)
+   (<preds> ^{ <prop1>           } <pred1>
+            ^{ <prop2> > <prop1> } <pred2>
+            ^{ <prop3> > <prop2> } <pred3>
+            ^{ <prop4> > <prop3> } <pred4>
+            ^{ <prop5> > <prop4> } <pred5>
+           -^{ <prop6> <> <prop1> <> <prop2> <> <prop3> <> <prop4> <> <prop5>})
+   (<cand-preds> ^<prop1> <pred1>
+                 ^<prop2> <pred2>
+                 ^<prop3> <pred3>
+                 ^<prop4> <pred4> 
+                 ^<prop5> <pred5>)
+-->
+   (<obj-info> ^matches true)
+}
+
+## actually check for the match
+
+# object argument match
+sp {action*problem-space*match-action*elaborate*match-info*op-info*matches*argument*object*abstract
+   (state <s> ^match-action <ma>)
+   (<ma> ^action-operator.<arg-name> <m-arg>
+         ^match-info.op-info <op-info>)
+   (<op-info> ^operator.<arg-name> <op-arg>
+              ^object-info <obj-info>)
+   (<m-arg> ^arg-type object
+            ^id <obj>)
+   (<op-arg> ^arg-type object
+             ^arg-status abstract
+             ^id <cand>)
+   (<obj-info> ^argument <arg-name>
+               ^object <obj>
+               ^candidate <cand>
+               ^matches true)
+-->
+   (<op-info> ^matches <arg-name>
+               ^matches-arg <m-arg>)
+}
+
+# predicate argument match
+sp {action*problem-space*match-action*elaborate*match-info*op-info*matches*argument*predicate*abstract
+   (state <s> ^match-action <ma>)
+   (<ma> ^action-operator.<arg-name> <m-arg>
+         ^match-info.op-info <op-info>)
+   (<op-info> ^operator.<arg-name> <op-arg>
+              ^object-info <obj-info>)
+   (<m-arg> ^arg-type predicate
+            ^handle <handle>
+            ^2 <obj2>)
+   (<op-arg> ^arg-type predicate
+             ^arg-status abstract
+             ^handle <handle>
+             ^2 <cand>)
+   (<obj-info> ^argument <arg-name>
+               ^object <obj2>
+               ^candidate <cand>
+               ^matches true)
+-->
+   (<op-info> ^matches <arg-name>
+               ^matches-arg <m-arg>)
+}
+
+# predicate argument match with any-predicate true
+sp {action*problem-space*match-action*elaborate*match-info*op-info*matches*argument*predicate*any-predicate*abstract
+   (state <s> ^match-action <ma>)
+   (<ma> ^action-operator.<arg-name> <m-arg>
+         ^match-info.op-info <op-info>)
+   (<op-info> ^operator.<arg-name> <op-arg>
+              ^object-info <obj-info>)
+   (<m-arg> ^arg-type predicate
+            ^handle <handle>
+            ^2 <obj2>)
+   (<op-arg> ^arg-type predicate
+             ^any-predicate true
+             ^2 <cand>)
+   (<obj-info> ^argument <arg-name>
+               ^object <obj2>
+               ^candidate <cand>
+               ^matches true)
+-->
+   (<op-info> ^matches <arg-name>
+               ^matches-arg <m-arg>)
+}
+
+#####################################################################
+# elaborate op-matched true
+#    #ENUMERATE 0-5 arguments
+
+sp {action*problem-space*match-action*elaborate*op-info*argument-name
+   (state <s> ^match-action <ma>)
+   (<ma> ^action-operator.<arg-name>.arg-type { <arg-type> <> until-clause }
+         ^match-info.op-info <op-info>)
+-->
+   (<op-info> ^argument-name <arg-name>)
+}
+
+sp {action*problem-space*match-action*elaborate*op-info*argument-name*missing-argument
+   (state <s> ^match-action <ma>)
+   (<ma> ^action-operator.missing-argument <arg-name>
+         ^match-info.op-info <op-info>)
+-->
+   (<op-info> ^argument-name <arg-name>)
+}
+
+sp {action*problem-space*match-action*elaborate*op-info*argument-name*from*match
+   (state <s> ^match-action <ma>)
+   (<ma> ^match-info.op-info <op-info>)
+   (<op-info> ^operator.<arg-name>.arg-type { <arg-type> <> until-clause })
+-->
+   (<op-info> ^argument-name <arg-name>)
+}
+
+sp {action*problem-space*match-action*elaborate*op-info*op-matched*no*arguments
+   (state <s> ^match-action <ma>)
+   (<ma> ^match-info.op-info <op-info>
+          -^action-operator.<arg-name>.arg-type << object predicate concept >>
+          -^action-operator.missing-argument)
+   (<op-info> ^operator <op>)
+-->
+   (<ma> ^matched <op>)
+}
+
+sp {action*problem-space*match-action*elaborate*op-info*op-matched*1*argument
+   (state <s> ^match-action <ma>)
+   (<ma> ^match-info.op-info <op-info>)
+   (<op-info> ^operator <op>
+              ^argument-name { <arg1> }
+             -^argument-name { <arg2> <> <arg1> }
+              ^matches <arg1>)
+-->
+   (<ma> ^matched <op>)
+}
+
+sp {action*problem-space*match-action*elaborate*op-info*op-matched*2*argument
+   (state <s> ^match-action <ma>)
+   (<ma> ^match-info.op-info <op-info>)
+   (<op-info> ^operator <op>
+              ^argument-name { <arg1>          }
+              ^argument-name { <arg2> > <arg1> }
+             -^argument-name { <arg3> <> <arg1> <> <arg2> }
+              ^matches <arg1> <arg2>)
+-->
+   (<ma> ^matched <op>)
+}
+
+sp {action*problem-space*match-action*elaborate*op-info*op-matched*3*argument
+   (state <s> ^match-action <ma>)
+   (<ma> ^match-info.op-info <op-info>)
+   (<op-info> ^operator <op>
+              ^argument-name { <arg1>          }
+              ^argument-name { <arg2> > <arg1> }
+              ^argument-name { <arg3> > <arg2> }
+             -^argument-name { <arg4> <> <arg1> <> <arg2> <> <arg3> }
+              ^matches <arg1> <arg2> <arg3>)
+-->
+   (<ma> ^matched <op>)
+}
+              
+sp {action*problem-space*match-action*elaborate*op-info*op-matched*4*argument
+   (state <s> ^match-action <ma>)
+   (<ma> ^match-info.op-info <op-info>)
+   (<op-info> ^operator <op>
+              ^argument-name { <arg1>          }
+              ^argument-name { <arg2> > <arg1> }
+              ^argument-name { <arg3> > <arg2> }
+              ^argument-name { <arg4> > <arg3> }
+             -^argument-name { <arg5> <> <arg1> <> <arg2> <> <arg3> <> <arg4> }
+              ^matches <arg1> <arg2> <arg3> <arg4>)
+-->
+   (<ma> ^matched <op>)
+}
+              
+sp {action*problem-space*match-action*elaborate*op-info*op-matched*5*argument
+   (state <s> ^match-action <ma>)
+   (<ma> ^match-info.op-info <op-info>)
+   (<op-info> ^operator <op>
+              ^argument-name { <arg1>          }
+              ^argument-name { <arg2> > <arg1> }
+              ^argument-name { <arg3> > <arg2> }
+              ^argument-name { <arg4> > <arg3> }
+              ^argument-name { <arg5> > <arg4> }
+             -^argument-name { <arg6> <> <arg1> <> <arg2> <> <arg3> <> <arg4> <> <arg5> }
+              ^matches <arg1> <arg2> <arg3> <arg4> <arg5>)
+-->
+   (<ma> ^matched <op>)
+}
