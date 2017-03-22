@@ -5,7 +5,7 @@ gamelist=["8puzzleno","3towerno","tictactoe","5puzzleno", "jmahjongno", "zmazeno
 i = 0
 newscript = ""
 #scriptname = ""
-while (i<10):
+while (i<1):
     i+=1
     shuffled = random.sample(gamelist, len(gamelist))
 

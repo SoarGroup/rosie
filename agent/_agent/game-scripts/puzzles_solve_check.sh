@@ -14,9 +14,10 @@ dot="."
 a="a"
 d="d"
 #3tower
-declare -a arr=("jigsawdoku")
+#
+declare -a arr=("stackedfrogs" "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2")
 #declare -a arr=("cannibals" "15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "jmahjong" "husbands" "3tower" "sudoku" "logi5" "jigsawdoku")
-
+#declare -a arr=("15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "husbands" "3tower")
 #modify less slow cannibals gbfox husbands 15ipuzzle
 #slow: x5tower 4tower
 #broken: frog, solitaire, 2pushmaze dsokoban 
