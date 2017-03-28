@@ -15,9 +15,11 @@ a="a"
 d="d"
 #3tower
 #
-declare -a arr=("stackedfrogs" "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2")
+#declare -a arr=("kstackedfrogs")
+# "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2")
 #declare -a arr=("cannibals" "15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "jmahjong" "husbands" "3tower" "sudoku" "logi5" "jigsawdoku")
-#declare -a arr=("15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "husbands" "3tower")
+#solutions for these
+declare -a arr=("15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "husbands" "3tower" "stackedfrogs" "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2" "kstackedfrogs")
 #modify less slow cannibals gbfox husbands 15ipuzzle
 #slow: x5tower 4tower
 #broken: frog, solitaire, 2pushmaze dsokoban 
@@ -62,19 +64,25 @@ do
 			##cp $rfile$sol $stored$game$sol$dot$numsol
 			
 			newfile=$stored$game$sol$dot$numsol
-			
+			foundsol=0
 			while [ -f $stored$game$sol$dot$numsol ]
 			do
 				newfile=$stored$game$sol$dot$numsol
 				if (diff -q $rfile$sol $newfile)
 				then
+					foundsol=1
 					break
 				else
 					numsol=`expr $numsol + 1`
 				fi
 			done
-			
+
 			diff -s $rfile$sol $newfile
+			if [[ $foundsol < 1 ]];
+			then
+				cp $rfile$sol $stored$game$sol$dot$numsol
+			fi
+			
 			
 			#print out time, states searched
 			cp s1.txt $rfile$top
