@@ -1,0 +1,85 @@
+# If there is an unproposed subaction, reject all operators (force a state no-change)
+sp {action-space*execute*reject*operators*if*unlearned*subaction
+   (state <s> -^name execute-action
+              ^problem-space.action-space execute
+              ^unlearned-subaction <sub-h>
+              ^operator <o> +)
+   -{(<s> ^operator <sub-op> +)
+     (<sub-op> ^subaction-handle <sub-h>)}
+-->
+   (<s> ^operator <o> -)
+}
+
+# Do smem stuff first
+sp {action-space*execute*prefer*smem*over*others
+   (state <s> -^name execute-action
+              ^problem-space.action-space execute
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name << smem-query smem-retrieve smem-retrieve-lti smem-store >> )
+   (<o2> -^name << smem-query smem-retrieve smem-retrieve-lti smem-store >> )
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+# Prefer learn-task-subaction*over*child-action
+sp {action-space*execute*prefer*subaction*learning*over*execute*child-action
+   (state <s> -^name execute-action
+              ^problem-space.action-space execute
+              ^operator <o1> +
+              ^operator <o2> +
+              ^child-action.execution-operator <o2>)
+   (<o1> ^name << learn-task-subaction store-task-subaction >>)
+   (<o2> ^action-handle <any>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+# prefer store over learn task subaction
+sp {action*execute*prefer*store-subaction*over*learn-subaction
+   (state <s> ^problem-space.action-space execute
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name store-task-subaction)
+   (<o2> ^name learn-task-subaction)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+# Finish the child-action before any other action operators
+sp {action-space*execute*prefer*child-action*over*non-child
+   (state <s> -^name execute-action
+              ^problem-space.action-space execute
+              ^operator <o1> +
+              ^operator { <o2> <> <o1> } +
+              ^child-action.execution-operator <o1>)
+  (<o2> ^action-handle <any>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+# Finish the child-action before reporting success
+sp {action-space*execute*prefer*child-action*over*report-success
+   (state <s> -^name execute-action
+              ^problem-space.action-space execute
+              ^operator <o1> +
+              ^operator <o2> +
+              ^child-action.execution-operator <o1>)
+   (<o2> ^name report-success)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+# Prefer report-success over any other operator that isn't a child-action
+sp {action-space*execute*prefer*report-success*over*proposed*action
+   (state <s> -^name execute-action
+              ^problem-space.action-space execute
+             -^child-action
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name report-success)
+   (<o2> ^action-handle <any>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+

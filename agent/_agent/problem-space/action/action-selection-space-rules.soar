@@ -1,0 +1,135 @@
+########### selection state #########
+
+# If there is an operator-tie in an action problem-space, 
+# Name the state selection
+sp {problem-space*action*operator-tie*elaborate*name*selection
+   (state <s> ^problem-space.name action
+              ^impasse tie
+              ^attribute operator)
+-->
+   (<s> ^name selection)
+}
+
+sp {problem-space*action*selection*elaborate*problem-space*default-state-copy*no
+   (state <s> ^name selection
+              ^problem-space <ps>)
+   (<ps> ^name action)
+-->
+   (<ps> ^default-state-copy no)
+}
+
+sp {problem-space*action*selection*elaborate*problem-space*world*copy-type*shallow
+   (state <s> ^name selection
+              ^problem-space <ps>)
+   (<ps> ^name action
+        -^action-space waypoint-search
+         ^world <world>)
+-->
+   (<world> ^copy-type shallow)
+}
+
+sp {problem-space*action*selection*elaborate*problem-space*subactions*copy-type*shallow
+   (state <s> ^name selection
+              ^problem-space <ps>)
+   (<ps> ^name action
+        -^action-space waypoint-search
+         ^subactions <subs>)
+-->
+   (<subs> ^copy-type shallow)
+}
+
+
+sp {problem-space*action*selection*elaborate*evaluate-operator*default-copy*info
+   (state <s> ^name selection
+              ^problem-space <ps>
+              ^operator <o> +)
+   (<ps> ^name action
+        -^action-space waypoint-search)
+   (<o> ^name evaluate-operator)
+-->
+   (<o> ^default-desired-copy yes)
+   (<o> ^default-operator-copy yes)
+}
+
+
+# KIRKMOVE
+sp {games*selection*elaborate*evaluate-operator*default-desired-copy
+   (state <s> ^problemspace games
+              ^operator <o> +)
+   (<o> ^name evaluate-operator)
+-->
+   (<o> ^default-desired-copy yes)
+   (<o> ^default-operator-copy yes)
+}
+
+
+
+########## evaluate-operator state #########
+
+sp {problem-space*action*evaluate-operator*elaborate*problem-space*action*type*simulate
+   (state <s> ^name evaluate-operator
+              ^problem-space <ps>)
+   (<ps> ^action <a>)
+-->
+   (<a> ^type simulate)
+}
+
+sp {problem-space*action*evaluate-operator*elaborate*problem-space*default-copy*info
+   (state <s> ^name evaluate-operator
+              ^problem-space <ps>)
+   (<ps> ^name action
+        -^action-space waypoint-search)
+-->
+   (<ps> ^default-state-copy no
+         ^default-operator-copy yes
+         ^default-desired-copy yes)
+}
+
+sp {problem-space*action*evaluate-operator*elaborate*problem-space*world*copy-type*deep
+   (state <s> ^name evaluate-operator
+              ^problem-space <ps>)
+   (<ps> ^name action
+        -^action-space waypoint-search
+         ^world <world>)
+-->
+   (<world> ^copy-type deep)
+}
+
+sp {problem-space*action*evaluate-operator*elaborate*problem-space*subactions*copy-type*deep
+   (state <s> ^name evaluate-operator
+              ^problem-space <ps>)
+   (<ps> ^name action
+        -^action-space waypoint-search
+         ^subactions <subs>)
+-->
+   (<subs> ^copy-type deep)
+}
+
+# If we are in evaluate-operator, we have deep copied the world
+#   So we have to create a transformed version of the action operator (from 2 states up)
+#   Using deep copies of the objects involved
+sp {problem-space*action*evaluate-operator*elaborate*copy-action
+   (state <s> ^name evaluate-operator
+              ^problem-space <ps>
+              ^superstate.superstate.action-operator <op>
+              ^deep-copy-world.copy-objects-map <map>)
+   (<ps> ^name action
+        -^action-space waypoint-search)
+-->
+   (<s> ^copy-action <ca>)
+   (<ca> ^source-action <op>
+         ^destination <s>
+         ^copy-name action-operator
+         ^object-map <map>)
+}
+
+
+## If the desired goal is satisfied, report success
+sp {problem-space*action*evaluate-operator*elaborate*successs*desired*satisfied
+   (state <s> ^name evaluate-operator
+              ^problem-space.name action
+              ^desired <d>)
+   (<d> ^satisfied true)
+-->
+   (<s> ^success <d>)
+}
