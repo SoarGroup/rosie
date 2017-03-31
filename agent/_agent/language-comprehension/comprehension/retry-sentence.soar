@@ -7,6 +7,7 @@ sp {comprehension*propose*retry-sentence
    (<is> -^processed-sentence true)
 -->
 #(interrupt)
+(write |retry-sentence | (crlf))
    (<s> ^operator <op> + =, >)
    (<op> ^name retry-sentence
          ^new-segment <nseg>)
@@ -23,7 +24,6 @@ sp {comprehension*propose*retry-sentence
 #   (<sentence> ^processing-result failure -
 #               ^processed true -)
 #}
-##JK remove processed true
 #sp {comprehension*apply*retry-sentence*process-next
 #   (state <s> ^operator.name retry-sentence
 #              ^segment <seg>)
@@ -83,7 +83,9 @@ sp {comprehension*compare*retry-sentence
 #}
 
 
+
 ##JK need to clean lists between retries?
+##(causes GDS reset, sometimes many repeats
 #sp {comprehension*apply*retry-sentence*clean-dialog-list-objects
 #   (state <s> ^operator <o>
 #              ^top-state <ts>
@@ -92,14 +94,20 @@ sp {comprehension*compare*retry-sentence
 #        ^new-segment <nseg>)
 #    (<ts> ^dialog-object-list {<dol> <=> <s>})
 #-->
+#	(<s> ^retry true)
 ##(interrupt)
 #   (<ts> ^dialog-object-list <dol> -)
 #   (<ts> ^dialog-object-list nil)
 #}
-#
-
-
-#JK not sure if should comment out or not (causes GDS reset, sometimes many repeats
+#sp {comprehension*apply*retry-sentence*removed-comprehension
+#   (state <s> ^name comprehension
+#              ^superstate <ss>
+#              ^retry true)
+#   (<ss> ^operator <op>)
+#-->
+#(<ss> ^operator <op> -)
+#(<ss> ^operator <op> + >)
+#}
 #sp {comprehension*apply*retry-sentence*clean-dialog-list-objects-saved
 #   (state <s> ^operator <o>
 #              ^top-state <ts>
@@ -111,7 +119,6 @@ sp {comprehension*compare*retry-sentence
 #   (<ts> ^dialog-object-list-saved <dol> -)
 #   (<ts> ^dialog-object-list-saved nil)
 #}
-##JK
 #sp {comprehension*apply*retry-sentence*clean-dialog-world*objects*predicates
 #   (state <s> ^operator <o>
 #              ^top-state <ts>
@@ -123,6 +130,7 @@ sp {comprehension*compare*retry-sentence
 #-->
 #   (<dw> ^<something> <obj> -)
 #}
+###JK
 
 sp {comprehension*apply*retry-sentence
    (state <s> ^operator <o>
@@ -149,16 +157,3 @@ sp {comprehension*apply*retry-sentence*copy-retry
 -->
    (<nseg> ^retry-receiver <x>)
 }
-
-#JK each word must be cleaned-better to copy original from sentence
-#sp {comprehension*apply*retry-sentence*external*clear-processing-result
-#   (state <s> ^operator.name retry-sentence
-#              ^top-state.world-usage external
-#              ^segment <seg>)
-#   (<seg> ^retry-sentence <x>
-#          ^original-sentence <sentence>)
-#   (<sentence> ^processing-result failure)
-#-->
-#   (<sentence> ^processing-result failure -
-#               ^processed true -)
-#}

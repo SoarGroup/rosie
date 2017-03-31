@@ -16,6 +16,21 @@ sp {board-between*propose*elaborate*args
          ^c <a3>)
 }
 
+sp {numeric-between*propose*elaborate*args
+#:interrupt
+   (state <s> ^name numeric-between
+              ^superstate.operator <o>)
+   (<o> ^args <args>
+        ^name numeric-between
+        ^parameter <p>)
+   (<args> ^2 <a2>
+                  ^3 <a3>)
+-->
+   (<s> ^parameter <p>
+         ^b <a2>
+         ^c <a3>)
+}
+
 sp {board-between*elaborate*objects
    (state <s> ^name board-between
               ^superstate.operator.name board-between
@@ -36,9 +51,29 @@ sp {board-between*elaborate*object*instance
               ^superstate.condition.result.set <res>
               ^operator <op>
               ^instance <s1>)
-      (<op> ^name complete ^instance <s1>) 
+   (<op> ^name complete ^instance <s1>) 
 -->
-  (<res> ^instance <s1>)
+   (<res> ^instance <s1>)
+}
+
+sp {numeric-between*elaborate*instances*diagonal*single
+    :o-support
+   (state <s> ^name numeric-between
+              ^c <r3>
+             ^superstate.operator <sop>
+              ^b <r2>
+              ^linkstate <ls>
+             # ^operator <o>
+              ^superstate.condition.rtype single
+              ^superstate.condition.result.set <rset>)
+   (<ls> ^integer-list <dt>)
+   (<dt> ^number <n3>)
+   (<sop> ^name numeric-between ^type between)
+   (<r2> ^result.set.instance.{1} {<obja> < <n3>})
+   (<r3> ^result.set.instance.{1} {<objb> >= <n3>})
+-->
+   (<rset> ^instance <s1>)
+   (<s1> ^2 <obja> ^3 <objb> ^1 <n3>)
 }
 
 #sp {board-between*elaborate*result
@@ -312,7 +347,8 @@ sp {board-between*elaborate*instances*samex
 sp {learn-predicate*elaborate*diff-table
    (state <s> ^name learn-predicate)
 -->
-    (<s> ^diff-table <dtt>)
+    (<s> ^diff-table <dtt> ^integer-list <il>)
+    (<il> ^number 0 1 2 3 4 5 6 7 8 9)
     (<dtt> ^diff <d1> <d2> <d3>)# <d3> <d4> <d5> <d6> <d7> <d8> <d9> <d10>)
     (<d1> ^pair <p> <p1> <p2> <p3> <p4> ^result 1)
     (<p> ^num 1 2)
@@ -330,20 +366,12 @@ sp {learn-predicate*elaborate*diff-table
     (<pab2> ^num 0 3)
     (<pb21> ^num 2 5)
     (<pb22> ^num 3 6)
-#    (<d2> ^num 3 1 ^result 2)
-#    (<d3> ^num 4 1 ^result 3)
-#    (<d4> ^num 5 1 ^result 4)
-#    (<d5> ^num 3 2 ^result 1)
-#    (<d6> ^num 4 2 ^result 2)
-#    (<d7> ^num 5 2 ^result 3)
-#    (<d8> ^num 4 3 ^result 1)
-#    (<d9> ^num 5 3 ^result 2)
-#    (<d10> ^num 5 4 ^result 1)
 }
 sp {game-search*elaborate*diff-table
    (state <s> ^name game-search)
 -->
-    (<s> ^diff-table <dtt>)
+    (<s> ^diff-table <dtt> ^integer-list <il>)
+    (<il> ^number 0 1 2 3 4 5 6 7 8 9)
     (<dtt> ^diff <d1> <d2> <d3>)# <d3> <d4> <d5> <d6> <d7> <d8> <d9> <d10>)
     (<d1> ^pair <p> <p1> <p2> <p3> <p4> ^result 1)
     (<p> ^num 1 2)
@@ -361,18 +389,9 @@ sp {game-search*elaborate*diff-table
     (<pab2> ^num 0 3)
     (<pb21> ^num 2 5)
     (<pb22> ^num 3 6)
-#    (<d2> ^num 3 1 ^result 2)
-#    (<d3> ^num 4 1 ^result 3)
-#    (<d4> ^num 5 1 ^result 4)
-#    (<d5> ^num 3 2 ^result 1)
-#    (<d6> ^num 4 2 ^result 2)
-#    (<d7> ^num 5 2 ^result 3)
-#    (<d8> ^num 4 3 ^result 1)
-#    (<d9> ^num 5 3 ^result 2)
-#    (<d10> ^num 5 4 ^result 1)
 }
 
-
+#JK TODO figure out inclusive, non inclusive
 sp {board-between*elaborate*instances*samexy*set
    (state <s> ^name board-between
               #^instance <s1> #JAMES UNCHUNKED VERSION
@@ -394,11 +413,10 @@ sp {board-between*elaborate*instances*samexy*set
    (<pred2> ^<xy> <x> ^{<yx> <> <xy>} <y1>)
    (<pred3> ^<xy> <x>)
    (<s1> ^2 <obja> ^3 <objb> ^1 <set>)
- -{(<pred3> ^<yx> {<y> >= <y1>} ^<yx> {<y> >= <y2>})}
- -{(<pred3> ^<yx> {<y> <= <y1>} ^<yx> {<y> <= <y2>})}
+ -{(<pred3> ^<yx> {<y> > <y1>} ^<yx> {<y> >= <y2>})} #{<y> >= <y1>} 
+ -{(<pred3> ^<yx> {<y> < <y1>} ^<yx> {<y> <= <y2>})} #{<y> <= <y1>}
 -->
    (<set> ^object <objc>)
-#   (<s1> ^done true)
 }
 
 #sp {board-between*elaborate*instances*samex*set
@@ -564,6 +582,14 @@ sp {board-between*elaborate*instances*samex*inclusive
 #   (<set> ^object <objc>)
 #}
 
+sp {numeric-between*propose*complete
+   (state <s> ^name numeric-between
+              ^instance <instance>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name complete
+        ^instance <instance>)
+}
 
 
 sp {board-between*propose*complete
