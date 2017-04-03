@@ -15,7 +15,7 @@ a="a"
 d="d"
 #3tower
 #
-#declare -a arr=("kstackedfrogs")
+#declare -a arr=("3tower")
 # "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2")
 #declare -a arr=("cannibals" "15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "jmahjong" "husbands" "3tower" "sudoku" "logi5" "jigsawdoku")
 #solutions for these
@@ -53,7 +53,7 @@ do
 			rm statesexp.txt -f
 
 			c=`expr $c + 1`
-			../../../../soar/out/./soar -s game-data-agent.soar stop > out.txt
+			../../../../soar/out/./soar -s game-agent.soar stop > out.txt
 			python calculateTeachSolvetime.py
 			python calculateStatesExplored.py
 		
@@ -78,10 +78,10 @@ do
 			done
 
 			diff -s $rfile$sol $newfile
-			if [[ $foundsol < 1 ]];
-			then
-				cp $rfile$sol $stored$game$sol$dot$numsol
-			fi
+			#if [[ $foundsol < 1 ]];
+			#then
+			#	cp $rfile$sol $stored$game$sol$dot$numsol
+			#fi
 			
 			
 			#print out time, states searched
