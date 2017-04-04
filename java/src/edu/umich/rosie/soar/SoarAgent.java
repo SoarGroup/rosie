@@ -17,10 +17,9 @@ import sml.Agent.RunEventInterface;
 public class SoarAgent implements RunEventInterface, PrintEventInterface {
     public static class AgentConfig{
         public String agentName;
-        public String rosieHome;
         public String agentSource;
         public String smemSource;
-        public String tclSource;
+        public String worldUsage;
 
         public boolean spawnDebugger;
         public int watchLevel;
@@ -37,10 +36,9 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
             writeStandardOut = props.getProperty("write-to-stdout", "false").equals("true");
            
             agentName = props.getProperty("agent-name", "SoarAgent");
-            rosieHome = props.getProperty("rosie-home", null);
             agentSource = props.getProperty("agent-source", null);
             smemSource = props.getProperty("smem-source", null);
-            tclSource = props.getProperty("tcl-source", null);
+            worldUsage = props.getProperty("world-usage", null);
             verbose = props.getProperty("verbose", "true").equals("true");
 
             try{
@@ -316,32 +314,16 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         System.out.println("---------------------------");
     }
     
-    public void setWorkingDir(){
-    	if(config.rosieHome != null){
-    		System.setProperty("user.dir", config.rosieHome);
-    		agent.ExecuteCommandLine("cd " + config.rosieHome);
-    	}
-    }
-
     private void sourceAgent(){
         agent.ExecuteCommandLine("smem --set database memory");
         agent.ExecuteCommandLine("epmem --set database memory");
-        
-        setWorkingDir();
-        if(config.tclSource != null){
-        	System.out.println("-------------- SOURCING TCL ---------------");
-            String res = agent.ExecuteCommandLine("source " + config.tclSource);
-            System.out.println(res);
-        }
 
-        setWorkingDir();
         if(config.smemSource != null){
         	System.out.println("------------- SOURCING SMEM ---------------");
             String res = agent.ExecuteCommandLine("source " + config.smemSource);
             parseSmemSourceInfo(res);
         }
 
-        setWorkingDir();
         if(config.agentSource != null){
         	System.out.println("---------- SOURCING PRODUCTIONS -----------");
             String res = agent.ExecuteCommandLine("source " + config.agentSource + " -v");
@@ -350,6 +332,15 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
             } else {
                 System.out.println("Sourced Productions");
             }
+        }
+        
+        if(config.worldUsage != null){
+        	System.out.println("Setting world-usage to " + config.worldUsage);
+            agent.ExecuteCommandLine(
+				"sp {top-state*elaborate*world-usage\n" + 
+				"(state <s> ^superstate nil)\n" + 
+				"-->\n" + 
+				"(<s> ^world-usage " + config.worldUsage + ")}");
         }
     }
 
