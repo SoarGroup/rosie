@@ -29,7 +29,7 @@ do
 	#fi
 	#echo "oops"
 	java SentencesToSoar soar-game.script
-	cp soar-game.soar /home/jrkirk/rosie2/rosie-project/rosie/agent/_agent/language-comprehension/comprehension/test-sentences/
+	cp soar-game.soar /home/jrkirk/rosie2/rosie-project/rosie/agent/language-comprehension/comprehension/test-sentences/
 	/home/jrkirk/rosie2/rosie-project/soar/out/./soar -s game-data-agent.soar stop
 	cp stats.txt testresult/$rfilename$stats
 	cp statsm.txt testresult/$rfilename$maxstats

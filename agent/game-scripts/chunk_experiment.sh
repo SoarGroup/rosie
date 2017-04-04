@@ -12,7 +12,7 @@ do
 	rfilename=${rfile%$suffix}
 	
 	java SentencesToSoar soar-game.script
-	cp soar-game.soar /home/jrkirk/rosie2/rosie-project/rosie/agent/_agent/language-comprehension/comprehension/test-sentences/
+	cp soar-game.soar /home/jrkirk/rosie2/rosie-project/rosie/agent/language-comprehension/comprehension/test-sentences/
 	/home/jrkirk/rosie2/rosie-project/soar/out/./cli < game-data-agent.soar
 	cp chunked-stats.txt resultsX/$rfilename$stats
 	cp startparsetime.txt resultsX/$rfilename$start
