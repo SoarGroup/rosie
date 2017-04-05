@@ -53,7 +53,7 @@ do
 			rm statesexp.txt -f
 
 			c=`expr $c + 1`
-			../../../../soar/out/./soar -s game-agent.soar stop > out.txt
+			../../../soar/out/./soar -s game-data-agent.soar stop > out.txt
 			python calculateTeachSolvetime.py
 			python calculateStatesExplored.py
 		
