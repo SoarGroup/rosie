@@ -168,6 +168,18 @@ sp {convert-parsed-format*elaborate*clause*prefer2
    (<s> ^preference-rule true)
 }
 
+sp {convert-parsed-format*elaborate*clause*prefer2arg1
+   (state <s> ^name convert-parsed-format
+              ^clause <c>)
+   (<c> ^action.handle prefer ^subclause1 <sb> ^subclause2 <sb2>)
+   (<sb> ^action <act> ^arg1 <a1> -^arg2)# <a2>)
+   (<sb2> ^action <act2> ^arg1 <a3> -^arg2)# <a4>)
+-->
+   (<s> ^pref-action <sz> ^parameter <a1> <a3>) #^clause <a2> <a4>
+   (<sz> ^prefer 2 ^1 <sb> ^2 <sb2>)
+   (<s> ^preference-rule true)
+}
+
 sp {convert-parsed-format*elaborate*clause*consider2
    (state <s> ^name convert-parsed-format
               ^clause <c>)
@@ -417,6 +429,23 @@ sp {convert-parsed-format*propose*handle-pref-action2
         ^arg1b <a3>
         ^arg2b <a4>)
 }
+
+sp {convert-parsed-format*propose*handle-pref-action2*noarg2
+   (state <s> ^name convert-parsed-format
+              ^pref-action <c>)
+   (<c> ^1 <c1> ^2 <c2> ^prefer 2)
+   (<c1> ^action <a> ^arg1 <a1> -^arg2)
+   (<c2> ^action <ab> ^arg1 <a3> -^arg2)
+   (<a> -^formatted)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name handle-pref-action
+        ^action <a>
+        ^action2 <ab> #so far the same?
+        ^prefer 2
+        ^arg1 <a1>
+        ^arg1b <a3>)
+}
 sp {convert-parsed-format*propose*handle-pref-action
    (state <s> ^name convert-parsed-format
               ^pref-action <c>)
@@ -615,6 +644,34 @@ sp {convert-parsed-format*apply*handle-pref-action2
    (<parab> ^1 <para3> ^2 <para4>)
    (<para3> ^param-id <id3> ^type <rtype3>)
    (<para4> ^param-id <id4> ^type <rtype4>)
+}
+
+sp {convert-parsed-format*apply*handle-pref-action2*noarg2
+   (state <s> ^name convert-parsed-format
+              ^operator <o>)
+   (<o> ^name handle-pref-action ^action <c>
+        ^action2 <c2> #so far the same?
+        ^prefer 2
+        ^arg1 <a1>
+        -^arg2 
+        ^arg1b <a3>
+        -^arg2b)
+   (<c> ^handle <name>)
+   (<c2> ^handle <name2>)
+   (<a1> ^formatted <p> ^parameter-index <id>)
+   (<a3> ^formatted <p3> ^parameter-index <id3>)
+   (<p> ^rtype <rtype>)
+   (<p3> ^rtype <rtype3>)
+-->
+   (<c> ^formatted true)
+   (<s> ^prefer <n12> ^nlp <n> <n2>)
+   (<n12> ^1 <n> ^2 <n2>)
+   (<n> ^name <name> ^args <a> ^parameter <para> ^type concept ^attribute action ^rtype <rtype>)# ^verb <prep>)
+   (<n2> ^name <name2> ^args <ab> ^parameter <parab> ^type concept ^attribute action ^rtype <rtype3>)# ^verb <prep2>)
+   (<para> ^1 <para1>)
+   (<para1> ^param-id <id> ^type <rtype>)
+   (<parab> ^1 <para3>)
+   (<para3> ^param-id <id3> ^type <rtype3>)
 }
 
 #consider versions
@@ -1014,6 +1071,26 @@ sp {convert-parsed-format*apply*handle-predicate*equal-exists*state-pair
    (<para2> ^param-id <id2> ^type <rtype2>)
 }
 
+#sp {convert-parsed-format*apply*handle-predicate*equal-exists*attribute
+#   (state <s> ^name convert-parsed-format
+#              ^superstate.world.predicates.predicate.handle <name>
+#              ^operator <o>)
+#   (<o> ^name handle-predicate ^predicate <c>)
+#   (<c> ^handle <name> ^2 <p> ^equal-to <eq> -^handle number1 -^modifier.handle negation)
+#   (<eq> ^formatted <oc>)
+#   (<p> ^formatted <oc2> ^parameter-index <id2>)
+#   (<oc> ^rtype <rtype> ^parameter.{1}.param-id <id1>)
+#   (<oc2> ^rtype <rtype2>)
+#-->
+#   (<c> ^formatted true)
+#   (<s> ^nlp <n>)
+#   (<n> ^name <name> ^args <a> ^parameter <para> ^type state-pair ^attribute prepositions ^rtype <rtype>)
+#   (<a> ^1 <oc> ^2 <oc2>)
+#   (<para> ^1 <para1> ^2 <para2>)
+#   (<para1> ^param-id <id1> ^type <rtype>)
+#   (<para2> ^param-id <id2> ^type <rtype2>)
+#}
+
 
 sp {convert-parsed-format*apply*handle-predicate*equal-exists*concept
    (state <s> ^name convert-parsed-format
@@ -1238,6 +1315,24 @@ sp {convert-parsed-format*apply*handle-predicate*number*equal
    (<para1> ^param-id <id1> ^type single)
    
 }
+
+sp {convert-parsed-format*apply*handle-predicate*unary-property*equal
+   (state <s> ^name convert-parsed-format
+              ^operator <o>)
+   (<o> ^name handle-predicate ^predicate <c>)
+   (<c> ^property <cp> ^handle <name> -^2 ^equal-to.formatted <oc>)
+   (<cp> -^handle property -^handle property1 ^item-type property ^type visual) 
+   (<oc> ^parameter.{1}.param-id <id1> ^type attribute-of)
+-->
+   (<c> ^formatted <n>)
+   (<s> ^nlp <n>)
+   (<n> ^name number ^result.set.instance <i> ^args <a> ^parameter <para> ^rtype single ^return-type number)
+   (<i> ^1 <name>)
+   (<para> ^1 <para1>)
+   (<para1> ^param-id <id1> ^type single)
+   
+}
+
 
 #for now store predifine number-of to count
 sp {convert-parsed-format*apply*handle-predicate*count
@@ -1520,15 +1615,17 @@ sp {convert-parsed-format*propose*handle-clause*attribute-of
         ^clause <c>)
 }
 
+#TODO bias towards category first
 #TODO handle direct not as unary predicate?
 sp {convert-parsed-format*propose*handle-property-predicate
    (state <s> ^name convert-parsed-format
              -^learn-link.handle <name>
               -^learning-predicate.spelling <name>
               ^clause <c>)
-   (<c> ^arg1 <p> ^predicate <pred> -^formatted)
+   (<c> ^arg1 <p> ^predicate <pred>)# -^formatted)
+   (<pred> -^formatted)
    (<p>  ^predicates.category <type> ^predicates <ps>) #^item-type <type> object?
-   (<pred> ^handle <name> ^item-type predicate ^property.handle {<prop> <> category})
+   (<pred> ^handle <name> ^item-type predicate ^property.handle <prop>)# <> category
 -->
    (<s> ^operator <o> + =)
    (<o> ^name handle-property-predicate
@@ -1542,11 +1639,12 @@ sp {convert-parsed-format*apply*handle-property-predicate*concept-property*notne
    (state <s> ^name convert-parsed-format
               ^operator <o>)
    (<o> ^name handle-property-predicate ^pred-name <name> ^param <p> ^property property ^pred-clause <c>)
-   (<c> -^modifier.handle negation)
+   (<c> -^modifier.handle negation ^predicate <pred>)
+   (<pred> ^handle <name>)
    (<p> -^new-formatted ^formatted <p1> ^parameter-index <id>)
    (<p1> ^rtype <rtype>)
 -->
-   (<c> ^formatted true)
+   (<pred> ^formatted true) #<c>
    (<p> ^new-formatted <n>)
    (<s> ^nlp <n>)
    (<n> ^name <name> ^args <a> ^parameter <para> ^type concept ^attribute predicate ^rtype <rtype>)
@@ -1555,16 +1653,18 @@ sp {convert-parsed-format*apply*handle-property-predicate*concept-property*notne
    (<para1> ^param-id <id> ^type <rtype>)
    
 }
-
+#JK hardcode fix color size shape
 sp {convert-parsed-format*apply*handle-property-predicate*concept-property*primitive*notnew
    (state <s> ^name convert-parsed-format
               ^operator <o>)
-   (<o> ^name handle-property-predicate ^pred-name <name> ^param <p> ^property {<prop> << color size shape >>} ^pred-clause <c>)
-   (<c> -^modifier.handle negation)
+   (<o> ^name handle-property-predicate ^pred-name <name> ^param <p> ^property <prop> ^pred-clause <c> -^property property) #{<prop> << color size shape >>}
+   (<c> -^modifier.handle negation ^predicate <pred>)
+   (<pred> ^handle <name>)
    (<p> -^new-formatted ^formatted <p1> ^parameter-index <id>)
    (<p1> ^rtype <rtype>)
 -->
-   (<c> ^formatted true)
+   #(<c> ^formatted true)
+    (<pred> ^formatted true)
    (<p> ^new-formatted <n>)
    (<s> ^nlp <n>)
    (<n> ^name <name> ^args <a> ^parameter <para> ^type attribute ^attribute <prop> ^rtype <rtype>)
@@ -1573,16 +1673,18 @@ sp {convert-parsed-format*apply*handle-property-predicate*concept-property*primi
    (<para1> ^param-id <id> ^type <rtype>)
    
 }
-
+#TODO consider new-new-formatted (better layering)
 sp {convert-parsed-format*apply*handle-property-predicate*concept-property*primitive
    (state <s> ^name convert-parsed-format
               ^operator <o>)
-   (<o> ^name handle-property-predicate ^pred-name <name> ^param <p> ^property {<prop> << color size shape >>} ^pred-clause <c>)
-   (<c> -^modifier.handle negation)
+   (<o> ^name handle-property-predicate ^pred-name <name> ^param <p> ^property <prop> ^pred-clause <c> -^property property) #{<prop> << color size shape >>}
+   (<c> -^modifier.handle negation ^predicate <pred>)
+   (<pred> ^handle <name>)
    (<p> ^new-formatted <p1> ^parameter-index <id>)
    (<p1> ^rtype <rtype>)
 -->
-   (<c> ^formatted true)
+   (<pred> ^formatted true)
+   #(<c> ^formatted true)
    (<s> ^nlp <n>)
    (<n> ^name <name> ^args <a> ^parameter <para> ^type attribute ^attribute <prop> ^rtype <rtype>)
    (<a> ^1 <p1>)
@@ -1595,11 +1697,13 @@ sp {convert-parsed-format*apply*handle-property-predicate*concept-property
    (state <s> ^name convert-parsed-format
               ^operator <o>)
    (<o> ^name handle-property-predicate ^pred-name <name> ^param <p> ^property property ^pred-clause <c>)
-   (<c> -^modifier.handle negation)
+   (<c> -^modifier.handle negation ^predicate <pred>)
+   (<pred> ^handle <name>)
    (<p> ^new-formatted <p1> ^parameter-index <id>)
    (<p1> ^rtype <rtype>)
 -->
-   (<c> ^formatted true)
+   #(<c> ^formatted true)
+   (<pred> ^formatted true)
    (<s> ^nlp <n>)
    (<n> ^name <name> ^args <a> ^parameter <para> ^type concept ^attribute predicate ^rtype <rtype>)
    (<a> ^1 <p1>)
