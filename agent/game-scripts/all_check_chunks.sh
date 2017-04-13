@@ -52,8 +52,8 @@ do
 	done
 done
 
-declare -a grr=("tictactoe" "kconnect3" "aconnect3" "econnect4" "risk" "president" "crazy8")
-#broken "ubreakthrough" "picaria" "9holes" "mens3" # othello
+declare -a grr=("tictactoe" "kconnect3" "aconnect3" "econnect4" "risk" "president" "crazy8" "ubreakthrough3" "9holes" "picaria")
+#broken "ubreakthrough" only 1 version,retrydue  "mens3" # othello
 
 ## now loop through the above array
 for game in "${grr[@]}"
