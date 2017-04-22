@@ -18,6 +18,7 @@ sp {interpret-message*propose*interpret-what-is-question
    (<msg> ^message-type what-is-question
          -^interpreted true)
 -->
+   (interrupt)
    (<s> ^operator <o> +)
    (<o> ^name interpret-what-is-question
         ^message <msg>)
@@ -60,7 +61,8 @@ sp {interpret-message*elaborate*interpret-what-is-question*predicate-object
            ^2 <pred>)
    (<pred> ^2 <obj>
            -^handle goal
-           -^handle failure)
+           -^handle failure
+           -^handle action)
 -->
    (<o> ^property <pred>
         ^object <obj>)
@@ -78,7 +80,7 @@ sp {interpret-message*elaborate*interpret-what-is-question*retrieve-goal
            ^handle goal)
    (<game> ^handle <game-name>)
 -->
-   (<o> ^gtype goal
+   (<o> ^type goal
         ^game <game-name>)
 }
 
@@ -94,7 +96,24 @@ sp {interpret-message*elaborate*interpret-what-is-question*retrieve-failure
            ^handle failure)
    (<game> ^handle <game-name>)
 -->
-   (<o> ^gtype failure
+   (<o> ^type failure
+        ^game <game-name>)
+}
+
+# Retrieving actions of the game 
+# PR - TODO (all these can be made the same rule and not have three rules for goal,failure,action)
+sp {interpret-message*elaborate*interpret-what-is-question*retrieve-action
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-what-is-question
+        ^message.arg1 <arg1>)
+   (<arg1> ^item-type predicate
+           ^2 <pred>)
+   (<pred> ^2 <game>
+           ^handle action)
+   (<game> ^handle <game-name>)
+-->
+   (<o> ^type action
         ^game <game-name>)
 }
 
@@ -189,7 +208,7 @@ sp {interpret-message*apply*interpret-what-is-question*create*retrieve-goal-mess
               ^instructor-message <msg>
               ^operator <o>)
    (<o> ^name interpret-what-is-question
-        ^gtype goal
+        ^type goal
         ^game <game>)
 -->
    (<s> ^new-segment-info <info>
@@ -199,7 +218,7 @@ sp {interpret-message*apply*interpret-what-is-question*create*retrieve-goal-mess
    (<p> ^type agent-goal-description
    		^parameters <params>
         ^satisfaction <sat>)
-   (<params> ^gtype goal
+   (<params> ^type goal
              ^game <game>)
    (<sat> ^dialog-event <de>)
    (<de> ^type explanation
@@ -212,7 +231,7 @@ sp {interpret-message*apply*interpret-what-is-question*create*retrieve-failure-m
               ^instructor-message <msg>
               ^operator <o>)
    (<o> ^name interpret-what-is-question
-        ^gtype failure
+        ^type failure
         ^game <game>)
 -->
    (<s> ^new-segment-info <info>
@@ -222,7 +241,30 @@ sp {interpret-message*apply*interpret-what-is-question*create*retrieve-failure-m
    (<p> ^type agent-failure-description
    		^parameters <params>
         ^satisfaction <sat>)
-   (<params> ^gtype failure
+   (<params> ^type failure
+             ^game <game>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type explanation
+         ^originator agent)
+}
+
+# Retrieving action details from smem from the games that were previously stored in memory
+sp {interpret-message*apply*interpret-what-is-question*create*retrieve-action-message
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>
+              ^operator <o>)
+   (<o> ^name interpret-what-is-question
+        ^type action
+        ^game <game>)
+-->
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type agent-game-action-description
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<params> ^type action
              ^game <game>)
    (<sat> ^dialog-event <de>)
    (<de> ^type explanation

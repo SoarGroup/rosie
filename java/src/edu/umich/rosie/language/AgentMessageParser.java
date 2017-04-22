@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,6 +15,7 @@ import java.util.Set;
 
 import javax.swing.plaf.basic.BasicSliderUI.ScrollListener;
 import com.sun.org.omg.CORBA.IdentifierHelper;
+//import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils.Collections;
 
 import sml.Identifier;
 import sml.WMElement;
@@ -1236,7 +1238,6 @@ public class AgentMessageParser
 		}
 		else
 		{
-                        //PR - consider using new function startswithvowel
 			if (startsWithVowel(objDesc.get(0)))
 			{
 				article = "an ";
@@ -1316,8 +1317,8 @@ public class AgentMessageParser
 		String prep = SoarUtil.getValueOfAttribute(objDescId, "prep");
 		if (prep == null)
 		{
-			List<String> object_descs_values = Arrays.asList(objectDescription, auxiliaryVerb, rtype, "0");
-			return object_descs_values;
+			List<String> objDesc_values = Arrays.asList(objectDescription, auxiliaryVerb, rtype, "0");
+			return objDesc_values;
 		}
 		
 		// Continue in case that the description is a prepositional phrase
@@ -1351,8 +1352,8 @@ public class AgentMessageParser
 		}
 		
 		objectDescription += article + object2_Desc;
-		List<String> object_descs_values = Arrays.asList(objectDescription, auxiliaryVerb, rtype, "0");
-		return object_descs_values;
+		List<String> objDesc_values = Arrays.asList(objectDescription, auxiliaryVerb, rtype, "0");
+		return objDesc_values;
 	}
 	
 	// Creates object predicate phrases based on the predicates retrieved from specific games
@@ -1367,19 +1368,20 @@ public class AgentMessageParser
 		while (objDescWME != null)
 		{		Identifier objDescId = objDescWME.ConvertToIdentifier();
 				Integer param_id = Integer.parseInt(SoarUtil.getValueOfAttribute(objDescId, "param-id"));
-				List<String> object_descs_values = getIndividualObjectPredicateForGame(objDescId);
+				List<String> objDesc_values = getIndividualObjectPredicateForGame(objDescId);
 				
 				if (!object_descs.containsKey(param_id))
 				{
 					// PR - Hack, this should be able to be done using lambda expressions object_descs.values().stream().anymatch(l -> l.contains(objectDescription)) in java 1.8
-					String objectDescription = object_descs_values.get(0);
-					if(object_descs.values().toString().contains(objectDescription))
+					String objectDescription = objDesc_values.get(0);
+					//ArrayList<String> object_descs_values = (object_descs.values()).stream().filter(p -> p.get(0)).collect(Collectors.toList())
+					if(object_descs.values().contains(objectDescription))
 					{
 						objectDescription = "other " + objectDescription;
 					}
-					object_descs_values.set(0,objectDescription);
-					//List<String> object_descs_values = Arrays.asList(objectDescription, auxiliaryVerb, rtype, "0");
-					object_descs.put(param_id, object_descs_values);
+					objDesc_values.set(0,objectDescription);
+					//List<String> objDesc_values = Arrays.asList(objectDescription, auxiliaryVerb, rtype, "0");
+					object_descs.put(param_id, objDesc_values);
 				}
 				objDescWME = descSetId.FindByAttribute("obj-desc", ++i);
 		}
