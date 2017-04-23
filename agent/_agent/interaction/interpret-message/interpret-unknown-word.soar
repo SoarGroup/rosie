@@ -81,7 +81,7 @@ sp {interpret-message*apply*interpret-unknown-word*create*segment
    (<out-msg> ^type unknown-word
               ^fields.word <word>)
 }
-
+#TODO FIX HACK NEED lexical info from failed parse to know multy arguments/preceeding word
 sp {interpret-message*apply*interpret-unknown-word*store-smem-word
    (state <s> ^name interpret-message
               ^smem.command <sc>
@@ -89,9 +89,26 @@ sp {interpret-message*apply*interpret-unknown-word*store-smem-word
    (<o> ^name interpret-unknown-word
         ^word <word>
        -^word husband
+	   -^word wife
        -^word larger
        -^word smaller
-       -^word passenger       
+	   -^word lower
+	   -^word higher
+	   -^word neighbor
+	   -^word position
+	   -^word heavier
+	   -^word lighter
+	   -^word brighter
+	   -^word darker
+	   -^word dimmer
+	   -^word below
+	   -^word left
+       -^word passenger
+       -^word occupant
+       -^word row-constraints
+       -^word column-constraints
+       -^word section-constraints   
+       -^word total-constraints  
        -^word adjacent 
         ^message <msg>)
 -->
@@ -102,13 +119,61 @@ sp {interpret-message*apply*interpret-unknown-word*store-smem-word
 }
 
 #TODO hack lost information that following word is than... need to recover
-sp {interpret-message*apply*interpret-unknown-word*store-smem-word*x-than
+sp {interpret-message*apply*interpret-unknown-word*store-smem-word*higher-than
    (state <s> ^name interpret-message
               ^smem.command <sc>
               ^operator <o>)
    (<o> ^name interpret-unknown-word
         ^word <word>
-        ^word << smaller larger >>
+        ^word higher
+        ^message <msg>)
+-->
+    (<sc> ^store <w1> <spell> <next> <next-to1> )
+    (<w1> ^handle <word>)
+    (<spell> ^spelling <word> ^structure-type C-ADJ ^converts-to C-ADJ-P ^relation <w1>)  
+    (<next> ^prior-word <word>
+                   ^current-word |than|
+                   ^spelling |higher-than|  ## Construction?
+                   ^structure-type C-ADJ
+                   ^relation <w1>
+                   ^assigners <next-to1>
+                   ^converts-to C-ADJ-P)
+           (<next-to1> ^structure-type DP
+                    ^relative-position after
+                    ^syntactic-structure head
+                    ^required true)
+}
+sp {interpret-message*apply*interpret-unknown-word*store-smem-word*lower-than
+   (state <s> ^name interpret-message
+              ^smem.command <sc>
+              ^operator <o>)
+   (<o> ^name interpret-unknown-word
+        ^word <word>
+        ^word lower
+        ^message <msg>)
+-->
+    (<sc> ^store <w1> <spell> <next> <next-to1> )
+    (<w1> ^handle <word>)
+    (<spell> ^spelling <word> ^structure-type C-ADJ ^converts-to C-ADJ-P ^relation <w1>)  
+    (<next> ^prior-word <word>
+                   ^current-word |than|
+                   ^spelling |lower-than|  ## Construction?
+                   ^structure-type C-ADJ
+                   ^relation <w1>
+                   ^assigners <next-to1>
+                   ^converts-to C-ADJ-P)
+           (<next-to1> ^structure-type DP
+                    ^relative-position after
+                    ^syntactic-structure head
+                    ^required true)
+}
+sp {interpret-message*apply*interpret-unknown-word*store-smem-word*larger-than
+   (state <s> ^name interpret-message
+              ^smem.command <sc>
+              ^operator <o>)
+   (<o> ^name interpret-unknown-word
+        ^word <word>
+        ^word larger
         ^message <msg>)
 -->
     (<sc> ^store <w1> <spell> <next> <next-to1> )
@@ -126,6 +191,30 @@ sp {interpret-message*apply*interpret-unknown-word*store-smem-word*x-than
                     ^syntactic-structure head
                     ^required true)
 }
+sp {interpret-message*apply*interpret-unknown-word*store-smem-word*smaller-than
+   (state <s> ^name interpret-message
+              ^smem.command <sc>
+              ^operator <o>)
+   (<o> ^name interpret-unknown-word
+        ^word <word>
+        ^word smaller
+        ^message <msg>)
+-->
+    (<sc> ^store <w1> <spell> <next> <next-to1> )
+    (<w1> ^handle <word>)
+    (<spell> ^spelling <word> ^structure-type C-ADJ ^converts-to C-ADJ-P ^relation <w1>)  
+    (<next> ^prior-word <word>
+                   ^current-word |than|
+                   ^spelling |smaller-than|  ## Construction?
+                   ^structure-type C-ADJ
+                   ^relation <w1>
+                   ^assigners <next-to1>
+                   ^converts-to C-ADJ-P)
+           (<next-to1> ^structure-type DP
+                    ^relative-position after
+                    ^syntactic-structure head
+                    ^required true)
+}
 #TODO hack lost information that following word is of... need to recover
 sp {interpret-message*apply*interpret-unknown-word*store-smem-word*x-of
    (state <s> ^name interpret-message
@@ -133,7 +222,7 @@ sp {interpret-message*apply*interpret-unknown-word*store-smem-word*x-of
               ^operator <o>)
    (<o> ^name interpret-unknown-word
         ^word <word>
-        ^word << passenger husband >>
+        ^word << passenger husband wife position neighbor occupant row-constraints column-constraints section-constraints total-constraints >>
         ^message <msg>)
 -->
     (<sc> ^store <w1> <spell> <p3>)
@@ -169,6 +258,31 @@ sp {interpret-message*apply*interpret-unknown-word*store-smem-word*adjacent
                     ^required true)
     
 }
+
+sp {interpret-message*apply*interpret-unknown-word*store-smem-word*below
+   (state <s> ^name interpret-message
+              ^smem.command <sc>
+              ^top-state.dialog-context <dc>
+              ^operator <o>)
+   (<o> ^name interpret-unknown-word
+        ^word <word>
+        ^word below
+        ^message <msg>)
+-->
+#(write (crlf) (cmd print <msg>))
+    (<sc> ^store <w1> <spell> <st> <plt>)
+    (<w1> ^handle <word> ^item-type relation ^relation-type existing ^relation <x>)
+    (<spell> ^spelling <word> ^super-type <st> ^relation <w1>)
+(<st> ^structure-type P
+                   ^relation-type binary
+                   ^assigners <plt>
+                   ^converts-to PP)
+           (<plt> ^structure-type DP
+                    ^relative-position after
+                    ^syntactic-structure head
+                    ^required true)
+}
+##(^structure-type P ^converts-to PP)    
 
     
 

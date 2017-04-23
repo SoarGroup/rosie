@@ -1,0 +1,86 @@
+#sp {action-space*waypoint-search*evaluate-operator*elaborate*go-to-next-waypoint*next-waypoint
+#   (state <s> ^name evaluate-operator
+#              ^problem-space.action-space waypoint-search
+#              ^operator <o> +)
+#   (<o> ^name go-to-next-waypoint
+#        ^next-waypoint <wp>)
+#-->
+#   (<o> ^next-waypoint <wp>)
+#}
+
+# simulate go-to-next-waypoint: update current-waypoint on state
+sp {action-space*waypoint-search*evaluate-operator*apply*go-to-next-waypoint
+   (state <s> ^name evaluate-operator
+              ^problem-space.action-space waypoint-search
+              ^operator <o>
+              ^current-waypoint <cur-wp>)
+   (<o> ^name go-to-next-waypoint
+        ^next-waypoint { <new-wp> <> <cur-wp> })
+-->
+   (<s> ^current-waypoint <cur-wp> -
+        ^current-waypoint <new-wp>)
+}
+
+# simulate go-to-next-waypoint: update current-waypoint on the evaluation structure
+sp {action-space*waypoint-search*evaluate-operator*apply*go-to-next-waypoint*update*current-waypoint*evaluation
+   (state <s> ^name evaluate-operator
+              ^problem-space.action-space waypoint-search
+              ^operator <o>
+              ^superstate.operator.evaluation <eval>
+              ^current-waypoint <cur-wp>)
+   (<o> ^name go-to-next-waypoint
+        ^next-waypoint <new-wp>)
+    (<eval> ^current-waypoint { <cur-wp> <> <new-wp> })
+-->
+   (<eval> ^current-waypoint <cur-wp> -
+           ^current-waypoint <new-wp>)
+}
+
+# When simulating go-to-next-waypoint, update the path cost
+sp {action-space*waypoint-search*evaluate-operator*elaborate*go-to-next-waypoint*dx*dy
+   (state <s> ^name evaluate-operator
+              ^problem-space.action-space waypoint-search
+              ^operator <o> +
+              ^current-waypoint <cur-wp>)
+   (<o> ^name go-to-next-waypoint
+        ^next-waypoint <new-wp>)
+   (<cur-wp> ^x <cx> ^y <cy>)
+   (<new-wp> ^x <dx> ^y <dy>)
+-->
+   (<o> ^dx (- <dx> <cx>)
+        ^dy (- <dy> <cy>) )
+}
+
+sp {action-space*waypoint-search*evaluate-operator*apply*go-to-next-waypoint*update*path-cost
+   (state <s> ^name evaluate-operator
+              ^problem-space.action-space waypoint-search
+              ^operator <o>
+              ^superstate.operator.evaluation <eval>
+              ^current-waypoint <cur-wp>)
+   (<o> ^name go-to-next-waypoint
+        ^dx <dx>
+        ^dy <dy>
+        ^next-waypoint <new-wp>)
+   (<eval> ^current-waypoint {<cur-wp> <> <new-wp>}
+           ^path-cost <old-cost>)
+-->
+   (<eval> ^path-cost <old-cost> -
+           ^path-cost (+ <old-cost> (sqrt (+ (* <dx> <dx>) (* <dy> <dy>)))))
+}
+
+# Cleanup estimated-cost and updated-estimate
+sp {action-space*waypoint-search*evaluate-operator*apply*go-to-next-waypoint*cleanup*evaluation
+   (state <s> ^name evaluate-operator
+              ^problem-space.action-space waypoint-search
+              ^operator <o>
+              ^superstate.operator.evaluation <eval>)
+   (<o> ^name go-to-next-waypoint
+        ^next-waypoint.handle <new-handle>)
+   (<eval> ^path-cost { <pc> <> 0 }
+           ^estimated-cost <ec>
+           ^current-waypoint <> <new-handle>
+           ^updated-estimate true)
+-->
+   (<eval> ^estimated-cost <ec> -
+           ^updated-estimate true -)
+}
