@@ -80,6 +80,9 @@ public class RosieConfig {
 	public String rosieHome;
 	
 	public RosieConfig(File configFile, Properties props, String rosieHome) throws RosieConfigException {
+		String configDir = configFile.getParent();
+		System.out.println(configDir);
+		
 		// rosieHome
 		this.rosieHome = rosieHome; 
 
@@ -97,7 +100,7 @@ public class RosieConfig {
 		if (props.containsKey("agent-dir")){
 			this.agentDir = props.getProperty("agent-dir");
 		} else {
-			this.agentDir = configFile.getParent();
+			this.agentDir = configFile.getParent() + "/agent";
 		}
 		
 		// domain
@@ -135,37 +138,37 @@ public class RosieConfig {
 		
 		// sentences-file
 		if (props.containsKey("sentences-file")){
-			this.sentencesFile = new File(this.agentDir + "/" + props.getProperty("sentences-file"));
+			this.sentencesFile = new File(configDir + "/" + props.getProperty("sentences-file"));
 		} else {
-			this.sentencesFile = new File(this.agentDir + "/" + this.agentName + ".sentences");
+			this.sentencesFile = new File(configDir + "/" + this.agentName + ".sentences");
 		}
 		
 		// world-file
 		if (props.containsKey("world-file")){
-			this.worldFile = new File(this.agentDir + "/" + props.getProperty("world-file"));
+			this.worldFile = new File(configDir + "/" + props.getProperty("world-file"));
 		} else {
-			this.worldFile = new File(this.agentDir + "/" + this.agentName + ".world");
+			this.worldFile = new File(configDir + "/" + this.agentName + ".world");
 		}
 		
 		// smem-config-file
 		if (props.containsKey("smem-config-file")){
-			this.smemConfigFile = new File(this.agentDir + "/" + props.getProperty("smem-config-file"));
+			this.smemConfigFile = new File(configDir + "/" + props.getProperty("smem-config-file"));
 		} else {
-			this.smemConfigFile = new File(this.agentDir + "/" + this.agentName + ".smem");
+			this.smemConfigFile = new File(configDir + "/" + this.agentName + ".smem");
 		}
 		
 		// custom-soar-file
 		if (props.containsKey("custom-soar-file")){
-			this.customSoarFile = new File(this.agentDir + "/" + props.getProperty("custom-soar-file"));
+			this.customSoarFile = new File(configDir + "/" + props.getProperty("custom-soar-file"));
 		} else {
-			this.customSoarFile = new File(this.agentDir + "/" + this.agentName + ".soar");
+			this.customSoarFile = new File(configDir + "/" + this.agentName + ".soar");
 		}
 		
 		// custom-smem-file
 		if (props.containsKey("custom-smem-file")){
-			this.customSmemFile = new File(this.agentDir + "/" + props.getProperty("custom-smem-file"));
+			this.customSmemFile = new File(configDir + "/" + props.getProperty("custom-smem-file"));
 		} else {
-			this.customSmemFile = new File(this.agentDir + "/" + this.agentName + "_smem.soar");
+			this.customSmemFile = new File(configDir + "/" + this.agentName + "_smem.soar");
 		}
 		
 		// otherSettings
@@ -184,6 +187,7 @@ public class RosieConfig {
 		StringBuilder sb = new StringBuilder();
 		sb.append("agent-name = " + this.agentName + "\n");
 		sb.append("agent-dir = " + this.agentDir + "\n");
+		sb.append("rosie-home = " + this.rosieHome + "\n");
 		sb.append("domain = " + this.domain + "\n");
 		sb.append("parser = " + this.parser + "\n");
 		sb.append("sentence-source = " + this.sentenceSource + "\n");
