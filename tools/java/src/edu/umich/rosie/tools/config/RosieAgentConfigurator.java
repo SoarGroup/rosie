@@ -52,9 +52,9 @@ public class RosieAgentConfigurator {
 			
 			// Smem
 			if (config.smemConfigFile.exists()){
-				File smemDir = new File(config.rosieHome + "/agent/init-smem");
+				File rosieDir = new File(config.rosieHome + "/agent");
 				File outputDir = new File(config.agentDir);
-				ArrayList<String> smemFiles = SmemConfigurator.configureSmem(config.smemConfigFile, smemDir, outputDir, config.agentName);
+				ArrayList<String> smemFiles = SmemConfigurator.configureSmem(config.smemConfigFile, outputDir, rosieDir, config.agentName);
 				for (String filename : smemFiles){
 					smemSourceFile.write("source " + filename + "\n\n");
 				}
