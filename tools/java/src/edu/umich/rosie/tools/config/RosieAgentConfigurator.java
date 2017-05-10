@@ -112,7 +112,8 @@ public class RosieAgentConfigurator {
 		// Smem
 		if (config.smemConfigFile.exists()){
 			File outputDir = new File(config.agentDir);
-			ArrayList<String> smemFiles = SmemConfigurator.configureSmem(config.smemConfigFile, smemDir, outputDir, config.agentName);
+			File rosieDir = new File(config.rosieHome + "/agent");
+			ArrayList<String> smemFiles = SmemConfigurator.configureSmem(config.smemConfigFile, outputDir, rosieDir, config.agentName);
 			smemSourceFile.write("# These files contain the specific set of semantic memory items for this particular agent\n");
 			for (String filename : smemFiles){
 				smemSourceFile.write("source " + filename + "\n");
