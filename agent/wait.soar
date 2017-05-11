@@ -8,10 +8,14 @@ sp {non-atomic*propose*wait
     (<q> ^name wait +)
 }
 
+##  PL  5/8/2017    Add option for a debug wait limit, details below
 sp {state-no-change*propose*wait
    (state <s> ^attribute state
               ^choices none
-             -^operator.name wait)
+              # Propose this one if no debug wait limit
+              ^top-state.agent-params.debug-wait-limit 0
+             -^operator.name wait
+             -^wait )
 -->
    (<s> ^operator <o> +)
    (<o> ^name wait)
@@ -34,3 +38,58 @@ sp {anystate*prefer*others*over*wait
 #-->
 #   (<s> ^operator <op1> > <op2>)
 #}
+
+##  PL  5/8/2017    Details for a debug wait limit
+sp {state-no-change*propose*wait*first-time
+   (state <s> ^attribute state
+              ^choices none
+              ^top-state.agent-params.debug-wait-limit { <limit> > 0 }
+             -^wait )
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name wait)
+}
+
+sp {state-no-change*apply*wait*first-time
+   (state <s> ^attribute state
+              ^choices none
+              ^top-state.agent-params.debug-wait-limit { <limit> > 0 }
+              ^operator.name wait
+             -^wait )
+-->
+   (<s> ^limit (- <limit> 1)
+        ^wait 1)
+}
+
+sp {state-no-change*propose*wait*not-first-time
+   (state <s> ^attribute state
+              ^choices none
+              ^limit <limit>
+              ^wait <x>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name wait)
+}
+
+sp {state-no-change*apply*wait*not-first-time
+   (state <s> ^attribute state
+              ^choices none
+              ^operator.name wait
+              ^limit <limit>
+              ^wait { <x> < <limit> })
+-->
+   (<s> ^wait <x> - 
+        ^wait(+ <x> 1) +)
+}
+
+sp {state-no-change*apply*wait*done
+   (state <s> ^attribute state
+              ^choices none
+              ^operator.name wait
+              ^limit <limit>
+              ^wait { <x> >= <limit> })
+-->
+   (<s> ^limit <limit> -
+        ^wait <x> -)
+   (interrupt)
+}
