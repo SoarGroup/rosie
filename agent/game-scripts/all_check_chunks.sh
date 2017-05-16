@@ -52,7 +52,7 @@ do
 	done
 done
 
-declare -a grr=("tictactoe" "kconnect3" "aconnect3" "econnect4" "risk" "president" "crazy8" "ubreakthrough3" "9holes" "picaria")
+declare -a grr=("tictactoe" "kconnect3" "aconnect3" "econnect4" "risk" "president" "crazy8" "ubreakthrough3" "9holes" "picaria" "mens3" "othello")
 #broken "ubreakthrough" only 1 version,retrydue  "mens3" # othello
 
 ## now loop through the above array
