@@ -73,6 +73,30 @@ public class SmemConfigurator {
 			}
 		}
 		
+		// Smem config file reader
+		BufferedReader smemWordsReader = new BufferedReader(new FileReader(
+				new File(agentDir, "/language-comprehension/smem-words/smem-words_to_process.soar")));
+		
+		while((line = smemWordsReader.readLine()) != null){
+			line = line.trim();
+			String[] args = line.split(" ");
+			
+			try {
+				if(line.startsWith("source") && args.length > 1){
+					String filename = args[1];
+					File sourceFile = new File(agentDir, "/language-comprehension/smem-words/" + filename);
+					File outputFile = new File(smemDir, "/" + sourceFile.getName());
+					writeSmemFile(sourceFile, outputFile);
+					sourceWriter.write("source " + outputFile.getName() + "\n\n");
+				}
+			} catch (IOException e){
+				System.err.println("ERROR in loading file from smem-words_to_process.soar: " + line);
+				System.err.println(e.getMessage());
+			}
+		}
+		
+		smemWordsReader.close();
+		
 		sourceWriter.close();
 		
 		return smemSourceFile;

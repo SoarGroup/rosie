@@ -126,7 +126,7 @@ public class RosieAgentConfigurator {
 		// Source the language stuff
 		smemSourceWriter.write("# This file sources the smem knowledge for the parser that doesn't need to be manipulated\n");
 		smemSourceWriter.write("pushd " + config.rosieHome + "/agent/language-comprehension/smem-words\n");
-		smemSourceWriter.write("source smem-words_universal_source.soar\n");
+		smemSourceWriter.write("source smem-words_source.soar\n");
 		smemSourceWriter.write("popd\n\n");
 
 		// Smem
