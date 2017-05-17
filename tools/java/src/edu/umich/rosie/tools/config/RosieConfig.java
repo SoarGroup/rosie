@@ -36,12 +36,12 @@ public class RosieConfig {
 	public static final HashSet<String> VALID_DOMAINS = new HashSet<String>(
 			Arrays.asList("magicbot", "tabletop", "internal", "fetch"));
 	
-	// parser = << laird lindes >>  [OPTIONAL] - The parser the agent should use
+	// parser = << laird lucia >>  [OPTIONAL] - The parser the agent should use
 	//    DEFAULT - laird
 	public String parser;
 	public static final String DEFAULT_PARSER = "laird";
 	public static final HashSet<String> VALID_PARSERS = new HashSet<String>(
-			Arrays.asList("laird", "lindes"));
+			Arrays.asList("laird", "lucia"));
 	
 	// sentence-source = << chat scripts >>  [OPTIONAL] - Where sentences come from
 	//    DEFAULT - chat
