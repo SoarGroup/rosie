@@ -1,0 +1,51 @@
+##!
+# @file
+#
+# @created plind 20170522
+# File: interpret-for-rosie.soar
+# Author: Peter Lindes
+# Created: 22 May 2017
+#
+# Desc: Sees a meaning the has been build up through
+#       comprehension and converts it to a message
+#       for Rosie to act on.
+#
+
+#   Propose an operator to interpret a parsed sentence
+#   THIS VERSION IS FOR USE WITH SIMULATE-COMPRHENSION
+#   IT SEES A MESSAGE ON THE STATE AND JUST PASSES
+#   ON THAT MESSAGE WITHOUT FURTHER INTERPRETATION
+sp {dialog-event*propose*interpret-for-rosie*simulation
+   (state <s> ^name dialog-event
+              ^purpose <p>
+              ^top-state.agent-params.language-mode lucia
+              ^message <message>    # A simulated message
+             -^top-state.status.performed )
+   (<p> ^type process-sentence ^parameters.sentence <sentence>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name interpret-for-rosie
+        ^message <message>
+        ^sentence <sentence>
+        ^debug-info (concat |Interpret a parsed sentence.|))
+}
+
+sp {dialog-event*apply*interpret-for-rosie*simulation
+   (state <s> ^name dialog-event
+              ^purpose <p>
+              ^top-state.agent-params.language-mode lucia
+              ^top-state.interaction.status <status>
+              ^operator <o>)
+   (<p> ^type process-sentence ^parameters.sentence <sentence>)
+   (<o> ^name interpret-for-rosie
+        ^message <message>
+        ^sentence <sentence>)
+-->
+   #    Put the message on the interaction status
+   #    along with the event it should satisfy.
+   (<status> ^performed <performed>
+             ^new-message <message>)
+   (<performed> ^dialog-event <dialog-event>)
+   (<dialog-event> ^originator agent
+                   ^type process-sentence)
+}
