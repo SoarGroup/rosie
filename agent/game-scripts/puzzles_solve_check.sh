@@ -13,17 +13,20 @@ no="no"
 dot="."
 a="a"
 d="d"
+old="Old"
 #3tower
 #
-#declare -a arr=("zmaze")
+#declare -a arr=("frog3")
 # "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2")
 #declare -a arr=("cannibals" "15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "jmahjong" "husbands" "3tower" "sudoku" "logi5" "jigsawdoku")
 #solutions for these
-declare -a arr=("15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "husbands" "3tower" "stackedfrogs" "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2" "kstackedfrogs" "sudoku" "logi5" "jigsawdoku" "cannibals")
+
+declare -a arr=("15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "husbands" "3tower" "stackedfrogs" "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2" "kstackedfrogs" "sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3")
+
 #declare -a arr=("sudoku" "logi5" "jigsawdoku" "cannibals")
-#modify less slow cannibals gbfox husbands 15ipuzzle
+#modify less slow cannibals gbfox husbands 15ipuzzle dsokoban2
 #slow: x5tower 4tower
-#broken: frog, solitaire, 2pushmaze dsokoban 
+#broken old version frog, oldfrog, fixed solitaire, dsoko, 2pushmaze, frog3
 
 c=1
 rm out.txt -f
@@ -35,9 +38,9 @@ do
 		if [[ $rfile == *$no.$game* ]]; then
 			continue
 		fi
-		if [[ $rfile == *$d.$game* ]]; then
-	   		continue
-		fi
+		#if [[ $rfile == *$d.$game* ]]; then
+	   	#	continue
+		#fi
 				
 		c=1
 		cp $rfile soar-game.script
@@ -92,6 +95,12 @@ do
 			echo "States explored:"
 			more states.txt
 			
+			##backup old benchmark
+			##cp $rfile$tstats $rfile$tstats$old
+			##cp $rfile$dec $rfile$dec$old
+			##cp $rfile$states $rfile$states$old
+			##cp $rfile$chunks $rfile$chunks$old
+
 			#store benchmark
 			#cp startend.seconds $rfile$tstats
 			#cp startend.decisions $rfile$dec
