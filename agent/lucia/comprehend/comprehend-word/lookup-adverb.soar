@@ -1,0 +1,54 @@
+##!
+# @file
+#
+# @created plind 20170202
+# File: lookup-adverb.soar
+# Author: Peter Lindes
+# Created: 2 February 2017
+#
+# Desc: Looks up a VerbModifier in the context to find its referent.
+#       This version is customized for the Rosie environment.
+#
+
+
+#################  Look up based on a VerbModifier   ####################### 
+
+#    Propose an operator to resolve the reference of a VerbModifier
+sp {comprehend-word*propose*lookup-adverb
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done  # May need to see comprehend-word-done as proposed
+              ^cxn <cxn>
+             -^reference resolved
+             -^smem.command.query <q>)
+   (<cxn> ^m <modifier>)
+   (<modifier> ^is.a VerbModifier
+               -^modifier )
+-->
+   (<s> ^operator <o> > + =)    #   May need more if multiple lexicals
+   (<o> ^name lookup-adverb
+        ^type resolution
+        ^r-type adverb
+        ^cxn <cxn>
+        ^modifier <modifier>
+        ^debug-info (concat |Find the referent for a given VerbModifier.|))
+}
+
+sp {comprehend-word*apply*lookup-adverb
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name lookup-adverb
+        ^r-type adverb
+        ^cxn <cxn>
+        ^modifier <modifier>)
+   (<modifier> ^id <id>)
+-->
+   #    Request a retrieval of the predicate
+   (<s> ^retrieval <r>)
+   (<r> ^cxn <cxn>
+        ^handle <id>
+        ^target <modifier>
+        ^attribute modifier)
+}
+
+#   Put a retrieval query on the smem link
+#   Use the same rule as in lookup-property

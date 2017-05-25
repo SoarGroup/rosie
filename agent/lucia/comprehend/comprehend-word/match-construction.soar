@@ -1,0 +1,371 @@
+##!
+# @file
+#
+# @created plindes 20150618
+# File: match-construction.soar
+# Author: Peter Lindes
+# Created: 18 June 2015
+# Renamed: 23 September 2015
+#
+# Desc: In other files there are propose rules for match-construction
+#       for every concrete, non-lexical construction.
+#       Here we have only apply productions that look for
+#       a non-lexical construction that has just been
+#       built, add source and text augmentations to it,
+#       and do other general things to make match-construction
+#       complete properly.
+#
+
+
+##   Apply the match-construction operator to add f and m
+#sp {comprehend-word*apply*match-construction*add-f-and-m
+#   (state <s> ^problem-space comprehend-word
+#              ^operator <o>
+#              ^cxn-new <cxn>)
+#   (<o> ^name match-construction)
+#   (<cxn> -^f
+#          -^m )
+#-->
+#   (<cxn> ^f <e-form>
+#          ^m <e-meaning>)
+#}
+
+##   Apply the match-construction operator to perform unifications
+#sp {comprehend-word*apply*match-construction*do-unify
+#   (state <s> ^problem-space comprehend-word
+#              ^operator <o>
+#              ^cxn-new <cxn>)
+#   (<o> ^name match-construction)
+#   (<cxn> ^unify <unify>
+#          ^<lhsString> <x>
+#          ^<rhsString> <y>)
+#   (<unify> ^lhs <lhs>
+#            ^lhsString <lhsString>
+#            ^rhs <rhs>
+#            ^rhsString <rhsString>)
+#-->
+#   #    Remove the unify flag and make the new connection
+#   #    This assumes the LHS is to be thrown away and replaced
+#   #    with whatever the RHS points to.
+#   (<cxn> ^unify <unify> -
+#          ^<lhsString> <x> -
+#          ^<lhsString> <rhs>)
+#}
+
+#   Apply the match-construction operator to add source and text
+#   This case is for a single constituent
+sp {comprehend-word*apply*match-construction*add-source-and-text*1
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn-new <cxn>)
+   (<o> ^name match-construction)
+   (<cxn> ^constituents <constituents>
+          ^m <meaning>)
+   #   Handle the case with only one constituent
+   (<constituents> ^<catt> <const>
+                  -^<catt2> <const2> <> <const>)
+   (<const> ^source <source>
+            ^text <text>)
+   (<source> ^left <left>
+             ^right <right>)
+   -->
+   (<cxn> ^source <source-new>
+          ^text <text>)
+   (<source-new> ^left <left>
+                 ^right <right>)
+   (<meaning> ^source <source-new>
+              ^text <text>)
+}
+
+#   Apply the match-construction operator to add source and text
+#   This case is for two constituents
+sp {comprehend-word*apply*match-construction*add-source-and-text*2
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn-new <cxn>)
+   (<o> ^name match-construction)
+   (<cxn> ^constituents <constituents>
+          ^m <meaning>
+          -^source <x>)
+   #   Handle the case with two constituents
+   (<constituents> ^<catt1> <const1>
+                   ^<catt2> { <const2> <> <const1> }
+                  -^<catt3> { <const3> <> <const1> <> <const2> })
+   (<const1> ^source <source1>
+             ^text <text1>)
+   (<source1> ^left <left1>
+              ^right <right1>)
+   (<const2> ^source <source2>
+             ^text <text2>)
+   (<source2> ^left { <left2> > <left1> }
+              ^right <right2>)
+   -->
+   #   Assume they go from left to right
+   (<cxn> ^source <source-new>
+          ^text (concat <text1> | | <text2>))
+   (<source-new> ^left <left1>
+                 ^right <right2>)
+   (<meaning> ^source <source-new>
+              ^text (concat <text1> | | <text2>))
+}
+
+sp {comprehend-word*apply*match-construction*add-source-and-text*2*1-nil
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn-new <cxn>)
+   (<o> ^name match-construction)
+   (<cxn> ^constituents <constituents>
+          ^m <meaning>
+          -^source <x>)
+   #   Handle the case with two constituents
+   (<constituents> ^<catt1> { <const1> <> nil }
+                   ^<catt2> nil
+                  -^<catt3> { <const3> <> <const1> <> nil })
+   (<const1> ^source <source1>
+             ^text <text1>)
+   (<source1> ^left <left1>
+              ^right <right1>)
+-->
+   #   Assume they go from left to right
+   (<cxn> ^source <source-new>
+          ^text <text1>)
+   (<source-new> ^left <left1>
+                 ^right <right1>)
+   (<meaning> ^source <source-new>
+              ^text <text1>)
+}
+
+#   Apply the match-construction operator to add source and text
+#   This case is for three constituents
+sp {comprehend-word*apply*match-construction*add-source-and-text*3
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn-new <cxn>)
+   (<o> ^name match-construction)
+   (<cxn> ^constituents <constituents>
+          ^m <meaning>
+         -^source <x>)
+   #   Handle the case with three constituents
+   (<constituents> ^<catt1> <const1>
+                   ^<catt2> { <const2> <> <const1> }
+                   ^<catt3> { <const3> <> <const1> <> <const2> }
+                  -^<catt4> { <const4> <> <const1> <> <const2> <> <const3> })
+   (<const1> ^source <source1>
+             ^text <text1>)
+   (<source1> ^left <left1>
+              ^right <right1>)
+   (<const2> ^source <source2>
+             ^text <text2>)
+   (<source2> ^left { <left2> > <left1> }
+              ^right <right2>)
+   (<const3> ^source <source3>
+             ^text <text3>)
+   (<source3> ^left { <left3> > <left2> }
+              ^right <right3>)
+-->
+   #   Assume they go from left to right
+   (<cxn> ^source <source-new>
+          ^text (concat <text1> | | <text2> | | <text3>))
+   (<source-new> ^left <left1>
+                 ^right <right3>)
+   (<meaning> ^source <source-new>
+              ^text (concat <text1> | | <text2> | | <text3>))
+}
+sp {comprehend-word*apply*match-construction*add-source-and-text*3*1-nil
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn-new <cxn>)
+   (<o> ^name match-construction)
+   (<cxn> ^constituents <constituents>
+          ^m <meaning>
+         -^source <x>)
+   #   Handle the case with three constituents
+   (<constituents> ^<catt1> <const1> <> nil
+                   ^<catt2> { <const2> <> <const1> <> nil }
+                   ^<catt3> nil
+                  -^<catt4> { <const4> <> <const1> <> <const2> <> nil })
+   (<const1> ^source <source1>
+             ^text <text1>)
+   (<source1> ^left <left1>
+              ^right <right1>)
+   (<const2> ^source <source2>
+             ^text <text2>)
+   (<source2> ^left { <left2> > <left1> }
+              ^right <right2>)
+-->
+   #   Assume they go from left to right
+   (<cxn> ^source <source-new>
+          ^text (concat <text1> | | <text2>))
+   (<source-new> ^left <left1>
+                 ^right <right2>)
+   (<meaning> ^source <source-new>
+              ^text (concat <text1> | | <text2>))
+}
+sp {comprehend-word*apply*match-construction*add-source-and-text*3*2-nil
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn-new <cxn>)
+   (<o> ^name match-construction)
+   (<cxn> ^constituents <constituents>
+          ^m <meaning>
+         -^source <x>)
+   #   Handle the case with three constituents
+   (<constituents> ^<catt1> <const1> <> nil
+                   ^<catt2> nil
+                   ^<catt3> nil
+                  -^<catt4> { <const4> <> <const1> <> nil })
+   (<const1> ^source <source1>
+             ^text <text1>)
+   (<source1> ^left <left1>
+              ^right <right1>)
+-->
+   #   Assume they go from left to right
+   (<cxn> ^source <source-new>
+          ^text (concat <text1>))
+   (<source-new> ^left <left1>
+                 ^right <right1>)
+   (<meaning> ^source <source-new>
+              ^text (concat <text1>))
+}
+
+#   Apply the match-construction operator to add source and text
+#   This case is for four constituents
+sp {comprehend-word*apply*match-construction*add-source-and-text*4
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn-new <cxn>)
+   (<o> ^name match-construction)
+   (<cxn> ^constituents <constituents>
+          ^m <meaning>
+         -^source <x>)
+   #   Handle the case with four constituents
+   (<constituents> ^<catt1> <const1>
+                   ^<catt2> { <const2> <> <const1> }
+                   ^<catt3> { <const3> <> <const2> <> <const1> }
+                   ^<catt4> { <const4> <> <const3> <> <const2> <> <const1> })
+   (<const1> ^source <source1>
+             ^text <text1>)
+   (<source1> ^left <left1>
+              ^right <right1>)
+   (<const2> ^source <source2>
+             ^text <text2>)
+   (<source2> ^left { <left2> > <left1> }
+              ^right <right2>)
+   (<const3> ^source <source3>
+             ^text <text3>)
+   (<source3> ^left { <left3> > <left2> }
+              ^right <right3>)
+   (<const4> ^source <source4>
+             ^text <text4>)
+   (<source4> ^left { <left4> > <left3> }
+              ^right <right4>)
+-->
+   #   Assume they go from left to right
+   (<cxn> ^source <source-new>
+          ^text (concat <text1> | | <text2> | | <text3> | | <text4>))
+   (<source-new> ^left <left1>
+                 ^right <right4>)
+   (<meaning> ^source <source-new>
+              ^text (concat <text1> | | <text2> | | <text3> | | <text4>))
+}
+
+#   Terminate match-construction when all subcases, evokes,
+#   and constraints have been resolved
+sp {comprehend-word*apply*match-construction*all-done
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn-new <cxn-new>
+              ^cxn <cxn>
+              ^cxn-set <c-set>
+             -^reference resolved)
+   (<o> ^name match-construction)
+   (<cxn-new> ^source <source>
+              -^subcase-of 
+              -^evokes 
+              -^constraint )
+   #    Check for the right context
+ -{(<cxn-new> ^is.a VerbWithArguments)
+   (<s> ^cxn-pending <pending>)}
+-->
+   #   Add this new construction to the construction set
+   (<c-set> ^cxn <cxn-new>)
+   #   Replace the lower-level construction we matched on the state
+   (<s> ^cxn <cxn> -
+        ^cxn-new <cxn-new> -
+        ^cxn <cxn-new>)
+   #   Set the done flag
+   (<s> ^match-construction done)
+}
+
+#    Sometimes a referent was resolved previously,
+#    for example "The green one" was resolved for "one" alone, but
+#    we need to clear that flag to allow more resolution to happen
+sp {comprehend-word*apply*match-construction*all-done*clear-ref-resolved
+   (state <s> ^superstate <ss>
+              ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn-new <cxn-new>
+              ^cxn <cxn>
+              ^cxn-set <c-set>
+              ^reference resolved)
+   (<o> ^name match-construction)
+   (<cxn-new> ^source <source>
+              -^subcase-of 
+              -^evokes 
+              -^constraint )
+   #    Check for the right context
+ -{(<cxn-new> ^is.a VerbWithArguments)
+   (<s> ^cxn-pending <pending>)}
+-->
+   #   Add this new construction to the construction set
+   (<c-set> ^cxn <cxn-new>)
+   #   Replace the lower-level construction we matched on the state
+   (<s> ^cxn <cxn> -
+        ^cxn-new <cxn-new> -
+        ^cxn <cxn-new>
+        ^reference resolved -)
+   #   Set the done flag
+   (<s> ^match-construction done)
+}
+
+
+#    RESTORE PENDING CONSTRUCTIONS WHEN NEEDED
+#    This will happen when a previous SNIP left
+#    some construction pending.
+
+#    The case of a PrepPhrase pending for a verb that needs it
+sp {comprehend-word*apply*match-construction*all-done*restore-pending-PP-to-verb
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn-new <cxn-new>
+              ^cxn <cxn>
+              ^cxn-set <c-set>
+              ^cxn-pending <pending>)
+   (<o> ^name match-construction)
+   (<cxn-new> ^source <source>
+              -^subcase-of 
+              -^evokes 
+              -^constraint )
+   #    Check for the right context
+   (<cxn-new> ^is.a VerbWithArguments)
+   (<cxn> ^previous <original-verb>)
+   (<original-verb> ^is.a ActionVerbNeedsTarget)
+-->
+   #   Add this new construction to the construction set
+   (<c-set> ^cxn <cxn-new>)
+   #   Update the phrase that was pending
+   (<pending> ^previous nil -
+              ^attached-to nil -
+              ^previous <cxn-new>
+              ^attached to <cxn-new>)
+   #   Update the state to remove the pending cxn
+   (<s> ^cxn <cxn> -
+        ^cxn-pending <pending> -
+        ^cxn <pending>)
+   #   Replace the lower-level construction we matched on the state
+   (<s> ^cxn <cxn> -
+        ^cxn-new <cxn-new> -
+        ^reference resolved -)
+   #   Set the done flag
+   (<s> ^match-construction done)
+}

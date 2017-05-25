@@ -1,0 +1,105 @@
+##!
+# @file
+#
+# @created plindes 20160328
+# File: attach-relative-pronoun.soar
+# Author: Peter Lindes
+# Created: 28 March 2016
+#
+# Desc:  Whenever a RelativePronoun it found, see where to attach it.
+#
+#
+#		This operator can have many proposals for different situations,
+#		and one some apply rules that do the attachment, with snips as needed.
+#
+#       When this operator is applied, any other alternative
+#       lexicals will be deleted by the general selection rule.
+#
+
+
+##################	PROPOSALS	#####################
+
+#    Propose an operator to attach a RelativePronoun to the previous RefExpr
+sp {comprehend-word*propose*attach-relative-pronoun*ref-expr
+   (state <s> ^problem-space comprehend-word
+              ^cxn <pronoun>
+              ^lexical-access done)
+   (<pronoun> ^is.a RelativePronoun
+             -^attached-to <attach-point>)
+   #    See whether what came before was a RefExpr
+   (<pronoun> ^previous <ref-expr>)
+   (<ref-expr> ^is.a RefExpr)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name attach-relative-pronoun
+        ^type attachment
+        ^selected <pronoun>
+        ^attach-type |ref-expr|
+        ^pronoun <pronoun>
+        ^attach-to <ref-expr>
+        ^debug-info (concat |Attach RelativePronoun | <pronoun> | to the RefExpr | <ref-expr> |.|))
+}
+
+#    Propose to attach a RelativePronoun to the RefExpr that is the object of the previous verb
+sp {comprehend-word*propose*attach-relative-pronoun*verb-object
+   (state <s> ^problem-space comprehend-word
+              ^cxn <pronoun>
+              ^lexical-access done)
+   (<pronoun> ^is.a RelativePronoun
+             -^attached-to <attach-point>)
+   #	See whether what came before was a VerbWithArguments with an object
+   (<pronoun> ^previous <verb>)
+   (<verb> ^is.a VerbWithArguments
+           ^object <ref-expr>)
+   (<ref-expr> ^is.a RefExpr)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name attach-relative-pronoun
+        ^type attachment
+        ^selected <pronoun>
+        ^attach-type |verb-object|
+        ^pronoun <pronoun>
+        ^attach-to <ref-expr>
+        ^debug-info (concat |Attach RelativePronoun | <pronoun> | to the RefExpr | <ref-expr> |.|))
+}
+
+
+##################	APPLICATIONS	#####################
+
+#    Make the attachment
+sp {comprehend-word*apply*attach-relative-pronoun
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name attach-relative-pronoun
+        ^attach-type <type>
+        ^pronoun <pronoun>
+        ^attach-to <attach-point>)
+-->
+   #	Attach this RelativePronoun to the RefExpr
+   (<pronoun> ^attached-to <attach-point>)
+   #   Write a message for the attachment.
+   (write (crlf) (concat |Attach RelativePronoun | <pronoun> | with type | <type> | to point | <attach-point> | .|))
+}
+
+#    Snip for the verb-object case
+sp {comprehend-word*apply*attach-relative-pronoun*snip-to-verb-object
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name attach-relative-pronoun
+        ^attach-type |verb-object|
+        ^pronoun <pronoun>
+        ^attach-to <attach-point>)		#	What to replace it with
+   #	Get info for the snip
+   (<pronoun> ^previous <verb-with-args>)#	The thing to be cut
+-->
+   #	THIS IS THE SNIP!!!
+   #	Change the previous pointer
+   #	This will orphan the VerbWithArguments and
+   #	leave it to be garbage collected.
+   #	Instead we'll point to its object,
+   #	allowing that to be matched
+   (<pronoun> ^previous <verb-with-args> -
+              ^previous <attach-point>)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <verb-with-args> | to get to | <attach-point> | .|))
+}

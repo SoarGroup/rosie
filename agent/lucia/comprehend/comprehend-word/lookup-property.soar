@@ -1,0 +1,225 @@
+##!
+# @file
+#
+# @created plindes 20160222
+# File: lookup-property.soar
+# Author: Peter Lindes
+# Created: 22 February 2016
+#
+# Desc: Looks up a PropertyDescriptor in the context to find its referent.
+#		This version is customized for the Rosie environment.
+#
+#		Another variation is to look up property specified by a noun
+#		such as "sphere".
+#
+
+
+#################  Look up based on a PropertyDescriptor   ####################### 
+
+#    Propose an operator to resolve the reference of a PropertyDescriptor
+sp {comprehend-word*propose*lookup-property*adjective
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done	# May need to see comprehend-word-done as proposed
+              ^cxn <cxn>
+             -^reference resolved
+             -^smem.command.query <q>)
+   (<cxn> ^m <prop-desc>)
+   (<prop-desc> ^is.a PropertyDescriptor
+               -^predicate )
+-->
+   (<s> ^operator <o> > + =)    #   May need more if multiple lexicals
+   (<o> ^name lookup-property
+        ^type resolution
+        ^r-type adjective
+        ^cxn <cxn>
+        ^property <prop-desc>
+        ^debug-info (concat |Find the referent for a given PropertyDescriptor.|))
+}
+
+sp {comprehend-word*apply*lookup-property*adjective
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name lookup-property
+        ^r-type adjective
+        ^cxn <cxn>
+        ^property <prop-desc>)
+   (<prop-desc> ^class <class>
+                ^name <value>)
+-->
+   #	Request a retrieval of the predicate
+   (<s> ^retrieval <r>)
+   (<r> ^cxn <cxn>
+        ^handle <value>
+        ^target <prop-desc>
+        ^attribute predicate)
+}
+
+
+#################  Look up based on a ObjectIsClassQuestion   ####################### 
+
+#    Propose an operator to resolve a property of a the question's class
+#	 This case will look for a shape.
+#	 There might be other useful cases.
+sp {comprehend-word*propose*lookup-property*q-class*shape
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done	# May need to see comprehend-word-done as proposed
+              ^cxn <cxn>
+             -^reference resolved
+             -^smem.command.query <q>)
+   #	Look for a question with a RefDesc as its class
+   (<cxn> ^m <question>)
+   (<question> ^is.a ObjectIsClassQuestion
+               ^class <ref-desc>
+              -^prop-desc.predicate <retrieved>)	#	Don't propose after retrieval done
+   #	Get the details of this reference
+   (<ref-desc> ^is.a RefDesc
+               ^referent { <object> <> nil })
+   (<object> ^predicates <predicates>)
+   (<predicates> ^shape { <shape> <> nil })
+-->
+   #	Propose the operator
+   (<s> ^operator <o> > + =)    #   May need more if multiple lexicals
+   (<o> ^name lookup-property
+        ^type resolution
+        ^r-type q-class
+        ^property <prop-desc>
+        ^debug-info (concat |Find the referent for a given shape noun.|))
+   #	Build a PropertyDescriptor to look up
+   (<prop-desc> ^class shape
+                ^name <shape>)
+}
+
+sp {comprehend-word*apply*lookup-property*q-class
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <cxn>)
+   (<o> ^name lookup-property
+        ^r-type q-class
+        ^property <o-prop-desc>)
+   (<o-prop-desc> ^class <class>
+                  ^name <value>)
+   #	Look for the main meaning
+   (<cxn> ^m <question>)
+-->
+   #	Request a retrieval of the predicate
+   (<s> ^retrieval <r>)
+   (<r> ^cxn <cxn>
+        ^handle <value>
+        ^target <m-prop-desc>
+        ^attribute predicate)
+   #	Post the PropertyDescriptor on the meaning of the main cxn
+   #	so that retrieve-item can find it.
+   (<question> ^prop-desc <m-prop-desc>)
+   (<m-prop-desc> ^class <class>
+                  ^name <value>)
+}
+
+
+#################  Look up based on a PropertyClassName   ####################### 
+
+#    Propose an operator to resolve a PropertyClassName
+sp {comprehend-word*propose*lookup-property*class
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done  # May need to see comprehend-word-done as proposed
+              ^cxn <cxn>
+             -^reference resolved
+             -^smem.command.query <q>)
+   #    Look for a RefExpr with a noun
+   (<cxn> ^is.a PropertyClassName
+          ^m <class>)
+   #    Get the name of this class
+   (<class> ^is.a PropertyClass
+            ^name <name>
+           -^predicate <retrieved>)    #   Don't propose after retrieval done
+-->
+   #    Propose the operator
+   (<s> ^operator <o> > + =)    #   May need more if multiple lexicals
+   (<o> ^name lookup-property
+        ^type resolution
+        ^r-type class
+        ^property <prop-desc>
+        ^debug-info (concat |Find the referent for a given class name.|))
+   #    Build a PropertyDescriptor to look up
+   (<prop-desc> ^class <class>
+                ^name <name>)
+}
+
+sp {comprehend-word*apply*lookup-property*class
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <cxn>)
+   (<o> ^name lookup-property
+        ^r-type class
+        ^property <o-prop-desc>)
+   (<o-prop-desc> ^class <class>
+                  ^name <value>)
+   #    Look for the correct cxn
+   (<cxn> ^is.a PropertyClassName)
+-->
+   #    Request a retrieval of the predicate
+   (<s> ^retrieval <r>)
+   (<r> ^cxn <cxn>
+        ^handle <value>
+        ^target <class>
+        ^attribute predicate)
+   #    Post a PropertyDescriptor on the meaning of the main cxn
+   #    so that retrieve-item can find it.
+   (<class> ^prop-desc <m-prop-desc>)
+   (<m-prop-desc> ^class <class>
+                  ^name <value>)
+}
+
+
+
+##    This case will look for a shape.
+##    There might be other useful cases.
+#sp {comprehend-word*propose*lookup-property*noun*shape
+#   (state <s> ^problem-space comprehend-word
+#              ^lexical-access done  # May need to see comprehend-word-done as proposed
+#              ^cxn <cxn>
+#             -^reference resolved
+#             -^smem.command.query <q>)
+#   #    Look for a RefExpr with a noun
+#   (<cxn> ^is.a Noun
+#          ^m <r-object>)
+#   #    Get the details of this object
+#   (<r-object> ^is.a RosieObject
+#               ^shape <shape>
+#              -^predicate <retrieved>)    #   Don't propose after retrieval done
+#-->
+#   #    Propose the operator
+#   (<s> ^operator <o> > +)
+#   (<o> ^name lookup-property
+#        ^type resolution
+#        ^r-type noun
+#        ^property <prop-desc>
+#        ^debug-info (concat |Find the referent for a given shape noun.|))
+#   #    Build a PropertyDescriptor to look up
+#   (<prop-desc> ^class shape
+#                ^name <shape>)
+#}
+#
+#sp {comprehend-word*apply*lookup-property*noun
+#   (state <s> ^problem-space comprehend-word
+#              ^operator <o>
+#              ^cxn <cxn>)
+#   (<o> ^name lookup-property
+#        ^r-type noun
+#        ^property <o-prop-desc>)
+#   (<o-prop-desc> ^class <class>
+#                  ^name <value>)
+#   #    Look for the main meaning
+#   (<cxn> ^m <noun>)
+#-->
+#   #    Request a retrieval of the predicate
+#   (<s> ^retrieval <r>)
+#   (<r> ^cxn <cxn>
+#        ^handle <value>
+#        ^target <noun>
+#        ^attribute predicate)
+#   #    Post a PropertyDescriptor on the meaning of the main cxn
+#   #    so that retrieve-item can find it.
+#   (<noun> ^prop-desc <m-prop-desc>)
+#   (<m-prop-desc> ^class <class>
+#                  ^name <value>)
+#}
