@@ -5,59 +5,123 @@
 # File: next-word.soar
 # Author: Peter Lindes
 # Created: 10 June 2015
+# Rewritten: 18 May 2017    Version to run within Rosie
 #
 # Desc: Receives the next word as requested
 #
 
-#    COMMENT OUT THIS PROPOSE RULE TO WORK
-#    WITH VERSION 2 OF comprehend-word.
 #    Propose an operator to request the word
 sp {comprehend*propose*next-word
-   (state <s> ^top-state <ts>
-              ^problem-space comprehend
+   (state <s> ^problem-space comprehend
               ^input <i>
              -^no-more true
              -^comprehension.done true)
-   (<ts> ^io.output-link <output>)
   -(<i> ^comprehended false)
-  -(<output> ^request-word complete)
 -->
    (<s> ^operator <o> +)
    (<o> ^name next-word
         ^debug-info (concat |Receive the input word that was requested.|))
 }
 
-sp {comprehend*apply*next-word*normal
-   (state <s> ^top-state <ts>
-              ^problem-space comprehend
+sp {comprehend*apply*next-word*first-time
+   (state <s> ^problem-space comprehend
               ^input <i>
-              ^operator <o>)
+              ^operator <o>
+              ^sentence <sentence>)
    (<o> ^name next-word)
-   (<ts> ^io.input-link.word <w>
-         ^io.output-link <output>
-         ^next-word <next-word>)
-  -(<w> ^no-more true)
-   (<i> ^word <old-w>
-        ^count <old-c>
-        ^comprehended true)
-   (<w> ^word <text>)
+   (<i> ^word nil
+        ^count -1
+        ^comprehended true
+        ^next nil
+        ^content nil)
+   #    Skip over the "*" to get to the first real word
+   (<sentence> ^next <first>)
+   (<first> ^spelling <text>
+            ^next <next>)
 -->
-   (<i> ^word <old-w> -
+   (<i> ^word nil -
         ^word <w>
-        ^count <old-c> -
-        ^count (+ <old-c> 1)
+        ^count -1 -
+        ^count 1
         ^comprehended true -
-        ^comprehended false)
-   #    DON'T TRY TO PUT THE WORD ON THE CURRENT STATE DIRECTLY
-   #    OR THE GDS WILL BLOW YOU AWAY!!!!
-   (write (crlf) (concat |Received word #| (+ <old-c> 2) |: | <text>))
-   #	Clean up the output link
-   (<output> ^request-word <next-word> -
-             ^request-word complete)
-   #    Update the word counter
-   (<ts> ^next-word <next-word> -
-         ^next-word (+ <next-word> 1))
+        ^comprehended false
+        ^next nil -
+        ^next <next>
+        ^content nil -
+        ^content <text>)
+   #    Build a word for Rosie, not all the info there
+   (<w> ^content <text>
+        ^orth <text>
+        ^post-punct ||
+        ^pre-punct ||
+#        ^previous nil
+        ^word <text>
+        ^word-count 0)
+   (write (crlf) (concat |Received word #1: | <text>))
 }
+
+sp {comprehend*apply*next-word*in-the-middle
+   (state <s> ^problem-space comprehend
+              ^input <i>
+              ^operator <o>
+              ^sentence <sentence>)
+   (<o> ^name next-word)
+   (<i> ^word <old-word>
+        ^count <old-count>
+        ^comprehended true
+        ^next { <next> <> nil }
+        ^content <old-text>)
+   (<next> ^spelling <text>
+           ^next <next-next>)
+-->
+   (<i> ^word <old-word> -
+        ^word <w>
+        ^count <old-count> -
+        ^count (+ <old-count> 1)
+        ^comprehended true -
+        ^comprehended false
+        ^next <next> -
+        ^next <next-next>
+        ^content <old-text> -
+        ^content <text>)
+   #    Build a word for Rosie, not all the info there
+   (<w> ^content <text>
+        ^orth <text>
+        ^post-punct ||
+        ^pre-punct ||
+#        ^previous nil
+        ^word <text>
+        ^word-count (+ <old-count> 1))
+   (write (crlf) (concat |Received word #| (+ <old-count> 2) |: | <text>))
+}
+
+#sp {comprehend*apply*next-word*normal
+#   (state <s> ^top-state <ts>
+#              ^problem-space comprehend
+#              ^operator <o>)
+#   (<o> ^name next-word)
+#   (<ts> ^io.input-link.word <w>
+#         ^input <i>
+#         ^io.output-link <output>)
+#  -(<w> ^no-more true)
+#   (<i> ^word <old-w>
+#        ^count <old-c>
+#        ^comprehended true)
+#   (<w> ^word <text>)
+#-->
+#   (<i> ^word <old-w> -
+#        ^word <w>
+#        ^count <old-c> -
+#        ^count (+ <old-c> 1)
+#        ^comprehended true -
+#        ^comprehended false)
+#   #    DON'T TRY TO PUT THE WORD ON THE CURRENT STATE DIRECTLY
+#   #    OR THE GDS WILL BLOW YOU AWAY!!!!
+#   (write (crlf) (concat |Received word #| (+ <old-c> 2) |: | <text>))
+#   #	Clean up the output link
+#   (<output> ^request-word (+ <old-c> 1) -
+#             ^request-word complete)
+#}
 
 #   Start accumulating the text of the sentence.
 sp {comprehend*apply*next-word*normal*start-sentence
