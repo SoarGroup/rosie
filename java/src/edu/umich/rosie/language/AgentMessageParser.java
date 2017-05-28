@@ -1273,10 +1273,10 @@ public class AgentMessageParser
 		
 		// PR - figure this object thing out, this may not be worth it in this case.
 		// This is in case the "object" is directly referred in the statement, it must not be ignored. For e.g. in stack-block, a clear object is larger-than a clear block.
-		if(!prev_attribute.equals("category"))
-		{
-			description += SoarUtil.getValueOfAttribute(objId, "name").replaceAll("\\d+.*","") + " ";
-		}
+		//if(!prev_attribute.equals("category"))
+		//{
+		//	description += SoarUtil.getValueOfAttribute(objId, "name").replaceAll("\\d+.*","") + " ";
+		//}
 
 		if(attribute_value.equals("input-arg"))
 		{
