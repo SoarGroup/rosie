@@ -63,7 +63,7 @@ sp {comprehend*apply*next-word*normal
 
 ############### RULES FOR ROSIE ONLY #################
 
-sp {comprehend*apply*next-word*first-time
+sp {comprehend*apply*next-word*first-word
    (state <s> ^problem-space comprehend
               ^input <i>
               ^operator <o>
@@ -77,7 +77,12 @@ sp {comprehend*apply*next-word*first-time
    #    Skip over the "*" to get to the first real word
    (<sentence> ^next <first>)
    (<first> ^spelling <text>
-            ^next <w-next>)
+            ^next <next>)
+   #    Don't fire if this is the last word
+  -(<next> ^next nil)
+ -{(<next> ^next <next-next>)
+   (<next-next> ^next nil
+                ^spelling |.|)}
 -->
    (<i> ^word nil -
         ^word <w>
@@ -86,7 +91,7 @@ sp {comprehend*apply*next-word*first-time
         ^comprehended true -
         ^comprehended false
         ^next nil -
-        ^next <w-next>
+        ^next <next>
         ^content nil -
         ^content <text>)
    #    Build a word for Rosie, not all the info there
@@ -109,10 +114,15 @@ sp {comprehend*apply*next-word*in-the-middle
    (<i> ^word <old-word>
         ^count <old-count>
         ^comprehended true
-        ^next { <w-next> <> nil }
+        ^next { <next> <> nil }
         ^content <old-text>)
-   (<w-next> ^spelling <text>
-           ^next <w-next-next>)
+   (<next> ^spelling <text>
+           ^next <next-next>)
+   #    Don't fire if this is the last word
+  -(<next> ^next nil)
+ -{(<next> ^next <next-next>)
+   (<next-next> ^next nil
+                ^spelling |.|)}
 -->
    (<i> ^word <old-word> -
         ^word <w>
@@ -120,12 +130,52 @@ sp {comprehend*apply*next-word*in-the-middle
         ^count (+ <old-count> 1)
         ^comprehended true -
         ^comprehended false
-        ^next <w-next> -
-        ^next <w-next-next>
+        ^next <next> -
+        ^next <next-next>
         ^content <old-text> -
-        ^content <text>)
+        ^content (concat <old-text> | | <text>))
    #    Build a word for Rosie, not all the info there
    (<w> ^content <text>
+        ^orth <text>
+        ^post-punct ||
+        ^pre-punct ||
+        ^word <text>
+        ^word-count <old-count>)
+   (write (crlf) (concat |Received word #| (+ <old-count> 1) |: | <text>))
+}
+
+sp {comprehend*apply*next-word*last-word
+   (state <s> ^problem-space comprehend
+              ^input <i>
+              ^operator <o>
+              ^sentence <sentence>)
+   (<o> ^name next-word)
+   (<i> ^word <old-word>
+        ^count <old-count>
+        ^comprehended true
+        ^next { <next> <> nil }
+        ^content <old-text>)
+   (<next> ^spelling <text>
+           ^next <next-next>)
+   #    Fire only if this is the last word
+  -(<next> ^next nil)
+   (<next> ^next <next-next>)
+   (<next-next> ^next nil
+                ^spelling |.|)
+-->
+   (<i> ^word <old-word> -
+        ^word <w>
+        ^count <old-count> -
+        ^count (+ <old-count> 1)
+        ^comprehended true -
+        ^comprehended false
+        ^next <next> -
+        ^next nil
+        ^content <old-text> -
+        ^content (concat <old-text> | | <text>))
+   #    Build a word for Rosie, not all the info there
+   (<w> ^content <text>
+        ^has-terminator true
         ^orth <text>
         ^post-punct ||
         ^pre-punct ||
@@ -143,8 +193,7 @@ sp {comprehend*apply*next-word*normal*start-sentence
               ^input <i>
               ^operator <o>)
    (<o> ^name next-word)
-   (<ts> ^io.input-link.word <w>
-         ^io.output-link <output>)
+   (<ts> ^io.input-link.word <w>)
   -(<w> ^no-more true)
    (<i> ^content nil)
    (<w> ^content <content>)
@@ -160,8 +209,7 @@ sp {comprehend*apply*next-word*normal*build-sentence
               ^input <i>
               ^operator <o>)
    (<o> ^name next-word)
-   (<ts> ^io.input-link.word <w>
-         ^io.output-link <output>)
+   (<ts> ^io.input-link.word <w>)
   -(<w> ^no-more true)
    (<i> ^content { <sentence> <> nil })
    (<w> ^content <content>)
