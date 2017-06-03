@@ -21,7 +21,8 @@ old="Old"
 #declare -a arr=("cannibals" "15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "jmahjong" "husbands" "3tower" "sudoku" "logi5" "jigsawdoku")
 #solutions for these
 
-declare -a arr=("15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "husbands" "3tower" "stackedfrogs" "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2" "kstackedfrogs" "sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3")
+#declare -a arr=("15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "husbands" "3tower" "stackedfrogs" "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2" "kstackedfrogs" "sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken")
+declare -a arr=("sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken")
 
 #declare -a arr=("sudoku" "logi5" "jigsawdoku" "cannibals")
 #modify less slow cannibals gbfox husbands 15ipuzzle dsokoban2
@@ -100,7 +101,15 @@ do
 			##cp $rfile$dec $rfile$dec$old
 			##cp $rfile$states $rfile$states$old
 			##cp $rfile$chunks $rfile$chunks$old
-
+			
+			if [ ! -f $rfile$tstats ]
+			then
+				echo "New time results"
+				cp startend.seconds $rfile$tstats
+				cp startend.decisions $rfile$dec
+				cp states.txt $rfile$states
+				cp chunks.txt $rfile$chunks
+			fi
 			#store benchmark
 			#cp startend.seconds $rfile$tstats
 			#cp startend.decisions $rfile$dec
