@@ -22,7 +22,7 @@ old="Old"
 #solutions for these
 
 #declare -a arr=("15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "husbands" "3tower" "stackedfrogs" "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2" "kstackedfrogs" "sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken")
-declare -a arr=("sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken")
+declare -a arr=("sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken" "kenp")
 
 #declare -a arr=("sudoku" "logi5" "jigsawdoku" "cannibals")
 #modify less slow cannibals gbfox husbands 15ipuzzle dsokoban2
@@ -104,7 +104,7 @@ do
 			
 			if [ ! -f $rfile$tstats ]
 			then
-				echo "New time results"
+				echo "  ::: New time results :::   "
 				cp startend.seconds $rfile$tstats
 				cp startend.decisions $rfile$dec
 				cp states.txt $rfile$states

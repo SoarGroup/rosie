@@ -296,6 +296,7 @@ sp {learning-event*propose*learn-game-name
    (state <s> ^name learning-event
               ^retrieve-game <name>
              -^retrieve-handle
+             -^top-state.new-spelling
               ^purpose <p>)
    (<p> ^type learn-game-name ^parameters.message <msg>)
    (<msg> ^predicate.handle <name>)
@@ -342,6 +343,7 @@ sp {learning-event*propose*learn-puzzle-name
 }
 sp {learning-event*propose*learn-action-name
    (state <s> ^name learning-event
+              -^top-state.new-spelling
               ^purpose <p>)
    (<p> ^type learn-action-name ^parameters.message <msg>)
    (<msg> ^predicate.handle <name>)
@@ -355,6 +357,7 @@ sp {learning-event*propose*learn-action-name
 }
 sp {learning-event*propose*learn-goal-name
    (state <s> ^name learning-event
+              -^top-state.new-spelling
               ^purpose <p>)
    (<p> ^type learn-goal-name ^parameters.message <msg>)
    (<msg> ^predicate.handle <name>)
@@ -366,8 +369,25 @@ sp {learning-event*propose*learn-goal-name
         ^handle <name>
         ^message <msg>)
 }
+sp {learning-event*propose*learn-predicate*after-new-term
+   (state <s> ^name learning-event
+              ^top-state.new-spelling true
+              ^top-state.dialog-context <dc>
+              ^purpose <p>)
+   (<p> ^type learn-goal-name ^parameters.message <msg>)
+   (<msg> ^predicate.handle <name>)
+   (<dc> ^learn-link <ll>)
+-->
+(interrupt)
+   (<s> ^operator <o> +)
+   (<o> ^name transfer-final
+        ^structure <ll>
+        ^type goal)
+}
+
 sp {learning-event*propose*learn-failure-name
    (state <s> ^name learning-event
+              -^top-state.new-spelling
               ^purpose <p>)
    (<p> ^type learn-failure-name ^parameters.message <msg>)
    (<msg> ^predicate.handle <name>)
@@ -573,11 +593,34 @@ sp {learning-event*apply*chunk-predicate-structure*finished*remove-learn-link
               ^finished-learning <type>
               ^<type>.handle <h>
               ^top-state <ts>)
-   (<ts> ^dialog-context <dc>)
+   (<ts> ^dialog-context <dc> -^new-spelling)# -^smap.<spell> <name>)
    (<dc> ^finalize-chunk <name>
          ^store-learn-link <ll> ^learn-link {<l2> <> <ll>})
    (<l2> ^handle <name>)
 -->
+   (<dc> ^store-learn-link <ll> -)
+   (<dc> ^learn-link <ll>)
+   (<dc> ^learn-link <l2> -)
+}
+#TODO temp solution
+sp {learning-event*apply*chunk-predicate-structure*finished*remove-learn-link*update*term
+:interrupt
+:o-support
+   (state <s> ^name learning-event
+              ^finished-learning << predicate >>
+              ^finished-learning <type>
+              ^<type>.handle <h>
+              ^top-state <ts>)
+   (<ts> ^dialog-context <dc> ^new-spelling <ns> ^smap.<spell> <name>)
+   (<dc> ^finalize-chunk <name>
+         ^store-learn-link <ll> ^learn-link {<l2> <> <ll>})
+   (<l2> ^handle <name>)
+   (<ll> ^condition <co>)
+   (<co> ^name <spell>)
+-->
+   (<co> ^name <spell> -)
+   (<co> ^name <name>)
+   #(<ts> ^new-spelling <ns> -)
    (<dc> ^store-learn-link <ll> -)
    (<dc> ^learn-link <ll>)
    (<dc> ^learn-link <l2> -)
