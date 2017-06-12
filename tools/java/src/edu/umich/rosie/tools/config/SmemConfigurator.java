@@ -14,6 +14,82 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SmemConfigurator {
+	static class Template {
+		String name;
+		ArrayList<String> compoundPart = new ArrayList<String>();
+		ArrayList<String> singularPart = new ArrayList<String>();
+		ArrayList<String> paramNames = new ArrayList<String>();
+		String listParamName = null;
+		
+		public Template(String[] spec, File templateFile) throws FileNotFoundException, IOException {
+			this.name = spec[1];
+			
+			for(int i = 2; i < spec.length - 1; i++){
+				if(spec[i].contains("*")){
+					listParamName = spec[i].replace("*", "");
+					break;
+				} else {
+					paramNames.add(spec[i]);
+				}
+			}
+			
+			if(!templateFile.exists()){
+				throw new FileNotFoundException(templateFile.getAbsolutePath());
+			}
+
+			BufferedReader templateReader = new BufferedReader(new FileReader(templateFile));
+			
+			String line;
+			Boolean hitSingular = false;
+			while((line = templateReader.readLine()) != null){
+				if(line.trim().toUpperCase().equals("#SINGULAR")){
+					hitSingular = true;
+				} else if(hitSingular){
+					singularPart.add(line);
+				} else {
+					compoundPart.add(line);
+				}
+			}
+
+			templateReader.close();
+		}
+		
+		public String fillFromLine(String line){
+			String filledLines = "";
+			
+			String[] values = line.split(" ");
+			if(values.length < paramNames.size()){
+				System.err.println("Error in template " + name + ": not enough values in line '" + line + "'");
+				return filledLines;
+			}
+
+			if(listParamName != null){
+				for(int i = paramNames.size(); i < values.length; i++){
+					String listValue = values[i];
+					for(String templateLine : compoundPart){
+						String strippedValue = listValue.replaceAll("'", "");
+						// Remove bad characters (like apostrophes)
+						// but if replacing something inside Soar quotes, keep the characters in
+						String filledLine = templateLine.replaceAll("\\|" + listParamName + "\\|", "|" + listValue + "|");
+						filledLine = filledLine.replaceAll(listParamName, strippedValue);
+						filledLines += "  " + filledLine + "\n";
+					}
+				}
+			}
+			
+			for(String templateLine : singularPart){
+				filledLines += "  " + templateLine + "\n";
+			}
+			
+			for(int i = 0; i < paramNames.size(); i++){
+				filledLines = filledLines.replaceAll(paramNames.get(i), values[i]);
+			}
+			
+			return filledLines;
+		}
+	}
+	
+	
 	public static HashMap<String, String> ltiMap = new HashMap<String, String>();
 	
 	public static File configureSmem(File inputFile, File outputDir, File agentDir, String agentName) throws IOException {
@@ -35,16 +111,21 @@ public class SmemConfigurator {
 		String line;
 		while((line = configReader.readLine()) != null){
 			line = line.trim();
+			if(line.startsWith("#")){
+				continue;
+			}
 			String[] args = line.split(" ");
 			
 			try {
 				// Create items to load into smem using a template file (in init-smem/templates)
-				// template <template_name> {
-				//    handle1 word1 word2 ...
+				// template <template_name> _PARAM-1_ _PARAM-2_ ... _PARAM-N_ _PARAM-LIST_*{
+				//    value1 value2 ... valueN listVal1 ...
 				// }
 				if(line.startsWith("template") && args.length > 1){
 					File outputFile = new File(smemDir, "/" + args[1] + ".soar");
-					writeTemplateFile(configReader, args[1], templateDir, outputFile);
+					File templateFile = new File(templateDir, "/" + args[1] + ".txt");
+					Template template = new Template(args, templateFile);
+					writeTemplateFile(template, configReader, outputFile);
 					sourceWriter.write("source " + outputFile.getName() + "\n\n");
 				}
 				// Include a semantic memory file to source, while replacing handle lti's (@handle1)
@@ -140,76 +221,33 @@ public class SmemConfigurator {
 		return template;
 	}
 	
-	
-	public static ArrayList<String> fillTemplate(ArrayList<String> template, String handle, String[] words){
-		StringBuilder wordTemplate = new StringBuilder();
-		StringBuilder conceptTemplate = new StringBuilder();
-		boolean hitConcept = false;
-		for(String line : template){
-			if(line.startsWith("(@_HANDLE_")){
-				hitConcept = true;
-			}
-			line = line.replaceAll("_HANDLE_", handle);
-			if(hitConcept){
-				conceptTemplate.append(line + "\n");
-			} else {
-				wordTemplate.append(line + "\n");
-			}
-		}
-
-		ArrayList<String> lines = new ArrayList<String>();
-		for(String word : words){
-			// If inside a variable, remove quotes
-			String strippedWord = word.replaceAll("'", "");
-			String newline = wordTemplate.toString().replaceAll("<_WORD_>", "<" + strippedWord + ">");
-			newline = newline.replaceAll("_WORD_", word);
-			newline = mapLTIs(newline);
-			lines.add(newline);
-		}
-
-		lines.add(mapLTIs(conceptTemplate.toString()));
-
-		return lines;
-	}
-	
-	private static void writeTemplateFile(BufferedReader configReader, String templateName, File templateDir, File outputFile){
+	private static void writeTemplateFile(Template template, BufferedReader configReader, File outputFile){
 		try {
-			ArrayList<String> template = readTemplateFile(templateDir, templateName);
-			
 			Writer outputWriter = new BufferedWriter(new OutputStreamWriter(
 					new FileOutputStream(outputFile)));
-			outputWriter.write("### AUTOGENERATED smem file for the " + templateName + " template ###\n");
+			outputWriter.write("### AUTOGENERATED smem file for the " + template.name + " template ###\n");
 			outputWriter.write("smem --add {\n");
 		
 			String line;
 			while((line = configReader.readLine()) != null){
 				line = line.trim();
+				if(line.length() == 0 || line.startsWith("#")){
+					continue;
+				}
 				if(line.startsWith("}")){
 					break;
 				}
-				// handle is the first word
-				String handle = line;
-				if(line.indexOf(" ") != -1){
-					handle = line.substring(0, line.indexOf(" "));
-				}
-				// any additional words in the line are spellings
-				String[] words = new String[0];
-				if(line.indexOf(" ") != -1){
-					words = line.substring(line.indexOf(" ")+1).split(" ");
-				}
-
-				ArrayList<String> filledTemplate = fillTemplate(template, handle, words);
-			
-				for(String l : filledTemplate){
-					outputWriter.write("  " + l + "\n");
-				}
+				
+				String filledTemplate = template.fillFromLine(line);
+				filledTemplate = mapLTIs(filledTemplate);
+				outputWriter.write(filledTemplate);
 				outputWriter.write("\n");
 			}
 			
 			outputWriter.write("}\n");
 			outputWriter.close();
 		} catch (Exception e){
-			System.err.println("ERROR reading template file " + templateName);
+			System.err.println("ERROR reading template file " + template.name);
 			System.err.println(e.getMessage());
 		}
 	}
@@ -292,7 +330,6 @@ public class SmemConfigurator {
 		}
 		writer.close();
 	}
-
 
     public static void main(String[] args) {
     	if (args.length < 2){
