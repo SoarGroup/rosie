@@ -306,7 +306,7 @@ public class SmemConfigurator {
 		return concepts;
 	}
 
-	private static void writeSmemFile(File sourceFile, File outputFile) throws IOException {
+	public static void writeSmemFile(File sourceFile, File outputFile) throws IOException {
 		BufferedReader reader = new BufferedReader(new FileReader(sourceFile));
 		Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile)));
 		

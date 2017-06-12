@@ -142,8 +142,10 @@ public class RosieAgentConfigurator {
 		
 		// Custom smem file
 		if (config.customSmemFile.exists()){
+			File outputFile = new File(config.agentDir + "/" + config.customSmemFile.getName());
+			SmemConfigurator.writeSmemFile(config.customSmemFile, outputFile);
 			smemSourceWriter.write("# Sourcing custom smem information specific to this agent\n");
-			smemSourceWriter.write("source " + config.customSmemFile.getAbsolutePath() + "\n\n");
+			smemSourceWriter.write("source " + outputFile.getAbsolutePath() + "\n\n");
 		}
 
 		// Finish writing the smem source file
