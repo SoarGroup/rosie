@@ -49,8 +49,8 @@ result.write("   (<status> ^performed.dialog-event <de>)\n");
 result.write("   (<de> ^type game-state-change\n");
 result.write("         ^originator agent)\n");
 result.write("   (<changes> ^outgoing-message <msg1>)\n");
-result.write("   (<msg1> ^type simple-message\n");
-result.write("          ^message-type ok)\n");
+result.write("   (<msg1> ^type ok\n");
+result.write("          ^complete-message true)\n");
 result.write("}\n");
 
 for infile in glob.glob('*.world'):
