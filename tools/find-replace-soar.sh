@@ -1,40 +1,42 @@
-# Replace variable tags - '<example>'
+#!/bin/bash 
+
+if [ $# -lt 2 ]; 
+    then echo "Needs 2 arguments"
+fi
+
+# find all soar files
+findcommand="find ./ -type f -name \"*.soar\" -print0"
+
+## Replace variable tags - '<example>'
 findreplace="s/<"$1">/<"$2">/g"
-#echo $findreplace
-#find ./ -type f -print0 | xargs -0 sed -i "$findreplace"
-
-# Replace standalone attributes - '^example '
-findreplace="s/\^"$1" /\^"$2" /g"
 echo $findreplace
-find ./ -type f -print0 | xargs -0 sed -i "$findreplace"
+eval $findcommand | xargs -0 sed -i "$findreplace"
 
-# Replace attributes with a dot after - '^example.next'
-findreplace="s/\^"$1"\./\^"$2"\./g"
+# Replace words in a rule
+#   previous character is { or *
+#   following character is * or EOL
+findreplace="s/\([{*]\)"$1"\(\*\|\$\)/\1"$2"\2/g"
 echo $findreplace
-find ./ -type f -print0 | xargs -0 sed -i "$findreplace"
+eval $findcommand | xargs -0 sed -i "$findreplace"
 
-# Replace dotted attributes - '^prev.example '
-findreplace="s/\."$1" /\."$2" /g"
+# Replace words in an attribute if:
+#   previous character is ^ or .
+#   following character is . or ) or space or EOL
+findreplace="s/\([.^]\)"$1"\([.) ]\|\$\)/\1"$2"\2/g"
 echo $findreplace
-find ./ -type f -print0 | xargs -0 sed -i "$findreplace"
+eval $findcommand | xargs -0 sed -i "$findreplace"
 
-# Replace attributes in the middle of a list - '^prev.example.next'
-findreplace="s/\."$1"\./\."$2"\./g"
+# Replace values:
+#   previous character is space
+#   following character is space or ) or EOL
+findreplace="s/\([ ]\)"$1"\([ )]\|\$\)/\1"$2"\2/g"
 echo $findreplace
-find ./ -type f -print0 | xargs -0 sed -i "$findreplace"
+eval $findcommand | xargs -0 sed -i "$findreplace"
 
-# Replace standalone words surrounded by whitespace - 'prev example next'
-findreplace="s/ "$1" / "$2" /g"
+# Replace words surrounded by whitespace
+#   previous character is space or BOL
+#   following character is space or EOL
+findreplace="s/\(^\|[ ]\)"$1"\([ ]\|\$\)/\1"$2"\2/g"
 echo $findreplace
-find ./ -type f -print0 | xargs -0 sed -i "$findreplace"
-
-# Replace standalone words ending a line -  ' example\n'
-findreplace="s/ "$1"$/ "$2"/g"
-echo $findreplace
-find ./ -type f -print0 | xargs -0 sed -i "$findreplace"
-
-# Replace standalone words ending in a parenthesis - ' example)' 
-findreplace="s/ "$1"[)]/ "$2")/g"
-echo $findreplace
-find ./ -type f -print0 | xargs -0 sed -i "$findreplace"
+eval $findcommand | xargs -0 sed -i "$findreplace"
 
