@@ -50,27 +50,27 @@ public class RosieConfig {
 	public static final HashSet<String> VALID_SENTENCE_SRCS = new HashSet<String>(
 			Arrays.asList("chat", "scripts"));
 	
-	// sentences-file = <filename> [OPTIONAL] - A file with a list of sentences
-	//    DEFAULT - <agent-name>.sentences
+	// sentences-file = <filename> [OPTIONAL] 
+	//    A file with a list of sentences
 	//    (File used by SentencesGenerator)
 	public File sentencesFile;
 	
-	// world-file = <filename> [OPTIONAL] - A file with info about the top-state world 
-	//    DEFAULT - <agent-name>.world
+	// world-file = <filename> [OPTIONAL]
+	//    A file with info about the top-state world 
 	//    (File used by WorldGenerator)
 	public File worldFile;
 
-	// smem-config-file = <filename> [OPTIONAL] - A file with info about what concepts to include from smem
-	//    DEFAULT - <agent-name>.smem
+	// smem-config-file = <filename> [OPTIONAL]
+	//     A file with info about what concepts to include from smem
 	//    (File used by SmemConfigurator)
 	public File smemConfigFile;
 	
-	// custom-soar-file = <filename> [OPTIONAL] - A file containing soar code that will be sourced by the agent
-	//    DEFAULT - <agent-name>.soar
+	// custom-soar-file = <filename> [OPTIONAL]
+	//     A file containing soar code that will be sourced by the agent
 	public File customSoarFile;
 
-	// custom-smem-file = <filename> [OPTIONAL] - A file containing smem adds that will be sourced by the agent
-	//    DEFAULT - <agent-name>_smem.soar
+	// custom-smem-file = <filename> [OPTIONAL]
+	//     A file containing smem adds that will be sourced by the agent
 	public File customSmemFile;
 
 	// Any other properties in the file will be put into the created rosie.config file
@@ -140,35 +140,35 @@ public class RosieConfig {
 		if (props.containsKey("sentences-file")){
 			this.sentencesFile = new File(configDir + "/" + props.getProperty("sentences-file"));
 		} else {
-			this.sentencesFile = new File(configDir + "/" + this.agentName + ".sentences");
+			this.sentencesFile = null;
 		}
 		
 		// world-file
 		if (props.containsKey("world-file")){
 			this.worldFile = new File(configDir + "/" + props.getProperty("world-file"));
 		} else {
-			this.worldFile = new File(configDir + "/" + this.agentName + ".world");
+			this.worldFile = null;
 		}
 		
 		// smem-config-file
 		if (props.containsKey("smem-config-file")){
 			this.smemConfigFile = new File(configDir + "/" + props.getProperty("smem-config-file"));
 		} else {
-			this.smemConfigFile = new File(configDir + "/" + this.agentName + ".smem");
+			this.smemConfigFile = null;
 		}
 		
 		// custom-soar-file
 		if (props.containsKey("custom-soar-file")){
 			this.customSoarFile = new File(configDir + "/" + props.getProperty("custom-soar-file"));
 		} else {
-			this.customSoarFile = new File(configDir + "/" + this.agentName + ".soar");
+			this.customSoarFile = null;
 		}
 		
 		// custom-smem-file
 		if (props.containsKey("custom-smem-file")){
 			this.customSmemFile = new File(configDir + "/" + props.getProperty("custom-smem-file"));
 		} else {
-			this.customSmemFile = new File(configDir + "/" + this.agentName + "_smem.soar");
+			this.customSmemFile = null;
 		}
 		
 		// otherSettings
@@ -191,11 +191,51 @@ public class RosieConfig {
 		sb.append("domain = " + this.domain + "\n");
 		sb.append("parser = " + this.parser + "\n");
 		sb.append("sentence-source = " + this.sentenceSource + "\n");
-		sb.append("sentences-file = " + (this.sentencesFile.exists() ? this.sentencesFile.getName() : "None") + "\n");
-		sb.append("world-file = " + (this.worldFile.exists() ? this.worldFile.getName() : "None") + "\n");
-		sb.append("smem-config-file = " + (this.smemConfigFile.exists() ? this.smemConfigFile.getName() : "None") + "\n");
-		sb.append("custom-soar-file = " + (this.customSoarFile.exists() ? this.customSoarFile.getName() : "None") + "\n");
-		sb.append("custom-smem-file = " + (this.customSmemFile.exists() ? this.customSmemFile.getName() : "None") + "\n");
+
+		if(this.sentencesFile != null){
+			sb.append("sentences-file = " + this.sentencesFile.getName() + "\n");
+			if(!this.sentencesFile.exists()){
+				sb.append("  !!! File does not exist !!!\n");
+			}
+		} else {
+			sb.append("sentences-file = None\n");
+		}
+
+		if(this.worldFile != null){
+			sb.append("world-file = " + this.worldFile.getName() + "\n");
+			if(!this.worldFile.exists()){
+				sb.append("  !!! File does not exist !!!\n");
+			}
+		} else {
+			sb.append("world-file = None\n");
+		}
+
+		if(this.smemConfigFile != null){
+			sb.append("smem-config-file = " + this.smemConfigFile.getName() + "\n");
+			if(!this.smemConfigFile.exists()){
+				sb.append("  !!! File does not exist !!!\n");
+			}
+		} else {
+			sb.append("smem-config-file = None\n");
+		}
+
+		if(this.customSoarFile != null){
+			sb.append("custom-soar-file = " + this.customSoarFile.getName() + "\n");
+			if(!this.customSoarFile.exists()){
+				sb.append("  !!! File does not exist !!!\n");
+			}
+		} else {
+			sb.append("custom-soar-file = None\n");
+		}
+
+		if(this.customSmemFile != null){
+			sb.append("custom-smem-file = " + this.customSmemFile.getName() + "\n");
+			if(!this.customSmemFile.exists()){
+				sb.append("  !!! File does not exist !!!\n");
+			}
+		} else {
+			sb.append("custom-smem-file = None\n");
+		}
 		
 		for(Map.Entry<String, String> e : this.otherSettings.entrySet()){
 			sb.append(e.getKey() + " = " + e.getValue() + "\n");

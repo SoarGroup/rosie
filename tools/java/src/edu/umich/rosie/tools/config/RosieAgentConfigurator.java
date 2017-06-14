@@ -53,7 +53,7 @@ public class RosieAgentConfigurator {
 		agentConfigFile.write("smem-source = " + smemSourceFilename + "\n\n");
 
 		// messages-file
-		if (config.sentenceSource.equals("chat") && config.sentencesFile.exists()){
+		if (config.sentenceSource.equals("chat") && config.sentencesFile != null && config.sentencesFile.exists()){
 			agentConfigFile.write("messages-file = " + config.sentencesFile.getAbsolutePath() + "\n\n");
 		}
 		
@@ -79,7 +79,7 @@ public class RosieAgentConfigurator {
 		agentSourceFile.write("pushd " + config.agentDir + "\n\n");
 
 		// Sentences
-		if (config.sentenceSource.equals("scripts") && config.sentencesFile.exists()){
+		if (config.sentenceSource.equals("scripts") && config.sentencesFile != null && config.sentencesFile.exists()){
 			File sentenceSourceFile = new File(config.agentDir + "/sentences_" + config.agentName + ".soar");
 			SentencesGenerator.generateRosieSentences(config.sentencesFile, sentenceSourceFile);
 			agentSourceFile.write("# Sourcing a list of scripted sentences to autorun\n");
@@ -87,7 +87,7 @@ public class RosieAgentConfigurator {
 		}
 		
 		// World
-		if (config.worldFile.exists()){
+		if (config.worldFile != null && config.worldFile.exists()){
 			File rosieWorldFile = new File(config.agentDir + "/world_" + config.agentName + ".soar");
 			WorldGenerator.generateRosieWorld(config.worldFile, rosieWorldFile);
 			agentSourceFile.write("# Sourcing a specification for the top-state world\n");
@@ -97,7 +97,7 @@ public class RosieAgentConfigurator {
 		agentSourceFile.write("popd\n\n");
 		
 		// Custom soar file
-		if (config.customSoarFile.exists()){
+		if (config.customSoarFile != null && config.customSoarFile.exists()){
 			agentSourceFile.write("# Sourcing custom soar code specific to this agent\n");
 			agentSourceFile.write("source " + config.customSoarFile.getAbsolutePath() + "\n\n");
 		}
@@ -130,18 +130,16 @@ public class RosieAgentConfigurator {
 		smemSourceWriter.write("popd\n\n");
 
 		// Smem
-		if (config.smemConfigFile.exists()){
-			File outputDir = new File(config.agentDir);
-			File rosieDir = new File(config.rosieHome + "/agent");
-			File smemSourceFile = SmemConfigurator.configureSmem(config.smemConfigFile, outputDir, rosieDir, config.agentName);
-			smemSourceWriter.write("# This file will source the smem files that were created by the SmemConfiguator tool\n");
-			smemSourceWriter.write("pushd " + smemSourceFile.getParentFile().getAbsolutePath() + "\n");
-			smemSourceWriter.write("source " + smemSourceFile.getName() + "\n");
-			smemSourceWriter.write("popd\n\n");
-		}
+		File outputDir = new File(config.agentDir);
+		File rosieDir = new File(config.rosieHome + "/agent");
+		File smemSourceFile = SmemConfigurator.configureSmem(config.smemConfigFile, outputDir, rosieDir, config.agentName);
+		smemSourceWriter.write("# This file will source the smem files that were created by the SmemConfiguator tool\n");
+		smemSourceWriter.write("pushd " + smemSourceFile.getParentFile().getAbsolutePath() + "\n");
+		smemSourceWriter.write("source " + smemSourceFile.getName() + "\n");
+		smemSourceWriter.write("popd\n\n");
 		
 		// Custom smem file
-		if (config.customSmemFile.exists()){
+		if (config.customSmemFile != null && config.customSmemFile.exists()){
 			File outputFile = new File(config.agentDir + "/" + config.customSmemFile.getName());
 			SmemConfigurator.writeSmemFile(config.customSmemFile, outputFile);
 			smemSourceWriter.write("# Sourcing custom smem information specific to this agent\n");

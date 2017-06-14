@@ -14,174 +14,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SmemConfigurator {
-	static class Template {
-		String name;
-		ArrayList<String> compoundPart = new ArrayList<String>();
-		ArrayList<String> singularPart = new ArrayList<String>();
-		ArrayList<String> paramNames = new ArrayList<String>();
-		String listParamName = null;
-		
-		public Template(String[] spec, File templateFile) throws FileNotFoundException, IOException {
-			this.name = spec[1];
-			
-			for(int i = 2; i < spec.length - 1; i++){
-				if(spec[i].contains("*")){
-					listParamName = spec[i].replace("*", "");
-					break;
-				} else {
-					paramNames.add(spec[i]);
-				}
-			}
-			
-			if(!templateFile.exists()){
-				throw new FileNotFoundException(templateFile.getAbsolutePath());
-			}
-
-			BufferedReader templateReader = new BufferedReader(new FileReader(templateFile));
-			
-			String line;
-			Boolean hitSingular = false;
-			while((line = templateReader.readLine()) != null){
-				if(line.trim().toUpperCase().equals("#SINGULAR")){
-					hitSingular = true;
-				} else if(hitSingular){
-					singularPart.add(line);
-				} else {
-					compoundPart.add(line);
-				}
-			}
-
-			templateReader.close();
-		}
-		
-		public String fillFromLine(String line){
-			String filledLines = "";
-			
-			String[] values = line.split(" ");
-			if(values.length < paramNames.size()){
-				System.err.println("Error in template " + name + ": not enough values in line '" + line + "'");
-				return filledLines;
-			}
-
-			if(listParamName != null){
-				for(int i = paramNames.size(); i < values.length; i++){
-					String listValue = values[i];
-					for(String templateLine : compoundPart){
-						String strippedValue = listValue.replaceAll("'", "");
-						// Remove bad characters (like apostrophes)
-						// but if replacing something inside Soar quotes, keep the characters in
-						String filledLine = templateLine.replaceAll("\\|" + listParamName + "\\|", "|" + listValue + "|");
-						filledLine = filledLine.replaceAll(listParamName, strippedValue);
-						filledLines += "  " + filledLine + "\n";
-					}
-				}
-			}
-			
-			for(String templateLine : singularPart){
-				filledLines += "  " + templateLine + "\n";
-			}
-			
-			for(int i = 0; i < paramNames.size(); i++){
-				filledLines = filledLines.replaceAll(paramNames.get(i), values[i]);
-			}
-			
-			return filledLines;
-		}
-	}
-	
 	
 	public static HashMap<String, String> ltiMap = new HashMap<String, String>();
-	
-	public static File configureSmem(File inputFile, File outputDir, File agentDir, String agentName) throws IOException {
-		File smemDir = new File(outputDir, "/smem");
-		if(!smemDir.exists()){
-			smemDir.mkdir();
-		}
-
-		File templateDir = new File(agentDir, "/init-smem/templates");
-
-		// File that will source all the soar files inside the smem directory
-		File smemSourceFile = new File(smemDir, "/smem_source.soar");
-		Writer sourceWriter = new BufferedWriter(new OutputStreamWriter(
-				new FileOutputStream(new File(smemDir, "/smem_source.soar"))));
-
-		// Smem config file reader
-		BufferedReader configReader = new BufferedReader(new FileReader(inputFile));
-		
-		String line;
-		while((line = configReader.readLine()) != null){
-			line = line.trim();
-			if(line.startsWith("#")){
-				continue;
-			}
-			String[] args = line.split(" ");
-			
-			try {
-				// Create items to load into smem using a template file (in init-smem/templates)
-				// template <template_name> _PARAM-1_ _PARAM-2_ ... _PARAM-N_ _PARAM-LIST_*{
-				//    value1 value2 ... valueN listVal1 ...
-				// }
-				if(line.startsWith("template") && args.length > 1){
-					File outputFile = new File(smemDir, "/" + args[1] + ".soar");
-					File templateFile = new File(templateDir, "/" + args[1] + ".txt");
-					Template template = new Template(args, templateFile);
-					writeTemplateFile(template, configReader, outputFile);
-					sourceWriter.write("source " + outputFile.getName() + "\n\n");
-				}
-				// Include a semantic memory file to source, while replacing handle lti's (@handle1)
-				// include-file <path-from-agent-dir>
-				else if (line.startsWith("include-file") && args.length > 1){
-					String filename = args[1];
-					File sourceFile = new File(agentDir, filename);
-					File outputFile = new File(smemDir, "/" + sourceFile.getName());
-					writeSmemFile(sourceFile, outputFile);
-					sourceWriter.write("source " + outputFile.getName() + "\n\n");
-				}
-				// Include a semantic memory file to source, while replacing handle lti's (@handle1)
-				//    and is able to be filtered (specify which items you want/don't want)
-				// filter-file <path-from-agent-dir>
-				else if(line.startsWith("filter-file") && args.length > 1){
-					String filename = args[1];
-					File sourceFile = new File(agentDir, filename);
-					File outputFile = new File(smemDir, "/" + sourceFile.getName());
-					HashMap<String, ArrayList<String> > items = parseFile(sourceFile);
-					filterSmemFile(outputFile, items);
-					sourceWriter.write("source " + outputFile.getName() + "\n\n");
-				}
-			} catch (IOException e){
-				System.err.println("ERROR in " + line);
-				System.err.println(e.getMessage());
-			}
-		}
-		
-		// Smem config file reader
-		BufferedReader smemWordsReader = new BufferedReader(new FileReader(
-				new File(agentDir, "/language-comprehension/smem-words/smem-words_to_process.soar")));
-		
-		while((line = smemWordsReader.readLine()) != null){
-			line = line.trim();
-			String[] args = line.split(" ");
-			
-			try {
-				if(line.startsWith("source") && args.length > 1){
-					String filename = args[1];
-					File sourceFile = new File(agentDir, "/language-comprehension/smem-words/" + filename);
-					File outputFile = new File(smemDir, "/" + sourceFile.getName());
-					writeSmemFile(sourceFile, outputFile);
-					sourceWriter.write("source " + outputFile.getName() + "\n\n");
-				}
-			} catch (IOException e){
-				System.err.println("ERROR in loading file from smem-words_to_process.soar: " + line);
-				System.err.println(e.getMessage());
-			}
-		}
-		
-		smemWordsReader.close();
-		
-		sourceWriter.close();
-		
-		return smemSourceFile;
-	}
 	
 	public static String mapLTIs(String line){
 		// Replace all lti references with a numerical equivalent
@@ -203,6 +37,133 @@ public class SmemConfigurator {
 		return line;
 	}
 	
+	public static File configureSmem(File configFile, File outputDir, File agentDir, String agentName) throws IOException {
+		File smemDir = new File(outputDir, "/smem");
+		if(!smemDir.exists()){
+			smemDir.mkdir();
+		}
+
+		// File that will source all the soar files inside the smem directory
+		File smemSourceFile = new File(smemDir, "/smem_source.soar");
+		Writer sourceWriter = new BufferedWriter(new OutputStreamWriter(
+				new FileOutputStream(new File(smemDir, "/smem_source.soar"))));
+		
+		if(configFile != null && configFile.exists()){
+			ArrayList<File> createdFiles = parseSmemConfigurationFile(configFile, agentDir, smemDir);
+			for(File f : createdFiles){
+				sourceWriter.write("source " + f.getName() + "\n\n");
+			}
+		}
+		
+		// Read Language Comprehension words
+		File languageFile = new File(agentDir, "/language-comprehension/smem-words/smem-words_to_process.soar");
+		if(languageFile.exists()){
+			ArrayList<File> createdFiles = parseLanguageSourceFile(languageFile, agentDir, smemDir);
+			for(File f : createdFiles){
+				sourceWriter.write("source " + f.getName() + "\n\n");
+			}
+		}
+		
+		sourceWriter.close();
+		
+		return smemSourceFile;
+	}
+	
+	private static ArrayList<File> parseSmemConfigurationFile(File configFile, File agentDir, File smemDir) {
+		ArrayList<File> createdFiles = new ArrayList<File>();
+		
+		BufferedReader configReader;
+		try{
+
+		// Smem config file reader
+		configReader = new BufferedReader(new FileReader(configFile));
+
+		File templateDir = new File(agentDir, "/init-smem/templates");
+		
+		String line;
+		while((line = configReader.readLine()) != null){
+			line = line.trim();
+			if(line.startsWith("#")){
+				continue;
+			}
+			String[] args = line.split(" ");
+			
+			try {
+				// Create items to load into smem using a template file (in init-smem/templates)
+				// template <template_name> _PARAM-1_ _PARAM-2_ ... _PARAM-N_ _PARAM-LIST_*{
+				//    value1 value2 ... valueN listVal1 ...
+				// }
+				if(line.startsWith("template") && args.length > 1){
+					File outputFile = new File(smemDir, "/" + args[1] + ".soar");
+					File templateFile = new File(templateDir, "/" + args[1] + ".txt");
+					SmemTemplate template = new SmemTemplate(args, templateFile);
+					writeTemplateFile(template, configReader, outputFile);
+					createdFiles.add(outputFile);
+				}
+				// Include a semantic memory file to source, while replacing handle lti's (@handle1)
+				// include-file <path-from-agent-dir>
+				else if (line.startsWith("include-file") && args.length > 1){
+					String filename = args[1];
+					File sourceFile = new File(agentDir, filename);
+					File outputFile = new File(smemDir, "/" + sourceFile.getName());
+					writeSmemFile(sourceFile, outputFile);
+					createdFiles.add(outputFile);
+				}
+				// Include a semantic memory file to source, while replacing handle lti's (@handle1)
+				//    and is able to be filtered (specify which items you want/don't want)
+				// filter-file <path-from-agent-dir>
+				else if(line.startsWith("filter-file") && args.length > 1){
+					String filename = args[1];
+					File sourceFile = new File(agentDir, filename);
+					File outputFile = new File(smemDir, "/" + sourceFile.getName());
+					HashMap<String, ArrayList<String> > items = parseFile(sourceFile);
+					filterSmemFile(outputFile, items);
+					createdFiles.add(outputFile);
+				}
+			} catch (IOException e){
+				System.err.println("ERROR in " + line);
+				System.err.println(e.getMessage());
+			}
+		}	
+		} catch (IOException e){
+			System.err.println("Could not read smem config file: " + configFile.getName());
+		}
+		return createdFiles;
+	}
+
+	private static ArrayList<File> parseLanguageSourceFile(File languageFile, File agentDir, File smemDir) {
+		ArrayList<File> createdFiles = new ArrayList<File>();
+		
+		try{
+			BufferedReader smemWordsReader = new BufferedReader(new FileReader(languageFile));
+					
+			String line;
+			while((line = smemWordsReader.readLine()) != null){
+				line = line.trim();
+				String[] args = line.split(" ");
+				
+				try {
+					if(line.startsWith("source") && args.length > 1){
+						String filename = args[1];
+						File sourceFile = new File(agentDir, "/language-comprehension/smem-words/" + filename);
+						File outputFile = new File(smemDir, "/" + sourceFile.getName());
+						writeSmemFile(sourceFile, outputFile);
+						createdFiles.add(outputFile);
+					}
+				} catch (IOException e){
+					System.err.println("ERROR in loading file from smem-words_to_process.soar: " + line);
+					System.err.println(e.getMessage());
+				}
+			}
+			
+			smemWordsReader.close();
+		}catch (IOException e){
+			System.err.println("Error reading " + languageFile.getName());
+		}
+		
+		return createdFiles;
+	}
+	
 	private static ArrayList<String> readTemplateFile(File templateDir, String templateName) throws IOException, FileNotFoundException {
 		File templateFile = new File(templateDir, "/" + templateName + ".txt");
 		if(!templateFile.exists()){
@@ -221,7 +182,7 @@ public class SmemConfigurator {
 		return template;
 	}
 	
-	private static void writeTemplateFile(Template template, BufferedReader configReader, File outputFile){
+	private static void writeTemplateFile(SmemTemplate template, BufferedReader configReader, File outputFile){
 		try {
 			Writer outputWriter = new BufferedWriter(new OutputStreamWriter(
 					new FileOutputStream(outputFile)));
