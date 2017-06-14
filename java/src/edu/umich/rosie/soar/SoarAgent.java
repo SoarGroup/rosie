@@ -114,7 +114,6 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 
     // Perception
     public void setPerceptionConnector(AgentConnector conn){
-    	System.out.println(conn);
         this.perceptionConn = conn;
     }
     public AgentConnector getPerceptionConnector(){

@@ -550,37 +550,14 @@ public class AgentMessageParser
 	}
 	
 	public static String translateExecutionFailure(Identifier fieldsId){
-		String info = SoarUtil.getValueOfAttribute(fieldsId, "failure-info");
-		String type = SoarUtil.getValueOfAttribute(fieldsId, "failure-type");
-		if(info == null || type == null){
+		String action = SoarUtil.getValueOfAttribute(fieldsId, "action-handle").replaceAll("\\d", "");
+		String command = SoarUtil.getValueOfAttribute(fieldsId, "command-name").replaceAll("\\d", "");
+
+		if(action == null || command == null){
 			return "I was not able to perform the action";
 		}
-		if(type.equals("command-error")){
-			return "There was a problem sending the " + info + " command";
-		} else if(type.equals("execution-failed")){
-			return "There was an error while executing the " + info + " command";
-		} else if(type.equals("direction-retrieval-failure")){
-			return "I do not know about the turn direction " + info;
-		} else if(type.equals("invalid-direction-failure")){
-			return "The given turn direction " + info + " was not a valid direction";
-		} else if(type.equals("unsatisfied-until-clause")){
-			return null;
-      //"I had to terminate the " + info + " command early";
-		} else if(type.equals("svs-filter-error")){
-			return "Something went wrong with the " + info + " filter";
-		} else if(type.equals("missing-object")){
-			return "I didn't see the object I expected to";
-		} else if(type.equals("unknown-location")){
-			return "I don't know how to get to the " + info + ".";
-		} else if(type.equals("no-ask-sentence")){
-			return "I don't know what to ask";
-		} else if(type.equals("no-say-sentence")){
-			return "I don't know what to say";
-		} else if(type.equals("unknown-current-location")){
-      return "I don't know where I am";
-    } else {
-			return "I was not able to perform the action";
-		}
+		
+		return "The " + command + " command failed while doing " + action;
 	}	
 	
 //    public static String translateAgentMessage(Identifier id){
