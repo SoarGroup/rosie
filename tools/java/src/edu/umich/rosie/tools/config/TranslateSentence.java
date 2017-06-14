@@ -18,51 +18,51 @@ import org.antlr.v4.runtime.tree.*;
 public class TranslateSentence extends RegressBaseListener {
 	//	Parameters
 	static final String HEADER_TEXT =
-			"#### Test sentences for ROSIE - \r\n"
-			+ "#    Built by the SentencesToSoar tool %s\r\n"
-			+ "#    from file '%s'.\r\n"
-			+ "\r\n"
-			+ "#   Apply initialize-rosie to set up the state.\r\n"
-			+ "sp {apply*initialize-rosie*sentence-number\r\n"
-			+ "   (state <s> ^name rosie\r\n"
-		    + "              ^top-state.world-usage internal\r\n"
-			+ "              ^operator.name initialize-rosie)\r\n"
-			+ "-->\r\n"
-			+ "   (<s> ^current-sentence-number 1\r\n"
-			+ "        ^max-sentence-number %d\r\n"
-			+ "        ^game-scripting true)\r\n"
-			+ "}\r\n"
-			+ "\r\n";
+			"#### Test sentences for ROSIE - \n"
+			+ "#    Built by the SentencesToSoar tool %s\n"
+			+ "#    from file '%s'.\n"
+			+ "\n"
+			+ "#   Apply initialize-rosie to set up the state.\n"
+			+ "sp {top-state*apply*create-scripted-sentences*sentence-number\n"
+			+ "   (state <s> ^name rosie\n"
+		    + "              ^agent-params.sentence-source scripts\n"
+			+ "              ^operator.name create-scripted-sentences)\n"
+			+ "-->\n"
+			+ "   (<s> ^current-sentence-number 1\n"
+			+ "        ^max-sentence-number %d\n"
+			+ "        ^game-scripting true)\n"
+			+ "}\n"
+			+ "\n";
 	
 	static final String PRODUCTION_TEXT =
-			"sp {elaborate*state*sentence-%d*%s\r\n"
-		//	+ "   (state <s> ^name comprehension\r\n"
-		//		+ "              ^superstate <ss>\r\n"
-			+ "   (state <s> ^name rosie\r\n"
-		    + "              ^top-state.world-usage internal)\r\n"
-		//   + "              ^superstate <ss>\r\n"
-		//+ "              ^segment <seg>)\r\n"
-			+ "   (<s> ^current-sentence-number %d)\r\n"
-			+ "-->\r\n"
-		    + "   (<s> ^current-sentence <seg>)\r\n"
-			+ "   (<seg> ^input-sentence <first>\r\n"
-			+ "          ^current-word <first>\r\n"
-			+ "          ^original-sentence <first>\r\n"
-			+ "          ^expected %s)\r\n"
-			+ "   (<first> ^spelling |*|\r\n"
-			+ "            ^next <w0>\r\n"
-			+ "            ^complete-sentence |%s|)\r\n"
+			"sp {top-state*elaborate*scripted*sentence-%d*%s\n"
+		//	+ "   (state <s> ^name comprehension\n"
+		//		+ "              ^superstate <ss>\n"
+			+ "   (state <s> ^name rosie\n"
+		    + "              ^agent-params.sentence-source scripts)\n"
+		//   + "              ^superstate <ss>\n"
+		//+ "              ^segment <seg>)\n"
+			+ "   (<s> ^current-sentence-number %d)\n"
+			+ "-->\n"
+		    + "   (<s> ^current-sentence <seg>)\n"
+			+ "   (<seg> ^input-sentence <first>\n"
+			+ "          ^current-word <first>\n"
+			+ "          ^original-sentence <first>\n"
+			+ "          ^expected %s)\n"
+			+ "   (<first> ^spelling |*|\n"
+			+ "            ^next <w0>\n"
+			+ "            ^complete-sentence |%s|)\n"
 			+ "%s"	//	The words go here
 			+ "%s"	//	The expectation goes here
-			+ "}\r\n"
-			+ "\r\n";
+			+ "}\n"
+			+ "\n";
 	
 	static final String WORD_WME =
-			"   (<w%d> ^spelling |%s|\r\n"
-			+ "         ^next %s)\r\n";
+			"   (<w%d> ^spelling |%s|\n"
+			+ "         ^next %s)\n";
 	
 //	static final String EXPECTATION_WME =
-//			"   (<%s> %s\r\n";
+//			"   (<%s> %s\n";
 	
     //  Private Members
 	private String inputFile;
@@ -126,11 +126,11 @@ public class TranslateSentence extends RegressBaseListener {
         //	Put in any comments
         List<TerminalNode> comments = ctx.COMMENT();
         for (TerminalNode comment: comments) {
-        	blockBuilder.append(comment.getText() + "\r\n");
+        	blockBuilder.append(comment.getText() + "\n");
         }
         //	Add the failure flag, if any
         if (ctx.FAILED() != null) {
-        	blockBuilder.append(ctx.FAILED().getText() + "\r\n");
+        	blockBuilder.append(ctx.FAILED().getText() + "\n");
         }
     }
     
@@ -223,7 +223,7 @@ public class TranslateSentence extends RegressBaseListener {
 			expectedSymbol = "<" + symbol + ">";
 		//	Remember we're on the first attribute and how much to indent
 		firstAttr = true;
-		StringBuilder indent = new StringBuilder("\r\n       ");
+		StringBuilder indent = new StringBuilder("\n       ");
 		for (int i = 0; i < symbol.length(); i++)
 			indent.append(" ");
 		attrIndent = indent.toString();
@@ -297,7 +297,7 @@ public class TranslateSentence extends RegressBaseListener {
 	 * <p>Nothing needed here.</p>
 	 */
 	@Override public void exitRhs(RegressParser.RhsContext ctx) {
-		expectBuilder.append(")\r\n");
+		expectBuilder.append(")\n");
 	}
 
 	
@@ -346,7 +346,7 @@ public class TranslateSentence extends RegressBaseListener {
         List<TerminalNode> comments = ctx.COMMENT();
         for (TerminalNode comment: comments) {
         	try {
-				writer.write(comment.getText() + "\r\n");
+				writer.write(comment.getText() + "\n");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

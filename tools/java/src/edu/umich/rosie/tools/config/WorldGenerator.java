@@ -21,18 +21,18 @@ public class WorldGenerator {
 			Writer outputWriter = new BufferedWriter(new OutputStreamWriter(
 					new FileOutputStream(outputFile), "utf-8"));
 			
-			String gFile = inputFile.toString();
+			String gFile = inputFile.getName().replace(".world", "");
+			
 			//outputWriter.write("# Placeholder for auto-generated world file");
-			outputWriter.write("\nsp {dialog-event*apply*state-change-respond*" + gFile + "\n");
-			outputWriter.write("   (state <s> ^name dialog-event\n");
-			outputWriter.write("              ^top-state <ts>\n");
+			outputWriter.write("\nsp {top-state*apply*create-internal-world*" + gFile + "\n");
+			outputWriter.write("   (state <s> ^superstate nil\n");
 			outputWriter.write("              ^operator <o>)\n");
-			outputWriter.write("   (<o> ^name state-change-respond\n");
-			outputWriter.write("        ^type " + gFile + ")\n");
-			outputWriter.write("   (<ts> ^world <wo2>)\n");
+			outputWriter.write("   (<o> ^name create-internal-world)\n");
+//			outputWriter.write("        ^type " + gFile + ")\n");
+//			outputWriter.write("   (<ts> ^world <wo2>)\n");
 			outputWriter.write("-->\n");
-			outputWriter.write("   (<ts> ^world <wo2> -)\n");
-			outputWriter.write("   (<ts> ^world <wo>)\n");
+//			outputWriter.write("   (<ts> ^world <wo2> -)\n");
+			outputWriter.write("   (<s> ^world <wo>)\n");
 			outputWriter.write("   (<wo> ^objects <objs> ^predicates <preds> ^robot <ro>)\n");
 			outputWriter.write("   (<ro> ^handle rosie ^item-type object ^arm.action wait ^predicate.handle rosie)\n");
 			
@@ -46,6 +46,7 @@ public class WorldGenerator {
 					List<String> preds = new ArrayList<String>();
 					
 					//initial object list
+					br.mark(30000);
 					while ((line = br.readLine()) != null) {
 						if (line.contains("objid"))
 						{
@@ -57,9 +58,9 @@ public class WorldGenerator {
 						{
 							hasPreds = true;
 						}
-						outputWriter.write(")\n");
+						//outputWriter.write(")\n");
 					}
-					
+					System.out.println(objs.toString());
 					outputWriter.write(")\n");
 					outputWriter.write("   (<self> ^type object ^handle self ^predicates.type object\n");
 
@@ -67,6 +68,7 @@ public class WorldGenerator {
 					if (hasPreds)
 					{
 						outputWriter.write(")\n   (<preds> ^predicate");
+						br.reset();
 						while ((line = br.readLine()) != null) {
 							if (line.contains("predicate ") || line.contains("predicate-set "))
 							{
@@ -82,7 +84,7 @@ public class WorldGenerator {
 					int flag = 0;
 					int index = -1;
 					int index2 = -1;
-					
+					br.reset();
 					while ((line = br.readLine()) != null)
 					{
 						if (line.contains("objid")) {
