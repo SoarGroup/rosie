@@ -83,58 +83,103 @@ sp {interpret-message*apply*interpret-unknown-word*create*segment
               ^fields.word <word>)
 }
 #TODO FIX HACK NEED lexical info from failed parse to know multy arguments/preceeding word
-sp {interpret-message*apply*interpret-unknown-word*store-smem-word
+#adjectives: low high top bottom dark dim warm cool cold hot heavy light covered clear free weak strong captured occupied matched -ed highest brightest -est
+#is a/the/an X object
+sp {interpret-message*apply*interpret-unknown-word*store-smem-word*X-OBJ-ADJ
    (state <s> ^name interpret-message
               ^smem.command <sc>
               ^operator <o>)
    (<o> ^name interpret-unknown-word
         ^word <word>
-       -^word husband
-	   -^word wife
-       -^word larger
-       -^word smaller
-	   -^word lower
-	   -^word higher
-	   -^word neighbor
-	   -^word position
-	   -^word heavier
-	   -^word lighter
-	   -^word brighter
-	   -^word darker
-	   -^word dimmer
-	   -^word below
-	   -^word left
-       -^word passenger
-       -^word occupant
-       -^word row-constraints
-       -^word column-constraints
-       -^word section-constraints   
-       -^word total-constraints  
-       -^word adjacent 
+        -^word box 
+		-^word frog
+		-^word piece
+        -^word knight
+		-^word toad
+		-^word diagonally
+        -^word larger #temp no after for non scripted
+		-^word jumpable
+		-^word grape
+   		-^word << on in below above near under behind around besides supporting >>
+		-^word grapefruit
         ^message <msg>)
+   (<msg> -^after of -^after than -^after from -^after by -^after to)# ^before << a the an >>)# -^after |.|)
 -->
+(write |ADJ| (crlf))
     (<sc> ^store <w1> <spell> <p3>)
     (<w1> ^handle <word> ^property <p3>)
     (<spell> ^spelling <word> ^structure-type ADJ ^referent <w1>)
     (<p3> ^handle property ^type visual ^item-type property)  
 }
 
-#TODO hack lost information that following word is than... need to recover
-sp {interpret-message*apply*interpret-unknown-word*store-smem-word*higher-than
+#sp {interpret-message*apply*interpret-unknown-word*store-smem-word*X-ADJ
+#   (state <s> ^name interpret-message
+#              ^smem.command <sc>
+#              ^operator <o>)
+#   (<o> ^name interpret-unknown-word
+#        ^word <word>
+#        -^word << box frog toad grape grapefruit >>
+#        ^message <msg>) 
+#(<msg> ^before is -^after << to than of >>)
+#-->
+#    (<sc> ^store <w1> <spell> <p3>)
+#    (<w1> ^handle <word> ^property <p3>)
+#    (<spell> ^spelling <word> ^structure-type ADJ ^referent <w1>)
+#    (<p3> ^handle property ^type visual ^item-type property)  
+#}
+
+# ^word << box frog toad grape grapefruit >>
+sp {interpret-message*apply*interpret-unknown-word*store-smem-word*noun
    (state <s> ^name interpret-message
               ^smem.command <sc>
               ^operator <o>)
    (<o> ^name interpret-unknown-word
         ^word <word>
-        ^word higher
+        ^word << knight piece tile box frog toad grape grapefruit missionary cannibal goose bean fox child adult player >>
         ^message <msg>)
+  # (<msg> ^before << a the an >> ^after |.|)
 -->
+(write |NOUN| (crlf))
+    (<sc> ^store <w1> <spell> <pp>)
+    (<w1> ^handle <word> ^item-type predicate ^property <pp>)
+    (<pp> ^handle property ^type visual ^item-type property)
+    (<spell> ^spelling <word> ^structure-type N ^number singular ^referent <w1>)  
+}
+
+sp {interpret-message*apply*interpret-unknown-word*store-smem-word*adverb
+   (state <s> ^name interpret-message
+              ^smem.command <sc>
+              ^operator <o>)
+   (<o> ^name interpret-unknown-word
+        ^word <word>
+        ^word << diagonally partially positively negatively completely >>
+        ^message <msg>)
+  # (<msg> ^before << a the an >> ^after |.|)
+-->
+(write |ADVERB| (crlf))
+    (<sc> ^store <w1> <spell>)
+    (<w1> ^handle <word>)
+    (<spell> ^spelling <word> ^structure-type ADV ^referent <w1>)  
+}
+
+#larger, smaller also usable as adj on the smaller block
+#smaller larger lower higher weaker stronger heavier lighter darker dimmer warmer brighter colder 
+sp {interpret-message*apply*interpret-unknown-word*store-smem-word*x-than
+   (state <s> ^name interpret-message
+              ^smem.command <sc>
+              ^operator <o>)
+   (<o> ^name interpret-unknown-word
+        ^word <word>
+        ^message <msg>)
+   (<msg> ^after than)# ^before is
+-->
+(write |THAN C-ADJ-P| (crlf))
     (<sc> ^store <w1> <spell> <next> <next-to1> )
     (<w1> ^handle <word>)
     (<spell> ^spelling <word> ^structure-type C-ADJ ^converts-to C-ADJ-P ^relation <w1>)  
     (<next> ^prior-word <word>
                    ^current-word |than|
-                   ^spelling |higher-than|  ## Construction?
+                   ^spelling (concat <word> |-than|)
                    ^structure-type C-ADJ
                    ^relation <w1>
                    ^assigners <next-to1>
@@ -144,21 +189,24 @@ sp {interpret-message*apply*interpret-unknown-word*store-smem-word*higher-than
                     ^syntactic-structure head
                     ^required true)
 }
-sp {interpret-message*apply*interpret-unknown-word*store-smem-word*lower-than
+#TEMP HACK TODO fix
+sp {interpret-message*apply*interpret-unknown-word*store-smem-word*x-thanhack
    (state <s> ^name interpret-message
               ^smem.command <sc>
               ^operator <o>)
    (<o> ^name interpret-unknown-word
         ^word <word>
-        ^word lower
+       ^word << larger smaller bigger lighter >>
         ^message <msg>)
+   (<msg> -^after )# ^before is
 -->
+(write |THAN C-ADJ-P| (crlf))
     (<sc> ^store <w1> <spell> <next> <next-to1> )
     (<w1> ^handle <word>)
     (<spell> ^spelling <word> ^structure-type C-ADJ ^converts-to C-ADJ-P ^relation <w1>)  
     (<next> ^prior-word <word>
                    ^current-word |than|
-                   ^spelling |lower-than|  ## Construction?
+                   ^spelling (concat <word> |-than|)
                    ^structure-type C-ADJ
                    ^relation <w1>
                    ^assigners <next-to1>
@@ -168,21 +216,26 @@ sp {interpret-message*apply*interpret-unknown-word*store-smem-word*lower-than
                     ^syntactic-structure head
                     ^required true)
 }
-sp {interpret-message*apply*interpret-unknown-word*store-smem-word*larger-than
+
+# again defeated occupied preotecatble jumpable all adjs
+#why like -than not like -to
+sp {interpret-message*apply*interpret-unknown-word*store-smem-word*x-by
    (state <s> ^name interpret-message
               ^smem.command <sc>
               ^operator <o>)
    (<o> ^name interpret-unknown-word
         ^word <word>
-        ^word larger
+		-^word jumpable
         ^message <msg>)
+   (<msg> ^after by)# ^before is
 -->
+(write |BY C-ADJ-P| (crlf))
     (<sc> ^store <w1> <spell> <next> <next-to1> )
     (<w1> ^handle <word>)
     (<spell> ^spelling <word> ^structure-type C-ADJ ^converts-to C-ADJ-P ^relation <w1>)  
     (<next> ^prior-word <word>
-                   ^current-word |than|
-                   ^spelling |larger-than|  ## Construction?
+                   ^current-word |by|
+                   ^spelling (concat <word> |-by|)
                    ^structure-type C-ADJ
                    ^relation <w1>
                    ^assigners <next-to1>
@@ -192,21 +245,72 @@ sp {interpret-message*apply*interpret-unknown-word*store-smem-word*larger-than
                     ^syntactic-structure head
                     ^required true)
 }
-sp {interpret-message*apply*interpret-unknown-word*store-smem-word*smaller-than
+
+#sp {interpret-message*apply*interpret-unknown-word*store-smem-word*x-by*tertiary
+#   (state <s> ^name interpret-message
+#              ^smem.command <sc>
+#              ^operator <o>)
+#   (<o> ^name interpret-unknown-word
+#        ^word <word>
+#		^word << jumpable >>
+#        ^message <msg>)
+##   (<msg> ^after by)# ^before is
+#-->
+#(write |TERN C-ADJ-P| (crlf))
+#    (<sc> ^store <w1> <spell> <next> <st> <pp1> <pp2> <pp3>)# <next>)# <next> <next-to1>)
+#    (<w1> ^handle <word> ^item-type relation ^relation-type existing ^relation <x>)
+#    #(<spell> ^spelling <word> ^structure-type P ^converts-to PP ^relation <w1>)
+#    (<spell> ^spelling <word> ^super-type <st> ^relation <w1>)
+#    (<st> ^structure-type P                                               
+#                   ^assigners <pp1> <pp2> <pp3>                            
+#                   ^relation-type ternary                                  
+#                   ^converts-to PP)														  
+#(<pp1> ^structure-type DP                                                  
+#                   ^before <pp2> <pp3>                                     
+#                   ^relative-position after                                
+#                   ^syntactic-structure head                               
+#                   ^required true)                                         
+#           (<pp2> ^structure-type CONJ                                     
+#                  ^before <pp3>                                            
+#                  ^required true                                           
+#                  ^syntactic-structure CONJ)                               
+#           (<pp3> ^structure-type DP                                       
+#                  ^relative-position after                                 
+#                  ^syntactic-structure complement                          
+#                  ^required true) 
+#(<next> ^prior-word <word>
+#                   ^current-word |by|
+#                   ^spelling (concat <word> |-by|)
+#                   ^structure-type P
+#                   ^relation <w1>
+#                   ^assigners <pp1> <pp2> <pp3>
+#				   ^relation-type ternary
+#                   ^converts-to PP)
+##           (<next-to1> ^structure-type DP
+##                    ^relative-position after
+##                    ^syntactic-structure head
+##                    ^required true)
+##
+#}
+
+#also try PP version
+#first try usage normal
+sp {interpret-message*apply*interpret-unknown-word*store-smem-word*x-from
    (state <s> ^name interpret-message
               ^smem.command <sc>
               ^operator <o>)
    (<o> ^name interpret-unknown-word
         ^word <word>
-        ^word smaller
         ^message <msg>)
+   (<msg> ^after from )# ^before is
 -->
+(write |FROM C-ADJ-P| (crlf))
     (<sc> ^store <w1> <spell> <next> <next-to1> )
     (<w1> ^handle <word>)
     (<spell> ^spelling <word> ^structure-type C-ADJ ^converts-to C-ADJ-P ^relation <w1>)  
     (<next> ^prior-word <word>
-                   ^current-word |than|
-                   ^spelling |smaller-than|  ## Construction?
+                   ^current-word |from|
+                   ^spelling (concat <word> |-from|)
                    ^structure-type C-ADJ
                    ^relation <w1>
                    ^assigners <next-to1>
@@ -216,6 +320,8 @@ sp {interpret-message*apply*interpret-unknown-word*store-smem-word*smaller-than
                     ^syntactic-structure head
                     ^required true)
 }
+
+#^word << passenger owner partner score husband wife position neighbor occupant row-constraints column-constraints section-constraints total-constraints >>
 #TODO hack lost information that following word is of... need to recover
 sp {interpret-message*apply*interpret-unknown-word*store-smem-word*x-of
    (state <s> ^name interpret-message
@@ -223,32 +329,36 @@ sp {interpret-message*apply*interpret-unknown-word*store-smem-word*x-of
               ^operator <o>)
    (<o> ^name interpret-unknown-word
         ^word <word>
-        ^word << passenger husband wife position neighbor occupant row-constraints column-constraints section-constraints total-constraints >>
         ^message <msg>)
+   (<msg> ^after of)
 -->
+(write |OF N ADJ| (crlf))
     (<sc> ^store <w1> <spell> <p3>)
     (<w1> ^handle <word> ^property <p3>)
     (<spell> ^spelling <word> ^structure-type N ^syntactic-referent-type ADJ ^number singular ^referent <w1>)
     (<p3> ^handle property ^type conceptual ^item-type property)
 }        
 
+#other -to
+#next to, adjacent
 #TODO hack lost information that following word is to and has 2 args... need to recover
-sp {interpret-message*apply*interpret-unknown-word*store-smem-word*adjacent
+sp {interpret-message*apply*interpret-unknown-word*store-smem-word*x-to
    (state <s> ^name interpret-message
               ^smem.command <sc>
               ^top-state.dialog-context <dc>
               ^operator <o>)
    (<o> ^name interpret-unknown-word
         ^word <word>
-        ^word adjacent
         ^message <msg>)
+   (<msg> ^before is ^after to)
 -->
+(write |ADJ IS-X-TO| (crlf))
     (<sc> ^store <w1> <spell> <next> <next-to1> )
     (<w1> ^handle <word>)
     (<spell> ^spelling <word> ^structure-type P ^converts-to PP ^relation <w1>)
               (<next> ^prior-word <word>
                    ^current-word |to|
-                   ^spelling |adjacent-to|  ## Construction?
+                   ^spelling (concat <word> |-to|)
                    ^structure-type P
                    ^relation <w1>
                    ^assigners <next-to1>
@@ -260,21 +370,23 @@ sp {interpret-message*apply*interpret-unknown-word*store-smem-word*adjacent
     
 }
 
-sp {interpret-message*apply*interpret-unknown-word*store-smem-word*below
+##^word << on in below above near under behind around besides >>
+sp {interpret-message*apply*interpret-unknown-word*store-smem-word*prep
    (state <s> ^name interpret-message
               ^smem.command <sc>
               ^top-state.dialog-context <dc>
               ^operator <o>)
    (<o> ^name interpret-unknown-word
         ^word <word>
-        ^word below
+		 ^word << on in below above near under behind around besides supporting >>
         ^message <msg>)
+   (<msg> -^after << than to of >> -^after |.|)#^before is
 -->
-#(write (crlf) (cmd print <msg>))
+(write |P-PP binary| (crlf))
     (<sc> ^store <w1> <spell> <st> <plt>)
     (<w1> ^handle <word> ^item-type relation ^relation-type existing ^relation <x>)
     (<spell> ^spelling <word> ^super-type <st> ^relation <w1>)
-(<st> ^structure-type P
+    (<st> ^structure-type P
                    ^relation-type binary
                    ^assigners <plt>
                    ^converts-to PP)
@@ -282,8 +394,7 @@ sp {interpret-message*apply*interpret-unknown-word*store-smem-word*below
                     ^relative-position after
                     ^syntactic-structure head
                     ^required true)
-}
-##(^structure-type P ^converts-to PP)    
+} 
 
     
 
