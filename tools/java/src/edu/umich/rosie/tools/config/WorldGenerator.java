@@ -60,7 +60,7 @@ public class WorldGenerator {
 						}
 						//outputWriter.write(")\n");
 					}
-					System.out.println(objs.toString());
+					
 					outputWriter.write(")\n");
 					outputWriter.write("   (<self> ^type object ^handle self ^predicates.type object\n");
 
