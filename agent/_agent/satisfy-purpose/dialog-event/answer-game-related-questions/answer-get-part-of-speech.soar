@@ -2,69 +2,38 @@ sp {dialog-event*propose*get-predicates-for-pos
    (state <s> ^name dialog-event
               ^set <set>)
    (<set> ^conditions <cond>)
-   (<cond> -^prep-retrieved)
-   #-{(<set> ^conditions <cond>)
-   #  (<cond> ^prep-retrieved)}
+   (<cond> -^POS-retrieved)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name get-part-of-speech-objDesc
-        ^condition <cond>) #this is the way to go about it.
+        ^condition <cond>)
 }
 
 sp {dialog-event*propose*get-predicates-for-pos*args
    (state <s> ^name dialog-event
               ^new-set <new-set>)
    (<new-set> ^condition <cond>)
-   (<cond> -^prep-retrieved)
+   (<cond> -^POS-retrieved)
 -->
     (<s> ^operator <o> + =)
     (<o> ^name get-part-of-speech-objDesc
          ^condition <cond>)
 } 
-
-#sp {dialog-event*equal-preferences*get-predicate-for-pos              
+           
 sp {dialog-event*apply*done-handling-conditions
    (state <s> ^name dialog-event
               ^set <set>
               ^new-set <new-set>)
-   #(<set> ^conditions <cond>)
-  #(<new-set> ^condition <new-cond>)
-  # -(<cond> -^prep-retrieved)
-   #-(<new-cond> -^prep-retrieved)
-    -{(<set> ^conditions <cond>)
-      (<cond> -^prep-retrieved)}
-    -{(<new-set> ^condition <new-cond>)
-      (<new-cond> -^prep-retrieved)}    
-  # -(<cond> -^primitive-reached)
+   -{(<set> ^conditions <cond>)
+     (<cond> -^POS-retrieved)}
+   -{(<new-set> ^condition <new-cond>)
+     (<new-cond> -^POS-retrieved)}
 -->
     (<s> ^all-structures-retrieved true)
 }   
-# add get-part-of-speech to file
-             
-# or
-   #(<cond> ^name <name> ^args <args> ^pos <pos>) #so that it goes from top to bottom-either do this while retrieving, applying the same rule again and again, one for set.conditions one for conditions.arg.conditions
-   #(<args> ^<num> <new-cond>)
-   #(<new-cond> ^name <new-name>
-   #            ^args <new-args>) 
-#-->
-   #( then get the pos for the given name)
 
-#sp {dialog-event*propose*get-part-of-speech-objDesc
-#   (state <s> ^name dialog-event
-#              ^smem.command <cmd>
-#              ^PR-game-details
-#              ^set.conditions <cond>
-              #^generated <gen>
-              #^combined
-              #^descriptions <descs>
-#    
-#-->
-#   (<s> ^operator <o> + =)
-#   (<o> ^name get-part-of-speech-objDesc
-#        ^condition <cond>)
-#}
-
-sp {dialog-event*apply*get-part-of-speech-objDesc
+# Retrieve LTI that has condition handle
+sp {dialog-event*apply*get-part-of-speech-objDesc*retrieve-handle-LTI
    (state <s> ^name dialog-event
               ^operator <o>
               ^smem.command <cmd>
@@ -78,8 +47,8 @@ sp {dialog-event*apply*get-part-of-speech-objDesc
    (<q> ^handle <name>)
 }   
 
-# After retrieval
-sp {dialog-event*apply*get-part-of-speech-objDesc*retrieval-success
+# After retrieval - retrieve LTI whose relation is current LTI (and that has the part of speech)
+sp {dialog-event*apply*get-part-of-speech-objDesc*retrieval-handle-LTI-success*retrieve-LTI-with-relation
    (state <s> ^name dialog-event
               ^operator <o>
               ^smem <smem>
@@ -93,21 +62,18 @@ sp {dialog-event*apply*get-part-of-speech-objDesc*retrieval-success
    (<cond> ^name <name>
            ^args <args>)
 --> 
-  # (<s> ^ret <ret>)
    (<cmd> ^query <q> -
           ^depth 5 -)
    (<cmd> ^query <qu> ^depth 5)
    (<qu> ^relation <ret>
          ^structure-type <str>) 
-}   #if this fails, query with referent
+}
 
-sp {dialog-event*apply*get-part-of-speech-objDesc*retrieve-more
+sp {dialog-event*apply*get-part-of-speech-objDesc*retrieval-LTI-with-relation-success
    (state <s> ^name dialog-event
               ^operator <o>
               ^smem <smem>
-              # ^ret <ret>
-              ^PR-game-details
-              )  
+              ^PR-game-details)  
    (<smem> ^command <cmd>
            ^result.retrieved <tret>) 
    (<tret> ^structure-type <str>)
@@ -118,19 +84,15 @@ sp {dialog-event*apply*get-part-of-speech-objDesc*retrieve-more
    (<cond> ^name <name>
            ^args <args>)
 -->
-   #(<s> ^tret <tret>)
-   (<cond> ^structure-type <str>
-           #^prep-retrieved true
-           ) #possibly add structure-type ad remove cond from operatormaybe not
+   (<cond> ^structure-type <str>)
    (<cmd> ^query <qu> -
           ^depth 5 -)
 }
 
-sp {dialog-event*apply*get-part-of-speech-objDesc*retrieve-on-failure
+sp {dialog-event*apply*get-part-of-speech-objDesc*retrieval-LTI-relation-failure*retrieve-with-referent
    (state <s> ^name dialog-event
               ^operator <o>
               ^smem <smem>
-              #^ret <ret>
               ^PR-game-details)  
    (<smem> ^command <cmd>
            ^result.failure <tret>) 
@@ -147,11 +109,10 @@ sp {dialog-event*apply*get-part-of-speech-objDesc*retrieve-on-failure
           ^structure-type <str>)
 }
 
-sp {dialog-event*apply*get-part-of-speech-objDesc*retrieve-on-failure-retrieved
+sp {dialog-event*apply*get-part-of-speech-objDesc*retrieval-with-referent-success
    (state <s> ^name dialog-event
               ^operator <o>
               ^smem <smem>
-             # ^ret <ret>
               ^PR-game-details)  
    (<smem> ^command <cmd>
            ^result.retrieved <tret>) 
@@ -163,14 +124,12 @@ sp {dialog-event*apply*get-part-of-speech-objDesc*retrieve-on-failure-retrieved
    (<cond> ^name <name>
            ^args <args>)
 -->
-   #(<s> ^tret <tret>)
-   (<s> ^current-condition <cond>)
    (<cond> ^structure-type <str>)
    (<cmd> ^query <qu> -
           ^depth 5 -)
 }
 
-# add to new set
+# add argument condition to new set when condition is not primitive
 sp {dialog-event*apply*get-part-of-speech-objDesc*add-to-new-set*not-primitive
    (state <s> ^name dialog-event
               ^operator <o>
@@ -180,14 +139,16 @@ sp {dialog-event*apply*get-part-of-speech-objDesc*add-to-new-set*not-primitive
         ^condition <cond>)
    (<cond> ^name <name>
            ^args <args>
-           ^structure-type <str>)
+           ^structure-type <str>
+           ^attribute { <> primitive <att> })
    (<args> ^<num> <new-cond>)
-   (<new-cond> ^attribute { <> primitive <att> })
+   (<new-cond> ^attribute)
 -->
    (<new-set> ^condition <new-cond>)
-   (<cond> ^prep-retrieved true)
+   (<cond> ^POS-retrieved true)
 }
 
+# Set condition with attribute primitive to done
 sp {dialog-event*apply*get-part-of-speech-objDesc*add-to-new-set*primitive
    (state <s> ^name dialog-event
               ^operator <o>
@@ -197,11 +158,10 @@ sp {dialog-event*apply*get-part-of-speech-objDesc*add-to-new-set*primitive
         ^condition <cond>)
    (<cond> ^name <name>
            ^args <args>
-           ^structure-type <str>)
-   (<args> ^<num> <new-cond>)
-   (<new-cond> ^attribute primitive)
+           ^structure-type <str>
+           ^attribute primitive)
 -->
-   (<cond> ^prep-retrieved true)
+   (<cond> ^POS-retrieved true)
 }
    
         
