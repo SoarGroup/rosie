@@ -1,11 +1,57 @@
-sp {op_pick-up1*fetch*elaborate*status*failure*not*visible
+sp {op_pick-up1*fetch*propose*handle-execution-failure*planning*failure
    (state <s> ^name op_pick-up1
-              ^target-object.predicates.visible false
               ^current-action <a>)
-   (<a> -^reset-command
-        -^pick-up-command)
+   (<a> ^{ << pick-up-command reset-command >> } <cmd>)
+   (<cmd> ^status failure
+          ^failure-reason << safety planning >>)
 -->
-   (<a> ^status failure)
+   (<s> ^operator <o> + = >)
+   (<o> ^name handle-command-failure
+        ^category failure-handling
+        ^action <a>
+        ^command <cmd>)
+}
+
+sp {op_pick-up1*fetch*propose*handle-execution-failure*second*time
+   (state <s> ^name op_pick-up1
+              ^current-action <a>)
+   (<a> ^reset-command.status success
+        ^pick-up-command <cmd>)
+   (<cmd> ^status failure)
+-->
+   (<s> ^operator <o> + = >)
+   (<o> ^name handle-command-failure
+        ^category failure-handling
+        ^action <a>
+        ^command <cmd>)
+}
+
+sp {op_pick-up1*fetch*propose*handle-command-failure
+   (state <s> ^name op_pick-up1
+              ^current-action <a>)
+   (<a> ^{ << pick-up-command reset-command >> } <cmd>)
+   (<cmd> ^status error)
+-->
+   (<s> ^operator <o> + = >)
+   (<o> ^name handle-command-failure
+        ^category failure-handling
+        ^action <a>
+        ^command <cmd>)
+}
+
+sp {op_pick-up1*fetch*propose*handle-missing-object-failure
+   (state <s> ^name op_pick-up1
+              ^current-action <a>
+             -^executing-command true
+              ^target-object <obj>)
+   (<a> -^pick-up-command.status success)
+   (<obj> ^predicates.visible false)
+-->
+   (<s> ^operator <o> + = >)
+   (<o> ^name handle-missing-object-failure
+        ^category failure-handling
+        ^action <a>
+        ^object <obj>)
 }
             
 ## Report failure if there are no more candidates for the missing object
@@ -24,7 +70,7 @@ sp {op_pick-up1*fetch*elaborate*status*failure*not*visible
 #sp {op_pick-up1*fetch*propose*report-failure*missing*object*reset*complete
 #   (state <s> ^name op_pick-up1
 #              ^problem-space.action.type execute
-#              ^current-action.reset-command.status complete
+#              ^current-action.reset-command.status success
 #             -^top-state.perception-monitor.object-monitor.new-object-info.status
 #              ^target-object.predicates.visible false)
 #-->
