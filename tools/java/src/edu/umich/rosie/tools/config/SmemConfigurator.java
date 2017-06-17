@@ -11,43 +11,35 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 public class SmemConfigurator {
-	
-	public static HashMap<String, String> ltiMap = new HashMap<String, String>();
-	
-	public static String mapLTIs(String line){
-		// Replace all lti references with a numerical equivalent
-		// (e.g. map @red1 --> @100110)
-		String[] words = line.split("\\s+");
-		for(String word : words){
-			word = word.replace("(", "").replace(")", "");
-			if(word.length() >= 2 && word.startsWith("@") && !Character.isDigit(word.charAt(1))){
-				String lti;
-				if (ltiMap.containsKey(word)){
-					lti = ltiMap.get(word);
-				} else {
-					lti = "@" + new Integer(100000 + ltiMap.size()).toString();
-					ltiMap.put(word, lti);
-				}
-				line = line.replace(word, lti);
-			}
-		}
-		return line;
-	}
-	
-	public static File configureSmem(File configFile, File outputDir, File agentDir, String agentName) throws IOException {
-		File smemDir = new File(outputDir, "/smem");
+	private HashMap<String, String> ltiMap; 
+	private ArrayList<String> filesToInclude;
+	private HashSet<String> blockList;
+	private String blockListType;
+	private File smemDir;
+
+	public SmemConfigurator(File outputDir) {
+		ltiMap = new HashMap<String, String>();
+		filesToInclude = new ArrayList<String>();
+		blockList = new HashSet<String>();
+		blockListType = "exclude-list";
+
+		smemDir = new File(outputDir, "/smem");
 		if(!smemDir.exists()){
 			smemDir.mkdir();
 		}
-
+	}
+	
+	public File configure(File configFile, File agentDir) throws IOException {
 		// File that will source all the soar files inside the smem directory
 		File smemSourceFile = new File(smemDir, "/smem_source.soar");
 		Writer sourceWriter = new BufferedWriter(new OutputStreamWriter(
 				new FileOutputStream(new File(smemDir, "/smem_source.soar"))));
 		
+		// Read the smem config file
 		if(configFile != null && configFile.exists()){
 			ArrayList<File> createdFiles = parseSmemConfigurationFile(configFile, agentDir, smemDir);
 			for(File f : createdFiles){
@@ -69,7 +61,38 @@ public class SmemConfigurator {
 		return smemSourceFile;
 	}
 	
-	private static ArrayList<File> parseSmemConfigurationFile(File configFile, File agentDir, File smemDir) {
+	public String mapLTIs(String line){
+		// Replace all lti references in a string with a numerical equivalent
+		// (e.g. map @red1 --> @100110)
+		
+		// Don't map comment lines
+		if(line.trim().startsWith("#")){
+			return line;
+		}
+		
+		String[] words = line.split("\\s+");
+		for(int i = 0; i < words.length; i++){
+			String word = words[i].replace("(", "").replace(")", "");
+			if(word.length() >= 2 && word.startsWith("@") && !Character.isDigit(word.charAt(1))){
+				String lti;
+				if (ltiMap.containsKey(word)){
+					lti = ltiMap.get(word);
+				} else {
+					lti = "@" + new Integer(100000 + ltiMap.size()).toString();
+					ltiMap.put(word, lti);
+				}
+				words[i] = lti;
+				line = line.replace(word + " ", lti + " ");
+				line = line.replace(word + ")", lti + ")");
+				if(line.endsWith(word)){
+					line = line.substring(0, line.length() - word.length()) + lti;
+				}
+			}
+		}
+		return line;
+	}	
+	
+	private ArrayList<File> parseSmemConfigurationFile(File configFile, File agentDir, File smemDir) {
 		ArrayList<File> createdFiles = new ArrayList<File>();
 		
 		BufferedReader configReader;
@@ -104,34 +127,50 @@ public class SmemConfigurator {
 				// include-file <path-from-agent-dir>
 				else if (line.startsWith("include-file") && args.length > 1){
 					String filename = args[1];
-					File sourceFile = new File(agentDir, filename);
-					File outputFile = new File(smemDir, "/" + sourceFile.getName());
-					writeSmemFile(sourceFile, outputFile);
-					createdFiles.add(outputFile);
+					filesToInclude.add(filename);
 				}
-				// Include a semantic memory file to source, while replacing handle lti's (@handle1)
-				//    and is able to be filtered (specify which items you want/don't want)
-				// filter-file <path-from-agent-dir>
-				else if(line.startsWith("filter-file") && args.length > 1){
-					String filename = args[1];
-					File sourceFile = new File(agentDir, filename);
-					File outputFile = new File(smemDir, "/" + sourceFile.getName());
-					HashMap<String, ArrayList<String> > items = parseFile(sourceFile);
-					filterSmemFile(outputFile, items);
-					createdFiles.add(outputFile);
+				// Creates a list of tagged blocks (smem --add commands) 
+				//    That you want to filter
+				//    include-list: only include smem blocks listed below
+				//    exclude-list: include all smem blocks except those listed
+				// smem-block-list << include-list exclude-list >> {
+				//    block-name1
+				//    block-name2
+				//    ...
+				// }
+				else if(line.startsWith("smem-block-list")){
+					if(args.length == 1 || !(args[1].equals("include-list") || args[1].equals("exclude-list"))){
+						System.err.println("smem-block-list must have type include-list or exclude-list");
+					} else {
+						blockListType = args[1];
+					}
+					while((line = configReader.readLine()) != null){
+						String trimmedLine = line.trim();
+						if (trimmedLine.equals("}")) break;
+						if (!trimmedLine.startsWith("#")){
+							blockList.add(trimmedLine);
+						}
+					}
 				}
 			} catch (IOException e){
 				System.err.println("ERROR in " + line);
 				System.err.println(e.getMessage());
 			}
 		}	
+		
+		for(String filename : filesToInclude){
+			File sourceFile = new File(agentDir, filename);
+			File outputFile = new File(smemDir, "/" + sourceFile.getName());
+			writeSmemFile(sourceFile, outputFile);
+			createdFiles.add(outputFile);
+		}
 		} catch (IOException e){
 			System.err.println("Could not read smem config file: " + configFile.getName());
 		}
 		return createdFiles;
 	}
 
-	private static ArrayList<File> parseLanguageSourceFile(File languageFile, File agentDir, File smemDir) {
+	private ArrayList<File> parseLanguageSourceFile(File languageFile, File agentDir, File smemDir) {
 		ArrayList<File> createdFiles = new ArrayList<File>();
 		
 		try{
@@ -164,25 +203,7 @@ public class SmemConfigurator {
 		return createdFiles;
 	}
 	
-	private static ArrayList<String> readTemplateFile(File templateDir, String templateName) throws IOException, FileNotFoundException {
-		File templateFile = new File(templateDir, "/" + templateName + ".txt");
-		if(!templateFile.exists()){
-			throw new FileNotFoundException(templateFile.getAbsolutePath());
-		}
-
-		BufferedReader templateReader = new BufferedReader(new FileReader(templateFile));
-		ArrayList<String> template = new ArrayList<String>();
-		
-		String line;
-		while((line = templateReader.readLine()) != null){
-			template.add(line);
-		}
-
-		templateReader.close();
-		return template;
-	}
-	
-	private static void writeTemplateFile(SmemTemplate template, BufferedReader configReader, File outputFile){
+	private void writeTemplateFile(SmemTemplate template, BufferedReader configReader, File outputFile){
 		try {
 			Writer outputWriter = new BufferedWriter(new OutputStreamWriter(
 					new FileOutputStream(outputFile)));
@@ -212,86 +233,38 @@ public class SmemConfigurator {
 			System.err.println(e.getMessage());
 		}
 	}
-	
-	private static HashMap<String, ArrayList<String> > parseFile(File file) throws IOException {
-		HashMap<String, ArrayList<String> > concepts = new HashMap<String, ArrayList<String> >();
-		
-		BufferedReader reader = new BufferedReader(new FileReader(file));
-		String fullline;
-		ArrayList<String> currentLines = new ArrayList<String>();
-		String handle = null;
-		while ((fullline = reader.readLine()) != null){
-			String line = fullline.trim();
-			// Ignore lines starting with #!
-			if (line.startsWith("#!") || line.startsWith("smem --add {") || line.startsWith("}")){
-				continue;
-			}
-			
-			// New concept definition
-			if (line.contains("+")){
-				// Wrap up old definition
-				if(handle != null){
-					if(concepts.containsKey(handle)){
-						System.err.println("ERROR: Concept map already contains the key " + handle);
-					} else {
-						boolean content = false;
-						for(String l : currentLines){
-							if(!l.trim().startsWith("#")){
-								content = true;
-								break;
-							}
-						}
-						if(content){
-							concepts.put(handle, currentLines);
-						}
-					}
-				}
-				
-				// Start a new concept definition block
-				int startIndex = line.indexOf("+") + 1;
-				int endIndex = line.indexOf(" ", startIndex);
-				if(endIndex == -1){
-					endIndex = line.length();
-				}
-				handle = line.substring(startIndex, endIndex);
-				currentLines = new ArrayList<String>();
-				currentLines.add(line);
-			} else if(line.length() > 0){
-				// Add the line to the current block
-				currentLines.add(mapLTIs(fullline));
-			}
-		}
-		
-		reader.close();
 
-		return concepts;
-	}
-
-	public static void writeSmemFile(File sourceFile, File outputFile) throws IOException {
+	public void writeSmemFile(File sourceFile, File outputFile) throws IOException {
 		BufferedReader reader = new BufferedReader(new FileReader(sourceFile));
 		Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile)));
 		
+		boolean write = true;
+		
 		String line;
 		while((line = reader.readLine()) != null){
-			writer.write(mapLTIs(line) + "\n");
+			if(line.trim().startsWith("#") && line.contains("+@")){
+				int i = line.indexOf("+@");
+				String blockName = line.substring(i+2);
+				if(blockName.contains(" ")){
+					blockName = blockName.substring(0, blockName.indexOf(" "));
+				}
+				if(blockListType.equals("include-list") && !blockList.contains(blockName)){
+					write = false;
+				} else if(blockListType.equals("exclude-list") && blockList.contains(blockName)){
+					write = false;
+				}
+			}
+			if(write){
+				writer.write(mapLTIs(line) + "\n");
+			}
+			if(line.trim().startsWith("}")){
+				write = true;
+			}
 		}
 		reader.close();
 		writer.close();
 	}
 	
-	private static void filterSmemFile(File smemFile, HashMap<String, ArrayList<String> > items) throws IOException {
-		Writer writer = new BufferedWriter(new OutputStreamWriter(
-				new FileOutputStream(smemFile)));
-		for(String handle : items.keySet()){
-			writer.write("smem --add {\n");
-			for(String line : items.get(handle)){
-				writer.write("  " + line + "\n");
-			}
-			writer.write("}\n\n");
-		}
-		writer.close();
-	}
-
     public static void main(String[] args) {
     	if (args.length < 2){
     		System.err.println("SmemConfigurator requires 2 argument:\n" + 
@@ -319,11 +292,11 @@ public class SmemConfigurator {
     	File outputDir = new File(System.getProperty("user.dir"));
     	
     	try {
-    		SmemConfigurator.configureSmem(inputFile, outputDir, rosieDir, agentName);
+    		SmemConfigurator smem = new SmemConfigurator(outputDir);;
+    		smem.configure(inputFile, rosieDir);
     	} catch (Exception e){
     		System.err.println("ERROR in SmemConfigurator.configureSmem");
     		System.err.println(e.getMessage());
     	}
     }
-
 }
