@@ -123,6 +123,8 @@ public class AgentMessageParser
 			return translateGetAgentGameActionDescription(fieldsId);
 		} else if(type.equals("agent-game-concept-definition")){
 			return translateGetAgentGameConceptDefinition(fieldsId);
+		} else if(type.equals("agent-detect-game-concepts")){
+			return translateGetAgentDetectGameConcepts(fieldsId);
 		} else if(type.equals("agent-location-description")){
 			return translateLocationDescription(fieldsId);
 		} else if(type.equals("get-location-info")){
@@ -311,6 +313,11 @@ public class AgentMessageParser
     	
         }
 	
+    public static String translateGetAgentDetectGameConcepts(Identifier fieldsId)  {
+    	String conceptSeen = "";
+    	conceptSeen = SoarUtil.getValueOfAttribute(fieldsId, "concept-seen");
+    	return conceptSeen;
+    }
 	public static String translateGetAgentGameActionDescription(Identifier fieldsId) {
 		Identifier descSetId = SoarUtil.getIdentifierOfAttribute(fieldsId, "descriptions");
 		String actionDescription = "";
