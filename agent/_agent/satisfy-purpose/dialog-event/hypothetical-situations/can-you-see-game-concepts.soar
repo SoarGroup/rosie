@@ -1,4 +1,3 @@
-#PR - TODO Need to add incomplete to the state. It comes here after apply interpret
 sp {dialog-event*propose*answer-can-you-see-game-concepts
    (state <s> ^name dialog-event
               ^purpose <p>)
@@ -8,20 +7,20 @@ sp {dialog-event*propose*answer-can-you-see-game-concepts
    (<params> ^gtype <gtype> 
              ^game-handle <game>)
  -->
-   (<s> ^operator <o> +) #PR - add specific preferences where this is greater than goal, failure, action
+   (<s> ^operator <o> +) #PR - could add specific preferences where this is greater than goal, failure, action
    (<o> ^name answer-can-you-see-game-concepts
         ^gtype <gtype> 
         ^game-handle <game>)
 }
 
-sp {dialog-event*elaborate*answer-can-you-see-game-concepts
+sp {dialog-event*apply*answer-can-you-see-game-concepts
    (state <s> ^name dialog-event
               ^purpose <p>
-              ^operator <o> +)
+              ^operator <o>)
    (<p> ^type agent-detect-game-concepts
         ^parameters <params>
         ^satisfaction <sat>)   
-   (<params> ^gtype <gtype> 
+   (<params> ^gtype <gtype>
              ^game-handle <game>) 
    (<o> ^name answer-can-you-see-game-concepts
         ^gtype <gtype> 
@@ -31,7 +30,7 @@ sp {dialog-event*elaborate*answer-can-you-see-game-concepts
        ^gtype <gtype>
        ^incomplete <inc>)
 }
-
+    
 # Apply operator answer-can-you-see-game-concepts
 sp {dialog-event*apply*answer-can-you-see-game-concepts*get-no-result-predicates
     (state <s> ^name dialog-event 
@@ -50,19 +49,132 @@ sp {dialog-event*apply*answer-can-you-see-game-concepts*get-no-result-predicates
     (<s> ^concept-seen no)
 }
 
-sp {dialog-event*elaborate*answer-can-you-see-game-concepts*concept-found
-   (state <s> ^name dialog-event 
-              ^operator <o1> +
-              ^operator <o2> +
-              ^gtype <gtype>
-              ^<gtype> <t>)
+####################################
+# Propose game-concept-identified - When game-concepts are recognized and operator is proposed
+####################################
+
+sp {operator*impasse-tie*propose*game-concept-identified
+   (state <s> ^superstate <ss>
+              ^attribute operator
+              ^impasse tie)
+   (<ss> ^name dialog-event
+         ^operator <o1> +
+         ^operator <o2> +
+         ^gtype <gtype>)
+   (<o1> ^type <gtype>)
+   (<o2> ^name answer-can-you-see-game-concepts)
+   -{ (<s> ^item { > <o1> <> <o2> <o3> }) }
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name game-concept-identified
+        ^operator <o2>
+        ^concept_operators <con>)
+   (<ss> ^concept_operators <con>)
+}
+
+sp {operator*impasse-tie*elaborate*game-concept-identified
+   (state <s> ^superstate <ss>
+              ^attribute operator
+              ^impasse tie 
+              ^operator <o> +)
+   (<ss> ^name dialog-event
+         ^operator <o1> +
+         ^gtype <gtype>)   
+   (<o> ^name game-concept-identified
+        ^concept_operators <con>)
+   (<o1> ^type <gtype>)
+-->
+   (<con> ^operators <o1>)
+}
+
+sp {operator*impasse-tie*apply*game-concept-identified*goal-or-failure
+   (state <s> ^superstate <ss>
+              ^attribute operator
+              ^impasse tie
+              ^operator <o>)
+   (<o> ^name game-concept-identified
+        ^concept_operators <con>)
+   (<con> ^operators <o1>)
+   (<ss> ^name dialog-event
+         ^operator <o1> +
+         ^operator <o2> +
+         ^gtype <gtype>
+         ^<gtype> <t>)
    (<t> ^aname <concept-name>)
    (<o1> ^name <concept-name>)
    (<o2> ^name answer-can-you-see-game-concepts)
 -->
-   (<s> ^concept-seen yes)
+   (<ss> ^concept-seen yes)
 }
-     
+
+
+#PR - TODO Delete the following once you have it telling you the number of actions
+# Actions
+
+#sp {dialog-event*elaborate*answer-can-you-see-game-concepts*action
+#   (state <s> ^name dialog-event
+#              ^purpose <p>
+#              ^operator <o> +)
+#   (<p> ^type agent-detect-game-concepts
+#        ^parameters <params>
+#        ^satisfaction <sat>)   
+#   (<params> ^gtype action 
+#             ^game-handle <game>) 
+#   (<o> ^name answer-can-you-see-game-concepts
+#        ^gtype <gtype> 
+#        ^game-handle <game>)
+#-->
+#  (<s> ^detect-game-concepts <game>
+#       ^gtype <gtype>
+#       #^proposed_actions <prop_act> -> ^<action_name> <act> <act> ^num 0
+#       #^num_actions 0
+#       ^operators_added <add>)
+#}
+##PR - Given the following condition, we can propose an operator in the substate or in this state with no real pre-conditions
+#sp {dialog-event*elaborate*answer-can-you-see-game-concepts*action-found
+#   (state <s> ^name dialog-event 
+#              ^operator <o> +
+#              ^operator <o1> +
+#              ^gtype <gtype>
+#              #^num_actions <num_actions>
+#              ^operators_added <add>)
+#   (<add> -^operator <o1>)
+#   (<o> ^name answer-can-you-see-game-concepts
+#         ^gtype <gtype>
+#         ^game-handle <game>)
+#   (<o1> ^type action
+#         ^name <name>)
+#-->
+#   #(<s> ^num_actions <num_actions> -
+#   #                (+ <num_actions> 1))
+#   (<o1> ^added yes)    
+#}   
+#
+#sp {dialog-event*elaborate*answer-can-you-see-game-concepts*action-added
+#    (state <s> ^name dialog-event 
+#               ^operator <o1> +
+#               ^operators_added <add>)
+#    (<o1> ^type action
+#          ^name <name>
+#          ^added yes)
+#-->
+#   (<add> ^operator <o1>)
+#}
+#
+#sp {dialog-event*elaborate*answer-can-you-see-game-concepts*action-found*complete
+#   (state <s> ^name dialog-event 
+#              ^operator <o> +
+#              ^gtype <gtype>)
+#    (<o> ^name answer-can-you-see-game-concepts
+#         ^gtype <gtype>
+#         ^game-handle <game>)
+#   -{(<s> ^operator <o1>)
+#     (<o1> ^type action
+#           -^added yes)}
+#-->
+#   (<s> ^concept-seen yes)
+#}
+    
 ################################################################
 # Report answer using complete-answer-can-you-see-game-concepts
 ################################################################
