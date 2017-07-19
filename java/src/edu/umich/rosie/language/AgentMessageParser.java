@@ -314,10 +314,22 @@ public class AgentMessageParser
         }
 	
     public static String translateGetAgentDetectGameConcepts(Identifier fieldsId)  {
-    	String conceptSeen = "";
-    	conceptSeen = SoarUtil.getValueOfAttribute(fieldsId, "concept-seen");
-    	return conceptSeen;
+    	Identifier responseId = SoarUtil.getIdentifierOfAttribute(fieldsId, "response");
+    	
+    	String num_actions = SoarUtil.getValueOfAttribute(responseId, "count");
+    	String conceptSeen = SoarUtil.getValueOfAttribute(responseId, "concept-seen");
+    	String type = SoarUtil.getValueOfAttribute(responseId, "type");
+    	
+    	if (conceptSeen.equals("Yes") && type.equals("action"))
+    	{
+    		return "Yes. I see " + num_actions + " actions.";
+    	}
+    	else
+    	{
+    		return conceptSeen;
+    	}
     }
+    
 	public static String translateGetAgentGameActionDescription(Identifier fieldsId) {
 		Identifier descSetId = SoarUtil.getIdentifierOfAttribute(fieldsId, "descriptions");
 		String actionDescription = "";
