@@ -1,0 +1,113 @@
+###########################################################################
+# Operator: smem query 
+# If you add wme ^smem-query-cue <cue> to any state, it will cue the semantic memory for the substructure
+
+
+############################################################################
+# Operator: smem lti retrieval operator which can be fired on any state
+# If you add the wme ^query-lti <lti> to ANY state, it will do the retrieval
+#   of the substructure for epmem
+# Will add a ^queryd-lti <lti> to the state when done
+
+
+sp {anystate*propose*smem-query
+   (state <s> ^smem-query <query>)
+   (<query> ^cue <cue>
+           -^result)
+-->
+   (<s> ^operator <o> + > =)
+   (<o> ^name smem-query
+        ^query-info <query>)
+}
+
+sp {anystate*apply*smem-query*create*query*command
+   (state <s> ^operator <o>
+              ^smem.command <cmd>)
+   (<o> ^name smem-query
+        ^query-info.cue <cue>)
+-->
+   (<cmd> ^query <cue>)
+}
+
+sp {anystate*apply*smem-query*copy*params
+   (state <s> ^operator <o>
+              ^smem.command <cmd>)
+   (<o> ^name smem-query
+        ^query-info <info>)
+   (<info> ^{ <att> <> cue <> result <> result-name <> destination } <val>)
+-->
+   (<cmd> ^<att> <val>)
+}
+#
+#sp {new*anystate*apply*smem-query*clear*command
+#   (state <s> ^smem.command <cmd>
+#	      ^operator <op>)
+#   (<op> ^name smem-query-new
+#   	 ^identifier <lti>)
+#   (<cmd> ^{<command> << query store query >>} {<olti> <> <lti>})
+#-->
+#   (<cmd> ^<command> <olti> -)
+#}
+
+sp {anystate*apply*smem-query*create*result*success
+   (state <s> ^operator <o>
+              ^smem.result <res>
+              ^smem.result.success <cue>)
+   (<o> ^name smem-query
+        ^query-info <info>)
+   (<info> ^cue <cue>)
+   (<res> ^success <cue>
+          ^retrieved <top-lti>
+         -^retrieved.<att> <top-lti>)
+-->
+   (<info> ^result <top-lti>)
+}
+
+sp {anystate*apply*smem-query*create*result*success*result-name
+   (state <s> ^operator <o>
+              ^smem.result <res>
+              ^smem.result.success <cue>)
+   (<o> ^name smem-query
+        ^query-info <info>)
+   (<info> ^cue <cue>
+           ^destination <dest>
+           ^result-name <name>)
+   (<res> ^success <cue>
+          ^retrieved <top-lti>
+         -^retrieved.<att> <top-lti>)
+-->
+   (<dest> ^<name> <top-lti>)
+}
+
+sp {anystate*apply*smem-query*create*result*failure
+   (state <s> ^operator <o>
+              ^smem.result.failure <cue>)
+   (<o> ^name smem-query
+        ^query-info <info>)
+   (<info> ^cue <cue>)
+-->
+   (<info> ^result failure)
+}
+
+sp {anystate*apply*smem-query*create*result*failure*result-name
+   (state <s> ^operator <o>
+              ^smem.result.failure <cue>)
+   (<o> ^name smem-query
+        ^query-info <info>)
+   (<info> ^cue <cue>
+           ^destination <dest>
+           ^result-name <name>)
+-->
+   (<dest> ^<name> failure)
+}
+
+sp {anystate*apply*smem-query*clear*smem*command
+   (state <s> ^operator <o>
+              ^smem.result.{ << success failure >> } <cue>
+              ^smem.command <cmd>)
+   (<o> ^name smem-query
+        ^query-info.cue <cue>)
+   (<cmd> ^<att> <val>)
+-->
+   (<cmd> ^<att> <val> -)
+}

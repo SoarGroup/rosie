@@ -1,0 +1,58 @@
+interpret-failure
+
+This operator is proposed when a failure is reported to interaction.status
+In the substate, the failure is taken care of and proper steps are taken.
+For each failure type, there should be a interpret-FAILURE-TYPE operator to handle it
+This operator should mark what needs to change on the state, and the complete-interpret-failure operator
+  will apply those changes (see change-list below)
+
+##### Superoperator Rep #####
+
+^failure <f> # from interaction.status.failure <f>
+
+###### change-list #####
+
+These are things you can add to the state which will be applied
+  during complete-interpret-failure
+  
+^new-segment-info <info> # info for a new segment to be added (see push-segment)
+^outgoing-message <msg>  # A message to be sent to the instructor, handled by interpret-message
+^terminate-segment true  # Pop the current interaction segment
+^remove-message true     # If there is a new-message on interaction.status, remove it
+^pop-action true         # Pop the current action from the action-stack
+
+
+##### Failures #####
+
+## failed-to-interpret-message
+	When the language comprehension system fails to interpret a message
+Effects:
+	Terminate Segment
+	Send Message: unable-to-interpret-message
+
+
+## index-object-failure
+	When the language comprehension system fails to ground an object
+Effects:
+	Stop interpreting the current message
+	Send Message: index-object-failure
+	
+
+## learn-location-failure
+	The human tried to teach a location, but we weren't in a known place
+Effects:
+	Terminate Segment
+	Send Message: learn-location-failure
+	
+	
+## retrospective-learning-failure
+	During retrospective learning the goal was not achieved
+Effects:
+	Terminate Segment
+	Send Message: retrospective-learning-failure
+
+	
+## unknown-location
+	The user asks us to go to a location but we don't know where it is
+Effects:
+	

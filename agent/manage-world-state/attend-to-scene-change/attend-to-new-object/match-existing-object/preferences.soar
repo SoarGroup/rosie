@@ -1,0 +1,80 @@
+#### matches-object-handle : This is the best match, prefer this one
+sp {match-existing-object*elaborate*best*preference*matches-object-handle
+   (state <s> ^name match-existing-object
+              ^operator <o> +)
+   (<o> ^name matches-object-handle)
+-->
+   (<s> ^operator <o> >)
+}
+
+#### matches-overlapping-object : A new perception object is overlapped by an existing one
+
+# First find intersecting objects, then overlapping ones
+sp {match-existing-object*prefer*intersect-command*over*overlap-command
+   (state <s> ^name match-existing-object
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name intersect-command)
+   (<o2> ^name overlap-command)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+# Wait to match an overlapping object until all svs-commands have finished
+sp {match-existing-object*prefer*svs-commands*over*matches-overlapping-object
+   (state <s> ^name match-existing-object
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name << intersect-command overlap-command >>)
+   (<o2> ^name << matches-overlapping-object matches-object-predicates >>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+# Prefer more overlap when matching
+sp {match-existing-object*prefer*matches-overlapping-object*with*more*overlap
+   (state <s> ^name match-existing-object
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name matches-overlapping-object
+         ^overlap <val1>)
+   (<o2> ^name matches-overlapping-object
+         ^overlap {<val2> < <val1>})
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+# If matching a visible object, the overlap must exceed the contained-threshold to count
+sp {match-existing-object*reject*matches-overlapping-object*not*enough*overlap
+   (state <s> ^name match-existing-object
+              ^operator <o> +
+              ^contained-threshold <thresh>)
+   (<o> ^name matches-overlapping-object
+        ^overlapping-object.status.visible true
+        ^overlap < <thresh>)
+-->
+   (<s> ^operator <o> -)
+}
+
+#### matches-object-predicates
+# Matches an existing object based on the predicates
+sp {match-existing-object*reject*matches-object-predicates*epmem*has*svs*object
+   (state <s> ^name match-existing-object
+              ^source-type epmem-obj
+              ^operator <o> +)
+   (<o> ^name matches-object-predicates
+        ^candidate.object-info.belief-obj <any>)
+-->
+   (<s> ^operator <o> -)
+}
+
+
+#### matches-none
+# If no matches are found, report none to superstate
+sp {match-existing-object*elaborate*worst*preference*matches-none
+   (state <s> ^name match-existing-object
+              ^operator <o> +)
+   (<o> ^name matches-none)
+-->
+   (<s> ^operator <o> <)
+}

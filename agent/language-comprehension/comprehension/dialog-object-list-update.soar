@@ -1,0 +1,81 @@
+sp {comprehension*elaborate*possible-referent*assigner
+   (state <s> ^name comprehension
+              ^segment.last-merge <lm>)
+   (<lm> ^assigner.parent-receiver <rh>)
+   (<rh> ^referent
+         ^ground-tested)
+-->
+   (<s> ^referent-home <rh>)}  
+
+sp {comprehension*elaborate*possible-referent*head
+   (state <s> ^name comprehension
+              ^segment.last-merge <lm>)
+   (<lm> ^assigner.parent-receiver <pr>)
+   (<pr> ^<< complement complement2 head >> <rh>
+         ^ground-tested)
+   (<rh> ^referent)
+-->
+   (<s> ^referent-home <rh>)}  
+
+sp {comprehension*elaborate*possible-referent*complement
+   (state <s> ^name comprehension
+              ^segment.last-merge <lm>)
+   (<lm> ^assigner.parent-receiver <pr>)
+   (<pr> ^<< complement complement2 >> <comp> 
+        -^head.referent
+         ^ground-tested)
+   (<comp> ^head <rh>)
+   (<rh> ^referent)
+--> 
+   (<s> ^referent-home <rh>)}   
+
+sp {comprehension*propose*dialog-object-list-update
+#:interrupt
+   (state <s> ^name comprehension
+             -^name evaluate-operator
+              ^referent-home.referent <obj>
+             -^referent-home.referent { <> <obj> }   # only one
+              ^top-state.dialog-object-list <dol>)
+  -(<dol> ^referent <obj>)      # don't duplicate
+-->
+   (<s> ^operator <op> + >)
+   (<op> ^name dialog-object-list-update
+         ^referent <obj>)
+}
+sp {comprehension*compare*dialog-object-list-update
+   (state <s> ^name comprehension
+              ^operator <op1> +
+                        <op2> +)
+   (<op1> ^name dialog-object-list-update)
+   (<op2> ^name << process-phrase-end process-semantics merge process-missing-assigner ground-referent ground-new-constraint clean-up-retrieved-stack >>)
+-->
+   (<s> ^operator <op1> > <op2>)
+}
+
+sp {apply*tested-referent*add-referent-dialog-object-list
+#:interrupt
+   (state <s> ^operator <op> 
+              ^top-state <ts>)
+   (<op> ^name dialog-object-list-update
+         ^referent <obj>)
+   (<ts> ^dialog-object-list <dol>)
+-->
+#(interrupt)
+   (<ts> ^dialog-object-list <dol> -
+                             <ndol>)
+   (<ndol> ^referent <obj>
+           ^next <dol>)
+}
+
+sp {apply*tested-referent*add-referent-dialog-object-list-access
+   (state <s> ^operator <op> 
+              ^tsegment <seg>)
+   (<op> ^name dialog-object-list-update
+         ^referent <obj>)
+   (<seg> ^dialog-object-list-access <dol>)
+-->
+   (<seg> ^dialog-object-list-access <dol> -
+                             <ndol>)
+   (<ndol> ^referent <obj>
+           ^next <dol>)
+}

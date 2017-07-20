@@ -1,0 +1,57 @@
+sp {send-message*propose*complete-send-message
+   (state <s> ^name send-message)
+-->
+   (<s> ^operator <o> + <)
+   (<o> ^name complete-send-message)
+}
+
+sp {send-message*apply*complete-send-message*delete*message
+   (state <s> ^name send-message
+              ^operator.name complete-send-message
+              ^message <msg>
+              ^top-state.interaction.changes <c>)
+   (<c> ^outgoing-message <msg>)
+-->
+   (<c> ^outgoing-message <msg> -)
+}
+
+sp {send-message*apply*complete-send-message*send*message*no*flags
+   (state <s> ^name send-message
+              #^agent-params.sentence-source chat
+              ^operator.name complete-send-message
+              ^created-message <msg>
+              ^io.output-link <out>
+              ^agent-params.debug-interaction <flag>)
+   (<msg> -^flags)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^originator agent
+          ^flags <f>)
+   (write (ifeq <flag> true (concat |Outgoing Message: | (crlf) (cmd print <msg> -d 2)) ||))
+}
+
+sp {send-message*apply*complete-send-message*send*message*flags
+   (state <s> ^name send-message
+              ^agent-params.sentence-source chat
+              ^operator.name complete-send-message
+              ^created-message <msg>
+              ^io.output-link <out>
+              ^agent-params.debug-interaction <flag>)
+   (<msg> ^flags)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^originator agent)
+   (write (ifeq <flag> true (concat |Outgoing Message: | (crlf) (cmd print <msg> -d 2)) ||))
+}
+
+sp {send-message*apply*complete-send-message*expected*message*terminate
+   (state <s> ^name interpret-message
+              ^operator.name complete-send-message
+	      ^current-purpose.satisfaction.dialog-event <de>
+	      ^created-message.type <type>
+	      ^top-state.interaction.changes <c>)
+   (<de> ^type <type>
+         ^originator agent)
+-->
+   (<c> ^terminate-segment true)
+}

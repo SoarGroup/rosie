@@ -1,0 +1,116 @@
+
+sp {describe-object-location*propose*describe-object
+   (state <s> ^name describe-object-location
+               ^<< obj obj2 >> <obj>
+              -^described <obj>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name describe-object
+        ^object <obj>)
+} 
+# TODO describe-object broken or just smem issue??
+
+sp {describe-object-location*apply*describe-object
+   (state <s> ^name describe-object-location
+              ^descriptions <d>
+              ^operator <o>)
+   (<o> ^name describe-object
+        ^object <obj>
+        ^description <desc>)
+-->
+   (<s> ^described <obj>)
+   (<d> ^obj-desc <objd>)
+   (<objd> ^desc <desc> ^object <obj>)  
+#   (<desc> ^word object ^word red)
+}
+
+sp {describe-object-location*propose*find-a-relation
+   (state <s> ^name describe-object-location
+               ^obj <obj>
+               ^described <obj>
+              -^relation
+               ^top-state.object <obj2>
+               ^top-state.prepositions.prep <p>)
+   (<obj> ^id <id>)
+   (<obj2> ^id <id2>)
+   (<p> ^name <prep> ^pair <pair>)
+   (<pair> ^a <id1> ^b <id2>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name find-a-relation
+        ^obj <obj>
+        ^obj2 <obj2>
+        ^relation <prep>)
+}
+sp {describe-object-location*apply*find-a-relation
+   (state <s> ^name describe-object-location
+               ^obj <obj>
+               ^operator <o>)
+   (<o> ^name find-a-relation
+        ^obj <obj>
+        ^obj2 <obj2>
+        ^relation <rel>)
+-->
+   (<s> ^obj2 <obj2>
+        ^relation <rel>)
+}
+
+
+sp {describe-object-location*propose*complete-location-question
+   (state <s> ^name describe-object-location
+              ^obj <obj1>
+              ^obj2 <obj2>
+              ^relation <rel>
+              ^descriptions <d>)
+   (<d> ^obj-desc <objd1> ^obj-desc <objd2>)
+   (<objd1> ^desc <desc1> ^object <obj1>)
+   (<objd2> ^desc <desc2> ^object <obj2>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name complete-location-question
+        ^obj1 <desc2>
+        ^obj2 <desc1>
+        ^relation <rel>)
+}
+
+
+sp {describe-object-location*apply*complete-location-question
+   (state <s> ^name describe-object-location
+              ^top-state.io.output-link <out>
+              ^top-state.status <status>
+              ^operator <o>)
+   (<o> ^name complete-location-question
+        ^obj1 <desc1>
+        ^obj2 <desc2>
+        ^relation <rel>)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type describe-scene
+          ^fields <f>)
+   (<f> ^object1 <desc1> ^object2 <desc2> ^prep <rel>)
+   (<status> ^performed.dialog-event.type explanation)
+}
+
+
+sp {describe-object-location*propose*end-location-question*no-preps
+   (state <s> ^name describe-object-location
+              ^obj.id <objid>
+             -^top-state.prepositions.prep.pair.a <obj>)
+-->
+   (<s> ^operator <o> + <)
+   (<o> ^name end-location-question)
+}
+
+
+sp {describe-object-location*apply*end-location-question
+   (state <s> ^name describe-object-location
+              ^top-state.io.output-link <out>
+              ^top-state.status <status>
+              ^operator <o>)
+   (<o> ^name end-location-question)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type location-unknown
+          ^fields <f>)
+   (<status> ^performed.dialog-event.type explanation)
+}

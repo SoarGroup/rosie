@@ -1,0 +1,44 @@
+sp {comprehension*propose*runaway-word-processing
+   (state <s> ^name comprehension
+              ^segment.decision-count-threshold <thres>
+              ^top-state.io.input-link.time.steps > <thres>)
+-->
+   (<s> ^operator <op> !)
+   (<op> ^name runaway-word-processing)
+} 
+
+sp {apply*runaway-word-processing*internal
+   (state <s> ^operator.name runaway-word-processing
+              ^agent-params.sentence-source scripts
+              ^top-state <ts> 
+              ^segment <seg>)
+   (<seg> ^original-sentence <cs>
+          ^decision-count-threshold <thres>) 
+   (<ts> ^current-sentence-number <csn>
+         ^failure-count <fc>)
+-->
+ #  (interrupt)
+   (<seg> ^decision-count-threshold <thres> -)
+   #(write (crlf) |Runaway processing: | <thres>)
+   (<seg> ^processed-terminator true)
+   (<cs> ^processed-sentence true
+         ^processing-result failure)
+   (<ts> ^terminated-sentence <csn>
+         ^failure-count <fc> - (+ <fc> 1))
+}
+
+sp {apply*runaway-word-processing*external
+   (state <s> ^operator.name runaway-word-processing
+              ^agent-params.sentence-source chat
+              ^segment <seg>)
+   (<seg> ^original-sentence <cs>
+          ^decision-count-threshold <thres>) 
+-->
+#   (interrupt)
+   (<seg> ^decision-count-threshold <thres> -)
+   #(write (crlf) |Runaway processing: | <thres>)
+   (<seg> ^processed-terminator true)
+   (<cs> ^processed-sentence true
+         ^processing-result failure)
+}
+

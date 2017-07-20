@@ -1,0 +1,53 @@
+sp {rosie*propose*next-sentence
+#:interrupt
+   (state <s> ^agent-params.sentence-source scripts
+              ^max-sentence-number <n>
+              ^current-sentence-number { < <n> <csn> }
+              ^terminated-sentence <csn>)
+--> 
+   (<s> ^operator <op> + =, >)
+   (<op> ^name next-sentence
+         ^next-sentence-number (+ <csn> 1))
+}
+
+sp {rosie*propose*next-sentence*skip
+#:interrupt
+   (state <s> ^superstate <ss>
+              ^agent-params.sentence-source scripts
+              ^segment.input-sentence.skip true)
+   (<ss> ^superstate nil
+         ^current-sentence-number <csn>)
+--> 
+   (<ss> ^terminated-sentence <csn>)
+}
+
+sp {apply*next-sentence
+   (state <s> ^operator <op>
+              ^current-sentence-number <csn>
+              ^terminated-sentence <csn>)
+   (<op> ^name next-sentence
+         ^next-sentence-number <n>)
+-->
+   (<s> ^terminated-sentence <csn> -
+        ^current-sentence-number <n>
+        ^current-sentence-number <csn> -)
+   #(write (crlf) |--------------Next Sentence #| <n>)
+ #(interrupt)
+}
+
+sp {apply*next-sentence2
+   (state <s> ^operator <op>
+              ^interaction.status <stat>)
+   (<stat> ^new-message <nm>)
+   (<op> ^name next-sentence)
+-->
+   (<stat> ^new-message <nm> -)
+}
+
+sp {apply*next-sentence-update-dialog-object-list-saved
+   (state <s> ^operator.name next-sentence
+              ^dialog-object-list-saved <dols>
+              ^dialog-object-list { <dol> <> <dols> })
+-->
+   (<s> ^dialog-object-list-saved <dols> -
+                                  <dol>)}

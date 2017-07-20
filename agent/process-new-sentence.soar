@@ -1,0 +1,67 @@
+#process new sentence from script or input link by creating a new segment that will get pushed onto stack
+sp {rosie*propose*process-new-sentence*scripted
+   (state <s> ^superstate nil
+              ^agent-params.sentence-source scripts
+              ^current-sentence <sentence>
+              ^current-sentence-number <csn>
+             -^terminated-sentence <cs>)
+   (<sentence> -^segment-proposed true)
+-->
+   (<s> ^operator <op> + >) # allow I/O
+   (<op> ^name process-new-sentence
+         ^sentence <sentence>)
+}
+sp {rosie*propose*process-new-sentence*input-link
+   (state <s> ^superstate nil
+              ^agent-params.sentence-source chat
+              ^io.input-link.language.sentence <sentence>)
+   (<sentence> -^segment-proposed true)
+-->
+   (<s> ^operator <op> + >)
+   (<op> ^name process-new-sentence
+         ^original-sentence <sentence>)
+}
+
+sp {rosie*apply*process-new-sentence*copy*new-segment-info*from-script
+   (state <s> ^superstate nil
+              ^operator <op>
+              ^top-state.interaction.changes <c>)
+   (<op> ^name process-new-sentence
+         ^sentence <sentence>)
+   (<sentence> ^original-sentence <os>)
+   #(<os> ^complete-sentence <cs1>)
+-->
+   #(write (crlf) <cs1>)   
+   (<sentence> ^segment-proposed true)
+   (<c> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type process-sentence 
+        ^parameters.sentence (deep-copy <os>)
+        ^satisfaction <sat>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type process-sentence
+          ^originator agent)
+}
+
+sp {rosie*apply*process-new-sentence*copy*new-segment-info*from-input-link
+   (state <s> ^superstate nil
+              ^operator <op>
+              ^top-state.interaction.changes <c>)
+   (<op> ^name process-new-sentence
+         ^original-sentence <os>)
+-->
+ #  (write (crlf) (cmd print <os>))
+   (<os> ^segment-proposed true)
+   (<c> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type process-sentence 
+        ^parameters.sentence (deep-copy <os>)
+        ^satisfaction <sat>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type process-sentence
+          ^originator agent)
+}
+
+
