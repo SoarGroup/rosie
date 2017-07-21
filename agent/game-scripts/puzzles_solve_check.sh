@@ -26,9 +26,11 @@ old="Old"
 #declare -a arr=("husbands" "3tower" "stackedfrogs" "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2" "kstackedfrogs" "sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken" "kenp" "ksudoku" "ktour" "sorting")
 #declare -a arr=("ktour" "sorting")
 
-#declare -a arr=("sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken" "kenp" "ksudoku" "ktour" "sorting")
+declare -a arr=("stackedfrogs" "lazystackedfrogs" "kstackedfrogs")
 
-declare -a arr=("15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "husbands" "3tower" "stackedfrogs" "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2" "kstackedfrogs" "sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken" "kenp" "ksudoku" "ktour" "sorting")
+#declare -a arr=("15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "husbands" "3tower" "sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken" "kenp" "ksudoku" "ktour" "sorting")
+
+#declare -a arr=("15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "husbands" "3tower" "stackedfrogs" "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2" "kstackedfrogs" "sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken" "kenp" "ksudoku" "ktour" "sorting")
 #declare -a arr=("sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken" "kenp" "ksudoku")
 #declare -a arr=("3tower")
 #declare -a arr=("sudoku" "logi5" "jigsawdoku" "cannibals")
@@ -118,7 +120,7 @@ do
 			
 			if [ ! -f $rfile$tstats ]
 			then
-				echo "  ::: New time results :::   "
+				echo "  ::: NOT COPY New time results :::   "
 				#cp startend.seconds $rfile$tstats
 				#cp startend.decisions $rfile$dec
 				#cp states.txt $rfile$states
