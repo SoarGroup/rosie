@@ -14,6 +14,7 @@ import java.util.Random;
 import java.util.Set;
 
 import javax.swing.plaf.basic.BasicSliderUI.ScrollListener;
+
 import com.sun.org.omg.CORBA.IdentifierHelper;
 //import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils.Collections;
 
@@ -323,6 +324,12 @@ public class AgentMessageParser
     	if (conceptSeen.equals("Yes") && type.equals("action"))
     	{
     		return "Yes. I see " + num_actions + " actions.";
+    	}
+    	// PR - add situation where you can detect a single action and respond about the same
+    	else if (conceptSeen.equals("No") && (type.equals("goal") || type.equals("failure"))) // PR - THis won't work with multiple actions, since there might be too many that don't match,  
+    	{
+    		String reason = translateUnsatisfiedCondition(responseId);
+    		return conceptSeen + ". " + reason;
     	}
     	else
     	{
