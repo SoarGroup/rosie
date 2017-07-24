@@ -10,12 +10,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
 import javax.swing.plaf.basic.BasicSliderUI.ScrollListener;
 
-import com.sun.org.omg.CORBA.IdentifierHelper;
 //import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils.Collections;
 
 import sml.Identifier;
@@ -1132,33 +1132,41 @@ public class AgentMessageParser
 	}
 	
 	public static String generateObjectDescription(Identifier descId){
-		String root = "block"; // PR - Verify if block is a correct default option
+		String root = "object"; // PR - Commenting because now category seems to be correct. Verify after merge
 		ArrayList<String> adjectives = new ArrayList<String>();
 		Identifier predsId = SoarUtil.getIdentifierOfAttribute(descId, "predicates");
 		
+		Map<String, String> att_val = new HashMap<String, String>();
 		for(int c = 0; c < predsId.GetNumberChildren(); c++){
 			WMElement el = predsId.GetChild(c);
 			String att = el.GetAttribute().toLowerCase();
 			String val = el.GetValueAsString().toLowerCase();
-			if(att.equals("name")){
-				if (!root.equals("block")){
-					adjectives.add(root);
-				}
-				root = val.replace("1","");
-			} else if(att.equals("shape")){
-				if (root.equals("block")){
-					val = val.replace("1", "");
-					root = val;
-				} else {
-					adjectives.add(val);
-				}
-			} else if(att.equals("color") || att.equals("size")) {
-				adjectives.add(val);
-			} else {
-				continue;
-			}
+			att_val.put(att, val);
 		}
 		
+		if(att_val.containsKey("shape"))
+		{
+			root = att_val.get("shape");
+		}
+		else if (att_val.containsKey("category"))
+		{
+			root = att_val.get("category");
+		}
+		root = root.replaceAll("1", "");
+		
+		if (att_val.containsKey("size"))
+		{
+			adjectives.add(att_val.get("size"));
+		}
+		if(att_val.containsKey("color"))
+		{
+			adjectives.add(att_val.get("color"));
+		}
+		if(att_val.containsKey("name"))
+		{
+			adjectives.add(att_val.get("name"));
+		}
+		// PR - TODO: need to address other attributes such as x and y co-ordinates and such. Figure how to do this in a general way.
 		String desc = "";
 		for(String adj : adjectives){
 			adj = adj.replace("1", "");
