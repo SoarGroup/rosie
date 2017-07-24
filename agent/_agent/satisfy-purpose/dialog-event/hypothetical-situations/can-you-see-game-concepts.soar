@@ -1,6 +1,6 @@
 sp {dialog-event*propose*answer-can-you-see-game-concepts
    (state <s> ^name dialog-event
-              -^descriptions <descs>
+              #-^descriptions <descs>
               ^purpose <p>)
    (<p> ^type agent-detect-game-concepts
         ^parameters <params>
@@ -45,9 +45,9 @@ sp {dialog-event*apply*answer-can-you-see-game-concepts*get-no-result-predicates
     (<set> -^instance)
 -->
     (<s> ^set <inc>
-         ^PR-game-details yes
+         #^PR-game-details yes
          ^concept-seen No)
-    (<inc> ^conditions <con>)
+    (<inc> ^condition <con>)
 } #PR - link this to resolve-satisfaction-failure so that lowest condition will be generated
 
 # Preferences - in order to not propose answer-can-you-see-game-concepts again
@@ -157,8 +157,8 @@ sp {dialog-event*op-no-change*apply*get-game-details*true-to-false
 
 sp {dialog-event*propose*complete-answer-can-you-see-game-concepts
    (state <s> ^name dialog-event
-              ^combined
-              ^generated <gen>
+              #^combined
+              #^generated <gen>
               ^concept-seen <seen>
               ^purpose.type <type>)
 -->
@@ -183,16 +183,18 @@ sp {dialog-event*apply*complete-answer-can-you-see-game-concepts*concept-seen-ye
    (<res> ^concept-seen <seen>
           ^count (size <con>)
           ^type <gtype>)
-}
+} #PR - at this point, add the goal.failure.action to top-state in order to answer which goals do you see?
 
 sp {dialog-event*apply*complete-answer-can-you-see-game-concepts*concept-seen-no*send-message
    (state <s> ^name dialog-event 
-              ^set <inc>
-              ^descriptions <descs>
+              ^set <set>
+              ^retrieve-game <game-name>
+             # ^descriptions <descs>
               ^purpose.type <type>
               ^operator <o>
               ^purpose.parameters.gtype <gtype>
-              ^io.output-link <out>)
+              ^io.output-link <out>
+              ^top-state <ts>)
    (<o> ^name complete-answer-can-you-see-game-concepts
         ^concept-seen << No >> <seen>)
 -->
@@ -201,9 +203,19 @@ sp {dialog-event*apply*complete-answer-can-you-see-game-concepts*concept-seen-no
           ^fields.response <res>)
    (<res> ^concept-seen <seen>
           ^type <gtype>
-          ^descriptions <descs>)
+          #^descriptions <descs>
+          )
+   (<ts> ^dialogue-context <dc>)
+   (<dc> ^type conversation
+         ^game-handle <game-handle>
+         ^concept-seen <seen>
+         ^gtype <gtype>
+         ^set <set>)          
 }
- 
+
+ #PR - TODO add game name so that people can continue to ask questions about a game
+#PR - TODO add these things to top-context only if it is a dialog
+
 sp {dialog-event*apply*complete-answer-can-you-see-game-concepts*mark*performed
    (state <s> ^name dialog-event
               ^operator.name complete-answer-can-you-see-game-concepts

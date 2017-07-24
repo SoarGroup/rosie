@@ -328,7 +328,7 @@ public class AgentMessageParser
     	// PR - add situation where you can detect a single action and respond about the same
     	else if (conceptSeen.equals("No") && (type.equals("goal") || type.equals("failure"))) // PR - THis won't work with multiple actions, since there might be too many that don't match,  
     	{
-    		String reason = translateUnsatisfiedCondition(responseId);
+    		String reason = "";//translateUnsatisfiedCondition(responseId);
     		return conceptSeen + ". " + reason;
     	}
     	else
