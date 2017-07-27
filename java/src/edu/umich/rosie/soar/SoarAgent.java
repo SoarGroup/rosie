@@ -246,7 +246,11 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         // (even when the KillDebugger isn't there)
         // I don't think there's any consequence to simply exiting instead.
         kernel.Shutdown();
-        
+
+		if(logWriter != null){
+			logWriter.flush();
+			logWriter.close();
+		}
     }
 
 
@@ -429,7 +433,9 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         }
         if(config.writeLog){
             synchronized(logWriter) {
-                logWriter.print(message);
+				if(!message.toUpperCase().startsWith("ERROR")){
+					logWriter.print(message);
+				}
             }
         }
     }
