@@ -88,8 +88,7 @@ public class AgentMessageParser
 		
 		Identifier fieldsId = SoarUtil.getIdentifierOfAttribute(id, "fields");
 		if(type.equals("get-next-task")){
-			return null;
-			//return translateNextTaskPrompt();
+			return translateNextTaskPrompt();
 		} else if(type.equals("get-predicate-info")){
 			return translateGetPredicateInfo(fieldsId);
 		} else if(type.equals("report-successful-training")){
