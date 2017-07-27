@@ -433,9 +433,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         }
         if(config.writeLog){
             synchronized(logWriter) {
-				if(!message.toUpperCase().startsWith("ERROR")){
-					logWriter.print(message);
-				}
+				logWriter.print(message);
             }
         }
     }
