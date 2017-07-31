@@ -1,0 +1,329 @@
+##!
+# @file
+#
+# @created plindes 20150706
+# File: check-expectation.soar
+# Author: Peter Lindes
+# Created: 6 July 2015
+#
+# Desc: Check to see if a completed parse meets the given expectation.
+#
+#
+#
+
+#   Propose an operator to check the expectation
+sp {check-failure*propose*check-expectation
+  # :interrupt
+   (state <s> ^name termination-processing
+              ^checked-not-merged-receivers true
+              ^checked-not-merged-assigners true
+              ^superstate.segment <seg>)
+   (<seg> -^parse-failed-receiver
+          -^parse-failed-assigner
+          -^processed-terminator true)
+   (<seg> ^original-sentence.processed-sentence true)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name check-expectation)
+}
+
+sp {check-failure*apply*check-expectation*expectation-nil
+   (state <s> ^operator.name check-expectation
+              ^agent-params.sentence-source scripts
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<ts> ^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<seg> ^expected nil)
+-->
+   (<seg> ^processed-terminator true)
+   (<ts> ^terminated-sentence <csn>
+         ^success-count <sc> - 
+                       (+ <sc> 1))
+   #(write (crlf) |NIL EXPECTATION PROVIDED for sentence | <csn> |.|)
+}
+
+sp {check-failure*apply*check-expectation*no-expectation
+   (state <s> ^operator.name check-expectation
+              ^agent-params.sentence-source scripts
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<ts> ^current-sentence-number <csn>
+         ^success-count <sc>)
+  -(<seg> ^expected )
+-->
+   (<seg> ^processed-terminator true)
+   (<ts> ^terminated-sentence <csn>
+         ^success-count <sc> - 
+                       (+ <sc> 1))
+   #(write (crlf) |NO EXPECTATION PROVIDED for sentence | <csn> |.|)
+}
+
+#   At L1:   (x ^a ) is missing  - FAIL
+sp {check-failure*apply*check-expectation*l1-attribute-missing
+   (state <s> ^operator.name check-expectation
+              ^agent-params.sentence-source scripts
+              ^segment <seg>
+             -^failed-receiver
+             -^failed-assigner)
+   (<seg> ^original-sentence.processed-sentence true
+          ^expected.<attr> 
+         -^semantics.<attr>)
+-->
+   (<seg> ^failed-expectation true)
+   #(write (crlf) |EXPECTATION FAILED: ^| <attr> | missing.|)
+}
+
+#   At L1:   (x ^a c) <> (y ^a d) - FAIL
+sp {check-failure*apply*check-expectation*l1-constant-fail
+   (state <s> ^operator.name check-expectation
+              ^agent-params.sentence-source scripts
+              ^segment <seg>
+             -^failed-receiver
+             -^failed-assigner)
+   (<seg> ^original-sentence.processed-sentence true
+          ^expected <expected>
+          ^semantics <sem>)
+   (<expected> -^<attr> {<=> <s>}  # NOT an identifier
+                ^<attr> <value>)
+   (<sem> ^<attr>  # so doesn't fire at same time as one above
+         -^<attr> <value>)
+-->
+   (<seg> ^failed-expectation true)
+   #(write (crlf) |EXPECTATION FAILED: '| <sem> | ^| <attr> |' | <value> | not found.|)
+}
+
+#   At L1:   (x ^a <c>) <> (y ^a d) - FAIL
+sp {check-failure*apply*check-expectation*l1-identifier-fail
+   (state <s> ^operator.name check-expectation
+              ^agent-params.sentence-source scripts
+              ^segment <seg>
+             -^failed-receiver
+             -^failed-assigner)
+   (<seg> ^original-sentence.processed-sentence true
+          ^expected <expected>
+          ^semantics <sem>)
+   (<expected> ^<attr> {<=> <s>})  # IS an identifier
+   (<sem> -^<attr> {<=> <s>})  # NOT match something that is an identifier
+-->
+   (<seg> ^failed-expectation true)
+   #(write (crlf) |EXPECTATION FAILED: '| <sem> | ^| <attr> |' no identifier value to match it.|)
+}
+
+#   At L2:   (x ^a ) is missing  - FAIL
+sp {check-failure*apply*check-expectation*l2-attribute-missing
+   (state <s> ^operator.name check-expectation
+              ^agent-params.sentence-source scripts
+              ^segment <seg>
+             -^failed-receiver
+             -^failed-assigner)
+   (<seg> ^original-sentence.processed-sentence true
+          ^expected.<attr1>.<attr2> 
+          ^semantics <sem>)
+  -(<sem> ^<attr1>.<attr2>)  # Avoids problem if there are multiple ^attr1
+-->
+   (<seg> ^failed-expectation true)
+   #(write (crlf) |EXPECTATION FAILED: '| <sem> | ^| <attr1> |.| <attr2> |' missing.|)
+}
+
+#   At L2:   (x ^a c) <> (y ^a d) - FAIL
+sp {check-failure*apply*check-expectation*l2-constant-fail
+   (state <s> ^operator.name check-expectation
+              ^agent-params.sentence-source scripts
+              ^segment <seg>
+             -^failed-receiver
+             -^failed-assigner)
+   (<seg> ^original-sentence.processed-sentence true
+          ^expected <expected>
+          ^semantics <sem>)
+   (<expected> ^<attr1> <expected2>)
+  -(<sem> ^<attr1>.<attr2> <value>)
+   (<expected2> ^<attr2> <value>)
+   (<expected2> -^<attr2> {<=> <s>})  # NOT an identifier
+-->
+   (<seg> ^failed-expectation true)
+   #(write (crlf) |EXPECTATION FAILED: '| <sem> | ^| <attr1> |.| <attr2> |' | <value> | not found.|)
+}
+
+#   At L2:   (x ^a <c>) <> (y ^a d) - FAIL
+sp {check-failure*apply*check-expectation*l2-identifier-fail
+   (state <s> ^operator.name check-expectation
+              ^agent-params.sentence-source scripts
+              ^segment <seg>
+             -^failed-receiver
+             -^failed-assigner)
+   (<seg> ^original-sentence.processed-sentence true
+          ^expected <expected>
+          ^semantics <sem>)
+   (<expected> ^<attr1>.<attr2> {<=> <s> <value>})  # IS an identifier
+  -(<sem> ^<attr1>.<attr2> {<=> <s>})  # NOT an identifier
+-->
+   (<seg> ^failed-expectation true)
+   #(write (crlf) |EXPECTATION FAILED: '| <sem> | ^| <attr1> |.| <attr2> |' | <value> | no identifier found.|)
+}
+
+#   At L3:   (x ^a ) is missing  - FAIL
+sp {check-failure*apply*check-expectation*l3-attribute-missing
+   (state <s> ^operator.name check-expectation
+              ^agent-params.sentence-source scripts
+              ^segment <seg>
+             -^failed-receiver
+             -^failed-assigner)
+   (<seg> ^original-sentence.processed-sentence true
+          ^expected <expected>
+          ^semantics <sem>)
+   (<expected> ^<attr1>.<attr2>.<attr3>)
+  -(<sem> ^<attr1>.<attr2>.<attr3> )
+-->
+   (<seg> ^checked-expectation true
+          ^failed-expectation true)
+   #(write (crlf) |EXPECTATION FAILED: '| <sem> | ^| <attr1> |.| <attr2> |.| <attr3> |' missing.|)
+}
+
+
+#   At L3:   (x ^a c) <> (y ^a d) - FAIL
+sp {check-failure*apply*check-expectation*l3-constant-fail
+   (state <s> ^operator.name check-expectation
+              ^agent-params.sentence-source scripts
+              ^segment <seg>
+             -^failed-receiver
+             -^failed-assigner)
+   (<seg> ^original-sentence.processed-sentence true
+          ^expected <expected>
+          ^semantics <sem>)
+   (<expected> ^<attr1>.<attr2> <expected3>)
+   (<expected3> -^<attr3> {<=> <s>}  
+                 ^<attr3> <value>)
+   (<sem> ^<attr1>.<attr2>.<attr3>)
+  -(<sem> ^<attr1>.<attr2>.<attr3> <value>)
+-->
+   (<seg> ^failed-expectation true)
+   #(write (crlf) |EXPECTATION FAILED: '| <sem> | ^| <attr1> |.| <attr2> |.| <attr3> |' | <value> | not found.|)
+}
+
+#   At L3:   (x ^a <c>) <> (y ^a d) - FAIL
+sp {check-failure*apply*check-expectation*l3-identifier-fail
+   (state <s> ^operator.name check-expectation
+              ^agent-params.sentence-source scripts
+              ^segment <seg>
+             -^failed-receiver
+             -^failed-assigner)
+   (<seg> ^original-sentence.processed-sentence true
+          ^expected <expected>
+          ^semantics <sem>)
+   (<expected> ^<attr1>.<attr2>.<attr3> {<=> <s>})  # identifier
+  -(<sem> ^<attr1>.<attr2>.<attr3> {<=> <s>})  # NOT an identifier
+-->
+   (<seg> ^failed-expectation true)
+   #(write (crlf) |EXPECTATION FAILED: '| <sem> | ^| <attr1> |.| <attr2> |.| <attr3> |'  no identifier.|)
+}
+
+sp {check-failure*apply*check-expectation
+   (state <s> ^operator.name check-expectation
+              ^segment <seg>)
+-->
+   (<seg> ^checked-expectation true)
+}
+
+sp {check-failure*apply*check-expectation*done
+   (state <s> ^operator.name check-expectation
+              ^agent-params.sentence-source scripts
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<ts> ^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<seg> ^checked-expectation true)
+-->
+   (<seg> ^processed-terminator true)
+   (<ts> ^terminated-sentence <csn>
+         ^success-count <sc> - 
+                       (+ <sc> 1))
+}
+
+sp {check-failure*apply*check-expectation*failure
+   (state <s> ^operator.name check-expectation
+              ^agent-params.sentence-source scripts
+              ^segment <seg>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<ts> ^current-sentence-number <csn>)
+   (<seg> ^failed-expectation true)
+-->
+   (<ts> ^expectation-failure <csn>)
+}
+########
+
+sp {apply*check-expectation*new-message
+   (state <s> ^name termination-processing
+              ^operator.name check-expectation
+             -^failed-receiver
+             -^failed-assigner
+              ^segment <seg>
+              ^top-state.interaction.status <status>)
+   (<seg> ^checked-expectation true
+          ^semantics <sem>)
+   (<sem> ^message-type <ms-type>)
+-->
+   (<status> ^new-message <sem>)
+}
+
+sp {apply*check-expectation-interaction-status
+   (state <s> ^name termination-processing
+              ^operator.name check-expectation
+             -^failed-receiver
+             -^failed-assigner
+              ^segment <seg>
+              ^top-state.interaction.status <status>)
+   (<seg> ^checked-expectation true
+          ^semantics <sem>)
+   (<sem> ^interaction-status.<att> <value>)
+-->
+   (<status> ^<att> <value>)
+}
+
+###########################################################
+#   SOME EXAMPLES OF TYPE CHECKING - COURTESY OF Justin Li
+#sp {iden-different-types
+#    (state <s> ^x <x>
+#               ^y <y>)
+#    (<x> ^z {<val> <=> <s>})
+#   -(<y> ^z {<=> <val>})
+#-->
+#    # fail
+#}
+#
+#sp {iden-same-types
+#    (state <s> ^x <x>
+#               ^y <y>)
+#    (<x> ^z {<val> <=> <s>})
+#    (<y> ^z {<=> <val>})
+#-->
+#    # pass
+#}
+#
+#sp {const-different-types
+#    (state <s> ^x <x>
+#               ^y <y>)
+#    (<x> ^z <val>)
+#   -(<x> ^z {<=> <s>})
+#   -(<y> ^z {<=> <val>})
+#-->
+#    # fail
+#}
+#
+#sp {const-same-types
+#    (state <s> ^x <x>
+#               ^y <y>)
+#    (<x> ^z <val>)
+#   -(<x> ^z {<=> <s>})
+#    (<y> ^z <val>)
+#-->
+#    # pass
+#}

@@ -1,0 +1,135 @@
+###################################################################
+#
+# interpret-command
+#   A command given by the instructor to the agent to do something
+#   Construction: *-VP-T
+#     E.g. 'Store the red sphere', 'Put the green large block in the pantry'
+#
+###################################################################
+
+#######
+# OPERATOR PROPOSAL
+#######
+sp {interpret-message*propose*interpret-action-command
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>
+              -^top-state.dialog-context
+              -^new-segment-info
+             -^action-operator <op>)
+   (<msg> ^message-type command -^action.word-structure.spelling |what's| -^action.word-structure.spelling |whats| -^action.handle load1 -^action.handle load -^action.handle describe1)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name interpret-action-command
+        ^command-message <msg>)
+}
+
+sp {interpret-message*reject*interpret-action-command*stop-following
+  (state <s> ^name interpret-message
+             ^operator <o> +
+             ^instructor-message.action.handle stop1
+             ^top-state.action-stack.top.execution-operator.name op_follow-person1)
+  (<o> ^name interpret-action-command)
+-->
+  (<s> ^operator <o> -)
+}
+
+sp {interpret-message*propose*interpret-stop-following-command
+  (state <s> ^name interpret-message
+             ^instructor-message.action.handle stop1
+             ^top-state.action-stack.top.execution-operator.name op_follow-person1
+             -^interpreted)
+-->
+  (<s> ^operator <o> +)
+  (<o> ^name interpret-stop-following-command)
+}
+
+sp {interpret-message*apply*interpret-stop-following-command
+  (state <s> ^name interpret-message
+             ^operator.name interpret-stop-following-command
+             ^instructor-message <msg>
+             ^top-state.action-stack.top <top>)
+-->
+  (<top> ^told-stop true)
+  (<s> ^interpreted <msg>)
+}
+
+#JK
+sp {interpret-message*propose*interpret-conditional-predicate*command
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>
+              ^top-state.dialog-context.type game-learning)
+   (<msg> ^message-type command
+          -^action.handle load
+          -^action.handle attend
+           -^action.handle load1
+	  -^action.handle describe1
+          -^action.handle attend1
+          -^interaction-status.failure
+          -^action.handle ignore
+          -^interpreted true)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name interpret-conditional-predicate
+        ^message <msg>)
+}
+
+sp {interpret-message*propose*interpret-attend-list
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>
+              ^top-state.dialog-context <dc>)
+   (<msg> ^message-type command
+          ^action.handle attend
+          -^interpreted true)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name interpret-attend-list
+        ^message <msg>)
+}
+
+sp {interpret-message*propose*interpret-ignore-list
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>
+              ^top-state.dialog-context <dc>)
+   (<msg> ^message-type command
+          ^action.handle ignore
+          -^interpreted true)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name interpret-ignore-list
+        ^message <msg>)
+}
+
+sp {interpret-message*apply*interpret-action-command
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>
+              ^operator.name interpret-action-command)
+   (<msg> ^action <action>)
+   (<action> ^handle <action-handle>		
+             -^agent-explanation)
+-->
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type execute-action
+        ^parameters.command-message <msg>
+        ^satisfaction.action-event.type <action-handle>)
+   (<msg> ^interpreted true)
+}
+
+sp {interpret-message*apply*interpert-action-command*mark*message*learning-action
+   (state <s> ^name interpret-message
+              ^operator.name interpret-action-command
+              ^instructor-message <msg>
+              ^top-state.interaction.stack.segment.purpose.type get-next-subaction)
+-->
+   (<msg> ^action-source instruction)
+}
+
+sp {interpret-message*apply*interpret-action-command*pop-segment*existing-action
+   (state <s> ^name interpret-message
+              ^operator.name interpret-action-command
+              ^top-state.interaction.stack.segment.purpose.type execute-action)
+-->
+   (<s> ^terminate-segment true
+        ^pop-action true)
+}

@@ -1,0 +1,159 @@
+sp {comprehension*propose*retry-sentence
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^original-sentence <is>
+          ^retry-sentence <x>
+         -^retried-sentence true)
+   (<is> -^processed-sentence true)
+-->
+#(interrupt)
+(write (crlf) |======== RETRY SENTENCE =======| (crlf))
+   (<s> ^operator <op> + =, >)
+   (<op> ^name retry-sentence
+         ^new-segment <nseg>)
+}
+
+#sp {comprehension*apply*retry-sentence*external*clear-processing-result
+#   (state <s> ^operator.name retry-sentence
+#              ^process-next.next nil
+#              ^segment <seg>)
+#   (<seg> ^retry-sentence <x>
+#          ^original-sentence <sentence>)
+#   (<sentence> ^processing-result failure)
+#-->
+#   (<sentence> ^processing-result failure -
+#               ^processed true -)
+#}
+#sp {comprehension*apply*retry-sentence*process-next
+#   (state <s> ^operator.name retry-sentence
+#              ^segment <seg>)
+#   (<seg> ^retry-sentence <x>
+#          ^original-sentence <sentence>)
+#   (<sentence> ^next <n>)
+#-->
+#   (<s> ^process-next <n>)
+#}
+#sp {comprehension*apply*retry-sentence*process-next*remove
+#   (state <s> ^operator.name retry-sentence
+#              ^process-next <pn>
+#              ^segment <seg>)
+#   (<pn> ^next {<n> <> nil})
+#-->
+#    (<pn> ^processed true -)
+#   (<s> ^process-next <n>)
+#}
+#sp {comprehension*apply*retry-sentence*process-next*nil
+#   (state <s> ^operator.name retry-sentence
+#              ^process-next <pn>
+#              ^segment <seg>)
+#   (<pn> ^next nil)
+#-->
+#   (<seg> ^retried-sentence true)
+#   (<s> ^process-next <n>)
+#}
+
+sp {comprehension*compare*retry-sentence
+   (state <s> ^name comprehension
+              ^operator <op1> +
+                        <op2> +)
+   (<op1> ^name retry-sentence)
+   (<op2> ^name failed-comprehension)
+-->
+   (<s> ^operator <op1> > <op2>)
+}
+
+#sp {comprehension*apply*retry-sentence*internal
+#   (state <s> ^operator <o>
+#              ^top-state.world-usage internal
+#             # ^process-next.next nil
+#              ^segment <seg>)
+# #  (<seg> ^retry-sentence <x>)
+#   (<o> ^name retry-sentence
+#        ^new-segment <nseg>)
+#-->
+#   (<s> ^segment <seg> -
+#        ^segment <nseg>)
+#   (<nseg> #^retry-receiver <x> 
+#           ^semantics <sem> 
+#           ^last-merge <lm>
+#           ^retried-sentence true)
+#    (<lm> ^receiver nil 
+#          ^assigner nil 
+#          ^structure-type none)
+#}
+
+
+
+##JK need to clean lists between retries?
+##(causes GDS reset, sometimes many repeats
+#sp {comprehension*apply*retry-sentence*clean-dialog-list-objects
+#   (state <s> ^operator <o>
+#              ^top-state <ts>
+#             ^segment <seg>)
+#   (<o> ^name retry-sentence
+#        ^new-segment <nseg>)
+#    (<ts> ^dialog-object-list {<dol> <=> <s>})
+#-->
+#	(<s> ^retry true)
+##(interrupt)
+#   (<ts> ^dialog-object-list <dol> -)
+#   (<ts> ^dialog-object-list nil)
+#}
+#sp {comprehension*apply*retry-sentence*removed-comprehension
+#   (state <s> ^name comprehension
+#              ^superstate <ss>
+#              ^retry true)
+#   (<ss> ^operator <op>)
+#-->
+#(<ss> ^operator <op> -)
+#(<ss> ^operator <op> + >)
+#}
+#sp {comprehension*apply*retry-sentence*clean-dialog-list-objects-saved
+#   (state <s> ^operator <o>
+#              ^top-state <ts>
+#              ^segment <seg>)
+#   (<o> ^name retry-sentence
+#        ^new-segment <nseg>)
+#    (<ts> ^dialog-object-list-saved {<dol> <=> <s>})
+#-->
+#   (<ts> ^dialog-object-list-saved <dol> -)
+#   (<ts> ^dialog-object-list-saved nil)
+#}
+#sp {comprehension*apply*retry-sentence*clean-dialog-world*objects*predicates
+#   (state <s> ^operator <o>
+#              ^top-state <ts>
+#              ^segment <seg>)
+#   (<o> ^name retry-sentence
+#        ^new-segment <nseg>)
+#    (<ts> ^dialog-world.<< objects predicates >> <dw>)
+#    (<dw> ^<something> <obj>)
+#-->
+#   (<dw> ^<something> <obj> -)
+#}
+###JK
+
+sp {comprehension*apply*retry-sentence
+   (state <s> ^operator <o>
+              ^segment <seg>)
+   (<o> ^name retry-sentence
+        ^new-segment <nseg>)
+-->
+   (<s> ^segment <seg> -
+        ^segment <nseg>)
+   (<nseg> ^semantics <sss>  
+           ^last-merge <lm>
+           ^retried-sentence true)
+    (<lm> ^receiver nil 
+          ^assigner nil 
+          ^structure-type none)
+}
+
+sp {comprehension*apply*retry-sentence*copy-retry
+   (state <s> ^operator <o>
+              ^segment <seg>)
+   (<seg> ^retry-sentence <x>)
+   (<o> ^name retry-sentence
+        ^new-segment <nseg>)
+-->
+   (<nseg> ^retry-receiver <x>)
+}

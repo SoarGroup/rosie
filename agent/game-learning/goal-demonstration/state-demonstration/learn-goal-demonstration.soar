@@ -1,0 +1,336 @@
+#primary? strange
+
+sp {learn-goal-demonstration*propose*extract-state
+   (state <s> ^name learn-goal-demonstration
+              ^type {<type> << initial final >>}
+             -^top-state.dialog-context.<type>
+              ^top-state.dialog-context.type game-learning)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name extract-state
+        ^type <type>)
+}
+
+sp {learn-goal-demonstration*apply*extract-state
+   (state <s> ^name learn-goal-demonstration
+              ^type {<type> << initial final >>}
+              ^state-result <staterep>
+              ^top-state.dialog-context <g>
+              ^operator <o>)
+   (<o> ^name extract-state
+        ^type <type>)
+-->
+   (<g> ^<type> <staterep>)
+}
+
+#TODO JK temp to set attend to test
+sp {learn-goal-demonstration*elaborate*attend
+   :o-support
+   (state <s> ^name learn-goal-demonstration
+              ^top-state.dialog-context <g>)
+   (<g> ^initial -^attend)
+-->
+   (<g> ^attend <at> ^ignore <ig>)
+}
+
+#TODO JK temp to set attend to test
+#sp {learn-goal-demonstration*elaborate*attend*object
+#   :o-support
+#   (state <s> ^name learn-goal-demonstration
+#              ^top-state.world.objects.object <obj>
+#              ^top-state.dialog-context <g>)
+#   (<obj> ^predicates.category block)
+#   (<g> ^attend <at>)
+#-->
+#   (<at> ^object <obj>)
+#}
+sp {learn-goal-demonstration*remove*goal-state
+   :o-support
+   (state <s> ^name learn-goal-demonstration
+              ^top-state.dialog-context <g>)
+   (<g> ^modified <t> ^initial <istate> ^final <fstate> ^goal-state <gs> ^goal-relationships <gr>)
+-->
+   (<g> ^modified <t> -)
+    (<g> ^goal-relationships <gr> -)
+    (<g> ^goal-state <gs> -)
+    (<g> ^finished-demo true)
+}
+   
+sp {learn-goal-demonstration*propose*state-diff
+   (state <s> ^name learn-goal-demonstration
+              ^top-state.dialog-context <g>)
+   (<g> ^initial <istate> ^final <fstate> -^goal-state ^attend <at> ^ignore <ig>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name state-diff
+        ^initial <istate>
+        ^final <fstate>
+        ^ignore <ig>
+        ^attend <at>)
+#   (<ig> ^relation larger-than1
+#         ^relation below1)
+}
+##TODO need?
+#sp {learn-goal-demonstration*apply*state-diff*remove-attend-ignore
+#   (state <s> ^name learn-goal-demonstration
+#              ^top-state.dialog-context <g>
+#              ^operator.name state-diff
+#        	  ^diff-result <dstate>)
+#   (<g> ^attend <at> ^ignore <ig>)
+#-->
+#   (<g> ^attend <at> -)
+#   (<g> ^ignore <ig> -)
+#   (<g> ^attend <at2> ^ignore <ig2>)
+#}
+sp {learn-goal-demonstration*apply*state-diff
+   (state <s> ^name learn-goal-demonstration
+              ^top-state.dialog-context <g>
+              ^operator.name state-diff
+        	  ^diff-result <dstate>)
+   (<g> ^initial <istate> ^final <fstate>)
+-->
+   (<g> ^goal-state <dstate>
+        ^goal-relationships <gr>)
+
+}
+
+sp {learn-goal-demonstration*apply*state-diff*copy-goal-relations
+   (state <s> ^name learn-goal-demonstration
+              ^top-state.dialog-context <g>)
+   (<g> ^goal-state <dstate> ^goal-relationships <gr>)
+   (<dstate> ^relationships.relations <r> ^predicates <p>)
+   (<p> ^<obj1> <desc1> ^<obj2> <desc2>)
+   (<r> ^instance <in> ^name <name>)
+   (<in> ^1 <obj1> ^2 <obj2>)
+-->
+   (<gr> ^relation <r1>)
+   (<r1> ^1 <desc1> ^2 <desc2> ^name <name>)
+}
+sp {learn-goal-demonstration*apply*state-diff*copy-goal-relations*1arg
+   (state <s> ^name learn-goal-demonstration
+              ^top-state.dialog-context <g>)
+   (<g> ^goal-state <dstate> ^goal-relationships <gr>)
+   (<dstate> ^relationships.relations <r> ^predicates <p>)
+   (<p> ^<obj1> <desc1> ^<obj2> <desc2>)
+   (<r> ^instance <in> ^name <name>)
+   (<in> ^1 <obj1> -^2)
+-->
+   (<gr> ^relation <r1>)
+   (<r1> ^1 <desc1> ^name <name>)
+}
+
+#TODO convert to natural language and read back
+#TODO handle corrects by additions, or removals
+
+#for now converts to TCN and stores
+#need to convert to NLPs (easier to do from tcn? already have code for this?-yes
+sp {learn-goal-demonstration*send-message*describe-goal-state
+   (state <s> ^name learn-goal-demonstration
+             -^top-state.dialog-context.finished-demo true
+              -^top-state.dialog-context.modified true
+              ^top-state.dialog-context.type game-learning
+                ^top-state.dialog-context.goal-relationships <gs>
+                ^top-state.interaction.status <status>
+                ^top-state.interaction.changes <changes>)
+-->
+   (<changes> ^outgoing-message <msg>)
+   (<msg> ^type describe-goal-state
+          ^complete-message true
+          ^fields <f>)
+   (<f> ^relationships <gs> ^definitive yes)
+   (<status> ^performed.learning-event <de>)
+   (<de> ^type game
+         ^originator agent)
+}
+
+
+sp {learn-goal-demonstration*elaborate*new-segment-info*learn-goal-definition
+   (state <s> ^name learn-goal-demonstration
+              ^top-state.dialog-context.goal-relationships <G10020>
+              ^top-state.dialog-context.finished-demo true
+              -^top-state.dialog-context.type game-learning)
+-->
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type learn-goal-definition
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<sat> ^learning-event.type goal)
+}
+sp {learn-goal-demonstration*propose*complete
+   (state <s> ^name learn-goal-demonstration
+              ^top-state.dialog-context.goal-relationships <G10020>
+              ^top-state.dialog-context.finished-demo true
+              -^top-state.dialog-context.type game-learning)
+-->
+   (<s> ^operator <o> + <)
+   (<o> ^name complete)
+}
+
+
+sp {learn-goal-demonstration*elaborate*goal-predicates*state-predicate
+   (state <s> ^name learn-goal-demonstration
+              ^top-state.dialog-context.goal-state.relationships <G10020>
+              ^top-state.dialog-context.finished-demo true
+               ^new-segment-info.purpose.parameters <params>)
+   (<G10020> ^relations <r>)
+   (<r> ^name <name> ^instance <i>)
+   (<i> ^1 <obj1> -^2)
+-->
+   (<params> ^goal-predicate <pred>)
+   (<pred> ^handle <name> ^1 <obj1> ^type state)
+}
+sp {learn-goal-demonstration*elaborate*goal-predicates*relation-predicate
+   (state <s> ^name learn-goal-demonstration
+              ^top-state.dialog-context.goal-state.relationships <G10020>
+              ^top-state.dialog-context.finished-demo true
+              ^new-segment-info.purpose.parameters <params>)
+   (<G10020> ^relations <r>)
+   (<r> ^name <name> ^instance <i>)
+   (<i> ^1 <obj1> ^2 <obj2>)
+-->
+   (<params> ^goal-predicate <pred>)
+   (<pred> ^handle <name> ^1 <obj1> ^2 <obj2> ^type relation)
+}
+
+
+sp {learn-goal-demonstration*apply*complete*create*new-segment
+   (state <s> ^name learn-goal-demonstration
+              ^operator.name complete
+              ^top-state <ts>
+              ^new-segment-info <info>)
+   (<ts> ^dialog-context <dc> ^interaction.status <status> ^interaction.changes <c>)
+   (<dc> ^goal-relationships <gs>)
+   (<info> ^purpose.parameters)
+-->
+   (<c> ^new-segment-info <info>)
+   (<ts> ^dialog-context <dc> -)
+   (<c> ^outgoing-message <msg>)
+   (<msg> ^type describe-final-goal-state
+          ^complete-message true
+          ^fields <f>)
+   (<f> ^relationships <gs> ^definitive no)
+   (<status> ^performed.learning-event <de>)
+   (<de> ^type game
+         ^originator agent)
+}
+
+sp {learn-goal-demonstration*propose*convert-state-to-TCN
+   (state <s> ^name learn-goal-demonstration
+              ^top-state.dialog-context.goal-state <gstate>
+              ^top-state.dialog-context.finished-demo true
+             -^tcn
+              ^top-state.dialog-context.type game-learning)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name convert-state-to-TCN
+        ^state-rep <gstate>)
+}
+
+#sp {learn-goal-demonstration*apply*convert-state-to-TCN
+#   (state <s> ^name learn-goal-demonstration
+#              ^top-state.current-game.game.goals <goals>
+#              ^operator <o>
+#              ^top-state.current-game.learning <l>)
+#   (<l> ^goal-number <gnum>)
+#   (<o> ^name convert-state-to-TCN
+#        ^result <tcn>
+#        ^param <p>
+#        ^state-rep <gstate>)
+#-->
+#   (<s> ^param <p>
+#        ^tcn <tcn>)
+#}
+
+
+# TODO for demo don't read out goal demonstrations
+#sp {learn-goal-demonstration*propose*convert-TCN-to-NL
+#   (state <s> ^name learn-goal-demonstration
+#              ^top-state.current-game.game.goal-state <gstate>
+#             -^description <d>
+#              ^nlp-set
+#              ^tcn <tcn>)
+#-->
+#   (<s> ^operator <o> + =)
+#   (<o> ^name convert-TCN-to-NL
+#        ^state-rep <gstate>
+#        ^tcn <tcn>
+#        ^param <param>)
+#}
+
+sp {learn-goal-demonstration*propose*convert-TCN-to-NLP
+   (state <s> ^name learn-goal-demonstration
+             -^nlp-set
+              ^tcn <g>)
+-->
+   (<s> ^operator <o> + = >)
+   (<o> ^name convert-TCN-to-NLP
+        ^type goal
+        ^tcn <g>)
+}
+
+
+sp {learn-goal-demonstration*propose*learn-predicate
+   (state <s> ^name learn-goal-demonstration
+              ^tcn <act>
+              ^nlp-set <nps>
+             -^done chunked-action
+              ^top-state.dialog-context <cg>)
+   (<cg> ^learn-link <l> ^name <gname> ^structure <g> ^finished-demo true)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name learn-predicate
+       # ^tcn <act>
+        ^nlp-set <nps>
+        ^type goal
+        ^game-name <gname>)
+}
+
+
+
+#sp {learn-goal-demonstration*apply*convert-state-to-TCN*send-message
+#   (state <s> ^name learn-goal-demonstration
+#              ^done chunked-action
+#              ^tcn
+#              ^top-state.dialog-context.structure.goals.<num>
+#              ^top-state.interaction.status <status>
+#              ^top-state.interaction.changes <changes>)
+#-->
+#   (<changes> ^outgoing-message <msg>)
+#   (<msg> ^type ok
+#          ^complete-message true)
+#   (<status> ^performed.learning-event.type game)
+#}
+
+
+#sp {learn-goal-demonstration*send-message*game-final-state
+#   (state <s> ^name learn-goal-demonstration
+#              ^type initial
+#              ^top-state.interaction.status <status>
+#              ^top-state.dialog-context.initial
+#             -^top-state.dialog-context.needs-setup
+#             -^top-state.dialog-context.final
+#              ^top-state.interaction.changes <changes>)
+#-->
+#   (<changes> ^outgoing-message <msg>)
+#   (<msg> ^type ok
+#          ^complete-message true)
+#   (<status> ^performed.learning-event.type game)
+#}
+
+sp {learn-goal-demonstration*send-message*game-final-state
+    :o-support
+   (state <s> ^name learn-goal-demonstration
+              ^type initial
+              ^top-state.interaction.status <status>
+              ^top-state.dialog-context <dc>
+              ^top-state.interaction.changes <changes>)
+   (<dc> ^initial -^final ^needs-setup <t>)
+-->
+    (<dc> ^needs-setup <t> -)
+   (<changes> ^outgoing-message <msg>)
+   (<msg> ^type define-actions
+          ^complete-message true)
+   (<status> ^performed.learning-event.type game)
+}

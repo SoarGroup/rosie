@@ -1,0 +1,114 @@
+
+
+# execution-failure: The turn command got a failure status
+sp {op_turn1*elaborate*failure*execution-failure
+   (state <s> ^name op_turn1
+              ^problem-space.action.type execute
+              ^current-action.turn-command.status { <status> << error failure interrupted >> })
+-->
+   (<s> ^failure <f>)
+   (<f> ^type execution-failure
+        ^command orient
+        ^error-status <status>)
+}
+
+sp {action-space*execute*handle-action-failure*execution*elaborate*terminate-action
+   (state <s> ^name handle-action-failure
+              ^failure-type execution
+              ^current-action.command-failed once)
+-->
+   (<s> ^terminate-action true)
+}
+
+sp {action-space*execute*handle-action-failure*execution*propose*retry-failed-command
+   (state <s> ^name handle-action-failure
+              ^failure-type execution
+              ^failure-info.command <cmd>
+              ^current-action <a>)
+   (<a> -^command-failed once)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name retry-failed-command
+        ^command <cmd>)
+}
+
+sp {action-space*execute*handle-action-failure*execution*apply*mark*command-failed*once
+   (state <s> ^name handle-action-failure
+              ^failure-type execution
+              ^operator.name retry-failed-command
+              ^current-action <a>)
+-->
+   (<a> ^command-failed once)
+}
+
+sp {action-space*execute*handle-action-failure*execution*apply*retry-failed-command*remove*sent-command
+   (state <s> ^name handle-action-failure
+              ^failure-type execution
+              ^operator <o>
+              ^current-action <a>)
+   (<o> ^name retry-failed-command
+        ^command <cmd>)
+   (<a> ^sent-command <cmd>)
+-->
+   (<a> ^sent-command <cmd> -)
+}
+
+sp {action-space*execute*handle-action-failure*execution*apply*retry-failed-command*remove*command*from*output-link
+   (state <s> ^name handle-action-failure
+              ^failure-type execution
+              ^operator <o>
+              ^superstate.io.output-link <out>)
+   (<o> ^name retry-failed-command
+        ^command <cmd>)
+   (<out> ^<command-name> <cmd>)
+-->
+   (<out> ^<command-name> <cmd> -)
+}
+
+sp {interpret-failure*propose*interpret-execution-failure
+   (state <s> ^name interpret-failure
+              ^failure <f>
+             -^handled <f>)
+   (<f> ^type execution-failure
+        ^failure-type <type>
+        ^failure-info <info>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name interpret-execution-failure
+        ^failure-type <type>
+        ^failure-info <info>)
+}
+
+sp {interpret-failure*apply*interpret-execution-failure*mark*handled
+   (state <s> ^name interpret-failure
+              ^operator.name interpret-execution-failure
+              ^failure <f>)
+   (<f> ^type execution-failure)
+-->
+   (<s> ^handled <f>)
+}
+
+sp {interpret-failure*apply*interpret-execution-failure*create*message
+   (state <s> ^name interpret-failure
+              ^operator <o>)
+   (<o> ^name interpret-execution-failure
+        ^failure-type <type>
+        ^failure-info <info>)
+-->
+   (<s> ^outgoing-message <msg>)
+   (<msg> ^type execution-failure
+          ^complete-message true
+          ^fields <f>)
+   (<f> ^failure-type <type>
+        ^failure-info <info>)
+}
+
+# If the action was the bottom action, terminate the segment
+sp {interpret-failure*apply*interpret-execution-failure*terminate*segment
+   (state <s> ^name interpret-failure
+              ^failure.bottom-action true
+              ^operator.name interpret-execution-failure
+              ^top-state.interaction.changes <c>)
+-->
+   (<c> ^terminate-segment true)
+}

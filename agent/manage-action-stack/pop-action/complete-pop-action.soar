@@ -1,0 +1,240 @@
+# complete-pop-action - takes care of thing that needs to be done when popping the action
+
+sp {pop-action*propose*complete-pop-action
+   (state <s> ^name pop-action)
+-->
+   (<s> ^operator <o> + <)
+   (<o> ^name complete-pop-action)
+}
+
+# Remove the action from the top of the stack
+sp {pop-action*apply*complete-pop-action*pop
+   (state <s> ^name pop-action
+              ^operator.name complete-pop-action
+              ^action-stack <stack>
+              ^action-to-pop <action>)
+   (<stack> ^top <action>)
+   (<action> ^prev <prev>)
+-->
+   (<stack> ^top <action> -
+            ^top <prev>)
+  (<action> ^next none -)
+  (<prev> ^next <action> -
+           ^next none)
+}
+
+# If the action was the bottom, change it to none
+sp {pop-action*apply*complete-pop-action*change*bottom
+  (state <s> ^name pop-action
+              ^operator.name complete-pop-action
+              ^action-stack <stack>
+              ^action-to-pop <action>)
+  (<stack> ^bottom <action>)
+-->
+  (<stack> ^bottom <action> -
+            ^bottom none)
+}
+
+
+# Remove the pop change from the changes list
+sp {pop-action*apply*complete-pop-action*clear*changes
+   (state <s> ^name pop-action
+              ^operator.name complete-pop-action
+              ^action-stack.changes <changes>
+              ^action-to-pop <action>)
+   (<changes> ^pop <action>)
+-->
+   (<changes> ^pop <action> -)
+}
+
+sp {pop-action*apply*complete-pop-action*pop*segment
+   (state <s> ^name pop-action
+               ^operator.name complete-pop-action
+               ^top-state.interaction.stack.segment.purpose <p>
+               ^action-to-pop.execution-operator <op>
+               ^top-state.interaction.changes <chgs>)
+  (<p> ^type execute-action
+       ^parameters.action-operator <op>)
+-->
+  (<chgs> ^terminate-segment true)
+}
+
+
+# Report an action-event as having been performed if the action was successful
+sp {pop-action*apply*complete-pop-action*report*performed*action-event
+   (state <s> ^name pop-action
+              ^operator.name complete-pop-action
+              ^action-to-pop <action>
+              ^top-state.interaction.status <status>)
+   (<action> ^status success
+             ^execution-operator.action-handle <action-handle>)
+-->
+   (<status> ^performed.action-event.type <action-handle>)
+}
+
+sp {pop-action*apply*complete-pop-action*report*find-success
+   (state <s> ^name pop-action
+              ^operator.name complete-pop-action
+              ^action-to-pop <action>
+              ^top-state.interaction.changes <chgs>)
+   (<action> ^status success
+             ^execution-operator.action-handle find1)
+-->
+   (<chgs> ^outgoing-message <msg>)
+   (<msg> ^type find-success
+          ^complete-message true)
+}
+
+# If there is a policy-learning-needed flag, 
+#   push a retrospective learning segment onto the interaction stack
+sp {pop-action*apply*complete-pop-action*push*learning*segment
+   (state <s> ^name pop-action
+              -^superstate.change-name clear-action-stack
+              ^operator.name complete-pop-action
+              ^action-to-pop <action>
+              ^top-state.interaction.changes <changes>)
+   (<action> ^policy-learning-needed true
+             ^status success
+             ^execution-operator.action-handle <> find1)
+-->
+   (<changes> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator agent)
+   (<p> ^type retrospective-learning
+        ^parameters <params>
+        ^satisfaction.learning-event.type retrospective)
+   (<params> ^action <action>)
+}
+
+# Remove anything remembered during the action
+sp {pop-action*apply*complete-pop-action*remove*remembered*things
+   (state <s> ^name pop-action
+              ^operator.name complete-pop-action
+              ^action-to-pop.remembered <rem>)
+   (<rem> ^object.predicates <preds>
+          ^attribute <att>
+          ^value <val>)
+   (<preds> ^<att> <val>)
+-->
+   (<preds> ^<att> <val> -)
+}
+
+# Remove answers during the action
+sp {pop-action*apply*complete-pop-action*remove*answers
+   (state <s> ^name pop-action
+              ^operator.name complete-pop-action
+              ^top-state.world.objects <objs>
+              ^action-to-pop <bottom>
+              ^action-stack.bottom <bottom>)
+  (<objs> ^object <obj>)
+  (<obj> ^predicates <preds>)
+  (<preds> ^modifier1 answer1)
+-->
+  (<preds> ^modifier1 answer1 -)
+}
+#
+#sp {pop-action*apply*complete-pop-action*remove*answer*objects
+#   (state <s> ^name pop-action
+#              ^operator.name complete-pop-action
+#              ^top-state.world.objects <objs>
+#              ^action-to-pop <bottom>
+#              ^action-stack.bottom <bottom>)
+#  (<objs> ^object <obj>)
+#  (<obj> ^predicates <preds>)
+#  (<preds> ^modifier1 answer1
+#           -^object-status confirmed)
+#-->
+#  (<objs> ^object <obj> -)
+#}
+#   
+# Clear robot-status
+sp {pop-action*apply*complete-pop-action*remove*robot-status
+   (state <s> ^name pop-action
+              ^operator.name complete-pop-action
+              ^top-state.world.objects.object.predicates <preds>
+              ^action-to-pop <bottom>
+              ^action-stack.bottom <bottom>)
+  (<preds> ^robot-status <status>)
+-->
+  (<preds> ^robot-status <status> -)
+}
+   
+   
+## Remove any objects added to the world during the action
+#sp {pop-action*apply*complete-pop-action*remove*added*objects
+#   (state <s> ^name pop-action
+#              ^operator.name complete-pop-action
+#              ^action-to-pop.added <obj>
+#              ^top-state.world.objects <objs>)
+#   (<objs> ^object <obj>)
+#-->
+#   (<objs> ^object <obj> -)
+#}
+#
+## Remove any predicates related to that added object
+#sp {pop-action*apply*complete-pop-action*remove*added*predicates
+#   (state <s> ^name pop-action
+#              ^operator.name complete-pop-action
+#              ^action-to-pop.added <obj>
+#              ^top-state.world.predicates.predicate <pred>)
+#   (<pred> ^instance <i>)
+#   (<i> ^<any> <obj>)
+#-->
+#   (<pred> ^instance <i> -)
+#}
+
+# If the execution operator has the flag ^perform once,
+#   mark it performed in the parent action
+sp {pop-action*apply*complete-pop-action*mark*performed*once*subaction
+   (state <s> ^name pop-action
+              ^operator.name complete-pop-action
+              ^action-to-pop.execution-operator <op>
+              ^action-to-pop.prev.execution-operator <parent-op>)
+   (<op> ^subaction-handle <sub-handle>
+         ^perform once)
+-->
+   (<parent-op> ^performed <sub-handle>)
+}
+
+sp {pop-action*apply*complete-pop-action*bottom*clear*task-objects
+  (state <s> ^name pop-action
+             ^operator.name complete-pop-action
+             ^action-to-pop <action>
+             ^action-stack.bottom <action>
+             ^action-stack <stack>)
+  (<stack> ^task-objects <objs>)
+-->
+  (<stack> ^task-objects <objs> -
+           ^task-objects <new>)
+}
+
+sp {pop-action*apply*complete-pop-action*delete*non-confirmed*task*object
+  (state <s> ^name pop-action
+             ^operator.name complete-pop-action
+             ^action-to-pop <action>
+             ^action-stack.bottom <action>
+             ^action-stack.task-objects.object <obj>
+             ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
+   (<obj> -^predicates.object-status confirmed
+          -^predicates.arm-status grabbed)
+   (<obj-info> ^wm-obj <obj>)
+-->
+   (<obj-info> ^delete-object true)
+}
+
+sp {pop-action*apply*complete-pop-action*delete*dialog*info
+  (state <s> ^name pop-action
+             ^operator.name complete-pop-action
+             ^action-to-pop <bottom>
+             ^action-stack.bottom <bottom>
+             ^top-state <top>)
+  (<top> ^dialog-object-list <list>
+         ^dialog-world <w>)
+-->
+  (<top> ^dialog-object-list <list> -
+         ^dialog-world <w> -
+         ^dialog-object-list nil
+         ^dialog-object-list-saved nil
+         ^dialog-world <new>)
+  (<new> ^objects <objs> ^predicates <preds>)
+}

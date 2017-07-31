@@ -1,0 +1,311 @@
+### If fail on retrieval, 
+### Cases: 
+####  1. No primitive assigners - unknown
+####  2. Multiple primitive assigners - none that are U - fail (this is rejected if there is a U)
+####  3. Single primitive assigner that is not U - make a guess at that.
+####  4. Propose U's - allow merge - will figure out at end. 
+####  5. Reject U's that are uncles of unfilled assigners such as an following a filled in D in a DP.
+####  
+
+sp {comprehend-word*propose*process-new-word*no-primitive-assigner*unknown
+   (state <s> ^name comprehend-word
+              ^quiescence t  # Don't chunk because this is going to get updated in smem.
+              ^segment <seg>
+              ^failed-retrieval true
+             -^failed-new-word true
+             -^retrieved-lexical-item.spelling <spell>)
+   (<seg> ^current-word.spelling <spell>)
+ -{(<seg> ^not-merged-assigner <ass2>)
+   (<ass2> ^structure-type << V ADJ N ADV PN U >>)} ## Not another primitive assigner 
+-->
+  (<s> ^operator <op> +)
+   (<op> ^name process-new-word
+         ^type U
+         ^fail true   # KIRK ???
+         ^spell <spell>
+        ^handle (make-constant-symbol <spell>))
+}
+#sp {comprehend-word*propose*process-new-word*no-primitive-assigner*unknown
+#   (state <s> ^name comprehend-word
+#              ^quiescence t  # Don't chunk because this is going to get updated in smem.
+#              ^segment <seg>
+#              ^failed-retrieval true
+#             -^failed-new-word true
+#             -^retrieved-lexical-item.spelling <spell>)
+#   (<seg> ^current-word.spelling <spell>)
+# -{(<seg> ^not-merged-assigner <ass2>)
+#   (<ass2> ^structure-type << V ADJ N ADV PN U >>)} ## Not another primitive assigner 
+#-->
+#  (<s> ^operator <op> +)
+#   (<op> ^name process-new-word
+#         ^type U
+#         ^spell <spell>
+#		 ^handle (make-constant-symbol <spell>))
+#}
+
+sp {comprehend-word*propose*process-new-word*multiple-non-U-primitive-assigner*fail
+   (state <s> ^name comprehend-word
+              ^quiescence t  # Don't chunk because this is going to get updated in smem.
+              ^segment <seg>
+              ^failed-retrieval true
+             -^failed-new-word true
+             -^retrieved-lexical-item.spelling <spell>)
+   (<seg> ^current-word <cw>
+           ^not-merged-assigner <ass> { <ass2> < <ass> } )  
+   (<ass> ^structure-type << V ADJ N ADV PN >>)  ## Assume all D QT P T Q RP are known
+   (<ass2> ^structure-type << V ADJ N ADV PN >>) ## Not another primitive assigner or a U
+   (<cw> ^spelling <spell>)
+  -(<seg> ^not-merged-assigner.structure-type U)
+-->
+   (<s> ^operator <op> +, =)
+   (<op> ^name process-new-word
+         ^spell <spell>
+         ^fail true
+		 ^handle (make-constant-symbol <spell>))
+}
+
+sp {comprehend-word*propose*process-new-word*single-primitive-assigner*guess
+   (state <s> ^name comprehend-word
+              ^quiescence t  # Don't chunk because this is going to get updated in smem.
+              ^segment <seg>
+              ^failed-retrieval true
+             -^failed-new-word true
+             -^retrieved-lexical-item.spelling <spell>
+              ^current-word <cw>)
+   (<seg> ^not-merged-assigner <ass>
+         -^retry-sentence)   
+   (<ass> ^structure-type { <st> << V ADJ N ADV PN >> })  ## Assume all D QT P T Q RP are known
+   -{(<seg> ^not-merged-assigner { <ass2> <> <ass> })
+   (<ass2> ^structure-type << V ADJ N ADV PN U >>)} ## Not another primitive assigner or a U
+   (<cw> ^spelling <spell>)
+-->
+   (<s> ^operator <op> +)
+   (<op> ^name process-new-word
+         ^type <st>
+         ^spell <spell>
+		 ^handle (make-constant-symbol <spell>))
+}
+
+sp {comprehend-word*propose*process-new-word*U
+#:interrupt
+   (state <s> ^name comprehend-word
+              ^quiescence t  # Don't chunk because this is going to get updated in smem.
+              ^segment <seg>
+              ^failed-retrieval true
+             -^failed-new-word true
+             -^retrieved-lexical-item.spelling <spell>)
+   (<seg> ^current-word <cw>
+          ^not-merged-assigner <ass>)
+   (<ass> ^structure-type U)
+   (<cw> ^spelling <spell>)
+-->
+   (<s> ^operator <op> +)
+   (<op> ^name process-new-word
+         ^type U
+         ^spell <spell>
+		 ^handle (make-constant-symbol <spell>))
+}
+
+## Reject failure if a ^type U
+sp {comprehend-word*reject*process-new-word*reject-failure-if-U
+   (state <s> ^name comprehend-word
+              ^operator <op1> + <op2> +
+              ^segment.not-merged-assigner.structure-type U)
+   (<op1> ^name process-new-word
+          ^fail true)
+   (<op2> ^name process-new-word
+          ^type U)
+-->
+   (<s> ^operator <op1> < <op2>)
+}
+#sp {comprehend-word*reject*process-new-word*reject-failure-if-shallow-U*interrupt
+#:interrupt
+#   (state <s> ^name comprehend-word
+#              ^operator.name process-new-word)
+#-->
+#    }
+
+## Reject failure U's when there is a deeper match for a DP that is unresolved
+sp {comprehend-word*reject*process-new-word*reject-failure-if-shallow-U
+#:interrupt
+   (state <s> ^name comprehend-word
+              ^operator <op1> +
+              ^segment <seg>)
+   (<seg> ^not-merged-assigner <ass2> { <> <ass2> <ass3> }
+          ^not-merged-receiver <nmr>)
+   (<op1> ^name process-new-word
+          ^assigner.parent-receiver <pr>  ## U below CP
+          ^type U)
+   (<ass2> ^structure-type N 
+           ^parent-receiver <nmr>)
+   (<nmr> ^structure-type D)
+   (<ass3> ^structure-type DP   ## DP Below CP
+           ^parent-receiver <pr>)
+-->
+   (<s> ^operator <op1> -)
+}
+
+##################
+
+sp {comprehend-word*compare*process-new-word*prefer-most-recent-unknown
+   (state <s> ^name comprehend-word
+              ^operator <op1> +
+                        {<> <op1> <op2> } +)
+   (<op1> ^name process-new-word
+          ^assigner <ass1>)
+   (<ass1> ^structure-type U
+           ^decision-count <n>)
+   (<op2> ^name process-new-word
+          ^assigner <ass2>)
+   (<ass2> ^structure-type U
+           ^decision-count < <n>)
+-->
+   (<s> ^operator <op1> > <op2>)
+}
+
+#############APPLY 
+### For type - not fail
+sp {apply*process-new-word*assign
+   (state <s> ^operator <op>
+              ^segment <seg>)
+              #^comprehension-structure <cs>)
+   (<op> ^name process-new-word
+         ^type { <> U <st> }
+         ^spell <spell>
+         ^handle <name>)
+   (<seg> ^semantics <sem>
+          ^current-word <cw>
+		  ^prior-word.spelling <prior>
+          ^original-sentence <cs>)
+   (<cw> ^next.spelling <next>)
+-->
+   (<s> #^new-word true
+        #^retrieved-lexical-item <nw>
+        ^store-concept <nw> <ref>)
+   
+   (<nw> ^spelling <spell>
+         #^structure-type <st>
+         ^referent <ref>)
+   (<ref> ^handle <name>
+          ^word-structure <nw>)
+   #(<cs> ^retrieved-lexical-item <nw>)
+   #(write (crlf) |I guess | <spell> | is a | <st> | with handle | <name>)
+   (<cw> ^processed true)
+   (<sem> ^interaction-status.new-message <is>)
+   (<is> ^type unknown-word
+   		 ^after <next>
+         ^before <prior>
+         ^word <spell>)
+   (<cs> ^processing-result failure)
+}
+
+sp {apply*process-new-word*assign*U
+   (state <s> ^operator <op>
+              ^comprehension-structure <cs>
+              ^smem.command <cmd>)
+   (<op> ^name process-new-word
+         ^type U
+         ^spell <spell>
+         ^handle <name>)
+-->
+   (<cs> ^retrieved-lexical-item <nw>)   
+   (<s> ^store-concept <nw> <ref>
+        ^new-word true
+        ^retrieved-lexical-item <nw>)
+   (<nw> ^spelling <spell>
+         ^referent <ref>)
+   (<ref> ^handle <name>
+          ^word-structure <nw>)
+   #(write (crlf) |I guess | <spell> | is UNKNOWN with handle | <name>)
+}
+
+## Even if unknown new word, store it away. 
+
+#adding before and after, but how get other info (like arg structure)
+sp {apply*process-new-word*failure*internal
+   (state <s> ^operator <op>
+              ^segment <seg>
+              ^agent-params.sentence-source scripts
+              ^top-state <ts>)
+#   (<ts> ^current-sentence-number <csn>)
+   (<seg> ^semantics <sem>
+          ^current-word <cw>
+          ^prior-word.spelling <prior>
+          ^original-sentence <cs>)
+   (<op> ^name process-new-word
+         ^spell <spell>
+         ^fail true
+         ^handle <name>)
+   (<cw> ^next.spelling <next>)
+-->
+   (<s> ^store-concept <nw> <ref>)
+   (<nw> ^spelling <spell>
+         ^referent <ref>)
+   (<ref> ^handle <name>
+          ^word-structure <nw>)
+   (<cw> ^processed true)
+   #(write (crlf) |New word: | <spell> | can't assign at this time. Store it as UNKNOWN (no type). Need help from user.|)
+   (<sem> ^interaction-status.new-message <is>)
+   (<is> ^type unknown-word
+         ^after <next>
+         ^before <prior>
+         ^word <spell>)
+   (<cs> ^processing-result failure)
+}
+
+
+sp {apply*process-new-word*failure*external
+   (state <s> ^operator <op>
+              ^segment <seg>
+              ^agent-params.sentence-source chat)
+   (<seg> ^semantics <sem>
+          ^current-word <cw>
+          ^original-sentence <cs>)
+   (<op> ^name process-new-word
+         ^spell <spell>
+         ^fail true
+         ^handle <name>)
+-->
+   (<s> ^store-concept <nw> <ref>)
+   (<nw> ^spelling <spell>
+         ^referent <ref>)
+   (<ref> ^handle <name>
+          ^word-structure <nw>)
+   (<cw> ^processed true)
+   #(write (crlf) |New word: | <spell> | can't assign at this time. Store it as no type (UNKNOWN). Need help from user.|)
+   (<sem> ^interaction-status.new-message <is>)
+   (<is> ^type unknown-word
+         ^word <spell>)
+   (<cs> ^processing-result failure)
+}
+
+sp {apply*process-new-word*mark-on-segment
+   (state <s> ^operator <op>
+              ^segment <seg>)
+   (<seg> ^current-word <cw>)
+   (<op> ^name process-new-word
+         ^spell <spell>
+         ^handle <name>)
+-->
+   (<seg> ^unknown-word <spell>)
+}
+sp {apply*process-new-word*clean-up
+   (state <s> ^operator <op>
+              ^smem.command <cmd>)
+   (<op> ^name process-new-word
+         ^word <cw>)
+   (<cmd> ^query <q>)
+-->
+   (<cmd> ^query <q> -)
+}
+
+#JK, learn unknown word right away
+sp {comprehension*prefer*failed-comprehension*over*process-phrase-end
+   (state <s> ^name comprehension
+              ^operator <op1> +
+              ^operator <op2> +)
+   (<op1> ^name failed-comprehension)
+   (<op2> ^name process-phrase-end)
+-->
+   (<s> ^operator <op1> > <op2>)
+}

@@ -1,0 +1,44 @@
+sp {top-state*sentence-source*scripts*propose*create-scripted-sentences
+   (state <s> ^superstate nil
+              ^agent-params.sentence-source scripts
+             -^max-sentence-number)
+-->
+   (<s> ^operator <op> + = >)
+   (<op> ^name create-scripted-sentences)
+}
+
+sp {apply*interpet-message*remove*current-sentence-number
+   (state <s> ^top-state <ts>
+              ^operator.name interpret-message)
+   (<ts> ^game-scripting true ^current-sentence-number <csn>)
+-->
+   (<ts> ^n-sentence-number (+ <csn> 1))
+   (<ts> ^current-sentence-number <csn> -)
+}
+
+sp {apply*wait-for-response*stop*max-sentence
+   (state <s> ^top-state <ts>
+              ^operator.name wait-for-response)
+   (<ts> ^max-sentence-number <csn>
+         ^current-sentence-number > <csn>)
+-->
+   (write (cmd |ctf stats.txt stats|))
+    (write (cmd |ctf statsm.txt statsm|))
+#  (write (cmd |ctf allsmem.txt print @|))
+ #  (write (cmd |ctf allsmemstats.txt smem --stats mem-usage|))
+  # (write (cmd |ctf stats.csv stcyc|)) 
+   (write (cmd |ctf statesexp.txt fc game-search*elaborate*other-levels*simulated|))  
+ #  (write (cmd |ctf solution.txt print (* ^dcount *) -d 2|)) 
+   (write (cmd |ctf chunks.txt pfc|))
+   (write (cmd |ctf s1.txt print s1 -d 3|)) # to verify all solve, no dialog context on top state
+   (halt)
+}
+
+sp {apply*wait-for-response*add*next-sentence-number
+   (state <s> ^top-state <ts>
+              ^operator.name wait-for-response)
+   (<ts> ^game-scripting true ^n-sentence-number <csn>)
+-->
+   (<ts> ^n-sentence-number <csn> -)
+   (<ts> ^current-sentence-number <csn>)
+}

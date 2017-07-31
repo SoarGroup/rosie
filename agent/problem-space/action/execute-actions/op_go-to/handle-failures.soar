@@ -1,0 +1,38 @@
+### No current waypoint, we don't know where we are
+#sp {op_go-to1*propose*report-failure*unknown-current-location
+#   (state <s> ^name op_go-to1
+#             -^world.robot.current-waypoint)
+#   
+#-->
+#   (<s> ^operator <o> + >)
+#   (<o> ^name report-failure
+#        ^failure-type unknown-current-location)
+#}
+
+#### Different failure cases that can arise during go-to
+
+sp {op_go-to1*propose*handle-execution-failure
+   (state <s> ^name op_go-to1
+              ^current-action <a>)
+   (<a> ^{ << stop-command drive-command drive-forward-command >> } <cmd>)
+   (<cmd> ^status failure) # drive commands can be interrupted
+-->
+   (<s> ^operator <o> + = >)
+   (<o> ^name handle-execution-failure
+        ^category failure-handling
+        ^action <a>
+        ^command <cmd>)
+}
+
+sp {op_go-to1*propose*handle-command-failure
+   (state <s> ^name op_go-to1
+              ^current-action <a>)
+   (<a> ^{ << stop-command drive-command drive-forward-command >> } <cmd>)
+   (<cmd> ^status error)
+-->
+   (<s> ^operator <o> + = >)
+   (<o> ^name handle-command-failure
+        ^category failure-handling
+        ^action <a>
+        ^command <cmd>)
+}

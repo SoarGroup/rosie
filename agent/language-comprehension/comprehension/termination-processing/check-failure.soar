@@ -1,0 +1,146 @@
+sp {termination-processing*propose*check-failure
+   (state <s> ^name termination-processing
+              ^checked-not-merged-receivers true
+              ^checked-not-merged-assigners true
+              ^superstate.segment <seg>)
+   (<seg> -^parse-failed-receiver
+          -^parse-failed-assigner
+          -^processed-terminator true
+          -^original-sentence.processed-sentence true)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name check-failure)
+}
+
+sp {apply*check-failure*monitor
+   (state <s> ^name termination-processing
+              ^top-state.current-sentence-number <csn>
+              ^operator.name check-failure 
+              ^segment <seg>)
+   (<seg> ^original-sentence.complete-sentence <os>
+          ^semantics <sem>)
+-->
+   #(write (crlf) |========== | <csn> | =============================================| (crlf) <os>)
+   #(write (crlf) (cmd print -d 7 <sem>) |=======================|)
+ #  (interrupt)
+}
+
+sp {apply*check-failure*monitor*to-file
+   (state <s> ^name termination-processing 
+              ^top-state.create-trace-file true
+              ^operator.name  check-failure 
+              ^segment <seg>)
+   (<seg> ^original-sentence <os>
+          ^semantics <sem>)
+-->
+   (cmd command-to-file -a |rosie-sentence-processing.trace| echo |=======================================|)
+   (cmd command-to-file -a |rosie-sentence-processing.trace| print <os>)
+   (cmd command-to-file -a |rosie-sentence-processing.trace| print -d 3 <sem>)
+}
+
+sp {apply*check-failure*monitor*no-number
+   (state <s> ^name termination-processing
+             -^top-state.current-sentence-number <csn>
+              ^operator.name check-failure 
+              ^segment <seg>)
+   (<seg> ^original-sentence.complete-sentence <os>
+          ^semantics <sem>)
+-->
+   #(write (crlf) |==========================| (crlf) <os>)
+   #(write (crlf) (cmd print -d 7 <sem>) |=======================|)
+  # (interrupt)
+}
+
+#### NEW
+sp {apply*check-failure*failure*retry*receiver
+  #:interrupt
+   (state <s> ^operator.name check-failure 
+              ^segment <seg>
+              ^failed-receiver <item>)
+-->
+   #(write (crlf) |Parse FAILED. Receiver: | <item>)
+   (<seg> ^parse-failed-receiver <item>)
+}
+
+sp {apply*check-failure*failure*retry*assigner
+#:interrupt
+   (state <s> ^operator.name check-failure 
+              ^segment <seg>
+              ^failed-assigner <item>)
+   (<seg> ^original-sentence <os>)
+-->
+   #(write (crlf) |Parse FAILED - Assigner: | <item>)
+   (<seg> ^parse-failed-assigner <item>)
+   (<os> ^processing-result failure) 
+}
+
+#### EXTERNAL
+
+sp {apply*check-failure*success
+   (state <s> ^operator.name check-failure 
+             -^top-state.parser-testing true
+              ^top-state.interaction.status <status>
+              ^segment <sp>
+             -^failed-receiver
+             -^failed-assigner)
+   (<sp> ^original-sentence <cs>
+         ^semantics.message-type <mt>)
+-->
+   #(write (crlf) |Parse SUCCEEDED.|)
+(<status> ^performed.dialog-event <de>)
+   (<de> ^type process-sentence
+         ^originator agent)
+   (<sp> ^processed-terminator true)
+   (<cs> ^processed-sentence true
+         ^processing-result success)
+}
+
+#### INTERNAL
+
+sp {apply*check-failure*success*internal
+   (state <s> ^operator <op>
+              ^top-state.parser-testing true
+              ^segment <sp>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<op> ^name check-failure)
+   (<ts> #^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<sp> ^original-sentence <cs>)
+-->
+   #(write (crlf) |Parse SUCCEEDED.|)
+#   (<sp> ^processed-terminator true)
+   (<cs> ^processed-sentence true
+         ^processing-result success)
+#   (<ts> ^terminated-sentence <csn>
+#         ^success-count <sc> - 
+#                       (+ <sc> 1))
+#   (interrupt)
+}
+#
+#########
+#
+sp {apply*check-failure*new-message
+   (state <s> ^operator.name  check-failure
+             -^top-state.parser-testing true
+             -^failed-receiver
+             -^failed-assigner
+              ^segment.semantics <sem>
+              ^top-state.interaction.status <status>)
+   (<sem> ^message-type <ms-type>)
+-->
+   (<status> ^new-message <sem>)
+}
+#
+#sp {apply*check-failure-interaction-status
+#   (state <s> ^operator.name  check-failure
+#               ^agent-params.sentence-source chat
+#             -^failed-receiver
+#             -^failed-assigner
+#              ^segment.semantics <sem>
+#              ^top-state.interaction.status <status>)
+#   (<sem> ^interaction-status.<att> <value>)
+#-->
+#   (<status> ^<att> <value>)
+#}

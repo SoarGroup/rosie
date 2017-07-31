@@ -1,0 +1,64 @@
+#sp {mNL-Soar*propose*comprehension
+#   (state <s> ^name rosie
+#              ^io.input-link.language.sentence <sentence>)
+#   (<sentence> -^processed-sentence true)
+#-->
+#   (<s> ^operator <op> + =)
+#   (<op> ^name comprehension
+#         ^sentence <sentence>)
+#}
+
+#sp {mNL-Soar*propose*comprehension*internal
+#   (state <s> ^agent-params.sentence-source scripts
+#              ^parser-testing true #John parser testing pipeline
+#              ^current-sentence-number <csn>
+#             -^terminated-sentence <cs>)
+#-->
+#   (<s> ^operator <op> + =, <) # allow I/O
+#   (<op> ^name comprehension)
+#}
+
+#satisfaction of stack calls comprehension
+sp {dialog-event*propose*comprehension
+   (state <s> ^name dialog-event
+              ^agent-params.parser laird
+              ^purpose <p>)
+   (<p> ^type process-sentence ^parameters.sentence <sentence>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name comprehension
+        ^sentence <sentence>)
+}
+
+## For alternative structures that could be retried, keep the most recent.
+sp {apply*comprehension*save-most-recent-alternative-structure
+   (state <s> ^operator.name comprehension
+              ^segment <seg>)
+   (<seg> ^not-merged-receiver <nmr>)
+   (<nmr> ^lt.alternative-structure)
+-->
+   (<seg> ^alternative-structure-receiver <nmr>)}
+
+#clean dialog-world
+sp {apply*performed-event*clean*dialog-world
+    (state <s1> ^name interaction
+                ^agent-params.parser laird
+                ^operator <o>
+                ^top-state.dialog-world.<< objects predicates >> <dw>)
+    (<o> ^name performed-event
+         -^event.dialog-event.type process-unknown-word
+        -^event.dialog-event.type process-sentence)
+   (<dw> ^<something> <obj>)
+-->
+   (<dw> ^<something> <obj> -)
+}
+
+sp {apply*comprehension*save-most-recent-alternative-meaning
+   (state <s> ^operator.name comprehension
+              ^segment <seg>)
+   (<seg> ^merged-receiver <nmr>)
+   (<nmr> ^lt.alternative-meaning)
+-->
+   (<seg> ^alternative-meaning-receiver <nmr>)}
+   
+   

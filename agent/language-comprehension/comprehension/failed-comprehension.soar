@@ -1,0 +1,200 @@
+### Created in process-new-word.soar with new-word is created that can't be merged
+###            next-word.soar when hit end of sentence and not finished.
+###            check-failure with ^parse-failed-assigner
+
+sp {comprehension*propose*failed-comprehension
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^original-sentence <is>)
+   (<is> ^processing-result failure
+        -^processed-sentence true)
+-->
+   (<s> ^operator <op> + =, >)
+   (<op> ^name failed-comprehension)
+}
+
+sp {comprehension*propose*failed-comprehension2
+ #:interrupt
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^<< parse-failed-receiver parse-failed-assigner >>
+          ^retried-sentence true)              
+-->
+   (<s> ^operator <op> + =, >)
+   (<op> ^name failed-comprehension)
+}
+
+sp {comprehension*apply*failed-comprehension*external*remove-old-message-type
+   #:interrupt
+   (state <s> ^name comprehension
+              ^operator <op>
+              ^segment.semantics <sem>)
+  (<sem> -^message-type << failed-comprehension unknown-word >> 
+          ^message-type <mes>)
+   (<op> ^name failed-comprehension)
+-->
+   (<sem> ^message-type <mes> -)
+}
+
+sp {comprehension*apply*failed-comprehension*failed-parse
+  #:interrupt
+   (state <s> ^name comprehension
+              ^operator <op>
+              ^segment <seg>)
+   (<seg> ^original-sentence <is>
+          ^semantics <sem>)
+   (<op> ^name failed-comprehension)
+   (<sem> -^interaction-status)
+-->
+   (<sem> ^interaction-status.failure.type failed-to-interpret-message)
+   #(write (crlf) <sem> | ^interaction-status.failure.type failed-to-interpret-message|)
+}
+
+
+sp {comprehension*apply*failed-comprehension*no-new-word
+   (state <s> ^name comprehension
+              ^operator <op>
+              ^segment <seg>)
+   (<seg> ^original-sentence <is>
+          ^semantics <sem>)
+   (<op> ^name failed-comprehension)
+   (<sem> ^interaction-status <status>)
+  -(<status> ^failure.type unknown-word)
+-->
+   (<sem> ^message-type failed-comprehension)
+   (<status> ^failure.type unknown-word)
+  # #(write (crlf) |Failed parse because of unknown word.|)
+}
+
+sp {comprehension*apply*failed-comprehension*new-word
+  #:interrupt
+   (state <s> ^name comprehension
+              ^operator <op>
+              ^segment <seg>)
+   (<seg> ^original-sentence <is>
+          ^semantics <sem>)
+   (<op> ^name failed-comprehension)
+   (<sem> ^interaction-status.type unknown-word)
+-->
+   (<sem> ^message-type unknown-word)
+}
+
+sp {apply*failed-comprehension*external
+   (state <s> ^operator.name failed-comprehension
+              ^segment <seg>)
+   (<seg> ^original-sentence <os>)
+-->
+   (<os> ^processed-sentence true
+         ^processing-result failure)
+}
+
+
+##JK causing issues for internal domains
+#sp {apply*failed-comprehension*failure*internal
+# #  :interrupt
+#   (state <s> ^operator.name failed-comprehension
+#              ^agent-params.sentence-source scripts
+#              ^segment <seg> 
+#              ^top-state <ts>)
+#   (<ts> ^failure-count <fc>
+#         ^current-sentence-number <csn>)
+#   (<seg> ^original-sentence.complete-sentence <os>
+#          ^semantics <sem>
+#         -^semantics.interaction-status.failure.type unknown-word)
+#-->
+#   (<ts> ^failure-count <fc> - (+ <fc> 1)
+#         ^terminated-sentence <csn>)
+#   #(write (crlf) |========== | <csn> | ================================================| (crlf) <os>)
+#   #(write (crlf) |FAILED!|)
+#   #(write (crlf) (cmd print -d 3 <sem>) |=======================|)
+#}
+#
+##JK causing issues for internal domains
+#sp {apply*failed-comprehension*failure*internal*unknown-word
+#   (state <s> ^operator.name failed-comprehension
+#              ^agent-params.sentence-source scripts
+#              ^segment <seg> 
+#              ^top-state <ts>)
+#   (<ts> ^failure-count <fc>
+#         ^current-sentence-number <csn>)
+#   (<seg> ^original-sentence.complete-sentence <os>
+#          ^semantics <sem>)
+#   (<sem> ^interaction-status.failure.type unknown-word)
+#-->
+#   (<ts> ^failure-count <fc> - (+ <fc> 1)
+#         ^terminated-sentence <csn>)
+#   #(write (crlf) |========== | <csn> | ===============================================| (crlf) <os>)
+#   #(write (crlf) |FAILED! Unknown-word|)
+#   #(write (crlf) (cmd print -d 3 <sem>) |=======================|)
+#
+#}
+
+#JK MERGE unsure what changed
+#sp {apply*failed-comprehension*failure*internal
+#  # :interrupt
+#   (state <s> ^operator.name failed-comprehension
+#              ^agent-params.sentence-source scripts
+#              ^segment <seg> 
+#              ^top-state <ts>)
+#   (<ts> ^failure-count <fc>
+#         ^current-sentence-number <csn>)
+#   (<seg> ^original-sentence.complete-sentence <os>
+#          ^semantics <sem>
+#         -^semantics.interaction-status.failure.type unknown-word)
+#-->
+#   (<ts> ^failure-count <fc> - (+ <fc> 1)
+#         ^terminated-sentence <csn>)
+#   #(write (crlf) |========== | <csn> | ================================================| (crlf) <os>)
+#   #(write (crlf) |FAILED!|)
+#   #(write (crlf) (cmd print -d 3 <sem>) |=======================|)
+#}
+#
+#sp {apply*failed-comprehension*failure*internal*unknown-word
+#   (state <s> ^operator.name failed-comprehension
+#              ^agent-params.sentence-source scripts
+#              ^segment <seg> 
+#              ^top-state <ts>)
+#   (<ts> ^failure-count <fc>
+#         ^current-sentence-number <csn>)
+#   (<seg> ^original-sentence.complete-sentence <os>
+#          ^semantics <sem>)
+#   (<sem> ^interaction-status.failure.type unknown-word)
+#-->
+#   (<ts> ^failure-count <fc> - (+ <fc> 1)
+#         ^terminated-sentence <csn>)
+#   #(write (crlf) |========== | <csn> | ===============================================| (crlf) <os>)
+#   #(write (crlf) |FAILED! Unknown-word|)
+#   #(write (crlf) (cmd print -d 3 <sem>) |=======================|)
+#
+#}
+#
+#sp {apply*failed-comprehension
+#   (state <s> ^name comprehension
+#              ^operator.name failed-comprehension
+#              ^segment <seg>)
+#   (<seg> ^semantics.message-type <message>
+#          ^original-sentence <is>)
+#-->   
+#  (<is> ^processed-sentence true)
+#}
+
+sp {apply*failed-comprehension2
+   (state <s> ^name comprehension
+              ^operator.name failed-comprehension
+              ^segment.semantics <sem>
+              ^top-state.interaction.status <status>)
+  (<sem> ^message-type <message>)
+-->   
+  (<status> ^new-message <sem>)
+}
+
+sp {apply*failed-comprehension-interaction-status
+   (state <s> ^operator.name failed-comprehension
+              ^segment.semantics <sem>
+              ^top-state.interaction.status <status>)
+   (<sem> ^interaction-status.<att> <value>)
+-->
+   (<status> ^<att> <value>)
+}
+
+

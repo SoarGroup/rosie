@@ -1,0 +1,213 @@
+sp {comprehension*propose*next-word
+   (state <s> ^name comprehension
+              ^segment <seg>)
+   (<seg> ^input-sentence <sent>
+          ^current-word <cw>)
+   (<cw> ^processed true)
+   (<sent> ^spelling
+          -^processing-result failure)
+-->
+   (<s> ^operator <o> + =, <)
+   (<o> ^name next-word)
+}
+
+#################
+
+sp {comprehension*apply*next-word*decision-count-threshold*initial
+   (state <s> ^operator.name next-word
+              ^segment <seg>)
+   (<seg> -^decision-count-threshold)
+-->
+   (<seg> ^decision-count-threshold (+ 300 (int (cmd stats -d))))  # can't use time.steps because causes problems with the GDS
+}
+
+sp {comprehension*apply*next-word*decision-count-threshold
+   (state <s> ^operator.name next-word
+              ^segment <seg>)
+   (<seg> ^decision-count-threshold <dct>)
+-->
+   (<seg> ^decision-count-threshold <dct> -          
+                                   (+ 300 (int (cmd stats -d))))  # can't use time.steps because causes problems with the GDS
+}
+
+#################
+
+sp {comprehension*apply*next-word
+   (state <s> ^operator.name next-word
+              ^segment <seg>)
+   (<seg> ^input-sentence <i>
+          ^current-word <old-w>
+          ^prior-word <pw>)
+   (<i> ^next { <> nil <n> })
+-->
+   (<seg> ^input-sentence <i> - # throw away word from input queue
+                          <n>
+          ^current-word <n>
+                        <old-w> -
+          ^prior-word <pw> -
+                      <old-w>)
+}
+
+sp {comprehension*apply*next-word*no-prior
+   (state <s> ^operator.name next-word
+              ^segment <seg>)
+   (<seg> ^input-sentence <i>
+          ^current-word <old-w>
+         -^prior-word <pw>)
+   (<i> ^next <n>)
+-->
+   (<seg> ^input-sentence <i> - # throw away word from input queue
+                          <n>
+          ^current-word <n>
+                        <old-w> -
+          ^prior-word <old-w>)}
+
+sp {comprehension*apply*next-word*end-of-sentence-failure*external
+  # :interrupt
+   (state <s> ^operator.name next-word
+              ^top-state <ts> 
+              ^segment <seg>
+              ^agent-params.sentence-source chat
+              ^top-state.interaction.status <status>)
+   (<ts> ^io.input-link.language.sentence <sentence>)
+   (<seg> ^input-sentence <i>
+          ^current-word <old-w>
+          ^prior-word <pw>
+          ^original-sentence <cs>)
+   (<i> ^next nil
+        ^spelling << |?| |!| |.| >>)
+-->
+ #  (interrupt)
+   #(write (crlf) |External Parse FAILED. Didn't get complete parse by time end of sentence encountered.|)
+   (<cs> ^processing-result failure
+         ^processed-sentence true)
+   (<status> ^failure.type failed-to-interpret-message)
+}
+
+sp {comprehension*apply*next-word*end-of-sentence-failure*internal
+   (state <s> ^operator.name next-word
+              ^agent-params.sentence-source scripts
+              ^segment <seg>)
+   (<seg> ^input-sentence <i>
+          ^current-word <old-w>
+          ^prior-word <pw>
+          ^original-sentence <cs>
+          ^original-sentence.complete-sentence <os>
+          ^semantics <sem>)
+   (<i> ^next nil
+        ^spelling << |?| |!| |.| >>)
+-->
+  # (interrupt)
+   #(write (crlf) |Internal parse FAILED. Didn't get complete parse by time end of sentence encountered.|)
+  # (<cs> ^processing-result failure)
+   (<seg> ^parse-failed-end-of-sentence true)
+ # (write (crlf) |========== | <csn> | =============================================| (crlf) <os>)
+ #  (write (crlf) (cmd print -d 7 <sem>) |=======================|)
+}
+
+sp {comprehension*apply*next-word*end-of-sentence-failure*unknown-word*external
+   (state <s> ^operator.name next-word
+              ^agent-params.sentence-source chat
+              ^segment <seg>
+              ^top-state.interaction.status <status>)
+   (<seg> ^input-sentence <i>
+          ^unknown-word <uw>
+          ^current-word <old-w>
+          ^prior-word <pw>
+          ^original-sentence <cs>)
+   (<i> ^next nil
+        ^spelling << |?| |!| |.| >>)
+-->
+ # (interrupt)
+   #(write (crlf) |Unknown Word encountered during parse, possibly contributing to failure: | <uw>)
+   (<status> ^failure <is>)
+   (<is> ^type unknown-word
+         ^word <uw>)
+}
+
+sp {comprehension*apply*next-word*end-of-sentence-failure*unknown-word*internal
+   (state <s> ^operator.name next-word
+              ^agent-params.sentence-source scripts
+              ^segment <seg>)
+   (<seg> ^input-sentence <i>
+          ^unknown-word <uw>
+          ^current-word <old-w>
+          ^prior-word <pw>
+          ^original-sentence <cs>)
+   (<i> ^next nil
+        ^spelling << |?| |!| |.| >>)
+-->
+ #  (interrupt)
+   #(write (crlf) |Unknown Word encountered during parse, possibly contributing to failure: | <uw>)
+}
+
+
+sp {comprehension*apply*next-word*mark-first-word
+   (state <s> ^operator.name next-word
+              ^segment <seg>)
+   (<seg> ^current-word.spelling |*|
+          ^input-sentence.next <n>)
+-->
+   (<n> ^first-word true)
+}
+
+
+sp {comprehension*apply*next-word*nil*missing-period
+   (state <s> ^operator.name next-word
+              ^segment <seg>)
+   (<seg> ^not-merged-assigner.structure-type T)
+   (<seg> ^input-sentence <i>
+          ^current-word <old-w>
+          ^prior-word <pw>)
+   (<i> ^next nil
+       -^spelling << |?| |!| |.| >>)
+-->
+   #(write (crlf) |Assume missing period - added to end of sentence.|)
+   (<i> ^next <next>)
+   (<next> ^spelling |.|
+           ^next nil)
+   (<seg> ^input-sentence <i> - # throw away word from input queue
+                          <next>
+          ^current-word <next>
+                        <old-w> -
+          ^prior-word <pw> -
+                      <old-w>)
+}
+
+sp {comprehension*apply*next-word*nil*missing-question-mark
+   (state <s> ^operator.name next-word
+              ^segment <seg>)
+   (<seg> ^not-merged-assigner.structure-type QT)
+   (<seg> ^input-sentence <i>
+          ^current-word <old-w>
+          ^prior-word <pw>)
+   (<i> ^next nil
+       -^spelling << |?| |!| |.| >>)
+-->
+   #(write (crlf) |Assume missing ? - added to end of sentence.|)
+   (<i> ^next <next>)
+   (<next> ^spelling |?|
+           ^next nil)
+   (<seg> ^input-sentence <i> - # throw away word from input queue
+                          <next>
+          ^current-word <next>
+                        <old-w> -
+          ^prior-word <pw> -
+                      <old-w>)
+}
+
+sp {comprehension*apply*next-word*clean-up-failure
+   (state <s> ^operator.name next-word
+              ^segment <seg>)
+   (<seg> ^failed-construction true)
+-->
+   (<seg> ^failed-construction true -)
+}
+
+sp {comprehension*apply*next-word*clean-up-multiple
+   (state <s> ^operator.name next-word
+              ^processed-multiple true)
+-->
+   (<s> ^processed-multiple true)
+}
+

@@ -1,0 +1,418 @@
+### Rules on constructions
+###  1. The current-word cannot be a phrase (DP, CP, VP) - the system doesn't know if
+###     something is a phrase until it has processed the next word. Thus, a phrase 
+###     can only appear in the prior-word slot.
+###  2. Both the current-word and prior word should have associated assigners except for when 
+###     the literal word such as |this| is used. Those 
+###     structures that aren't constructions (they are retrieved only using spelling) should not
+##      have assigners for those words, but constructions need assigners so they can "absorb"
+##      any information in the receivers that will get merged with the assigners.
+##   3. If T is an assigner, then should be type S. Otherwise, should be CP (so can be embedded in 
+##      another construction at some point.
+
+### All assigners need a syntactic-structure
+
+
+## CP-T
+smem --add {
+           (<CP-T> ^construction |CP-T|
+                   ^structure-type S #CP
+                   ^current-word T
+                   ^prior-word CP
+                   ^prior-word-first false   # by having both - means it doesn't matter whether first or not.
+                   ^prior-word-first true	
+                   ^assigners <ass1> <ass2>)
+           (<ass1> ^structure-type CP
+                   ^required true
+                   ^syntactic-structure sentence
+                   ^semantic-structure *copy*
+                   )
+           (<ass2> ^structure-type T
+                   ^after <ass1>
+                   ^required true
+                   ^syntactic-structure terminator
+                   )
+}
+
+## Command *-VP-T - Store the red block.
+## Maybe *-VP -> CP 
+## CONJ-VP -> CP?
+smem --add {
+           (<VP-T> ^construction |*-VP-T|
+                   ^structure-type S #CP
+                   ^current-word T
+                   ^prior-word VP
+                   ^prior-word-first true	
+                   ^message-type command	
+                   ^assigners <ass1> <ass2>)
+           (<ass1> ^structure-type VP
+                   ^required true
+                   ^syntactic-structure predicate
+                   ^semantic-structure *copy*
+                   )
+           (<ass2> ^structure-type T
+                   ^after <ass1>
+                   ^required true
+                   ^syntactic-structure terminator
+                   )
+}
+
+## Command VP-T - [and] store the red block.
+smem --add {
+           (<VP-T> ^construction |VP-T|
+                   ^converts-to CP
+                   ^current-word T       # T should only be consumed by a CP going to a sentence.
+                   ^prior-word VP
+                   ^prior-word-first false	
+                   ^message-type command	
+                   ^structure-type C
+                   ^assigners <ass1>) #<ass2>)
+           (<ass1> ^structure-type VP
+                   ^required true
+                   ^syntactic-structure predicate
+                   ^semantic-structure *copy*
+                   )
+#           (<ass2> ^structure-type T
+#                   ^after <ass1>
+#                   ^required true
+#                   ^syntactic-structure terminator
+#                   )
+}
+
+
+## Rosie Command *-Rosie-VP-T - Rosie store the red block.
+smem --add {
+           (<VP-T> ^construction |*-Rosie-VP|
+                   ^structure-type CP
+                   ^current-word V
+                   ^prior-word ROSIE
+                   ^prior-word-first true
+                   ^message-type command	
+                   ^assigners <ass0> <ass1>)# <ass2>)
+           (<ass0> ^structure-type ROSIE
+                   ^before <ass1>
+                   ^syntactic-structure head
+                   ^semantic-structure agent
+                   ^required true)
+           (<ass1> ^structure-type VP
+                   ^required true
+                   ^syntactic-structure predicate
+                   ^semantic-structure *copy*
+                   )
+}
+
+## Normal DP-
+smem --add {
+           (<sentence> ^construction |*-DP-T|
+                       ^structure-type S
+                       ^current-word T
+                       ^prior-word DP
+                       ^prior-word-first true
+                       ^message-type object-definition
+                       ^assigners <ass0> <ass1>)
+           (<ass0> ^structure-type DP
+                   ^syntactic-structure head
+                   ^semantic-structure arg1
+                   ^required true)
+           (<ass1> ^structure-type T
+                   ^after <ass0>
+                   ^required true
+                   ^syntactic-structure terminator
+                   )
+}
+
+## Normal *-DP-VP-T -
+smem --add {
+           (<sentence> ^construction |*-DP-VP|
+                       ^structure-type CP
+                       ^current-word V                  # why disabled?
+                       ^prior-word DP
+                       ^prior-word-first true
+                       ^message-type object-action
+                       ^assigners <ass0> <ass1>)#<ass2>)
+           (<ass0> ^structure-type DP
+                   ^relative-position before
+                   ^before <ass1>
+                   ^syntactic-structure head
+                   ^semantic-structure agent
+                   ^required true)
+           (<ass1> ^structure-type VP
+                   ^after <ass0>
+                   ^required true
+                   ^syntactic-structure predicate
+                   ^semantic-structure action
+                   )
+#           (<ass2> ^structure-type T
+#                   ^after <ass1>
+#                   ^required true
+#                   ^syntactic-structure terminator
+#                  #^parent <sentence>)
+}
+
+## Proper-noun VP T
+smem --add {
+           (<sentence> ^construction |*-PN-VP|
+                       ^structure-type CP
+                       ^current-word V
+                       ^prior-word PN
+                       ^prior-word-first true
+                       ^message-type object-action
+                       ^assigners <ass0> <ass1>)
+           (<ass0> ^structure-type NP
+                   ^relative-position after
+                   ^before <ass1>
+                   ^syntactic-structure head
+                   ^semantic-structure agent
+                   ^required true)
+           (<ass1> ^structure-type VP
+                   ^after <ass0>
+                   ^required true
+                   ^syntactic-structure predicate
+                   ^semantic-structure action
+                   )
+}
+           
+## DP VP
+# 
+smem --add {
+           (<sentence> ^construction |DP-VP|
+                       ^structure-type C
+                       ^current-word V
+                       ^prior-word DP
+                       ^prior-word-first false
+                       ^assigners <ass0> <ass1>
+                       ^converts-to CP)
+           (<ass0> ^structure-type DP
+                   ^before <ass1>
+                   ^syntactic-structure head
+                   ^semantic-structure agent
+                   ^required true)
+           (<ass1> ^structure-type VP
+                   ^required true
+                   ^syntactic-structure predicate
+                   ^semantic-structure *copy*
+                   )
+}
+
+smem --add {
+           (<VP-T> ^construction |*-MV-VPING-T|
+                   ^structure-type S #CP
+                   ^current-word T
+                   ^prior-word VPING
+                   ^prior-word-first false	
+                   ^message-type command	
+                   ^assigners <ass1> <ass2> <ass3>)
+           (<ass1> ^structure-type MV
+                   ^required true
+                   ^syntactic-structure action
+                   ^semantic-structure *copy*
+                   )
+           (<ass2> ^structure-type VPING
+                   ^after <ass1>
+                   ^required true
+                   ^syntactic-structure nil
+                   ^semantic-structure *embed*
+                   ^embed-structure vping-clause
+                   )
+           (<ass3> ^structure-type T
+                   ^after <ass1> <ass2>
+                   ^required true
+                   ^syntactic-structure terminator
+                   )
+}
+
+smem --add { 
+           (<stop> ^spelling |stop|
+                   ^structure-type MV
+                   ^semantic-structure action
+                   ^tense present
+                   ^number singular
+                   ^referent @stop1)
+ 
+           (<start> ^spelling |start|
+                   ^structure-type MV
+                   ^semantic-structure action
+                   ^tense present
+                   ^number singular
+                   ^referent <start2>)          
+           (<start2> ^handle start1 
+                     ^procedural <proc106> 
+                     ^item-type action )
+           (<proc106> ^op_name initiate-start1)
+           
+                      
+           (<following> ^spelling |following|
+                        ^structure-type VING
+                        ^converts-to VPING
+                        ^referent <ref2>
+                   ^semantic-structure action
+                   ^tense present
+                   ^number singular
+                   ^assigners <VT1> <VT2> <VT3> <VT4> <VT5> <VT6>)
+          (<VT1> ^structure-type V-AUX
+                 ^relative-position before
+                 ^syntactic-structure nil
+                 ^semantic-structure action-modifier
+                 ^optional true)
+          (<VT2> ^structure-type DP
+                 ^before <VT3>
+                 ^relative-position after
+                 ^syntactic-structure head
+                 ^semantic-structure arg1
+                 ^required true)         
+          (<VT3> ^structure-type CONJP # |move the block and the sphere to the |
+                  ^after <VT2> 
+                  ^syntactic-structure predicate
+                  ^repeatable true
+                  ^semantic-structure *copy*
+                  ^copy-structure arg1
+                  ^optional true) 
+          (<VT4> ^structure-type ADV  # Up down slowly ...
+                  ^relative-position after
+                  ^syntactic-structure adverb-modifier
+                  ^semantic-structure modifier
+                  ^optional true)
+          (<VT5> ^structure-type PP
+                  ^relative-position after
+                  ^syntactic-structure complement2
+                  ^semantic-structure arg2
+                  ^optional true)
+          (<VT6> ^structure-type ADV  #Carefully 
+                  ^relative-position before
+                  ^syntactic-structure adverb-modifier
+                  ^semantic-structure modifier
+                  ^optional true)
+
+            (<ref2> ^op_name follow) 
+}      
+
+smem --add {                     
+           (<leading> ^spelling |leading|
+                        ^structure-type VING
+                        ^converts-to VPING
+                        ^referent <ref2>
+                   ^semantic-structure action
+                   ^tense present
+                   ^number singular
+                   ^assigners <VT1> <VT2> <VT3> <VT4> <VT5> <VT6>)
+          (<VT1> ^structure-type V-AUX
+                 ^relative-position before
+                 ^syntactic-structure nil
+                 ^semantic-structure action-modifier
+                 ^optional true)
+          (<VT2> ^structure-type DP
+                 ^before <VT3>
+                 ^relative-position after
+                 ^syntactic-structure head
+                 ^semantic-structure arg1
+                 ^required true)         
+          (<VT3> ^structure-type CONJP # |move the block and the sphere to the |
+                  ^after <VT2> 
+                  ^syntactic-structure predicate
+                  ^repeatable true
+                  ^semantic-structure *copy*
+                  ^copy-structure arg1
+                  ^optional true) 
+          (<VT4> ^structure-type ADV  # Up down slowly ...
+                  ^relative-position after
+                  ^syntactic-structure adverb-modifier
+                  ^semantic-structure modifier
+                  ^optional true)
+          (<VT5> ^structure-type PP
+                  ^relative-position after
+                  ^syntactic-structure complement2
+                  ^semantic-structure arg2
+                  ^optional true)
+          (<VT6> ^structure-type ADV  #Carefully 
+                  ^relative-position before
+                  ^syntactic-structure adverb-modifier
+                  ^semantic-structure modifier
+                  ^optional true)
+
+            (<ref2> ^op_name lead) 
+}      
+
+
+## For DP, VP
+smem --add {
+           (<sentence> ^construction |*-for-DP-semicolon-VP|
+                       ^structure-type CP
+                       ^current-word |for|
+                       ^prior-word |*|
+                       ^message-type for-construct
+                       ^assigners <ass0> <ass1> <ass2> <ass3>)
+           (<ass0> ^structure-type DP
+                   ^relative-position after
+                   ^before <ass1> <ass2> <ass3>
+                   ^syntactic-structure head
+                   ^semantic-structure for-condition
+                   #^semantic-structure *embed*
+                   #^embed-structure for-condition-subclause
+                   ^required true)
+           (<ass1> ^structure-type SEMICOLON
+                   ^before <ass2> <ass3>
+                   ^required true
+                   ^syntactic-structure nil)
+           (<ass2> ^structure-type VP
+                   ^before <ass3>
+                   ^required true
+                   ^syntactic-structure predicate
+                   ^semantic-structure *embed*
+                   ^embed-structure for-action-subclause)
+           (<ass3> ^structure-type THEN
+                   ^before <ass4>
+                   ^optional true
+                   ^syntactic-structure nil)
+           (<ass4> ^structure-type CP
+                 ^semantic-structure *embed*
+                 ^embed-structure for-action-then-subclause
+                 ^syntactic-structure nil
+                 ^optional true)
+}
+
+## while DP, VP
+smem --add {
+           (<sentence> ^construction |*-while-CP-semicolon-VP|
+                       ^structure-type CP
+                       ^current-word |while|
+                       ^prior-word |*|
+                       ^message-type while-construct
+                       ^assigners <ass0> <ass1> <ass2>)
+           (<ass0> ^structure-type CP
+                   ^relative-position after
+                   ^before <ass1> <ass2>
+                   ^syntactic-structure head
+                   ^semantic-structure *embed*
+                   ^embed-structure while-condition-subclause
+                   ^required true)
+           (<ass1> ^structure-type SEMICOLON
+                   ^before <ass2>
+                   ^required true
+                   ^syntactic-structure nil)
+           (<ass2> ^structure-type VP
+                   ^required true
+                   ^syntactic-structure predicate
+                   ^semantic-structure *embed*
+                   ^embed-structure while-action-subclause
+                   )
+}
+## Otherwise, VP
+smem --add {
+           (<sentence> ^construction |*-otherwise-colon-VP|
+                       ^structure-type CP
+                       ^current-word |otherwise|
+                       ^prior-word |*|
+                       ^message-type otherwise-construct
+                       ^assigners <ass1> <ass2>)
+           (<ass1> ^structure-type SEMICOLON
+                   ^before <ass2>
+                   ^required true
+                   ^syntactic-structure nil)
+           (<ass2> ^structure-type VP
+                   ^required true
+                   ^syntactic-structure predicate
+                   ^semantic-structure *embed*
+                   ^embed-structure otherwise-action-subclause
+                   )
+}
+

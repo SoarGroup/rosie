@@ -1,0 +1,95 @@
+# We matches a new perception-obj to an existing world object
+# We tell the perception system to link the perception object to a different id
+# This should cause the substate to retract
+
+sp {update-existing-object*propose*link-perception-object
+   (state <s> ^name update-existing-object
+              ^source-type perception-obj
+              ^source-obj.id <perc-id>
+              ^existing-obj.perception-id <obj-id>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name link-perception-object
+        ^perception-obj-id <perc-id>
+        ^existing-obj-id <obj-id>)
+}
+
+sp {update-existing-object*apply*link-perception-object
+   (state <s> ^name update-existing-object
+              ^agent-params.domain << tabletop fetch >>
+              ^operator <o>
+              ^io.output-link <ol>)
+   (<o> ^name link-perception-object
+        ^perception-obj-id <perc-id>
+        ^existing-obj-id <obj-id>)
+-->
+   (<ol> ^modify-scene <ms>)
+   (<ms> ^type link
+         ^source-handle <perc-id>
+         ^destination-handle <obj-id>)
+}
+
+sp {update-existing-object*apply*link-perception-object*change*perception-id
+   (state <s> ^name update-existing-object
+              ^agent-params.domain magicbot
+              ^operator.name link-perception-object
+              ^existing-obj <obj>
+              ^source-obj.id <new-pid>)
+   (<obj> ^perception-id <old-pid>)
+-->
+   (<obj> ^perception-id <old-pid> -
+          ^perception-id <new-pid>)
+}
+
+sp {update-existing-object*apply*link-perception-object*monitor*perception
+   (state <s> ^name update-existing-object
+              ^operator <o>
+              ^agent-params.debug-perception true)
+   (<o> ^name link-perception-object
+        ^perception-obj-id <perc-id>
+        ^existing-obj-id <obj-id>)
+-->
+   (write |Linking object | <perc-id> | to | <obj-id>)
+}
+
+## If the perception-obj matches an existing world object, 
+##   simply update the perception-id on that object
+#sp {attend-to-new-object*propose*link-to-existing-object*matches-world-object
+#   (state <s> ^name attend-to-new-object
+#              ^source-type perception-obj
+#              ^world-match-result { <obj-info> <> none })
+#-->
+#   (<s> ^operator <o> +)
+#   (<o> ^name link-to-existing-object
+#        ^object <obj-info>)
+#}
+#
+## If the perception-obj matches a smem object in the world that is not visible, 
+##    update the perception-id on that object
+#sp {attend-to-new-object*propose*link-to-existing-object*matches*smem-obj
+#   (state <s> ^name attend-to-new-object
+#              ^source-type perception-obj
+#              ^smem-obj.handle <handle>
+#              ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
+#   (<obj-info> ^object-handle <handle>
+#               ^status.visible false)
+#-->
+#   (<s> ^operator <o> + >)
+#   (<o> ^name link-to-existing-object
+#        ^object <obj-info>)
+#}
+#
+## Change the perception-id on the object-info
+#sp {attend-to-new-object*apply*link-to-existing-object*change*perception-id
+#   (state <s> ^name attend-to-new-object
+#              ^operator <o>
+#              ^perception-id <id>)
+#   (<o> ^name link-to-existing-object
+#        ^object <obj-info>)
+#   (<obj-info> ^perception-id { <old-id> <> <id> } )
+#-->
+#   (<obj-info> ^perception-id <old-id> -
+#               ^perception-id <id>)
+#}
+#   
+#   

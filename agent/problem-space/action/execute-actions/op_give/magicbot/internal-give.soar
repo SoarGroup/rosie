@@ -1,0 +1,57 @@
+sp {op_give*propose*internal-give
+   (state <s> ^name op_give1
+              ^held-object <obj>
+              ^person <person>
+              ^top-state.world.robot.arm.state internal
+              -^current-action.put-down-command)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name internal-give
+        ^object <obj>
+        ^person <person>)
+}
+
+sp {op_give*apply*internal-give*send-confirmation
+   (state <s> ^name op_give1
+              ^operator <o>
+              ^current-action.received-yes true
+              ^top-state.interaction.changes <c>
+              ^agent-params.arm-simulation-level none)
+   (<o> ^name internal-give)
+-->
+   (<c> ^outgoing-message <msg>)
+   (<msg> ^type confirm-give
+          ^complete-message true)
+}
+
+sp {op_give*apply*internal-give*send-message
+   (state <s> ^name op_give1
+              ^operator <o>
+              ^current-action <a>
+              ^top-state.interaction.changes <c>)
+   (<o> ^name internal-give
+        ^object <obj>
+        ^person <person>)
+   (<a> -^sent-message true)
+-->
+   (<c> ^outgoing-message <msg>)
+   (<msg> ^type give-item-request
+          ^item <obj>
+          ^person <person>)
+   (<a> ^sent-message true)
+}
+
+sp {op_give*apply*internal-give*remove*grabbed
+   (state <s> ^name op_give1
+              ^operator.name internal-give
+              ^held-object.predicates <preds>
+              ^current-action <a>)
+   (<a> ^received-yes true)
+   (<preds> ^arm-status grabbed)
+-->
+   (<preds> ^arm-status grabbed -
+            ^arm-status not-grabbed)
+   (<a> ^put-down-command.status success)
+}
+
+
