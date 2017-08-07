@@ -607,7 +607,12 @@ public class AgentMessageParser
                return objectDesc + " is missing the " + missingprop + " property";
             }
          }
-      } else {
+      } else if(subtype != null && subtype.equals("missing-argument")){
+		  String argName = SoarUtil.getValueOfAttribute(fieldsId, "missing-argument");
+		  if (action != null && argName != null){
+			  return "The " + action + " action was missing a " + argName + " argument";
+		  }
+	  } else {
 		   String argname = SoarUtil.getValueOfAttribute(fieldsId, "argument-name");
          if(action != null && argname != null){
             return "The " + argname + " argument of the " + action + " action was invalid";
