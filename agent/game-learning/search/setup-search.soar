@@ -35,6 +35,8 @@ sp {setup-search*propose*find-solution2
         ^replay true
         ^game-name <name>)
 }
+####################################################################3
+
 
 #sp {setup-search*propose*detect-game-concepts
 #   (state <s> ^name setup-search
@@ -46,92 +48,120 @@ sp {setup-search*propose*find-solution2
 #   (<o> ^name detect-game
 #        ^game-name <name>)
 #}
-##################################
 
-#sp {elaborate*detect-game-concepts
-#   (state <s> ^name detect-game
-#              ^superstate.operator <op>)
-#   (<op> ^game-name <name>)
-#-->
-#   (<s> ^detect-game-concepts <name> ^gtype action)#action)# goal failure heuristic)
-#}
-#sp {detect-game-concepts*elaborate*problem-space
-#   (state <s> ^detect-game-concepts <name>
-#              ^top-state.world <world2>)
-#-->
-#   (<s> ^flag detect-game-concepts ^simulated true ^problem-space <ps> ^retrieve-game <name> ^list <l>)
-#   (<l> ^game <g>)
-#   (<ps> ^world <world> ^name game)#JK 1/18/17 ^name action hmmm
-#   (<world> ^source <world2>
-#            ^copy-type deep)
-#}
-#sp {detect-game-concepts*elaborate*sub-conditions
-#   (state <s> ^flag detect-game-concepts
-#              ^gtype <type>
-#              ^<type> <t>)
-#   (<t> ^condition <co>)
-#   (<co> ^args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <cond>)
-#   (<cond> ^name <name>)
-#-->
-#   (<t> ^condition <cond>)
-#}
-#sp {detect-game-concepts*elaborate*sub-conditions*predicate
-#   (state <s> ^flag detect-game-concepts
-#              ^gtype <type>
-#              ^<type> <t>)
-#   (<t> ^nlp-set.conditions <cond>)
-#-->
-#   (<t> ^condition <cond>)
-#}
-#sp {detect-game-concepts*elaborate*input-args
-#   (state <s> ^flag detect-game-concepts
-#              ^gtype <gtype>
-#              ^predicate <T5>
-#              ^<gtype>.condition <co>)
-#   (<co> ^type concept ^attribute predicate ^name <name> ^args <args>)
-#   (<args> ^num > 0)
-#   (<args> ^<a1> <c1>)
-#   (<c1> ^result.set.instance <in1> ^rtype <rtype>)
-#   (<T5> ^link <co> ^condition <c> ^nlp-set <nlps> ^parameter-set <P124> ^potential-args <P125>)
-#   (<c> ^attribute input-arg ^parameter.{1}.param-id <a1> ^rtype <rtype>)
-#   (<nlps> ^aname <name>)
-#   (<c> ^result.set <res2>)
-#-->
-#   (<res2> ^instance <in1>)
-#}
-#sp {detect-game-concepts*elaborate*input-args*noparam
-#   (state <s> ^flag detect-game-concepts
-#              ^gtype <gtype>
-#              ^predicate <T5>
-#              ^<gtype>.condition <co>)
-#   (<co> ^type concept ^attribute predicate ^name <name> ^args <args>)
-#   (<args> ^num > 0)
-#   (<args> ^<a1> <c1>)
-#   (<c1> ^result.set.instance <in1> ^rtype <rtype> ^parameter.num 0)
-#   (<T5> ^handle <name> ^link <co> ^condition <c> ^nlp-set <nlps> ^formated predicate ^parameter-set <P124> ^potential-args <P125> ^condition <c5>)
-#   (<c5> ^args.<argn> <c> ^parameter.<argn> <param>)#look at parent for param-id
-#   (<param> ^param-id <a1>)
-#   (<c> ^attribute input-arg ^parameter.num 0 ^rtype <rtype>)
-#   (<c> ^result.set <res2>)
-#-->
-#   (<res2> ^instance <in1>)
-#}
-#sp {detect-game-concepts*elaborate*input-args*set-to-single*objects
-#   (state <s> ^flag detect-game-concepts
-#              ^gtype <gtype>
-#              ^predicate <T5>
-#              ^<gtype>.condition <co>)
-#   (<co> ^type concept ^attribute predicate ^name <name> ^args <args>)
-#   (<args> ^num > 0)
-#   (<args> ^<a1> <c1>)
-#   (<c1> ^result.set.instance.{1}.<elem> <obj> ^rtype set)# ^parameter.num 0)
-#   (<T5> ^link <co> ^condition <c> ^nlp-set <nlps> ^parameter-set <P124> ^potential-args <P125>)
-#   (<c> ^result.set <res> ^attribute input-arg ^parameter.{1}.param-id <a1> ^rtype single)
-#   (<nlps> ^aname <name>)
-#-->
-#   (<res> ^instance <i15>)
-#   (<i15> ^1 <obj>)
-#}
+
+################################
+sp {elaborate*detect-predicate-concepts
+   (state <s> ^flag detect-game-concepts
+              ^detect-predicate <pred>)
+   (<pred> ^name <name> -^input)
+-->
+   (<s> ^gtype predicate ^predicate <g2>)
+    (<g2> ^condition <c1> ^back-link <pred>)
+    (<c1> ^name <name> ^type concept ^negative false ^attribute predicate ^args <a1> ^rtype single ^result.set <res3>)
+    (<a1> ^num 1 ^1 <c2>)
+    (<c2> ^name object ^args <a3> ^negative false ^result.set <res> ^rtype single ^parameter.num 0 ^type attribute ^attribute primitive)
+} 
+    
+##################################
+sp {elaborate*detect-game-concepts*results
+   (state <s> ^name detect-game
+              ^predicate <p>
+              ^detect-predicate <pred>)
+   (<pred> ^name <name> ^results <r> )#^input)# input optional
+   (<p> ^back-link <pred> ^condition <c1>)
+   (<c1> ^name <name> ^result.set.instance <i>)
+-->
+(<r> ^instance <i>)
+}
+
+sp {elaborate*detect-game-concepts*initial
+   (state <s> ^name detect-game
+              ^superstate.operator <op>)
+   (<op> ^game-name <name>)
+-->
+   (<s> ^detect-predicate <pred>)#^detect-game-concepts <name>
+   (<pred> ^name clear ^results <r> )#^input)# input optional
+}
+
+sp {detect-game-concepts*elaborate*problem-space
+   (state <s> #^detect-game-concepts <name>
+              ^detect-predicate <pred>
+              ^top-state.world <world2>)
+-->
+   (<s> ^flag detect-game-concepts ^simulated true ^problem-space <ps> ^list <l>)# ^retrieve-game <name>)
+   (<l> ^game <g>)
+   (<ps> ^world <world> ^name action)#JK 1/18/17 ^name action hmmm
+   (<world> ^source <world2>
+            ^copy-type deep)
+}
+sp {detect-game-concepts*elaborate*sub-conditions
+   (state <s> ^flag detect-game-concepts
+              ^gtype <type>
+              ^<type> <t>)
+   (<t> ^condition <co>)
+   (<co> ^args.{<arg> << 1 2 3 4 5 6 7 8 9 10 >>} <cond>)
+   (<cond> ^name <name>)
+-->
+   (<t> ^condition <cond>)
+}
+sp {detect-game-concepts*elaborate*sub-conditions*predicate
+   (state <s> ^flag detect-game-concepts
+              ^gtype <type>
+              ^<type> <t>)
+   (<t> ^nlp-set.conditions <cond>)
+-->
+   (<t> ^condition <cond>)
+}
+sp {detect-game-concepts*elaborate*input-args
+   (state <s> ^flag detect-game-concepts
+              ^gtype <gtype>
+              ^predicate <T5>
+              ^<gtype>.condition <co>)
+   (<co> ^type concept ^attribute predicate ^name <name> ^args <args>)
+   (<args> ^num > 0)
+   (<args> ^<a1> <c1>)
+   (<c1> ^result.set.instance <in1> ^rtype <rtype>)
+   (<T5> ^link <co> ^condition <c> ^nlp-set <nlps> ^parameter-set <P124> ^potential-args <P125>)
+   (<c> ^attribute input-arg ^parameter.{1}.param-id <a1> ^rtype <rtype>)
+   (<nlps> ^aname <name>)
+   (<c> ^result.set <res2>)
+-->
+   (<res2> ^instance <in1>)
+}
+sp {detect-game-concepts*elaborate*input-args*noparam
+   (state <s> ^flag detect-game-concepts
+              ^gtype <gtype>
+              ^predicate <T5>
+              ^<gtype>.condition <co>)
+   (<co> ^type concept ^attribute predicate ^name <name> ^args <args>)
+   (<args> ^num > 0)
+   (<args> ^<a1> <c1>)
+   (<c1> ^result.set.instance <in1> ^rtype <rtype> ^parameter.num 0)
+   (<T5> ^handle <name> ^link <co> ^condition <c> ^nlp-set <nlps> ^formated predicate ^parameter-set <P124> ^potential-args <P125> ^condition <c5>)
+   (<c5> ^args.<argn> <c> ^parameter.<argn> <param>)#look at parent for param-id
+   (<param> ^param-id <a1>)
+   (<c> ^attribute input-arg ^parameter.num 0 ^rtype <rtype>)
+   (<c> ^result.set <res2>)
+-->
+   (<res2> ^instance <in1>)
+}
+sp {detect-game-concepts*elaborate*input-args*set-to-single*objects
+   (state <s> ^flag detect-game-concepts
+              ^gtype <gtype>
+              ^predicate <T5>
+              ^<gtype>.condition <co>)
+   (<co> ^type concept ^attribute predicate ^name <name> ^args <args>)
+   (<args> ^num > 0)
+   (<args> ^<a1> <c1>)
+   (<c1> ^result.set.instance.{1}.<elem> <obj> ^rtype set)# ^parameter.num 0)
+   (<T5> ^link <co> ^condition <c> ^nlp-set <nlps> ^parameter-set <P124> ^potential-args <P125>)
+   (<c> ^result.set <res> ^attribute input-arg ^parameter.{1}.param-id <a1> ^rtype single)
+   (<nlps> ^aname <name>)
+-->
+   (<res> ^instance <i15>)
+   (<i15> ^1 <obj>)
+}
 
 ############################
 ############################
