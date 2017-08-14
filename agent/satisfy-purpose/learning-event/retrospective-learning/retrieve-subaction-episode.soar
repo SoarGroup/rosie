@@ -1,8 +1,22 @@
 sp {retrospective-learning*propose*retrieve-subaction-episode
    (state <s> ^name retrospective-learning
-              ^subactions <subs>)
+              ^initial-episode <ep>
+              ^subactions-stack <subs>)
    (<subs> ^max-episode-id <ep-id>
-          -^retrieved-all true)
+           ^next none)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name retrieve-subaction-episode
+        ^after-episode-id <ep-id>)
+}
+
+sp {retrospective-learning*propose*retrieve-subaction-episode*learned
+   (state <s> ^name retrospective-learning
+              ^initial-episode <ep>
+              ^subactions-stack <subs>)
+   (<subs> ^max-episode-id <ep-id>
+           ^next <top>)
+   (<top> ^learned true)
 -->
    (<s> ^operator <o> +)
    (<o> ^name retrieve-subaction-episode
@@ -13,8 +27,8 @@ sp {retrospective-learning*apply*retrieve-subaction-episode*create*cue
    (state <s> ^name retrospective-learning
               ^operator <o>
               ^epmem.command <cmd>
-              ^subactions <subs>
-              ^action-operator.action-handle <handle>)
+              ^subactions-stack <subs>
+              ^action-handle <handle>)
    (<o> ^name retrieve-subaction-episode)
    (<subs> ^max-episode-id <max-id>
            ^min-episode-id <min-id>)
@@ -30,8 +44,8 @@ sp {retrospective-learning*apply*retrieve-subaction-episode*create*cue
 sp {retrospective-learning*apply*retrieve-subaction-episode*success
    (state <s> ^name retrospective-learning
               ^operator.name retrieve-subaction-episode
-              ^epmem <epmem>
-              ^subactions <subs>)
+              ^subactions-stack <subs>
+              ^epmem <epmem>)
    (<epmem> ^result <res>
             ^result.retrieved <episode>
             ^command <cmd>)
@@ -40,11 +54,16 @@ sp {retrospective-learning*apply*retrieve-subaction-episode*success
           ^memory-id <ep-id>
           ^normalized-match-score 1.0)
    (<cmd> ^query <q>)
-   (<subs> ^max-episode-id <old-max>)
+   (<subs> ^max-episode-id <old-max>
+           ^next <next>)
 -->
    (<subs> ^max-episode-id <old-max> -
-           ^max-episode-id (- <ep-id> 5)) # Subtract 5 just to make sure it's before the opearator is first selected
-   (<s> ^subaction-episode <episode>)
+           ^max-episode-id (- <ep-id> 5) # Subtract 5 just to make sure it's before the opearator is first selected
+           ^next <next> -
+           ^next <new-seg>)
+   (<new-seg> ^episode <episode>
+              ^episode-id <ep-id>
+              ^next <next>)
    (<cmd> ^query <q> -)
 }
 
@@ -52,7 +71,7 @@ sp {retrospective-learning*apply*retrieve-subaction-episode*failure*no*perfect*m
    (state <s> ^name retrospective-learning
               ^operator.name retrieve-subaction-episode
               ^epmem <epmem>
-              ^subactions <subs>)
+              ^subactions-stack <subs>)
    (<epmem> ^result.normalized-match-score < 1.0
             ^command <cmd>)
    (<cmd> ^query <q>)
@@ -65,7 +84,7 @@ sp {retrospective-learning*apply*retrieve-subaction-episode*failure*no*match
    (state <s> ^name retrospective-learning
               ^operator.name retrieve-subaction-episode
               ^epmem <epmem>
-              ^subactions <subs>)
+              ^subactions-stack <subs>)
    (<epmem> ^result.failure
             ^command <cmd>)
    (<cmd> ^query <q>)
