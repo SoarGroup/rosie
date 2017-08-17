@@ -1,8 +1,10 @@
 package edu.umich.rosie.soar;
 
+import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.Properties;
 import java.util.*;
@@ -19,11 +21,12 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         public String agentName;
         public String agentSource;
         public String smemSource;
-        public String worldUsage;
 
         public boolean spawnDebugger;
         public int watchLevel;
         public int throttleMS;
+        
+        public boolean remoteConnection;
         
         public String speechFile;
 
@@ -38,8 +41,8 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
             agentName = props.getProperty("agent-name", "SoarAgent");
             agentSource = props.getProperty("agent-source", null);
             smemSource = props.getProperty("smem-source", null);
-            worldUsage = props.getProperty("world-usage", null);
             verbose = props.getProperty("verbose", "true").equals("true");
+            remoteConnection = props.getProperty("remote-connection", "false").equals("true");
 
             try{
                 watchLevel = Integer.parseInt(props.getProperty("watch-level", "1"));
@@ -86,11 +89,21 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         runEventCallbackIds = new ArrayList<Long>();
         
         time = new Time();
-
-        kernel = Kernel.CreateKernelInNewThread();
-        if (kernel == null){
-           throw new IllegalStateException("CreateKernelInNewThread() returned null");
+        
+        if(this.config.remoteConnection){
+        	int port = Kernel.kDefaultSMLPort;
+			kernel = Kernel.CreateRemoteConnection(true, null, port, false);
+			if (kernel == null){
+			   throw new IllegalStateException("CreateRemoveConnection() returned null");
+			}
+			System.out.println("CreatedConnection");
+        } else {
+			kernel = Kernel.CreateKernelInNewThread();
+			if (kernel == null){
+			   throw new IllegalStateException("CreateKernelInNewThread() returned null");
+			}
         }
+
         // !!! Important !!!
         // We set AutoCommit to false, and only commit inside of the event
         // handler
@@ -139,9 +152,16 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
     public void createAgent(){
         System.out.println("SoarAgent::createAgent()");
         // Initialize Soar Agent
-        agent = kernel.CreateAgent(config.agentName);
-        if (agent == null){
-           throw new IllegalStateException("Kernel created null agent");
+        if(config.remoteConnection){
+			agent = kernel.GetAgentByIndex(0);
+			if (agent == null){
+			   throw new IllegalStateException("Remote Kernel did not have an agent");
+			}
+        } else {
+			agent = kernel.CreateAgent(config.agentName);
+			if (agent == null){
+			   throw new IllegalStateException("Kernel created null agent");
+			}
         }
         
         if (config.spawnDebugger){
@@ -165,7 +185,9 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
             printCallbackId = agent.RegisterForPrintEvent(smlPrintEventId.smlEVENT_PRINT, this, null);
         }
 
-        sourceAgent();
+        if(!config.remoteConnection){
+        	sourceAgent();
+        }
         agent.ExecuteCommandLine(String.format("w %d", config.watchLevel));
         
         if(perceptionConn != null){
@@ -239,7 +261,10 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
             agent.KillDebugger();
             debuggerSpawned = false;
         }
-        kernel.DestroyAgent(agent);
+        
+        if(!config.remoteConnection){
+        	kernel.DestroyAgent(agent);
+        }
 
         //kernel.DestroyAgent(agent);
         // SBW removed DestroyAgent call, it hangs in headless mode for some reason
@@ -336,15 +361,6 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
             } else {
                 System.out.println("Sourced Productions");
             }
-        }
-        
-        if(config.worldUsage != null){
-        	System.out.println("Setting world-usage to " + config.worldUsage);
-            agent.ExecuteCommandLine(
-				"sp {top-state*elaborate*world-usage\n" + 
-				"(state <s> ^superstate nil)\n" + 
-				"-->\n" + 
-				"(<s> ^world-usage " + config.worldUsage + ")}");
         }
     }
 
