@@ -1,0 +1,117 @@
+# If we were told to go to an object (^target-object <obj>)
+# Then find the object's position and drive to a position 1.5 meteres in front of it
+
+sp {op_go-to*elaborate*svs-filter*node_position*object
+   (state <s> ^name op_go-to1
+              ^problem-space.execution-type external
+              ^target-object.svs-obj.id <obj-id>
+               ^top-state.svs.command <cmd>)
+-->
+    (<cmd> ^extract <pos>)
+    (<pos> ^type node_position
+            ^a <obj>)
+    (<obj> ^type node
+           ^id <obj-id>)
+    (<s> ^object-position-filter <pos>)
+}
+
+sp {op_go-to*elaborate*object-position*from*filter
+   (state <s> ^name op_go-to1
+              ^object-position-filter.result.record.value <p>)
+-->
+    (<s> ^target-object-position <p>)
+}
+
+sp {op_go-to*elaborate*svs-filter*node_position*robot
+   (state <s> ^name op_go-to1
+              ^problem-space.execution-type external
+              ^top-state.svs.command <cmd>)
+-->
+    (<cmd> ^extract <pos>)
+    (<pos> ^type node_position
+            ^a <obj>)
+    (<obj> ^type node
+           ^id robot)
+    (<s> ^robot-position-filter <pos>)
+}
+
+sp {op_go-to*elaborate*robot-position*from*filter
+   (state <s> ^name op_go-to1
+              ^robot-position-filter.result.record.value <p>)
+-->
+    (<s> ^robot-position <p>)
+}
+          
+sp {op_go-to*elaborate*calculation
+   (state <s> ^name op_go-to1
+              ^problem-space.execution-type external
+              ^robot-position <rp>
+              ^target-object-position <op>)
+   (<rp> ^x <rx> ^y <ry>)
+   (<op> ^x <ox> ^y <oy>)
+-->
+   (<s> ^calculations <c>)
+   (<c> ^robot-x <rx> ^robot-y <ry>
+        ^object-x <ox> ^object-y <oy>)
+}
+
+sp {op_go-to*elaborate*calculations*distance
+   (state <s> ^name op_go-to1
+              ^calculations <c>)
+   (<c> ^robot-x <rx> ^robot-y <ry>
+        ^object-x <ox> ^object-y <oy>)
+-->
+   (<c> ^distance (sqrt (+ (* (- <ox> <rx>) (- <ox> <rx>) )
+                           (* (- <oy> <ry>) (- <oy> <ry>) ) ) ) )
+}
+
+sp {op_go-to*elaborate*calculations*theta
+   (state <s> ^name op_go-to1
+              ^calculations <c>)
+   (<c> ^robot-x <rx> ^robot-y <ry>
+        ^object-x <ox> ^object-y <oy>)
+-->
+   (<c> ^theta (atan2 (- <oy> <ry>) (- <ox> <rx>) ) )
+}
+
+sp {op_go-to*elaborate*calcuations*drive-x*drive-y
+   (state <s> ^name op_go-to1
+              ^calculations <c>)
+   (<c> ^robot-x <rx> ^robot-y <ry>
+        ^object-x <ox> ^object-y <oy>
+        ^theta <theta>)
+-->
+   (<c> ^drive-x (- <ox> (* 1.5 (cos <theta>) ) ) )
+   (<c> ^drive-y (- <oy> (* 1.5 (sin <theta>) ) ) )
+}
+
+sp {op_go-to1*propose*send-drive-to-xy-command
+   (state <s> ^name op_go-to1
+              ^problem-space.execution-type external
+              ^calculations <c>
+              -^current-action.drive-command)
+  (<c> ^drive-x <x>
+       ^drive-y <y>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name send-drive-to-xy-command
+        ^position <pos>)
+   (<pos> ^x <x> ^y <y>)
+}
+
+sp {op_go-to1*apply*send-drive-to-xy-command*send
+   (state <s> ^name op_go-to1
+              ^operator <o>
+              ^io.output-link <out>
+              ^current-action <a>)
+   (<o> ^name send-drive-to-xy-command
+        ^position <pos>)
+   (<pos> ^x <x> ^y <y>)
+-->
+    (<out> ^do-control-law <law>)
+    (<law> ^name drive-xy
+           ^parameters <params>
+           ^termination-condition.name stabilized)
+    (<params> ^x <x> ^y <y>)
+    (<a> ^drive-command <law>)
+}

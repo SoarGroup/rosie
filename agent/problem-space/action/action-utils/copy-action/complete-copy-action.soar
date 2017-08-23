@@ -1,88 +1,100 @@
-sp {learn-copy-action-elaboration-rule*propose*complete-copy-action
-   (state <s> ^name learn-copy-action-elaboration-rule
-              ^copy-action <ca>)
-   (<ca> ^copy-name <name>
-         -^destination.<name> <a>)
+sp {action-utils*copy-action*propose*complete-copy-action
+   (state <s> ^copy-action-workspace <ws>)
 -->
-   (<s> ^operator <o> + =)
+   (<s> ^operator <o> + < =)
    (<o> ^name complete-copy-action
-        ^copy-action <ca>)
+        ^workspace <ws>)
 }
 
-sp {learn-copy-action-elaboration-rule*elaborate*complete-copy-action*perform*copy
-   (state <s> ^name learn-copy-action-elaboration-rule
-              ^operator <o> +)
+sp {action-utils*copy-action*elaborate*complete-copy-action*perform*copy
+   (state <s> ^operator <o> +)
    (<o> ^name complete-copy-action
-        ^copy-action <ca>)
-   (<ca> ^source-action.perform <perf>)
+        ^workspace <ws>)
+   (<ws> ^source-action.perform <perf>)
 -->
-   (<ca> ^perform <perf>)
+   (<ws> ^perform <perf>)
 }
 
-sp {learn-copy-action-elaboration-rule*elaborate*complete-copy-action*perform*default
-   (state <s> ^name learn-copy-action-elaboration-rule
-              ^operator <o> +)
+sp {action-utils*copy-action*elaborate*complete-copy-action*perform*default
+   (state <s> ^operator <o> +)
    (<o> ^name complete-copy-action
-        ^copy-action <ca>)
-   (<ca> ^source-action <src>)
+        ^workspace <ws>)
+   (<ws> ^source-action <src>)
    (<src> -^perform)
 -->
-   (<ca> ^perform multiple)
+   (<ws> ^perform multiple)
 }
 
-sp {learn-copy-action-elaboration-rule*apply*complete-copy-action*create*copied-action*subaction-handle
-   (state <s> ^name learn-copy-action-elaboration-rule
-              ^operator <o>)
+sp {action-utils*copy-action*prefer*higher*workspace
+   (state <s> ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name << complete-copy-action copy-action-argument >>
+         ^workspace <ws>)
+   (<o2> ^name << complete-copy-action copy-action-argument >>
+         ^workspace < <ws>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {action-utils*copy-action*apply*complete-copy-action*reject
+   (state <s> ^operator <o> +)
+   (<o> ^name << complete-copy-action copy-action-argument >>
+        ^workspace <ws>)
+   (<ws> ^copy-name <name>
+         ^destination.<name> <copy>)
+-->
+   (<s> ^operator <o> -)
+}
+
+sp {action-utils*copy-action*apply*complete-copy-action*create*copied-action*no*subaction-handle
+   (state <s> ^operator <o>)
    (<o> ^name complete-copy-action
-        ^copy-action <ca>)
-   (<ca> ^source-action <src>
+        ^workspace <ws>)
+   (<ws> ^source-action <src>
+         ^perform <perf>)
+   (<src> ^name <name>
+          ^action-handle <h>
+          -^subaction-handle <sub-h>)
+-->
+   (<ws> ^copied-action <copy>)
+   (<copy> ^name <name>
+           ^action-handle <h>
+           ^perform <perf>)
+}
+
+sp {action-utils*copy-action*apply*complete-copy-action*create*copied-action*subaction-handle
+   (state <s> ^operator <o>)
+   (<o> ^name complete-copy-action
+        ^workspace <ws>)
+   (<ws> ^source-action <src>
          ^perform <perf>)
    (<src> ^name <name>
           ^action-handle <h>
           ^subaction-handle <sub-h>)
 -->
-   (<ca> ^copied-action <copy>)
+   (<ws> ^copied-action <copy>)
    (<copy> ^name <name>
            ^action-handle <h>
            ^perform <perf>
            ^subaction-handle <sub-h>)
 }
 
-sp {learn-copy-action-elaboration-rule*apply*complete-copy-action*create*copied-action*no*subaction-handle
-   (state <s> ^name learn-copy-action-elaboration-rule
-              ^operator <o>)
-   (<o> ^name complete-copy-action
-        ^copy-action <ca>)
-   (<ca> ^source-action <src>
-         ^perform <perf>)
-   (<src> ^name <name>
-          ^action-handle <h>
-         -^subaction-handle)
--->
-   (<ca> ^copied-action <copy>)
-   (<copy> ^name <name>
-           ^action-handle <h>
-           ^perform <perf>)
-}
-
 # Also, arg-status
-sp {learn-copy-action-elaboration-rule*apply*complete-copy-action*copy*arg-status
-   (state <s> ^name learn-copy-action-elaboration-rule
-              ^operator <o>)
+sp {action-utils*copy-action*apply*complete-copy-action*copy*arg-status
+   (state <s> ^operator <o>)
    (<o> ^name complete-copy-action
-        ^copy-action <ca>)
-   (<ca> ^copy-argument <arg>)
+        ^workspace <ws>)
+   (<ws> ^copy-argument <arg>)
    (<arg> ^source-arg.arg-status <status>
           ^arg-copy <arg-copy>)
 -->
    (<arg-copy> ^arg-status <status>)
 }
-sp {learn-copy-action-elaboration-rule*apply*complete-copy-action*copy*arg-status*unknown
-   (state <s> ^name learn-copy-action-elaboration-rule
-              ^operator <o>)
+sp {action-utils*copy-action*apply*complete-copy-action*copy*arg-status*unknown
+   (state <s> ^operator <o>)
    (<o> ^name complete-copy-action
-        ^copy-action <ca>)
-   (<ca> ^copy-argument <arg>)
+        ^workspace <ws>)
+   (<ws> ^copy-argument <arg>)
    (<arg> ^source-arg <src>
           ^arg-copy <arg-copy>)
    (<src> -^arg-status)
@@ -96,11 +108,11 @@ sp {learn-copy-action-elaboration-rule*apply*complete-copy-action*copy*arg-statu
 # ENUMERATE: 0-5 arguments
 
 sp {copy-action*complete-copy-action*learn-copy-action-elaboration-rule*0*args
-   (state <s> ^name learn-copy-action-elaboration-rule
-              ^operator <o>)
+   (state <s> ^operator <o>)
    (<o> ^name complete-copy-action
-        ^copy-action <ca>)
-   (<ca> ^num-args 0
+        ^workspace <ws>)
+   (<ws> ^num-args 0
+         ^not-copied true
          ^copied-action <copy>
          ^destination <dest>
          ^copy-name <name>)
@@ -109,11 +121,11 @@ sp {copy-action*complete-copy-action*learn-copy-action-elaboration-rule*0*args
 }
 
 sp {copy-action*complete-copy-action*learn-copy-action-elaboration-rule*1*args
-   (state <s> ^name learn-copy-action-elaboration-rule
-              ^operator <o>)
+   (state <s> ^operator <o>)
    (<o> ^name complete-copy-action
-        ^copy-action <ca>)
-   (<ca> ^num-args 1
+        ^workspace <ws>)
+   (<ws> ^num-args 1
+         ^not-copied true
          ^copy-argument   <arg1>
          ^copied-action <copy>
          ^destination <dest>
@@ -125,11 +137,11 @@ sp {copy-action*complete-copy-action*learn-copy-action-elaboration-rule*1*args
 }
 
 sp {copy-action*complete-copy-action*learn-copy-action-elaboration-rule*2*args
-   (state <s> ^name learn-copy-action-elaboration-rule
-              ^operator <o>)
+   (state <s> ^operator <o>)
    (<o> ^name complete-copy-action
-        ^copy-action <ca>)
-   (<ca> ^num-args 2
+        ^workspace <ws>)
+   (<ws> ^num-args 2
+         ^not-copied true
          ^copy-argument   <arg1>
          ^copy-argument { <arg2> > <arg1>}
          ^copied-action <copy>
@@ -144,11 +156,11 @@ sp {copy-action*complete-copy-action*learn-copy-action-elaboration-rule*2*args
 }
 
 sp {copy-action*complete-copy-action*learn-copy-action-elaboration-rule*3*args
-   (state <s> ^name learn-copy-action-elaboration-rule
-              ^operator <o>)
+   (state <s> ^operator <o>)
    (<o> ^name complete-copy-action
-        ^copy-action <ca>)
-   (<ca> ^num-args 3
+        ^workspace <ws>)
+   (<ws> ^num-args 3
+         ^not-copied true
          ^copy-argument   <arg1>
          ^copy-argument { <arg2> > <arg1>}
          ^copy-argument { <arg3> > <arg2>}
@@ -166,11 +178,11 @@ sp {copy-action*complete-copy-action*learn-copy-action-elaboration-rule*3*args
 }
 
 sp {copy-action*complete-copy-action*learn-copy-action-elaboration-rule*4*args
-   (state <s> ^name learn-copy-action-elaboration-rule
-              ^operator <o>)
+   (state <s> ^operator <o>)
    (<o> ^name complete-copy-action
-        ^copy-action <ca>)
-   (<ca> ^num-args 4
+        ^workspace <ws>)
+   (<ws> ^num-args 4
+         ^not-copied true
          ^copy-argument   <arg1>
          ^copy-argument { <arg2> > <arg1>}
          ^copy-argument { <arg3> > <arg2>}
@@ -191,11 +203,11 @@ sp {copy-action*complete-copy-action*learn-copy-action-elaboration-rule*4*args
 }
 
 sp {copy-action*complete-copy-action*learn-copy-action-elaboration-rule*5*args
-   (state <s> ^name learn-copy-action-elaboration-rule
-              ^operator <o>)
+   (state <s> ^operator <o>)
    (<o> ^name complete-copy-action
-        ^copy-action <ca>)
-   (<ca> ^num-args 5
+        ^workspace <ws>)
+   (<ws> ^num-args 5
+         ^not-copied true
          ^copy-argument   <arg1>
          ^copy-argument { <arg2> > <arg1>}
          ^copy-argument { <arg3> > <arg2>}

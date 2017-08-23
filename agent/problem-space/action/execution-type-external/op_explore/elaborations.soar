@@ -1,0 +1,72 @@
+# elaborate problem-space attend-to-all-perception
+sp {op_explore1*elaborate*problem-space*attend-to-all-perception*yes
+   (state <s> ^name op_explore1
+              ^problem-space.execution-type external
+              ^problem-space.perception <p>)
+-->
+   (<p> ^attend-to-all-perception yes)
+}
+
+#### GOAL SATISFACTION ####
+# If until-clause is satisfied, then the goal is finished
+sp {op_explore1*execute*elaborate*desired*satisfied
+   (state <s> ^name op_explore1
+              ^problem-space.execution-type external
+              ^until-clause.satisfied true)
+-->
+   (<s> ^desired.satisfied true)
+}
+
+# If there is no until clause, wait until all locations are visited
+sp {op_explore1*execute*elaborate*desired*satisfied*no*until
+   (state <s> ^name op_explore1
+              ^problem-space.execution-type external
+             -^until-clause
+              ^unvisited-waypoints false)
+-->
+   (<s> ^desired.satisfied true)
+}
+
+sp {execute-explore*elaborate*distance-map
+   (state <s> ^name op_explore1)
+-->
+   (<s> ^distance-map <map>)
+}
+
+sp {execute-explore*elaborate*distance-map*distance*0
+   (state <s> ^name op_explore1
+              ^distance-map <map>
+              ^world.robot.current-waypoint.handle <wp-handle>)
+-->
+   (<map> ^<wp-handle> 0)
+}
+
+sp {execute-explore*elaborate*distance-map*neighbors
+   (state <s> ^name op_explore1
+              ^distance-map <map>
+              ^top-state.maps.map.waypoint <wp>
+              ^world.robot.current-waypoint.handle <any>)
+   (<map> ^<wp-handle> <d>)
+   (<wp> ^handle <wp-handle>
+         ^next.handle <next-handle>)
+   -{(<map> ^<next-handle> <= <d>)}
+-->
+   (<map> ^<next-handle> (+ <d> 1))
+}
+
+sp {execute-explore*elaborate*unvisited-waypoints*true
+   (state <s> ^name op_explore1
+              ^top-state.maps.map.waypoint.handle { <wp-handle> <> bwp01 }
+             -^current-action.visited <wp-handle>
+             -^current-action.explorened <wp-handle>)
+-->
+   (<s> ^unvisited-waypoints true)
+}
+
+sp {execute-explore*elaborate*unvisited-waypoints*false
+   (state <s> ^name op_explore1
+             -^unvisited-waypoints true)
+-->
+   (<s> ^unvisited-waypoints false)
+}
+        

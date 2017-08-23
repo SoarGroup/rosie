@@ -18,7 +18,7 @@ public class RosieConfig {
 
 	// A set of property names used in the config file
 	public static final HashSet<String> PROP_NAMES = new HashSet<String>(
-			Arrays.asList("agent-name", "agent-dir", "domain", "parser", 
+			Arrays.asList("agent-name", "agent-dir", "domain", "parser", "simulate-perception",
 					"sentence-source", "sentences-file", "world-file", "smem-config-file", 
 					"custom-soar-file", "custom-smem-file"));
 	
@@ -35,6 +35,10 @@ public class RosieConfig {
 	public String domain;
 	public static final HashSet<String> VALID_DOMAINS = new HashSet<String>(
 			Arrays.asList("magicbot", "tabletop", "internal", "fetch"));
+
+	// simulate-perception << true false >> [OPTIONAL]
+	//    Only relevant for domain=internal, whether more detailed perception is simulated
+	public Boolean simulate_perception;
 	
 	// parser = << laird lucia >>  [OPTIONAL] - The parser the agent should use
 	//    DEFAULT - laird
@@ -113,6 +117,16 @@ public class RosieConfig {
 		} else {
 			throw new RosieConfigException("Missing domain parameter");
 		}
+
+		// simulate-perception
+		System.out.println(this.domain);
+		if (this.domain.equals("internal")){
+			System.out.println("simulate-perception");
+			System.out.println(props.getProperty("simulate-perception"));
+			this.simulate_perception = props.getProperty("simulate-perception", "false").toLowerCase().equals("true");
+		} else {
+			this.simulate_perception = false;
+		}
 		
 		// parser
 		if (props.containsKey("parser")){
@@ -189,6 +203,7 @@ public class RosieConfig {
 		sb.append("agent-dir = " + this.agentDir + "\n");
 		sb.append("rosie-home = " + this.rosieHome + "\n");
 		sb.append("domain = " + this.domain + "\n");
+		sb.append("simulate-perception = " + new Boolean(this.simulate_perception).toString() + "\n");
 		sb.append("parser = " + this.parser + "\n");
 		sb.append("sentence-source = " + this.sentenceSource + "\n");
 

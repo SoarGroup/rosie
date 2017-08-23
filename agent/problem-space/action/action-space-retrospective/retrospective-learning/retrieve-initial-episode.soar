@@ -1,0 +1,64 @@
+sp {retrospective-learning*propose*retrieve-initial-episode
+   (state <s> ^name retrospective-learning
+             -^initial-episode)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name retrieve-initial-episode)
+}
+
+sp {retrospective-learning*apply*retrieve-initial-episode
+   (state <s> ^name retrospective-learning
+              ^operator.name retrieve-initial-episode
+              ^superstate.operator.action-operator.action-handle <action-handle>
+              ^epmem.command <cmd>)
+-->
+   (<cmd> ^query <q>)
+   (<q> ^action-stack.top <top>)
+   (<top> ^start-of-execution true
+          ^execution-operator.action-handle <action-handle>)
+}
+
+sp {retrospective-learning*apply*retrieve-initial-episode*success
+   (state <s> ^name retrospective-learning
+              ^operator.name retrieve-initial-episode
+              ^subactions-stack <subs>
+              ^epmem <epmem>
+              ^present-id <present-id>)
+   (<epmem> ^result <res>
+            ^result.retrieved <episode>
+            ^command <cmd>)
+   (<res> ^success <q>
+          ^retrieved <episode>
+          ^memory-id <ep-id>
+          ^normalized-match-score 1.0)
+   (<cmd> ^query <q>)
+-->
+   (<s> ^initial-episode <episode>)
+   (<subs> ^max-episode-id <present-id>
+           ^min-episode-id (+ <ep-id> 5)) ## Add 5 just so we don't get it again
+   (<cmd> ^query <q> -)
+}
+
+sp {retrospective-learning*apply*retrieve-initial-episode*failure*no*exact*match
+   (state <s> ^name retrospective-learning
+              ^operator.name retrieve-initial-episode
+              ^epmem <epmem>)
+   (<epmem> ^result.normalized-match-score < 1.0
+            ^command <cmd>)
+   (<cmd> ^query <q>)
+-->
+   (<s> ^initial-episode none)
+   (<cmd> ^query <q> -)
+}
+        
+sp {retrospective-learning*apply*retrieve-initial-episode*failure*no*match
+   (state <s> ^name retrospective-learning
+              ^operator.name retrieve-initial-episode
+              ^epmem <epmem>)
+   (<epmem> ^result.failure
+            ^command <cmd>)
+   (<cmd> ^query <q>)
+-->
+   (<s> ^initial-episode none)
+   (<cmd> ^query <q> -)
+}

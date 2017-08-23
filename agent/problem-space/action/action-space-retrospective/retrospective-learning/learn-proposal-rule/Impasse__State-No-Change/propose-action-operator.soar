@@ -1,0 +1,181 @@
+sp {learn-proposal-rule-substate*elaborate*arg-set
+   (state <s> ^name learn-proposal-rule-substate)
+-->
+   (<s> ^arg-set <set>)
+}
+
+# ENUMERATE: 0-2 args
+# Enumerate the arguments of the action and form sets of all possible arguments
+# based on the type and category (e.g. location)
+
+sp {learn-proposal-rule-substate*elaborate*arg-info*no*args
+   (state <s> ^name learn-proposal-rule-substate
+              ^retrieved-action <a>)
+   (<a> -^<name1>.arg-type <t1>)
+-->
+   (<s> ^arg-info <i>)
+   (<i> ^num-args 0)
+}
+
+sp {learn-proposal-rule-substate*elaborate*arg-info*1*args
+   (state <s> ^name learn-proposal-rule-substate
+              ^retrieved-action <a>)
+   (<a> ^{ <name1> }.arg-type <t1>
+       -^{ <name2> <> <name1> }.arg-type <t2>)
+-->
+   (<s> ^arg-info <i>)
+   (<i> ^num-args 1
+        ^1 <name1>)
+}
+
+sp {learn-proposal-rule-substate*elaborate*arg-info*2*args
+   (state <s> ^name learn-proposal-rule-substate
+              ^retrieved-action <a>)
+   (<a> ^{ <name1>           < <name2> }.arg-type <t1>
+        ^{ <name2> > <name1>           }.arg-type <t2>
+       -^{ <name3> <> <name2> <> <name1> }.arg-type <t3>)
+-->
+   (<s> ^arg-info <i>)
+   (<i> ^num-args 2
+        ^1 <name1>
+        ^2 <name2>)
+}
+
+sp {learn-proposal-rule-substate*elaborate*arg-set*object*arg
+   (state <s> ^name learn-proposal-rule-substate
+              ^retrieved-action.<arg-name> <arg>
+              ^arg-info <info>
+              ^arg-set <set>
+              ^deep-copy-world.copy-objects-map.<ss-obj> <obj>
+              ^world.objects.object <obj>)
+   (<info> ^<arg-num> <arg-name>)
+   (<arg> ^arg-type object 
+          ^arg-status <status>
+          ^id.predicates.category <cat>)
+   (<obj> ^predicates.category <cat>)
+-->
+   (<set> ^<arg-num> <new-arg>)
+   (<new-arg> ^arg-type object
+              ^arg-status <status>
+              ^id <obj>
+              ^ss-version <ss-arg>)
+   (<ss-arg> ^arg-type object
+             ^arg-status <status>
+             ^id <ss-obj>)
+}
+
+sp {learn-proposal-rule-substate*elaborate*arg-set*predicate*arg
+   (state <s> ^name learn-proposal-rule-substate
+              ^retrieved-action.<arg-name> <arg>
+              ^arg-info <info>
+              ^arg-set <set>
+              ^deep-copy-world.copy-objects-map.<ss-obj> <obj>
+              ^world.objects.object <obj>)
+   (<info> ^<arg-num> <arg-name>)
+   (<arg> ^arg-type predicate 
+          ^arg-status <status>
+          ^handle <ph>
+          ^{2}.predicates.category <cat>)
+   (<obj> ^predicates.category <cat>)
+-->
+   (<set> ^<arg-num> <new-arg>)
+   (<new-arg> ^arg-type predicate
+              ^arg-status <status>
+              ^handle <ph>
+              ^2 <obj>
+              ^ss-version <ss-arg>)
+   (<ss-arg> ^arg-type predicate
+             ^arg-status <status>
+             ^handle <ph>
+             ^2 <ss-obj>)
+}
+
+# Propose every possible version of the action
+# ENUMERATE: 0-2 args
+sp {learn-proposal-rule-substate*propose*action-operator*no*args
+   (state <s> ^name learn-proposal-rule-substate
+              ^retrieved-action <a>
+              ^arg-info.num-args 0)
+   (<a> ^name <name>
+        ^action-handle <h>
+        ^perform <perf>
+       -^<arg-name>.arg-type <t>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name <name>
+        ^action-handle <h>
+        ^subaction-handle none
+        ^perform <perf>)
+}
+
+sp {learn-proposal-rule-substate*propose*action-operator*1*arg
+   (state <s> ^name learn-proposal-rule-substate
+              ^retrieved-action <a>
+              ^arg-info <info>
+              ^arg-set <set>)
+   (<a> ^name <name>
+        ^action-handle <h>
+        ^perform <perf>)
+   (<info> ^num-args 1
+           ^1 <arg1-name>)
+   (<set> ^1 <arg1>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name <name>
+        ^action-handle <h>
+        ^subaction-handle none
+        ^perform <perf>
+        ^<arg1-name> <arg1>)
+}
+
+sp {learn-proposal-rule-substate*propose*action-operator*2*args
+   (state <s> ^name learn-proposal-rule-substate
+              ^retrieved-action <a>
+              ^arg-info <info>
+              ^arg-set <set>)
+   (<a> ^name <name>
+        ^action-handle <h>
+        ^perform <perf>)
+   (<info> ^num-args 2
+           ^1 <arg1-name>
+           ^2 <arg2-name>)
+   (<set> ^1 <arg1>
+          ^2 <arg2>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name <name>
+        ^action-handle <h>
+        ^subaction-handle none
+        ^perform <perf>
+        ^<arg1-name> <arg1>
+        ^<arg2-name> <arg2>)
+}
+
+# Reject a proposed action if it doesn't match the retrieved-action
+# (Hopefully have only 1 action operator being proposed)
+sp {learn-proposal-rule-substate*reject*operator*object*arg*no*match
+   (state <s> ^name learn-proposal-rule-substate
+              ^retrieved-action.<arg-name> <arg>
+              ^operator <o> +)
+   (<arg> ^arg-type object
+          ^id.handle <h>)
+   (<o> ^<arg-name> <op-arg>)
+   (<op-arg> ^arg-type object
+             ^id.handle <> <h>)
+-->
+   (<s> ^operator <o> -)
+}
+
+sp {learn-proposal-rule-substate*reject*operator*predicate*arg*no*match
+   (state <s> ^name learn-proposal-rule-substate
+              ^retrieved-action.<arg-name> <arg>
+              ^operator <o> +)
+   (<arg> ^arg-type predicate
+          ^{2}.handle <h>)
+   (<o> ^<arg-name> <op-arg>)
+   (<op-arg> ^arg-type predicate
+             ^{2}.handle <> <h>)
+-->
+   (<s> ^operator <o> -)
+}
+              

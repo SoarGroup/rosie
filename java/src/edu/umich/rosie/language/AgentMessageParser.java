@@ -95,8 +95,7 @@ public class AgentMessageParser
 		
 		Identifier fieldsId = SoarUtil.getIdentifierOfAttribute(id, "fields");
 		if(type.equals("get-next-task")){
-			return null;
-			//return translateNextTaskPrompt();
+			return translateNextTaskPrompt();
 		} else if(type.equals("get-predicate-info")){
 			return translateGetPredicateInfo(fieldsId);
 		} else if(type.equals("report-successful-training")){
@@ -135,19 +134,21 @@ public class AgentMessageParser
 			return translateGoalState(fieldsId);
 		} else if(type.equals("describe-final-goal-state")){
 			return translateFinalGoalState(fieldsId);
-	   	} else if(type.equals("say-sentence")){
+	    	} else if(type.equals("say-sentence")){
 	    		return translateSaySentence(fieldsId);
          	// AM: produced by problem-space/action/failure-handling
 	    	} else if(type.equals("execution-failure")){
 	    		return translateExecutionFailure(fieldsId);
-       		} else if(type.equals("command-failure")){
-        		return translateCommandFailure(fieldsId);
-       		} else if(type.equals("action-failure")){
+	        } else if(type.equals("command-failure")){
+                  	return translateCommandFailure(fieldsId);
+	        } else if(type.equals("action-failure")){
          		return translateActionFailure(fieldsId);
-       		} else if(type.equals("missing-object-failure")){
-          		return translateMissingObjectFailure(fieldsId);
-       		} else if(type.equals("invalid-argument-failure")){
-          return translateInvalidArgumentFailure(fieldsId);
+	        } else if(type.equals("unsatisfied-goal")){
+			return translateUnsatisfiedGoal(fieldsId);
+	        } else if(type.equals("missing-object-failure")){
+         		return translateMissingObjectFailure(fieldsId);
+	        } else if(type.equals("invalid-argument-failure")){
+         		return translateInvalidArgumentFailure(fieldsId);
          	// AM: End failures
 	    	} else if(type.equals("cant-find-object")){
 	    		return translateCantFindObject(fieldsId);
@@ -982,6 +983,17 @@ public class AgentMessageParser
 		return "The " + command + " command failed while doing " + action;
 	}	
 
+	public static String translateUnsatisfiedGoal(Identifier fieldsId){
+		String action = SoarUtil.getValueOfAttribute(fieldsId, "action-handle").replaceAll("\\d", "");
+
+		if(action == null){
+			return "I was not able to achieve the goal of the action";
+		}
+		
+		return "I could not achieve the goal of " + action;
+	}	
+	
+
 	public static String translateCommandFailure(Identifier fieldsId){
 		String action = SoarUtil.getValueOfAttribute(fieldsId, "action-handle").replaceAll("\\d", "");
 		String command = SoarUtil.getValueOfAttribute(fieldsId, "command-name").replaceAll("\\d", "");
@@ -1029,7 +1041,12 @@ public class AgentMessageParser
                return objectDesc + " is missing the " + missingprop + " property";
             }
          }
-      } else {
+      } else if(subtype != null && subtype.equals("missing-argument")){
+		  String argName = SoarUtil.getValueOfAttribute(fieldsId, "missing-argument");
+		  if (action != null && argName != null){
+			  return "The " + action + " action was missing a " + argName + " argument";
+		  }
+	  } else {
 		   String argname = SoarUtil.getValueOfAttribute(fieldsId, "argument-name");
          if(action != null && argname != null){
             return "The " + argname + " argument of the " + action + " action was invalid";
