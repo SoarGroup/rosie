@@ -1,0 +1,82 @@
+###################################################################
+#
+# interpret-which-concept-do-you-see
+# Occurs when the instructor wants to know details of game concepts that Rosie can see in the world
+#       E.g. 'Do you see the goal of tower-of-hanoi?'.'Yes'.'Which goals do you see?'. #PR - maybe describe the goal here? distinguish between goals and actions.
+
+
+# PR -  The whole point of this is that I have to handle it two ways - one as a follow up to "do you see" and second " independently"
+# PR - currently working on follow up
+#
+###################################################################
+
+#######
+# OPERATOR PROPOSAL
+#######
+sp {interpret-message*propose*interpret-which-concept-do-you-see
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>)
+   (<msg> ^message-type what-N-do-you-sense-question
+         -^interpreted true)
+-->
+   (interrupt)
+   (<s> ^operator <o> +)
+   (<o> ^name interpret-which-concept-do-you-see
+        ^message <msg>)
+}
+
+######
+# OPERATOR ELABORATIONS
+######
+
+# Elaborate useful information from the top-state onto the operator
+sp {interpret-message*elaborate*interpret-which-concept-do-you-see*describe-list-game-concepts
+   (state <s> ^name interpret-message
+              ^top-state.dialogue-context <dc>
+              ^operator <o> +)
+   (<o> ^name interpret-which-concept-do-you-see
+        ^message <msg>)
+   (<msg> ^arg1.handle <concept-type>)
+   (<dc> ^type conversation
+         ^game-handle <game-handle>
+         ^concept-seen <seen>
+         ^gtype <gtype>
+         ^concept_details <condet>)
+-->
+    (<o> ^game-handle <game-handle>
+         ^concept-seen <seen>
+         ^type <gtype>
+         ^asked-type <concept-type>
+         ^concept_details <condet>)
+}
+
+#####
+# OPERATOR APPLICATION
+#####
+
+sp {interpret-message*apply*interpret-which-concept-do-you-see*create*follow-up-to-do-you-see
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>
+              ^operator <o>)
+   (<o> ^name interpret-which-concept-do-you-see
+        ^game-handle <game-handle>
+        ^concept-seen <seen>
+        ^type <gtype>
+        ^asked-type <concept-type> # this might work for individual situation
+        ^concept_details <condet>)
+-->
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)    
+   (<p> ^type agent-response-list-concepts-seen
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<params> ^game-handle <game-handle>
+             ^concept-seen <seen>
+             ^type <gtype>
+             ^concept_details <condet>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type explanation #PR - TODO change this to "dialog","conversation" to indicate there can eb more questions
+         ^originator agent)
+}  

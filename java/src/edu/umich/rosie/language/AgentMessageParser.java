@@ -117,6 +117,8 @@ public class AgentMessageParser
 			return translateGetAgentGameConceptDefinition(fieldsId);
 		} else if(type.equals("agent-detect-game-concepts")){
 			return translateGetAgentDetectGameConcepts(fieldsId);
+		} else if(type.equals("agent-response-list-concepts-seen")){
+			return translateGetAgentListDetectedGameConcepts(fieldsId);
 		} else if(type.equals("agent-location-description")){
 			return translateLocationDescription(fieldsId);
 		} else if(type.equals("get-location-info")){
@@ -338,6 +340,38 @@ public class AgentMessageParser
     	}
     }
     
+    public static String translateGetAgentListDetectedGameConcepts (Identifier fieldsId)  {
+    	Identifier responseId = SoarUtil.getIdentifierOfAttribute(fieldsId, "response");
+    	String type = SoarUtil.getValueOfAttribute(responseId, "type");
+    	Identifier condetailsId = SoarUtil.getIdentifierOfAttribute(responseId, "concept_details");
+    	
+    	// Get number and name of actions
+    	// Counter for individual concept WMEs
+    	String detectedConcepts = "I see ";
+    	List<String> concept_list = new ArrayList<String>();
+    	int i = 0;
+    	WMElement conceptWME = condetailsId.FindByAttribute(type, i);
+    	while (conceptWME != null)
+    	{
+    		Identifier conceptId = conceptWME.ConvertToIdentifier();
+    		String name = SoarUtil.getValueOfAttribute(conceptId, "name");
+    		name = name.replaceAll("\\d", "");
+    		String count = SoarUtil.getValueOfAttribute(conceptId, "count");
+    		if(Integer.parseInt(count) == 1)
+    		{
+    			concept_list.add((count + " instance of " + name + " "));
+    		}
+    		else
+    		{
+    			concept_list.add((count + " instances of " + name + " ")); 
+    		}
+    		conceptWME = condetailsId.FindByAttribute(type, ++i);
+    	}
+    	
+    	detectedConcepts += String.join("and ",concept_list) + ".";
+    	return detectedConcepts;    		
+    }
+    
 	public static String translateGetAgentGameActionDescription(Identifier fieldsId) {
 		Identifier descSetId = SoarUtil.getIdentifierOfAttribute(fieldsId, "descriptions");
 		String actionDescription = "";
@@ -388,7 +422,7 @@ public class AgentMessageParser
 					while(k < param1_list.size())
 					{
 						List<String> objDesc1 = object_descs.get(param1_list.get(k++));
-                                                actionDescription += addArticleForObjectDescription(objDesc1) + objDesc1.get(0) + "and ";						
+						actionDescription += addArticleForObjectDescription(objDesc1) + objDesc1.get(0) + "and ";						
 					}
 					
 					// PR - Make the following into remove "and" function or something.
