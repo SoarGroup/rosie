@@ -100,6 +100,8 @@ public class AgentMessageParser
 			return translateGetPredicateInfo(fieldsId);
 		} else if(type.equals("report-successful-training")){
 			return translateReportSuccessfulTraining(fieldsId);
+		} else if(type.equals("agent-perception-description")){
+			return translatePerceptionDescription(fieldsId);
 		} else if(type.equals("agent-object-description")){
 			return translateObjectDescription(fieldsId);
 		} else if(type.equals("agent-predicate-description")){
@@ -644,6 +646,67 @@ public class AgentMessageParser
 		}
 	}
 	
+	public static String translatePerceptionDescription(Identifier fieldsId) {
+		Identifier descSetId = SoarUtil.getIdentifierOfAttribute(fieldsId, "descriptions");
+		if(descSetId == null) {
+			return "Something went wrong";
+		}
+		String description = "";
+		
+		// Verifying if object description was generated successfully
+		String generated = SoarUtil.getValueOfAttribute(descSetId, "generated");
+		if(generated.equals("yes"))	{	
+			// Retrieving multiple predicates
+			int i = 0;
+			WMElement descWME = descSetId.FindByAttribute("description", i);
+			while (descWME != null)
+			{
+				Identifier descId = descWME.ConvertToIdentifier();
+				String prep = SoarUtil.getValueOfAttribute(descId, "prep").replace("1","");
+				
+				// Get object 2 identifier
+				Identifier obj2Id = SoarUtil.getIdentifierOfAttribute(descId, "2");
+				// Description of the related object in terms of size, shape and color
+				String obj2Desc = generateObjectDescription(obj2Id);
+				
+				// Retrieving multiple objects that are related to object 2 through prep
+				int k = 0;
+				List<String> param1_list = new ArrayList<String>();
+				WMElement param1_WME = descId.FindByAttribute("1", k);
+				while (param1_WME != null)
+				{
+					Identifier param1Id = param1_WME.ConvertToIdentifier();
+					String objDesc1 = generateObjectDescription(param1Id);
+                    String article = startsWithVowel(objDesc1) ? "an ":"a ";
+					param1_list.add(article + objDesc1);
+					param1_WME = descId.FindByAttribute("1", ++k);
+				}
+				//PR - TODO: make this into a helper function that can be used across multiple functions
+				if (param1_list.size() > 1)
+				{
+					String obj1Desc = String.join(", ",param1_list);
+					int lastcomma = obj1Desc.lastIndexOf(',');
+					obj1Desc = obj1Desc.substring(0,1).toUpperCase() + obj1Desc.substring(1,lastcomma) + " and" + obj1Desc.substring(lastcomma+1);
+					description += obj1Desc + " are " + prep + " the " + obj2Desc + ". ";
+				}
+				else
+				{
+                    String obj1Desc = param1_list.get(0);
+                    obj1Desc = obj1Desc.substring(0,1).toUpperCase() + obj1Desc.substring(1);
+					description += obj1Desc + " is " + prep + " the " + obj2Desc + ". ";
+				}
+				
+				descWME = descSetId.FindByAttribute("description", ++i);
+			}
+			
+		}
+		else {
+			description =  "Cannot describe what I see";
+		}
+		
+		return description;
+	}
+	
 	public static String translateLocationDescription(Identifier fieldsId) {
 		Identifier descId = SoarUtil.getIdentifierOfAttribute(fieldsId, "location-description");
 		
@@ -1056,7 +1119,7 @@ public class AgentMessageParser
       return "I got an invalid argument in an action";
 	}	
 
-	
+/*	
 //    public static String translateAgentMessage(Identifier id){
 //        String message = null;
 //        
@@ -1186,7 +1249,8 @@ public class AgentMessageParser
 //	private static String translateNextSubtaskQuery() {
 //		return "How do I proceed?";
 //	}
-//
+//*/
+	
 	private static String translateNextTaskPrompt() {
         return "I am ready for a new task";
 	}
@@ -1645,7 +1709,8 @@ public class AgentMessageParser
 		
 		return descriptionList;
 	}
-	
+
+/*
 //
 //	private static String translateTeachingRequest(Identifier id){
 //    	LingObject obj = LingObject.createFromSoarSpeak(id, "description");
@@ -1857,5 +1922,7 @@ public class AgentMessageParser
 //    	LingObject obj = LingObject.createFromSoarSpeak(id, "object");
 //    	return "Is this " + obj.toString() + "?";
 //    }
-//    
+//  
+  */
+	
 }

@@ -131,4 +131,97 @@ sp {dialog-event*state-no-change*descriptions-not-combined
          ^generated <gen>)
 -->
    (<ss> ^combined no)
+}    
+
+# This operator is proposed when multiple objects are related to a common object with the same relation 
+# For e.g. A red block is in the kitchen. A blue block is in the kitchen. -> A red block and a blue block are in the kitchen.
+
+##################################################
+# Propose combine object predicates
+##################################################
+sp {dialog-event*propose*combine-object-descriptions
+   (state <s> ^name dialog-event
+              ^descriptions <descs>
+              ^generated yes)
+   (<descs> ^description <desc1>
+            ^description { <desc2> <> <desc1> })
+   (<desc1> ^prep <prep1>
+            ^1 <paramid1>
+            ^2 <paramid2>)
+   (<desc2> ^prep <prep1>
+            ^1 { <paramid3> <> <paramid1> }
+            ^2 <paramid2>)   
+  -{ (<descs> ^description { > <desc1> <desc> }) }
+-->
+   (<s> ^operator <o> + =) # PR - TODO - test with multiple combinations that have to be combined (on and in)
+   (<o> ^name combine-object-descriptions
+        ^desc <desc1>)
+}
+
+sp {dialog-event*elaborate*combine-object-descriptions
+   (state <s> ^name dialog-event
+              ^descriptions <descs>
+              ^generated yes
+              ^operator <o> +)
+   (<descs> ^description <desc2>)
+   (<desc1> ^prep <prep1>
+            ^1 <paramid1>
+            ^2 <paramid2>)
+   (<desc2> ^prep <prep1>
+            ^1 { <paramid3> <> <paramid1> }
+            ^2 <paramid2>)
+   (<o> ^name combine-object-descriptions
+        ^desc <desc1>)   
+-->
+   (<o> ^description <desc2>)
 }     
+            
+sp {dialog-event*apply*combine-object-descriptions
+   (state <s> ^name dialog-event
+              ^descriptions <descs>
+              ^operator <o>)
+   (<desc2> ^1 <paramid3>
+            ^2 <paramid2>)
+   (<o> ^name combine-object-descriptions
+        ^desc <desc1>
+        ^description <desc2>)
+-->
+   (<desc1> ^1 <paramid3>) # This is to handle having multiple objects related to a single location
+   (<desc2> ^combined yes)
+}
+
+sp {dialog-event*apply*combine-object-descriptions*remove-redundant-first-predicates            
+   (state <s> ^name dialog-event
+              ^descriptions <descs>
+              ^operator <o>)  
+   (<o> ^name combine-object-descriptions
+        ^desc <desc1>
+        ^description <desc2>)
+   (<descs> ^description <desc2>) 
+   (<desc2> ^combined yes)
+-->
+   (<descs> ^description <desc2> -)
+}
+
+sp {dialog-event*apply*done-combining
+   (state <s> ^name dialog-event
+              ^operator <o>)
+   (<o> ^name combine-object-descriptions)
+   -{(<o> ^description <desc>)
+     (<desc> -^combined yes)}
+-->
+   (<s> ^combined yes)
+}
+
+# When it is in the mobile world and no auxiliary verbs need to be added 
+sp {dialog-event*state-no-change*object-descriptions-not-combined
+   (state <s> ^superstate <ss>
+              ^attribute << state operator >>
+              ^impasse no-change)
+   (<ss> ^name dialog-event
+         ^descriptions <descs>
+         ^purpose.type agent-perception-description
+         ^generated <gen>)
+-->
+   (<ss> ^combined no)
+}
