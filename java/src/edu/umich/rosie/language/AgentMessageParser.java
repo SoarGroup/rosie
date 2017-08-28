@@ -1,5 +1,6 @@
 package edu.umich.rosie.language;
 
+import java.nio.channels.SeekableByteChannel;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -120,6 +121,8 @@ public class AgentMessageParser
 			return translateGetAgentDetectGameConcepts(fieldsId);
 		} else if(type.equals("agent-response-list-concepts-seen")){
 			return translateGetAgentListDetectedGameConcepts(fieldsId);
+		} else if(type.equals("agent-list-mobile-world-concepts-seen")){
+			return translateGetAgentListDetectedMobileWorldConcepts(fieldsId);
 		} else if(type.equals("agent-location-description")){
 			return translateLocationDescription(fieldsId);
 		} else if(type.equals("get-location-info")){
@@ -343,7 +346,7 @@ public class AgentMessageParser
     	}
     }
     
-    public static String translateGetAgentListDetectedGameConcepts (Identifier fieldsId)  {
+    public static String translateGetAgentListDetectedGameConcepts(Identifier fieldsId)  {
     	Identifier responseId = SoarUtil.getIdentifierOfAttribute(fieldsId, "response");
     	String type = SoarUtil.getValueOfAttribute(responseId, "type");
     	Identifier condetailsId = SoarUtil.getIdentifierOfAttribute(responseId, "concept_details");
@@ -373,6 +376,45 @@ public class AgentMessageParser
     	
     	detectedConcepts += String.join("and ",concept_list) + ".";
     	return detectedConcepts;    		
+    }
+    
+    public static String translateGetAgentListDetectedMobileWorldConcepts(Identifier fieldsId)  {
+    	Identifier responseId = SoarUtil.getIdentifierOfAttribute(fieldsId, "response");
+    	String type = SoarUtil.getValueOfAttribute(responseId, "concept-type");
+    	String conceptSeen = SoarUtil.getValueOfAttribute(responseId, "concept-seen");
+    	String detectedConceptsResponse = "";
+    	
+    	if (conceptSeen.equals("Yes"))
+    	{
+    		Identifier conceptDetailsId = SoarUtil.getIdentifierOfAttribute(responseId, "concept-details");
+    		List<String> detectedConceptsList = new ArrayList<String>();
+    		// Iterating through multiple concepts that Rosie can see
+    		int i = 0;
+    		WMElement conceptWME = conceptDetailsId.FindByAttribute(type, i);
+    		
+    		// PR - TODO this currently works only for actions
+    		while (conceptWME != null)
+    		{
+    			Identifier conceptId = conceptWME.ConvertToIdentifier();
+    			String verb = SoarUtil.getValueOfAttribute(conceptId, "action-handle");
+    			verb = verb.replaceAll("\\d", "");
+    			Identifier objId = SoarUtil.getIdentifierOfAttribute(conceptId, "object");
+    			String objDesc = generateObjectDescription(objId);
+    			detectedConceptsList.add(verb+" the " + objDesc);
+    			conceptWME = conceptDetailsId.FindByAttribute(type, ++i);
+    		}
+    		
+    		detectedConceptsResponse = "I see the following " + type + "s: ";
+    		String detectedConcepts = String.join(", ",detectedConceptsList);
+			int lastcomma = detectedConcepts.lastIndexOf(',');
+			detectedConceptsResponse += detectedConcepts.substring(0,lastcomma) + " and" + detectedConcepts.substring(lastcomma+1);			
+    	}
+    	else
+    	{
+    		detectedConceptsResponse = "I do not see any " + type + "s.";
+    	}
+    	
+    	return detectedConceptsResponse;
     }
     
 	public static String translateGetAgentGameActionDescription(Identifier fieldsId) {
@@ -681,6 +723,7 @@ public class AgentMessageParser
 					param1_list.add(article + objDesc1);
 					param1_WME = descId.FindByAttribute("1", ++k);
 				}
+				
 				//PR - TODO: make this into a helper function that can be used across multiple functions
 				if (param1_list.size() > 1)
 				{
