@@ -1,0 +1,39 @@
+###############################################################################
+#
+# Inside the op_pick-up1 substate, this will put a reset command on the output link
+# If the pick-up fails this will reset the arm
+#
+###############################################################################
+
+sp {op_pick-up1*tabletop*propose*send-reset-command
+   (state <s> ^name op_pick-up1
+              ^problem-space.execution-type external
+              ^world.robot.arm.moving-status << failure home >>
+             -^current-action.reset-command)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name send-reset-command
+        ^actions.reset <r>)
+}
+
+sp {op_pickup*apply*send-reset-command
+   (state <s> ^name op_pick-up1
+              ^operator.name send-reset-command
+              ^io.output-link <ol>
+              ^current-action <a>)
+-->
+   (<ol> ^reset <r>)
+   (<a> ^reset-command <r>)
+}
+
+sp {op_pickup*apply*send-reset-command*remove*pick-up-command
+   (state <s> ^name op_pick-up1
+              ^operator.name send-reset-command
+              ^current-action <a>
+              ^io.output-link <out>)
+   (<a> ^pick-up-command <cmd>)
+   (<out> ^pick-up <cmd>)
+-->
+   (<a> ^pick-up-command <cmd> -)
+   (<out> ^pick-up <cmd> -)
+}

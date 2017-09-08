@@ -1,0 +1,170 @@
+# PR - Commenting this out because working with chunks and not with smem,
+#uncomment this and all-structures-retrieved for this to work
+
+#sp {dialog-event*propose*get-predicates-for-pos
+#   (state <s> ^name dialog-event
+#              ^set <set>)
+#   (<set> ^conditions <cond>)
+#   (<cond> -^POS-retrieved)
+#-->
+#   (<s> ^operator <o> + =)
+#   (<o> ^name get-part-of-speech-objDesc
+#        ^condition <cond>)
+#}
+#
+#sp {dialog-event*propose*get-predicates-for-pos*args
+#   (state <s> ^name dialog-event
+#              ^new-set <new-set>)
+#   (<new-set> ^condition <cond>)
+#   (<cond> -^POS-retrieved)
+#-->
+#    (<s> ^operator <o> + =)
+#    (<o> ^name get-part-of-speech-objDesc
+#         ^condition <cond>)
+#} 
+           
+sp {dialog-event*apply*done-handling-conditions
+   (state <s> ^name dialog-event
+              ^set <set>
+              ^new-set <new-set>)
+   -{(<set> ^conditions <cond>)
+     (<cond> -^POS-retrieved)}
+   -{(<new-set> ^condition <new-cond>)
+     (<new-cond> -^POS-retrieved)}
+-->
+    (<s> ^all-structures-retrieved true)
+}   
+
+# Retrieve LTI that has condition handle
+sp {dialog-event*apply*get-part-of-speech-objDesc*retrieve-handle-LTI
+   (state <s> ^name dialog-event
+              ^operator <o>
+              ^smem.command <cmd>
+              ^PR-game-details)
+   (<o> ^name get-part-of-speech-objDesc
+        ^condition <cond>)
+   (<cond> ^name <name>
+           ^args <args>)
+-->   
+   (<cmd> ^query <q> ^depth 5)
+   (<q> ^handle <name>)
+}   
+
+# After retrieval - retrieve LTI whose relation is current LTI (and that has the part of speech)
+sp {dialog-event*apply*get-part-of-speech-objDesc*retrieval-handle-LTI-success*retrieve-LTI-with-relation
+   (state <s> ^name dialog-event
+              ^operator <o>
+              ^smem <smem>
+              ^PR-game-details)
+   (<smem> ^result.retrieved <ret>
+           ^command <cmd>)
+   (<cmd> ^query <q> ^depth 5)
+   (<q> ^handle <name>)
+   (<o> ^name get-part-of-speech-objDesc
+        ^condition <cond>)
+   (<cond> ^name <name>
+           ^args <args>)
+--> 
+   (<cmd> ^query <q> -
+          ^depth 5 -)
+   (<cmd> ^query <qu> ^depth 5)
+   (<qu> ^relation <ret>
+         ^structure-type <str>) 
+}
+
+sp {dialog-event*apply*get-part-of-speech-objDesc*retrieval-LTI-with-relation-success
+   (state <s> ^name dialog-event
+              ^operator <o>
+              ^smem <smem>
+              ^PR-game-details)  
+   (<smem> ^command <cmd>
+           ^result.retrieved <tret>) 
+   (<tret> ^structure-type <str>)
+   (<cmd> ^query <qu> ^depth 5)
+   (<qu> ^relation <ret>)   
+   (<o> ^name get-part-of-speech-objDesc
+        ^condition <cond>)
+   (<cond> ^name <name>
+           ^args <args>)
+-->
+   (<cond> ^structure-type <str>)
+   (<cmd> ^query <qu> -
+          ^depth 5 -)
+}
+
+sp {dialog-event*apply*get-part-of-speech-objDesc*retrieval-LTI-relation-failure*retrieve-with-referent
+   (state <s> ^name dialog-event
+              ^operator <o>
+              ^smem <smem>
+              ^PR-game-details)  
+   (<smem> ^command <cmd>
+           ^result.failure <tret>) 
+   (<cmd> ^query <qu> ^depth 5)
+   (<qu> ^relation <ret>)   
+   (<o> ^name get-part-of-speech-objDesc
+        ^condition <cond>)
+   (<cond> ^name <name>
+           ^args <args>)
+-->
+   (<cmd> ^query <qu> - 
+          ^query <qu1>)
+   (<qu1> ^referent <ret>
+          ^structure-type <str>)
+}
+
+sp {dialog-event*apply*get-part-of-speech-objDesc*retrieval-with-referent-success
+   (state <s> ^name dialog-event
+              ^operator <o>
+              ^smem <smem>
+              ^PR-game-details)  
+   (<smem> ^command <cmd>
+           ^result.retrieved <tret>) 
+   (<tret> ^structure-type <str>)
+   (<cmd> ^query <qu> ^depth 5)
+   (<qu> ^referent <ret>)   
+   (<o> ^name get-part-of-speech-objDesc
+        ^condition <cond>)
+   (<cond> ^name <name>
+           ^args <args>)
+-->
+   (<cond> ^structure-type <str>)
+   (<cmd> ^query <qu> -
+          ^depth 5 -)
+}
+
+# add argument condition to new set when condition is not primitive
+sp {dialog-event*apply*get-part-of-speech-objDesc*add-to-new-set*not-primitive
+   (state <s> ^name dialog-event
+              ^operator <o>
+              ^new-set <new-set>
+              ^PR-game-details)
+   (<o> ^name get-part-of-speech-objDesc
+        ^condition <cond>)
+   (<cond> ^name <name>
+           ^args <args>
+           ^structure-type <str>
+           ^attribute { <> primitive <att> })
+   (<args> ^<num> <new-cond>)
+   (<new-cond> ^attribute)
+-->
+   (<new-set> ^condition <new-cond>)
+   (<cond> ^POS-retrieved true)
+}
+
+# Set condition with attribute primitive to done
+sp {dialog-event*apply*get-part-of-speech-objDesc*add-to-new-set*primitive
+   (state <s> ^name dialog-event
+              ^operator <o>
+              ^new-set <new-set>
+              ^PR-game-details)
+   (<o> ^name get-part-of-speech-objDesc
+        ^condition <cond>)
+   (<cond> ^name <name>
+           ^args <args>
+           ^structure-type <str>
+           ^attribute primitive)
+-->
+   (<cond> ^POS-retrieved true)
+}
+   
+        

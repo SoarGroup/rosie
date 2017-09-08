@@ -16,30 +16,38 @@ sp {push-action*apply*complete-push-action*add*start-of-execution*flag
 }
 
 # push the action on to the stack
+
 sp {push-action*apply*complete-push-action*push
    (state <s> ^name push-action
               ^operator.name complete-push-action
               ^action-stack <stack>
               ^action-to-push <action>)
    (<stack> ^top <top>)
+   (<top> ^next none)
 -->
    (<stack> ^top <top> -
             ^top <action>)
-   (<action> ^next none)
+   (<action> ^next none
+             ^prev <top>)
    (<top> ^next none -
-           ^next <action>)
+          ^next <action>)
 }
 
-# if the stack was empty, update the bottom
-sp {push-action*apply*complete-push-action*change*bottom
-  (state <s> ^name push-action
+# if the stack was empty, update the top and bottom 
+sp {push-action*apply*complete-push-action*push*empty
+   (state <s> ^name push-action
               ^operator.name complete-push-action
               ^action-stack <stack>
               ^action-to-push <action>)
-  (<stack> ^bottom none)
+   (<stack> ^top none
+            ^bottom none)
 -->
-  (<stack> ^bottom none -
+   (<stack> ^top none -
+            ^top <action>
+            ^bottom none -
             ^bottom <action>)
+   (<action> ^next none
+             ^prev none)
 }
 
 # clear the pop command from the changes list
@@ -74,8 +82,54 @@ sp {push-action*apply*complete-push-action*print*action*segment
    (<a> ^execution-operator <exop>)
 -->
    (write |Pushing a new action segment: | (crlf))
-   (write (cmd print <a> -d 1) (crlf))
-   (write |Action Operator: | (crlf))
-   (write (cmd print <exop> -d 5) (crlf))
+   (write (cmd print <a> -d 1)  (crlf))
+   (write |Action Operator: |  (crlf))
+   (write (cmd print <exop> -d 5)  (crlf))
 }
+
+sp {push-action*apply*complete-push-action*print*action*1*obj
+   (state <s> ^name push-action
+              ^agent-params.print-actions true
+              ^operator.name complete-push-action
+              ^action-to-push <a>)
+   (<a> ^execution-operator <exop>)
+   (<exop> ^name <op-name>
+           ^<arg1-name> <arg1>
+          -^{ <arg2-name> <> <arg1-name> }.arg-type <t2>)
+   (<arg1> ^arg-type object ^id.handle <obj>)
+-->
+   (write (crlf) |!ACTION! | <op-name> | | <obj> (crlf))
+}
+
+sp {push-action*apply*complete-push-action*print*action*1*pred
+   (state <s> ^name push-action
+              ^agent-params.print-actions true
+              ^operator.name complete-push-action
+              ^action-to-push <a>)
+   (<a> ^execution-operator <exop>)
+   (<exop> ^name <op-name>
+           ^<arg1-name> <arg1>
+          -^{ <arg2-name> <> <arg1-name> }.arg-type <t2>)
+   (<arg1> ^arg-type predicate ^{2}.handle <obj>)
+-->
+   (write (crlf) |!ACTION! | <op-name> | | <obj> (crlf))
+}
+
+sp {push-action*apply*complete-push-action*print*action*1*obj*1*pred
+   (state <s> ^name push-action
+              ^agent-params.print-actions true
+              ^operator.name complete-push-action
+              ^action-to-push <a>)
+   (<a> ^execution-operator <exop>)
+   (<exop> ^name <op-name>
+           ^<arg1-name> <arg1>
+           ^<arg2-name> <arg2>)
+   (<arg1> ^arg-type object ^id.handle <obj1>)
+   (<arg2> ^arg-type predicate ^{2}.handle <obj2>)
+-->
+   (write (crlf) |!ACTION! | <op-name> | | <obj1> | | <obj2> (crlf))
+}
+
+        
+
         

@@ -222,170 +222,228 @@ sp {learn-condition*propose*resolve-satisfaction-failure
 (<o> ^name resolve-satisfaction-failure)
 }
 
+# PR - my version
+sp {learn-condition*apply*resolve-satisfaction-failure
+   (state <s> ^superstate <sss>)
+   (<sss> ^name learn-condition
+          ^operator.name resolve-satisfaction-failure)
+-->
+   (<s> ^unresolved-conditions <cos>
+        ^set <out-cond>)
+}
+
 sp {resolve-satisfaction-failure*elaborate*unresolved
    (state <s> ^name resolve-satisfaction-failure
-              ^superstate.superstate <sss>)
+              ^superstate.superstate <sss>
+              ^unresolved-conditions <cos>)
    (<sss> ^condition <co>)
    (<co> -^result.set.<x>)
 -->
-(<s> ^unresolved-condition <co>)
+   (<cos> ^condition <co>)
 }
 
+# When the top condition is broken because of its child condition (e.g. on is broken because small block doesn't exist) add the child (missing small block) condition.
+sp {resolve-satisfaction-failure*elaborate*select-bottom-most-conditions
+   (state <s> ^name resolve-satisfaction-failure
+              ^unresolved-conditions <cos>)
+   (<cos> ^condition <co1>
+          ^condition { <> <co1> <co2> })
+   (<co1> ^args.<< 1 2 >> <co2>)
+-->
+   (<co1> ^added yes)
+}
+
+#PR - TODO this won't work in why not?
+# When a concept is broken (larger-than, captured), the condition of the predicate appears unresolved as well. Only add the concept/link as unresolved condition.
+sp {resolve-satisfaction-failure*elaborate*ignore-predicate-subcondition
+   (state <s> ^name resolve-satisfaction-failure
+              ^superstate.superstate.superstate <ssss>
+              ^unresolved-conditions <cos>)
+   (<cos> ^condition <co1>
+          ^condition { <> <co1> <co2> })
+   (<ssss> ^name evaluate-predicate
+           ^predicate <pred>)
+   (<pred> ^link <co2>
+           ^condition <co1>)
+-->
+   (<co1> ^added yes)
+}    
+   
 sp {resolve-satisfaction-failure*propose*handle-unresolved-condition
    (state <s> ^name resolve-satisfaction-failure
-              ^unresolved-condition <co>)
-   (<co> ^name <name>)
+              -^set.conditions
+              ^unresolved-conditions <cos>)
+   (<cos> ^condition <con>)
+  -{ (<cos> ^condition {> <con> <con2>})} # Ensuring this operator is proposed only once given a set of conditions and it consists of at least one. 
 -->
-#(interrupt)
-#(write (cmd print <co> -d 4))
-(<s> ^operator <o> + =)
-(<o> ^name handle-unresolved-condition
-     #^word (make-constant-symbol <name>)
-     ^spelling <name>
-     ^condition <co>)
-}
-sp {resolve-satisfaction-failure*apply*handle-unresolved-condition*copy
-   (state <s> ^name resolve-satisfaction-failure
-              ^unresolved-condition <co>)
-   (<co> ^name <name>)
-(<s> ^operator <o>)
-(<o> ^name handle-unresolved-condition
-     ^spelling <name>
-     ^condition <co>)
--->
-(<s> ^word (make-constant-symbol <name>))
+   (interrupt)
+   (<s> ^operator <o> +)
+   (<o> ^name handle-unresolved-condition
+        ^unresolved-conditions <cos>)
 }
 
-sp {resolve-satisfaction-failure*prefer*handle-unresolved-condition*concept
+sp {resolve-satisfaction-failure*apply*add-condition-without-subconditions
    (state <s> ^name resolve-satisfaction-failure
-              ^operator <o1> +
-              ^operator <o2> +)
-   (<o1> ^condition.type concept)
-   (<o2> -^condition.type concept)
--->
-(<s> ^operator <o1> > <o2>)
-}
-
-
-sp {resolve-satisfaction-failure*prefer*handle-unresolved-condition*concept*usedcurrent*first
-   (state <s> ^name resolve-satisfaction-failure
-   		  	  ^linkstate <sss>
-              ^operator <o1> +
-              ^operator <o2> +)
-   (<sss> ^main-type <gtype> ^<gtype> <g>)
-   (<g> ^condition <c1> -^condition <c2>)
-   (<o1> ^condition <c1>)
-   (<c1> ^type concept)
-   (<o2> ^condition <c2>)
-   (<c2> ^type concept)
--->
-(<s> ^operator <o1> > <o2>)
-}
-
-
-#CASE 1 learned concept not detected, ask for another definition
-sp {resolve-satisfaction-failure*apply*handle-unresolved-condition*noparse
-   (state <s> ^name resolve-satisfaction-failure
-              ^quiescence t #do not chunk through this rule (failure case)
-              ^top-state.dialog-context <dc>
-              ^linkstate <ls>
-              ^word <word> 
-              ^top-state <ts>
-              ^top-state.interaction.changes <c>
+              ^set <out-cond>
+     		  ^quiescence t #do not chunk through this rule (failure case)
               ^operator <o>)
-   (<ls> ^main-type <type> ^<type> <t> -^parsed-structure)
-   (<t> ^nlp-set <nlp> ^formated)
-(<o> ^name handle-unresolved-condition
-     ^condition <co>
-     ^spelling <spell>)
-#(<dc> ^learn-link <ll>)
-#(<ll> ^argnum <an>)
-(<co> ^name {<name2> <> <word>})
-(<ts> -^smap.<spell>)
+   (<o> ^name handle-unresolved-condition
+        ^unresolved-conditions <cos>)
+   (<cos> ^condition <co1>)
+   (<co1> -^added yes)
 -->
-(write (crlf) <spell>)
-(<ts> ^smap <sm> ^new-spelling true)
-(<sm> ^<spell> <word>)
-    #(<co> ^name <name2> -)
-    #(<ll> ^argnum <an> -)
-    #(<co> ^name <word>)
-    (<c> ^new-segment-info <info>)
+   (<out-cond> ^conditions <co1>)
+}
+
+# If it has failed because a set was not satisfied but all conditions are satisfied.
+sp {resolve-conditions*propose*resolve-satisfaction-failure
+   (state <s> ^operator.name wait
+              ^impasse no-change
+              ^superstate <ss>
+              ^superstate.superstate <sss>)
+   (<ss> ^name resolve-conditions)
+   (<sss> ^name chunk-predicate-impasse)
+-->
+   (interrupt)
+   (<ss> ^operator <o> + >)      
+   (<o> ^name resolve-satisfaction-failure)
+}
+
+sp {resolve-conditions*elaborate*resolve-satisfaction-failure
+   (state <s> #^name resolve-conditions
+              ^superstate <ss>
+              ^operator <o> +)
+   (<o> ^name resolve-satisfaction-failure)
+   (<ss> ^<gtype>.nlp-set <nlp-set>
+         ^gtype { <> |predicate| <gtype> })
+   (<nlp-set> ^<< nlp conditions >> <condition>)
+   (<condition> ^args <args1>
+                ^parameter <params1>)
+-->
+   (<condition> ^arg-count (size <args1>)
+                ^param-count (size <params1>))
+}
+ 
+sp {resolve-conditions*elaborate*resolve-satisfaction-failure*select-nlp
+   (state <s> #^name resolve-conditions
+              ^superstate <ss>
+              ^operator <o> +)
+   (<o> ^name resolve-satisfaction-failure)
+   (<ss> ^<gtype>.nlp-set <nlp-set>
+         ^gtype { <> |predicate| <gtype> })
+   (<nlp-set> ^<< nlp conditions >> <condition>)
+   (<condition> #PR - TODO consider doing this with parameter instead of args
+                ^args <args1>
+                ^arg-count <argcount>)
+   -{(<nlp-set> ^nlp { <condition2> <> <condition1> })
+     (<condition2> ^arg-count { > <argcount> <argcount2> })}
+-->
+    (<o> ^nlp <condition>
+         ^gtype <gtype>)
+}
+
+# Making the assumption that the result.set.instance has 2 args
+# not considering multiple conditions with same no. of args yet
+sp {resolve-conditions*apply*resolve-satisfaction-failure*neg-pair
+   (state <s> ^name resolve-satisfaction-failure
+              ^superstate <ss>
+              ^superstate.superstate <sss>)
+   (<ss> ^operator <o>)
+   (<o> ^name resolve-satisfaction-failure
+        ^nlp <cond>
+        ^gtype <gtype>)
+   (<cond> ^parameter <param>
+           ^result.set.instance <inst>)
+   (<param> ^1.param-id <paramid1>
+            ^2.param-id <paramid2>)
+   (<inst> ^1 <num> ^2 <cset>)
+   (<sss> ^<gtype>.parameter-set.negpair <negpair>)
+   (<negpair> ^<paramid1> { <num1> <> <num> } #num1 is what it should have been #PR - confirm with james
+              ^<paramid2> <cset>)
+-->
+   (<s> ^set <set>)
+   (<set> ^conditions <cond>)
+}
+# PR - end my  version
+
+#case 3 inform instructor about condition not identified in the real world
+
+sp {resolve-satisfaction-failure*propose*complete-handle-unresolved-condition
+   (state <s> ^name resolve-satisfaction-failure
+              ^PR-game-details yes
+              ^generated <gen>
+              ^added yes
+              ^set <out-cond>
+              ^descriptions <descs>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name complete-handle-unresolved-condition
+        ^descriptions <descs>
+        ^generated <gen>)   
+}
+
+# PR - TODO: complete this the way you complete can you see game concepts and remove unsatisfied condition from send-message
+sp {resolve-satisfaction-failure*apply*complete-handle-unresolved-condition*condition-unsatisfied*remove-dialogue-context
+   (state <s> ^name resolve-satisfaction-failure
+              ^PR-game-details yes
+              ^quiescence t #do not chunk through this rule (failure case)
+              ^descriptions <descs>
+              ^added yes
+              ^generated <gen>
+              ^set <out-cond>
+              ^top-state <ts>
+              ^top-state.interaction.changes <c> 
+              ^operator <o>)
+   (<o> ^name complete-handle-unresolved-condition)
+   (<ts> ^dialogue-context <dc>)
+-->
+   (<ts> ^dialogue-context <dc> -) # remove dialogue-context if it exists from top-state (on answering why not?)
+}
+ 
+sp {resolve-satisfaction-failure*apply*complete-handle-unresolved-condition*condition-unsatisfied*send-message
+   (state <s> ^name resolve-satisfaction-failure
+              ^PR-game-details yes
+              ^quiescence t #do not chunk through this rule (failure case)
+              ^descriptions <descs>
+              ^added yes
+              ^generated <gen>
+              ^set <out-cond>
+              -^top-state.dialogue-context
+              ^top-state.interaction.changes <c> 
+              ^operator <o>)
+   (<o> ^name complete-handle-unresolved-condition)
+-->
+   (<c> ^new-segment-info <info>)
    (<info> ^purpose <p>
            ^originator agent)
-   (<p> ^type process-unknown-word
-        ^parameters.word <word>
+   (<p> ^type process-unsatisfied-condition
+        ^parameters.condition <co>
         ^satisfaction <sat>)
    (<sat> ^dialog-event <de>)
-   (<de> ^type process-unknown-word
+   (<de> ^type single-word-response # PR - Additionally you could write extra rules (with type process-unsatisfied-condition in case instructor needs further detail about the issue or for clarifications.
           ^originator instructor)
-   (<dc> ^learning-predicate <lp>)
-   (<lp> ^name <word> ^spelling <spell>)
-   (<c> ^outgoing-message <out-msg>)
-   (<out-msg> ^type unknown-defined-word
-              ^fields.word <word>)
-  # (<ps> ^learned-structure <nlp>)
+   (<c> ^outgoing-message <out>)
+   (<out> ^type unsatisfied-condition
+          ^fields.descriptions <descs>)
 }
 
-sp {resolve-satisfaction-failure*apply*handle-unresolved-condition
-#:interrupt
-   (state <s> ^name resolve-satisfaction-failure
-              ^quiescence t #do not chunk through this rule (failure case)
-              ^top-state.dialog-context <dc>
-              ^linkstate <ls>
-              ^word <word> 
-              ^top-state <ts>
-              ^top-state.interaction.changes <c>
-              ^operator <o>)
-   (<ls> ^main-type <type> ^<type> <t> ^parsed-structure <ps>)
-   (<t> ^nlp-set <nlp> ^formated)
-(<o> ^name handle-unresolved-condition
-     ^condition <co>
-     ^spelling <spell>)
-(<dc> ^learn-link <ll>)
-(<ll> ^argnum <an>)
-(<co> ^name <name2> <> <word>)
-(<ts> -^smap.<spell>)
--->
-(write (crlf) <spell>)
-(<ts> ^smap <sm>)
-(<sm> ^<spell> <word>)
-    (<co> ^name <name2> -)
-    (<ll> ^argnum <an> -)
-    (<co> ^name <word>)
-    (<c> ^new-segment-info <info>)
-   (<info> ^purpose <p>
-           ^originator agent)
-   (<p> ^type process-unknown-word
-        ^parameters.word <word>
-        ^satisfaction <sat>)
-   (<sat> ^dialog-event <de>)
-   (<de> ^type process-unknown-word
-          ^originator instructor)
-   (<dc> ^learning-predicate <lp>)
-   (<lp> ^name <word> ^spelling <spell>)
-   (<c> ^outgoing-message <out-msg>)
-   (<out-msg> ^type unknown-defined-word
-              ^complete-message true
-              ^fields.word <word>)
-   (<ps> ^learned-structure <nlp>)
-}
+# Alternate RHS for above. Right now, the above method ensures if there is an issue while learning a game, the execution continues
+# Whereas in the following way, execution stops 
+#   (<out> ^send-message <msg>)
+#   (<msg> ^type unsatisfied-condition
+#          ^fields.descriptions <descs>)
 
-#case 2, try other spelling mapping (TODO temp solution need better smem linking), hanlding of parser
-sp {resolve-satisfaction-failure*apply*handle-unresolved-condition*try-another
-#:interrupt
-   (state <s> ^name resolve-satisfaction-failure
-              ^quiescence t #do not chunk through this rule (failure case)
-              ^top-state <ts>
-              ^operator <o>)
-(<o> ^name handle-unresolved-condition
-     ^condition <co>
-     ^spelling <spell>)
-(<co> ^name <name2> <> <word2>)
-(<ts> ^smap.<spell> <word2>)
--->
-    (<co> ^name <name2> -)
-    (<co> ^name <word2>)
-}
+#sp {resolve-satisfaction-failure*apply*complete-handle-unresolved-condition*mark*performed
+#   (state <s> ^name resolve-satisfaction-failure
+#              ^quiescence t #do not chunk through this rule (failure case)
+#              ^operator.name complete-handle-unresolved-condition
+#              ^top-state <ts>)
+#   (<ts> ^interaction.status <status>)
+#-->
+#   (<status> ^performed.dialog-event <de>)
+#   (<de> ^type explanation
+#         ^originator agent)
+#}
 
 #case 1
 #could be because concept has another unknown definition

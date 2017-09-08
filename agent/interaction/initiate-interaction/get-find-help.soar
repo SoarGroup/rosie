@@ -1,51 +1,39 @@
-# For an cant-find-object, where multiple objects match..
-# Will ask a which question to get more information
+#################### get-find-help ######################
+# Parameters:
+#    object - the object the agent can't find
 
-sp {interpret-failure*propose*interpret-cant-find-object
-   (state <s> ^name interpret-failure
-              ^failure <failure>
-             -^handled <failure>)
-   (<failure> ^type cant-find-object
-             ^object <obj>)
--->
-   (<s> ^operator <o> +)
-   (<o> ^name interpret-cant-find-object
-        ^object <obj>)
-}
-
-sp {interpret-failure*apply*interpret-cant-find-object*mark*handled
-   (state <s> ^name interpret-failure
-              ^operator.name interpret-cant-find-object
-              ^failure <failure>)
--->
-   (<s> ^handled <failure>)
-}
-
-sp {interpret-failure*apply*interpret-cant-find-object*create*new-segment
-   (state <s> ^name interpret-failure
-              ^operator <o>)
-   (<o> ^name interpret-cant-find-object
+# Push a new segment to find out if the instructor knows where the object is
+sp {anystate*apply*initiate-interaction*get-find-help*push*segment
+   (state <s> ^operator <o>
+              ^quiescence t
+              ^top-state.interaction.changes <chgs>)
+   (<o> ^name initiate-interaction
+        ^type get-find-help
         ^object <obj>)
 -->
-   (<s> ^new-segment-info <info>)
+   (<chgs> ^new-segment-info <info>)
    (<info> ^purpose <p>
-        ^originator agent)
+           ^originator agent)
    (<p> ^type get-find-help
+        ^parameters <params>
         ^satisfaction.dialog-event <de>)
+   (<params> ^object <obj>)
    (<de> ^type ANY
          ^originator instructor)
 }
 
-sp {interpret-failure*apply*interpret-cant-find-object*create*message
-   (state <s> ^name interpret-failure
-              ^operator <o>)
-   (<o> ^name interpret-cant-find-object
+# Send an outgoing message to ask for help about the object
+sp {anystate*apply*initiate-interaction*get-find-help*send*message*get-goal-info
+   (state <s> ^operator <o>
+              ^quiescence t
+              ^top-state.interaction.changes <chgs>)
+   (<o> ^name initiate-interaction
+        ^type get-find-help
         ^object <obj>)
 -->
-   (<s> ^outgoing-message <msg>)
+   (<chgs> ^outgoing-message <msg>)
    (<msg> ^type cant-find-object
-          ^object <obj>)
+          ^complete-message true
+          ^fields.object <obj>)
 }
 
-
-   
