@@ -348,33 +348,106 @@ public class AgentMessageParser
     
     public static String translateGetAgentListDetectedGameConcepts(Identifier fieldsId)  {
     	Identifier responseId = SoarUtil.getIdentifierOfAttribute(fieldsId, "response");
-    	String type = SoarUtil.getValueOfAttribute(responseId, "type");
-    	Identifier condetailsId = SoarUtil.getIdentifierOfAttribute(responseId, "concept_details");
-    	
-    	// Get number and name of actions
-    	// Counter for individual concept WMEs
-    	String detectedConcepts = "I see ";
-    	List<String> concept_list = new ArrayList<String>();
-    	int i = 0;
-    	WMElement conceptWME = condetailsId.FindByAttribute(type, i);
-    	while (conceptWME != null)
+    	String type = SoarUtil.getValueOfAttribute(responseId, "concept-type");
+    	Identifier condetailsId = SoarUtil.getIdentifierOfAttribute(responseId, "concept-details");
+    	int num_operators = Integer.parseInt(SoarUtil.getValueOfAttribute(responseId, "num-operators"));
+    	String detectedConcepts="";
+    	// PR - TODO right now only works with actions
+    	if (num_operators < 5)    		
     	{
-    		Identifier conceptId = conceptWME.ConvertToIdentifier();
-    		String name = SoarUtil.getValueOfAttribute(conceptId, "name");
-    		name = name.replaceAll("\\d", "");
-    		String count = SoarUtil.getValueOfAttribute(conceptId, "count");
-    		if(Integer.parseInt(count) == 1)
+			detectedConcepts = "I see the following actions: ";
+    		if(type.equals("action"))
     		{
-    			concept_list.add((count + " instance of " + name + " "));
+	    		Identifier operatorsId = SoarUtil.getIdentifierOfAttribute(responseId, "concept-operators");
+	    		// Counter for multiple operators
+	    		int j = 0;
+	    		WMElement operatorWME = operatorsId.FindByAttribute("operator1", j);
+	    		while (operatorWME != null)
+	    		{
+	    			Identifier operatorId = operatorWME.ConvertToIdentifier();
+	    			
+	    			// Getting all objects referred in the action
+	    			int num_parameters = Integer.parseInt(SoarUtil.getValueOfAttribute(operatorId, "num-parameters"));
+	    			Identifier parametersId = SoarUtil.getIdentifierOfAttribute(operatorId, "parameters");
+	    			HashMap<Integer, String> object_descs = new HashMap<Integer, String>();
+	    			for(int z=1;z <= num_parameters;z++)
+	    			{
+	    				Identifier objId = SoarUtil.getIdentifierOfAttribute(parametersId, Integer.toString(z));
+	    				String desc = generateObjectDescription(objId);
+	                    String article = startsWithVowel(desc) ? "an ":"a ";
+	                    object_descs.put(z, article+desc);    				
+	    			}
+	    			
+	    			// Verb description
+	    			Identifier verbId = SoarUtil.getIdentifierOfAttribute(operatorId, "verb");
+					String verbName = SoarUtil.getValueOfAttribute(verbId, "verb-name").replace("1","");
+					String verbPrep = SoarUtil.getValueOfAttribute(verbId, "verb-prep").replace("1","");
+					if (verbPrep.equals("on"))
+					{
+						// Add "to" to "on" when it is associated with a verb
+						verbPrep += "to";
+					}
+					
+					// Retrieving multiple objects that need to be moved
+					int k = 0;
+					List<String> param1_list = new ArrayList<String>();
+					WMElement param1_WME = verbId.FindByAttribute("1", k);
+					while (param1_WME != null)
+					{
+						int param1Id = Integer.parseInt(param1_WME.GetValueAsString());
+						param1_list.add(object_descs.get(param1Id));
+						param1_WME = verbId.FindByAttribute("1", ++k);
+					}
+					
+					int paramid2 = Integer.parseInt(SoarUtil.getValueOfAttribute(verbId, "2"));
+					//PR - TODO: make this into a helper function that can be used across multiple functions
+					if (param1_list.size() > 1)
+					{
+						String obj1Desc = String.join(", ",param1_list);
+						int lastcomma = obj1Desc.lastIndexOf(',');
+						obj1Desc = obj1Desc.substring(0,lastcomma) + " and" + obj1Desc.substring(lastcomma+1);
+						detectedConcepts +=  verbName.substring(0, 1).toUpperCase() + verbName.substring(1) + " " + obj1Desc + " " + verbPrep 
+								+ " " + object_descs.get(paramid2) + ". ";
+					}
+					else
+					{
+	                    String obj1Desc = param1_list.get(0);
+	                    detectedConcepts += verbName.substring(0, 1).toUpperCase() + verbName.substring(1) + " " + obj1Desc 
+	                    		+ " " + verbPrep + " " + object_descs.get(paramid2) + ". ";
+					}
+					
+	    			// Counter for verbs
+	    			operatorWME = operatorsId.FindByAttribute("operator1", ++j);
+	    		}
     		}
-    		else
-    		{
-    			concept_list.add((count + " instances of " + name + " ")); 
-    		}
-    		conceptWME = condetailsId.FindByAttribute(type, ++i);
+    	}
+    	else {
+    		// Get number and name of concepts
+	    	detectedConcepts = "I see ";
+	    	List<String> concept_list = new ArrayList<String>();
+	    	// Counter for individual concept WMEs
+	    	int i = 0;
+	    	WMElement conceptWME = condetailsId.FindByAttribute(type, i);
+	    	while (conceptWME != null)
+	    	{
+	    		Identifier conceptId = conceptWME.ConvertToIdentifier();
+	    		String name = SoarUtil.getValueOfAttribute(conceptId, "name");
+	    		name = name.replaceAll("\\d", "");
+	    		String count = SoarUtil.getValueOfAttribute(conceptId, "count");
+	    		if(Integer.parseInt(count) == 1)
+	    		{
+	    			concept_list.add((count + " instance of " + name + " "));
+	    		}
+	    		else
+	    		{
+	    			concept_list.add((count + " instances of " + name + " ")); 
+	    		}
+	    		conceptWME = condetailsId.FindByAttribute(type, ++i);
+	    	}
+	    	
+	    	detectedConcepts += String.join("and ",concept_list) + ".";
     	}
     	
-    	detectedConcepts += String.join("and ",concept_list) + ".";
     	return detectedConcepts;    		
     }
     
@@ -710,7 +783,8 @@ public class AgentMessageParser
 				Identifier obj2Id = SoarUtil.getIdentifierOfAttribute(descId, "2");
 				// Description of the related object in terms of size, shape and color
 				String obj2Desc = generateObjectDescription(obj2Id);
-				
+
+				//PR - TODO: make this into a function that can be used across multiple functions
 				// Retrieving multiple objects that are related to object 2 through prep
 				int k = 0;
 				List<String> param1_list = new ArrayList<String>();
@@ -1326,6 +1400,7 @@ public class AgentMessageParser
 	}
 	
 	public static String generateObjectDescription(Identifier descId){
+		// PR - TODO consider adding article in here.
 		String root = "object"; // PR - Commenting because now category seems to be correct. Verify after merge
 		ArrayList<String> adjectives = new ArrayList<String>();
 		Identifier predsId = SoarUtil.getIdentifierOfAttribute(descId, "predicates");

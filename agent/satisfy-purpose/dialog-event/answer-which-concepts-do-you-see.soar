@@ -7,14 +7,17 @@ sp {dialog-event*propose*answer-which-concepts-do-you-see
    (<params> ^game-handle <game-handle>
              ^concept-seen <seen>
              ^type <gtype>
-             ^concept_details <condet>)
+             ^concept-details <condet>
+             ^concept-operators <con>)
  -->
     (<s> ^operator <o> +) #PR - TODO maybe we ought to put these things onto dialog-event state
     (<o> ^name answer-which-concepts-do-you-see
          ^game-handle <game-handle>
          ^concept-seen <seen>
          ^type <gtype>
-         ^concept_details <condet>)
+         ^concept-details <condet>
+         ^concept-operators <con>
+         ^num-operators (size <con>))
 }
 
 sp {dialog-event*propose*answer-which-concepts-do-you-see*mobile-world
@@ -40,7 +43,8 @@ sp {dialog-event*apply*answer-which-concepts-do-you-see*mobile-world
         ^simulate-perception true
         ^type action)
 -->
-   (<s> ^problem-space <ps>)
+   (<s> ^problem-space <ps>
+        ^response <res>)
    (<ps> ^propose-action-operators true
          ^name action
          ^execution-type internal
@@ -101,13 +105,104 @@ sp {operator*impasse-tie*apply*mobile-world-concept-identified*actions-detected
    -{ (<con> -^action <a1>)}
    (<ss> ^name dialog-event
          ^operator <o1> +
-         ^operator <o2> +)
+         ^operator <o2> +
+         ^response <res>)
    (<o1> ^action-handle <handle>)
    (<o2> ^name answer-which-concepts-do-you-see)
 -->
-   (<ss> ^concept-seen Yes
-         ^concept-details <con>
-         ^concept-type <type>)
+   (<res> ^concept-seen Yes
+          ^concept-details <con>
+          ^concept-type <type>)
+}
+
+########################################
+# The following is based on being able to talk about real objects (talking about place a missionary as opposed to place a block the way we do with mobile world)
+#############################################
+# Only works for actions now
+sp {dialog-event*apply*answer-which-concepts-do-you-see*add-concept-operators-to-state
+   (state <s> ^name dialog-event
+              ^purpose <p>
+              ^operator <o>)
+   (<o> ^name answer-which-concepts-do-you-see
+        ^game-handle <game-handle>
+        ^concept-seen <seen>
+        ^type action
+        ^concept-details <condet>
+        ^concept-operators <con>
+        ^num-operators <num>)
+-->
+   (<s> ^concept-operators <con>
+        ^response <res>)
+}
+                
+sp {dialog-event*apply*answer-which-concepts-do-you-see*add-verbs-to-operators
+   (state <s> ^name dialog-event
+              ^concept-operators <con>
+              ^purpose <p>
+              ^operator <o>)
+   (<o> ^name answer-which-concepts-do-you-see
+        ^game-handle <game-handle>
+        ^concept-seen <seen>
+        ^type action
+        ^concept-details <condet>
+        ^concept-operators <con>
+        ^num-operators <num>)
+   (<con> ^operator1 <action-op>)
+   (<action-op> ^parameters <params>
+                ^verb-structure.1 <inst>)
+   (<inst> ^verb-name <verb-name>
+           ^verb-prep <verb-prep>
+           ^2 <param-id2>)
+-->
+   (<action-op> ^num-parameters (size <params>)
+                ^verb <verb>)
+   (<verb> ^verb-name <verb-name>
+           ^verb-prep <verb-prep>
+           ^2 <param-id2>)
+}
+
+sp {dialog-event*apply*answer-which-concepts-do-you-see*separate-verbs
+   (state <s> ^name dialog-event
+              ^concept-operators <con>
+              ^purpose <p>
+              ^operator <o>)
+   (<o> ^name answer-which-concepts-do-you-see
+        ^game-handle <game-handle>
+        ^concept-seen <seen>
+        ^type action
+        ^concept-details <condet>
+        ^concept-operators <con>
+        ^num-operators <num>)
+   (<con> ^operator1 <action-op>)
+   (<action-op> ^verb-structure <struct>
+                ^verb <verb>)
+   (<struct> ^<arg-num> <inst>)
+   (<inst> ^1 <param-id1>)
+-->
+   (<verb> ^1 <param-id1>)
+   (<s> ^added yes) # so that the verbs are added onto the responses
+}
+
+sp {dialog-event*apply*answer-which-concepts-do-you-see*create-message
+   (state <s> ^name dialog-event
+              ^concept-operators <con>
+              ^response <res>
+              ^added yes
+              ^purpose <p>
+              ^operator <o>)
+   (<o> ^name answer-which-concepts-do-you-see
+        ^game-handle <game-handle>
+        ^concept-seen <seen>
+        ^type <gtype>
+        ^concept-details <condet>
+        ^concept-operators <con>
+        ^num-operators <num>)
+ -->
+   (<res> ^concept-type <gtype>
+           ^concept-seen <seen>
+           ^concept-details <condet>
+           ^concept-operators <con>
+           ^num-operators <num>)
 }
 
 
@@ -117,33 +212,41 @@ sp {operator*impasse-tie*apply*mobile-world-concept-identified*actions-detected
 
 sp {dialog-event*propose*complete-answer-which-concepts-do-you-see
    (state <s> ^name dialog-event
-              ^concept-seen <seen>
-              ^concept-details <con>
-              ^concept-type <ctype>
+              ^response <res>
               ^purpose.type <type>)
+   (<res> ^concept-seen <seen>
+          ^concept-details <con>
+          ^concept-type <ctype>)
 -->
    (<s> ^operator <o> + >)
    (<o> ^name complete-answer-which-concepts-do-you-see
         ^concept-seen <seen>)
 }
 
+sp {dialog-event*apply*complete-answer-which-concepts-do-you-see*remove-dialogue-context
+   (state <s> ^name dialog-event
+              ^response <res>
+              ^purpose.type <type>
+              ^top-state <ts>
+              ^operator.name complete-answer-which-concepts-do-you-see)
+   (<ts> ^dialogue-context <dc>)
+-->
+   (<ts> ^dialogue-context <dc> -) # remove dialogue-context if it exists from top-state (on answering why not?)
+}
+ 
 sp {dialog-event*apply*complete-answer-which-concepts-do-you-see*concept-seen-yes*send-message
    (state <s> ^name dialog-event
-              ^concept-seen <seen>
               ^purpose.type <type>
               ^io.output-link <out>
               ^operator <o>
-              ^concept-details <con>
-              ^concept-type <ctype>)
+              ^response <res>
+              -^top-state.dialogue-context)
    (<o> ^name complete-answer-which-concepts-do-you-see
-        ^concept-seen Yes)
+        ^concept-seen <seen>)
 -->
    (<out> ^send-message <msg>)
    (<msg> ^type <type>
           ^fields.response <res>)
-   (<res> ^concept-seen <seen>
-          ^concept-details <con>
-          ^concept-type <ctype>) 
 }
 
 sp {dialog-event*apply*complete-answer-which-concepts-do-you-see*mark*performed
@@ -155,43 +258,4 @@ sp {dialog-event*apply*complete-answer-which-concepts-do-you-see*mark*performed
    (<status> ^performed.dialog-event <de>)
    (<de> ^type explanation
          ^originator agent)
-}       
-    
-########################################
-# The following will be changed based on being able to talk about real objects (talking about place a missionary as opposed to place a block the way we do with mobile world)
-#############################################
-sp {dialog-event*apply*answer-which-concepts-do-you-see
-   (state <s> ^name dialog-event
-              ^purpose <p>
-              ^operator <o>
-              ^io.output-link <out>)
-   (<p> ^type <type>
-        ^parameters <params>
-        ^satisfaction <sat>)   
-   (<o> ^name answer-which-concepts-do-you-see
-        ^game-handle <game-handle>
-        ^concept-seen <seen>
-        ^type <gtype>
-        ^concept_details <condet>)
-#   (<condet> ^<gtype> <op-set>)
-#   (<op-set> ^name <concept-name>
-#             ^set <set>
-#             ^operators <op>
-#             ^count <count>)
- -->
-    (<out> ^send-message <msg>) #PR - TODO this seems to send too many messages. add a separate complete operator or find something else.
-    (<msg> ^type <type>
-           ^fields.response <res>)
-    (<res> ^type <gtype>
-           ^concept_details <condet>)
 }
-
-#sp {dialog-event*apply*answer-which-concepts-do-you-see*mark*performed
-#   (state <s> ^name dialog-event
-#              ^operator.name answer-which-concepts-do-you-see
-#              ^top-state.interaction.status <status>)
-#-->
-#   (<status> ^performed.dialog-event <de>)
-#   (<de> ^type explanation
-#         ^originator agent)
-#}     
