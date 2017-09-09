@@ -1563,6 +1563,7 @@ public class AgentMessageParser
 		String attribute_value = SoarUtil.getValueOfAttribute(objId, "attribute");
 		String prev_attribute = "";
 		String set = SoarUtil.getValueOfAttribute(objId, "rtype");
+        String type="";
 		
 		while (!(attribute_value.equals("primitive") ||  attribute_value.equals("input-arg")))
 		{
@@ -1571,6 +1572,7 @@ public class AgentMessageParser
 			Identifier arg1 = SoarUtil.getIdentifierOfAttribute(arg, "1");
 			prev_attribute = attribute_value;
 			attribute_value = SoarUtil.getValueOfAttribute(arg1, "attribute");
+			type = SoarUtil.getValueOfAttribute(objId, "type");
 			objId = arg1;
 		}
 		
@@ -1581,7 +1583,7 @@ public class AgentMessageParser
 		//	description += SoarUtil.getValueOfAttribute(objId, "name").replaceAll("\\d+.*","") + " ";
 		//}
 
-		if(attribute_value.equals("input-arg"))
+		if(attribute_value.equals("input-arg") || type.equals("concept")) // PR - except for husband/passenger, concepts tend to be adjectives
 		{
 			description += "object ";
 		}
@@ -1612,10 +1614,17 @@ public class AgentMessageParser
 		
 		// Based on if the rtype is set or single, auxiliaryVerb will be set as "are" or "is"
 		String auxiliaryVerb = SoarUtil.getValueOfAttribute(objDescId, "aux-verb");
-		rtype = auxiliaryVerb.equals("are ")?"set":"single";
-		
-		objectDescription += getObjectDescriptionForGames(objId1);
-				 
+		if(auxiliaryVerb != null)
+		{
+			rtype = auxiliaryVerb.equals("are ")?"set":"single";
+			objectDescription += getObjectDescriptionForGames(objId1);
+		}
+		else
+		{
+			// This is an object without a param-id
+			rtype = SoarUtil.getValueOfAttribute(objDescId, "rtype");
+			objectDescription += getObjectDescriptionForGames(objDescId);
+		}
 		// Adding preposition to the description			
 		String prep = SoarUtil.getValueOfAttribute(objDescId, "prep");
 		if (prep == null)
@@ -1748,8 +1757,17 @@ public class AgentMessageParser
 				continue;
 			}
 			
-			Integer paramid2 = Integer.parseInt(param2_string);
-			List<String> objDesc2 = object_descs.get(paramid2);
+            Integer paramid2;
+            List<String> objDesc2 = new ArrayList<String>();
+			if(param2_string.equals("id2")) // If this is prepositional predicate where only first arg has param-id
+			{
+				Identifier id2_string = SoarUtil.getIdentifierOfAttribute(conditionId, "id2");
+                objDesc2 = getIndividualObjectPredicateForGame(id2_string);
+			}
+			else {
+				paramid2 = Integer.parseInt(param2_string);
+                objDesc2 = object_descs.get(paramid2);
+            }
 		
 			if(objDesc2 != null)
 			{
@@ -1813,6 +1831,10 @@ public class AgentMessageParser
 			}
 			
 			prep = prep.replace("1","");
+			if(prep.equals("adjacent"))
+			{
+				prep += " to";
+			}
 			if(negative != null && negative.equals("true"))
 			{	
 				prep = "not " + prep;
