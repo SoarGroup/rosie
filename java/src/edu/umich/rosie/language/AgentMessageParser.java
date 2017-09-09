@@ -328,16 +328,16 @@ public class AgentMessageParser
     	
     	String num_actions = SoarUtil.getValueOfAttribute(responseId, "count");
     	String conceptSeen = SoarUtil.getValueOfAttribute(responseId, "concept-seen");
-    	String type = SoarUtil.getValueOfAttribute(responseId, "type");
+    	String gtype = SoarUtil.getValueOfAttribute(responseId, "gtype");
     	
-    	if (conceptSeen.equals("Yes") && type.equals("action"))
+    	if (conceptSeen.equals("Yes") && gtype.equals("action"))
     	{
     		return "Yes. I see " + num_actions + " actions.";
     	}
     	// PR - add situation where you can detect a single action and respond about the same
-    	else if (conceptSeen.equals("No") && (type.equals("goal") || type.equals("failure"))) // PR - THis won't work with multiple actions, since there might be too many that don't match,  
+    	else if (conceptSeen.equals("No") && (gtype.equals("goal") || gtype.equals("failure"))) // PR - THis won't work with multiple actions, since there might be too many that don't match,  
     	{
-    		String reason = "";//translateUnsatisfiedCondition(responseId);
+    		String reason = translateUnsatisfiedCondition(responseId);
     		return conceptSeen + ". " + reason;
     	}
     	else
