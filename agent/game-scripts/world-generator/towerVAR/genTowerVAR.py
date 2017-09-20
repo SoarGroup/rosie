@@ -6,7 +6,7 @@ import os
 import glob, pprint
 from random import randint
 
-
+firstflag = 0
 worldstatelist= ""
 i=0
 
@@ -84,8 +84,9 @@ for x in range(0,100):
                                 result.write(")\n" + predicates)
                                 predicates = ""
                                 index= index +1
-                                result.write("(<" + str(predid[index])+ "> ^item-type predicate ^handle " + str(predid[index]) + " ^instance ")
+                                result.write("(<" + str(predid[index])+ "> ^item-type predicate ^handle " + str(predid[index]) )#+ " ^instance ")
                                 flag = 2
+                                firstflag = 1
                         elif "predicate-set " in line:
                                 if flag == 1:
                                         index=-1
@@ -96,17 +97,20 @@ for x in range(0,100):
                                 flag = 3
                         elif line.strip():
                                 if flag == 1:
-                                        if (didrandomremove < 2 and randint(0,7) == 1):
+                                        if (didrandomremove < 3 and randint(0,9) == 1):
                                                 didrandomremove = didrandomremove + 1
                                                 print "Removed " + line + " from " + str(objid[index])
                                         else:
                                                 words = line.split()
                                                 result.write("^" + str(words[0]) + " " + str(words[1]) + " ")
                                 elif flag == 2:
-                                        if (didrandomremove < 3 and randint(0,3) == 2):
+                                        if (didrandomremove < 6 and randint(0,3) == 2):
                                                 didrandomremove = didrandomremove + 1
-                                                print "Removed " + line
+                                                print "Removed " + line + " from " + str(predid[index])
                                         else:
+                                                if (firstflag == 1):
+                                                        firstflag = 2;
+                                                        result.write(" ^instance ");
                                                 index2 = index2 +1
                                                 words = line.split()
                                                 result.write("<ins" + str(index2) + "> ")
