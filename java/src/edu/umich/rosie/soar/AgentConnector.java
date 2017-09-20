@@ -27,7 +27,6 @@ public abstract class AgentConnector implements OutputEventInterface, RunEventIn
         this.outputHandlerCallbackIds = new HashSet<Long>();
         this.outputHandlerNames = new String[]{};
         this.initAgentCallbackId = 0;
-        this.initAgentCallbackId = 0;
 
         this.connected = false;
 	}

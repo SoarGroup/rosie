@@ -21,6 +21,15 @@ sp {action-space*execute*copy-action*reject*all*others
    (<s> ^operator <o2> -)
 }
 
+## If we want to learn an action model, force a SNC
+sp {action-space*execute*learn-task-action-model*reject*all*others
+   (state <s> ^problem-space.action-space execute
+              ^learn-action-task-model true
+              ^operator <o> +)
+-->
+   (<s> ^operator <o> -)
+}
+
 # If we want to learn a task subaction, reject all other operators
 sp {action-space*execute*learn-task-subaction*reject*all*others
    (state <s> ^problem-space.action-space execute
@@ -35,9 +44,10 @@ sp {action-space*execute*learn-task-subaction*reject*all*others
 sp {action-space*execute*reject*operators*if*unlearned*subaction
    (state <s> -^name execute-action
               ^problem-space.action-space execute
-              ^unlearned-subaction <sub-h>
+              ^current-action.unlearned-subaction <sub-h>
+              ^child-action.execution-operator <ex-op>
               ^operator <o> +)
-   -{(<s> ^operator <sub-op> +)
+   -{(<s> ^operator { <sub-op> <> <ex-op> } +)
      (<sub-op> ^subaction-handle <sub-h>)}
 -->
    (<s> ^operator <o> -)
@@ -86,4 +96,17 @@ sp {action-space*execute*prefer*smem*over*others
 -->
    (<s> ^operator <o1> > <o2>)
 }
+
+sp {action-space*execute*reject*subaction
+   (state <s> ^problem-space.action-space execute
+              ^operator <o> +
+              -^child-action
+              -^created-subaction <sub-h>
+              -^best-pref-eval <o>)
+   (<o> ^action-handle <h>
+        ^subaction-handle <sub-h>)
+-->
+   (<s> ^operator <o> -)
+}
+             
 

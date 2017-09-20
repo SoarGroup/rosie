@@ -1,0 +1,132 @@
+sp {dialog-event*propose*answer-what-is-question
+   (state <s> ^name dialog-event
+              ^purpose.type agent-object-description)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name answer-what-is-question)
+}
+
+# Elaborate answer to get descriptions of object in relation to prepositional phrase object
+sp {dialog-event*elaborate*answer-what-is-question*get-object
+   (state <s> ^name dialog-event
+              ^operator <o> +
+              ^purpose <p>)
+   (<p> ^type agent-object-description
+        ^parameters <params>)
+   (<params> ^object <obj>
+        	 -^generated)
+   (<o> ^name answer-what-is-question)
+-->
+   (<s> ^object-descriptions <desc>)
+   (<o> ^object <obj>)
+}
+
+# Describe given object
+sp {dialog-event*elaborate*answer-what-is-question*given-object
+   (state <s> ^name dialog-event
+              ^operator <o> +
+              ^purpose <p>)
+   (<o> ^name answer-what-is-question)
+   (<p> ^type agent-object-description
+        ^parameters <params>)
+   (<params> ^object <obj>
+        	 ^generated <gen>)
+-->
+   (<s> ^generated <gen>
+        ^object-descriptions <desc>)
+   (<o> ^given-object <obj>)
+}
+
+##############################################
+# Apply operator answer what-is-question
+##############################################
+
+
+# PR - make ^1 ^2 into ^<<describe-position>> or something based on the preposition handle.
+
+# Retrieves the first predicate of the relation since the specified object is the second
+sp {dialog-event*agent-object-description*apply*answer-what-is-question*get-first-predicate
+   (state <s> ^name dialog-event
+              ^operator <o>  
+			  ^object-descriptions <desc>
+              ^top-state.world.predicates <wpreds>)
+   (<o> ^name answer-what-is-question
+        ^object <obj>)
+   (<obj> ^handle <obj-handle>
+          ^2 <pred-2>)
+   (<wpreds> ^predicate <pred>)
+   (<pred> ^instance <instance>
+           ^handle <obj-handle>)
+   (<instance> ^2 <pred-2>
+               ^1 <pred-1>)
+-->
+   (<s> ^generated yes)
+   (<desc> ^object <pred-1>)     
+}
+
+# Handling answer to "What is this?"
+sp {dialog-event*agent-object-description*apply*answer-what-is-question*given-object
+   (state <s> ^name dialog-event
+              ^operator <o>  
+			  ^object-descriptions <desc>
+			  ^generated <gen>)
+   (<o> ^name answer-what-is-question
+        ^given-object <obj>)		  
+-->
+   (<s> ^generated <gen>)
+   (<desc> ^object <obj>)
+}
+ 			  
+# When requested entity does not exist
+sp {answer-what-is-question*elaborate*agent-object-description*not-generated
+   (state <s> ^name answer-what-is-question
+              ^superstate <ss>)
+   (<ss> ^purpose.type agent-object-description
+         ^object-descriptions <desc>)
+   (<desc> -^object)
+-->
+   (<ss> ^generated no)
+}
+
+#######################################################
+# Report answer using complete-answer-what-is-question
+#######################################################
+
+sp {answer-what-is-question*propose*complete-answer-what-is-question
+   (state <s> ^name answer-what-is-question
+              ^superstate <ss>)
+   (<ss> ^generated <gen>
+         ^object-descriptions <desc>)
+-->
+   (<s> ^operator <o> + <)
+   (<o> ^name complete-answer-what-is-question
+        ^object-descriptions <desc>)
+   (<desc> ^generated <gen>)        
+}     
+ 
+sp {answer-what-is-question*apply*complete-answer-what-is-question*mark*performed
+   (state <s> ^name answer-what-is-question
+              ^operator.name complete-answer-what-is-question
+              ^top-state.interaction.status <status>)
+-->
+   (<status> ^performed.dialog-event <de>)
+   (<de> ^type explanation
+         ^originator agent)
+}  
+
+sp {answer-what-is-question*apply*complete-answer-what-is-question*generated*send-message
+   (state <s> ^name answer-what-is-question
+              ^operator <o>  
+              ^io.output-link <out>)
+   (<o> ^name complete-answer-what-is-question
+         ^object-descriptions <desc>)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type agent-object-description
+          ^fields.object <desc>)
+}        
+        
+        
+        
+        
+        

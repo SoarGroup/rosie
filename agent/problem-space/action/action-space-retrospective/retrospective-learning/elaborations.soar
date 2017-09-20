@@ -1,0 +1,113 @@
+# The current episode id
+sp {retrospective-learning*elaborate*present-id
+   (state <s> ^name retrospective-learning
+              ^superstate.operator.present-id <id>)
+-->
+   (<s> ^present-id <id>)
+}
+
+# The action segment for the task we are trying to learn the policy for
+sp {retrospective-learning*elaborate*current-action
+   (state <s> ^name retrospective-learning
+              ^superstate.purpose.parameters.action <action>)
+-->
+   (<s> ^current-action <action>)
+}
+
+sp {retrospective-learning*elaborate*action-handle
+   (state <s> ^name retrospective-learning
+              ^current-action.execution-operator.action-handle <h>)
+-->
+   (<s> ^action-handle <h>)
+}
+
+#sp {retrospective-learning*elaborate*subactions*answer
+#   (state <s> ^name retrospective-learning
+#              ^subactions <subs>
+#              ^current-action.answer.handle <h>)
+#-->
+#  (<subs> ^answer <h>)
+#}
+
+#sp {retrospective-learning*elaborate*world*predicate*on*top-state
+#   (state <s> ^name retrospective-learning
+#              ^learning-context.episode.world.predicates <preds>
+#              ^top-state.world.predicates.predicate <pred>
+#              ^world.predicates <cur-preds>)
+#   (<preds> -^predicate.handle <pred-handle>)
+#   (<pred> ^handle <pred-handle>)
+#-->
+#   (<cur-preds> ^predicate <new-pred>)
+#   (<new-pred> ^handle <pred-handle>)
+#}
+
+##############################################################
+# subactions-stack
+# Contains a stack of the subactions performed during the task
+# Including the episodes where each was initiated
+##############################################################
+
+sp {retrospective-learning*elaborate*subactions-stack
+   (state <s> ^name retrospective-learning)
+-->
+   (<s> ^subactions-stack <subs>)
+   (<subs> ^next none
+           ^segments <segs>)
+}
+
+# The subactions structure used to copy subactions into substates
+# (Contains only the actions)
+sp {retrospective-learning*elaborate*subactions*top
+   (state <s> ^name retrospective-learning
+              ^subactions-stack.next.subaction-copy <sub>)
+-->
+   (<s> ^subactions <subs>)
+   (<subs> ^next <sub>)
+}
+
+# Elaborate next pointers
+sp {retrospective-learning*elaborate*subactions*next*none
+   (state <s> ^name retrospective-learning
+              ^subactions-stack.segments.segment <seg>)
+   (<seg> ^subaction-copy <sub>
+          ^next none)
+-->
+   (<sub> ^next none)
+}
+
+sp {retrospective-learning*elaborate*subactions*next*sub
+   (state <s> ^name retrospective-learning
+              ^subactions-stack.segments.segment <seg>)
+   (<seg> ^subaction-copy <sub>
+          ^next.subaction-copy <next>)
+-->
+   (<sub> ^next <next>)
+}
+
+# Elaborate the set of segments
+sp {retrospective-learning*elaborate*subactions-stack*segment
+   (state <s> ^name retrospective-learning
+              ^subactions-stack <subs>)
+   (<subs> ^next { <seg> <> none }
+           ^segments <segs>)
+-->
+   (<segs> ^segment <seg>)
+}
+
+sp {retrospective-learning*elaborate*subactions-stack*segment*next
+   (state <s> ^name retrospective-learning
+              ^subactions-stack <subs>)
+   (<subs> ^segments <segs>)
+   (<segs> ^segment.next { <seg> <> none })
+-->
+   (<segs> ^segment <seg>)
+}
+
+# replayed-all-subactions true
+#   elaborated when all subactions have been replayed 
+sp {retrospective-learning*elaborate*replayed-all-subactions
+   (state <s> ^name retrospective-learning
+              ^subactions-stack.retrieved-all true)
+-->
+   (<s> ^replayed-all-subactions true)
+}

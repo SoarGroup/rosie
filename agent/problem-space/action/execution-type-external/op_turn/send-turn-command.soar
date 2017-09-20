@@ -1,0 +1,31 @@
+###############################################################################
+#
+# Inside the execute-turn1 substate, this will put a turn command on the output link
+#
+###############################################################################
+
+sp {op_turn1*propose*send-turn-command
+   (state <s> ^name op_turn1
+              ^problem-space.execution-type external
+              ^direction-id
+             -^current-action.turn-command)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name send-turn-command)
+}
+
+sp {op_turn1*apply*send-turn-command
+   (state <s> ^name op_turn1
+              ^operator.name send-turn-command
+              ^current-action <a>
+              ^top-state.io.output-link <out>
+              ^top-state.perception-monitor.input-link.self.pose.yaw <yaw>
+              ^direction-id.side <side>
+              ^direction-id.yaw <dy>)
+-->
+   (<out> ^do-control-law <law>)
+   (<law> ^name orient
+          ^parameters.yaw (+ <yaw> <dy>)
+          ^termination-condition.name stabilized)
+   (<a> ^turn-command <law>)
+}

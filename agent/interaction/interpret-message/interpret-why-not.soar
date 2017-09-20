@@ -1,0 +1,74 @@
+###################################################################
+#
+# interpret-why-not
+# Occurs when the instructor wants to understand why couldn't rosie see a game concept or do any action?
+#       E.g. 'Do you see the goal of tower-of-hanoi?'.'No'.'Why not?'. 'The small block is not on the medium block'.
+#
+###################################################################
+
+#######
+# OPERATOR PROPOSAL
+#######
+sp {interpret-message*propose*interpret-why-not
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>)
+   (<msg> ^message-type why-not
+         -^interpreted true)
+-->
+#   (interrupt)
+   (<s> ^operator <o> +)
+   (<o> ^name interpret-why-not
+        ^message <msg>)
+}
+
+######
+# OPERATOR ELABORATIONS
+######
+
+# Elaborate useful information from the top-state onto the operator
+sp {interpret-message*elaborate*interpret-why-not*game-concept-not-seen
+   (state <s> ^name interpret-message
+              ^top-state.dialogue-context <dc>
+              ^operator <o> +)
+   (<o> ^name interpret-why-not)
+   (<dc> ^type conversation
+         ^game-handle <game-handle>
+         ^concept-seen <seen>
+         ^gtype <gtype>
+         ^set <set>)
+-->
+    (<o> ^game-handle <game-handle>
+         ^concept-seen <seen>
+         ^type <gtype>
+         ^set <set>)
+}
+
+#####
+# OPERATOR APPLICATION
+#####
+
+sp {interpret-message*apply*interpret-why-not*create*game-concept-not-seen
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>
+              ^operator <o>)
+   (<o> ^name interpret-why-not
+        ^game-handle <game-handle>
+        ^concept-seen <seen>
+        ^type <gtype>
+        ^set <set>)
+-->
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)    
+   (<p> ^type agent-response-why-not
+        ^parameters <params>
+        ^satisfaction <sat>)   
+   (<params> ^game-handle <game-handle>
+             ^concept-seen <seen>
+             ^type <gtype>
+             ^set <set>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type explanation #PR - TODO change this to "dialog","conversation" to indicate there can eb more questions
+         ^originator agent)
+}  
