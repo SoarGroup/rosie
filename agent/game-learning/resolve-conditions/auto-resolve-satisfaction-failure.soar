@@ -1,0 +1,175 @@
+sp {auto-resolve-satisfaction-failure*elaborate*unresolved
+   (state <s> ^name auto-resolve-satisfaction-failure
+              ^superstate.superstate <sss>)
+   (<sss> ^condition <co>)
+   (<co> -^result.set.<x>)
+-->
+(<s> ^unresolved-condition <co>)
+}
+
+sp {auto-resolve-satisfaction-failure*propose*select-unresolved-condition
+   (state <s> ^name auto-resolve-satisfaction-failure
+              ^unresolved-condition <co>)
+   (<co> ^name <name>)
+-->
+#(write (cmd print <co> -d 4))
+(<s> ^operator <o> + =)
+(<o> ^name select-unresolved-condition
+     #^word (make-constant-symbol <name>)
+     ^spelling <name>
+     ^condition <co>)
+}
+sp {auto-resolve-satisfaction-failure*apply*select-unresolved-condition*copy
+   (state <s> ^name auto-resolve-satisfaction-failure
+              ^unresolved-condition <co>)
+   (<co> ^name <name>)
+(<s> ^operator <o>)
+(<o> ^name select-unresolved-condition
+     ^spelling <name>
+     ^condition <co>)
+-->
+(<s> ^word (make-constant-symbol <name>))
+}
+
+sp {auto-resolve-satisfaction-failure*prefer*select-unresolved-condition*concept
+   (state <s> ^name auto-resolve-satisfaction-failure
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^condition.type concept)
+   (<o2> -^condition.type concept)
+-->
+(<s> ^operator <o1> > <o2>)
+}
+
+
+sp {auto-resolve-satisfaction-failure*prefer*select-unresolved-condition*concept*usedcurrent*first
+   (state <s> ^name auto-resolve-satisfaction-failure
+   		  	  ^linkstate <sss>
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<sss> ^main-type <gtype> ^<gtype> <g>)
+   (<g> ^condition <c1> -^condition <c2>)
+   (<o1> ^condition <c1>)
+   (<c1> ^type concept)
+   (<o2> ^condition <c2>)
+   (<c2> ^type concept)
+-->
+(<s> ^operator <o1> > <o2>)
+}
+
+
+#CASE 1 learned concept not detected, ask for another definition
+sp {auto-resolve-satisfaction-failure*apply*select-unresolved-condition*noparse
+   (state <s> ^name auto-resolve-satisfaction-failure
+              ^quiescence t #do not chunk through this rule (failure case)
+              ^top-state.dialog-context <dc>
+              ^linkstate <ls>
+              ^word <word> 
+              ^top-state <ts>
+              ^top-state.interaction.changes <c>
+              ^operator <o>)
+   (<ls> ^main-type <type> ^<type> <t> -^parsed-structure)
+   (<t> ^nlp-set <nlp> ^formated)
+(<o> ^name select-unresolved-condition
+     ^condition <co>
+     ^spelling <spell>)
+#(<dc> ^learn-link <ll>)
+#(<ll> ^argnum <an>)
+(<co> ^name {<name2> <> <word>})
+(<ts> -^smap.<spell>)
+-->
+(write (crlf) <spell>)
+(<ts> ^smap <sm> ^new-spelling true)
+(<sm> ^<spell> <word>)
+    #(<co> ^name <name2> -)
+    #(<ll> ^argnum <an> -)
+    #(<co> ^name <word>)
+    (<c> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator agent)
+   (<p> ^type process-unknown-word
+        ^parameters.word <word>
+        ^satisfaction <sat>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type process-unknown-word
+          ^originator instructor)
+   (<dc> ^learning-predicate <lp>)
+   (<lp> ^name <word> ^spelling <spell>)
+   (<c> ^outgoing-message <out-msg>)
+   (<out-msg> ^type unknown-defined-word
+              ^fields.word <word>)
+  # (<ps> ^learned-structure <nlp>)
+}
+
+sp {auto-resolve-satisfaction-failure*apply*select-unresolved-condition
+   (state <s> ^name auto-resolve-satisfaction-failure
+              ^quiescence t #do not chunk through this rule (failure case)
+              ^top-state.dialog-context <dc>
+              ^linkstate <ls>
+              ^word <word> 
+              ^top-state <ts>
+              ^top-state.interaction.changes <c>
+              ^operator <o>)
+   (<ls> ^main-type <type> ^<type> <t> ^parsed-structure <ps>)
+   (<t> ^nlp-set <nlp> ^formated)
+(<o> ^name select-unresolved-condition
+     ^condition <co>
+     ^spelling <spell>)
+(<dc> ^learn-link <ll>)
+(<ll> ^argnum <an>)
+(<co> ^name <name2> <> <word>)
+(<ts> -^smap.<spell>)
+-->
+(write (crlf) <spell>)
+(<ts> ^smap <sm>)
+(<sm> ^<spell> <word>)
+    (<co> ^name <name2> -)
+    (<ll> ^argnum <an> -)
+    (<co> ^name <word>)
+    (<c> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator agent)
+   (<p> ^type process-unknown-word
+        ^parameters.word <word>
+        ^satisfaction <sat>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type process-unknown-word
+          ^originator instructor)
+   (<dc> ^learning-predicate <lp>)
+   (<lp> ^name <word> ^spelling <spell>)
+   (<c> ^outgoing-message <out-msg>)
+   (<out-msg> ^type unknown-defined-word
+              ^fields.word <word>)
+   (<ps> ^learned-structure <nlp>)
+}
+
+#case 2, try other spelling mapping (TODO temp solution need better smem linking), hanlding of parser
+sp {auto-resolve-satisfaction-failure*apply*select-unresolved-condition*try-another
+   (state <s> ^name auto-resolve-satisfaction-failure
+              ^quiescence t #do not chunk through this rule (failure case)
+              ^top-state <ts>
+              ^operator <o>)
+(<o> ^name select-unresolved-condition
+     ^condition <co>
+     ^spelling <spell>)
+(<co> ^name <name2> <> <word2>)
+(<ts> ^smap.<spell> <word2>)
+-->
+    (<co> ^name <name2> -)
+    (<co> ^name <word2>)
+}
+
+#case 1
+#could be because concept has another unknown definition
+
+#case 2
+#could be because concepts has another known definition
+
+#case 3, bad argument connection
+
+#case 4, description incorrect could list simplest condition could not satisfy
+#only reach this case if ruled out 1 or 2
+
+#case 5, got to isets, but there is a negpair case....
+
+#would be useful application of preeti's work-> describing an unsatified concept in english= I could not find any matched objects, or i could not find a value of an object...
