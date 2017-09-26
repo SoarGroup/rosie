@@ -10,16 +10,11 @@ a="a"
 d="d"
 game="tower3var"				
 
-declare -a arr=("tower3var")
-
 c=1
 rm out.txt -f
-#for game in "${arr[@]}"
 x=0
 while [ $x -le $repeat ]
 do
-	
-	#for rfile in $game.$game
 	for rfile in tower3var.tower3var
 	do
 		cp $rfile soar-game.script

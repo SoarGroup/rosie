@@ -25,7 +25,7 @@ old="Old"
 
 #declare -a arr=("husbands" "3tower" "stackedfrogs" "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2" "kstackedfrogs" "sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken" "kenp" "ksudoku" "ktour" "sorting")
 
-declare -a arr=("lfamilycross")
+declare -a arr=("husbands")
 
 #declare -a arr=("stackedfrogs" "lazystackedfrogs" "kstackedfrogs")
 
