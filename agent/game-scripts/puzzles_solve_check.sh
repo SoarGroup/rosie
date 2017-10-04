@@ -16,7 +16,7 @@ d="d"
 old="Old"
 #3tower
 #
-#declare -a arr=("frog3")
+declare -a arr=("jmahjong")
 # "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2")
 #declare -a arr=("cannibals" "15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "jmahjong" "husbands" "3tower" "sudoku" "logi5" "jigsawdoku")
 #solutions for these
@@ -25,7 +25,7 @@ old="Old"
 
 #declare -a arr=("husbands" "3tower" "stackedfrogs" "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2" "kstackedfrogs" "sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken" "kenp" "ksudoku" "ktour" "sorting")
 
-declare -a arr=("ken" "kenp" "ktour" "sudoku")
+#declare -a arr=("ken" "kenp" "ktour" "sudoku")
 
 #declare -a arr=("stackedfrogs" "lazystackedfrogs" "kstackedfrogs")
 
@@ -37,7 +37,7 @@ declare -a arr=("ken" "kenp" "ktour" "sudoku")
 
 #declare -a arr=("sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken" "kenp" "ksudoku" "ktour" "sorting")
 
-#declare -a arr=("15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "husbands" "wives" "3tower" "stackedfrogs" "lazystackedfrogs" "kstackedfrogs" "sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken" "kenp" "ksudoku" "ktour" "sorting")
+#declare -a arr=("15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "husbands" "wives" "lfamilycross" "3tower" "stackedfrogs" "lazystackedfrogs" "kstackedfrogs" "sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken" "kenp" "ksudoku" "ktour" "sorting" "jmahjong" "mapncolor3" "mapncolorv" "mapncolore" "mapncolor")
 
 #declare -a arr=("sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken" "kenp" "ksudoku")
 #declare -a arr=("3tower")
@@ -47,12 +47,13 @@ declare -a arr=("ken" "kenp" "ktour" "sudoku")
 #broken old version frog, oldfrog, fixed solitaire, dsoko, 2pushmaze, frog3
 
 c=1
-rm out.txt -f
+
 for game in "${arr[@]}"
 do
 	#for rfile in ktourd.$game
 	for rfile in *.$game
 	do
+		rm out.txt -f
 		if [[ $rfile == *$no.$game* ]]; then
 			continue
 		fi
@@ -85,12 +86,11 @@ do
 			##../../../soar/out/./soar -s game-data-agent.soar stop > out.txt
 			python calculateTeachSolvetime.py
 			python calculateStatesExplored.py
-		
+			
 			
 			python soar-strip.py $rfile
 			
 			numsol=1
-			##cp $rfile$sol $stored$game$sol$dot$numsol
 			
 			newfile=$stored$game$sol$dot$numsol
 			foundsol=0
@@ -107,10 +107,10 @@ do
 			done
 
 			diff -s $rfile$sol $newfile
-			#if [[ $foundsol < 1 ]];
-			#then
-			#	cp $rfile$sol $stored$game$sol$dot$numsol
-			#fi
+			if [[ $foundsol < 1 ]];
+			then
+				cp $rfile$sol $stored$game$sol$dot$numsol
+			fi
 			
 			
 			#print out time, states searched
