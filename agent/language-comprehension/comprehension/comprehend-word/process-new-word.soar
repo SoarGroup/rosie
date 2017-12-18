@@ -56,7 +56,7 @@ sp {comprehend-word*propose*process-new-word*multiple-non-U-primitive-assigner*f
    (<ass2> ^structure-type << V ADJ N ADV PN >>) ## Not another primitive assigner or a U
    (<cw> ^spelling <spell>)
   -(<seg> ^not-merged-assigner.structure-type U)
-   -->
+-->
    (<s> ^operator <op> +, =)
    (<op> ^name process-new-word
          ^spell <spell>
@@ -75,7 +75,7 @@ sp {comprehend-word*propose*process-new-word*single-primitive-assigner*guess
    (<seg> ^not-merged-assigner <ass>
          -^retry-sentence)   
    (<ass> ^structure-type { <st> << V ADJ N ADV PN >> })  ## Assume all D QT P T Q RP are known
- -{(<seg> ^not-merged-assigner { <ass2> <> <ass> })
+   -{(<seg> ^not-merged-assigner { <ass2> <> <ass> })
    (<ass2> ^structure-type << V ADJ N ADV PN U >>)} ## Not another primitive assigner or a U
    (<cw> ^spelling <spell>)
 -->
@@ -175,7 +175,9 @@ sp {apply*process-new-word*assign
          ^handle <name>)
    (<seg> ^semantics <sem>
           ^current-word <cw>
+		  ^prior-word.spelling <prior>
           ^original-sentence <cs>)
+   (<cw> ^next.spelling <next>)
 -->
    (<s> #^new-word true
         #^retrieved-lexical-item <nw>
@@ -191,6 +193,8 @@ sp {apply*process-new-word*assign
    (<cw> ^processed true)
    (<sem> ^interaction-status.new-message <is>)
    (<is> ^type unknown-word
+   		 ^after <next>
+         ^before <prior>
          ^word <spell>)
    (<cs> ^processing-result failure)
 }
@@ -217,21 +221,22 @@ sp {apply*process-new-word*assign*U
 
 ## Even if unknown new word, store it away. 
 
-
+#adding before and after, but how get other info (like arg structure)
 sp {apply*process-new-word*failure*internal
-  #:interrupt
    (state <s> ^operator <op>
               ^segment <seg>
+              ^agent-params.sentence-source scripts
               ^top-state <ts>)
-   (<ts> #^current-sentence-number <csn>
-         ^world-usage internal)
+#   (<ts> ^current-sentence-number <csn>)
    (<seg> ^semantics <sem>
           ^current-word <cw>
+          ^prior-word.spelling <prior>
           ^original-sentence <cs>)
    (<op> ^name process-new-word
          ^spell <spell>
          ^fail true
          ^handle <name>)
+   (<cw> ^next.spelling <next>)
 -->
    (<s> ^store-concept <nw> <ref>)
    (<nw> ^spelling <spell>
@@ -242,6 +247,8 @@ sp {apply*process-new-word*failure*internal
    #(write (crlf) |New word: | <spell> | can't assign at this time. Store it as UNKNOWN (no type). Need help from user.|)
    (<sem> ^interaction-status.new-message <is>)
    (<is> ^type unknown-word
+         ^after <next>
+         ^before <prior>
          ^word <spell>)
    (<cs> ^processing-result failure)
 }
@@ -250,7 +257,7 @@ sp {apply*process-new-word*failure*internal
 sp {apply*process-new-word*failure*external
    (state <s> ^operator <op>
               ^segment <seg>
-              ^top-state.world-usage external)
+              ^agent-params.sentence-source chat)
    (<seg> ^semantics <sem>
           ^current-word <cw>
           ^original-sentence <cs>)
@@ -292,6 +299,7 @@ sp {apply*process-new-word*clean-up
    (<cmd> ^query <q> -)
 }
 
+#JK, learn unknown word right away
 sp {comprehension*prefer*failed-comprehension*over*process-phrase-end
    (state <s> ^name comprehension
               ^operator <op1> +

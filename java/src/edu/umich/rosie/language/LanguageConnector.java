@@ -36,7 +36,7 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
 		
 		String speechFile = props.getProperty("speech-file", "audio_file/sample");
 		
-        //this.tts = new TextToSpeech();
+        this.tts = new TextToSpeech();
         //this.stt = new SpeechToText(speechFile, agent);
         
         curMessage = null;
@@ -82,7 +82,7 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
     		curMessage = new Message(message.message, nextMessageId++);
     		break;
     	case AGENT_MESSAGE:
-    		//tts.speak(message.message);
+    		tts.speak(message.message);
     		break;
     	}
 	}

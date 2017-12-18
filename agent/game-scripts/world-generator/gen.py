@@ -10,49 +10,6 @@ i=0
 
 result = open("interpret-game-state-change.soar", 'wb+')
 
-result.write("sp {interpret-message*apply*interpret-game-state-change\n");
-result.write("   (state <s> ^name interpret-message\n");
-result.write("              ^instructor-message <msg>\n");
-result.write("              ^operator <o>)\n");
-result.write("   (<o> ^name interpret-game-state-change\n");
-result.write("        ^type <type>)\n");
-result.write("-->\n");
-result.write("   (<s> ^new-segment-info <info>\n");
-result.write("        ^mark-interpreted <msg>)\n");
-result.write("   (<info> ^purpose <p>\n");
-result.write("           ^originator instructor)\n");
-result.write("   (<p> ^type game-state-change\n");
-result.write("        ^parameters.message <type>\n");
-result.write("        ^satisfaction <sat>)\n");
-result.write("   (<sat> ^dialog-event <de>)\n");
-result.write("   (<de> ^type game-state-change\n");
-result.write("          ^originator agent)\n");
-result.write("}\n");
-result.write("sp {dialog-event*propose*game-state-change-respond\n");
-result.write("   (state <s> ^name dialog-event\n");
-result.write("              ^purpose <p>)\n");
-result.write("   (<p> ^type game-state-change ^parameters.message <type>)\n");
-result.write("-->\n");
-result.write("   (<s> ^operator <o> +)\n");
-result.write("   (<o> ^name game-state-change-respond\n");
-result.write("        ^type <type>)\n");
-result.write("}\n");
-result.write("sp {dialog-event*apply*game-state-change-respond\n");
-result.write("   (state <s> ^name dialog-event\n");
-result.write("              ^operator <o>\n");
-result.write("              ^top-state.interaction.status <status>\n");
-result.write("              ^top-state.interaction.changes <changes>)\n");
-result.write("   (<o> ^name game-state-change-respond\n");
-result.write("        ^type <type>)\n");
-result.write("-->\n");
-result.write("   (<status> ^performed.dialog-event <de>)\n");
-result.write("   (<de> ^type game-state-change\n");
-result.write("         ^originator agent)\n");
-result.write("   (<changes> ^outgoing-message <msg1>)\n");
-result.write("   (<msg1> ^type simple-message\n");
-result.write("          ^message-type ok)\n");
-result.write("}\n");
-
 for infile in glob.glob('*.world'):
         gFile= infile.replace('.world','')
         print gFile
@@ -140,12 +97,12 @@ for infile in glob.glob('*.world'):
                         elif flag == 2:
                                 index2 = index2 +1
                                 words = line.split()
-                                result.write("<in" + str(index2) + "> ")
-                                predicates+= "(<in" + str(index2) + "> ^1 <o" + str(words[0]) + "> ^2 <o" + str(words[1]) + ">)\n"
+                                result.write("<ins" + str(index2) + "> ")
+                                predicates+= "(<ins" + str(index2) + "> ^1 <o" + str(words[0]) + "> ^2 <o" + str(words[1]) + ">)\n"
                         elif flag == 3:
                                 index2 = index2 +1
-                                result.write("<in" + str(index2) + "> ")
-                                predicates+= "(<in" + str(index2) + "> ^1 <set" + str(index2) + ">)\n(<set" + str(index2) + ">  ^object"
+                                result.write("<ins" + str(index2) + "> ")
+                                predicates+= "(<ins" + str(index2) + "> ^1 <set" + str(index2) + ">)\n(<set" + str(index2) + ">  ^object"
                                 for word in line.split():
                                         predicates+= " <o" +  str(word) + ">"
                                 predicates +=")\n"
@@ -154,14 +111,4 @@ for infile in glob.glob('*.world'):
 	result.write("}\n")
 
 
-result.write("sp {interpret-message*propose*interpret-game-state-change\n")
-result.write("   (state <s> ^name interpret-message\n")
-result.write("              ^instructor-message <msg>)\n")
-result.write("   (<msg> ^action.handle load ^arg1.word-structure.spelling <type>\n")
-result.write("         -^interpreted true)\n")
-result.write("-->\n")
-result.write("   (<s> ^operator <o> +)\n")
-result.write("   (<o> ^name interpret-game-state-change\n")
-result.write("        ^type <type>)\n")
-result.write("}\n")
 result.close();

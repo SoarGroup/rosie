@@ -29,8 +29,8 @@ sp {store-predicate-structure*apply*complete*game-name
               ^top-state.interaction.changes <changes>)
 -->
    (<changes> ^outgoing-message <msg>)
-   (<msg> ^type simple-message
-          ^message-type describe-game)
+   (<msg> ^type describe-game
+          ^complete-message true)
    (<status> ^performed.learning-event <de>)
    (<de> ^type game
          ^originator agent)
@@ -44,8 +44,8 @@ sp {store-predicate-structure*apply*complete*puzzle-name
               ^top-state.interaction.changes <changes>)
 -->
    (<changes> ^outgoing-message <msg>)
-   (<msg> ^type simple-message
-          ^message-type describe-puzzle)
+   (<msg> ^type describe-puzzle
+          ^complete-message true)
    (<status> ^performed.learning-event <de>)
    (<de> ^type game
          ^originator agent)
@@ -60,8 +60,8 @@ sp {store-predicate-structure*apply*complete*goal-name
               ^top-state.interaction.changes <changes>)
 -->
    (<changes> ^outgoing-message <msg>)
-   (<msg> ^type simple-message
-          ^message-type setup-goal)
+   (<msg> ^type setup-goal
+          ^complete-message true)
    (<status> ^performed.learning-event <de>)
    (<de> ^type game-name
          ^originator agent)
@@ -76,8 +76,8 @@ sp {store-predicate-structure*apply*complete*failure-name
               ^top-state.interaction.changes <changes>)
 -->
    (<changes> ^outgoing-message <msg>)
-   (<msg> ^type simple-message
-          ^message-type setup-failure)
+   (<msg> ^type setup-failure
+          ^complete-message true)
    (<status> ^performed.learning-event <de>)
    (<de> ^type game-name
          ^originator agent)
@@ -92,8 +92,8 @@ sp {store-predicate-structure*apply*complete*action-name
               ^top-state.interaction.changes <changes>)
 -->
    (<changes> ^outgoing-message <msg>)
-   (<msg> ^type simple-message
-          ^message-type describe-action)
+   (<msg> ^type describe-action
+          ^complete-message true)
    (<status> ^performed.learning-event <de>)
    (<de> ^type game-name
          ^originator agent)
@@ -111,6 +111,7 @@ sp {store-predicate-structure*apply*complete*action-goal-failure-transfer
 -->
    (<changes> ^outgoing-message <msg>)
    (<msg> ^type already-know
+          ^complete-message true
           ^fields <f>)
    (<f> ^concept-name <handle> ^type <ptype>)
    (<status> ^performed.learning-event <de>)
@@ -200,7 +201,7 @@ sp {store-predicate-structure*elaborate*query*find-transferable*knowlege
               ^smem.command <sc>)
    (<s> ^storing name ^ptype << action goal failure >> ^handle <handle> ^message.predicate <pred2>)
 -->
-   (<sc> ^query <pred2> ^depth 1)
+   (<sc> ^query <pred2> ^depth 15)
    (<pred2> ^handle <handle> ^item-type predicate)
 }
 
@@ -216,13 +217,35 @@ sp {store-predicate-structure*propose*transfer-action-goal
    (state <s> ^name store-predicate-structure
               ^smem.result.retrieved <struc>
               ^found-transferable-knowledge true
-              ^storing name ^ptype <type> ^handle <handle>)
+              ^storing name 
+              ^ptype <type> 
+              ^handle <handle>)
 -->
+(interrupt)
     (<s> ^operator <o> + >)
     (<o> ^name transfer-action-goal
+         ^check yes
          ^type <type>
          ^structure <struc>
          ^handle-name <handle>)
+}
+sp {store-predicate-structure*apply*transfer-action-goal
+   (state <s> ^name store-predicate-structure
+              ^smem.result.retrieved <struc>
+              ^found-transferable-knowledge true
+              ^storing name 
+              ^ptype <type> 
+              ^handle <handle>)
+    (<s> ^operator <o>)
+    (<o> ^name transfer-action-goal
+         ^check yes
+         ^type <type>
+         ^structure <struc>
+         ^handle-name <handle>)
+    (<struc> ^predicate-structure <ps>)
+-->
+(<s> ^new-handle (make-constant-symbol <handle>))
+(<s> ^ps-copy (deep-copy <ps>))
 }
 
 sp {store-predicate-structure*elaborate*found-transferable-knowledge*false

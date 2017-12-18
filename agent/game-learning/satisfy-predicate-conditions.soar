@@ -89,6 +89,7 @@ sp {satisfy-predicate-conditions*propose*finished-learning-predicate
     (<a1> ^parameter-set <p1> ^handle <c1>)
     (<p1> ^set <i1>)
     -->
+#(write (cmd print <i1> -d 4))
     (<s1> ^operator <o1> + =)
     (<o1> ^name finished-learning-predicate)
   #  (<s1> ^operator <o1> + =)
@@ -133,6 +134,7 @@ sp {satisfy-predicate-conditions*elaborate-finished-learning*goal
     (<a1> ^parameter-set <p1> ^handle <c1>)
     (<p1> ^set <i1>)
     -->
+#(write (cmd print <i1> -d 4))
     (<sss> ^finished-learning <type>)
     (<ss> ^finished-learning <type>)
 }
@@ -274,14 +276,16 @@ sp {finished-learning*propose*complete
 #                ^top-state.dialog-context <dc>)
 #    (<dc> ^store-learn-link <ll> ^learn-link {<l2> <> <ll>})
 #-->
-#    (<dc> ^store-learn-link <ll> -)
-#   (<dc> ^learn-link <ll>)
-#   (<dc> ^learn-link <l2> -)
+#(interrupt)
+# #   (<dc> ^store-learn-link <ll> -)
+# #  (<dc> ^learn-link <ll>)
+# #  (<dc> ^learn-link <l2> -)
 #}
 
 sp {satisfy-purpose*finished-learning*apply*complete*remove-learn-link
     (state <s1> ^name interaction
-                ^operator <o> 
+                ^operator <o>
+               -^top-state.new-spelling #HACKy
                 ^top-state.dialog-context <dc>)
     (<dc> ^learn-link <ll>)
     (<ll> ^argnum <a>) #means built
@@ -291,6 +295,23 @@ sp {satisfy-purpose*finished-learning*apply*complete*remove-learn-link
         -^event.dialog-event.type process-sentence)
 -->
    (<dc> ^learn-link <ll> -)
+}
+
+sp {interaction*apply*performed-event*game-learning*clean*dialog-object-list
+    (state <s1> ^name interaction
+                ^top-state <top>
+                ^operator <o>)
+    (<o> ^name performed-event
+         ^event.learning-event.type game)
+    (<top> ^dialog-world <w> ^dialog-object-list <list> ^dialog-object-list-saved <dls>)
+-->
+  (<top> ^dialog-object-list <list> -
+         ^dialog-world <w> -
+         ^dialog-object-list-saved <dls> -
+         ^dialog-object-list nil
+         ^dialog-object-list-saved nil
+         ^dialog-world <new>)
+  (<new> ^objects <objs> ^predicates <preds>)
 }
 
 sp {satisfy-purpose*clean*dialog-object-list
@@ -323,30 +344,34 @@ sp {satisfy-purpose*clean*dialog-world
    (<dw> ^<something> <obj> -)
 }
 
-sp {finished-learning*apply*complete*output-object-1
-    (state <s1> ^name finished-learning
-                ^operator.name complete
-                ^top-state.dialog-context <dc>)
-    (<dc> ^output-object-1 <lp>)
--->
-   (<dc> ^output-object-1 <lp> -)
-}
-sp {finished-learning*apply*complete*input-object-1
-    (state <s1> ^name finished-learning
-                ^operator.name complete
-                ^top-state.dialog-context <dc>)
-    (<dc> ^input-object-1 <lp>)
--->
-   (<dc> ^input-object-1 <lp> -)
-}
-sp {finished-learning*apply*complete*input-object-2
-    (state <s1> ^name finished-learning
-                ^operator.name complete
-                ^top-state.dialog-context <dc>)
-    (<dc> ^input-object-2 <lp>)
--->
-   (<dc> ^input-object-2 <lp> -)
-}
+
+#sp {finished-learning*apply*complete*output-object-1
+#    (state <s1> ^name finished-learning
+#                ^operator.name complete
+#                ^top-state.dialog-context <dc>)
+#    (<dc> ^output-object-1 <lp>)
+#-->
+#    (interrupt)
+#   #(<dc> ^output-object-1 <lp> -)
+#}
+#sp {finished-learning*apply*complete*input-object-1
+#    (state <s1> ^name finished-learning
+#                ^operator.name complete
+#                ^top-state.dialog-context <dc>)
+#    (<dc> ^input-object-1 <lp>)
+#-->
+#   (<dc> ^input-object-1 <lp> -)
+#}
+#sp {finished-learning*apply*complete*input-object-2
+#    (state <s1> ^name finished-learning
+#                ^operator.name complete
+#                ^top-state.dialog-context <dc>)
+#    (<dc> ^input-object-2 <lp>)
+#-->
+#   (<dc> ^input-object-2 <lp> -)
+#}
+
+
 #learn chunk right away like for actions
 #sp {finished-learning*apply*complete*send-message*predicate
 #    (state <s1> ^name finished-learning
@@ -360,6 +385,7 @@ sp {finished-learning*apply*complete*input-object-2
 #   (<dc> ^learning-predicate <lp> -)
 #   (<changes> ^outgoing-message <msg>)
 #   (<msg> ^type learned-unknown-word
+#          ^complete-message true
 #          ^fields.word <word>)
 #   (<status> ^performed.learning-event <de>)
 #   (<de> ^type game
@@ -417,6 +443,23 @@ sp {finished-learning*apply*complete*send-message*action
    (<dc> ^finalize-chunk <name>)
 }
 
+
+#JK copy issue fixed til here!!!
+sp {finished-learning*apply*complete*send-message*goal*copied
+    (state <s1> ^name finished-learning
+                ^topstate.new-spelling
+                ^operator.name complete
+                ^top-state.dialog-context <dc>
+                ^top-state.interaction.status <status>
+                ^top-state.interaction.changes <changes>)
+    (<dc> ^structure.goals <act> -^goal-relationships -^learning-predicate ^learn-link.handle <name>)
+    (<act> -^goal <a>)
+    #(<a> ^handle <name>)
+-->
+   (<act> ^retrieve-handle <name>)
+   (<dc> ^finalize-chunk <name>)
+}
+
 sp {finished-learning*apply*complete*send-message*goal
     (state <s1> ^name finished-learning
                 ^operator.name complete
@@ -462,6 +505,7 @@ sp {finished-learning*apply*complete*send-message*goal-state*demo
    (<act> ^retrieve-handle <name>)
    (<changes> ^outgoing-message <msg>)
    (<msg> ^type describe-final-goal-state
+          ^complete-message true
           ^fields <f>)
    (<f> ^relationships <gs> ^definitive no)
    (<status> ^performed.learning-event <de>)
@@ -487,8 +531,10 @@ sp {satisfy-predicate-conditions*elaborate*condition-instance*negative
     (<r52> ^instance <i1>)
     (<i1> ^1 <n4>)
     (<r1> ^set <s2>)
-    (<t1> ^nlp-set <n1> ^link <c4> ^primary-rtype <type>)    
-    (<n1> ^aname <c2>)
+    (<t1> ^nlp-set <n1> ^link <c4> ^primary-rtype <type> ^parameter-set.tested calculate6)#TODO bad that relies on atleast one being calculated to know complete inorder to avoid premature negative
+    (<n1> ^aname <c2>) 
+ -{ (state <s1>)
+    (<t1> -^instance)} 
  -{ (<t1> ^instance <i3>)
       (<i3> ^1 <n4> )
       #(<c5> ^result <r*2>)
@@ -516,8 +562,10 @@ sp {satisfy-predicate-conditions*elaborate*condition-instance*negative*2param
     (<r72> ^instance <i7>)
     (<i7> ^1 {<> <n4> <n7>})
     (<r1> ^set <s2>)
-    (<t1> ^nlp-set <n1> ^link <c4> ^primary-rtype <type>)    
+    (<t1> ^nlp-set <n1> ^link <c4> ^primary-rtype <type> ^parameter-set.tested calculate6)    
     (<n1> ^aname <c2>)
+ -{ (state <s1>)
+    (<t1> -^instance)} 
  -{ (<t1> ^instance <i3>)
       (<i3> ^1 <n4> ^2 <n7>)
       #(<c5> ^result <r*2>)
@@ -543,6 +591,7 @@ sp {satisfy-predicate-conditions*elaborate*condition-instance
     -->
     (<s2> ^instance <i1> +)
 }
+#TODO analyze should try to learn these rules?????
 
 #when child argument was a parameter and a set
 sp {satisfy-predicate-conditions*elaborate*condition-instance*single-to-set*parameters
@@ -562,6 +611,41 @@ sp {satisfy-predicate-conditions*elaborate*condition-instance*single-to-set*para
     -->
     (<s2> ^instance <i1>)
     (<i1> ^1 <set>)
+}
+#causes duplicate results...
+#could try bias that take lowest instance with 2 as arg...
+sp {satisfy-predicate-conditions*elaborate*condition-instance*single-to-set*parameters2
+    (state <s1> ^gtype <c3> ^list <l1> ^<c3> <a1> ^<c1> <t1>)
+    (<l1> ^game <g1>)
+    (<a1> ^condition <c4>)
+    (<c4> ^negative false ^parameter.{1}.param-id <pid> ^parameter.{2}.type single ^type concept ^result <r1> ^name <c2> ^attribute <c1> ^rtype set ^parameter.num 2)
+   #^args.{1} <arg> 
+    # (<arg> ^rtype single)
+    (<r1> ^set <s2>)
+    (<t1> ^nlp-set <n1> ^link <c4> ^primary-rtype single ^instance <i1> )
+    (<i1> ^2 <obj>)
+    (<n1> ^aname <c2>)
+   -{(<t1> ^instance {<is1> > <i1>}) #bias for no duplicate results
+     (<is1> ^2 <obj>)}
+    -->
+    (<s2> ^instance <ir>)
+    (<ir> ^1 <setn> ^2 <obj>)
+}
+sp {satisfy-predicate-conditions*elaborate*condition-instance*single-to-set*parameters2*copy-objects
+    (state <s1> ^gtype <c3> ^list <l1> ^<c3> <a1> ^<c1> <t1>)
+    (<l1> ^game <g1>)
+    (<a1> ^condition <c4>)
+    (<c4> ^negative false ^parameter.{1}.param-id <pid> ^parameter.{2}.type single ^type concept ^result <r1> ^name <c2> ^attribute <c1> ^rtype set ^parameter.num 2)
+   #^args.{1} <arg> 
+    # (<arg> ^rtype single)
+    (<r1> ^set <s2>)
+    (<t1> ^nlp-set <n1> ^link <c4> ^primary-rtype single ^instance <i1> )
+    (<i1> ^1 <obj1> ^2 <obj>)
+    (<n1> ^aname <c2>)
+    (<s2> ^instance <ir>)
+    (<ir> ^1 <setn> ^2 <obj>)
+-->
+    (<setn> ^<object> <obj1>)
 }
 
 #only if one main parameter

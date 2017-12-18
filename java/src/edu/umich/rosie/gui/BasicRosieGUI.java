@@ -54,7 +54,8 @@ public class BasicRosieGUI extends JFrame
 
     	ChatPanel chat = new ChatPanel(soarAgent, this, internalPasser);
     	this.add(chat);
-    	this.add(new InstructorMessagePanel(chat, props));
+    	
+    	add(new InstructorMessagePanel(chat, props));
 
     	setupMenu();
     	

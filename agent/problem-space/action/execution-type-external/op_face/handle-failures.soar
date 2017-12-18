@@ -1,0 +1,71 @@
+#### Different failure cases that can arise during face
+
+sp {op_face1*propose*handle-execution-failure
+   (state <s> ^name op_face1
+              ^current-action <a>)
+   (<a> ^orient-command <cmd>)
+   (<cmd> ^status << failure interrupted >>)
+-->
+   (<s> ^operator <o> + = >)
+   (<o> ^name handle-execution-failure
+        ^category failure-handling
+        ^action <a>
+        ^command <cmd>)
+}
+
+sp {op_face1*propose*handle-command-failure
+   (state <s> ^name op_face1
+              ^current-action <a>)
+   (<a> ^orient-command <cmd>)
+   (<cmd> ^status error)
+-->
+   (<s> ^operator <o> + = >)
+   (<o> ^name handle-command-failure
+        ^category failure-handling
+        ^action <a>
+        ^command <cmd>)
+}
+
+#
+## svs-filter-error: One of the position filters had an error
+#sp {op_face1*propose*report-failure*svs-filter-error
+#   (state <s> ^name op_face1
+#              ^problem-space.execution-type external
+#              ^current-action.execution-operator.action-handle <handle>
+#              ^{ << target-position-filter robot-position-filter >> <filter-name> } <pos-filter>)
+#   (<pos-filter> ^result <res>)
+#   (<res> -^record.value)
+#-->
+#   (<s> ^operator <o> + > =)
+#   (<o> ^name report-failure
+#        ^failure-type svs-filter-error
+#        ^failure-info <filter-name>)
+#}
+#
+#sp {op_face1*apply*report-failure*svs-filter-error*remove*commands
+#   (state <s> ^name op_face1
+#              ^operator.name report-failure
+#              ^robot-position-filter <rob-pos>
+#              ^target-position-filter <obj-pos>
+#              ^top-state.svs.command <cmd>)
+#   (<cmd> ^extract_once <rob-pos>
+#          ^extract_once <obj-pos>)
+#-->
+#   (<cmd> ^extract_once <rob-pos> -
+#          ^extract_once <obj-pos> -)
+#}
+#
+## missing-object: We faced where we thought the object was, but it wasn't there
+#sp {op_face1*propose*report-failure*missing-object
+#   (state <s> ^name op_face1
+#              ^problem-space.execution-type external
+#              ^current-action.execution-operator.action-handle <handle>
+#              ^current-action.orient-command.status success
+#              ^target-object.predicates.visible false)
+#-->
+#   (<s> ^operator <o> + > =)
+#   (<o> ^name report-failure
+#        ^failure-type missing-object
+#        ^failure-info <handle>)
+#}
+#

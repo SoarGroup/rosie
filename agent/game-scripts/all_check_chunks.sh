@@ -1,4 +1,4 @@
-#!/bin/bash
+OB#!/bin/bash
 
 suffix=".tower"
 tstats=".tstats"
@@ -13,8 +13,8 @@ ffix="no"
 chunks=".chunks"
 
 #puzzles
-declare -a arr=("husbands" "cannibals" "lfamilycross" "15ipuzzle" "x5tower" "zmaze" "jmahjong" "gbfox" "3tower" "4tower" "5puzzle" "8puzzle" "iso8puzzle" "yiso5puzzle" "blocksworld" "worldblocks")
-
+#declare -a arr=("husbands" "cannibals" "lfamilycross" "15ipuzzle" "x5tower" "zmaze" "jmahjong" "gbfox" "3tower" "4tower" "5puzzle" "8puzzle" "iso8puzzle" "yiso5puzzle" "blocksworld" "worldblocks")
+declare -a arr=("husbands")
 #broken: frog, solitaire, 2pushmaze, dsokobanno, 
 
 ## now loop through the above array
@@ -43,17 +43,18 @@ do
 		do
 			echo $c
 			c=`expr $c + 1`
-			../../../../soar/out/./soar -s game-data-agent.soar stop > out.txt 
+			../../../soar/out/./soar -s game-data-agent.soar stop > out.txt 
 		done
 						
 		#cp chunks.txt $stored$rfile$chunks
 		diff -q chunks.txt $stored$rfile$chunks
-		diff -s chunks.txt $stored$rfile$chunks	
+		#diff -s chunks.txt $stored$rfile$chunks	
 	done
 done
 
-declare -a grr=("tictactoe" "kconnect3" "aconnect3" "econnect4" "othello" "risk" "president" "crazy8")
-#broken "ubreakthrough" "picaria" "9holes" "mens3"
+declare -a grr=("tictactoe" "kconnect3" "aconnect3" "econnect4" "risk" "president" "crazy8" "ubreakthrough3" "9holes" "picaria" "mens3" )
+#"othello") different betweenversion than stacked frogs need to teach
+#broken "ubreakthrough" only 1 version,retrydue  "mens3" # othello
 
 ## now loop through the above array
 for game in "${grr[@]}"
@@ -81,11 +82,11 @@ do
 		do
 			echo $c
 			c=`expr $c + 1`
-			../../../../soar/out/./soar -s game-data-agent.soar stop > out.txt
+			../../../soar/out/./soar -s game-data-agent.soar stop > out.txt
 		done
 						
 		#cp chunks.txt $stored$rfile$chunks
 		diff -q chunks.txt $stored$rfile$chunks
-		diff -s chunks.txt $stored$rfile$chunks	
+		#diff -s chunks.txt $stored$rfile$chunks	
 	done
 done

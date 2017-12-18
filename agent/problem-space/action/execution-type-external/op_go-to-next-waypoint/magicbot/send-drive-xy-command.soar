@@ -1,0 +1,47 @@
+###############################################################################
+#
+# Inside the op_go-to-next-waypoint1 substate, this will put a drive-to-waypoint command on the output link
+#
+###############################################################################
+
+sp {op_go-to-next-waypoint1*propose*send-drive-xy-command*face
+   (state <s> ^name op_go-to-next-waypoint1
+              ^problem-space.execution-type external
+              ^current-action.position-set.next { <next> <> none }
+              ^do-face true
+              ^current-action.face-command.status success
+             -^current-action.drive-command)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name send-drive-xy-command
+        ^position <next>)
+}
+
+sp {op_go-to-next-waypoint1*propose*send-drive-xy-command*no-face
+   (state <s> ^name op_go-to-next-waypoint1
+              ^problem-space.execution-type external
+              ^current-action.position-set.next { <next> <> none }
+              ^do-face false
+             -^current-action.drive-command)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name send-drive-xy-command
+        ^position <next>)
+}
+
+sp {op_go-to-next-waypoint1*apply*send-drive-xy-command
+   (state <s> ^name op_go-to-next-waypoint1
+              ^operator <o>
+              ^top-state.io.output-link <out>
+              ^current-action <a>)
+   (<o> ^name send-drive-xy-command
+        ^position <pos>)
+   (<pos> ^x <x> ^y <y>)
+-->
+   (<out> ^do-control-law <law>)
+   (<law> ^name drive-xy
+          ^parameters <params>
+          ^termination-condition.name stabilized)
+   (<params> ^x <x> ^y <y>)
+   (<a> ^drive-command <law>)
+}

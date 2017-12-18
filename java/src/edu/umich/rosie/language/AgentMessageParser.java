@@ -36,15 +36,6 @@ public class AgentMessageParser
 		if(simpleMessages == null){
 			simpleMessages = new HashMap<String, String>();
 			simpleMessages.put("ok", "Ok");
-//			simpleMessages.put("unable-to-satisfy", "I was unable to carry out that instruction");
-//			simpleMessages.put("unable-to-interpret-message", "I was unable to interpret that last message");
-//			simpleMessages.put("missing-object", "I lost the object I was using");
-//			simpleMessages.put("index-object-failure", "I couldn't find the referenced object");
-//			simpleMessages.put("no-proposed-action", "I couldn't perform the requested action");
-//			simpleMessages.put("learn-location-failure", "I was not able to identify my current location");
-//			simpleMessages.put("get-goal-info", "What is the goal of that action?");
-//			simpleMessages.put("no-action-context-for-goal", "I don't know what action that goal is for");
-//			simpleMessages.put("get-next-subaction", "What do I do next?");
 			simpleMessages.put("unable-to-satisfy", "I couldn't do that");
 			simpleMessages.put("unable-to-interpret-message", "I don't understand.");
 			simpleMessages.put("missing-object", "I lost the object I was using. Can you help me find it?");
@@ -97,8 +88,7 @@ public class AgentMessageParser
 		
 		Identifier fieldsId = SoarUtil.getIdentifierOfAttribute(id, "fields");
 		if(type.equals("get-next-task")){
-			return null;
-			//return translateNextTaskPrompt();
+			return translateNextTaskPrompt();
 		} else if(type.equals("get-predicate-info")){
 			return translateGetPredicateInfo(fieldsId);
 		} else if(type.equals("report-successful-training")){
@@ -121,8 +111,20 @@ public class AgentMessageParser
 			return translateFinalGoalState(fieldsId);
 	    } else if(type.equals("say-sentence")){
 	    	return translateSaySentence(fieldsId);
+         // AM: produced by problem-space/action/failure-handling
 	    } else if(type.equals("execution-failure")){
 	    	return translateExecutionFailure(fieldsId);
+       } else if(type.equals("command-failure")){
+         return translateCommandFailure(fieldsId);
+       } else if(type.equals("action-failure")){
+         return translateActionFailure(fieldsId);
+	   } else if(type.equals("unsatisfied-goal")){
+		   return translateUnsatisfiedGoal(fieldsId);
+       } else if(type.equals("missing-object-failure")){
+          return translateMissingObjectFailure(fieldsId);
+       } else if(type.equals("invalid-argument-failure")){
+          return translateInvalidArgumentFailure(fieldsId);
+         // AM: End failures
 	    } else if(type.equals("cant-find-object")){
 	    	return translateCantFindObject(fieldsId);
 	    } else if(type.equals("multiple-arguments")){
@@ -548,40 +550,91 @@ public class AgentMessageParser
 		return "Can you be more specific? Which " + worldObjectToString(obj) + "?";
 		
 	}
-	
+
 	public static String translateExecutionFailure(Identifier fieldsId){
-		String info = SoarUtil.getValueOfAttribute(fieldsId, "failure-info");
-		String type = SoarUtil.getValueOfAttribute(fieldsId, "failure-type");
-		if(info == null || type == null){
+		String action = SoarUtil.getValueOfAttribute(fieldsId, "action-handle").replaceAll("\\d", "");
+		String command = SoarUtil.getValueOfAttribute(fieldsId, "command-name").replaceAll("\\d", "");
+
+		if(action == null || command == null){
 			return "I was not able to perform the action";
 		}
-		if(type.equals("command-error")){
-			return "There was a problem sending the " + info + " command";
-		} else if(type.equals("execution-failed")){
-			return "There was an error while executing the " + info + " command";
-		} else if(type.equals("direction-retrieval-failure")){
-			return "I do not know about the turn direction " + info;
-		} else if(type.equals("invalid-direction-failure")){
-			return "The given turn direction " + info + " was not a valid direction";
-		} else if(type.equals("unsatisfied-until-clause")){
-			return null;
-      //"I had to terminate the " + info + " command early";
-		} else if(type.equals("svs-filter-error")){
-			return "Something went wrong with the " + info + " filter";
-		} else if(type.equals("missing-object")){
-			return "I didn't see the object I expected to";
-		} else if(type.equals("unknown-location")){
-			return "I don't know how to get to the " + info + ".";
-		} else if(type.equals("no-ask-sentence")){
-			return "I don't know what to ask";
-		} else if(type.equals("no-say-sentence")){
-			return "I don't know what to say";
-		} else if(type.equals("unknown-current-location")){
-      return "I don't know where I am";
-    } else {
-			return "I was not able to perform the action";
-		}
+		
+		return "The " + command + " command failed while doing " + action;
 	}	
+
+	public static String translateUnsatisfiedGoal(Identifier fieldsId){
+		String action = SoarUtil.getValueOfAttribute(fieldsId, "action-handle").replaceAll("\\d", "");
+
+		if(action == null){
+			return "I was not able to achieve the goal of the action";
+		}
+		
+		return "I could not achieve the goal of " + action;
+	}	
+	
+
+	public static String translateCommandFailure(Identifier fieldsId){
+		String action = SoarUtil.getValueOfAttribute(fieldsId, "action-handle").replaceAll("\\d", "");
+		String command = SoarUtil.getValueOfAttribute(fieldsId, "command-name").replaceAll("\\d", "");
+
+		if(action == null || command == null){
+			return "An outgoing command could not be interpreted";
+		}
+		
+		return "The " + command + " command failed to be interpreted during " + action;
+	}	
+	
+	public static String translateActionFailure(Identifier fieldsId){
+		String action = SoarUtil.getValueOfAttribute(fieldsId, "action-handle").replaceAll("\\d", "");
+		String subaction = SoarUtil.getValueOfAttribute(fieldsId, "action-name").replaceAll("\\d", "");
+
+		if(action == null || subaction == null){
+			return "I was not able to perform the action";
+		}
+		
+		return "The action " + subaction + " failed while doing " + action;
+	}	
+	
+	public static String translateMissingObjectFailure(Identifier fieldsId){
+		String action = SoarUtil.getValueOfAttribute(fieldsId, "action-handle").replaceAll("\\d", "");
+		Identifier objectId = SoarUtil.getIdentifierOfAttribute(fieldsId, "missing-object");
+      String objectDesc = worldObjectToString(objectId);
+
+		if(action == null || objectDesc == null){
+         return "I lost the object I was using";
+		}
+		
+		return "I lost " + objectDesc + " while doing " + action;
+	}	
+	
+	public static String translateInvalidArgumentFailure(Identifier fieldsId){
+		String action = SoarUtil.getValueOfAttribute(fieldsId, "action-handle").replaceAll("\\d", "");
+		String subtype = SoarUtil.getValueOfAttribute(fieldsId, "subtype").replaceAll("\\d", "");
+
+      if(subtype != null && subtype.equals("missing-property")){
+         Identifier objectId = SoarUtil.getIdentifierOfAttribute(fieldsId, "object");
+         if(objectId != null){
+            String objectDesc = worldObjectToString(objectId);
+		      String missingprop = SoarUtil.getValueOfAttribute(fieldsId, "missing-property").replaceAll("\\d", "");
+            if(objectDesc != null && missingprop != null){
+               return objectDesc + " is missing the " + missingprop + " property";
+            }
+         }
+      } else if(subtype != null && subtype.equals("missing-argument")){
+		  String argName = SoarUtil.getValueOfAttribute(fieldsId, "missing-argument");
+		  if (action != null && argName != null){
+			  return "The " + action + " action was missing a " + argName + " argument";
+		  }
+	  } else {
+		   String argname = SoarUtil.getValueOfAttribute(fieldsId, "argument-name");
+         if(action != null && argname != null){
+            return "The " + argname + " argument of the " + action + " action was invalid";
+         }
+      }
+		
+      return "I got an invalid argument in an action";
+	}	
+
 	
 //    public static String translateAgentMessage(Identifier id){
 //        String message = null;

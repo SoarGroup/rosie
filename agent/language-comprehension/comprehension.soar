@@ -9,7 +9,7 @@
 #}
 
 #sp {mNL-Soar*propose*comprehension*internal
-#   (state <s> ^world-usage internal
+#   (state <s> ^agent-params.sentence-source scripts
 #              ^parser-testing true #John parser testing pipeline
 #              ^current-sentence-number <csn>
 #             -^terminated-sentence <cs>)
@@ -18,77 +18,11 @@
 #   (<op> ^name comprehension)
 #}
 
-#process new sentence from script or input link by creating a new segment that will get pushed onto stack
-sp {rosie*propose*process-new-sentence*scripted
-   (state <s> ^world-usage internal
-             #-^parser-testing true 
-              ^current-sentence <sentence>
-              ^current-sentence-number <csn>
-             -^terminated-sentence <cs>)
-   (<sentence> -^segment-proposed true)
--->
-   (<s> ^operator <op> + >) # allow I/O
-   (<op> ^name process-new-sentence
-         ^sentence <sentence>)
-}
-sp {rosie*propose*process-new-sentence*input-link
-   (state <s> ^name rosie
-              -^parser-testing true
-              ^io.input-link.language.sentence <sentence>)
-   (<sentence> -^segment-proposed true)
--->
-   (<s> ^operator <op> + >)
-   (<op> ^name process-new-sentence
-         ^original-sentence <sentence>)
-}
-
-sp {rosie*apply*process-new-sentence*copy*new-segment-info*from-script
-   (state <s> ^name rosie
-              ^operator <op>
-              ^top-state.interaction.changes <c>)
-   (<op> ^name process-new-sentence
-         ^sentence <sentence>)
-   (<sentence> ^original-sentence <os>)
-   #(<os> ^complete-sentence <cs1>)
--->
-   #(write (crlf) <cs1>)	
-   (<sentence> ^segment-proposed true)
-   (<c> ^new-segment-info <info>)
-   (<info> ^purpose <p>
-           ^originator instructor)
-   (<p> ^type process-sentence 
-        ^parameters.sentence (deep-copy <os>)
-        ^satisfaction <sat>)
-   (<sat> ^dialog-event <de>)
-   (<de> ^type process-sentence
-          ^originator agent)
-}
-
-sp {rosie*apply*process-new-sentence*copy*new-segment-info*from-input-link
-   (state <s> ^name rosie
-              ^operator <op>
-              ^top-state.interaction.changes <c>)
-   (<op> ^name process-new-sentence
-         ^original-sentence <os>)
--->
- #  (write (crlf) (cmd print <os>))
-   (<os> ^segment-proposed true)
-   (<c> ^new-segment-info <info>)
-   (<info> ^purpose <p>
-           ^originator instructor)
-   (<p> ^type process-sentence 
-        ^parameters.sentence (deep-copy <os>)
-        ^satisfaction <sat>)
-   (<sat> ^dialog-event <de>)
-   (<de> ^type process-sentence
-          ^originator agent)
-}
-
 #satisfaction of stack calls comprehension
 sp {dialog-event*propose*comprehension
    (state <s> ^name dialog-event
-              ^purpose <p>
-              ^top-state.agent-params.language-mode laird)
+              ^agent-params.parser laird
+              ^purpose <p>)
    (<p> ^type process-sentence ^parameters.sentence <sentence>)
 -->
    (<s> ^operator <o> + =)
@@ -108,6 +42,7 @@ sp {apply*comprehension*save-most-recent-alternative-structure
 #clean dialog-world
 sp {apply*performed-event*clean*dialog-world
     (state <s1> ^name interaction
+                ^agent-params.parser laird
                 ^operator <o>
                 ^top-state.dialog-world.<< objects predicates >> <dw>)
     (<o> ^name performed-event

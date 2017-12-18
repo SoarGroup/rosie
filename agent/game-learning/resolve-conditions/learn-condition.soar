@@ -100,6 +100,8 @@ sp {learn-condition-impasse*propose*function
          ^parameter <p>)
 }
 
+#TODO JAMES when trying to generalize (notice that operators here have similar structure)
+#TODO RECODE TODO
 sp {learn-condition-impasse*propose*attribute-of
    (state <s> ^name learn-condition-impasse
               ^superstate <ss>)
@@ -129,6 +131,24 @@ sp {learn-condition-impasse*propose*has-attribute
          ^negative <bool>
          ^parameter <p>)
 }
+
+
+sp {learn-condition-impasse*propose*same-attribute
+   (state <s> ^name learn-condition-impasse
+              ^superstate <ss>)
+   (<ss> ^condition <co>)
+   (<co> ^args <args> ^negative <bool> ^parameter <p> ^name <type> ^type same-attribute)
+-->
+ #  (write (cmd print <co> -d 9))
+   (<ss> ^operator <op> + =)
+   (<op> ^args <args>
+         ^name same-attribute
+         ^type <type>
+         ^negative <bool>
+         ^parameter <p>)
+}
+
+
 
 #TODO readd for reset up message
 #sp {learn-condition*propose*retry-condition-setup*stillunrseolved
@@ -184,6 +204,7 @@ sp {retry-condition-setup*apply*complete
           ^originator instructor)
    (<c> ^outgoing-message <out-msg>)
    (<out-msg> ^type reset-state
+              ^complete-message true
               ^fields.word <type>)
    (<ps> ^learned-structure <nlp>)
 }
@@ -196,6 +217,7 @@ sp {learn-condition*propose*resolve-satisfaction-failure
    (<sss> ^name learn-condition)
 -->
 #(interrupt)
+#(write (cmd print <sss> -d 6))
 (<sss> ^operator <o> + >)
 (<o> ^name resolve-satisfaction-failure)
 }
@@ -214,11 +236,24 @@ sp {resolve-satisfaction-failure*propose*handle-unresolved-condition
               ^unresolved-condition <co>)
    (<co> ^name <name>)
 -->
+#(interrupt)
+#(write (cmd print <co> -d 4))
 (<s> ^operator <o> + =)
 (<o> ^name handle-unresolved-condition
-     ^word (make-constant-symbol <name>)
+     #^word (make-constant-symbol <name>)
      ^spelling <name>
      ^condition <co>)
+}
+sp {resolve-satisfaction-failure*apply*handle-unresolved-condition*copy
+   (state <s> ^name resolve-satisfaction-failure
+              ^unresolved-condition <co>)
+   (<co> ^name <name>)
+(<s> ^operator <o>)
+(<o> ^name handle-unresolved-condition
+     ^spelling <name>
+     ^condition <co>)
+-->
+(<s> ^word (make-constant-symbol <name>))
 }
 
 sp {resolve-satisfaction-failure*prefer*handle-unresolved-condition*concept
@@ -231,12 +266,73 @@ sp {resolve-satisfaction-failure*prefer*handle-unresolved-condition*concept
 (<s> ^operator <o1> > <o2>)
 }
 
+
+sp {resolve-satisfaction-failure*prefer*handle-unresolved-condition*concept*usedcurrent*first
+   (state <s> ^name resolve-satisfaction-failure
+   		  	  ^linkstate <sss>
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<sss> ^main-type <gtype> ^<gtype> <g>)
+   (<g> ^condition <c1> -^condition <c2>)
+   (<o1> ^condition <c1>)
+   (<c1> ^type concept)
+   (<o2> ^condition <c2>)
+   (<c2> ^type concept)
+-->
+(<s> ^operator <o1> > <o2>)
+}
+
+
 #CASE 1 learned concept not detected, ask for another definition
-sp {resolve-satisfaction-failure*apply*handle-unresolved-condition
+sp {resolve-satisfaction-failure*apply*handle-unresolved-condition*noparse
    (state <s> ^name resolve-satisfaction-failure
               ^quiescence t #do not chunk through this rule (failure case)
               ^top-state.dialog-context <dc>
               ^linkstate <ls>
+              ^word <word> 
+              ^top-state <ts>
+              ^top-state.interaction.changes <c>
+              ^operator <o>)
+   (<ls> ^main-type <type> ^<type> <t> -^parsed-structure)
+   (<t> ^nlp-set <nlp> ^formated)
+(<o> ^name handle-unresolved-condition
+     ^condition <co>
+     ^spelling <spell>)
+#(<dc> ^learn-link <ll>)
+#(<ll> ^argnum <an>)
+(<co> ^name {<name2> <> <word>})
+(<ts> -^smap.<spell>)
+-->
+(write (crlf) <spell>)
+(<ts> ^smap <sm> ^new-spelling true)
+(<sm> ^<spell> <word>)
+    #(<co> ^name <name2> -)
+    #(<ll> ^argnum <an> -)
+    #(<co> ^name <word>)
+    (<c> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator agent)
+   (<p> ^type process-unknown-word
+        ^parameters.word <word>
+        ^satisfaction <sat>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type process-unknown-word
+          ^originator instructor)
+   (<dc> ^learning-predicate <lp>)
+   (<lp> ^name <word> ^spelling <spell>)
+   (<c> ^outgoing-message <out-msg>)
+   (<out-msg> ^type unknown-defined-word
+              ^fields.word <word>)
+  # (<ps> ^learned-structure <nlp>)
+}
+
+sp {resolve-satisfaction-failure*apply*handle-unresolved-condition
+#:interrupt
+   (state <s> ^name resolve-satisfaction-failure
+              ^quiescence t #do not chunk through this rule (failure case)
+              ^top-state.dialog-context <dc>
+              ^linkstate <ls>
+              ^word <word> 
               ^top-state <ts>
               ^top-state.interaction.changes <c>
               ^operator <o>)
@@ -244,7 +340,7 @@ sp {resolve-satisfaction-failure*apply*handle-unresolved-condition
    (<t> ^nlp-set <nlp> ^formated)
 (<o> ^name handle-unresolved-condition
      ^condition <co>
-     ^word <word> ^spelling <spell>)
+     ^spelling <spell>)
 (<dc> ^learn-link <ll>)
 (<ll> ^argnum <an>)
 (<co> ^name <name2> <> <word>)
@@ -269,12 +365,14 @@ sp {resolve-satisfaction-failure*apply*handle-unresolved-condition
    (<lp> ^name <word> ^spelling <spell>)
    (<c> ^outgoing-message <out-msg>)
    (<out-msg> ^type unknown-defined-word
+              ^complete-message true
               ^fields.word <word>)
    (<ps> ^learned-structure <nlp>)
 }
 
 #case 2, try other spelling mapping (TODO temp solution need better smem linking), hanlding of parser
 sp {resolve-satisfaction-failure*apply*handle-unresolved-condition*try-another
+#:interrupt
    (state <s> ^name resolve-satisfaction-failure
               ^quiescence t #do not chunk through this rule (failure case)
               ^top-state <ts>

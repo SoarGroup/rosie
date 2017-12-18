@@ -15,11 +15,11 @@ sp {pop-action*apply*complete-pop-action*pop
               ^action-to-pop <action>)
    (<stack> ^top <action>)
    (<action> ^prev <prev>)
+   (<prev> ^next <action>)
 -->
    (<stack> ^top <action> -
             ^top <prev>)
-  (<action> ^next none -)
-  (<prev> ^next <action> -
+   (<prev> ^next <action> -
            ^next none)
 }
 
@@ -29,10 +29,13 @@ sp {pop-action*apply*complete-pop-action*change*bottom
               ^operator.name complete-pop-action
               ^action-stack <stack>
               ^action-to-pop <action>)
-  (<stack> ^bottom <action>)
+  (<stack> ^bottom <action>
+           ^top <action>)
 -->
   (<stack> ^bottom <action> -
-            ^bottom none)
+           ^bottom none
+           ^top <action> -
+           ^top none)
 }
 
 
@@ -81,57 +84,8 @@ sp {pop-action*apply*complete-pop-action*report*find-success
              ^execution-operator.action-handle find1)
 -->
    (<chgs> ^outgoing-message <msg>)
-   (<msg> ^type simple-message
-          ^message-type find-success)
-}
-
-sp {pop-action*apply*complete-pop-action*report*find-failure
-   (state <s> ^name pop-action
-              ^operator.name complete-pop-action
-              ^action-to-pop <action>
-              ^top-state.interaction.changes <chgs>)
-   (<action> -^status success
-             ^execution-operator.action-handle find1)
--->
-   (<chgs> ^outgoing-message <msg>)
-   (<msg> ^type simple-message
-          ^message-type find-failure)
-}
-
-# Report an execution failure if the action failed (bottom action)
-sp {pop-action*apply*complete-pop-action*report*execution*failure*bottom
-   (state <s> ^name pop-action
-              ^operator.name complete-pop-action
-              ^action-to-pop <action>
-              ^action-stack.bottom <action>
-              ^top-state.interaction.status <status>)
-   (<action> ^status failure
-             ^execution-failure <type>
-             ^failure-info <info>)
--->
-   (<status> ^failure <f>)
-   (<f> ^type execution-failure
-        ^failure-type <type>
-        ^failure-info <info>
-        ^bottom-action true)
-}
-
-# Report an execution failure if the action failed (not bottom action)
-sp {pop-action*apply*complete-pop-action*report*execution*failure*not*bottom
-   (state <s> ^name pop-action
-              ^operator.name complete-pop-action
-              ^action-to-pop <action>
-              ^action-stack.bottom <> <action>
-              ^top-state.interaction.status <status>)
-   (<action> ^status failure
-             ^execution-failure <type>
-             ^failure-info <info>)
--->
-   (<status> ^failure <f>)
-   (<f> ^type execution-failure
-        ^failure-type <type>
-        ^failure-info <info>
-        ^bottom-action false)
+   (<msg> ^type find-success
+          ^complete-message true)
 }
 
 # If there is a policy-learning-needed flag, 
@@ -239,7 +193,7 @@ sp {pop-action*apply*complete-pop-action*mark*performed*once*subaction
               ^operator.name complete-pop-action
               ^action-to-pop.execution-operator <op>
               ^action-to-pop.prev.execution-operator <parent-op>)
-   (<op> ^subaction-handle <sub-handle>
+   (<op> ^subaction-handle { <sub-handle> <> none }
          ^perform once)
 -->
    (<parent-op> ^performed <sub-handle>)

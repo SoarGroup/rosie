@@ -1,0 +1,69 @@
+sp {op_face*propose*extract-positions
+   (state <s> ^name op_face1
+              ^problem-space.execution-type external
+              ^target-object.svs-obj.id <perc-id>
+             -^yaw-to-target)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name extract-positions
+        ^robot-id robot
+        ^target-id <perc-id>)
+}
+
+sp {op_face*apply*extract-positions*create*robot*position*filter
+   (state <s> ^name op_face1
+              ^operator <o>
+              ^top-state.svs.command <cmd>)
+   (<o> ^name extract-positions
+        ^robot-id <rob-id>)
+-->
+    (<cmd> ^extract_once <rob-pos>)
+    (<rob-pos> ^type node_position
+               ^a <rob>)
+    (<rob> ^type node
+           ^id <rob-id>)
+    (<s> ^robot-position-filter <rob-pos>)
+}
+
+sp {op_face*apply*extract-positions*create*target*position*filter
+   (state <s> ^name op_face1
+              ^operator <o>
+              ^top-state.svs.command <cmd>)
+   (<o> ^name extract-positions
+        ^target-id <tar-id>)
+-->
+    (<cmd> ^extract_once <tar-pos>)
+    (<tar-pos> ^type node_position
+               ^a <tar>)
+    (<tar> ^type node
+           ^id <tar-id>)
+    (<s> ^target-position-filter <tar-pos>)
+}
+
+sp {op_face*apply*extract-positions*copy*results
+   (state <s> ^name op_face1
+              ^operator.name extract-positions
+              ^robot-position-filter.result.record.value <rob-pos>
+              ^target-position-filter.result.record.value <tar-pos>)
+   (<rob-pos> ^x <rx> ^y <ry>)
+   (<tar-pos> ^x <tx> ^y <ty>)
+-->
+   (<s> ^yaw-to-target (atan2 (- <ty> <ry>) (- <tx> <rx>)))
+}
+
+sp {op_face*apply*extract-positions*cleanup*commands
+   (state <s> ^name op_face1
+              ^operator.name extract-positions
+              ^robot-position-filter <rob-pos>
+              ^target-position-filter <tar-pos>
+              ^top-state.svs.command <cmd>)
+   (<rob-pos> ^result.record.value)
+   (<tar-pos> ^result.record.value)
+   (<cmd> ^extract_once <rob-pos>
+          ^extract_once <obj-pos>)
+-->
+   (<s> ^robot-position-filter <rob-pos> -
+        ^target-position-filter <obj-pos> -)
+   (<cmd> ^extract_once <rob-pos> -
+          ^extract_once <obj-pos> -)
+}
