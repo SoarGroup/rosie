@@ -25,6 +25,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         public boolean spawnDebugger;
         public int watchLevel;
         public int throttleMS;
+		public boolean startRunning;
         
         public boolean remoteConnection;
         
@@ -36,6 +37,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 
         public AgentConfig(Properties props){
             spawnDebugger = props.getProperty("spawn-debugger", "true").equals("true");
+            startRunning = props.getProperty("start-running", "false").equals("true");
             writeStandardOut = props.getProperty("write-to-stdout", "false").equals("true");
            
             agentName = props.getProperty("agent-name", "SoarAgent");
@@ -201,6 +203,10 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         }
 
         System.out.print("\n");
+
+		if(config.startRunning){
+			start();
+		}
     }
 
     /**
