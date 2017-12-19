@@ -73,7 +73,19 @@ public class RosieAgentConfigurator {
 		// Source the proper agent domain file
 		agentSourceFile.write("# Sourcing the proper agent file for the specified domain\n");
 		agentSourceFile.write("pushd " + config.rosieHome + "/agent\n");
-		agentSourceFile.write("source " + config.domain + "_source.soar\n");
+		agentSourceFile.write("source " + config.domain + "_source.soar\n\n");
+
+      // Source the proper language comprehension files
+      if(config.parser.equals("laird")){
+         agentSourceFile.write("pushd language-comprehension\n");
+         agentSourceFile.write("source mNL-Soar_source.soar\n");
+         agentSourceFile.write("popd\n");
+      } else if(config.parser.equals("lucia")){
+         agentSourceFile.write("pushd lucia\n");
+         agentSourceFile.write("source Lucia_source.soar\n");
+         agentSourceFile.write("popd\n");
+      }
+
 		agentSourceFile.write("popd\n\n");
 
 		agentSourceFile.write("pushd " + config.agentDir + "\n\n");
