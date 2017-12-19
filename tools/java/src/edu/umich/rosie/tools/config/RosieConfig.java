@@ -102,9 +102,10 @@ public class RosieConfig {
 		
 		// agent-dir
 		if (props.containsKey("agent-dir")){
-			this.agentDir = props.getProperty("agent-dir");
+			this.agentDir = props.getProperty("agent-dir").replaceAll("\\\\", "/");
 		} else {
 			this.agentDir = configFile.getParent() + "/agent";
+			this.agentDir = this.agentDir.replaceAll("\\\\", "/");
 		}
 		
 		// domain

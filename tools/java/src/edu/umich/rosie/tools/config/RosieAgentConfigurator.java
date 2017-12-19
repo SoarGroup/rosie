@@ -54,7 +54,7 @@ public class RosieAgentConfigurator {
 
 		// messages-file
 		if (config.sentenceSource.equals("chat") && config.sentencesFile != null && config.sentencesFile.exists()){
-			agentConfigFile.write("messages-file = " + config.sentencesFile.getAbsolutePath() + "\n\n");
+			agentConfigFile.write("messages-file = " + config.sentencesFile.getAbsolutePath().replaceAll("\\\\", "/") + "\n\n");
 		}
 		
 		// Other Settings
@@ -99,7 +99,7 @@ public class RosieAgentConfigurator {
 		// Custom soar file
 		if (config.customSoarFile != null && config.customSoarFile.exists()){
 			agentSourceFile.write("# Sourcing custom soar code specific to this agent\n");
-			agentSourceFile.write("source " + config.customSoarFile.getAbsolutePath() + "\n\n");
+			agentSourceFile.write("source " + config.customSoarFile.getAbsolutePath().replaceAll("\\\\", "/") + "\n\n");
 		}
 		
 		// Create the agent param wme's
@@ -138,7 +138,7 @@ public class RosieAgentConfigurator {
 		File rosieDir = new File(config.rosieHome + "/agent");
 		File smemSourceFile = smem.configure(config.smemConfigFile, rosieDir);
 		smemSourceWriter.write("# This file will source the smem files that were created by the SmemConfiguator tool\n");
-		smemSourceWriter.write("pushd " + smemSourceFile.getParentFile().getAbsolutePath() + "\n");
+		smemSourceWriter.write("pushd " + smemSourceFile.getParentFile().getAbsolutePath().replaceAll("\\\\", "/") + "\n");
 		smemSourceWriter.write("source " + smemSourceFile.getName() + "\n");
 		smemSourceWriter.write("popd\n\n");
 		
@@ -147,7 +147,7 @@ public class RosieAgentConfigurator {
 			File outputFile = new File(config.agentDir + "/" + config.customSmemFile.getName());
 			smem.writeSmemFile(config.customSmemFile, outputFile);
 			smemSourceWriter.write("# Sourcing custom smem information specific to this agent\n");
-			smemSourceWriter.write("source " + outputFile.getAbsolutePath() + "\n\n");
+			smemSourceWriter.write("source " + outputFile.getAbsolutePath().replaceAll("\\\\", "/") + "\n\n");
 		}
 
 		// Finish writing the smem source file
@@ -191,6 +191,7 @@ public class RosieAgentConfigurator {
     			System.exit(1);
     		}
     	}
+    	rosieHome = rosieHome.replaceAll("\\\\", "/");
         
         try{
         	RosieConfig config = new RosieConfig(configFile, props, rosieHome);

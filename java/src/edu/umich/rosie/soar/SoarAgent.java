@@ -355,7 +355,8 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 
         if(config.agentSource != null){
         	System.out.println("---------- SOURCING PRODUCTIONS -----------");
-            String res = agent.ExecuteCommandLine("source " + config.agentSource + " -v");
+            System.out.println(config.agentSource);
+        	String res = agent.ExecuteCommandLine("source " + config.agentSource + " -v");
             if(config.verbose){
                 parseAgentSourceInfo(res);
             } else {
