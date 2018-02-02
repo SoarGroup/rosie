@@ -8,7 +8,7 @@ dec=".decisions"
 sol=".solution"
 stored="stored-"
 statesexp=".statesexp"
-repeat=40
+repeat=1
 no="no"
 dot="."
 a="a"
@@ -16,7 +16,7 @@ d="d"
 old="Old"
 #3tower
 #
-declare -a arr=("mapncolore")
+#declare -a arr=("mapncolore")
 # "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2")
 #declare -a arr=("cannibals" "15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "jmahjong" "husbands" "3tower" "sudoku" "logi5" "jigsawdoku")
 #solutions for these
@@ -39,7 +39,7 @@ declare -a arr=("mapncolore")
 
 #declare -a arr=("sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken" "kenp" "ksudoku" "ktour" "sorting" "jmahjong" "mapncolor3" "mapncolorv" "mapncolore" "mapncolor")
 
-#declare -a arr=("15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "husbands" "wives" "lfamilycross" "3tower" "stackedfrogs" "lazystackedfrogs" "kstackedfrogs" "sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken" "kenp" "ksudoku" "ktour" "sorting" "jmahjong" "mapncolor3" "mapncolorv" "mapncolore" "mapncolor")
+declare -a arr=("15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "husbands" "wives" "lfamilycross" "3tower" "stackedfrogs" "lazystackedfrogs" "kstackedfrogs" "sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken" "kenp" "ksudoku" "ktour" "sorting" "jmahjong" "mapncolor3" "mapncolorv" "mapncolore" "mapncolor")
 
 #declare -a arr=("sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken" "kenp" "ksudoku")
 #declare -a arr=("3tower")
