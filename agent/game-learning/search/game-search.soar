@@ -1,7 +1,7 @@
 sp {game-search*elaborate*problem-space
    (state <s> ^name game-search
               ^dcount <dc>
-             #-^depth-limit <dc> #need actions inorder to determine some goals... #TODO check cost of ommiting (can be bad....!!
+             #-^depth-limit <dc> #need actions inorder to determine some goals.#TODO check cost of ommiting(can be bad!!
               ^simulated true)
 -->
    (<s> ^ntype action goal failure # heuristic
@@ -141,6 +141,51 @@ sp {game-search*apply*simulate*write
 		(<pb> ^value <num>)
 }
 
+sp {game-search*apply*simulate*remove
+#:interrupt
+   (state <s> ^name game-search
+              ^deep-copy-world.copy-objects-map <com>
+              ^world.objects <objs>
+              ^operator <o>)
+   (<o> ^type action
+        ^name <cname>
+        ^verb-structure.<vnum> <v1>  #multiple actions possible
+        ^parameters <p>)
+   (<p> ^<i1> <obj1>)
+   (<com> ^<obj1> <objb>)
+   (<objb> ^predicates <pb>)
+   (<v1> ^1 <i1> ^verb-name remove1)
+   (<objs> ^object <objb>)
+-->
+#(interrupt)
+#(write (cmd print <v1> -d 5))
+#(write (cmd print <objs> -d 2))
+#(write (cmd print <objb> -d 2))
+	(<objs> ^object <objb> -)
+}
+
+sp {game-search*apply*simulate*remove*instance
+   (state <s> ^name game-search
+              ^deep-copy-world.copy-objects-map <com>
+              ^world.predicates.predicate <p2>
+              ^operator <o>)
+   (<o> ^type action
+        ^name <cname>
+        ^verb-structure.<vnum> <v1>  #multiple actions possible
+        ^parameters <p>)
+   (<p> ^<i1> <obj1>)
+   (<com> ^<obj1> <objb>)
+   (<objb> ^predicates <pb>)
+   (<v1> ^1 <i1> ^verb-name remove1)
+   (<p2> ^instance <in>)
+   (<in> ^<something> <objb>)
+-->
+#(interrupt)
+#(write (cmd print <p2> -d 2))
+#(write (cmd print <in> -d 4))
+   (<p2> ^instance <in> -)
+}
+
 #####
 #INHERIT primitive relations of locations beneath a block
 #need to not copy
@@ -247,9 +292,11 @@ sp {game-search*apply*simulate
   # (<com> ^entry <e1> ^entry <e2>)
   # (<e1> ^source <obj> ^copy <obja>)
   # (<e2> ^source <obj1> ^copy <objb>)
-   (<v1> ^verb-prep on1 ^1 <i1> ^2 <i2> -^verb-name write1)
+   (<v1> ^verb-prep on1 ^1 <i1> ^2 <i2> -^verb-name write1 -^verb-name remove1)
    
 -->
+#(interrupt)
+#(write (cmd print <o> -d 5))
    (<prep> ^instance <instance> -
            ^instance <instance3>)
    (<prep2> ^instance <instance2> -
@@ -520,6 +567,30 @@ sp {game-search*apply*action*perform-action
 -->
    (<d5> ^perform-action <fa>)
    (<fa> ^dcount (- (+ (* 2 <dc>) <num>) 1) ^obj1 <obja> ^obj2 <objb> ^pname <vp> ^vname <vname>)
+}
+
+
+sp {game-search*apply*action*perform-action*1arg
+   (state <s> ^name selection
+              ^evaluation <e>
+              ^superstate <ss>
+              ^top-state <ts>
+              ^problemspace games)
+   (<ss> ^dcount <dc> -^multiplayer true)
+   (<e> ^symbolic-value success ^superoperator <so>)
+   (<so> ^parameters <p> ^verb-structure <vs>)
+   (<vs> ^<num> <vs2>)
+   (<p> ^<i1> <o1>)
+  # (<v> ^1 <v1>)#for now only handle 1 verb actions
+   (<vs2> ^verb-prep <vp> ^verb-name <vname> ^1 <i1> -^2)
+   (<o1> ^handle <handle1>)
+   (<ts> ^world.objects <objs> ^dialog-context <d5>)
+   (<objs> ^object <obja>)
+   (<obja> ^handle <handle1>)
+   
+-->
+   (<d5> ^perform-action <fa>)
+   (<fa> ^dcount (- (+ (* 2 <dc>) <num>) 1) ^obj1 <obja> ^pname <vp> ^vname <vname>)
 }
 sp {game-search*apply*action*perform-action*number
    (state <s> ^name selection

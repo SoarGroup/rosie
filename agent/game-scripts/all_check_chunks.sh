@@ -1,4 +1,4 @@
-OB#!/bin/bash
+#!/bin/bash
 
 suffix=".tower"
 tstats=".tstats"
