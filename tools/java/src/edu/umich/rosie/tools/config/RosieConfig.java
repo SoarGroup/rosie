@@ -34,7 +34,7 @@ public class RosieConfig {
 	//    The environment the agent is in (determines perception/action rules)
 	public String domain;
 	public static final HashSet<String> VALID_DOMAINS = new HashSet<String>(
-			Arrays.asList("magicbot", "tabletop", "internal", "fetch"));
+			Arrays.asList("magicbot", "tabletop", "internal", "fetch", "ai2thor"));
 
 	// simulate-perception << true false >> [OPTIONAL]
 	//    Only relevant for domain=internal, whether more detailed perception is simulated
