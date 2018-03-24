@@ -82,6 +82,7 @@ public class AgentMessageParser
 			simpleMessages.put("already-learned-goal", "I know that goal.");
 			simpleMessages.put("already-learned-action", "I know that action.");
 			simpleMessages.put("already-learned-failure", "I know that failure condition.");
+			simpleMessages.put("gotit", "I've found a solution.");
 		}
 		
 		String type = SoarUtil.getValueOfAttribute(id, "type");
