@@ -44,6 +44,9 @@ old="Old"
 #ktourprlrg.ktour  broken? only with random seed?
 #QsolitaireR.solitaireR broken with random seed
 
+#kenhc broken
+#all ken.ken broken
+#ksudoku broken
 declare -a arr=("15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "husbands" "wives" "3tower" "sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "solitaireR" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken" "kenp" "ksudoku" "sorting" "jmahjong" "mapncolor3" "ktour" "lfamilycross")
 
 #slow ktour lfamily cross 
