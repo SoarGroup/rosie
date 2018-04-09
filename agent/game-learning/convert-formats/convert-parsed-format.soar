@@ -210,10 +210,19 @@ sp {convert-parsed-format*elaborate*clause*consider2
 sp {convert-parsed-format*elaborate*clause*subclause
    (state <s> ^name convert-parsed-format
               ^clause <c>)
-   (<c> ^<< if-subclause subclause then-subclause >> <s1>)
+   (<c> ^<< if-subclause subclause then-subclause >> <s1>) #then-subclause >> TODO check doesn't break anything why should this be a clause?
 -->
    (<s> ^clause <s1>)
 }
+
+#sp {convert-parsed-format*elaborate*clause*thensubclause
+#:interrupt
+#   (state <s> ^name convert-parsed-format
+#              ^clause <c>)
+#   (<c> ^<< then-subclause >> <s1>) #then-subclause >> TODO check doesn't break anything why should this be a clause?
+#-->
+#   #(<s> ^clause <s1>)
+#}
 
 sp {convert-parsed-format*elaborate*arg1*parameter
    (state <s> ^name convert-parsed-format
@@ -396,7 +405,15 @@ sp {convert-parsed-format*elaborate*arg2*parameter
               ^clause <c>)
    (<c> ^predicate <p>)
    (<p> ^<< 2 3 >> <pp>)
-   (<pp> ^predicates.category <type>)
+   (<pp> ^predicates <pred>)
+   (<pred> ^category <type>)
+ -{(<s> ^learning-predicate <lp>) #in set
+   (<lp> ^name <name>)
+   (<pred> ^property <name>)
+    (<p> ^handle in1)}
+ -{(<pred> ^property) #bit hacky
+   (<s> -^superstate.world.predicates.predicate.handle in1)
+    (<p> ^handle in1)}
 -->
    (<s> ^parameter <pp>)
 }
@@ -493,8 +510,6 @@ sp {convert-parsed-format*elaborate*arg2*parameter*indef2
    (<s> ^indef <p>)
 }
 
-
-
 sp {convert-parsed-format*propose*create-object
    (state <s> ^name convert-parsed-format
               ^parameter <c>)
@@ -522,7 +537,6 @@ sp {convert-parsed-format*propose*handle-subset
    		^number <n>
         ^arg1 <r2>)
 }
-
 
 sp {convert-parsed-format*apply*handle-subset*interrupt
    (state <s> ^name convert-parsed-format
@@ -1141,7 +1155,6 @@ sp {convert-parsed-format*apply*handle-pref-action2*consider
 #        ^arg2b <a2>)
 #}
 ###############REMOVE JK recent 1/8
-
 
 sp {convert-parsed-format*propose*handle-action*2actions
    (state <s> ^name convert-parsed-format
@@ -3032,10 +3045,28 @@ sp {convert-parsed-format*propose*handle-clause*parameter
 sp {convert-parsed-format*propose*handle-clause
    (state <s> ^name convert-parsed-format
              -^learn-link.handle <name>
-              -^learning-predicate.spelling <name>
+              -^learning-predicate.spelling <name> #todo check spelling DEPRICATED?
               ^clause <c>)
    (<c> ^arg1 ^predicate <p> -^formatted)
-   (<p> ^2 ^handle <name> -^handle of1)
+   (<p> ^2 <p2> ^handle <name> -^handle of1)
+ -{(<s> ^learn-link <ll>) #in set
+   (<ll> ^handle <name2>)
+    (<p> ^handle in1)
+    (<p2> ^predicates <ppp>)
+    (<ppp> ^property <name2>)}
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name handle-clause
+        ^clause <c>)
+}
+
+sp {convert-parsed-format*propose*handle-clause*set*relation
+   (state <s> ^name convert-parsed-format
+             -^learn-link.handle <name>
+              -^learning-predicate.spelling <name> #todo check spelling DEPRICATED?
+              ^clause <c>)
+   (<c> ^arg1 ^predicate <p> -^formatted)
+   (<p> -^2 ^handle <name> ^item-type relation -^handle of1)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name handle-clause
@@ -3325,6 +3356,25 @@ sp {convert-parsed-format*apply*handle-clause
    (<para2> ^param-id <id2> ^type <rtype2>)  
 }
 
+sp {convert-parsed-format*apply*handle-clause*relation*setnoargs
+   (state <s> ^name convert-parsed-format
+              ^superstate.world.predicates.predicate.handle <name>
+              ^operator <o>)
+   (<o> ^name handle-clause ^clause <c>)
+   (<c> ^arg1 <c1> ^predicate <r> -^modifier.handle negation)
+   (<r> ^handle <name> -^2 ^item-type relation)
+   (<c1> ^formatted <p> ^parameter-index <id> -^new-formatted)
+   (<p> ^rtype set)
+-->
+   (<c> ^formatted true)
+   (<s> ^nlp <n>)
+   (<n> ^name <name> ^args <a> ^parameter <para> ^type state-pair ^attribute prepositions ^rtype set)
+   (<a> ^1 <p>)
+   (<para> ^1 <para1>)
+   (<para1> ^param-id <id> ^type set) 
+}
+
+
 sp {convert-parsed-format*apply*handle-clause*arg3
    (state <s> ^name convert-parsed-format
               ^superstate.world.predicates.predicate.handle <name>
@@ -3370,6 +3420,48 @@ sp {convert-parsed-format*apply*handle-clause*concepts
    (<para2> ^param-id <id2> ^type <rtype2>)
    
 }
+
+sp {convert-parsed-format*apply*handle-clause*concepts*no*param-index
+   (state <s> ^name convert-parsed-format
+              -^superstate.world.predicates.predicate.handle <name>  #hacky test
+              ^operator <o>)
+   (<o> ^name handle-clause ^clause <c>)
+   (<c> ^arg1 <c1> ^predicate <r> -^modifier.handle negation)
+   (<r> ^handle <name> ^2 <c2> -^3)
+   (<c1> ^formatted <p> -^parameter-index <id>)
+   (<c2> ^formatted <p2> -^parameter-index <id2>)
+   (<p> ^parameter.{1}.param-id <id> ^rtype <rtype>)
+   (<p2> ^parameter.{1}.param-id <i2> ^rtype <rtype2>)
+-->
+   (<c> ^formatted true)
+   (<s> ^nlp <n>)
+   (<n> ^name <name> ^args <a> ^parameter <para> ^type concept ^attribute predicate ^rtype <rtype>)
+   (<a> ^1 <p> ^2 <p2>)
+   (<para> ^1 <para1> ^2 <para2>)
+   (<para1> ^param-id <id> ^type <rtype>)
+   (<para2> ^param-id <id2> ^type <rtype2>)
+}
+
+sp {convert-parsed-format*apply*handle-clause*concepts*no*param-index*in*set
+   (state <s> ^name convert-parsed-format
+              -^superstate.world.predicates.predicate.handle in1  #hacky test
+              ^operator <o>)
+   (<o> ^name handle-clause ^clause <c>)
+   (<c> ^arg1 <c1> ^predicate <r> -^modifier.handle negation)
+   (<r> ^handle in1 ^2 <c2> -^3)
+   (<c1> ^formatted <p> -^parameter-index <id> -^new-formatted)
+   (<c2> -^formatted ^predicates.property <name>)
+   (<p> ^parameter.{1}.param-id <id> ^rtype <rtype>)
+-->
+   (<c> ^formatted true)
+   (<s> ^nlp <n>)
+   (<n> ^name <name> ^args <a> ^parameter <para> ^type concept ^attribute predicate ^rtype <rtype>)
+   (<a> ^1 <p>)
+   (<para> ^1 <para1>)
+   (<para1> ^param-id <id> ^type <rtype>)
+}
+
+
 #need list of functions
 sp {convert-parsed-format*apply*handle-clause*concept*arg3*between
    (state <s> ^name convert-parsed-format
