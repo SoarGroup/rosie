@@ -16,14 +16,14 @@ d="d"
 old="Old"
 #3tower
 #
-#declare -a arr=("solitaire")
+#declare -a arr=("jmahjong")
 # "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2")
 #declare -a arr=("cannibals" "15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "jmahjong" "husbands" "3tower" "sudoku" "logi5" "jigsawdoku")
 #solutions for these
 
 #declare -a arr=("15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" 
 
-#declare -a arr=("husbands" "3tower" "stackedfrogs" "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2" "kstackedfrogs" "sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken" "kenp" "ksudoku" "ktour" "sorting")
+#declare -a arr=("husbands" "3tower" "stackedfrogs" "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2" "kstackedfrogs" "sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken" "kenp" "OBksudoku" "ktour" "sorting")
 
 #declare -a arr=("ken" "kenp" "ktour" "sudoku")
 
@@ -44,10 +44,16 @@ old="Old"
 #ktourprlrg.ktour  broken? only with random seed?
 #QsolitaireR.solitaireR broken with random seed
 
-#kenhc broken
-#all ken.ken broken
+
+#all ken.ken variants broken
 #ksudoku broken
-declare -a arr=("15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "husbands" "wives" "3tower" "sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "solitaireR" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken" "kenp" "ksudoku" "sorting" "jmahjong" "mapncolor3" "ktour" "lfamilycross")
+#jmahjongR broken
+#managers broken
+#stacked frogs broken?
+
+declare -a arr=("15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "husbands" "wives" "3tower" "sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "solitaireR" "dsokoban2" "2pushmaze" "frog3" "sorting" "jmahjong" "mapncolor3" "ktour" "lfamilycross")
+
+#declare -a arr=("15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "husbands" "wives" "3tower" "sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "solitaireR" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken" "kenp" "ksudoku" "sorting" "jmahjong" "mapncolor3" "ktour" "lfamilycross")
 
 #slow ktour lfamily cross 
 #broken gbfox husbands wives(assuming) lfamily(assuming) cannibals assuming fixed?
@@ -98,6 +104,7 @@ do
 			rm startend.decisions -f
 			rm states.txt -f
 			rm statesexp.txt -f
+			rm solution.txt -f
 
 			c=`expr $c + 1`
 			
@@ -126,10 +133,10 @@ do
 			done
 
 			diff -s $rfile$sol $newfile
-			if [[ $foundsol < 1 ]];
-			then
-				cp $rfile$sol $stored$game$sol$dot$numsol
-			fi
+			#if [[ $foundsol < 1 ]];
+			#then
+			#	cp $rfile$sol $stored$game$sol$dot$numsol
+			#fi
 			
 			
 			#print out time, states searched
