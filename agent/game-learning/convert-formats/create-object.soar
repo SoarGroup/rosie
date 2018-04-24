@@ -1,21 +1,21 @@
 
 sp {create-object*elaborate*parameter*input-object1*single*noparam
-    :interrupt
+ #:interrupt
    (state <s> ^name create-object
               ^superstate <ss>)
    (<ss> ^input-object-1 <c>
          ^learning-predicate.usage-args.{1} <arg>
          ^operator.parameter <c>)
    (<c> ^parameter-index <oc>)# -^predicates.multiple true)
-   (<arg> ^parameter.num 0)#^rtype single)
+   (<arg> ^parameter.num 0)# ^rtype single) #should always be single?? check new rule
 -->
    (<s> ^condition <co>
         ^last-condition <co>)
   
    (<co> ^args <A67> ^attribute input-arg ^name object ^negative false
-                 ^parameter <P628> ^rtype single)
-   (<P628> ^1 <para>)
-   (<para> ^param-id <oc>)
+                 ^parameter <P628> ^rtype single ^input 1)
+  # (<P628> ^1 <para>)
+  # (<para> ^param-id <oc>)
 }
 
 sp {create-object*elaborate*parameter*input-object2*single*noparam
@@ -25,33 +25,34 @@ sp {create-object*elaborate*parameter*input-object2*single*noparam
          ^learning-predicate.usage-args.{2} <arg>
          ^operator.parameter <c>)
    (<c> ^parameter-index <oc>)# -^predicates.multiple true)
-   (<arg> ^parameter.num 0)#^rtype single)
+   (<arg> ^parameter.num 0)# ^rtype single)
 -->
    (<s> ^condition <co>
         ^last-condition <co>)
   
    (<co> ^args <A67> ^attribute input-arg ^name object ^negative false
-                 ^parameter <P628> ^rtype single)
-   (<P628> ^1 <para>)
-   (<para> ^param-id <oc>)
+                 ^parameter <P628> ^rtype single ^input 2)
+   #unsure if want this to be a parameter
+ #  (<P628> ^1 <para>)
+ #  (<para> ^param-id <oc>)
 }
 
 #hmm depends on usage (was what tested a parameter set)
 ##causes problems for grouped
 sp {create-object*elaborate*parameter*input-object1*set
-    :interrupt
+   # :interrupt
    (state <s> ^name create-object
               ^superstate <ss>)
    (<ss> ^input-object-1 <c>
          ^learning-predicate.usage-args.{1} <arg>
          ^operator.parameter <c>)
    (<c> ^parameter-index <oc>) #^predicates.multiple true)
-   (<arg> ^rtype set ^parameter.num > 0) #^rtype set)
+   (<arg> ^rtype set ^parameter.num > 0)
 -->
    (<s> ^condition <co>
         ^last-condition <co>)
    (<co> ^args <A67> ^attribute input-arg ^name object ^negative false
-                 ^parameter <P628> ^rtype set)
+                 ^parameter <P628> ^rtype set ^input 1)
    (<P628> ^1 <para>)
    (<para> ^param-id <oc>)
 }
@@ -62,14 +63,15 @@ sp {create-object*elaborate*parameter*input-object2*set
          ^learning-predicate.usage-args.{2} <arg>
          ^operator.parameter <c>)
    (<c> ^parameter-index <oc>) #^predicates.multiple true)
-   (<arg> ^rtype set ^parameter.num > 0) #^rtype set)
+   (<arg> ^rtype set ^parameter.num > 0)
 -->
    (<s> ^condition <co>
         ^last-condition <co>)
    (<co> ^args <A67> ^attribute input-arg ^name object ^negative false
-                 ^parameter <P628> ^rtype set)
-   (<P628> ^1 <para>)
-   (<para> ^param-id <oc>)
+                 ^parameter <P628> ^rtype set ^input 2)
+   #duplicated, remove for now
+#   (<P628> ^1 <para>)
+#   (<para> ^param-id <oc>)
 }
 
 sp {create-object*elaborate*parameter*input-object1*single
@@ -79,12 +81,12 @@ sp {create-object*elaborate*parameter*input-object1*single
          ^learning-predicate.usage-args.{1} <arg>
          ^operator.parameter <c>)
    (<c> ^parameter-index <oc>) #^predicates.multiple true)
-   (<arg> ^rtype single ^parameter.num > 0) #^rtype set)
+   (<arg> ^rtype single ^parameter.num > 0)
 -->
    (<s> ^condition <co>
         ^last-condition <co>)
    (<co> ^args <A67> ^attribute input-arg ^name object ^negative false
-                 ^parameter <P628> ^rtype single)
+                 ^parameter <P628> ^rtype single ^input 1)
    (<P628> ^1 <para>)
    (<para> ^param-id <oc>)
 }
@@ -100,7 +102,7 @@ sp {create-object*elaborate*parameter*input-object2*single
    (<s> ^condition <co>
         ^last-condition <co>)
    (<co> ^args <A67> ^attribute input-arg ^name object ^negative false
-                 ^parameter <P628> ^rtype single)
+                 ^parameter <P628> ^rtype single ^input 2)
    (<P628> ^1 <para>)
    (<para> ^param-id <oc>)
 }
@@ -372,12 +374,26 @@ sp {create-object*apply*complete*remove-rtype
 #and make sure no relation, will cause issues
 #or if not indef??
 sp {create-object*apply*complete*not-indef-parameter*set
+#:interrupt
    (state <s> ^name create-object
               ^operator.name complete
               ^last-condition <cond>
-              ^superstate.operator.parameter <c>)
-   (<c> ^predicates.number <> singular -^relation ^parameter-index <id>)
+              ^superstate <ss>)
+   (<ss> ^operator.parameter <c>)
+   (<c> ^predicates <pp> -^relation ^parameter-index <id>)
+   (<pp> ^multiple true -^quantified.handle all)
    (<cond> ^parameter <p>)
+   -{(<pp> ^number singular)}
+-{(<ss> ^input-object-1 <c>)
+  (<ss> ^learning-predicate <lp>)
+  (<lp> ^usage-args <args>)
+  (<args> ^1 <a1>)
+  (<a1> ^rtype single ^parameter.num 0)}
+-{(<ss> ^input-object-2 <c>)
+  (<ss> ^learning-predicate <lp>)
+  (<lp> ^usage-args <args>)
+  (<args> ^2 <a2>)
+  (<a2> ^rtype single ^parameter.num 0)}
 -->
    (<p> ^1 <para1>)
    (<para1> ^param-id <id> ^type set)
@@ -428,7 +444,7 @@ sp {create-object*apply*complete*hasnumber*with*relation
               ^complete true
               ^last-condition <cond>
               ^superstate.operator.parameter <c>)
-   (<c> -^predicates.multiple true ^predicates.number <> singular ^relation <r>)
+   (<c> -^predicates.multiple true -^predicates.number singular ^relation <r>)
    (<r> -^handle between)
 -->
    (<c> ^formatted <cond> ^rtype set)

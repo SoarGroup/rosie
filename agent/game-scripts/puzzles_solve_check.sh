@@ -8,7 +8,7 @@ dec=".decisions"
 sol=".solution"
 stored="stored-"
 statesexp=".statesexp"
-repeat=1
+repeat=5
 no="no"
 dot="."
 a="a"
@@ -16,7 +16,7 @@ d="d"
 old="Old"
 #3tower
 #
-#declare -a arr=("jmahjong")
+declare -a arr=("ken")
 # "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2")
 #declare -a arr=("cannibals" "15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "jmahjong" "husbands" "3tower" "sudoku" "logi5" "jigsawdoku")
 #solutions for these
@@ -51,7 +51,8 @@ old="Old"
 #managers broken
 #stacked frogs broken?
 
-declare -a arr=("15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "husbands" "wives" "3tower" "sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "solitaireR" "dsokoban2" "2pushmaze" "frog3" "sorting" "jmahjong" "mapncolor3" "ktour" "lfamilycross")
+#here
+#declare -a arr=("15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "husbands" "wives" "3tower" "sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "solitaireR" "dsokoban2" "2pushmaze" "frog3" "sorting" "jmahjong" "mapncolor3" "ktour" "lfamilycross")
 
 #declare -a arr=("15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "husbands" "wives" "3tower" "sudoku" "logi5" "jigsawdoku" "cannibals" "solitaire" "solitaireR" "dsokoban2" "2pushmaze" "frog3" "ken" "colorken" "kenp" "ksudoku" "sorting" "jmahjong" "mapncolor3" "ktour" "lfamilycross")
 
@@ -76,7 +77,7 @@ c=1
 for game in "${arr[@]}"
 do
 	#for rfile in $game.$game
-	for rfile in *.$game
+	for rfile in kennorder.$game
 	do
 		rm out.txt -f
 		if [[ $rfile == *$no.$game* ]]; then
