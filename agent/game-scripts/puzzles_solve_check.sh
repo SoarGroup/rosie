@@ -8,7 +8,7 @@ dec=".decisions"
 sol=".solution"
 stored="stored-"
 statesexp=".statesexp"
-repeat=5
+repeat=10
 no="no"
 dot="."
 a="a"
@@ -16,7 +16,14 @@ d="d"
 old="Old"
 #3tower
 #
-declare -a arr=("ken")
+declare -a arr=("solitaire")
+#solitairR diff solution
+#FIXED ken in, sometime broken
+#FIXED and sometime sudoku broken, and another solution for solitaire
+#FIXED solitaireR random broken 23
+
+#declare -a arr=("ken" "sudoku" "3tower" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "solitaire" "solitaireR")
+
 # "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2")
 #declare -a arr=("cannibals" "15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "jmahjong" "husbands" "3tower" "sudoku" "logi5" "jigsawdoku")
 #solutions for these
@@ -77,7 +84,7 @@ c=1
 for game in "${arr[@]}"
 do
 	#for rfile in $game.$game
-	for rfile in kennorder.$game
+	for rfile in neworder*.$game
 	do
 		rm out.txt -f
 		if [[ $rfile == *$no.$game* ]]; then
