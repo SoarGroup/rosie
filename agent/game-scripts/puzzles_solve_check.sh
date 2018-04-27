@@ -8,7 +8,7 @@ dec=".decisions"
 sol=".solution"
 stored="stored-"
 statesexp=".statesexp"
-repeat=10
+repeat=5
 no="no"
 dot="."
 a="a"
@@ -16,13 +16,18 @@ d="d"
 old="Old"
 #3tower
 #
-declare -a arr=("solitaire")
-#solitairR diff solution
+#declare -a arr=("ken")
+declare -a arr=("kenp" "cannibals" "sorting" "colorken" "logi5" "jigsawdoku" "wives" "3tower" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "lfamilycross" "ken")
+#"solitaire")
+#solitairR diff bad double remove solution
+#soliatre different good solutions?
 #FIXED ken in, sometime broken
 #FIXED and sometime sudoku broken, and another solution for solitaire
 #FIXED solitaireR random broken 23
+#sudoku random segfault newordersubsame.sudoku
 
-#declare -a arr=("ken" "sudoku" "3tower" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "solitaire" "solitaireR")
+#declare -a arr=("ken" "3tower" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "solitaire")
+# "solitaireR")
 
 # "stackedfrogs2" "lazystackedfrogs" "lazystackedfrogs2")
 #declare -a arr=("cannibals" "15ipuzzle" "gbfox" "8puzzle4" "8puzzle5" "8puzzle6" "8puzzle6alt" "8puzzle" "5puzzle" "iso8puzzle" "yiso5puzzle" "zmaze" "blocksworld" "worldblocks" "lfamilycross" "jmahjong" "husbands" "3tower" "sudoku" "logi5" "jigsawdoku")
@@ -80,6 +85,8 @@ declare -a arr=("solitaire")
 #broken old version frog, oldfrog, fixed solitaire, dsoko, 2pushmaze, frog3
 
 c=1
+rm pertaskstats.txt -f
+rm smemuse.txt -f
 
 for game in "${arr[@]}"
 do
@@ -113,6 +120,8 @@ do
 			rm states.txt -f
 			rm statesexp.txt -f
 			rm solution.txt -f
+			rm stats.txt -f
+			rm endlearntime.txt -f
 
 			c=`expr $c + 1`
 			
