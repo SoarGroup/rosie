@@ -237,6 +237,15 @@ sp {finished-learning*propose*store*primary*rtype
    (<ll> ^primary-rtype <rtype>)
 }
 
+sp {finished-learning*propose*store*seconday*rtype
+   (state <s> ^operator.name finished-learning
+              ^store-link <ll>)
+   (<ll> ^predicate-structure.conditions.parameter.<num> <p>)
+   (<p> ^param-id 2 ^type <rtype>)
+-->
+   (<ll> ^secondary-rtype <rtype>)
+}
+
 sp {finished-learning*propose*store-next-level
    (state <s> ^name finished-learning
              -^all-stored
@@ -643,12 +652,24 @@ sp {satisfy-predicate-conditions*elaborate*condition-instance
     (state <s1> ^gtype <c3> ^list <l1> ^<c3> <a1> ^<c1> <t1>)
     (<l1> ^game <g1>)
     (<a1> ^condition <c4>)
-    (<c4> ^type concept ^result <r1> ^name <c2> ^attribute <c1> ^rtype <rtype> ^negative false)
+    (<c4> ^type concept ^result <r1> ^name <c2> ^attribute <c1> ^rtype <rtype> ^negative false ^parameter.num < 2)
     (<r1> ^set <s2>)
     (<t1> ^nlp-set <n1> ^instance <i1> ^link <c4> ^primary-rtype <rtype>)
     (<n1> ^aname <c2>)
     -->
     (<s2> ^instance <i1> +)
+}
+
+sp {satisfy-predicate-conditions*elaborate*condition-instance*primary*secondary
+    (state <s1> ^gtype <c3> ^list <l1> ^<c3> <a1> ^<c1> <t1>)
+    (<l1> ^game <g1>)
+    (<a1> ^condition <c4>)
+    (<c4> ^type concept ^result <r1> ^name <c2> ^attribute <c1> ^parameter.{2}.type <rtype2> ^rtype <rtype> ^negative false ^parameter.num 2)
+    (<r1> ^set <s2>)
+    (<t1> ^nlp-set <n1> ^instance <i1> ^link <c4> ^primary-rtype <rtype> ^secondary-rtype <rtype2>)
+    (<n1> ^aname <c2>)
+    -->
+  (<s2> ^instance <i1> +)
 }
 #TODO analyze should try to learn these rules?????
 
@@ -671,6 +692,34 @@ sp {satisfy-predicate-conditions*elaborate*condition-instance*single-to-set*para
     (<s2> ^instance <i1>)
     (<i1> ^1 <set>)
 }
+
+sp {satisfy-predicate-conditions*elaborate*condition-instance*set-single-set*parameters
+#:interrupt
+    (state <s1> ^gtype <c3> ^list <l1> ^<c3> <a1> ^<c1> <t1>)
+    (<l1> ^game <g1>)
+    (<a1> ^condition <c4>)
+    (<c4> ^negative false ^parameter <para> ^args <args> ^type concept ^result <r1> ^name <c2> ^attribute <c1> ^rtype single) # 1
+	(<r1> ^set <s2>)
+	(<para> ^1 <para1> ^2 <para2>)
+    (<para1> ^param-id <pid> ^type single)
+    (<para2> ^param-id <pid2> ^type set)
+    (<args> ^1 <arg1> ^2 <arg2>)
+    (<arg1> ^rtype single)
+    (<arg2> ^rtype set ^parameter.{1}.param-id <pid2> ^result.set.instance.{1} <set>)
+    (<t1> ^nlp-set <n1> ^link <c4> ^primary-rtype single ^instance <i1> ^secondary-rtype single)
+    (<i1> ^1 <obja>)
+    (<n1> ^aname <c2>)
+    -{(state <s1>)
+     (<set> -^<something>)}
+   -{(<set> ^object <obj>)
+    -{(<t1> ^instance <i2>)
+      (<i2> ^1 <obja> ^2 <obj>)}}
+-->
+    (<s2> ^instance <i3>)
+    (<i3> ^1 <obja> ^2 <set>)
+}
+
+
 #causes duplicate results...
 #could try bias that take lowest instance with 2 as arg...
 sp {satisfy-predicate-conditions*elaborate*condition-instance*single-to-set*parameters2
@@ -678,10 +727,8 @@ sp {satisfy-predicate-conditions*elaborate*condition-instance*single-to-set*para
     (<l1> ^game <g1>)
     (<a1> ^condition <c4>)
     (<c4> ^negative false ^parameter.{1}.param-id <pid> ^parameter.{2}.type single ^type concept ^result <r1> ^name <c2> ^attribute <c1> ^rtype set ^parameter.num 2)
-   #^args.{1} <arg> 
-    # (<arg> ^rtype single)
     (<r1> ^set <s2>)
-    (<t1> ^nlp-set <n1> ^link <c4> ^primary-rtype single ^instance <i1> )
+    (<t1> ^nlp-set <n1> ^link <c4> ^primary-rtype single ^instance <i1> ^secondary-rtype single)
     (<i1> ^2 <obj>)
     (<n1> ^aname <c2>)
    -{(<t1> ^instance {<is1> > <i1>}) #bias for no duplicate results
@@ -690,15 +737,14 @@ sp {satisfy-predicate-conditions*elaborate*condition-instance*single-to-set*para
     (<s2> ^instance <ir>)
     (<ir> ^1 <setn> ^2 <obj>)
 }
+
 sp {satisfy-predicate-conditions*elaborate*condition-instance*single-to-set*parameters2*copy-objects
     (state <s1> ^gtype <c3> ^list <l1> ^<c3> <a1> ^<c1> <t1>)
     (<l1> ^game <g1>)
     (<a1> ^condition <c4>)
     (<c4> ^negative false ^parameter.{1}.param-id <pid> ^parameter.{2}.type single ^type concept ^result <r1> ^name <c2> ^attribute <c1> ^rtype set ^parameter.num 2)
-   #^args.{1} <arg> 
-    # (<arg> ^rtype single)
     (<r1> ^set <s2>)
-    (<t1> ^nlp-set <n1> ^link <c4> ^primary-rtype single ^instance <i1> )
+    (<t1> ^nlp-set <n1> ^link <c4> ^primary-rtype single ^instance <i1> ^secondary-rtype single)
     (<i1> ^1 <obj1> ^2 <obj>)
     (<n1> ^aname <c2>)
     (<s2> ^instance <ir>)
@@ -706,6 +752,8 @@ sp {satisfy-predicate-conditions*elaborate*condition-instance*single-to-set*para
 -->
     (<setn> ^<object> <obj1>)
 }
+
+
 
 #only if one main parameter
 sp {satisfy-predicate-conditions*elaborate*condition-instance*single-to-set

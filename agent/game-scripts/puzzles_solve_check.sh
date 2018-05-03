@@ -8,7 +8,7 @@ dec=".decisions"
 sol=".solution"
 stored="stored-"
 statesexp=".statesexp"
-repeat=5
+repeat=10
 no="no"
 dot="."
 a="a"
@@ -16,8 +16,8 @@ d="d"
 old="Old"
 #3tower
 #
-#declare -a arr=("ken")
-declare -a arr=("kenp" "cannibals" "sorting" "colorken" "logi5" "jigsawdoku" "wives" "3tower" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "lfamilycross" "ken")
+declare -a arr=("shuffle")
+#declare -a arr=("ken" "kenp" "cannibals" "sorting" "colorken" "logi5" "jigsawdoku" "wives" "3tower" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "lfamilycross")
 #"solitaire")
 #solitairR diff bad double remove solution
 #soliatre different good solutions?
@@ -91,7 +91,7 @@ rm smemuse.txt -f
 for game in "${arr[@]}"
 do
 	#for rfile in $game.$game
-	for rfile in neworder*.$game
+	for rfile in neworder.$game
 	do
 		rm out.txt -f
 		if [[ $rfile == *$no.$game* ]]; then
@@ -150,10 +150,10 @@ do
 			done
 
 			diff -s $rfile$sol $newfile
-			#if [[ $foundsol < 1 ]];
-			#then
-			#	cp $rfile$sol $stored$game$sol$dot$numsol
-			#fi
+			if [[ $foundsol < 1 ]];
+			then
+				cp $rfile$sol $stored$game$sol$dot$numsol
+			fi
 			
 			
 			#print out time, states searched
