@@ -8,16 +8,18 @@ dec=".decisions"
 sol=".solution"
 stored="stored-"
 statesexp=".statesexp"
-repeat=10
+repeat=1
 no="no"
 dot="."
+temp="temp"
 a="a"
 d="d"
 old="Old"
 #3tower
 #
-declare -a arr=("shuffle")
-#declare -a arr=("ken" "kenp" "cannibals" "sorting" "colorken" "logi5" "jigsawdoku" "wives" "3tower" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "lfamilycross")
+#declare -a arr=("yiso5puzzle" "iso8puzzle" "2pushmaze" "jmahjong" "jmahjongR" "solitaire" "solitaireR" "5puzzle" "8puzzle" "3tower" "cannibals" "sorting" "colorken" "logi5" "jigsawdoku" "wives" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "shuffle" "kenp" "lfamilycross")
+declare -a arr=("logi5" "jigsawdoku" "wives" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "shuffle" "kenp" "lfamilycross")
+#declare -a arr=("solitaire" "solitaireR" "kenp" "cannibals" "sorting" "colorken" "logi5" "jigsawdoku" "wives" "3tower" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "lfamilycross")
 #"solitaire")
 #solitairR diff bad double remove solution
 #soliatre different good solutions?
@@ -91,7 +93,7 @@ rm smemuse.txt -f
 for game in "${arr[@]}"
 do
 	#for rfile in $game.$game
-	for rfile in neworder.$game
+	for rfile in neworder*.$game
 	do
 		rm out.txt -f
 		if [[ $rfile == *$no.$game* ]]; then
@@ -152,7 +154,7 @@ do
 			diff -s $rfile$sol $newfile
 			if [[ $foundsol < 1 ]];
 			then
-				cp $rfile$sol $stored$game$sol$dot$numsol
+				cp $rfile$sol $stored$game$sol$dot$numsol$dot$temp
 			fi
 			
 			
