@@ -75,10 +75,10 @@ public class AgentMessageParser
 			simpleMessages.put("describe-action", "What are the conditions of the action.");
 			simpleMessages.put("describe-goal", "Please describe or demonstrate the goal.");
 			simpleMessages.put("describe-failure", "Please describe the failure condition.");
-			simpleMessages.put("learned-goal", "Ok, I've learned the goal.");
-			simpleMessages.put("learned-action", "Ok, I've learned the action.");
-			simpleMessages.put("learned-failure", "Ok, I've learned the failure condition.");
-			simpleMessages.put("learned-heuristic", "Ok, I've learned the heuristic.");
+			simpleMessages.put("learned-goal", "I have learned the goal.");
+			simpleMessages.put("learned-action", "I have learned the action.");
+			simpleMessages.put("learned-failure", "I have learned the failure condition.");
+			simpleMessages.put("learned-heuristic", "I have learned the heuristic.");
 			simpleMessages.put("already-learned-goal", "I know that goal.");
 			simpleMessages.put("already-learned-action", "I know that action.");
 			simpleMessages.put("already-learned-failure", "I know that failure condition.");
@@ -97,7 +97,7 @@ public class AgentMessageParser
 		
 		Identifier fieldsId = SoarUtil.getIdentifierOfAttribute(id, "fields");
 		if(type.equals("get-next-task")){
-			return translateNextTaskPrompt();
+			return null;//translateNextTaskPrompt();
 		} else if(type.equals("get-predicate-info")){
 			return translateGetPredicateInfo(fieldsId);
 		} else if(type.equals("report-successful-training")){
@@ -193,7 +193,7 @@ public class AgentMessageParser
 	}
         
         public static String translateLearnedGame(Identifier fieldsId){
-               String result = "Ok, I've learned the rules of ";
+               String result = "I've learned ";
                String word = SoarUtil.getValueOfAttribute(fieldsId, "game");
   
     	       if (word != null)
@@ -231,7 +231,7 @@ public class AgentMessageParser
 	}
 	
 	public static String translateLearnedUnknownWord(Identifier fieldsId){
-	    	String result = "Ok, I've learned the concept ";
+	    	String result = "Ok, I have learned ";
 	    	String word = SoarUtil.getValueOfAttribute(fieldsId, "word");
 	    	
 	    	if (word != null)
@@ -279,14 +279,14 @@ public class AgentMessageParser
 	}
 
 	public static String translateUnknownDefinedWord(Identifier fieldsId){
-	    	String result = "I cannot satisfy the concept ";
+	    	String result = "I cannot satisfy ";
 	    	String word = SoarUtil.getValueOfAttribute(fieldsId, "word");
 	    	if (word != null)
 	    	{
 	    		word = word.replaceAll("\\d", "");
 	    		result += word;
 	    	}
-	    	result+= ". Can you give another definition?";
+	    	result+= ". Can you define it?";
 	    	return result;
         }
 	    	

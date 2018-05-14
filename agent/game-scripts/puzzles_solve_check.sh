@@ -8,7 +8,7 @@ dec=".decisions"
 sol=".solution"
 stored="stored-"
 statesexp=".statesexp"
-repeat=1
+repeat=20
 no="no"
 dot="."
 temp="temp"
@@ -17,7 +17,9 @@ d="d"
 old="Old"
 #3tower
 #
-declare -a arr=("yiso5puzzle" "iso8puzzle" "2pushmaze" "jmahjong" "jmahjongR" "solitaire" "solitaireR" "5puzzle" "8puzzle" "3tower" "cannibals" "sorting" "logi5" "jigsawdoku" "wives" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "shuffle" "kenp" "lfamilycross" "ken")
+declare -a arr=("sudoku")
+#declare -a arr=("shuffle" "colorken")
+#declare -a arr=("yiso5puzzle" "iso8puzzle" "2pushmaze" "jmahjong" "jmahjongR" "solitaire" "solitaireR" "5puzzle" "8puzzle" "3tower" "cannibals" "sorting" "logi5" "jigsawdoku" "wives" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "shuffle" "kenp" "lfamilycross" "ken")
 #declare -a arr=("logi5" "jigsawdoku" "wives" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "shuffle" "kenp" "lfamilycross")
 #declare -a arr=("solitaire" "solitaireR" "kenp" "cannibals" "sorting" "colorken" "logi5" "jigsawdoku" "wives" "3tower" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "lfamilycross")
 #"solitaire")
@@ -93,7 +95,7 @@ rm smemuse.txt -f
 for game in "${arr[@]}"
 do
 	#for rfile in $game.$game
-	for rfile in neworder*.$game
+	for rfile in newordersubsamef*.$game
 	do
 		rm out.txt -f
 		if [[ $rfile == *$no.$game* ]]; then
