@@ -15,11 +15,14 @@ temp="temp"
 a="a"
 d="d"
 old="Old"
+
 #3tower
 #
-declare -a arr=("colorkenp2")
+declare -a arr=("sujiko")
+#survo
 #declare -a arr=("transfersudocolorkenshufflenosc4")
-#sudoku
+#all but jmahjong no remove works
+#declare -a arr=("pyramid" "shuffle" "colorken" "colorkenp" "yiso5puzzle" "iso8puzzle" "2pushmaze" "jmahjong" "jmahjongR" "solitaire" "solitaireR" "5puzzle" "8puzzle" "3tower" "cannibals" "sorting" "logi5" "jigsawdoku" "wives" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "shuffle" "kenp" "lfamilycross" "ken")
 #declare -a arr=("shuffle" "colorken")
 #declare -a arr=("yiso5puzzle" "iso8puzzle" "2pushmaze" "jmahjong" "jmahjongR" "solitaire" "solitaireR" "5puzzle" "8puzzle" "3tower" "cannibals" "sorting" "logi5" "jigsawdoku" "wives" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "shuffle" "kenp" "lfamilycross" "ken")
 #declare -a arr=("logi5" "jigsawdoku" "wives" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "shuffle" "kenp" "lfamilycross")
