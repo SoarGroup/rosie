@@ -8,7 +8,7 @@ dec=".decisions"
 sol=".solution"
 stored="stored-"
 statesexp=".statesexp"
-repeat=50
+repeat=200
 no="no"
 dot="."
 temp="temp"
@@ -18,11 +18,19 @@ old="Old"
 
 #3tower
 #
-declare -a arr=("sujiko")
+
+declare -a arr=("golf")
+#declare -a arr=("colorkenp")
+#declare -a arr=("sujiko" "suko" "survo" "pyramid" "shuffle")
 #survo
 #declare -a arr=("transfersudocolorkenshufflenosc4")
 #all but jmahjong no remove works
-#declare -a arr=("pyramid" "shuffle" "colorken" "colorkenp" "yiso5puzzle" "iso8puzzle" "2pushmaze" "jmahjong" "jmahjongR" "solitaire" "solitaireR" "5puzzle" "8puzzle" "3tower" "cannibals" "sorting" "logi5" "jigsawdoku" "wives" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "shuffle" "kenp" "lfamilycross" "ken")
+
+#declare -a arr=("pyramid" "colorken" "colorkenp" "yiso5puzzle" "iso8puzzle" "2pushmaze" "jmahjongR" "solitaireR" "5puzzle" "8puzzle" "3tower" "cannibals" "sorting" "logi5" "jigsawdoku" "wives" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "shuffle" "kenp" "lfamilycross" "ken")
+
+#declare -a arr=("pyramid" "colorken" "colorkenp" "yiso5puzzle" "iso8puzzle" "2pushmaze" "jmahjong" "jmahjongR" "solitaire" "solitaireR" "5puzzle" "8puzzle" "3tower" "cannibals" "sorting" "logi5" "jigsawdoku" "wives" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "shuffle" "kenp" "lfamilycross" "ken")
+
+
 #declare -a arr=("shuffle" "colorken")
 #declare -a arr=("yiso5puzzle" "iso8puzzle" "2pushmaze" "jmahjong" "jmahjongR" "solitaire" "solitaireR" "5puzzle" "8puzzle" "3tower" "cannibals" "sorting" "logi5" "jigsawdoku" "wives" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "shuffle" "kenp" "lfamilycross" "ken")
 #declare -a arr=("logi5" "jigsawdoku" "wives" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "shuffle" "kenp" "lfamilycross")
