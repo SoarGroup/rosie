@@ -19,9 +19,9 @@ old="Old"
 #3tower
 #
 
-declare -a arr=("golf")
+declare -a arr=("simpleages")
 #declare -a arr=("colorkenp")
-#declare -a arr=("sujiko" "suko" "survo" "pyramid" "shuffle")
+#declare -a arr=("tripeaks" "sujiko" "suko" "golf" "survo" "pyramid" "shuffle")
 #survo
 #declare -a arr=("transfersudocolorkenshufflenosc4")
 #all but jmahjong no remove works
