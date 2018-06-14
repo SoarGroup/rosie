@@ -19,7 +19,7 @@ old="Old"
 #3tower
 #
 
-declare -a arr=("simpleages")
+declare -a arr=("travelsales")
 #declare -a arr=("colorkenp")
 #declare -a arr=("tripeaks" "sujiko" "suko" "golf" "survo" "pyramid" "shuffle")
 #survo
