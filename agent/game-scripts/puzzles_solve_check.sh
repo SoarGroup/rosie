@@ -8,7 +8,7 @@ dec=".decisions"
 sol=".solution"
 stored="stored-"
 statesexp=".statesexp"
-repeat=200
+repeat=100
 no="no"
 dot="."
 temp="temp"
@@ -19,9 +19,10 @@ old="Old"
 #3tower
 #
 
-declare -a arr=("travelsales")
+declare -a arr=("kakuro" "ksideswap4")
+#declare -a arr=("kswap2")
 #declare -a arr=("colorkenp")
-#declare -a arr=("tripeaks" "sujiko" "suko" "golf" "survo" "pyramid" "shuffle")
+#declare -a arr=("ktour" "simpleages" "travelsales" "nrooks" "tripeaks" "sujiko" "suko" "golf" "survo" "pyramid" "shuffle")
 #survo
 #declare -a arr=("transfersudocolorkenshufflenosc4")
 #all but jmahjong no remove works
