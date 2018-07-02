@@ -8,7 +8,7 @@ dec=".decisions"
 sol=".solution"
 stored="stored-"
 statesexp=".statesexp"
-repeat=5
+repeat=200
 no="no"
 dot="."
 temp="temp"
@@ -18,7 +18,8 @@ old="Old"
 
 #3tower
 #
-declare -a arr=("nknights")
+declare -a arr=("nqueens")
+#declare -a arr=("nknights")
 #declare -a arr=("nkings")
 #declare -a arr=("kakuro" "ksideswap4")
 #declare -a arr=("kswap2")
