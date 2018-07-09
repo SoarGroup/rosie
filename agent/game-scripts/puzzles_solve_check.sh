@@ -8,7 +8,7 @@ dec=".decisions"
 sol=".solution"
 stored="stored-"
 statesexp=".statesexp"
-repeat=200
+repeat=1
 no="no"
 dot="."
 temp="temp"
@@ -18,13 +18,13 @@ old="Old"
 
 #3tower
 #
-declare -a arr=("nqueens")
+#declare -a arr=("nqueens")
 #declare -a arr=("nknights")
 #declare -a arr=("nkings")
 #declare -a arr=("kakuro" "ksideswap4")
 #declare -a arr=("kswap2")
 #declare -a arr=("colorkenp")
-#declare -a arr=("ktour" "simpleages" "travelsales" "nrooks" "tripeaks" "sujiko" "suko" "golf" "survo" "pyramid" "shuffle")
+declare -a arr=("nknights" "nkings" "kakuro" "kswap2" "ksideswap4"  "ktour" "simpleages" "travelsales" "nrooks" "tripeaks" "sujiko" "suko" "golf" "survo" "pyramid" "shuffle" "colorken" "colorkenp" "yiso5puzzle" "iso8puzzle" "2pushmaze" "jmahjongR" "solitaireR" "5puzzle" "8puzzle" "3tower" "cannibals" "sorting" "logi5" "jigsawdoku" "wives" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "shuffle" "kenp" "lfamilycross" "ken")
 #survo
 #declare -a arr=("transfersudocolorkenshufflenosc4")
 #all but jmahjong no remove works
