@@ -33,6 +33,7 @@ sp {resolve*auto-resolve-satisfaction-failure*tie*alphanumeric*bias
 
 sp {auto-resolve-satisfaction-failure*apply*select-unresolved-condition*copy
    (state <s> ^name auto-resolve-satisfaction-failure
+   		  	  ^top-state <ts>
               ^unresolved-condition <co>)
    (<co> ^name <name>)
    (<s> ^operator <o>)
@@ -40,18 +41,20 @@ sp {auto-resolve-satisfaction-failure*apply*select-unresolved-condition*copy
         ^spelling <name>
         ^condition <co>)
 -->
+#(write (cmd print -d 2 <ts>))
    (<s> ^word (make-constant-symbol <name>))
 }
 
-#sp {auto-resolve-satisfaction-failure*prefer*select-unresolved-condition*concept
-#   (state <s> ^name auto-resolve-satisfaction-failure
-#              ^operator <o1> +
-#              ^operator <o2> +)
-#   (<o1> ^condition.type concept)
-#   (<o2> -^condition.type concept)
-#-->
-#   (<s> ^operator <o1> > <o2>)
-#}
+#want this one?
+sp {auto-resolve-satisfaction-failure*prefer*select-unresolved-condition*concept
+   (state <s> ^name auto-resolve-satisfaction-failure
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^condition.type concept)
+   (<o2> -^condition.type concept)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
 
 #TODO in future may use this to pick different versions of between<< (multiple functions)
 sp {auto-resolve-satisfaction-failure*prefer*select-unresolved-condition*function*concept
@@ -87,11 +90,12 @@ sp {auto-resolve-satisfaction-failure*prefer*select-unresolved-condition*concept
    (<sss> ^main-type <gtype> ^<gtype> <g>)
    (<g> ^condition <c1> -^condition <c2>)
    (<o1> ^condition <c1>)
- #  (<c1> ^type concept)
+   (<c1> ^type concept)# want?
    (<o2> ^condition <c2>)
- #  (<c2> ^type concept)
+   (<c2> ^type concept) #want?
 -->
-   (<s> ^operator <o1> > <o2>)
+#   (<s> ^operator <o1> > <o2>)
+   (<s> ^operator <o1> < <o2>)
 }
 
 #CASE 1 learned concept not detected, ask for another definition
@@ -279,7 +283,6 @@ sp {auto-resolve-satisfaction-failure*apply*select-unresolved-condition*try-anot
    (state <s> ^name auto-resolve-satisfaction-failure
               ^quiescence t #do not chunk through this rule (failure case)
               ^top-state <ts>
-              #^superstate <ss>
               ^operator <o>)
 (<o> ^name select-unresolved-condition
      ^condition <co>
@@ -290,6 +293,129 @@ sp {auto-resolve-satisfaction-failure*apply*select-unresolved-condition*try-anot
 #(<ss> ^keep-spelling <spell>)
     (<co> ^name <name2> -)
     (<co> ^name <word2>)
+}
+
+
+#in the future should pre build all possible interpretations, not just hacky try changing one and see if makes work
+#need to smem retrieve not use smap
+#opposites
+sp {auto-resolve-satisfaction-failure*apply*select-unresolved-condition*try-opposite
+   (state <s> ^name auto-resolve-satisfaction-failure
+              ^quiescence t #do not chunk through this rule (failure case)
+              #^top-state <ts>
+			  ^linkstate.opposite-table.pair <pa>
+              ^operator <o>)
+(<pa> ^word <spell> ^word {<name2> <> <spell>}) #on1 below1
+(<o> ^name select-unresolved-condition
+     ^condition <co>
+     ^spelling <spell2>) #below
+(<co> ^name <name2> ^args <a>) #below1
+(<a> ^1 <a1> ^2 <a2>)
+#(<ts> ^smap.<spell> <word2>) #clear clear3
+-->
+#(<ss> ^keep-spelling <spell>)
+    (<co> ^name <name2> -)
+(<a> ^1 <a1> -)
+(<a> ^2 <a2> -)
+(<a> ^2 <a1> ^1 <a2>)
+    (<co> ^name <spell>)
+}
+
+#synonym
+sp {auto-resolve-satisfaction-failure*apply*select-unresolved-condition*try-synonym
+   (state <s> ^name auto-resolve-satisfaction-failure
+              ^quiescence t #do not chunk through this rule (failure case)
+              ^top-state <ts>
+			  ^linkstate.synonym-table.pairs <pa>
+              ^operator <o>)
+(<pa> ^word <spell> ^word {<spell2> <> <spell>}) #clear empty
+(<o> ^name select-unresolved-condition
+     ^condition <co>
+     ^spelling <spell2>) #empty
+(<co> ^name <name2>) #empty1
+(<ts> ^smap.<spell> <word2>) #clear clear3
+-->
+#(<ss> ^keep-spelling <spell>)
+    (<co> ^name <name2> -)
+    (<co> ^name <word2>)
+}
+
+#antonym
+sp {auto-resolve-satisfaction-failure*apply*select-unresolved-condition*try-antonym
+   (state <s> ^name auto-resolve-satisfaction-failure
+              ^quiescence t #do not chunk through this rule (failure case)
+              ^top-state <ts>
+			  ^linkstate.antonym-table.pair <pa>
+              ^operator <o>)
+(<pa> ^word <spell> ^word {<spell2> <> <spell>}) #clear covered
+(<o> ^name select-unresolved-condition
+     ^condition <co>
+     ^spelling <spell2>) #covered
+(<co> ^name <name2> ^negative <t> ^negative false) #covered1
+(<ts> ^smap.<spell> <word2>) #clear clear3
+-->
+#(<ss> ^keep-spelling <spell>)
+    (<co> ^name <name2> -)
+	(<co> ^negative <t> -)
+    (<co> ^name <word2>)
+	(<co> ^negative true)
+}
+sp {auto-resolve-satisfaction-failure*apply*select-unresolved-condition*try-antonym*negative
+   (state <s> ^name auto-resolve-satisfaction-failure
+              ^quiescence t #do not chunk through this rule (failure case)
+              ^top-state <ts>
+			  ^linkstate.antonym-table.pair <pa>
+              ^operator <o>)
+(<pa> ^word <spell> ^word {<spell2> <> <spell>}) #clear covered
+(<o> ^name select-unresolved-condition
+     ^condition <co>
+     ^spelling <spell2>) #covered
+(<co> ^name <name2> ^negative <t> ^negative true) #covered1
+(<ts> ^smap.<spell> <word2>) #clear clear3
+-->
+#(<ss> ^keep-spelling <spell>)
+    (<co> ^name <name2> -)
+	(<co> ^negative <t> -)
+    (<co> ^name <word2>)
+	(<co> ^negative false)
+}
+
+sp {auto-resolve-satisfaction-failure*apply*select-unresolved-condition*try-another2
+   (state <s> ^name auto-resolve-satisfaction-failure
+              ^quiescence t #do not chunk through this rule (failure case)
+              ^top-state <ts>
+              ^operator <o>)
+(<o> ^name select-unresolved-condition
+     ^condition <co>
+     ^spelling <spell>)
+(<co> ^name <spell> <> <word2>)
+(<ts> ^smap.<spell2> <spell>)
+(<ts> ^smap.<spell2> <word2>)
+-->
+#(<ss> ^keep-spelling <spell>)
+    (<co> ^name <name2> -)
+    (<co> ^name <word2>)
+}
+
+
+
+sp {auto-resolve-satisfaction-failure*apply*select-unresolved-condition*try-anotherasdf
+   (state <s> ^name auto-resolve-satisfaction-failure
+              ^quiescence t #do not chunk through this rule (failure case)
+              #^top-state <ts>
+			  ^linkstate <ts>
+              #^superstate <ss>
+              #^word <xr>
+              ^operator <o>)
+(<o> ^name select-unresolved-condition
+     ^condition <co>
+     ^spelling <spell>)
+#(<co> ^name <name2> <> <word2>)
+#(<ts> ^smap.<spell> <word2>)
+-->
+(write (cmd matches))
+(write (cmd print <o> -d 3))
+#(write (cmd print <ts> -d 2))
 }
 
 #case 1
