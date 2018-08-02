@@ -24,7 +24,10 @@ old="Old"
 #declare -a arr=("kakuro" "ksideswap4")
 #declare -a arr=("kswap2")
 #declare -a arr=("colorkenp")
-declare -a arr=("nknights" "nkings" "kakuro" "kswap2" "ksideswap4"  "ktour" "simpleages" "travelsales" "nrooks" "tripeaks" "sujiko" "suko" "golf" "survo" "pyramid" "shuffle" "colorken" "colorkenp" "yiso5puzzle" "iso8puzzle" "2pushmaze" "jmahjongR" "solitaireR" "5puzzle" "8puzzle" "3tower" "cannibals" "sorting" "logi5" "jigsawdoku" "wives" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "shuffle" "kenp" "lfamilycross" "ken")
+#"pyramid" "shuffle"
+#"colorken" "colorkenp" "yiso5puzzle" "iso8puzzle" "2pushmaze" "jmahjongR" "solitaireR" "5puzzle" "8puzzle" "3tower" "cannibals" "sorting" "logi5" "jigsawdoku" "wives" "dsokoban2"  
+declare -a arr=("husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "kenp" "nknights" "nkings" "kakuro" "kswap2" "ksideswap4" "ktour" "simpleages" "travelsales" "nrooks" "tripeaks" "sujiko" "suko" "golf" "survo" "lfamilycross" "ken")
+#declare -a arr=("nknights" "nkings" "kakuro" "kswap2" "ksideswap4"  "ktour" "simpleages" "travelsales" "nrooks" "tripeaks" "sujiko" "suko" "golf" "survo" "pyramid" "shuffle" "colorken" "colorkenp" "yiso5puzzle" "iso8puzzle" "2pushmaze" "jmahjongR" "solitaireR" "5puzzle" "8puzzle" "3tower" "cannibals" "sorting" "logi5" "jigsawdoku" "wives" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "shuffle" "kenp" "lfamilycross" "ken")
 #survo
 #declare -a arr=("transfersudocolorkenshufflenosc4")
 #all but jmahjong no remove works
@@ -172,7 +175,7 @@ do
 			diff -s $rfile$sol $newfile
 			if [[ $foundsol < 1 ]];
 			then
-				cp $rfile$sol $stored$game$sol$dot$numsol #$dot$temp
+				cp $rfile$sol $stored$game$sol$dot$numsol$dot$temp
 			fi
 			
 			
