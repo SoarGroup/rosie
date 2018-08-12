@@ -10,7 +10,6 @@
 #
 ##if -then subclause object generalization
 #exists in create-object need to fix there
-
 #replace functionality of 
 #handle-clause predicate,clause
 #handle-clause parameter
@@ -60,18 +59,30 @@ sp {create-condition*elaborate*clause*condition-name
    (state <s> ^name create-condition
    		  	 -^param true
    		  	  ^clause <co>)
-   (<co> ^<< handle name >> {<cname> <> of1})
+   (<co> ^<< handle name >> {<cname> <> of1} -^item-type object)
 -->
    (<s> ^condition-name <cname>)
 }
+
 sp {create-condition*elaborate*clause*condition-name*predicate
    (state <s> ^name create-condition
    		  	 -^param true
    		  	  ^clause.predicate <co>)
-   (<co> ^<< handle name >> {<cname> <> of1})
+   (<co> -^item-type object  ^<< handle name >> {<cname> <> of1})
 -->
    (<s> ^condition-name <cname>)
 }
+
+
+#sp {create-condition*elaborate*clause*condition-name*predicate*count
+#   (state <s> ^name create-condition
+#   		  	 -^param true
+#   		  	  ^clause.predicate <co>)
+#   (<co> ^item-type object ^predicates <pp>)
+#   (<pp> ^multiple true ^number <n>)
+#-->
+#   (<s> ^condition-name count)
+#}
 
 sp {create-condition*elaborate*clause*action
    (state <s> ^name create-condition
@@ -83,7 +94,7 @@ sp {create-condition*elaborate*clause*action
 }
 sp {create-condition*elaborate*smem-result*return-type
    (state <s> ^name create-condition
-   		  	  ^smem-result.property.handle numeric)
+   		  	  ^smem-result.property.handle << number numeric >>)
 -->
    (<s> ^return-type number)
 }
@@ -217,9 +228,9 @@ sp {create-condition*elaborate*param1*no-rtype
    (<p1> ^type <type>)
 }
 
-sp {create-condition*elaborate*param1*no-rtype*attribute-of
+sp {create-condition*elaborate*param1*no-rtype*no-arg
    (state <s> ^name create-condition
-              ^condition-type attribute-of
+              #^condition-type attribute-of
               ^rtype <type>
               ^equal-to.parameter-index <pid>
               -^arg1
@@ -369,6 +380,15 @@ sp {create-condition*elaborate*rtype*parameter
    (<s> ^rtype <type>)
 }
 
+
+sp {create-condition*elaborate*rtype*number
+   (state <s> ^name create-condition
+   		  	  ^equal-to.formatted.rtype single
+              ^condition.name number)
+-->
+   (<s> ^rtype single)
+}
+
 sp {create-condition*elaborate*rtype*set
    (state <s> ^name create-condition
               ^clause.predicates.multiple true
@@ -446,26 +466,27 @@ sp {create-condition*elaborate*arg1*formatted*equal-to*state-pair
 }
 
 
-sp {create-condition*elaborate*param1*formatted*equal-to*state-pair
+sp {create-condition*elaborate*param1*formatted*equal-to
    (state <s> ^name create-condition
               -^param true
-              ^condition-type state-pair 
-              ^equal-to <co>
-   		  	  ^clause <c>)
-   (<c> -^1 -^arg1)
-   (<co> ^parameter-index <id>)
--->
-   (<s> ^param1 <id>)
-}
-
-sp {create-condition*elaborate*param1*formatted*equal-to*attribute-of
-   (state <s> ^name create-condition
-              ^condition-type attribute-of
+              #^condition-type state-pair 
               ^equal-to <co>)
+   		  	  #^clause <c>)
+   #(<c> -^1 -^arg1)
    (<co> ^parameter-index <id>)
 -->
    (<s> ^param1 <id>)
 }
+#subsummed by top one
+#sp {create-condition*elaborate*param1*formatted*equal-to*attribute-of
+#   (state <s> ^name create-condition
+#              ^condition-type attribute-of
+#              ^equal-to <co>)
+#   (<co> ^parameter-index <id>)
+#-->
+#   (<s> ^param1 <id>)
+#}
+
 sp {create-condition*elaborate*rtype*formatted*equal-to*attribute-of
    (state <s> ^name create-condition
               ^condition-type attribute-of
@@ -665,10 +686,10 @@ sp {create-condition*elaborate*attribute*property
    		  	  ^smem-result <ss>
               ^smem-result.property <prop>
 			  ^condition-type attribute)
-   (<prop> ^handle <att> ^item-type property)
+   (<prop> ^handle <att> ^item-type property -^handle number)
 -->
 #(interrupt)
-(write (cmd print <ss> -d 3))
+#(write (cmd print <ss> -d 3))
    (<s> ^condition-attribute <att>)
 }
 
@@ -683,7 +704,7 @@ sp {create-condition*elaborate*primitive*type*attribute
 }
 sp {create-condition*elaborate*primitive*type*attribute*2
    (state <s> ^name create-condition
-   		  	  ^superstate.superstate.world.objects.object.predicates.<x> <name>
+   		  	  ^superstate.superstate.world.objects.object.predicates.{<x> <> number} <name>
              -^clause.handle << of of1 >>
              -^relation.handle << of of1 >>
    		  	  ^condition-name <name>)
@@ -796,6 +817,7 @@ sp {create-condition*apply*create-name
 			  ^operator <o>
 			  ^condition <c>
      		-^smem-result.function
+			-^smem-result.property.handle number
               ^condition-handle <handle>)
    (<o> ^name create-name
    		^handle <handle>)
@@ -818,14 +840,41 @@ sp {create-condition*apply*create-name*function
    (<c> ^name <name> ^function <func>)
 }
 
+sp {create-condition*apply*create-name*number
+   (state <s> ^name create-condition
+			  ^operator <o>
+			  ^condition <c>
+     		  ^smem-result.property.handle number
+              ^condition-handle <handle>)
+   (<o> ^name create-name
+   		^handle <handle>)
+-->
+   (<c> ^name number)
+}
+
 sp {create-condition*apply*create-result
    (state <s> ^name create-condition
+   		  	 -^condition.name number
 			  ^operator <o>)
    (<o> ^name create-result
    		^condition <c>)
 -->
    (<c> ^result <r>)
    (<r> ^set <rs>)
+}
+
+sp {create-condition*apply*create-result*number
+   (state <s> ^name create-condition
+   		  	  ^condition.name number
+			  ^condition-name <cn>
+			  ^operator <o>)
+   (<o> ^name create-result
+   		^condition <c>)
+-->
+   (<c> ^result <r>)
+   (<r> ^set <rs>)
+   (<rs> ^instance <i1>)
+   (<i1> ^1 <cn>)
 }
 
 sp {create-condition*apply*create-negative
@@ -898,6 +947,17 @@ sp {create-condition*apply*create-args
    (<c> ^args <ar>)
 }
 
+sp {create-condition*apply*create-args*number
+   (state <s> ^name create-condition
+   		  	  -^args
+			  ^condition.name number
+			  ^operator <o>)
+   (<o> ^name create-args
+   		^condition <c>)
+-->
+   (<c> ^args <ar>)
+}
+
 sp {create-condition*apply*interrupt
    (state <s> ^name create-condition
    		  	  ^condition <c>
@@ -913,7 +973,7 @@ sp {create-condition*apply*interrupt
 
 sp {wait*apply*interrupt
    (state <s> #^superstate.name learn-condition
-   		  	  ^superstate.superstate.name create-from-parse
+   		  	  ^superstate.name smem-version-retrieve
    		  	  #^superstate.superstate.superstate.superstate.predicate.nlp-set <ss>
    		  	  ^superstate.superstate <ss>
 			  #^condition <c>
@@ -922,14 +982,14 @@ sp {wait*apply*interrupt
 			  ^operator <o>)
    (<o> ^name wait)
 -->
-(write (cmd print <ss> -d 4))
-(write (cmd matches))
+(write (cmd print <ss> -d 3))
+(write (cmd pref <ss> condition-name -w))
 (interrupt)
 }
 
 sp {create-type*apply*interrupt
    (state <s> #^superstate.superstate.name retrieve-predicate-structure
-   		  	  ^superstate.name create-type
+   		  	  ^superstate.name create-args
              ^superstate.superstate <ss>)
    		  	  #^superstate.superstate.superstate.operator <oo> +)
    		  	  #^superstate.superstate.superstate.nlp <ss>)
