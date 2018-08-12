@@ -99,6 +99,7 @@ sp {create-condition*elaborate*smem-result*return-type
    (<s> ^return-type number)
 }
 
+
 sp {create-condition*elaborate*clause*parameter*condition-name
    (state <s> ^name create-condition
    		  	  #^param true
@@ -106,6 +107,17 @@ sp {create-condition*elaborate*clause*parameter*condition-name
    (<r> ^<< handle name >> {<cname> <> of1})
 -->
    (<s> ^condition-name <cname>)
+}
+
+sp {create-condition*elaborate*clause*subset
+   (state <s> ^name create-condition
+   		  	  ^clause <c>
+   		  	  ^relation <r>)
+   (<c> ^item-type object ^predicates.number <n>)
+   (<r> ^<< handle name >> of1)
+-->
+   (<s> ^function <f> ^rtype set)
+   (<f> ^function subset-of ^handle <n>)
 }
 
 sp {create-condition*elaborate*clause*arg2*relation
@@ -228,11 +240,11 @@ sp {create-condition*elaborate*param1*no-rtype
    (<p1> ^type <type>)
 }
 
-sp {create-condition*elaborate*param1*no-rtype*no-arg
+sp {create-condition*elaborate*param1*no-rtype*no-arg*x
    (state <s> ^name create-condition
               #^condition-type attribute-of
               ^rtype <type>
-              ^equal-to.parameter-index <pid>
+              #^equal-to.parameter-index <pid>
               -^arg1
               ^parameter.{1} <p1>)
    (<p1> ^param-id <pid>)
@@ -323,6 +335,63 @@ sp {create-condition*elaborate*parameter*1
    (<p1> ^param-id <a1>)
 }
 
+
+#sp {create-condition*elaborate*rtype*single*function
+#   (state <s> ^name create-condition
+#   		  -^smem-result.multiple true
+#			  ^return-type number)
+#              #^function <f>)
+#-->
+#   (<s> ^rtype single)
+#}
+#sp {create-condition*elaborate*rtype*set*function
+#   (state <s> ^name create-condition
+#   		  	  ^smem-result.multiple true
+#              ^function <f>)
+#-->
+#   (<s> ^rtype set)
+#}
+
+sp {create-condition*elaborate*rtype*single*attribute-of
+   (state <s> ^name create-condition
+   		  	  ^return-type number
+              #^condition-type attribute-of
+             -^smem-result.multiple true)
+-->
+   (<s> ^rtype single)
+}
+
+
+sp {create-condition*elaborate*rtype*single*no-arg1
+   (state <s> ^name create-condition
+   		  	  ^args <aa>
+			 -^return-type number
+              #^condition-type attribute-of
+			 -^function.function subset-of
+             -^smem-result.multiple true)
+   (<aa> -^1 ^2 <x>)
+-->
+   (<s> ^rtype single)
+}
+sp {create-condition*elaborate*rtype*set*no-arg1
+   (state <s> ^name create-condition
+   		  	  ^args <aa>
+			 -^return-type number
+              #^condition-type attribute-of
+              ^smem-result.multiple true)
+   (<aa> -^1 ^2 <x>)
+-->
+   (<s> ^rtype set)
+}
+
+sp {create-condition*elaborate*rtype*set*attribute-of
+   (state <s> ^name create-condition
+   		  	  ^return-type number
+              #^condition-type attribute-of
+              ^smem-result.multiple true)
+-->
+   (<s> ^rtype set)
+}
 sp {create-condition*elaborate*parameter*2*attribute-of
    (state <s> ^name create-condition
               ^num-params 2
@@ -337,7 +406,7 @@ sp {create-condition*elaborate*parameter*2*attribute-of
    (<s> ^increment-obj-count true)
    (<s> ^parameter <a>)
    (<a> ^1 <p1> ^2 <p2>)
-   (<p1> ^param-id <a1> ^type single)
+   (<p1> ^param-id <a1> )#^type single)
    (<p2> ^param-id <a2>)
 }
 
@@ -355,7 +424,7 @@ sp {create-condition*elaborate*parameter*2*attribute-of*set
    (<s> ^increment-obj-count true)
    (<s> ^parameter <a>)
    (<a> ^1 <p1> ^2 <p2>)
-   (<p1> ^param-id <a1> ^type set)
+   (<p1> ^param-id <a1>)# ^type set)
    (<p2> ^param-id <a2>)
 }
 
@@ -609,6 +678,7 @@ sp {create-condition*elaborate*clause*parameter
    (state <s> ^name create-condition
    		  	  ^superstate.parameter <co>
    		  	  ^clause <co>)
+	(<co> ^formatted)
 -->
    (<s> ^param true)
 }
@@ -643,6 +713,7 @@ sp {create-condition*elaborate*type*concept
    		  	  ^not attribute
           	  ^not state-pair
              -^condition-type attribute-of
+			 -^function
              -^smem-result.function
    		  	  ^condition-name <name>)
 -->
@@ -658,8 +729,8 @@ sp {create-condition*elaborate*function
 
 sp {create-condition*elaborate*type*function
    (state <s> ^name create-condition
-              ^smem-result.function <f>
-   		  	  ^condition-name <name>)
+              ^function <f>)
+   		  	  #^condition-name <name>)
 -->
    (<s> ^condition-type function)
 }
@@ -816,6 +887,7 @@ sp {create-condition*apply*create-name
    (state <s> ^name create-condition
 			  ^operator <o>
 			  ^condition <c>
+			 -^function
      		-^smem-result.function
 			-^smem-result.property.handle number
               ^condition-handle <handle>)
@@ -825,15 +897,15 @@ sp {create-condition*apply*create-name
    #(write (cmd print <o> -d 3))
    (<c> ^name <handle>)
 }
+
 sp {create-condition*apply*create-name*function
    (state <s> ^name create-condition
 			  ^operator <o>
 			  ^condition <c>
-     		  ^smem-result.function <f>
-              ^condition-handle <handle>)
+     		  ^function <f>)
+              #^condition-handle <handle>)
    (<f> ^handle <name> ^function <func>)
-   (<o> ^name create-name
-   		^handle <handle>)
+   (<o> ^name create-name)
 -->
 #(write (cmd print <o> -d 3))
 #(interrupt)
@@ -871,6 +943,7 @@ sp {create-condition*apply*create-result*number
    (<o> ^name create-result
    		^condition <c>)
 -->
+#(interrupt)
    (<c> ^result <r>)
    (<r> ^set <rs>)
    (<rs> ^instance <i1>)
@@ -989,13 +1062,13 @@ sp {wait*apply*interrupt
 
 sp {create-type*apply*interrupt
    (state <s> #^superstate.superstate.name retrieve-predicate-structure
-   		  	  ^superstate.name create-args
+   		  	  ^superstate.name create-rtype
              ^superstate.superstate <ss>)
    		  	  #^superstate.superstate.superstate.operator <oo> +)
    		  	  #^superstate.superstate.superstate.nlp <ss>)
 -->
 (interrupt)
-(write (cmd print <ss> -d 3))
+(write (cmd print <ss> -d 5))
 #(write (cmd matches))
 #(write (cmd print <oo> -d 15))
 #(write (cmd pref <ss>))
@@ -1117,12 +1190,25 @@ sp {create-condition*apply*create-action*2args
 sp {create-condition*propose*create-name
    (state <s> ^name create-condition
               ^condition <c>
+			 -^function
               ^condition-handle <handle>)
  -{(<c> ^name <n>)}
 -->
    (<s> ^operator <o> +)
    (<o> ^name create-name
 	    ^handle <handle>
+	    ^condition <c>)
+}
+
+sp {create-condition*propose*create-name*function
+   (state <s> ^name create-condition
+              ^condition <c>
+			  ^function <f>)
+ -{(<c> ^name <n>)}
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name create-name
+	    ^function <f>
 	    ^condition <c>)
 }
 
