@@ -94,6 +94,7 @@ sp {create-condition*elaborate*clause*action
 }
 sp {create-condition*elaborate*smem-result*return-type
    (state <s> ^name create-condition
+   		  	 -^equal-to.handle absent
    		  	  ^smem-result.property.handle << number numeric >>)
 -->
    (<s> ^return-type number)
@@ -179,6 +180,7 @@ sp {create-condition*elaborate*num-args*3
 }
 sp {create-condition*elaborate*num-args*2
    (state <s> ^name create-condition
+   		  	 -^equal-to.handle absent
    		  	  ^clause <co>)
    (<co> ^2 <r> -^3)
 -->
@@ -206,13 +208,27 @@ sp {create-condition*elaborate*relation*num-args*3
 -->
    (<s> ^num-args 3)
 }
+
 sp {create-condition*elaborate*relation*num-args*2
    (state <s> ^name create-condition
+   		  	 -^equal-to.handle absent
    		  	  ^relation <co>)
    (<co> ^2 <r> -^3)
 -->
    (<s> ^num-args 2)
 }
+
+
+sp {create-condition*elaborate*relation*num-args*1*absent
+   (state <s> ^name create-condition
+   		  	  ^condition-type has-attribute
+   		  	  ^equal-to.handle absent
+   		  	  ^relation <co>)
+   (<co> ^2 <r> -^3)
+-->
+   (<s> ^num-args 1)
+}
+
 sp {create-condition*elaborate*num-params
    (state <s> ^name create-condition
    		  	  ^num-args <na>)
@@ -293,14 +309,27 @@ sp {create-condition*elaborate*param1
 -->
    (<s> ^param1 <pi>)
 }
+
 sp {create-condition*elaborate*param2
    (state <s> ^name create-condition
               #^param true
+			 -^equal-to.handle absent
    		  	  ^relation <r>)
    (<r> ^2 <co>)
    (<co> ^parameter-index <pi>)
 -->
    (<s> ^param2 <pi>)
+}
+
+sp {create-condition*elaborate*param1*absent
+   (state <s> ^name create-condition
+   		  	  ^condition-type has-attribute
+              ^equal-to.handle absent
+   		  	  ^relation <r>)
+   (<r> ^2 <co>)
+   (<co> ^parameter-index <pi>)
+-->
+   (<s> ^param1 <pi>)
 }
 sp {create-condition*elaborate*param3
    (state <s> ^name create-condition
@@ -546,6 +575,7 @@ sp {create-condition*elaborate*param1*formatted*equal-to
 -->
    (<s> ^param1 <id>)
 }
+
 #subsummed by top one
 #sp {create-condition*elaborate*param1*formatted*equal-to*attribute-of
 #   (state <s> ^name create-condition
@@ -620,9 +650,11 @@ sp {create-condition*elaborate*arg3*formatted*predicate
    (<s> ^arg3 <f>)
 }
 
+
 sp {create-condition*elaborate*arg2*formatted*parameter
    (state <s> ^name create-condition
               #^param true
+			 -^equal-to.handle absent
    		  	  ^relation <r>)
    (<r> ^2 <co>)
    (<co> ^formatted <f>)
@@ -630,6 +662,30 @@ sp {create-condition*elaborate*arg2*formatted*parameter
 -->
    (<s> ^arg2 <f>)
 }
+
+sp {create-condition*elaborate*arg1*formatted*parameter*absent
+   (state <s> ^name create-condition
+			  ^condition-type has-attribute
+			  ^equal-to.handle absent
+   		  	  ^relation <r>)
+   (<r> ^2 <co>)
+   (<co> ^formatted <f>)
+  -{(<co> ^formatted {<f2> > <f>})} #most recently added formatted 
+-->
+   (<s> ^arg1 <f>)
+}
+
+#### write between is annoying think how to do properly
+#could expand in create-from-parse like predicates.number of handdling
+#could elaborate number-arg1 or something #need to update objects 
+#sp {create-condition*elaborate*arg2*number
+#   (state <s> ^name create-condition
+#   		  	  ^relation <r>)
+#   (<r> ^2 <co>)
+#   (<co> -^formatted ^number <n>)
+#-->
+#   (<s> ^arg2 <f>)
+#}
 
 sp {create-condition*elaborate*args*2
    (state <s> ^name create-condition
@@ -640,8 +696,16 @@ sp {create-condition*elaborate*args*2
    (<s> ^args <a>)
    (<a> ^1 <a1> ^2 <a2>)
 }
-
 sp {create-condition*elaborate*args*1
+   (state <s> ^name create-condition
+              ^num-args 1
+   		  	  ^arg1 <a1>)
+-->
+   (<s> ^args <a>)
+   (<a> ^1 <a1>)
+}
+
+sp {create-condition*elaborate*args*1*default
    (state <s> ^name create-condition
               -^num-args
    		  	  ^arg1 <a1>
@@ -725,7 +789,7 @@ sp {create-condition*elaborate*function
               ^smem-result.function <f>)
 -->
    (<s> ^function <f>)
- }
+}
 
 sp {create-condition*elaborate*type*function
    (state <s> ^name create-condition
@@ -782,6 +846,7 @@ sp {create-condition*elaborate*primitive*type*attribute*2
 -->
    (<s> ^condition-type attribute)
 }
+
 #sp {create-condition*elaborate**type*not*attribute-of
 #   (state <s> ^name create-condition
 #   		  	  ^condition-name <name>)
@@ -794,18 +859,29 @@ sp {create-condition*elaborate*primitive*type*attribute*2
 sp {create-condition*elaborate*type*attribute-of
    (state <s> ^name create-condition
    		  	  ^superstate.superstate.world.objects.object.predicates.<name>
-          	  ^relation.handle << of of1 >>
+          	  ^<< clause relation >>.handle << of of1 >>
+			 -^equal-to.handle absent
    		  	  ^condition-name <name>)
 -->
    (<s> ^condition-type attribute-of)
 }
-sp {create-condition*elaborate*type*attribute-of*clause
+
+sp {create-condition*elaborate*type*has-attribute
    (state <s> ^name create-condition
    		  	  ^superstate.superstate.world.objects.object.predicates.<name>
-          	  ^clause.handle << of of1 >>
+          	  ^<< clause relation >>.handle << of of1 >>
+			  ^equal-to <eq>
+			  ^condition <co> 
    		  	  ^condition-name <name>)
+   (<eq> ^handle absent)
+   #(<s> ^arg2 <aa> ^param2 <pp>)
 -->
-   (<s> ^condition-type attribute-of)
+#(interrupt)
+#(write (cmd pref <s> arg2 -w))
+#(write (cmd pref <s> param2 -w))
+#(write (cmd print <s> -d 3))
+  (<s> ^condition-type has-attribute ^negative true)
+  (<eq> ^formatted <co>)
 }
 
 sp {create-condition*elaborate*primitive*attribute*category
@@ -990,6 +1066,28 @@ sp {create-condition*apply*create-type
    (<c> ^type <h>)
 }
 
+sp {create-condition*apply*create-type*number
+   (state <s> ^name create-condition
+   		  	 -^condition-type <h>
+			 -^equal-to <eq>
+			  #^condition <c>
+			  ^object-count <oc>
+			  ^superstate <ss>
+			  ^clause <c1>
+			  ^operator <o>)
+   (<o> ^name create-type)
+   (<ss> ^object-count <oc>)
+   (<c1> ^number <num1> -^{<x> <> number})
+-->
+   (<c1> ^formatted <co> ^parameter-index <oc>)
+   (<ss> ^object-count <oc> -)
+   (<ss> ^object-count (+ 1 <oc>))
+   (<ss> ^nlp <co>)
+   (<co> ^name number ^result.set.instance <i1> ^args <ax> ^parameter <parap> ^rtype single ^return-type number)
+   (<i1> ^1 <num1>)
+   #(<parap> ^1 <parapg>)
+}
+
 sp {create-condition*apply*create-rtype
    (state <s> ^name create-condition
    		  	  ^rtype <rt>
@@ -1062,7 +1160,7 @@ sp {wait*apply*interrupt
 
 sp {create-type*apply*interrupt
    (state <s> #^superstate.superstate.name retrieve-predicate-structure
-   		  	  ^superstate.name create-rtype
+   		  	  ^superstate.name create-type
              ^superstate.superstate <ss>)
    		  	  #^superstate.superstate.superstate.operator <oo> +)
    		  	  #^superstate.superstate.superstate.nlp <ss>)
@@ -1182,6 +1280,46 @@ sp {create-condition*apply*create-action*2args
    (<a> ^formatted true) 
 }
 
+sp {create-condition*apply*create-args*numeric-between*function
+   (state <s> ^name create-condition
+			 -^args
+			  ^superstate <ss>
+     		  -^param1
+         	  -^param2
+			  -^equal-to.formatted
+			  ^condition <co>
+              ^clause <cl>
+			  ^function <ff>
+			  ^object-count <oc>
+              ^operator <o>)
+   (<o> ^name create-args)
+   (<ss> ^object-count <oc>)
+   (<c1> ^relation <r>)
+   (<r> ^2 <r2> ^3 <r3> -^4)
+   (<r2> ^number <num1>)
+   (<r3> ^number <num2>)
+-->
+   (<cl> ^formatted <co> ^parameter-index <oc>)
+   (<r> ^formatted <co>)
+   (<ss> ^object-count <oc> -)
+   (<ss> ^object-count (+ 3 <oc>))
+   (<ss> ^nlp <co>)
+   (<co> ^args <a> ^parameter <para> ^return-type number ^rtype single)
+   (<a> ^2 <p2> ^3 <p3>)
+   (<para> ^1 <para1> ^2 <para2> ^3 <para3>)
+   (<para1> ^param-id <oc> ^type single)
+   (<para2> ^param-id (+ <oc> 1) ^type single)
+   (<para3> ^param-id (+ <oc> 2) ^type single)
+   (<p2> ^name number ^result.set.instance <i1> ^args <ax> ^parameter <parap> ^rtype single ^return-type number)
+   (<p3> ^name number ^result.set.instance <i2> ^args <ax2> ^parameter <parap2> ^rtype single ^return-type number)
+   (<i1> ^1 <num1>)
+   (<i2> ^1 <num2>)
+   (<parap> ^1 <parapg>)
+   (<parapg> ^param-id (+ <oc> 1) ^type single)
+   (<parap2> ^1 <parap2g>)
+   (<parap2g> ^param-id (+ <oc> 2) ^type single)
+}
+
 
 
 ##########################
@@ -1262,7 +1400,6 @@ sp {create-condition*propose*create-args
    (<o> ^name create-args
 	    ^condition <c>)
 }
-
 sp {create-condition*propose*create-attribute
    (state <s> ^name create-condition
               ^condition-attribute <ac>
@@ -1273,7 +1410,6 @@ sp {create-condition*propose*create-attribute
    (<o> ^name create-attribute
 	    ^condition <c>)
 }
-
 sp {create-condition*propose*create-type
    (state <s> ^name create-condition
               ^condition <c>)
@@ -1283,7 +1419,6 @@ sp {create-condition*propose*create-type
    (<o> ^name create-type
 	    ^condition <c>)
 }
-
 sp {create-condition*propose*create-return-type
    (state <s> ^name create-condition
               ^return-type <rt>
@@ -1304,7 +1439,6 @@ sp {create-condition*propose*create-result
    (<o> ^name create-result
 	    ^condition <c>)
 }
-
 sp {create-condition*propose*complete
    (state <s> ^name create-condition
               ^condition <c>)
