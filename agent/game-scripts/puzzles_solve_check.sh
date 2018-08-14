@@ -24,9 +24,17 @@ old="Old"
 #declare -a arr=("kakuro" "ksideswap4")
 #declare -a arr=("kswap2")
 #declare -a arr=("colorkenp")
+#"husbands" "wives" "8puzzle" "yiso5puzzle" "iso8puzzle" 
+#"logi5" "jigsawdoku" "sudoku" "mapncolor3")
+
+declare -a arr=("frog" "nrooks") 
+#declare -a arr=("2pushmaze" "5puzzle" "3tower" "cannibals" "sorting" "dsokoban2" "gbfox" "frog" "worldblocks" "blocksworld" "zmaze" "nknights" "nkings" "kswap1" "ktour" "travelsales" "nrooks" "lfamilycross") 
+
+
 #"pyramid" "shuffle"
-#"colorken" "colorkenp" "yiso5puzzle" "iso8puzzle" "2pushmaze" "jmahjongR" "solitaireR" "5puzzle" "8puzzle" "3tower" "cannibals" "sorting" "logi5" "jigsawdoku" "wives" "dsokoban2"  
-declare -a arr=("husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "kenp" "nknights" "nkings" "kakuro" "kswap2" "ksideswap4" "ktour" "simpleages" "travelsales" "nrooks" "tripeaks" "sujiko" "suko" "golf" "survo" "lfamilycross" "ken")
+#"colorken" "colorkenp" "yiso5puzzle" "iso8puzzle" "2pushmaze" "jmahjongR" "solitaireR" "5puzzle" "8puzzle" "3tower" "cannibals" "sorting" "logi5" "jigsawdoku" "wives" "dsokoban2"
+  
+#declare -a arr=("husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "kenp" "nknights" "nkings" "kakuro" "kswap2" "ksideswap4" "ktour" "simpleages" "travelsales" "nrooks" "tripeaks" "sujiko" "suko" "golf" "survo" "lfamilycross" "ken")
 #declare -a arr=("nknights" "nkings" "kakuro" "kswap2" "ksideswap4"  "ktour" "simpleages" "travelsales" "nrooks" "tripeaks" "sujiko" "suko" "golf" "survo" "pyramid" "shuffle" "colorken" "colorkenp" "yiso5puzzle" "iso8puzzle" "2pushmaze" "jmahjongR" "solitaireR" "5puzzle" "8puzzle" "3tower" "cannibals" "sorting" "logi5" "jigsawdoku" "wives" "dsokoban2" "husbands" "8puzzle" "gbfox" "sudoku" "zmaze" "shuffle" "kenp" "lfamilycross" "ken")
 #survo
 #declare -a arr=("transfersudocolorkenshufflenosc4")
@@ -114,7 +122,7 @@ rm smemuse.txt -f
 for game in "${arr[@]}"
 do
 	#for rfile in $game.$game
-	for rfile in neworder*.$game
+	for rfile in Xneworder*.$game
 	do
 		rm out.txt -f
 		if [[ $rfile == *$no.$game* ]]; then
