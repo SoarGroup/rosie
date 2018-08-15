@@ -23,11 +23,11 @@ old="Old"
 #declare -a arr=("nkings")
 #declare -a arr=("kakuro" "ksideswap4")
 #declare -a arr=("kswap2")
-#declare -a arr=("frog" "nrooks")
+declare -a arr=("frog" "nrooks")
 #
 #"logi5" "jigsawdoku" "sudoku" "mapncolor3")
 
-declare -a arr=("logi5" "jigsawdoku" "sudoku" "mapncolor3" "colorken" "husbands" "wives" "8puzzle" "yiso5puzzle" "iso8puzzle")
+#declare -a arr=("logi5" "jigsawdoku" "sudoku" "mapncolor3" "colorken" "ken" "pyramid" "jmahjong" "husbands" "wives" "8puzzle" "yiso5puzzle" "iso8puzzle")
 
 #declare -a arr=("2pushmaze" "5puzzle" "3tower" "cannibals" "sorting" "dsokoban2" "gbfox" "frog" "worldblocks" "blocksworld" "zmaze" "nknights" "nkings" "kswap1" "ktour" "travelsales" "nrooks" "lfamilycross") 
 
