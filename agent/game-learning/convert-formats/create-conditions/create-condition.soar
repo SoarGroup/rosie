@@ -60,6 +60,7 @@ sp {create-condition*elaborate*param1*formatted*agent
 -->
    (<s> ^param1 <id>)
 }
+
 sp {create-condition*elaborate*arg1*formatted*agent
    (state <s> ^name create-condition
               -^param true
@@ -68,6 +69,15 @@ sp {create-condition*elaborate*arg1*formatted*agent
   -{(<co> ^formatted {<f2> > <f>})} #most recently added formatted 
 -->
    (<s> ^arg1 <f>)
+}
+
+sp {create-condition*elaborate*arg1*rtype*agent
+   (state <s> ^name create-condition
+              -^param true
+   		  	  ^agent <co>)
+   (<co> ^rtype <rtype>)
+-->
+   (<s> ^rtype <rtype>)
 }
 sp {create-condition*elaborate*clause*condition-name*same-attribute
    (state <s> ^name create-condition
@@ -81,7 +91,6 @@ sp {create-condition*elaborate*clause*condition-name*same-attribute
    (<s> ^condition-type same-attribute)
    (<co> ^name <name>)#todo ok to skip over condition-name,smem-version-retrieve?
 }
-
 sp {create-condition*elaborate*clause*action
    (state <s> ^name create-condition
    		   	  ^clause <co>)
@@ -97,13 +106,26 @@ sp {create-condition*elaborate*smem-result*return-type
 -->
    (<s> ^return-type number)
 }
-
 sp {create-condition*elaborate*clause*parameter*condition-name
    (state <s> ^name create-condition
    		  	  ^relation <r>)
    (<r> ^<< handle name >> {<cname> <> of1})
+  -{(<r> ^handle in1)
+    (<s> -^superstate.superstate.world.predicates.predicate.handle in1)}
 -->
    (<s> ^condition-name <cname>)
+}
+#test in different way?
+sp {create-condition*elaborate*clause*in-set*condition-name
+   (state <s> ^name create-condition
+             -^superstate.superstate.world.predicates.predicate.handle in1
+             #-^superstate.parameter <c2>
+   		  	  ^relation <r>)
+    (<r> ^handle in1 ^2 <c2> -^3)
+    (<c2> ^predicates.property <name>)
+-->
+#(interrupt)
+   (<s> ^condition-name <name>)
 }
 
 sp {create-condition*elaborate*clause*subset
@@ -114,7 +136,7 @@ sp {create-condition*elaborate*clause*subset
    (<r> ^<< handle name >> of1)
 -->
    (<s> ^function <f> ^rtype set)
-   (<f> ^function subset-of ^handle <n>)
+   (<f> ^function subset-of ^type <n>)
 }
 
 sp {create-condition*elaborate*clause*arg2*relation
@@ -208,9 +230,21 @@ sp {create-condition*elaborate*relation*num-args*2
    		  	 -^equal-to.handle absent
    		  	  ^relation <co>)
    (<co> ^2 <r> -^3)
+  -{(<co> ^handle in1)
+    (<s> -^superstate.superstate.world.predicates.predicate.handle in1)} 
 -->
    (<s> ^num-args 2)
 }
+sp {create-condition*elaborate*relation*num-args*1*set
+   (state <s> ^name create-condition
+             -^superstate.superstate.world.predicates.predicate.handle in1
+   		  	 -^equal-to.handle absent
+   		  	  ^relation <co>)
+   (<co> ^2 <r> -^3 ^handle in1)
+-->
+   (<s> ^num-args 1)
+}
+
 sp {create-condition*elaborate*relation*num-args*1*absent
    (state <s> ^name create-condition
    		  	  ^condition-type has-attribute
@@ -235,6 +269,7 @@ sp {create-condition*elaborate*param1*rtype
 -->
    (<p1> ^type <type>)
 }
+#qqq
 sp {create-condition*elaborate*param1*no-rtype
    (state <s> ^name create-condition
               ^args.{1}.rtype <type>
@@ -242,15 +277,20 @@ sp {create-condition*elaborate*param1*no-rtype
   -{(<s> ^param true
          ^clause <co>)
     (<co> ^rtype <rt>)}
+  -{(<s> ^agent <ax>)
+    (<ax> ^rtype <rx>)}
 -->
    (<p1> ^type <type>)
 }
+
 sp {create-condition*elaborate*param1*no-rtype*no-arg*x
    (state <s> ^name create-condition
               ^rtype <type>
-              -^arg1
+              #-^arg1
+			  ^operator <o>
               ^parameter.{1} <p1>)
-   (<p1> ^param-id <pid>)
+   (<p1> ^param-id <pid> -^type)
+   (<o> ^name <nn>)
 -->
    (<p1> ^type <type>)
 }
@@ -300,6 +340,18 @@ sp {create-condition*elaborate*param2
    		  	  ^relation <r>)
    (<r> ^2 <co>)
    (<co> ^parameter-index <pi>)
+-->
+   (<s> ^param2 <pi>)
+}
+#qqq
+sp {create-condition*elaborate*param2*no-parameter-index
+   (state <s> ^name create-condition
+			 -^equal-to.handle absent
+   		  	  ^relation <r>)
+   (<r> ^2 <co>)
+   (<co> ^formatted <f>)#-^parameter-index 
+   (<f> ^parameter.{1}.param-id <pi>)
+ #-{(<co> ^formatted {<f2> > <f>})} #most recently added formatted 
 -->
    (<s> ^param2 <pi>)
 }
@@ -420,10 +472,15 @@ sp {create-condition*elaborate*parameter*3
    (<p2> ^param-id <a2>)
    (<p3> ^param-id <a3>)
 }
+#qqq
 sp {create-condition*elaborate*rtype*parameter
    (state <s> ^name create-condition
+   		  	 -^rtype
+			 ^operator <o>
               ^parameter.{1}.type <type>)
+   (<o> ^name <nn>)
 -->
+#(write (cmd print <o>))
    (<s> ^rtype <type>)
 }
 sp {create-condition*elaborate*rtype*number
@@ -778,6 +835,26 @@ sp {create-condition*elaborate*condition
    (<s> ^condition <c>)
 }
 
+#sp {convert-parsed-format*apply*handle-clause*concepts*in*set
+#   (state <s> ^name convert-parsed-format
+#              -^superstate.world.predicates.predicate.handle in1  #hacky test
+#              ^operator <o>)
+#   (<o> ^name handle-clause ^clause <c>)
+#   (<c> ^arg1 <c1> ^predicate <r> -^modifier.handle negation)
+#   (<r> ^handle in1 ^2 <c2> -^3)
+#   (<c1> ^formatted <p> ^parameter-index <id> -^new-formatted)
+#   (<c2> -^formatted ^predicates.property <name>)
+#   (<p> ^rtype <rtype>)
+#-->
+#   (<c> ^formatted true)
+#   (<s> ^nlp <n>)
+#   (<n> ^name <name> ^args <a> ^parameter <para> ^type concept ^attribute predicate ^rtype <rtype>)
+#   (<a> ^1 <p>)
+#   (<para> ^1 <para1>)
+#   (<para1> ^param-id <id> ^type <rtype>)
+#}
+
+
 #############################
 ###   DEBUGGING RULES   #####
 #############################
@@ -790,7 +867,7 @@ sp {create-condition*interrupt
    (<o> ^name complete)
 -->
 (write (cmd print <c> -d 5))
-#(write (cmd matches))
+(write (cmd matches create-condition*apply*create-name))
 (interrupt)
 }
 
@@ -812,14 +889,17 @@ sp {wait*interrupt*create-condition
 
 sp {create-type*interrupt
    (state <s> #^superstate.superstate.name retrieve-predicate-structure
-   		  	  ^superstate.name create-type
+   		  	  ^superstate.name create-args
+			  ^top-state.dialog-context.store-learn-link <sl>
              ^superstate.superstate <ss>)
    		  	  #^superstate.superstate.superstate.operator <oo> +)
    		  	  #^superstate.superstate.superstate.nlp <ss>)
 -->
 (interrupt)
 (write (cmd print <ss> -d 5))
-#(write (cmd matches))
+(write (cmd print <sl> -d 15))
+(write (cmd matches ))
+(write (cmd fc create-condition*elaborate*param2*no-parameter-index))
 #(write (cmd print <oo> -d 15))
 #(write (cmd pref <ss>))
 }
