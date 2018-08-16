@@ -8,7 +8,7 @@ sp {smem-version-retrieve*elaborate*smem-query
    (state <s> ^name smem-version-retrieve
               ^smem.command <c>
               ^superstate.operator.handle <handle>)
--->
+-->	
    (<c> ^query <cue>
         ^link-to-ltm yes #need for prohibit#no#only for latest 9.6 dev
         ^depth 5)
@@ -19,10 +19,74 @@ sp {smem-version-retrieve*elaborate*smem-query*result
 :o-support
    (state <s> ^name smem-version-retrieve
               ^superstate <ss>
+               ^looked-for-next true
+              -^next-version <rv>
               ^smem.result.retrieved <rr>)
    (<rr> ^handle <cn>)
 -->
-   (<ss> ^condition-handle <cn>
+(<ss> ^condition-handle <cn>
          ^smem-result <rr>)
 }
-
+sp {smem-version-retrieve*elaborate*smem-query*result*next-version
+:o-support
+   (state <s> ^name smem-version-retrieve
+              ^superstate <ss>
+               ^looked-for-next true
+               ^next-version <rv>
+              ^smem.result.retrieved <rr>)
+   (<rr> ^handle <cn>)
+   (<ss> ^superstate <sss>)
+-->
+   (<ss> ^condition-handle <cn>
+         ^next-version <rv>
+         ^smem-result <rr>)
+   (<sss> ^next-version <rv>)
+}
+sp {smem-version-retrieve*propose*smem-next-version
+:o-support
+   (state <s> ^name smem-version-retrieve
+              ^superstate.operator.handle <handle>
+              ^smem.result.retrieved <rr>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name smem-next-version
+        ^retrieved <rr>
+        ^handle <handle>)
+}
+####################################3
+sp {smem-next-version*elaborate*prohibit
+   (state <s> ^name smem-next-version
+              ^superstate.operator <so>)
+   (<so> ^handle <handle> ^retrieved <rr>)
+-->
+   (<s> ^handle <handle> ^prohibit <rr>)
+}
+sp {smem-next-version*elaborate*smem-query
+   (state <s> ^name smem-next-version
+              ^handle <handle> 
+              ^prohibit <rr>
+              ^smem.command <c>)
+-->
+   (<c> ^query <cue>
+        ^prohibit <rr>
+        ^link-to-ltm yes #need for prohibit#no#only for latest 9.6 dev
+        ^depth 5)
+   (<cue> ^handle <handle>)
+}
+sp {smem-next-version*elaborate*smem-query*failure
+:o-support
+   (state <s> ^name smem-next-version
+              ^superstate <ss>
+              ^smem.result.failure <rr>)
+-->
+   (<ss> ^looked-for-next true)
+}
+sp {smem-next-version*elaborate*smem-query*next-version
+:o-support
+   (state <s> ^name smem-next-version
+              ^superstate <ss>
+              ^smem.result.retrieved <rr>)
+   (<ss> ^superstate <sss>)
+-->
+   (<ss> ^looked-for-next true ^next-version <rr>)
+}

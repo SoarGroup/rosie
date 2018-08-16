@@ -1,11 +1,12 @@
 sp {create-from-parse*elaborate*sentence
+:o-support
    (state <s> ^name create-from-parse
               ^superstate.operator <sop>)
    (<sop> ^structure <t>)
 -->
-   (<s> ^sentence <t>)
+  #(<s> ^sentence <t>)
+  (<s> ^sentence (deep-copy <t>))
 }
-
 sp {create-from-parse*elaborate*only-parameter
    (state <s> ^name create-from-parse
               ^sentence.<< if-subclause then-subclause subclause >> <c>)
@@ -14,14 +15,12 @@ sp {create-from-parse*elaborate*only-parameter
 -->
    (<s> ^parameter <p>)
 }
-
 sp {create-from-parse*elaborate*sentence*subclause
    (state <s> ^name create-from-parse
               ^sentence <s2>)
 -->
    (<s> ^condition <s2>)
 }
-
 sp {create-from-parse*elaborate*arg1*parameter
    (state <s> ^name create-from-parse
               ^condition <c>)
@@ -30,7 +29,6 @@ sp {create-from-parse*elaborate*arg1*parameter
 -->
    (<s> ^parameter <p>)
 }
-
 sp {create-from-parse*elaborate*arg1*agent*has
    (state <s> ^name create-from-parse
               ^condition <c>)
@@ -39,7 +37,6 @@ sp {create-from-parse*elaborate*arg1*agent*has
 -->
    (<s> ^parameter <p>)
 }
-
 sp {create-from-parse*elaborate*predicate-objects
    (state <s> ^name create-from-parse
               ^condition <c>)
@@ -49,7 +46,6 @@ sp {create-from-parse*elaborate*predicate-objects
 -->
    (<s> ^parameter <pp>)
 }
-
 sp {create-from-parse*elaborate*predicate-objects*of*first
    (state <s> ^name create-from-parse
               ^condition <c>)
@@ -62,7 +58,6 @@ sp {create-from-parse*elaborate*predicate-objects*of*first
 -->
    (<s> ^parameter <pp>)
 }
-
 sp {create-from-parse*elaborate*predicate-objects*of*second
    (state <s> ^name create-from-parse
               ^condition <c>)
@@ -72,7 +67,6 @@ sp {create-from-parse*elaborate*predicate-objects*of*second
 -->
    (<s> ^parameter <pp>)
 }
-
 sp {create-from-parse*elaborate*predicate-objects*more
    (state <s> ^name create-from-parse
               ^condition <c>)
@@ -80,7 +74,6 @@ sp {create-from-parse*elaborate*predicate-objects*more
 -->
    (<s> ^condition <p1> <p2>)
 }
-
 sp {create-from-parse*elaborate*predicate*of*predicate
    (state <s> ^name create-from-parse
               ^condition <c>)
@@ -90,7 +83,6 @@ sp {create-from-parse*elaborate*predicate*of*predicate
 -->
    (<s> ^condition <c2>)
 }
-
 sp {create-from-parse*elaborate*predicate*of*relation*predicate
    (state <s> ^name create-from-parse
               ^condition.relation <c>)
@@ -99,7 +91,6 @@ sp {create-from-parse*elaborate*predicate*of*relation*predicate
 -->
    (<s> ^condition <c2>)
 }
-
 sp {create-from-parse*elaborate*arg1*relation*parameter
    (state <s> ^name create-from-parse
               ^condition <c>)
@@ -109,7 +100,6 @@ sp {create-from-parse*elaborate*arg1*relation*parameter
 -->
    (<s> ^parameter <p>)
 }
-
 sp {create-from-parse*elaborate*arg1*of-concept*parameter
    (state <s> ^name create-from-parse
               ^condition <c>)
@@ -118,7 +108,6 @@ sp {create-from-parse*elaborate*arg1*of-concept*parameter
 -->
    (<s> ^condition <a>)
 }
-
 sp {create-from-parse*elaborate*parameter*relation*parameter
    (state <s> ^name create-from-parse
               ^parameter <p>)
@@ -130,7 +119,6 @@ sp {create-from-parse*elaborate*parameter*relation*parameter
 -->
    (<s> ^parameter <pp>)
 }
-
 sp {create-from-parse*elaborate*arg2*parameter
    (state <s> ^name create-from-parse
               ^condition <c>)
@@ -148,7 +136,6 @@ sp {create-from-parse*elaborate*arg2*parameter
 -->
    (<s> ^parameter <pp>)
 }
-
 sp {create-from-parse*elaborate*arg2*parameter*name
    (state <s> ^name create-from-parse
               ^condition <c>)
@@ -158,9 +145,6 @@ sp {create-from-parse*elaborate*arg2*parameter*name
 -->
    (<s> ^parameter <pp>)
 }
-
-################
-################
 sp {create-from-parse*elaborate*agent*opponent
 :o-support
    (state <s> ^name create-from-parse
@@ -194,32 +178,173 @@ sp {create-from-parse*elaborate*agent*opponent*then-clause*two
    (<nps> ^opponent true)
 }
 ################
-################
+sp {create-from-parse*interrupt*mismatch*input-objects
+   (state <s> ^name create-from-parse
+              ^top-state.dialog-context <dc>)
+   (<dc> ^{<inp> << input-object-1 input-object-2 output-object-1 >>} <x>)
+   (<s> ^<inp> {<x2> <> <x>})
+-->
+(write (cmd print |MISTAKE|))
+(write (cmd print |MISTAKE|))
+(interrupt)
+   #(<s> ^learning-predicate <np>) #maybe make learn-link here! then multiple versions easier
+}
 sp {create-from-parse*elaborate*learning-predicate
    (state <s> ^name create-from-parse
               ^top-state.dialog-context <dc>)
-   (<dc> ^learn-link <ll> ^learning-predicate <np>)
+   (<dc> ^learning-predicate <np>)
 -->
-   (<s> ^learning-predicate <np> ^learn-link <ll>)
+   (<s> ^learning-predicate <np>) #maybe make learn-link here! then multiple versions easier
 }
-sp {create-from-parse*elaborate*input-object
+sp {create-from-parse*elaborate*learn-link
    (state <s> ^name create-from-parse
-              ^top-state.dialog-context.input-object-1 <np>)
+              ^top-state.dialog-context <dc>)
+   (<dc> ^learn-link <ll>)
 -->
-   (<s> ^input-object-1 <np>)
+   (<s> ^learn-link <ll>) #maybe make learn-link here! then multiple versions easier
 }
-sp {create-from-parse*elaborate*output-object-1
+#first make local version
+#hmm could build seperate learn-link here too instead of in interpret-message
+sp {create-from-parse*elaborate*input-object-1*obj-desc
    (state <s> ^name create-from-parse
-              ^top-state.dialog-context.output-object-1 <np>)
+              ^sentence <msg>
+              ^learning-predicate <lp>)
+   (<msg> ^arg1 <obj> ^predicate <pred>)# -^arg2)
+   (<pred> ^handle <name>)# ^property <p>)
+   (<lp> ^<< spelling name >> <name>)
 -->
-   (<s> ^output-object-1 <np>)
+   (<s> ^input-object-1 <obj>)
 }
-sp {create-from-parse*elaborate*input-object-2
+sp {create-from-parse*elaborate*input-object-2*obj-desc
    (state <s> ^name create-from-parse
-              ^top-state.dialog-context.input-object-2 <np>)
+              ^sentence <msg>
+              ^learning-predicate <lp>)
+   (<msg> ^arg1 <obj> ^predicate <pred> -^arg2)
+   (<pred> ^handle <name> ^2 <obj2>)# ^property <p>)
+   (<lp> ^<< spelling name >> <name>)
 -->
-   (<s> ^input-object-2 <np>)
+   (<s> ^input-object-2 <obj2>)
 }
+sp {create-from-parse*elaborate*input-object-2*obj-desc*of1
+   (state <s> ^name create-from-parse
+              ^sentence <msg>
+              ^learning-predicate <lp>)
+   (<msg> ^arg1 <obj> ^predicate <pred> -^arg2)
+   (<pred> ^handle of1 ^2 <pred2>)# ^item-type predicate)
+   (<pred2> ^handle <name> ^2 <obj2>)
+   (<lp> ^<< spelling name >> <name>)
+-->
+   (<s> ^input-object-2 <obj2>)
+   (<s> ^output-object-1 <obj>)
+}
+sp {create-from-parse*elaborate*input-object-2*obj-desc*of14
+   (state <s> ^name create-from-parse
+              ^sentence <msg>
+              ^learning-predicate <lp>)
+   (<msg> ^arg1 <obj> ^arg2 <pred>  -^predicate)
+   (<pred> ^handle of1 ^2 <pred2> ^item-type predicate)
+   (<pred2> ^handle <name> ^2 <o2>)
+   (<lp> ^<< spelling name >> <name>)
+   -{(<msg> ^arg2 <ff> <> <pred>)}
+-->
+   (<s> ^input-object-2 <o2>)
+   (<s> ^output-object-1 <obj>)
+}
+sp {create-from-parse*elaborate*input-object-2*obj-desc*of12
+   (state <s> ^name create-from-parse
+              ^sentence <msg>
+              ^learning-predicate <lp>)
+   (<msg> ^arg1 <obj> ^arg2 <pred> ^arg2 <p3> -^predicate)
+   (<pred> ^handle of1 ^2 <pred2> ^item-type predicate)
+   (<pred2> ^handle <name> ^2 <o2>)
+   (<p3> ^handle <name> ^relation <relp>)
+   (<relp> ^handle of1 ^2 <o2>)
+   (<lp> ^<< spelling name >> <name>)
+-->
+   (<s> ^input-object-2 <o2>)
+   (<s> ^output-object-1 <obj>)
+}
+sp {create-from-parse*elaborate*input-object-2*obj-desc*of13
+   (state <s> ^name create-from-parse
+              ^sentence <msg>
+              ^learning-predicate <lp>)
+   (<msg> ^arg1 <obj> ^predicate <pred> -^arg2)
+   (<pred> ^handle of1 ^2 <pred2> ^item-type predicate)
+   (<pred2> ^handle <name> ^2 <obj2>)
+   (<lp> ^<< spelling name >> <name>)
+-->
+   (<s> ^input-object-2 <obj2>)
+   (<s> ^output-object-1 <obj>)
+}
+sp {create-from-parse*elaborate*input-object-1*then-desc*1
+   (state <s> ^name create-from-parse
+              ^sentence <msg>
+              ^learning-predicate <lp>)
+   (<msg> ^then-subclause <tc>)
+   (<tc> ^arg1 <obj> ^predicate <pred> -^arg2)
+   (<pred> ^handle in1 ^2 <arg2> ^item-type predicate -^property)
+   (<arg2> ^item-type object ^predicates <pp>)
+   (<pp> ^property <name>)
+   (<lp> ^<< spelling name >> <name>)
+-->
+   (<s> ^input-object-1 <obj>)
+}
+sp {create-from-parse*elaborate*input-object-1*then-desc*2
+   (state <s> ^name create-from-parse
+              ^sentence <msg>
+              ^learning-predicate <lp>)
+   (<msg> ^then-subclause <tc>)
+   (<tc> ^arg1 <obj> ^predicate <pred> -^arg2)
+   (<pred> ^handle <name> -^2 )#^item-type predicate -^property)#^property <p>)
+   (<lp> ^<< spelling name >> <name>)
+-->
+   (<s> ^input-object-1 <obj>)
+}
+sp {create-from-parse*elaborate*input-objects*then-desc*3
+   (state <s> ^name create-from-parse
+              ^sentence <msg>
+              ^learning-predicate <lp>)
+   (<msg> ^then-subclause <tc>)
+   (<tc> ^arg1 <obj> ^predicate <pred> -^arg2)
+   (<pred> ^handle <name> ^2 <obj2> -^handle of1)
+   (<lp> ^<< spelling name >> <name>)
+-->
+   (<s> ^input-object-1 <obj> ^input-object-2 <obj2>)
+}
+sp {create-from-parse*elaborate*output-objects*then-desc*4
+   (state <s> ^name create-from-parse
+              ^sentence <msg>
+              ^learning-predicate <lp>)
+   (<msg> ^then-subclause <tc>)
+   (<tc> ^arg1 <obj> ^predicate <pred> -^arg2)
+   (<pred> ^handle of1 ^2 <pred2> ^item-type predicate)
+   (<pred2> ^handle <name> ^2 <obj2>)
+   (<lp> ^<< spelling name >> <name>)
+-->
+   (<s> ^output-object-1 <obj> ^input-object-2 <obj2>)
+}
+###########################################################
+###########################################################
+#sp {create-from-parse*elaborate*input-object
+#   (state <s> ^name create-from-parse
+#              ^top-state.dialog-context.input-object-1 <np>)
+#-->
+#   (<s> ^input-object-1 <np>)
+#}
+#sp {create-from-parse*elaborate*output-object-1
+#   (state <s> ^name create-from-parse
+#              ^top-state.dialog-context.output-object-1 <np>)
+#-->
+#   (<s> ^output-object-1 <np>)
+#}
+#sp {create-from-parse*elaborate*input-object-2
+#   (state <s> ^name create-from-parse
+#              ^top-state.dialog-context.input-object-2 <np>)
+#-->
+#   (<s> ^input-object-2 <np>)
+#}
+###########################################################
+###########################################################
 sp {create-from-parse*elaborate*action-count*nlp-set
    (state <s> ^name create-from-parse)
 -->
@@ -333,7 +458,6 @@ sp {create-from-parse*elaborate*clause*subclause
 -->
    (<s> ^condition <s1>)
 }
-
 sp {create-from-parse*elaborate*arg1*relation*parameterfg
    (state <s> ^name create-from-parse
               ^condition <c>)
@@ -343,7 +467,6 @@ sp {create-from-parse*elaborate*arg1*relation*parameterfg
    (<s> ^condition <p>)
    #(<s> ^numeric-predicate <p>)
 }
-
 sp {create-from-parse*elaborate*arg1*relation*parameter*write1
    (state <s> ^name create-from-parse
               ^condition <c>)
@@ -508,7 +631,7 @@ sp {create-from-parse*elaborate*arg2*parameter*indef2
 sp {create-from-parse*propose*create-object
    (state <s> ^name create-from-parse
               ^parameter <c>)
-   (<c> -^formatted)
+   #(<c> -^formatted)
  -{(<s> ^parameter <c2>)
    (<c2> ^relation <r>)
    (<r> ^2 <c> ^handle in1)
@@ -518,6 +641,23 @@ sp {create-from-parse*propose*create-object
    (<s> ^operator <o> + =)
    (<o> ^name create-object
         ^parameter <c>)
+}
+sp {create-from-parse*propose*create-objectASDFF
+   (state <s> ^name create-from-parse
+              ^operator <o>
+              ^parameter <c>)
+   (<o> ^name create-object ^parameter <c>)
+   (<c> ^formatted <f>)
+-->
+   (<s> ^operator <o> -)
+}
+sp {create-from-parse*apply*create-object*copy*formatted
+   (state <s> ^name create-from-parse
+              ^operator <o>)
+   (<o> ^name create-object ^parameter <c>)
+   (<c> ^finalize <f>)
+-->
+   (<c> ^formatted <f>)
 }
 sp {create-from-parse*apply*create-object*increment-object-count
    (state <s> ^name create-from-parse
@@ -594,6 +734,7 @@ sp {create-from-parse*apply*complete*verb-structure
 -->
     (<ss> ^verb-structure <vs>)
 }
+
 sp {create-from-parse*apply*complete-flag
    (state <s> ^name create-from-parse
               ^nlp-set <nps>
@@ -601,6 +742,18 @@ sp {create-from-parse*apply*complete-flag
               ^operator.name complete)
 -->
     (<s> ^complete-flag true)
+}
+sp {create-from-parse*apply*complete-flag*flag
+   (state <s> ^name create-from-parse
+              #^nlp-set <nps>
+              ^nlp <nlp>
+              ^operator.name complete)
+    (<s> ^complete-flag true)
+	(<nlp> ^name empty ^args.{1} <a>)
+-->
+#(write (cmd print <nlp> -d 4))
+#(write (cmd matches))
+#(interrupt)
 }
 sp {create-from-parse*apply*complete
    (state <s> ^name create-from-parse
@@ -616,6 +769,8 @@ sp {create-from-parse*apply*complete*only-objects
              -^indef <pp>
              -^input-object-1 <pp>
              -^input-object-2 <pp>
+			 #-^complete-flag true
+			 #^nlp-set <nps>
               ^parameter <pp>)
    (<pp> ^formatted <p3> ^parameter-index <id>)
    (<p3> ^parameter <para>)
@@ -624,11 +779,12 @@ sp {create-from-parse*apply*complete*only-objects
 -{(<pp> ^formatted <pp3> > <p3>)}
 -{(<para> ^1 <xx>)}
 -->
+#(write (cmd print <pp> -d 5))
+#(interrupt)
    (<s> ^nlp <p3>)
    (<para> ^1 <p2>)
    (<p2> ^param-id <id>)
 }
-
 sp {create-from-parse*apply*complete*only-input-objects
    (state <s> ^name create-from-parse
               ^operator.name complete
@@ -649,7 +805,7 @@ sp {create-from-parse*apply*complete*superstate*copy
              -^avoid
              -^consider
               ^complete-flag true
-              ^top-state.dialog-context.learn-link.handle <name>
+              ^learn-link.handle <name>
               ^operator.name complete)
    -{(<s> ^nlp <nlp>)
      (<nps> -^nlp <nlp>)}
@@ -665,7 +821,7 @@ sp {create-from-parse*apply*complete*superstate*copy*prefererence
               ^prefer <pref>
              -^modifier <m>
               ^complete-flag true
-              ^top-state.dialog-context.learn-link.handle <name>
+              ^learn-link.handle <name>
               ^operator.name complete)
    -{(<s> ^nlp <nlp>)
      (<nps> -^nlp <nlp>)}
@@ -681,7 +837,7 @@ sp {create-from-parse*apply*complete*superstate*copy*prefererence*avoid
               ^avoid <pref>
              -^modifier <m>
               ^complete-flag true
-              ^top-state.dialog-context.learn-link.handle <name>
+              ^learn-link.handle <name>
               ^operator.name complete)
    -{(<s> ^nlp <nlp>)
      (<nps> -^nlp <nlp>)}
@@ -698,7 +854,7 @@ sp {create-from-parse*apply*complete*superstate*copy*prefererence*avoid*modifier
               ^moved <mov>
               ^modifier <m>
               ^complete-flag true
-              ^top-state.dialog-context.learn-link.handle <name>
+              ^learn-link.handle <name>
               ^operator.name complete)
    -{(<s> ^nlp <nlp>)
      (<nps> -^nlp <nlp>)}
@@ -715,11 +871,11 @@ sp {create-from-parse*apply*complete*superstate*copy*prefererence*modifier*moved
               ^moved <mov>
               ^modifier <m>
               ^complete-flag true
-              ^top-state.dialog-context.learn-link.handle <name>
+              ^learn-link.handle <name>
               ^operator.name complete)
    -{(<s> ^nlp <nlp>)
      (<nps> -^nlp <nlp>)}
-(<ss> ^<type> <a> ^gtype <type>)
+   (<ss> ^<type> <a> ^gtype <type>)
 -->
    (<a> ^nlp-set <nps> ^aname <name> ^prefer <pref> ^modifier <m> ^moved <mov>)
    (<nps> ^aname <name>)
@@ -732,7 +888,7 @@ sp {create-from-parse*apply*complete*superstate*copy*prefererence*modifier
              -^moved
               ^modifier <m>
               ^complete-flag true
-              ^top-state.dialog-context.learn-link.handle <name>
+              ^learn-link.handle <name>
               ^operator.name complete)
    -{(<s> ^nlp <nlp>)
      (<nps> -^nlp <nlp>)}
@@ -749,7 +905,7 @@ sp {create-from-parse*apply*complete*superstate*copy*prefererence*avoid*modifier
              -^moved
               ^modifier <m>
               ^complete-flag true
-              ^top-state.dialog-context.learn-link.handle <name>
+              ^learn-link.handle <name>
               ^operator.name complete)
    -{(<s> ^nlp <nlp>)
      (<nps> -^nlp <nlp>)}
@@ -764,7 +920,7 @@ sp {create-from-parse*apply*complete*superstate*copy*considererence
               ^nlp-set <nps>
               ^consider <pref>
               ^complete-flag true
-              ^top-state.dialog-context.learn-link.handle <name>
+              ^learn-link.handle <name>
               ^operator.name complete)
    -{(<s> ^nlp <nlp>)
      (<nps> -^nlp <nlp>)}
@@ -773,7 +929,3 @@ sp {create-from-parse*apply*complete*superstate*copy*considererence
    (<a> ^nlp-set <nps> ^aname <name> ^consider <pref>)
    (<nps> ^aname <name>)
 }
-###################
-###################
-#superstate will have object-count and the rest of junk on create-parsed-format
-

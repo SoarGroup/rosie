@@ -23,13 +23,21 @@ old="Old"
 #declare -a arr=("nkings")
 #declare -a arr=("kakuro" "ksideswap4")
 #declare -a arr=("kswap2")
-declare -a arr=("frog" "nrooks")
+#
+declare -a arr=("frog")
+# "nrooks"
 #
 #"logi5" "jigsawdoku" "sudoku" "mapncolor3")
+#jmahjong random error
+#declare -a arr=("sudoku" "frog" "nrooks") #rand seed seg faults all work on #25!
 
-#declare -a arr=("logi5" "jigsawdoku" "sudoku" "mapncolor3" "colorken" "ken" "pyramid" "jmahjong" "husbands" "wives" "8puzzle" "yiso5puzzle" "iso8puzzle")
+#on 25 all these working pre removal of input-object
+#and post now try deep copy sentence
+#declare -a arr=("logi5" "jigsawdoku" "sudoku" "mapncolor3" "colorken" "ken" "pyramid" "jmahjong" "husbands" "wives" "8puzzle" "yiso5puzzle" "iso8puzzle" "5puzzle" "3tower" "cannibals" "sorting" "gbfox" "frog" "worldblocks" "blocksworld" "zmaze" "nknights" "nkings" "kswap1" "ktour" "travelsales" "nrooks" "lfamilycross")
 
-#declare -a arr=("2pushmaze" "5puzzle" "3tower" "cannibals" "sorting" "dsokoban2" "gbfox" "frog" "worldblocks" "blocksworld" "zmaze" "nknights" "nkings" "kswap1" "ktour" "travelsales" "nrooks" "lfamilycross") 
+#other between
+#declare -a arr=("2pushmaze" "dsokoban2" "solitaire")
+
 
 
 #"pyramid" "shuffle"
