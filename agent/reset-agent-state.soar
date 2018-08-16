@@ -1,31 +1,33 @@
-# change-name = clear-stack
-#   pop actions until the stack is empty
+# reset-agent-state - stop any tasks/interactions the agent is doing
 
-# keep popping until the top of the stack = none
-sp {manage-action-stack*clear-stack*propose*pop-action
-   (state <s> ^name manage-action-stack
-              ^change-name clear-action-stack
+sp {top-state*propose*reset-agent-state
+   (state <s> ^superstate nil
+              ^reset-agent-state true)
+-->
+   (<s> ^operator <o> + !)
+   (<o> ^name reset-agent-state)
+}
+
+sp {top-state*apply*reset-agent-state*clear-interaction-stack
+   (state <s> ^superstate nil
+              ^operator.name reset-agent-state
+              ^interaction.changes <chgs>)
+-->
+   (<chgs> ^clear-interaction-stack true)
+}
+
+sp {top-state*apply*reset-agent-state*clear-action-stack
+   (state <s> ^superstate nil
+              ^operator.name reset-agent-state
               ^action-stack.top { <action> <> none })
 -->
-   (<s> ^operator <o> +)
-   (<o> ^name pop-action
-        ^action <action>)
+   (<action> ^status abort)
 }
 
-sp {manage-action-stack*propose*complete-clear-action-stack
-   (state <s> ^name manage-action-stack
-              ^change-name clear-action-stack
-              ^action-stack.top none)
+sp {top-state*apply*reset-agent-state*remove*flag
+   (state <s> ^superstate nil
+              ^operator.name reset-agent-state
+              ^reset-agent-state true)
 -->
-   (<s> ^operator <o> +)
-   (<o> ^name complete-clear-action-stack)
-}
-
-sp {manage-action-stack*apply*complete-clear-action-stack
-   (state <s> ^name manage-action-stack
-              ^operator.name complete-clear-action-stack
-              ^action-stack.changes <changes>)
-   (<changes> ^clear-action-stack true)
--->
-   (<changes> ^clear-action-stack true -)
+   (<s> ^reset-agent-state true -)
 }
