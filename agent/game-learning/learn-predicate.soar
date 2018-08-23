@@ -9,6 +9,7 @@ sp {perception-monitor*elaborate*object*volume
 -->
 	(<p> ^volume <vol>)
 }
+#TODO DEPRICATE/REPLACE COPY
 sp {learn-predicate*elaborate*verb-structure
     :o-support
    (state <s> ^name learn-predicate
@@ -18,7 +19,7 @@ sp {learn-predicate*elaborate*verb-structure
               ^action <a>)
    (<a> ^aname <name>)
 -->
-   (<a> ^verb-structure <vs>)
+   (<a> ^verb-structure <vs>) #COPY PROBLEM
 } 
 sp {learn-predicate*elaborate*input-args
    (state <s> ^name learn-predicate
@@ -204,6 +205,7 @@ sp {learn-predicate*elaborate*from*transfer-action-goal
               ^superstate <ss>)
    (<ss> ^name transfer-action-goal ^structure <t> ^gtype <type>)
 -->
+#ignore(interrupt)
    (<s> ^gtype <type>
       #  ^retrieve-handle <handle>
         #^parsed-structure <ps>
@@ -244,12 +246,14 @@ sp {learn-predicate*elaborate*tcn
    (<op> ^message <t>
          ^type {<type> << predicate action goal failure heuristic >>})
 -->
-   (<s> ^gtype <type>
-        ^main-type <type>
-        ^<type> <act>)
-  (<act> ^parameter-set <ps>
-        ^potential-args <po>)
+#(interrupt)#happens first
+   (<s> ^main-type <type>)
+        #^gtype <type>)
+        #^<type> <act>)
+  #(<act> ^parameter-set <ps>
+  #      ^potential-args <po>)
 }
+
 sp {learn-predicate*elaborate*parsed-structure
 :o-support
    (state <s> ^name learn-predicate
@@ -265,6 +269,7 @@ sp {learn-predicate*elaborate*tcn*nlp-set
    (<op> ^nlp-set <nps>
          ^type {<type> << predicate action goal failure heuristic >>})
 -->
+#ignore(interrupt)#doesnt happen
    (<s> ^parsed-structure <t>
         ^gtype <type>
         ^main-type <type>
@@ -273,14 +278,19 @@ sp {learn-predicate*elaborate*tcn*nlp-set
          ^nlp-set <nps>
         ^potential-args <po>)
 }
+#weird check why fires at first selection auto repair
 sp {learn-predicate*elaborate*tcn*nlp-set*stored
+:o-support
    (state <s> ^name learn-predicate
               ^quiescence t 
+			 -^main-type #COPY FIX
               ^superstate.operator <op>)
    (<t> ^learned-structure <nps>)
    (<op> ^message <t>
          ^type {<type> << predicate action goal failure heuristic >>})
 -->
+(write (cmd print |HAPPENS|))
+#(interrupt) #happens
    (<s> ^parsed-structure <t2>
         ^gtype <type>
         ^main-type <type>
@@ -308,9 +318,10 @@ sp {learn-predicate*apply*convert-language-format*clean-old-structures
 
 sp {learn-predicate*propose*convert-language-format
    (state <s> ^name learn-predicate
-             -^<gtype>.nlp-set
+             -^<type>.nlp-set #TODO COPY CHANGE
               ^parsed-structure <t>
-              ^gtype <gtype>
+			  ^main-type <type>
+              #^gtype <gtype>
              -^tcn)
 -->
    (<s> ^operator <o> + =)
@@ -319,15 +330,22 @@ sp {learn-predicate*propose*convert-language-format
    #(<o> ^name convert-parsed-format
    #     ^structure <t>)
 }
-sp {learn-predicate*store*verb-structure
-   :o-support
-   (state <s> ^name learn-predicate
+#######qqqqq
+sp {learn-predicate*store*verb-structure*steal*learn-from-parameter
+ #  :o-support
+   (state <s> #^name learn-predicate
+   		  	  ^name create-from-parse
               ^verb-structure <vs>
-              ^top-state.dialog-context <dc>
-              ^action <t>)
+			  ^operator.name complete
+			  ^complete-flag-2 true
+              ^top-state.dialog-context <dc>)
+              #^action <t>)
    (<dc> ^type game-learning ^learn-link <ll>)
 -->
-   (<ll> ^verb-structure <vs>)
+#(interrupt)
+#(write (cmd print <s> -d 3))
+#(write (cmd matches))
+   (<ll> ^verb-structure <vs>) #COPY PROBLEM
 }
 sp {learn-predicate*store*structure
    :o-support
