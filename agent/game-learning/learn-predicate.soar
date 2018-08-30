@@ -9,19 +9,6 @@ sp {perception-monitor*elaborate*object*volume
 -->
 	(<p> ^volume <vol>)
 }
-#TODO DEPRICATE/REPLACE COPY #working copied out with subsame.sudoku
-#sp {learn-predicate*elaborate*verb-structure
-#    :o-support
-#   (state <s> ^name learn-predicate
-#              ^gtype action
-#             -^retrieve-handle <name>
-#              ^verb-structure <vs>
-#              ^action <a>)
-#   (<a> ^aname <name>)
-#-->
-#   (<a> ^verb-structure <vs>)
-#}
- 
 sp {learn-predicate*elaborate*input-args
    (state <s> ^name learn-predicate
               ^gtype <gtype>
@@ -38,7 +25,6 @@ sp {learn-predicate*elaborate*input-args
 -->
    (<res2> ^instance <in1>)
 }
-
 #hmm not sure if right anymore
 #try doing it for non parameters too
 sp {learn-predicate*elaborate*input-args*set-to-single*objects
@@ -58,7 +44,6 @@ sp {learn-predicate*elaborate*input-args*set-to-single*objects
    (<res> ^instance <i15>)
    (<i15> ^1 <obj>)
 }
-
 #JK REMOVED deep-copy sentence change                                                             
 #sp {learn-predicate*elaborate*input-args*learning-predicate
 #   (state <s> ^name learn-predicate
@@ -70,7 +55,6 @@ sp {learn-predicate*elaborate*input-args*set-to-single*objects
 #-->
 #   (<c> ^result.set <res>)
 #}
-
 sp {learn-predicate*elaborate*input-args*object*single
    (state <s> ^name learn-predicate
               ^top-state.dialog-context.learning-predicate <lp>
@@ -206,15 +190,14 @@ sp {learn-predicate*elaborate*from*transfer-action-goal
               ^superstate <ss>)
    (<ss> ^name transfer-action-goal ^structure <t> ^gtype <type>)
 -->
-#ignore(interrupt)
    (<s> ^gtype <type>
       #  ^retrieve-handle <handle>
         #^parsed-structure <ps>
+        ^completed-version 1
         ^game <name>
         ^<type> <t>
         ^main-type <type>)
 }
-
 #trying to fix triple pass! fucked by GDS not sure why, for now just do two games
 #sp {learn-predicate*elaborate*from*transfer-action-goal
 #:o-support
@@ -239,7 +222,6 @@ sp {learn-predicate*elaborate*from*transfer-action-goal
 #   (<pas> ^argnum <an>)
 #   (<p> ^aname <aname>)
 #}
-
 sp {learn-predicate*elaborate*tcn
    (state <s> ^name learn-predicate
               ^superstate.operator <op>)
@@ -247,14 +229,12 @@ sp {learn-predicate*elaborate*tcn
    (<op> ^message <t>
          ^type {<type> << predicate action goal failure heuristic >>})
 -->
-#(interrupt)#happens first
    (<s> ^main-type <type>)
         #^gtype <type>)
         #^<type> <act>)
   #(<act> ^parameter-set <ps>
   #      ^potential-args <po>)
 }
-
 sp {learn-predicate*elaborate*parsed-structure
 :o-support
    (state <s> ^name learn-predicate
@@ -270,10 +250,10 @@ sp {learn-predicate*elaborate*tcn*nlp-set
    (<op> ^nlp-set <nps>
          ^type {<type> << predicate action goal failure heuristic >>})
 -->
-#ignore(interrupt)#doesnt happen,want to do this anways
    (<s> ^parsed-structure <t>
         ^gtype <type>
         ^main-type <type>
+        ^completed-version 1
         ^<type> <act>)
   (<act> ^parameter-set <ps>
          ^nlp-set <nps>
@@ -285,15 +265,20 @@ sp {learn-predicate*elaborate*tcn*nlp-set*stored
    (state <s> ^name learn-predicate
               ^quiescence t 
 			 -^main-type #COPY FIX
+			  ^top-state.dialog-context <dc>
               ^superstate.operator <op>)
    (<t> ^learned-structure <nps>)
    (<op> ^message <t>
          ^type {<type> << predicate action goal failure heuristic >>})
 -->
-#(write (cmd print |HAPPENS|))
-#(interrupt) #happens
+#(interrupt) #TODO use message structure? and rebuild?
+#TODO need to clean learn-link and message <t> then of parsed-struct, or dont add
+#TODO better explained if is iterative (add new knowledge so should rebuild ...)
+#(write (cmd print <nps> -d 10))
+#(write (cmd print <op> -d 4))
    (<s> ^parsed-structure <t2>
         ^gtype <type>
+        ^completed-version 1
         ^main-type <type>
         ^<type> <act>)
   (<act> ^parameter-set <ps>
@@ -308,59 +293,56 @@ sp {learn-predicate*apply*convert-language-format*clean-old-structures
               ^top-state.dialog-context.learn-link <ll>
               ^gtype <gtype>
              -^tcn)
-  #(<o> ^name convert-parsed-format)#TODO check
-   (<o> ^name create-from-parse)
+   (<o> ^name create-from-parse) #convert-parsed-format
    (<ll> ^predicate-structure <ps>)
    (<ps> ^conditions <nlp>)
 -->
 (interrupt)
    (<ps> ^conditions <nlp> -)
 }
-
-sp {learn-predicate*propose*convert-language-format
+sp {learn-predicate*propose*create-from-parse
    (state <s> ^name learn-predicate
-             -^<type>.nlp-set #TODO COPY CHANGE
+             #-^<type>.nlp-set #CHANGE
+             #-^prohibit
+             -^completed-version 1 
               ^parsed-structure <t>
 			  ^main-type <type>
               #^gtype <gtype>
              -^tcn)
 -->
    (<s> ^operator <o> + =)
-   (<o> ^name create-from-parse
+   (<o> ^name create-from-parse #convert-parsed-format
         ^structure <t>)
-   #(<o> ^name convert-parsed-format
-   #     ^structure <t>)
 }
-#######qqqqq
-#### TODO MOVE, works with sudokusubsame
-sp {learn-predicate*store*verb-structure*steal*learn-from-parameter
- #  :o-support
-   (state <s> #^name learn-predicate
-   		  	  ^name create-from-parse
-              ^verb-structure <vs>
-			  ^operator.name complete
-			  ^complete-flag-2 true
-              ^top-state.dialog-context <dc>)
-              #^action <t>)
-   (<dc> ^type game-learning ^learn-link <ll>)
+sp {learn-predicate*propose*create-from-parse*next-version
+   (state <s> ^name learn-predicate
+              #^prohibit <pp>
+              ^next-version <nv>
+             -^prohibit <nv>
+              ^completed-version 1
+             -^completed-version 2 
+              ^parsed-structure <t>
+			  ^main-type <type>
+             -^tcn)
 -->
 #(interrupt)
-#(write (cmd print <s> -d 3))
-#(write (cmd matches))
-   (<ll> ^verb-structure <vs>) #COPY PROBLEM
+   (<s> ^operator <o> + =)
+   (<o> ^name create-from-parse
+        #^prohibit <pp>
+        ^structure <t>)
 }
-
+#delay this copy until we have picked a winner!
 sp {learn-predicate*store*structure
    :o-support
    (state <s> ^name learn-predicate
               ^top-state.dialog-context <dc>
               ^gtype {<gtype> << action goal failure heuristic >>}
               ^<gtype> <t>)
-   (<t> ^nlp-set.nlp <nlp> ^formated)
+   (<t> ^nlp-set.nlp <nlp> ^formated ^final-version) #COPY CHANGE
    (<dc> ^type game-learning ^learn-link <ll>)
    (<ll> ^predicate-structure <ps>)
 -->
-   (<ps> ^conditions <nlp>)
+   (<ps> ^conditions <nlp>) #COPY PROBLEM	
 }
 sp {learn-predicate*store*prefer
    :o-support
@@ -368,10 +350,10 @@ sp {learn-predicate*store*prefer
               ^top-state.dialog-context <dc>
               ^gtype {<gtype> << heuristic >>}
               ^<gtype> <t>)
-   (<t> ^prefer <nlp> ^formated)
+   (<t> ^prefer <nlp> ^formated ^final-version)
    (<dc> ^type game-learning ^learn-link <ll>)
 -->
-   (<ll> ^prefer <nlp>)
+   (<ll> ^prefer <nlp>)#COP PROBLEM
 }
 sp {learn-predicate*store*avoid
    :o-support
@@ -379,10 +361,10 @@ sp {learn-predicate*store*avoid
               ^top-state.dialog-context <dc>
               ^gtype {<gtype> << heuristic >>}
               ^<gtype> <t>)
-   (<t> ^avoid <nlp> ^formated)
+   (<t> ^avoid <nlp> ^formated ^final-version)
    (<dc> ^type game-learning ^learn-link <ll>)
 -->
-   (<ll> ^avoid <nlp>)
+   (<ll> ^avoid <nlp>)#COP PROBLEM
 }
 sp {learn-predicate*store*moved
    :o-support
@@ -390,7 +372,7 @@ sp {learn-predicate*store*moved
               ^top-state.dialog-context <dc>
               ^gtype {<gtype> << heuristic >>}
               ^<gtype> <t>)
-   (<t> ^moved <nlp> ^formated)
+   (<t> ^moved <nlp> ^formated ^final-version)
    (<dc> ^type game-learning ^learn-link <ll>)
 -->
    (<ll> ^moved <nlp>)
@@ -401,7 +383,7 @@ sp {learn-predicate*store*modifier
               ^top-state.dialog-context <dc>
               ^gtype {<gtype> << heuristic >>}
               ^<gtype> <t>)
-   (<t> ^modifier <m> ^formated)
+   (<t> ^modifier <m> ^formated ^final-version)
    (<dc> ^type game-learning ^learn-link <ll>)
 -->
    (<ll> ^modifier <m>)
@@ -413,7 +395,7 @@ sp {learn-predicate*store*consider
               ^top-state.dialog-context <dc>
               ^gtype {<gtype> << heuristic >>}
               ^<gtype> <t>)
-   (<t> ^consider <nlp> ^formated)
+   (<t> ^consider <nlp> ^formated ^final-version)
    (<dc> ^type game-learning ^learn-link <ll>)
 -->
    (<ll> ^consider <nlp>)
@@ -425,7 +407,7 @@ sp {learn-predicate*store*opponent
               ^top-state.dialog-context <dc>
               ^gtype {<gtype> << action goal failure heuristic >>}
               ^<gtype> <t>)
-   (<t> ^nlp-set.opponent <o> ^formated ^handle <n>)
+   (<t> ^nlp-set.opponent <o> ^formated ^handle <n> ^final-version)
    (<dc> ^type game-learning ^learn-link <ll>)
    (<ll> ^handle <n>)
 -->
@@ -437,11 +419,11 @@ sp {learn-predicate*store*structure*argnum
               ^top-state.dialog-context <dc>
               ^main-type {<gtype> << action goal failure heuristic >>}
               ^<gtype> <t>)
-   (<t> ^parameter-set.argnum <an> ^handle <n>)
+   (<t> ^parameter-set.argnum <an> ^handle <n> ^final-version)
    (<dc> ^type game-learning ^learn-link <ll>)
    (<ll> ^handle <n>)
 -->
-   (<ll> ^argnum <an>)
+   (<ll> ^argnum <an>) #COPY PROBLEM
 }
 sp {learn-predicate*store*structure*heuristic
    :o-support
@@ -464,11 +446,11 @@ sp {learn-predicate*store*structure*learned-predicate
               ^gtype {<type> << predicate heuristic >>}
               ^main-type <type>
               ^<type> <t>)
-   (<t> ^nlp-set <nl> ^formated ^parameter-set.argnum <an> ^handle <name>)
+   (<t> ^nlp-set <nl> ^formated ^parameter-set.argnum <an> ^handle <name> ^final-version)
    (<dc> ^type game-learning ^learn-link <ll>)
    (<ll> ^handle <name>)
 -->
-   (<ll> ^predicate-structure <ps> ^argnum <an>)
+   (<ll> ^predicate-structure <ps> ^argnum <an>) #COPY PROBLEM
 }
 sp {learn-predicate*store*structure*learned-predicate*conditions
    :o-support
@@ -477,21 +459,24 @@ sp {learn-predicate*store*structure*learned-predicate*conditions
               ^gtype {<type> << predicate heuristic >>}
               ^main-type <type>
               ^<type> <t>)
-   (<t> ^nlp-set.nlp <nlp> ^formated ^handle <name>)
+   (<t> ^nlp-set.nlp <nlp> ^formated ^handle <name> ^final-version)
    (<dc> ^type game-learning ^learn-link <ll>)
    (<ll> ^predicate-structure <ps> ^handle <name>)
 -->
-   (<ps> ^conditions <nlp>)
+   (<ps> ^conditions <nlp>) #COPY PROBLEM
 }
+#COPY PROBLEM
+#wait for all of interpretations to be created and formatted
 sp {learn-predicate*elaborate*list-games
    (state <s> ^name learn-predicate
               ^main-type <type2>
-              ^<type2> <gt>           
+              #^<type2> <gt>
+              ^completed-versions true      
               ^top-state.dialog-context <dc>
               ^superstate.operator <op>)
    (<op> ^type <type>)
-   (<gt> ^handle <pname> ^formated)
-   (<dc> ^learn-link.handle <pname> ^name <name>)
+   #(<gt> ^handle <pname> ^formated)
+   (<dc> ^name <name>)#^learn-link.handle <pname>
 -->
    (<s> ^list.game <g> ^objects <o>)
    (<g> ^game <name> ^type <type> predicate) 
@@ -539,7 +524,42 @@ sp {learn-predicate*propose*formate-conditions
    (<s> ^operator <o> + = >)
    (<o> ^name format-conditions
         ^type <type>
+		^predicate <t>
         ^nlp-set <nlp>)
+}
+sp {preference*learn-predicate*prefer*x*over*format-conditions
+   (state <s> ^name learn-predicate
+              ^operator <o> +
+              ^operator <o2> +)
+    (<o> ^name create-from-parse)
+    (<o2> ^name format-conditions)
+-->
+   (<s> ^operator <o> > <o2>)
+}
+#create completed all versions that fires after format-conditions
+sp {learn-predicate*propose*completed-creating-versions
+   (state <s> ^name learn-predicate
+             -^completed-versions
+              ^main-type <type>)
+-->
+   (<s> ^operator <o> + <)
+   (<o> ^name completed-creating-versions)
+}
+sp {learn-predicate*apply*completed-creating-versions
+#:interrupt
+   (state <s> ^name learn-predicate
+              ^operator.name completed-creating-versions)
+-->
+   (<s> ^completed-versions true)
+}
+sp {learn-predicate*apply*completed-creating-versions*single-version
+   (state <s> ^name learn-predicate
+             -^prohibit #only single type
+              ^main-type <type>
+              ^<type> <t>
+              ^operator.name completed-creating-versions)
+-->
+   (<t> ^final-version true)
 }
 sp {learn-predicate*elaborate*sub-conditions
    (state <s> ^name learn-predicate
@@ -603,4 +623,15 @@ sp {learn-predicate*elaborate*nlp-set*verb-structure
    (<t> ^nlp-set.verb-structure <vs>)
 -->
 	(<t> ^verb-structure <vs>)
+}
+#need to make at end of learn
+sp {learn-predicate*elaborate*learn-link*verb-structure
+:o-support
+   (state <s> ^name learn-predicate
+              ^top-state.dialog-context.learn-link <ll> #TODO most recent?
+              ^gtype action
+              ^action <t>)
+   (<t> ^nlp-set.verb-structure <vs> ^final-version)
+-->
+   (<ll> ^verb-structure <vs>)
 }

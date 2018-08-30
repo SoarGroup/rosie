@@ -4,7 +4,6 @@ sp {learn-condition*elaborate*conditions
 -->
    (<s> ^condition <co>)
 }
-
 #temp if go back to retrieveal model may need to chunk here
 sp {learn-condition*impasse
    (state <s> ^superstate.name learn-condition
@@ -16,7 +15,6 @@ sp {learn-condition*impasse
    (<s> ^name learn-condition-impasse
         ^condition <co>)
 }
-
 sp {learn-condition-impasse*propose*with-attribute
    (state <s> ^name learn-condition-impasse
               ^superstate <ss>)
@@ -35,7 +33,6 @@ sp {learn-condition-impasse*propose*with-attribute
    (<a3> ^name number ^args <ag3> ^rtype single ^result.set.instance <a33> ^return-type number)
    (<a33> ^1 <name>)
 }
-
 sp {learn-condition-impasse*propose*with-attribute22
    (state <s> ^name learn-condition-impasse
               ^superstate <ss>)
@@ -54,7 +51,6 @@ sp {learn-condition-impasse*propose*with-attribute22
    (<a3> ^name number ^args <ag3> ^rtype single ^result.set.instance <a33> ^return-type number)
    (<a33> ^1 <name>)
 }
-
 sp {learn-condition-impasse*propose*with-attribute*primitive-object
    (state <s> ^name learn-condition-impasse
               ^superstate <ss>)
@@ -68,7 +64,6 @@ sp {learn-condition-impasse*propose*with-attribute*primitive-object
          ^negative <bool>
          ^parameter <p>)
 }
-
 #normally here need to retrieve structure and elab linkstate predicate (already have)
 sp {learn-condition-impasse*propose*top-pair
    (state <s> ^name learn-condition-impasse
@@ -84,7 +79,6 @@ sp {learn-condition-impasse*propose*top-pair
          ^negative <bool>
          ^parameter <p>)
 }
-
 sp {learn-condition-impasse*propose*function
    (state <s> ^name learn-condition-impasse
               ^superstate <ss>)
@@ -98,7 +92,6 @@ sp {learn-condition-impasse*propose*function
          ^negative <bool>
          ^parameter <p>)
 }
-
 sp {learn-condition-impasse*propose*concept-condition
    (state <s> ^name learn-condition-impasse
               ^superstate <ss>)
@@ -108,8 +101,6 @@ sp {learn-condition-impasse*propose*concept-condition
    (<ss> ^operator <op> + =)
    (<op> ^name concept-condition)
 }
-
-
 #TODO JAMES when trying to generalize (notice that operators here have similar structure)
 #TODO RECODE TODO
 sp {learn-condition-impasse*propose*attribute-of
@@ -126,8 +117,6 @@ sp {learn-condition-impasse*propose*attribute-of
          ^negative <bool>
          ^parameter <p>)
 }
-
-
 sp {learn-condition-impasse*propose*has-attribute
    (state <s> ^name learn-condition-impasse
               ^superstate <ss>)
@@ -141,8 +130,6 @@ sp {learn-condition-impasse*propose*has-attribute
          ^negative <bool>
          ^parameter <p>)
 }
-
-
 sp {learn-condition-impasse*propose*same-attribute
    (state <s> ^name learn-condition-impasse
               ^superstate <ss>)
@@ -157,7 +144,6 @@ sp {learn-condition-impasse*propose*same-attribute
          ^negative <bool>
          ^parameter <p>)
 }
-
 #TODO readd for reset up message
 #sp {learn-condition*propose*retry-condition-setup*stillunrseolved
 #   (state <s> ^operator.name wait
@@ -177,14 +163,12 @@ sp {learn-condition-impasse*propose*same-attribute
 #(<sss> ^operator <o> + >)
 #(<o> ^name retry-condition-setup)
 #}
-
 sp {retry-condition-setup*propose*complete
    (state <s> ^name retry-condition-setup)
 -->
 (<s> ^operator <o> + =)
 (<o> ^name complete)
 }
-
 sp {retry-condition-setup*apply*complete
    (state <s> ^name retry-condition-setup
               ^quiescence t #do not chunk through this rule (failure case)
@@ -215,18 +199,183 @@ sp {retry-condition-setup*apply*complete
               ^fields.word <type>)
    (<ps> ^learned-structure <nlp>)
 }
-
 #TODO ADD BACK FOR ISOMORPHIC DETECTION
 #JK version
-sp {learn-condition*propose*auto-resolve-satisfaction-failure
-#:interrupt
+#TODO COPY VERSION changed
+#sp {learn-condition*propose*auto-resolve-satisfaction-failure
+#   (state <s> ^operator.name wait
+#              ^impasse no-change
+#              ^superstate.superstate <sss>)
+#   (<sss> ^name learn-condition)
+#-->
+#(<sss> ^operator <o> + >)
+#(<o> ^name auto-resolve-satisfaction-failure)
+#}
+sp {learn-condition*propose*ungroundable-condition
    (state <s> ^operator.name wait
               ^impasse no-change
               ^superstate.superstate <sss>)
    (<sss> ^name learn-condition)
 -->
+#(interrupt)
 (<sss> ^operator <o> + >)
-(<o> ^name auto-resolve-satisfaction-failure)
+(<o> ^name ungroundable-condition)
+}
+sp {learn-condition*apply*ungroundable-condition
+   (state <s> ^name learn-condition
+              ^superstate <ss>
+              ^operator.name ungroundable-condition)
+   (<ss> ^operator <o>)
+-->
+(<ss> ^operator <o> -) #consider less than pref?
+}
+sp {resolve-conditions*propose*resolve-ungroundable
+   (state <s> ^operator.name wait
+              ^impasse no-change
+              ^quiescence t 
+              ^superstate <ss>
+              ^superstate.superstate <sss>)
+   (<ss> ^name resolve-conditions ^condition <co>)
+   (<sss> ^name chunk-predicate-impasse)
+(<co> -^result.set.<s>)
+-->
+#(interrupt)
+#(write (cmd print <ss> -d 3))
+   (<ss> ^operator <o> + = >)      
+   (<o> ^name resolve-ungroundable
+   		^condition <co>)
+}
+
+#preference rules
+sp {resolve-conditions*prefer*resolve-ungroundable*type*concept
+   (state <s> ^name resolve-conditions
+   		  	  ^operator <o1> +
+			  ^operator <o2> +)
+   (<o1> ^name resolve-ungroundable ^condition <co1>)
+   (<o2> ^name resolve-ungroundable ^condition <co2>)
+   (<co1> ^type concept)
+   (<co2> -^type concept)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+sp {resolve-conditions*prefer*resolve-ungroundable*same*name
+   (state <s> ^name resolve-conditions
+   		  	  ^operator <o1> +
+			  ^operator <o2> +)
+   (<o1> ^name resolve-ungroundable ^condition {<co1> < <co2>})
+   (<o2> ^name resolve-ungroundable ^condition <co2>)
+   (<co1> ^name <name>)#^type concept
+   (<co2> ^name <name>)#^type concept
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+sp {resolve-conditions*apply*resolve-ungroundable*interrupt
+   (state <s> ^name resolve-conditionsXX
+   		  	  ^operator <o>)
+   (<o> ^name resolve-ungroundable ^condition <co>)
+-->
+(interrupt)
+(write (cmd print <co> -d 5))
+}
+sp {resolve-conditions*apply*resolve-ungroundable*make-new-symbol
+   (state <s> ^name resolve-conditions
+   		  	  ^linkstate <ls>
+			  ^quiescence t 
+   		  	  ^operator <o>)
+   (<o> ^name resolve-ungroundable ^condition <co>)
+   (<ls> ^<type> <t> ^main-type <type>) #TODO or gtype? should we learn subconcepts?
+   (<t> ^condition <co>)
+   (<co> ^name <name>)
+-->
+   (<s> ^word (make-constant-symbol <name>))
+#JK removing below makes us not copy onto learn-link, 
+#good, only do at end, re convert-from-parse, wont slow too much and maybe useful
+#(<t> ^final-version true)#copys struc onto learn-link #TODO use parse structure instead?
+}
+
+sp {resolve-conditions*apply*resolve-ungroundable*finished-version
+   (state <s> ^name resolve-conditions
+   		  	  ^linkstate <ls>
+			  ^quiescence t 
+			  ^word <word>
+			  ^smem.command <sc>
+   		  	  ^operator <o>)
+   (<o> ^name resolve-ungroundable ^condition <co>)
+   (<ls> ^<type> <t> ^main-type <type>) #TODO or gtype? should we learn subconcepts?
+   (<t> ^condition <co> -^return-type number)
+   (<co> ^name <name>)
+-->
+#(interrupt)
+   (<s> ^found-new-learnable true)
+   (<sc> ^store <h1> <prop>) # if do spelling version need sturture-type.. below, kinda a pain
+#start by doing handle-spelling version)
+   (<h1> ^handle <name> ^new-handle <word> ^property <prop>)
+   (<prop> ^handle property ^type visual) #todo maybe problem storing multiple of these
+}
+#do want to create new h1, because property of term may have changed< ! come up with good examples
+#
+sp {resolve-conditions*apply*resolve-ungroundable*finished-version*numeric
+   (state <s> ^name resolve-conditions
+   		  	  ^linkstate <ls>
+			  ^quiescence t 
+			  ^word <word>
+			  ^smem.command <sc>
+   		  	  ^operator <o>)
+   (<o> ^name resolve-ungroundable ^condition <co>)
+   (<ls> ^<type> <t> ^main-type <type>) #TODO or gtype? should we learn subconcepts?
+   (<t> ^condition <co> ^return-type number)#check!! that this is here
+   (<co> ^name <name>)
+-->
+#(interrupt)
+   (<s> ^found-new-learnable true)
+   (<sc> ^store <h1> <prop>) # if do spelling version need sturture-type.. below, kinda a pain
+#start by doing handle-spelling version)
+   (<h1> ^handle <word> ^handle-spelling <name> ^property <prop>) #steal from clear
+   (<prop> ^handle numeric ^type conceptual)
+}
+
+sp {resolve-conditions*apply*resolve-ungroundable
+   (state <s> ^name resolve-conditions
+   		  	  ^quiescence t 
+			  ^linkstate <ls>
+			  ^word <word>
+			  ^top-state <ts>
+			  ^top-state.interaction.changes <c>
+			  ^found-new-learnable true
+   		  	  ^operator <o>)
+   (<o> ^name resolve-ungroundable ^condition <co>)
+   #(<ls> ^main-type <type> ^<type> <t> ^parsed-structure <ps>)
+   #(<t> ^nlp-set <nlp> ^formated ^final-version true)
+   (<ts> ^dialog-context <dc>)
+   #(<dc> ^learn-link <ll>)
+   #(<ll> ^argnum <an>)
+   (<co> ^name {<name2> <> <word>} ^args <args>)
+   #(<ts> ^smap.<spell2> <spell>)
+-->
+#(interrupt)
+(write (crlf) <name2>)
+#   (write (cmd print <dc> -d 10))
+#   (write (cmd print <ls> -d 2))
+   #(<ts> ^smap <sm>) #TODO need to store in smem, stop using smap
+   #(<sm> ^<name2> <word>)
+   #(<co> ^name <name2> -) #only do this if learn-link structure copy
+   #(<ll> ^argnum <an> -)
+   #(<co> ^name <word>)
+   (<c> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator agent)
+   (<p> ^type process-unknown-word
+        ^parameters.word <word>
+        ^satisfaction <sat>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type process-unknown-word
+          ^originator instructor)
+   (<dc> ^learning-predicate <lp>)
+   (<lp> ^name <word> ^spelling <name2> ^usage-args (deep-copy <args>))
+   (<c> ^outgoing-message <out-msg>)
+   (<out-msg> ^type unknown-defined-word
+              ^fields.word <word>)
+   #(<ps> ^learned-structure <nlp>) #dont stored
 }
 
 # PR - my version
@@ -241,7 +390,6 @@ sp {learn-condition*propose*auto-resolve-satisfaction-failure
 #(<sss> ^operator <o> + >)
 #(<o> ^name resolve-satisfaction-failure)
 #}
-
 
 sp {learn-condition*apply*resolve-satisfaction-failure
    (state <s> ^superstate <sss>)
@@ -258,7 +406,6 @@ sp {learn-condition*apply*resolve-satisfaction-failure
 #(interrupt)
 #(write (cmd print <lsd> -d 10))
 #}
-
 sp {resolve-satisfaction-failure*elaborate*unresolved
    (state <s> ^name resolve-satisfaction-failure
               ^superstate.superstate <sss>
@@ -322,17 +469,19 @@ sp {resolve-satisfaction-failure*apply*add-condition-without-subconditions
 }
 
 # If it has failed because a set was not satisfied but all conditions are satisfied.
-sp {resolve-conditions*propose*resolve-satisfaction-failure
-   (state <s> ^operator.name wait
-              ^impasse no-change
-              ^superstate <ss>
-              ^superstate.superstate <sss>)
-   (<ss> ^name resolve-conditions)
-   (<sss> ^name chunk-predicate-impasse)
--->
-   (<ss> ^operator <o> + >)      
-   (<o> ^name resolve-satisfaction-failure)
-}
+#JK version commenting out
+#TODO USE for Preeti version
+#sp {resolve-conditions*propose*resolve-satisfaction-failure
+#   (state <s> ^operator.name wait
+#              ^impasse no-change
+#              ^superstate <ss>
+#              ^superstate.superstate <sss>)
+#   (<ss> ^name resolve-conditions)
+#   (<sss> ^name chunk-predicate-impasse)
+#-->
+#   (<ss> ^operator <o> + >)      
+#   (<o> ^name resolve-satisfaction-failure)
+#}
 
 sp {resolve-conditions*elaborate*resolve-satisfaction-failure
    (state <s> #^name resolve-conditions
