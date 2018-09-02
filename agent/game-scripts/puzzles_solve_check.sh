@@ -22,28 +22,31 @@ old="Old"
 #declare -a arr=("nknights")
 #declare -a arr=("nkings")
 #declare -a arr=("kakuro" "ksideswap4")
-#declare -a arr=("kswap2")
+#declare -a arr=("shuffle")
+#"kenp" "colorkenp")
 #
 #
 #"logi5" "jigsawdoku" "sudoku" "mapncolor3")
 #jmahjong random error
 #declare -a arr=("sudoku" "frog" "nrooks") #rand seed seg faults all work on #25!
-
 #on 25 all these working pre removal of input-object
 #and post now try deep copy sentence
 
 #declare -a arr=("sorting" "gbfox" "worldblocks" "blocksworld" "zmaze" "nknights" "nkings" "kswap1" "ktour" "travelsales" "nrooks" "lfamilycross")
 #declare -a arr=("nrooks" "lfamilycross")
 #declare -a arr=("gbfox" "worldblocks" "blocksworld" "zmaze" "nknights" "nkings" "kswap1" "ktour" "travelsales" "nrooks" "lfamilycross")
-#STILL broken 
-declare -a arr=("logi5" "jigsawdoku" "sudoku" "mapncolor3" "colorken" "ken" "jmahjong" "pyramid" "husbands" "wives" "8puzzle" "yiso5puzzle" "iso8puzzle" "5puzzle" "3tower" "cannibals" "sorting" "gbfox" "worldblocks" "blocksworld" "zmaze" "nknights" "nkings" "kswap1" "ktour" "travelsales" "nrooks" "2pushmaze" "dsokoban2" "solitaire" "lfamilycross")
-#
 
-
-
+#all working but family cross 9/1/2018
+#3 betweens not working, but everything else 9/2
+#survo,kakuro broken
+#BROKE! "husbands" "wives" 
+declare -a arr=("8puzzle" "yiso5puzzle" "iso8puzzle" "5puzzle" "3tower" "cannibals" "sorting" "gbfox" "worldblocks" "blocksworld" "zmaze" "nknights" "nkings" "nqueens" "kswap1" "ktour" "travelsales" "nrooks" "stackedfrogs" "stackedfrogs2" "kstackedfrogs" "lazystackedfrogs" "lfamilycross")
+#"logi5" "jigsawdoku" "sudoku" "ksudoku" "mapncolor3" "colorken" "ken" "kenp" "colorkenp" "tripeaks" "golf" "suko" "sujiko" "shuffle" "jmahjong" "pyramid" 
 #other between
-#declare -a arr=("2pushmaze" "dsokoban2" "solitaire")
+#declare -a arr=("frog" "2pushmaze" "dsokoban2" "solitaire")
 #"frog"
+
+#declare -a arr=("logi5" "jigsawdoku" "sudoku" "ksudoku" "mapncolor3" "colorken" "ken" "kenp" "colorkenp" "tripeaks" "golf" "suko" "sujiko" "shuffle" "jmahjong" "pyramid" "husbands" "wives" "8puzzle" "yiso5puzzle" "iso8puzzle" "5puzzle" "3tower" "cannibals" "sorting" "gbfox" "worldblocks" "blocksworld" "zmaze" "nknights" "nkings" "nqueens" "kswap1" "ktour" "travelsales" "nrooks" "frog" "2pushmaze" "dsokoban2" "solitaire" "stackedfrogs" "stackedfrogs2" "kstackedfrogs" "lazystackedfrogs" "lfamilycross")
 
 
 #"pyramid" "shuffle"
