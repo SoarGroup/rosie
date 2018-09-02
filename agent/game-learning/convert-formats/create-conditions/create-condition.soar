@@ -357,6 +357,9 @@ sp {create-condition*elaborate*param1
               ^param true
    		  	  ^clause <co>)
    (<co> ^parameter-index <pi>)
+-{(<s> ^unary-attribute)
+  (<co> ^relation <r>)
+  (<r> -^handle between)}#delay param-id
 -->
    (<s> ^param1 <pi>)
 }
@@ -525,13 +528,31 @@ sp {create-condition*elaborate*rtype*number
 -->
    (<s> ^rtype single)
 }
+
 sp {create-condition*elaborate*rtype*set
    (state <s> ^name create-condition
               ^clause.predicates.multiple true
+			  ^clause <co>
               -^parameter.{1} <r>)
+-{(<s> ^unary-attribute)
+  (<co> ^relation <r>)
+  (<r> -^handle between)}#delay param-id
 -->
    (<s> ^rtype set)
 }
+
+sp {create-condition*elaborate*rtype*single*parent*is*set
+   (state <s> ^name create-condition
+              ^clause.predicates.multiple true
+			  ^clause <co>
+			  ^unary-attribute
+              -^parameter.{1} <r>)
+  (<co> ^relation <r>)
+  (<r> -^handle between)
+-->
+   (<s> ^rtype single)
+}
+
 sp {create-condition*elaborate*rtype*no-parameter
    (state <s> ^name create-condition
               ^args.{1}.rtype <type>
@@ -894,23 +915,39 @@ sp {wait*interrupt*create-condition
 (write (cmd pref <ss> condition-name -w))
 (interrupt)
 }
-
-
 ##WORKING tILL HERE
 ##need to pick version!! that is best
 #one works
 sp {create-type*interrupt
    (state <s> #^superstate.superstate.name retrieve-predicate-structure
-   		  	  #^superstate.name create-args
-			  ^superstate.name complete
+   		  	  ^superstate.name create-args
+			  #^superstate.name complete
+			  #^superstate.name learn-condition
 			  ^top-state.dialog-context <dc>
              ^superstate.superstate <ss>)
    		  	  #^superstate.superstate.superstate.operator <oo> +)
    		  	  #^superstate.superstate.superstate.nlp <ss>)
 -->
 (interrupt)
-(write (cmd print <dc>))
+(write (cmd print <ss> -d 5))
 #(write (cmd matches ))
-(write (cmd matches create-from-parse*apply*complete*superstate*copy))
-(write (cmd fc satisfy-predicate-conditions*elaborate-finished-learning*final-version))
+#(write (cmd matches create-from-parse*apply*complete*superstate*copy))
+#(write (cmd fc satisfy-predicate-conditions*elaborate-finished-learning*final-version))
+}
+
+
+sp {create-type*interrupt*wait
+   (state <s> ^operator.name wait
+			  #^top-state.dialog-context <dc>
+             ^superstate <ss>)
+   		  	  #^superstate.superstate.superstate.operator <oo> +)
+   		  	  #^superstate.superstate.superstate.nlp <ss>)
+			  (<ss> ^name learn-condition ^superstate <ls>)
+-->
+(interrupt)
+#(write (cmd print <ls> -d 5))
+(write (cmd pref <ls>))
+#(write (cmd matches ))
+#(write (cmd matches create-from-parse*apply*complete*superstate*copy))
+#(write (cmd fc satisfy-predicate-conditions*elaborate-finished-learning*final-version))
 }
