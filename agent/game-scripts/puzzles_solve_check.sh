@@ -39,9 +39,10 @@ old="Old"
 #all working but family cross 9/1/2018
 #3 betweens not working, but everything else 9/2
 #survo,kakuro broken
-#BROKE! "husbands" "wives" 
-declare -a arr=("8puzzle" "yiso5puzzle" "iso8puzzle" "5puzzle" "3tower" "cannibals" "sorting" "gbfox" "worldblocks" "blocksworld" "zmaze" "nknights" "nkings" "nqueens" "kswap1" "ktour" "travelsales" "nrooks" "stackedfrogs" "stackedfrogs2" "kstackedfrogs" "lazystackedfrogs" "lfamilycross")
-#"logi5" "jigsawdoku" "sudoku" "ksudoku" "mapncolor3" "colorken" "ken" "kenp" "colorkenp" "tripeaks" "golf" "suko" "sujiko" "shuffle" "jmahjong" "pyramid" 
+#incorrect tripeaks golf 
+
+declare -a arr=("husbands" "wives" "logi5" "jigsawdoku" "sudoku" "ksudoku" "mapncolor3" "colorken" "ken" "kenp" "colorkenp" "tripeaks" "golf" "suko" "sujiko" "shuffle" "jmahjong" "pyramid" "8puzzle" "yiso5puzzle" "iso8puzzle" "5puzzle" "3tower" "cannibals" "sorting" "gbfox" "worldblocks" "blocksworld" "zmaze" "nknights" "nkings" "nqueens" "kswap1" "ktour" "travelsales" "nrooks" "stackedfrogs" "stackedfrogs2" "kstackedfrogs" "lazystackedfrogs" "lfamilycross")
+
 #other between
 #declare -a arr=("frog" "2pushmaze" "dsokoban2" "solitaire")
 #"frog"
