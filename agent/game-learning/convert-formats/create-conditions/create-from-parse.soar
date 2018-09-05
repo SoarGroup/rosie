@@ -7,6 +7,14 @@ sp {create-from-parse*elaborate*sentence
   #(<s> ^sentence <t>)
   (<s> ^sentence (deep-copy <t>))
 }
+sp {create-from-parse*elaborate*version-set
+:o-support
+   (state <s> ^name create-from-parse
+              ^superstate.operator <sop>)
+   (<sop> ^version-set <t>)
+-->
+  (<s> ^version-set <t>)
+}
 sp {create-from-parse*elaborate*only-parameter
    (state <s> ^name create-from-parse
               ^sentence.<< if-subclause then-subclause subclause >> <c>)
@@ -21,7 +29,6 @@ sp {create-from-parse*elaborate*sentence*subclause
 -->
    (<s> ^condition <s2>)
 }
-
 sp {create-from-parse*elaborate*arg1*parameter
    (state <s> ^name create-from-parse
               ^condition <c>)
@@ -760,10 +767,28 @@ sp {create-from-parse*apply*complete-flag
 -->
     (<s> ^complete-flag true)
 }
-sp {create-from-parse*apply*complete-flag-2
+sp {create-from-parse*apply*complete-flag*interruptz
+   (state <s> ^name create-from-parseX
+              ^nlp-set <nps>
+              ^nlp <nlp>
+			  ^complete-flag-2 true
+			  ^version-set <vs>
+              ^operator.name complete)
+  #(<s> ^complete-flag true)
+-->
+(interrupt)
+(write (cmd matches create-from-parse*apply*complete*superstate*copy))
+(write (cmd print <s> -d 3))
+}
+sp {create-from-parse*apply*complete-flag-2z
    (state <s> ^name create-from-parse
               ^complete-flag true
-              ^operator.name complete)
+              ^operator.name complete
+              ^superstate <ss>)
+#(<ss> ^main-type <type> -^completed-version)
+#  (<s> ^<type> <act>)
+#-{(state <s>)
+#  (<act> -^nlp-set)}
 -->
     (<s> ^complete-flag-2 true)
 }
@@ -969,7 +994,7 @@ sp {create-from-parse*elaborate*gtype*initial
   (<act> ^parameter-set <ps>
         ^potential-args <po>)
 }
-sp {create-from-parse*apply*complete*superstate*copy*final
+sp {create-from-parse*apply*complete*superstate*copy*final*first-version
    (state <s> ^name create-from-parse
               ^superstate <ss>
 			  ^complete-flag-2 true
@@ -981,18 +1006,46 @@ sp {create-from-parse*apply*complete*superstate*copy*final
 #(interrupt)
 (<ss> ^completed-version 1 ^gtype <type> ^<type> <act>)
 }
-sp {create-from-parse*apply*complete*superstate*copy*final2
+
+sp {create-from-parse*apply*complete*superstate*copy*final
    (state <s> ^name create-from-parse
               ^superstate <ss>
 			  ^complete-flag-2 true
+			  ^version-set <vs>
               ^operator.name complete)
-(<ss> ^main-type <type> ^completed-version 1 -^completed-version 2) #dumb make variable, but real solution cannot just increase, needs to do all possible combo
+(<ss> ^main-type <type> ^completed-version 1)
   (<s> ^<type> <act>)
 -{(<act> -^nlp-set)}
 -->
 #(interrupt)
-(<ss> ^completed-version 2 ^gtype <type> ^<type> <act>)
+(<ss> ^gtype <type> ^<type> <act>)
 }
+sp {create-from-parse*apply*complete*formatted*version-set
+   (state <s> ^name create-from-parse
+              ^superstate <ss>
+			  ^version-set <vs>
+			  ^complete-flag-2 true
+              ^operator.name complete)
+(<ss> ^main-type <type>)
+  (<s> ^<type> <act>)
+-{(<act> -^nlp-set)}
+-->
+(<vs> ^formatted true)
+}
+
+
+#sp {create-from-parse*apply*complete*superstate*copy*final2
+#   (state <s> ^name create-from-parse
+#              ^superstate <ss>
+#			  ^complete-flag-2 true
+#              ^operator.name complete)
+#(<ss> ^main-type <type> ^completed-version 1 -^completed-version 2) #dumb make variable, but real solution cannot just i#ncrease, needs to do all possible combo
+#  (<s> ^<type> <act>)
+#-{(<act> -^nlp-set)}
+#-->
+##(interrupt)
+#(<ss> ^completed-version 2 ^gtype <type> ^<type> <act>)
+#}
 #sp {create-from-parse*apply*complete*superstate*copy*final3
 #   (state <s> ^name create-from-parse
 #              ^superstate <ss>
@@ -1005,28 +1058,29 @@ sp {create-from-parse*apply*complete*superstate*copy*final2
 ##(interrupt)
 #(<ss> ^completed-version 3 ^gtype <type> ^<type> <act>)
 #}
-sp {create-from-parse*apply*complete*superstate*copy*prohibit
-   (state <s> ^name create-from-parse
-              ^superstate <ss>
-              ^prohibit <pr>
-			  ^complete-flag-2 true
-              ^operator.name complete)
-(<ss> ^main-type <type>)
-  (<s> ^<type> <act>)
--{(<act> -^nlp-set)}
--->
-(<ss> ^prohibit <pr>)
-}
-sp {create-from-parse*apply*complete*superstate*copy*next-version
-   (state <s> ^name create-from-parse
-              ^superstate <ss>
-              ^next-version <pr>
-			  ^complete-flag-2 true
-              ^operator.name complete)
-(<ss> ^main-type <type>)
-  (<s> ^<type> <act>)
--{(<act> -^nlp-set)}
--->
-#(interrupt)
-(<ss> ^next-version <pr>)
-}
+#prohibit,next-version
+#sp {create-from-parse*apply*complete*superstate*copy*prohibit
+#   (state <s> ^name create-from-parse
+#              ^superstate <ss>
+#              ^prohibit <pr>
+#			  ^complete-flag-2 true
+#              ^operator.name complete)
+#(<ss> ^main-type <type>)
+#  (<s> ^<type> <act>)
+#-{(<act> -^nlp-set)}
+#-->
+#(<ss> ^prohibit <pr>)
+#}
+#sp {create-from-parse*apply*complete*superstate*copy*next-version
+#   (state <s> ^name create-from-parse
+#              ^superstate <ss>
+#              ^next-version <pr>
+#			  ^complete-flag-2 true
+#              ^operator.name complete)
+#(<ss> ^main-type <type>)
+#  (<s> ^<type> <act>)
+#-{(<act> -^nlp-set)}
+#-->
+##(interrupt)
+#(<ss> ^next-version <pr>)
+#}

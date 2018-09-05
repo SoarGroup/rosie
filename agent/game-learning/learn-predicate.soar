@@ -190,10 +190,12 @@ sp {learn-predicate*elaborate*from*transfer-action-goal
               ^superstate <ss>)
    (<ss> ^name transfer-action-goal ^structure <t> ^gtype <type>)
 -->
+#(interrupt)
+(write |HMMM 3 this did fire... on transfer?|)
    (<s> ^gtype <type>
       #  ^retrieve-handle <handle>
         #^parsed-structure <ps>
-        ^completed-version 1
+        ^completed-version 1 #will this work?
         ^game <name>
         ^<type> <t>
         ^main-type <type>)
@@ -250,10 +252,12 @@ sp {learn-predicate*elaborate*tcn*nlp-set
    (<op> ^nlp-set <nps>
          ^type {<type> << predicate action goal failure heuristic >>})
 -->
+(write |HMMM this did fire... on transfer?|)
+#(interrupt)
    (<s> ^parsed-structure <t>
         ^gtype <type>
         ^main-type <type>
-        ^completed-version 1
+        ^completed-version 1 #wont work with version-set?
         ^<type> <act>)
   (<act> ^parameter-set <ps>
          ^nlp-set <nps>
@@ -276,6 +280,7 @@ sp {learn-predicate*elaborate*tcn*nlp-set*stored
 #TODO better explained if is iterative (add new knowledge so should rebuild ...)
 #(write (cmd print <nps> -d 10))
 #(write (cmd print <op> -d 4))
+(write |HMMM 2 this did fire... on transfer?|)
    (<s> ^parsed-structure <t2>
         ^gtype <type>
         ^completed-version 1
@@ -321,20 +326,32 @@ sp {learn-predicate*elaborate*version-list
 -->
    (<s> ^version-list <vl>)
 }
-#qqqqqq
-sp {learn-predicate*propose*create-version-list
+sp {learn-predicate*propose*create-version-map
    (state <s> ^name learn-predicate
               ^completed-version 1
 			  ^version-list <vl>
-			 -^complete-version-list
+			 -^version-map
              -^tcn)
 -->
-(interrupt)
-(write |WTF MATE|)
-(write (cmd print <vl> -d 5))
+#(interrupt)
+#(write (cmd print <vl> -d 5))
    (<s> ^operator <o> + >)
-   (<o> ^name create-version-list
-        ^version-list <v>)
+   (<o> ^name create-version-map
+        ^version-list <vl>)
+}
+sp {learn-predicate*propose*create-from-parse*version-set
+   (state <s> ^name learn-predicate
+              ^completed-version 1 
+              ^parsed-structure <t>
+			  ^version-map.version-set <vs>
+			  ^main-type <type>
+             -^tcn)
+   (<vs> -^formatted)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name create-from-parse
+   		^version-set <vs>
+        ^structure <t>)
 }
 
 #two version worked, now depricated
@@ -557,7 +574,7 @@ sp {learn-predicate*elaborate*handlename
 -->
 	(<t> ^aname <aname>)
 }
-sp {learn-predicate*propose*formate-conditions
+sp {learn-predicate*propose*format-conditions
    (state <s> ^name learn-predicate
               ^main-type <type>
               ^<type> <t>)
@@ -570,15 +587,17 @@ sp {learn-predicate*propose*formate-conditions
 		^predicate <t>
         ^nlp-set <nlp>)
 }
+
 sp {preference*learn-predicate*prefer*x*over*format-conditions
    (state <s> ^name learn-predicate
               ^operator <o> +
               ^operator <o2> +)
-    (<o> ^name create-from-parse)
+    (<o> ^name << create-from-parse create-version-map >>)
     (<o2> ^name format-conditions)
 -->
    (<s> ^operator <o> > <o2>)
 }
+
 #create completed all versions that fires after format-conditions
 sp {learn-predicate*propose*completed-creating-versions
    (state <s> ^name learn-predicate
@@ -590,10 +609,12 @@ sp {learn-predicate*propose*completed-creating-versions
 }
 
 sp {learn-predicate*apply*completed-creating-versions
-#:interrupt
    (state <s> ^name learn-predicate
               ^operator.name completed-creating-versions)
 -->
+#(interrupt)
+#(write (cmd print <s> -d 3))
+#(write (cmd pref <s>))
    (<s> ^completed-versions true)
 }
 

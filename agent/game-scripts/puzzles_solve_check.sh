@@ -41,10 +41,15 @@ old="Old"
 #survo,kakuro broken
 #incorrect tripeaks golf 
 
-declare -a arr=("husbands" "wives" "logi5" "jigsawdoku" "sudoku" "ksudoku" "mapncolor3" "colorken" "ken" "kenp" "colorkenp" "tripeaks" "golf" "suko" "sujiko" "shuffle" "jmahjong" "pyramid" "8puzzle" "yiso5puzzle" "iso8puzzle" "5puzzle" "3tower" "cannibals" "sorting" "gbfox" "worldblocks" "blocksworld" "zmaze" "nknights" "nkings" "nqueens" "kswap1" "ktour" "travelsales" "nrooks" "stackedfrogs" "stackedfrogs2" "kstackedfrogs" "lazystackedfrogs" "lfamilycross")
+#2pushmaze problem with two blue things retrieving two smem..
+#9/4
+#broken
+#"2pushmaze" "dsokoban2" "solitaire" "mapncolor3" "shuffle" "8puzzle" "yiso5puzzle" "iso8puzzle" "5puzzle" "3tower" "worldblocks" "blocksworld" "zmaze" "lazystackedfrogs" "lfamilycross"
+#working
+declare -a arr=("husbands" "wives" "logi5" "jigsawdoku" "sudoku" "ksudoku" "frog" "colorken" "ken" "kenp" "colorkenp" "tripeaks" "golf" "suko" "sujiko" "jmahjong" "pyramid" "cannibals" "sorting" "gbfox" "nknights" "nkings" "nqueens" "kswap1" "ktour" "travelsales" "nrooks" "stackedfrogs" "stackedfrogs2" "kstackedfrogs")
 
 #other between
-#declare -a arr=("frog" "2pushmaze" "dsokoban2" "solitaire")
+#declare -a arr=(
 #"frog"
 
 #declare -a arr=("logi5" "jigsawdoku" "sudoku" "ksudoku" "mapncolor3" "colorken" "ken" "kenp" "colorkenp" "tripeaks" "golf" "suko" "sujiko" "shuffle" "jmahjong" "pyramid" "husbands" "wives" "8puzzle" "yiso5puzzle" "iso8puzzle" "5puzzle" "3tower" "cannibals" "sorting" "gbfox" "worldblocks" "blocksworld" "zmaze" "nknights" "nkings" "nqueens" "kswap1" "ktour" "travelsales" "nrooks" "frog" "2pushmaze" "dsokoban2" "solitaire" "stackedfrogs" "stackedfrogs2" "kstackedfrogs" "lazystackedfrogs" "lfamilycross")
