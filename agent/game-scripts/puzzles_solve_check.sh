@@ -41,12 +41,13 @@ old="Old"
 #survo,kakuro broken
 #incorrect tripeaks golf 
 
-#2pushmaze problem with two blue things retrieving two smem..
-#9/4
+#2pushmaze problem with two blue things retrieving two smem..fixed
+#9/6 stable on all but lfamilycross, tripeaks golf still incorrect 
 #broken
-#"2pushmaze" "dsokoban2" "solitaire" "mapncolor3" "shuffle" "8puzzle" "yiso5puzzle" "iso8puzzle" "5puzzle" "3tower" "worldblocks" "blocksworld" "zmaze" "lazystackedfrogs" "lfamilycross"
+#declare -a arr=("lfamilycross")
+
 #working
-declare -a arr=("husbands" "wives" "logi5" "jigsawdoku" "sudoku" "ksudoku" "frog" "colorken" "ken" "kenp" "colorkenp" "tripeaks" "golf" "suko" "sujiko" "jmahjong" "pyramid" "cannibals" "sorting" "gbfox" "nknights" "nkings" "nqueens" "kswap1" "ktour" "travelsales" "nrooks" "stackedfrogs" "stackedfrogs2" "kstackedfrogs")
+declare -a arr=("husbands" "wives" "logi5" "jigsawdoku" "sudoku" "ksudoku" "frog" "2pushmaze" "dsokoban2" "solitaire" "mapncolor3" "shuffle" "8puzzle" "yiso5puzzle" "iso8puzzle" "5puzzle" "3tower" "worldblocks" "blocksworld" "zmaze" "lazystackedfrogs" "colorken" "ken" "kenp" "colorkenp" "tripeaks" "golf" "suko" "sujiko" "jmahjong" "pyramid" "cannibals" "sorting" "gbfox" "nknights" "nkings" "nqueens" "kswap1" "ktour" "travelsales" "nrooks" "stackedfrogs" "stackedfrogs2" "kstackedfrogs")
 
 #other between
 #declare -a arr=(
