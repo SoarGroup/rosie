@@ -38,17 +38,25 @@ old="Old"
 
 #all working but family cross 9/1/2018
 #3 betweens not working, but everything else 9/2
-#survo,kakuro broken
+#FIXED survo,kakuro broken
 #incorrect tripeaks golf 
 
 #2pushmaze problem with two blue things retrieving two smem..fixed
 #9/6 stable on all but lfamilycross, tripeaks golf still incorrect 
-#broken
-#declare -a arr=("lfamilycross")
+#fixed survo, kakuro
+#declare -a arr=("ksideswap4")
+#declare -a arr=("kakuro" "survo")
 
-#working
-declare -a arr=("husbands" "wives" "logi5" "jigsawdoku" "sudoku" "ksudoku" "frog" "2pushmaze" "dsokoban2" "solitaire" "mapncolor3" "shuffle" "8puzzle" "yiso5puzzle" "iso8puzzle" "5puzzle" "3tower" "worldblocks" "blocksworld" "zmaze" "lazystackedfrogs" "colorken" "ken" "kenp" "colorkenp" "tripeaks" "golf" "suko" "sujiko" "jmahjong" "pyramid" "cannibals" "sorting" "gbfox" "nknights" "nkings" "nqueens" "kswap1" "ktour" "travelsales" "nrooks" "stackedfrogs" "stackedfrogs2" "kstackedfrogs")
+#lazystackedfrogs generates bad solution maybe because of between exclusive?
+#^yes!!, and doesnt learn between inclusive?
+#only for lazy or for normal too?
+#hmmm yes dont' have problem for stackedfrogs, only detects inclusive strange
+#bad solutions lazystackedfrogs,golf, tripeaks
+#declare -a arr=("solitaireR" "jmahjongR") #check solution
+#working!
+declare -a arr=("husbands" "wives" "logi5" "jigsawdoku" "sudoku" "ksudoku" "frog" "2pushmaze" "dsokoban2" "solitaire" "solitaireR" "jmahjongR" "mapncolor3" "kakuro" "survo" "shuffle" "8puzzle" "yiso5puzzle" "iso8puzzle" "5puzzle" "15ipuzzle" "3tower" "worldblocks" "blocksworld" "zmaze" "lazystackedfrogs" "colorken" "ken" "kenp" "colorkenp" "tripeaks" "golf" "suko" "sujiko" "jmahjong" "pyramid" "cannibals" "sorting" "gbfox" "nknights" "nkings" "nqueens" "kswap1" "ksideswap4" "ktour" "travelsales" "nrooks" "stackedfrogs" "stackedfrogs2" "kstackedfrogs")
 
+#
 #other between
 #declare -a arr=(
 #"frog"
