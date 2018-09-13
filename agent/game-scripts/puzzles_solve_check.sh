@@ -44,7 +44,7 @@ old="Old"
 #2pushmaze problem with two blue things retrieving two smem..fixed
 #9/6 stable on all but lfamilycross, tripeaks golf still incorrect 
 #fixed survo, kakuro
-#declare -a arr=("ksideswap4")
+declare -a arr=("2pushmaze") #ant
 #declare -a arr=("kakuro" "survo")
 
 #lazystackedfrogs generates bad solution maybe because of between exclusive?
@@ -54,7 +54,13 @@ old="Old"
 #bad solutions lazystackedfrogs,golf, tripeaks
 #declare -a arr=("solitaireR" "jmahjongR") #check solution
 #working!
-declare -a arr=("husbands" "wives" "logi5" "jigsawdoku" "sudoku" "ksudoku" "frog" "2pushmaze" "dsokoban2" "solitaire" "solitaireR" "jmahjongR" "mapncolor3" "kakuro" "survo" "shuffle" "8puzzle" "yiso5puzzle" "iso8puzzle" "5puzzle" "15ipuzzle" "3tower" "worldblocks" "blocksworld" "zmaze" "lazystackedfrogs" "colorken" "ken" "kenp" "colorkenp" "tripeaks" "golf" "suko" "sujiko" "jmahjong" "pyramid" "cannibals" "sorting" "gbfox" "nknights" "nkings" "nqueens" "kswap1" "ksideswap4" "ktour" "travelsales" "nrooks" "stackedfrogs" "stackedfrogs2" "kstackedfrogs")
+#declare -a arr=(
+#maybe broken:
+# "kakuro" "nqueens" 
+#declare -a arr=("husbands" "wives" "logi5" "jigsawdoku" "sudoku" "ksudoku" "frog" "2pushmaze" "dsokoban2" "solitaire" "solitaireR" "jmahjongR" "mapncolor3" "survo" "shuffle" "8puzzle" "yiso5puzzle" "iso8puzzle" "5puzzle" "15ipuzzle" "3tower" "worldblocks" "blocksworld" "zmaze" "lazystackedfrogs" "colorken" "ken" "kenp" "colorkenp" "tripeaks" "golf" "suko" "sujiko" "jmahjong" "pyramid" "cannibals" "sorting" "gbfox" "nknights" "nkings" "kswap1" "ksideswap4" "ktour" "travelsales" "nrooks" "stackedfrogs")
+#broken
+#declare -a arr=("kakuro" "nqueens" 
+#declare -a arr=("stackedfrogs2" "kstackedfrogs")
 
 #
 #other between

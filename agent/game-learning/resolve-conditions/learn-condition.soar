@@ -228,7 +228,6 @@ sp {learn-condition*apply*ungroundable-condition
 -->
    (<ss> ^operator <o> -) #consider less than pref?
 }
-
 sp {resolve-conditions*propose*resolve-ungroundable
    (state <s> ^operator.name wait
               ^impasse no-change
@@ -237,9 +236,8 @@ sp {resolve-conditions*propose*resolve-ungroundable
               ^superstate.superstate <sss>)
    (<ss> ^name resolve-conditions ^condition <co>)
    (<sss> ^name chunk-predicate-impasse)
-(<co> -^result.set.<x>)
+   (<co> -^result.set.<x>)
 -->
-#(write (cmd print <ss> -d 3))
    (<ss> ^operator <o> + >) # =      
    (<o> ^name resolve-ungroundable
    		^condition <co>)
@@ -249,22 +247,97 @@ sp {resolve*resolve-ungroundable*tie*alphanumeric*bias
               ^item <o1>
 			  ^quiescence t
 			  ^item <o2>
+			  ^condition-set <cs1>
+			  ^condition-set <cs2>
               ^choices multiple)
    (<ss> ^name resolve-conditions
          ^operator <o1> +
          ^operator <o2> +)
    (<o1> ^name resolve-ungroundable ^condition.name <s1> < <s2>)
    (<o2> ^name resolve-ungroundable ^condition.name <s2>)
+   (<cs1> ^handle <s1> ^count 1)#only at same count
+   (<cs2> ^handle <s2> ^count 1)
 -->
-#(interrupt)
-#(write (cmd pref <ss>))
-#(write (cmd print <o1> -d 4))
-#(write (cmd print <o2> -d 4))
-#(write (cmd print <o3> -d 4))
    (<ss> ^operator <o1> > <o2>)
 }
-#
-#TODO in future may use this to pick different versions of between<< (multiple functions)
+sp {prefer*resolve-ungroundable*higher*count
+   (state <s> ^superstate <ss>
+              ^item <o1>
+			  ^quiescence t
+			  ^item <o2>
+			  ^condition-set <cs1>
+			  ^condition-set <cs2>
+              ^choices multiple)
+   (<ss> ^name resolve-conditions
+         ^operator <o1> +
+         ^operator <o2> +)
+   (<o1> ^name resolve-ungroundable ^condition.name <s1>)
+   (<o2> ^name resolve-ungroundable ^condition.name <s2>)
+   (<cs1> ^handle <s1> ^count <c2>)
+   (<cs2> ^handle <s2> ^count {<c3> < <c2>})
+-->
+   (<ss> ^operator <o1> > <o2>)
+}
+sp {prefer*resolve-ungroundable*same-concept*lowest
+   (state <s> ^superstate <ss>
+              ^item <o1>
+			  ^quiescence t
+			  ^item <o2>
+			  ^condition-set <cs1>
+              ^choices multiple)
+   (<ss> ^name resolve-conditions
+         ^operator <o1> +
+         ^operator <o2> +)
+   (<o1> ^name resolve-ungroundable ^condition {<c1> < <c2>})
+   (<o2> ^name resolve-ungroundable ^condition <c2>)
+   (<c1> ^name <s1>)
+   (<c2> ^name <s1>)
+   (<cs1> ^handle <s1> ^count {<n2> > 1})
+-->
+   (<ss> ^operator <o1> > <o2>)
+}
+sp {resolve*resolve-ungroundable*elaborate*set
+   (state <s> ^superstate <ss>
+              ^quiescence t
+			  ^item <i>
+              ^choices multiple)
+   (<i> ^condition.name <cn>)
+   (<ss> ^name resolve-conditions)
+-{(<s> ^item {<i2> < <i>})
+  (<i2> ^condition <c2>)
+  (<c2> ^name <cn>)} #bias to only select one per name
+-->
+   (<s> ^condition-set <cs>)
+   (<cs> ^handle <cn> ^results <x1>)
+}
+sp {resolve*resolve-ungroundable*elaborate*set*result
+   (state <s> ^superstate <ss>
+              ^quiescence t
+			  ^item <i>
+              ^choices multiple)
+   (<i> ^condition.name <cn>)
+   (<ss> ^name resolve-conditions)
+   (<s> ^condition-set <cs>)
+   (<cs> ^handle <cn> ^results <x1>)
+-->
+   (<x1> ^result <i>)
+}
+sp {resolve*resolve-ungroundable*elaborate*set*result*count
+   (state <s> ^superstate <ss>
+              ^quiescence t
+              ^choices multiple)
+   (<ss> ^name resolve-conditions)
+   (<s> ^condition-set <cs>)
+   (<cs> ^handle <cn> ^results <x1>)
+-{(state <s>)
+  (<x1> -^result)}
+-->
+   (<cs> ^count (size <x1>))
+}
+
+
+
+#TODO in future may use this to pick different versions of between (multiple functions)
 sp {resolve-conditions*prefer*resolve-ungroundable*function*concept
    (state <s> ^name resolve-conditions
               ^operator <o1> +
@@ -319,26 +392,27 @@ sp {resolve-conditions*prefer*resolve-ungroundable*type*concept
 -->
    (<s> ^operator <o1> > <o2>)
 }
-sp {resolve-conditions*prefer*resolve-ungroundable*same*name*bias
-   (state <s> ^name resolve-conditions
-   		  	  ^operator <o1> +
-			  ^operator <o2> +)
-   (<o1> ^name resolve-ungroundable ^condition {<co1> < <co2>})
-   (<o2> ^name resolve-ungroundable ^condition <co2>)
-   (<co1> ^name <name>)#^type concept
-   (<co2> ^name <name>)#^type concept
--->
-   (<s> ^operator <o1> > <o2>)
-}
-sp {resolve-conditions*apply*resolve-ungroundable*interrupt
+
+#sp {resolve-conditions*prefer*resolve-ungroundable*same*name*bias
+#   (state <s> ^name resolve-conditions
+#   		  	  ^operator <o1> +#
+#			  ^operator <o2> +)
+#   (<o1> ^name resolve-ungroundable ^condition {<co1> < <co2>})
+#   (<o2> ^name resolve-ungroundable ^condition <co2>)
+#   (<co1> ^name <name>)#^type concept
+#   (<co2> ^name <name>)#^type concept
+#-->
+#   (<s> ^operator <o1> > <o2>)
+#}
+
+sp {resolve-conditions*apply*resolve-ungroundable*interrupt*debug
    (state <s> ^name resolve-conditions
    		  	  ^operator <o>)
    (<o> ^name resolve-ungroundable ^condition <co>)
    (<co> ^name on1)
 -->
-(interrupt)
-#(write (cmd pref <o>))
-(write (cmd print <co> -d 8))
+   (interrupt)
+   (write (cmd print <co> -d 8))
 }
 sp {resolve-conditions*apply*resolve-ungroundable*make-new-symbol
    (state <s> ^name resolve-conditions
