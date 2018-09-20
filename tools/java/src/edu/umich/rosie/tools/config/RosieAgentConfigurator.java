@@ -86,6 +86,13 @@ public class RosieAgentConfigurator {
          agentSourceFile.write("popd\n");
       }
 
+      // Source the proper language comprehension files
+      if(config.parser_test.equals("true")){
+         agentSourceFile.write("pushd testing\n");
+         agentSourceFile.write("source test-parser.soar\n");
+         agentSourceFile.write("popd\n");
+      }
+
 		agentSourceFile.write("popd\n\n");
 
 		agentSourceFile.write("pushd " + config.agentDir + "\n\n");

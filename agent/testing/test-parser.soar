@@ -1,0 +1,252 @@
+##!
+# @file
+#
+# @created plindes 20180917
+# File: test-parser.soar
+# Author: Peter Lindes
+# Created: 17 September 2018
+#
+# Desc: Logic for running a regression test on whatever parser is selected
+#
+
+##############  SET UP THE TEST MODE    #########################
+
+#   Set the agent-params value if this was sourced
+sp {top-state*elaborate*setup-parser-test
+   (state <s> ^superstate nil
+              ^agent-params <params>)
+-->
+   (<s> ^parser-test <test>)
+   (<params> ^parser-test true)
+}
+
+##############  SET UP THE FIRST TEST SENTENCE    #########################
+
+#   Propose an operator to test the first sentence
+sp {top-state*propose*test-first-sentence
+   (state <s> ^superstate nil
+              ^parser-test <test>)
+  -(<test> ^sentence <sentence>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name test-first-sentence
+        ^name create-scripted-sentences)    #   Fake this to get auto-written code
+}
+
+sp {top-state*apply*test-first-sentence
+   (state <s> ^superstate nil
+              ^agent-params.sentence-source scripts
+              ^parser-test <test>
+              ^operator <o>
+              ^current-sentence <sentence>
+              ^current-sentence-number <csn>
+              ^interaction.changes <c>)
+   (<o> ^name test-first-sentence)
+   (<sentence> ^original-sentence <os>)
+-->
+   #    Set up the test data
+   (<test> ^sentence <os>
+           ^number <csn>)
+   #    Set up the interaction state
+   (<sentence> ^segment-proposed true)
+   (<c> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type process-sentence 
+        ^parameters.sentence (deep-copy <os>)
+        ^satisfaction <sat>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type process-sentence
+          ^originator agent)
+}
+
+
+##############  PROPOSE AN OPERATOR TO COMPREHEND    #########################
+
+#   Propose Lucia's comprehend at the appropriate time.
+sp {top-state*propose*comprehend
+   (state <s> ^name rosie
+              ^interaction.changes.new-segment-info.purpose <p>
+              ^agent-params.parser lucia
+              ^agent-params.parser-test true
+              ^parser-test <test>
+             -^comprehension ) # Quit when a comprehension posted
+   (<test> ^sentence <sentence>
+          -^message <message>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name comprehend
+        ^sentence <sentence>
+        ^comprehension <c>
+        ^input <i>
+        ^debug-info (concat |Comprehend a segment of language input.|))
+   #    Create an comprehension data structure on the comprehend state
+   (<c> ^cxn-stack nil
+        ^cxn-set <c-set>
+        ^lex-stack nil
+        ^word-stack nil)
+   #    Create an input data structure on the comprehend state
+   (<i> ^word nil
+        ^count -1
+        ^comprehended true
+        ^content nil
+        ^next nil)
+}
+
+#   Propose laird's comprehend at the appropriate time.
+sp {top-state*propose*comprehension
+   (state <s> ^name rosie
+              ^interaction.changes.new-segment-info.purpose <p>
+              ^agent-params.parser laird
+              ^agent-params.parser-test true
+              ^parser-test <test>
+             -^interaction.status.new-message <msg> ) # Quit when a comprehension posted
+   (<test> ^sentence <sentence>
+          -^message <message>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name comprehension
+        ^sentence <sentence>
+        ^debug-info (concat |Comprehend a segment of language input.|))
+}
+
+
+##############  PROPOSE INTERPRET FOR LUCIA    #########################
+
+#   Propose an operator to interpret a parsed sentence
+sp {top-state*propose*interpret-for-rosie
+   (state <s> ^name rosie
+              ^interaction.changes.new-segment-info.purpose <p>
+              ^agent-params.parser lucia
+              ^agent-params.parser-test true
+              ^comprehension <c>
+              ^discourse <d>
+             -^message )
+   #    Find the sentence that was parsed
+   (<p> ^type process-sentence ^parameters.sentence <sentence>)
+   (<sentence> ^complete-sentence <text>)
+   #    Get the top level construction found
+   (<c> ^cxn-stack <top-cxn>)
+   #    Only fire if there is a unique top cxn
+   (<top-cxn> ^cxn-name <cxn-name>
+              ^previous nil)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name interpret-for-rosie
+        ^comprehension <c>
+        ^discourse <d>
+        ^debug-info (concat |Interpret | <cxn-name> | for '| <text> |'.|))
+}
+
+#   Do this before next sentence
+sp {top-state*preference*interpret-before-next-sentence
+   (state <s> ^superstate nil
+              ^agent-params.parser-test true
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name interpret-for-rosie)
+   (<o2> ^name test-next-sentence)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+
+##############  POST THE INTERPRETATION TO THE TEST DATA    #########################
+
+#   Post the message to the test data for lucia
+sp {interpret*apply*interpret-done*parser-test*lucia
+   (state <s> ^top-state <ts>
+              ^problem-space interpret-for-rosie
+              ^operator <o>
+              ^message <message>)
+   (<o> ^name interpret-done)
+   (<ts> ^parser-test <test>)
+-->
+   #    Put the message on the test data
+   (<test> ^message <message>)
+}
+
+#   Post the message to the test data for laird
+sp {termination-processing*apply*check-failure*parser-test
+   (state <s> ^name termination-processing
+              ^operator <o>
+              ^segment.semantics <message>
+              ^top-state <ts>)
+   (<o> ^name check-failure)
+   (<ts> ^parser-test <test>)
+-->
+   #    Put the message on the test data
+   (<test> ^message <message>)
+}
+
+
+##############  MOVE ON TO THE NEXT SENTENCE    #########################
+
+#   In test mode, move on to next sentence
+sp {top-state*propose*test-next-sentence
+   (state <s> ^name rosie
+              ^interaction.changes.new-segment-info.purpose <p>
+              ^agent-params.parser-test true
+              ^interaction.status.new-message <msg>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name test-next-sentence
+        ^debug-info (concat |Move on to test the next sentence.|))
+}
+
+sp {top-state*apply*test-next-sentence*next-sentence-number
+   (state <s> ^name rosie
+              ^agent-params.parser-test true
+              ^parser-test <test>
+              ^current-sentence-number <csn>
+             -^max-sentence-number <csn>
+              ^operator <o>)
+   (<o> ^name test-next-sentence)
+   (<test> ^number <csn>
+           ^message <msg>)
+-->
+   #    Change to the next sentence number
+   (<s> ^current-sentence-number <csn> -
+        ^current-sentence-number (+ <csn> 1))
+   (<test> ^number <csn> -)
+}
+
+sp {top-state*apply*test-next-sentence*update-test
+   (state <s> ^superstate nil
+              ^agent-params.sentence-source scripts
+              ^parser-test <test>
+              ^operator <o>
+              ^current-sentence <sentence>
+              ^current-sentence-number <csn>
+              ^interaction.status <status>)
+   (<o> ^name test-next-sentence)
+   (<sentence> ^original-sentence <os>)
+   (<status> ^new-message <msg>)
+   (<test> ^sentence <s-old>
+          -^number 
+           ^message <msg>)
+-->
+   #    Remove the new interaction message
+   (<status> ^new-message <msg> -)
+#   (<test> ^message <message> -)
+   #    Set up the test data
+   (<test> ^sentence <s-old> -
+           ^message <msg> -
+           ^sentence <os>
+           ^number <csn>)
+}
+
+
+##############  QUIT AT THE END OF THE SCRIPT    #########################
+
+sp {top-state*apply*test-next-sentence*quit
+   (state <s> ^name rosie
+              ^agent-params.parser-test true
+              ^operator <o>
+              ^parser-test.number <csn>
+              ^parser-test.message <msg>
+              ^max-sentence-number <csn>)   #   When we're at max
+   (<o> ^name test-next-sentence)
+-->
+   (halt)
+}
