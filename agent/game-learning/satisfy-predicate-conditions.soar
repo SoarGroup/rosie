@@ -32,7 +32,7 @@ sp {topstate*elaborate*game-state-input*object
               ^io.input-link.game-state <gs>)
    (<gs> ^objects.object <obj> ^relationships <rels>)# ^turn <n>)
 -->
-    (<objs> ^object <obj>)
+   (<objs> ^object <obj>)
    (<obj> ^category block ^primitive object)
 }
 
@@ -123,13 +123,29 @@ sp {satisfy-predicate-conditions*elaborate-finished-learning*final-version
     (<a1> ^parameter-set <p1> ^handle <c1>)# -^final-version)
 -{(state <s1>)
   (<p1> -^set <i1>)}
--{(<s1> ^<type> {<a2> <> <a1>})
+-{(<s1> ^<type> {<a2> <> <a1>}) #doesnt have a second viable version
   (<a2> ^parameter-set <p2>)
     (<p2> ^set <i2>)}
 -->
 #(interrupt)
    (<a1> ^final-version true)
 }
+
+sp {satisfy-predicate-conditions*elaborate-finished-learning*final-version*multiple
+    (state <s1> ^top-state.dialog-context <dc>)
+    (<dc> ^learning true)
+    (<dc> ^number-answer <num>)
+    (<s1> ^main-type {<type> << action goal failure >>} ^operator <o> ^<type> <a1>)
+    (<o> ^type <type> -^duplicate-of) 
+    (<a1> ^parameter-set <p1> ^handle <c1> ^num-results <num>)# -^final-version)
+-{(state <s1>)
+  (<p1> -^set <i1>)}
+-->
+#(interrupt)
+   (<a1> ^final-version true)
+  # (<dc> ^number-answer <num> -) #or remove later..yeah..
+}
+#needs final-version
 
 sp {satisfy-predicate-conditions*elaborate-finished-learning*transfer-action-goal-name
     (state <s1> ^top-state.dialog-context.learning true ^superstate <ss>)
@@ -348,6 +364,18 @@ sp {interaction*apply*performed-event*game-learning*clean*dialog-object-list
          ^dialog-object-list-saved nil
          ^dialog-world <new>)
   (<new> ^objects <objs> ^predicates <preds>)
+}
+
+sp {interaction*apply*performed-event*game-learning*clean*dialog-contexct*number-answer
+    (state <s1> ^name interaction
+                ^top-state <top>
+                ^operator <o>)
+    (<o> ^name performed-event
+         ^event.learning-event.type game)
+    (<top> ^dialog-context <dc>)
+    (<dc> ^number-answer <na>)
+-->
+    (<dc> ^number-answer <na> -)
 }
 
 sp {satisfy-purpose*clean*dialog-object-list
@@ -571,21 +599,46 @@ sp {satisfy-predicate-conditions*elaborate*condition-instance*negative
     (<r52> ^instance <i1>)
     (<i1> ^1 <n4>)
     (<r1> ^set <s2>)
-    (<t1> ^nlp-set <n1> ^link <c4> ^primary-rtype <type> ^parameter-set.tested calculate6)#TODO bad that relies on atleast one being calculated to know complete inorder to avoid premature negative
+    (<t1> ^nlp-set <n1> ^link <c4> ^primary-rtype <type> ^parameter-set.tested calculate6)
     (<n1> ^aname <c2>) 
  -{ (state <s1>)
     (<t1> -^instance)} 
  -{ (<t1> ^instance <i3>)
-      (<i3> ^1 <n4> )
-      #(<c5> ^result <r*2>)
-      #(<r*2> ^set <s*4>)
-      #(<s*4> ^instance <i*2>)
-      #(<i*2> ^1 <objb>)
-      }
+      (<i3> ^1 <n4> )}
     -->
     (<s2> ^instance <i5> +)
     (<i5> ^1 <n4>)
 }
+
+
+sp {satisfy-predicate-conditions*elaborate*condition-instance*negative*set-single
+    (state <s1> ^gtype <c3> ^list <l1> ^<c3> <a1> ^<c1> <t1>)
+    (<l1> ^game <g1>)
+    (<a1> ^condition <c4>)
+    (<c4> ^args <ar1> ^type concept ^result <r1> ^name <c2> ^attribute <c1> ^rtype set ^negative true ^parameter <p1>)
+#    (<p1> ^num < 2 )
+#    (<ar1> ^1 <c8>)
+#    (<c8> ^rtype set ^result <r5> ^parameter <pz>)
+#    (<pz> ^num > 0)
+#    (<r5> ^set <r52>)
+#    (<r52> ^instance <i1>)
+#    (<i1> ^1 <n4>)
+#    (<r1> ^set <s2>)
+    (<t1> ^nlp-set <n1> ^link <c4> )#^primary-rtype <tx> ^parameter-set.tested calculate6)
+    (<n1> ^aname <c2>) 
+ #-{(state <s1>)
+ #  (<t1> -^instance)} 
+ #-{(<t1> ^instance <i3>)
+ #     (<i3> ^1 <obj>)
+# 	  (<n4> ^<x1> <obj>)}
+-->
+#(interrupt) #XQXQXQXQXQXQ
+#(write (cmd print <t1> -d 10))
+#    (<s2> ^instance <i5> +)
+#    (<i5> ^1 <n4>)
+}
+
+
 
 sp {satisfy-predicate-conditions*elaborate*condition-instance*negative*2param
     (state <s1> ^gtype <c3> ^list <l1> ^<c3> <a1> ^<c1> <t1>)
@@ -700,6 +753,7 @@ sp {satisfy-predicate-conditions*elaborate*condition-instance*set-single-set*par
 
 #causes duplicate results...
 #could try bias that take lowest instance with 2 as arg...
+
 sp {satisfy-predicate-conditions*elaborate*condition-instance*single-to-set*parameters2
     (state <s1> ^gtype <c3> ^list <l1> ^<c3> <a1> ^<c1> <t1>)
     (<l1> ^game <g1>)
@@ -736,13 +790,14 @@ sp {satisfy-predicate-conditions*elaborate*condition-instance*single-to-set
     (state <s1> ^gtype <c3> ^list <l1> ^<c3> <a1> ^<c1> <t1>)
     (<l1> ^game <g1>)
     (<a1> ^condition <c4>)
-    (<c4> ^negative false ^args.{1}.parameter.num 0 ^type concept ^result <r1> ^name <c2> ^attribute <c1> ^rtype set ^parameter.num < 2) # 1
+    (<c4> ^args.{1}.parameter.num 0 ^type concept ^result <r1> ^name <c2> ^attribute <c1> ^rtype set ^parameter.num < 2) # 1
     (<r1> ^set <s2>)
     (<t1> ^nlp-set <n1> ^link <c4> ^primary-rtype single)#^instance <i1> 
     (<n1> ^aname <c2>)
     -{(state <s1>)
      (<t1> -^instance)}
     -->
+#(interrupt)
     (<s2> ^instance <i1>)
     (<i1> ^1 <set>)
 }
@@ -756,8 +811,28 @@ sp {satisfy-predicate-conditions*elaborate*condition-instance*single-to-set*copy
     (<t1> ^nlp-set <n1> ^instance.{1} <obj> ^link <c4> ^primary-rtype single)
     (<n1> ^aname <c2>)
     -->
+#(interrupt)
     (<set> ^<object> <obj>)
 }
+
+##XQXQXQXQ
+##
+sp {satisfy-predicate-conditions*elaborate*condition-instance*single-to-set*copy-objects*negative
+    (state <s1> ^gtype <c3> ^list <l1> ^<c3> <a1> ^<c1> <t1>)
+    (<l1> ^game <g1>)
+    (<a1> ^condition <c4>)
+    (<c4> ^negative true ^args.{1} <ar1> ^type concept ^result <r1> ^name <c2> ^attribute <c1> ^rtype set ^parameter.num < 2)
+	(<ar1> ^parameter.num 0 ^rtype single ^result.set.instance.{1} <obj>)
+    (<r1> ^set.instance.{1} <set>)
+    (<t1> ^nlp-set <n1> ^link <c4> ^primary-rtype single)
+    (<n1> ^aname <c2>)
+-{(<t1> ^instance <in1>)
+  (<in1> ^1 <obj>)}
+-->
+#(interrupt)
+    (<set> ^<object> <obj>)
+}
+
 
 #any/generic action
 sp {satisfy-predicate-conditions*elaborate*condition-instance*action*any
@@ -1555,7 +1630,7 @@ sp {satisfy-predicate-conditions*elaborate*initial-set*1-arguments
 sp {satisfy-predicate-conditions*elaborate*negative-condition-instance*2-arguments
     (state <s1> ^gtype <c2> ^list <l1> ^<c2> <p1>)
     (<l1> ^game <g1>)
-    (<p1> ^parameter-set <p2> ^potential-args <p3> ^condition <c1>) #^nlp-set.nlp <c1>)#JK no nlp version, also look only at nlp, not all conditions
+    (<p1> ^parameter-set <p2> ^potential-args <p3> ^nlp-set.nlp <c1>)#^condition <c1>)#JK no nlp version, also look only at nlp
     (<p2> ^tested calculate3)
     (<c1> ^parameter <p4> ^result <r1>)
     (<p4> ^num 2 ^2 <pp1> ^1 <pp2>) #not necessarily 1 and 2
@@ -1569,28 +1644,29 @@ sp {satisfy-predicate-conditions*elaborate*negative-condition-instance*2-argumen
     (<p2> ^negpair <n1> +)
     (<n1> ^<x2> <pp3> + ^<x1> <pp4> +)
 }
-#sp {satisfy-predicate-conditions*elaborate*negative-condition-instance*2-arguments2
-#    (state <s1> ^gtype <c2> ^list <l1> ^<c2> <p1>)
-#    (<l1> ^game <g1>)
-#    (<p1> ^parameter-set <p2> ^potential-args <p3> ^nlp-set.conditions <c1>)#^condition <c1>) #JK no nlp version, also look only at nlp, not all conditions
-#    (<p2> ^tested calculate3)
-#    (<c1> ^parameter <p4> ^result <r1>)
-#    (<p4> ^num 2 ^2 <pp1> ^1 <pp2>) #not necessarily 1 and 2
-#    (<pp1> ^param-id <x1>)
-#    (<pp2> ^param-id <x2>)
-#    (<p3> ^<x2> <pp3> ^<x1> <pp4>)
-#   -{(<r1> ^set <s2>)
-#     (<s2> ^instance <p5>)
-#     (<p5> ^2 <pp4> ^1 <pp3>)}
-#    -->
-#    (<p2> ^negpair <n1> +)
-#    (<n1> ^<x2> <pp3> + ^<x1> <pp4> +)
-#}
+
+sp {satisfy-predicate-conditions*elaborate*negative-condition-instance*2-arguments2
+    (state <s1> ^gtype <c2> ^list <l1> ^<c2> <p1>)
+    (<l1> ^game <g1>)
+   (<p1> ^parameter-set <p2> ^potential-args <p3> ^nlp-set.conditions <c1>)
+    (<p2> ^tested calculate3)
+    (<c1> ^parameter <p4> ^result <r1>)
+    (<p4> ^num 2 ^2 <pp1> ^1 <pp2>) #not necessarily 1 and 2
+    (<pp1> ^param-id <x1>)
+    (<pp2> ^param-id <x2>)
+    (<p3> ^<x2> <pp3> ^<x1> <pp4>)
+   -{(<r1> ^set <s2>)
+     (<s2> ^instance <p5>)
+     (<p5> ^2 <pp4> ^1 <pp3>)}
+    -->
+    (<p2> ^negpair <n1> +)
+    (<n1> ^<x2> <pp3> + ^<x1> <pp4> +)
+}
 
 sp {satisfy-predicate-conditions*elaborate*negative-condition-instance*3-arguments
     (state <s1> ^gtype <c19> ^list <l1> ^<c19> <a1>)
     (<l1> ^game <g1>)
-    (<a1> ^parameter-set <p1> ^potential-args <p2> ^condition <c1>)#^nlp-set.nlp <c1> #JK nlp version
+    (<a1> ^parameter-set <p1> ^potential-args <p2> ^nlp-set.nlp <c1>)#^condition <c1>)#JK nlp version
     (<p1> ^tested calculate3)
     (<c1> ^parameter <p3> ^result <r1>)
     (<p3> ^num 3 ^3 <*1> ^2 <*2> ^1 <*3>) #not necessarily 1 and 2 and 3
@@ -1605,24 +1681,24 @@ sp {satisfy-predicate-conditions*elaborate*negative-condition-instance*3-argumen
     (<p1> ^negpair3 <n1> +)
     (<n1> ^<ar1> <*6> + ^<ar2> <*5> + ^<ar3> <*4> +)
 }
-#sp {satisfy-predicate-conditions*elaborate*negative-condition-instance*3-arguments2
-#    (state <s1> ^gtype <c19> ^list <l1> ^<c19> <a1>)
-#    (<l1> ^game <g1>)
-#    (<a1> ^parameter-set <p1> ^potential-args <p2> ^nlp-set.conditions <c1>)# ^condition <c1>) #JK nlp version
-#    (<p1> ^tested calculate3)
-#    (<c1> ^parameter <p3> ^result <r1>)
-#    (<p3> ^num 3 ^3 <*1> ^2 <*2> ^1 <*3>) #not necessarily 1 and 2 and 3
-#    (<*1> ^param-id <ar2>)
-#    (<*2> ^param-id <ar1>)
-#    (<*3> ^param-id <ar3>)
-#    (<p2> ^<ar3> <*4> ^<ar2> <*5> ^<ar1> <*6>)
-#   -{ (<r1> ^set <s2>)
-#      (<s2> ^instance <p4>)
-#      (<p4> ^1 <*4> ^3 <*5> ^2 <*6>)}
-#-->
-#    (<p1> ^negpair3 <n1> +)
-#    (<n1> ^<ar1> <*6> + ^<ar2> <*5> + ^<ar3> <*4> +)
-#}
+sp {satisfy-predicate-conditions*elaborate*negative-condition-instance*3-arguments2
+    (state <s1> ^gtype <c19> ^list <l1> ^<c19> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^parameter-set <p1> ^potential-args <p2> ^nlp-set.conditions <c1>)# ^condition <c1>) #JK nlp version
+    (<p1> ^tested calculate3)
+    (<c1> ^parameter <p3> ^result <r1>)
+    (<p3> ^num 3 ^3 <*1> ^2 <*2> ^1 <*3>) #not necessarily 1 and 2 and 3
+    (<*1> ^param-id <ar2>)
+    (<*2> ^param-id <ar1>)
+    (<*3> ^param-id <ar3>)
+    (<p2> ^<ar3> <*4> ^<ar2> <*5> ^<ar1> <*6>)
+   -{ (<r1> ^set <s2>)
+      (<s2> ^instance <p4>)
+      (<p4> ^1 <*4> ^3 <*5> ^2 <*6>)}
+-->
+    (<p1> ^negpair3 <n1> +)
+    (<n1> ^<ar1> <*6> + ^<ar2> <*5> + ^<ar3> <*4> +)
+}
 
 #damn problem with single neg to (if embedded)
 #problem for now, just revert, look into change in create-from-parse, to make sure nlp if on top, also maybe anything with 2 or more paramids should be on top (nlp...)
@@ -1630,7 +1706,7 @@ sp {satisfy-predicate-conditions*elaborate*negative-condition-instance*3-argumen
 sp {satisfy-predicate-conditions*elaborate*negative-condition-instance*1-argument
     (state <s1> ^gtype <c2> ^list <l1> ^<c2> <a1>)
     (<l1> ^game <g1>)
-    (<a1> ^parameter-set <p2> ^potential-args <p1> ^condition <c1>)#^nlp-set.nlp <c1>)#  #JK nlp version
+    (<a1> ^parameter-set <p2> ^potential-args <p1> ^nlp-set.nlp <c1>) #^condition <c1>)##JK nlp version
     (<p2> ^tested calculate3)
     (<c1> ^parameter <p3> ^result <r1>)
     (<p3> ^<c6> <p4>)
@@ -1643,26 +1719,26 @@ sp {satisfy-predicate-conditions*elaborate*negative-condition-instance*1-argumen
     (<p2> ^neg <n1> +)
     (<n1> ^<c4> <o1> +)
 }
-#sp {satisfy-predicate-conditions*elaborate*negative-condition-instance*1-argument2
-#    (state <s1> ^gtype <c2> ^list <l1> ^<c2> <a1>)
-#    (<l1> ^game <g1>)
-#    (<a1> ^parameter-set <p2> ^potential-args <p1> ^nlp-set.conditions <c1>)# ^condition <c1>)  #JK nlp version
-#    (<p2> ^tested calculate3)
-#    (<c1> ^parameter <p3> ^result <r1>)
-#    (<p3> ^<c6> <p4>)
-#    (<p4> ^param-id <c4>)
-#    (<p1> ^<c4> <o1>)
-#   -{(<r1> ^set <rs1>)
-#     (<rs1> ^instance <pp1>)
-#     (<pp1> ^<c6> <o1>)}
-# -->
-#    (<p2> ^neg <n1> +)
-#    (<n1> ^<c4> <o1> +)
-#}
+sp {satisfy-predicate-conditions*elaborate*negative-condition-instance*1-argument2
+    (state <s1> ^gtype <c2> ^list <l1> ^<c2> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^parameter-set <p2> ^potential-args <p1> ^nlp-set.conditions <c1>)# ^condition <c1>)  #JK nlp version
+    (<p2> ^tested calculate3)
+    (<c1> ^parameter <p3> ^result <r1>)
+    (<p3> ^<c6> <p4>)
+    (<p4> ^param-id <c4>)
+    (<p1> ^<c4> <o1>)
+   -{(<r1> ^set <rs1>)
+     (<rs1> ^instance <pp1>)
+     (<pp1> ^<c6> <o1>)}
+ -->
+    (<p2> ^neg <n1> +)
+    (<n1> ^<c4> <o1> +)
+}
 sp {satisfy-predicate-conditions*elaborate*potential-argument*number
     (state <s1> ^gtype <c1> ^list <l1> ^<c1> <a1>)
     (<l1> ^game <g1>)
-    (<a1> ^potential-args <p1> ^parameter-set <p2> ^condition <c3>)#^nlp-set.nlp <c3>)#  #JK nlp version
+    (<a1> ^potential-args <p1> ^parameter-set <p2> ^nlp-set.nlp <c3>) #^condition <c3>)#  #JK nlp version
     (<c3> ^return-type number ^parameter <p3> ^result <r1> ^rtype single)
     (<r1> ^set <s2>)
     (<s2> ^instance <p5>)
@@ -1672,24 +1748,24 @@ sp {satisfy-predicate-conditions*elaborate*potential-argument*number
  -->
     (<p1> ^<c6> <c7> +)
 }
-#sp {satisfy-predicate-conditions*elaborate*potential-argument*number2
-#    (state <s1> ^gtype <c1> ^list <l1> ^<c1> <a1>)
-#    (<l1> ^game <g1>)
-#    (<a1> ^potential-args <p1> ^parameter-set <p2> ^nlp-set.conditions <c3>)# ^condition <c3>)  #JK nlp version
-#    (<c3> ^return-type number ^parameter <p3> ^result <r1> ^rtype single)
-#    (<r1> ^set <s2>)
-#    (<s2> ^instance <p5>)
-#    (<p3> ^<c4> <p4>) #tests existance of 1 to create possible of any
-#    (<p4> ^param-id <c6>) #^type single
-#    (<p5> ^<c4> <c7> ^1)
-# -->
-#    (<p1> ^<c6> <c7> +)
-#}
+sp {satisfy-predicate-conditions*elaborate*potential-argument*number2
+    (state <s1> ^gtype <c1> ^list <l1> ^<c1> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^potential-args <p1> ^parameter-set <p2> ^nlp-set.conditions <c3>)# ^condition <c3>)  #JK nlp version
+    (<c3> ^return-type number ^parameter <p3> ^result <r1> ^rtype single)
+    (<r1> ^set <s2>)
+    (<s2> ^instance <p5>)
+    (<p3> ^<c4> <p4>) #tests existance of 1 to create possible of any
+    (<p4> ^param-id <c6>) #^type single
+    (<p5> ^<c4> <c7> ^1)
+ -->
+    (<p1> ^<c6> <c7> +)
+}
 #hmm this would be nice to only do from top... see if can keep with XQXQXQXQ change...
 sp {satisfy-predicate-conditions*elaborate*potential-argument
     (state <s1> ^gtype <c2> ^list <l1> ^<c2> <a1>)
     (<l1> ^game <g1>)
-    (<a1> ^potential-args <p1> ^parameter-set <p2> ^condition <c1>)#^nlp-set.nlp <c1>)#  #JK nlp version uggg would be great to fix
+    (<a1> ^potential-args <p1> ^parameter-set <p2> ^nlp-set.nlp <c1>)#^condition <c1>#JK nlp version uggg would be great to fix
     (<c1> ^parameter <p3> ^result <r1>)
     (<r1> ^set <s2>)
     (<s2> ^instance <p5>)
@@ -1701,18 +1777,18 @@ sp {satisfy-predicate-conditions*elaborate*potential-argument
 -->
     (<p1> ^<c6> <o1> +)
 }
-#sp {satisfy-predicate-conditions*elaborate*potential-argument2
-#    (state <s1> ^gtype <c2> ^list <l1> ^<c2> <a1>)
-#    (<l1> ^game <g1>)
-#    (<a1> ^potential-args <p1> ^parameter-set <p2> ^nlp-set.conditions <c1>)# ^condition <c1>)  #JK nlp version
-#    (<c1> ^parameter <p3> ^result <r1>)
-#    (<r1> ^set <s2>)
-#    (<s2> ^instance <p5>)
-#    (<p5> ^1 <o2> ^{ << 1 2 3 4 5 >> <c4> } <o1>) #tests existance of non empty 1 to create possible of any
-#   -{ (<o2> -^<wme> <w*1>)
-#      (<s1> ^list <l*1>)}
-#    (<p3> ^<c4> <p4>)
-#    (<p4> ^param-id <c6>)
-#-->
-#    (<p1> ^<c6> <o1> +)
-#}
+sp {satisfy-predicate-conditions*elaborate*potential-argument2
+    (state <s1> ^gtype <c2> ^list <l1> ^<c2> <a1>)
+    (<l1> ^game <g1>)
+    (<a1> ^potential-args <p1> ^parameter-set <p2> ^nlp-set.conditions <c1>)# ^condition <c1>)  #JK nlp version
+    (<c1> ^parameter <p3> ^result <r1>)
+    (<r1> ^set <s2>)
+    (<s2> ^instance <p5>)
+    (<p5> ^1 <o2> ^{ << 1 2 3 4 5 >> <c4> } <o1>) #tests existance of non empty 1 to create possible of any
+   -{ (<o2> -^<wme> <w*1>)
+      (<s1> ^list <l*1>)}
+    (<p3> ^<c4> <p4>)
+    (<p4> ^param-id <c6>)
+-->
+    (<p1> ^<c6> <o1> +)
+}

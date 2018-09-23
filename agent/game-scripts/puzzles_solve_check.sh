@@ -8,7 +8,7 @@ dec=".decisions"
 sol=".solution"
 stored="stored-"
 statesexp=".statesexp"
-repeat=1
+repeat=200
 no="no"
 dot="."
 temp="temp"
@@ -18,7 +18,7 @@ old="Old"
 
 #3tower
 #
-#declare -a arr=("nqueens")
+#declare -a arr=("cannibals")
 #declare -a arr=("nknights")
 #declare -a arr=("nkings")
 #declare -a arr=("kakuro" "ksideswap4")
@@ -44,7 +44,7 @@ old="Old"
 #2pushmaze problem with two blue things retrieving two smem..fixed
 #9/6 stable on all but lfamilycross, tripeaks golf still incorrect 
 #fixed survo, kakuro
-declare -a arr=("2pushmaze") #ant
+declare -a arr=("2pushmazeant2") #ant
 #declare -a arr=("kakuro" "survo")
 
 #lazystackedfrogs generates bad solution maybe because of between exclusive?

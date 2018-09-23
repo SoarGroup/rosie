@@ -182,6 +182,8 @@ public class AgentMessageParser
 		    return translateCurrentTime(fieldsId);
                 } else if(type.equals("reset-state")){
 		    return translateResetState(fieldsId);
+                } else if(type.equals("how-many-actions")){
+		    return translateHowManyActions(fieldsId);
                 } 
 		//conversational messages
 		else if(type.equals("generic"))
@@ -229,6 +231,35 @@ public class AgentMessageParser
 		result+= ". Please set it up again.";
 		return result;
 	}
+	
+	public static String translateHowManyActions(Identifier fieldsId){
+    	String result = "How many available actions are there ";
+    	String word = SoarUtil.getValueOfAttribute(fieldsId, "word1");
+    	
+    	if (word != null)
+    	{
+    		//word = word.replaceAll("\\d", "");
+    		result += word + " or ";
+    	}
+        String word2 = SoarUtil.getValueOfAttribute(fieldsId, "word2");
+    	
+    	if (word2 != null)
+    	{
+    		//word2 = word2.replaceAll("\\d", "");
+    		result += word2;
+    	}
+    	String word3 = SoarUtil.getValueOfAttribute(fieldsId, "word3");
+    	
+    	if (word3 != null)
+    	{
+    		//word3 = word3.replaceAll("\\d", "");
+    		result += " or " + word3;
+    	}
+    	result += "?";
+    	
+    	return result;
+    }
+
 	
 	public static String translateLearnedUnknownWord(Identifier fieldsId){
 	    	String result = "Ok, I have learned ";
