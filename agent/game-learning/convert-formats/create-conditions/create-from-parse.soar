@@ -4,7 +4,6 @@ sp {create-from-parse*elaborate*sentence
               ^superstate.operator <sop>)
    (<sop> ^structure <t>)
 -->
-#(interrupt)
   (<s> ^sentence (deep-copy <t>))
 }
 sp {create-from-parse*elaborate*version-set
@@ -33,11 +32,39 @@ sp {create-from-parse*elaborate*sentence*subclause
 sp {create-from-parse*elaborate*arg1*parameter
    (state <s> ^name create-from-parse
               ^condition <c>)
-   (<c> ^<< arg1 arg2 2 >> <p>)
+   (<c> ^<< arg1 arg2 2 >> <p>) 
    (<p> ^predicates.category <type>)
+ -{(<c> ^action.procedural <x>) #to fix language issue with multiple args (when referencing moving multiple objects
+   (<p> ^predicates.multiple true)}
 -->
    (<s> ^parameter <p>)
 }
+
+#JK HACK FIX for multiple arg1 results
+sp {create-from-parse*elaborate*arg1*parameter*multiple
+   (state <s> ^name create-from-parse
+              ^condition <c>)
+   (<c> ^arg1 <p> ^action.procedural) #to fix language issue with multiple args (when referencing moving multiple objects
+   (<p> ^predicates <pp> -^relation)
+   (<pp> ^multiple true ^category <type>)
+-{(<c> ^arg1.relation <z>)}
+ -{(<c> ^arg1 {<p2> < <p>})
+   (<p2> ^predicates.multiple true)}
+-->
+   (<s> ^parameter <p>)
+}
+sp {create-from-parse*elaborate*arg1*parameter*multiple*relation
+   (state <s> ^name create-from-parse
+              ^condition <c>)
+   (<c> ^arg1 <p> ^action.procedural) #to fix language issue with multiple args (when referencing moving multiple objects
+   (<p> ^predicates <pp> ^relation)
+   (<pp> ^multiple true ^category <type>)
+ -{(<c> ^arg1 {<p2> < <p>})
+   (<p2> ^relation <z> ^predicates.multiple true)}
+-->
+   (<s> ^parameter <p>)
+}
+
 sp {create-from-parse*elaborate*arg1*agent*has
    (state <s> ^name create-from-parse
               ^condition <c>)
@@ -1046,15 +1073,17 @@ sp {create-from-parse*apply*complete*formatted*version-set
    (<vs> ^formatted true)
 }
 #### DEBUG
-sp {create-from-parse*apply*complete-flag*interruptz
-   (state <s> ^name create-from-parseX
-              ^nlp-set <nps>
-              ^nlp <nlp>
+sp {create-from-parse*apply*complete-flag*interruptzx
+   (state <s> ^name create-from-parse
+              #^nlp-set <nps>
+              ^operator <o> +
 			  ^complete-flag-2 true
-			  ^version-set <vs>
+			  #^version-set <vs>
               ^operator.name complete)
+(<o> ^name create-condition ^condition <co>)
 -->
 (interrupt)
-(write (cmd matches create-from-parse*apply*complete*superstate*copy))
-(write (cmd print <s> -d 3))
+#(write (cmd matches create-from-parse*apply*complete*superstate*copy))
+(write (cmd print <co>))
+(write (cmd pref <o> -w ))
 }

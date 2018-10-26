@@ -237,13 +237,58 @@ sp {resolve-conditions*propose*resolve-ungroundable
    (<ss> ^name resolve-conditions ^condition <co>)
    (<sss> ^name chunk-predicate-impasse)
    (<co> -^result.set.<x>)
-#-{(<co> ^name <prep>)
-#  (<s> ^top-state.world.predicates.predicate.handle <prep>)} #not primitive that exists
+-{(<co> ^name <prep>)
+  (<s> ^top-state.world.predicates.predicate.handle <prep>)} #not primitive that exists
 -->
    (<ss> ^operator <o> + >) # =      
    (<o> ^name resolve-ungroundable
    		^condition <co>)
 }
+sp {resolve-conditions*prefer*resolve-ungroundable*over*resolve-learn-next
+   (state <s> ^name resolve-conditions
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name resolve-ungroundable)
+   (<o2> ^name resolve-learn-next)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+sp {resolve-conditions*propose*resolve-learn-next
+   (state <s> ^operator.name wait
+              ^impasse no-change
+              ^quiescence t 
+              ^superstate <ss>
+              ^superstate.superstate <sss>)
+   (<ss> ^name resolve-conditions ^condition <co>)
+   (<sss> ^name chunk-predicate-impasse)
+   (<co> -^result.set.<x> ^name <prep> ^args <aa>)
+   (<s> ^top-state.world.predicates.predicate.handle <prep>)#not primitive that exists
+   (<aa> ^<< 1 2 >> <a1>)
+   (<a1> ^name <handle> ^type concept) #kinda hacky
+-->
+   (<ss> ^operator <o> + >) # =      
+   (<o> ^name resolve-learn-next
+   		^condition <a1>)
+}
+sp {resolve-conditions*prefer*resolve-learn-next*over*resolve-learn-next
+   (state <s> ^name resolve-conditions
+              ^linkstate.version-list <vl>
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name resolve-learn-next ^condition <a1>)
+   (<o2> ^name resolve-learn-next ^condition <a2>)
+   (<a1> ^name <name1>)
+   (<a2> ^name <name2>)
+   (<vl> ^version <v1> <v2>)
+   (<v1> ^handle-spelling <hs> ^item.smem-result <sr1> ^structure-type N)
+   (<sr1> ^handle <name1>)
+   (<v2> ^handle-spelling <hs1> ^item.smem-result <sr2> ^structure-type ADJ)
+   (<sr2> ^handle <name2>)
+-->
+(interrupt)
+   (<s> ^operator <o1> > <o2>)
+}
+
 sp {resolve*resolve-ungroundable*tie*alphanumeric*bias
    (state <s> ^superstate <ss>
               ^item <o1>
@@ -337,9 +382,6 @@ sp {resolve*resolve-ungroundable*elaborate*set*result*count
 -->
    (<cs> ^count (size <x1>))
 }
-
-
-
 #TODO in future may use this to pick different versions of between (multiple functions)
 sp {resolve-conditions*prefer*resolve-ungroundable*function*concept
    (state <s> ^name resolve-conditions
@@ -407,9 +449,23 @@ sp {resolve-conditions*prefer*resolve-ungroundable*type*concept
 #-->
 #   (<s> ^operator <o1> > <o2>)
 #}
-
+sp {resolve-conditions*apply*resolve-learn-next*interrupt*debug
+   (state <s> ^name resolve-conditionsX
+   		  	  #^linkstate <ls>
+			  ^top-state.dialog-context <dc>
+               ^linkstate <la>
+   		  	  ^operator <o>)
+   (<o> ^name resolve-learn-next ^condition <co>)
+   ##(<ls> ^<type> <t> ^gtype <type>)
+   ##(<t> ^link <co>)
+   ##(<co> ^name on1)
+   (<co> ^name <prep>)
+   (<s> ^top-state.world.predicates.predicate.handle <prep>)#not primitive that exists
+-->
+   (interrupt)
+}
 sp {resolve-conditions*apply*resolve-ungroundable*interrupt*debug
-   (state <s> ^name resolve-conditions
+   (state <s> ^name resolve-conditionsX
    		  	  #^linkstate <ls>
 			  ^top-state.dialog-context <dc>
                ^linkstate <la>
@@ -422,12 +478,39 @@ sp {resolve-conditions*apply*resolve-ungroundable*interrupt*debug
    (<s> ^top-state.world.predicates.predicate.handle <prep>)#not primitive that exists
 -->
    (interrupt)
-   (write (cmd print <la> -d 8))
-#(write (cmd print <dc> -d 10))
 }
+#sp {resolve-conditions*apply*resolve-ungroundable*elaborate*possible
+#   (state <s> ^name resolve-conditions
+#   		  	  #^linkstate <ls>
+#			  ^top-state.dialog-context <dc>
+#               ^linkstate <la>
+#   		  	  ^operator <o>)
+#   (<o> ^name resolve-ungroundable ^condition <co>)
+#   ##(<ls> ^<type> <t> ^gtype <type>)
+#   ##(<t> ^link <co>)
+#   ##(<co> ^name on1)
+#   (<co> ^name <prep> ^args <aa>)
+#   (<s> ^top-state.world.predicates.predicate.handle <prep>)#not primitive that exists
+#   (<aa> ^<< 1 2 >> <a1>)
+#   (<a1> ^name <handle> ^type concept) #kinda hacky
+#-->
+#   (<s> ^learn-possible <lp>)
+#   (<lp> ^name <handle> ^word (make-constant-symbol <handle>))
+#}
 
-
-#xqxqxqxqxqxq
+sp {resolve-conditions*apply*resolve-learn-next*make-new-symbol
+   (state <s> ^name resolve-conditions
+   		  	  ^linkstate <ls>
+			  ^quiescence t
+   		  	  ^operator <o>)
+   (<o> ^name resolve-learn-next ^condition <co>)
+  # (<ls> ^<type> <t> ^main-type <type>) #TODO or gtype? should we learn subconcepts?
+  # (<t> ^condition <co>)
+   (<co> ^name <name>)
+-->
+   (<s> ^word (make-constant-symbol <name>))
+  #(<t> ^final-version true)  #removing makes us not copy ontolearn-link and re convert-from-parse
+}
 sp {resolve-conditions*apply*resolve-ungroundable*make-new-symbol
    (state <s> ^name resolve-conditions
    		  	  ^linkstate <ls>
@@ -440,10 +523,29 @@ sp {resolve-conditions*apply*resolve-ungroundable*make-new-symbol
 -{(<s> ^top-state.world.predicates.predicate.handle <name>)} #not primitive that exists
 -->
    (<s> ^word (make-constant-symbol <name>))
-  #removing makes us not copy ontolearn-link and re convert-from-parse
-  #(<t> ^final-version true)
+  #(<t> ^final-version true)  #removing makes us not copy ontolearn-link and re convert-from-parse
 }
 
+
+sp {resolve-conditions*apply*resolve-learn-next*finished-version
+   (state <s> ^name resolve-conditions
+   		  	  ^linkstate <ls>
+			  ^quiescence t 
+			  ^word <word>
+			  ^smem.command <sc>
+   		  	  ^operator <o>)
+   (<o> ^name resolve-learn-next ^condition <co>)
+   (<ls> ^version-list.version <v> ^<type> <t> ^main-type <type>) #TODO or gtype? should we learn subconcepts?
+   (<t> ^condition <co> -^return-type number)
+   (<co> ^name <name>)
+   (<v> ^handle-spelling <hs> ^item.smem-result <sr1>)
+   (<sr1> ^handle <name>)
+-->
+   (<s> ^found-new-learnable true)
+   (<sc> ^store <h1> <prop>) # if do spelling version need sturture-type.. below, kinda a pain
+   (<h1> ^handle <word> ^handle-spelling <hs> ^property <prop>)#<name>
+   (<prop> ^handle property ^type visual) #todo maybe problem storing multiple of these
+}
 sp {resolve-conditions*apply*resolve-ungroundable*finished-version
    (state <s> ^name resolve-conditions
    		  	  ^linkstate <ls>
@@ -455,16 +557,13 @@ sp {resolve-conditions*apply*resolve-ungroundable*finished-version
    (<ls> ^<type> <t> ^main-type <type>) #TODO or gtype? should we learn subconcepts?
    (<t> ^condition <co> -^return-type number)
    (<co> ^name <name>)
--{(<s> ^top-state.world.predicates.predicate.handle <name>)} #not primitive that exists
+ -{(<s> ^top-state.world.predicates.predicate.handle <name>)} #not primitive that exists
 -->
    (<s> ^found-new-learnable true)
    (<sc> ^store <h1> <prop>) # if do spelling version need sturture-type.. below, kinda a pain
    (<h1> ^handle <word> ^handle-spelling <name> ^property <prop>)
    (<prop> ^handle property ^type visual) #todo maybe problem storing multiple of these
 }
-
-
-
 #do want to create new h1, because property of term may have changed< ! come up with good examples
 sp {resolve-conditions*apply*resolve-ungroundable*finished-version*numeric
    (state <s> ^name resolve-conditions
@@ -483,7 +582,59 @@ sp {resolve-conditions*apply*resolve-ungroundable*finished-version*numeric
    (<h1> ^handle <word> ^handle-spelling <name> ^property <prop>) #steal from clear
    (<prop> ^handle numeric ^type conceptual)
 }
-##v
+
+sp {resolve-conditions*prefer*resolve-learn-next*over*resolve-learn-next
+   (state <s> ^name resolve-conditions
+              ^linkstate.version-list <vl>
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name resolve-learn-next ^condition <a1>)
+   (<o2> ^name resolve-learn-next ^condition <a2>)
+   (<a1> ^name <name1>)
+   (<a2> ^name <name2>)
+   (<vl> ^version <v1> <v2>)
+   (<v1> ^handle-spelling <hs> ^item.smem-result <sr1> ^structure-type N)
+   (<sr1> ^handle <name1>)
+   (<v2> ^handle-spelling <hs1> ^item.smem-result <sr2> ^structure-type ADJ)
+   (<sr2> ^handle <name2>)
+-->
+#(interrupt)
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {resolve-conditions*apply*resolve-learn-next
+   (state <s> ^name resolve-conditions
+   		  	  ^quiescence t 
+			  ^linkstate <ls>
+			  ^word <word>
+			  ^top-state <ts>
+			  ^top-state.interaction.changes <c>
+			  ^found-new-learnable true
+   		  	  ^operator <o>)
+   (<o> ^name resolve-learn-next ^condition <co>)
+   (<ts> ^dialog-context <dc>)
+   (<co> ^name {<name2> <> <word>} ^args <args>)
+   (<ls> ^version-list.version <v>)
+   (<v> ^handle-spelling <hs> ^item.smem-result <sr1>)
+   (<sr1> ^handle <name2>)
+-->
+#(write (crlf) <name2>)
+   (<c> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator agent)
+   (<p> ^type process-unknown-word
+        ^parameters.word <word>
+        ^satisfaction <sat>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type process-unknown-word
+          ^originator instructor)
+   (<dc> ^learning-predicate <lp>)
+   (<lp> ^name <word> ^spelling <hs> ^usage-args (deep-copy <args>))#<name2
+   (<c> ^outgoing-message <out-msg>)
+   (<out-msg> ^type unknown-defined-word
+              ^fields.word <word>)
+   #(<ps> ^learned-structure <nlp>) #dont stored
+}
 sp {resolve-conditions*apply*resolve-ungroundable
    (state <s> ^name resolve-conditions
    		  	  ^quiescence t 
@@ -514,8 +665,6 @@ sp {resolve-conditions*apply*resolve-ungroundable
               ^fields.word <word>)
    #(<ps> ^learned-structure <nlp>) #dont stored
 }
-
-
 # PR - my version
 #sp {learn-condition*propose*resolve-satisfaction-failure
 #   (state <s> ^operator.name wait
