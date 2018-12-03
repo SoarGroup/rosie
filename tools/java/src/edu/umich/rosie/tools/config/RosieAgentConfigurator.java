@@ -131,6 +131,7 @@ public class RosieAgentConfigurator {
 			agentSourceFile.write("   (<p> ^simulate-perception true)\n");
 		}
 		agentSourceFile.write("   (<p> ^parser " + config.parser + ")\n");
+		agentSourceFile.write("   (<p> ^parser-test " + config.parser_test + ")\n");
 		agentSourceFile.write("   (<p> ^sentence-source " + config.sentenceSource + ")\n");
 		agentSourceFile.write("}\n\n");
 
