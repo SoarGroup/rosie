@@ -34,11 +34,17 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         public Boolean verbose;
         public Boolean writeLog;
         public Boolean writeStandardOut;
+        
+        public Boolean parserTest;
+        public String parser;
 
         public AgentConfig(Properties props){
             spawnDebugger = props.getProperty("spawn-debugger", "true").equals("true");
             startRunning = props.getProperty("start-running", "false").equals("true");
             writeStandardOut = props.getProperty("write-to-stdout", "false").equals("true");
+
+            parser = props.getProperty("parser", "lucia");
+            parserTest = props.getProperty("parser-test", "false").equals("true");
            
             agentName = props.getProperty("agent-name", "SoarAgent");
             agentSource = props.getProperty("agent-source", null);
@@ -177,7 +183,11 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 
         if(config.writeLog){
             try {
-                logWriter = new PrintWriter(new FileWriter("rosie-log.txt"));
+            	String logName = (config.parserTest)?
+            						(config.parser.equals("lucia"))?
+            							"lucia-log.txt" : "laird-log.txt"
+            						: "rosie-log.txt";
+                logWriter = new PrintWriter(new FileWriter(logName));
             } catch (IOException e) {
                 e.printStackTrace();
             }

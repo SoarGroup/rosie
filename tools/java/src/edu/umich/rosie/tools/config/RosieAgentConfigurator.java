@@ -51,6 +51,10 @@ public class RosieAgentConfigurator {
 		// Agent Source Information
 		agentConfigFile.write("agent-source = " + agentSourceFilename + "\n");
 		agentConfigFile.write("smem-source = " + smemSourceFilename + "\n\n");
+		
+		//	Parser testing info
+		agentConfigFile.write("parser = " + config.parser + "\n");
+		agentConfigFile.write("parser-test = " + config.parser_test + "\n\n");
 
 		// messages-file
 		if (config.sentenceSource.equals("chat") && config.sentencesFile != null && config.sentencesFile.exists()){
