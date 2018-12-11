@@ -1,0 +1,187 @@
+sp {dialog-event*propose*answer-feature-relation-description
+   (state <s> ^name dialog-event
+              ^purpose <p>)
+   (<p> ^type feature-relation-description
+        ^parameters.object <obj>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name answer-feature-relation-description
+        ^object <obj>)
+}
+
+# Elaborate answer for feature-relation-description set
+sp {dialog-event*elaborate*answer-feature-relation-description
+   (state <s> ^name dialog-event
+              ^purpose.type feature-relation-description)
+-->
+   (<s> ^feature-relation-description <descs>)
+}
+
+####################################################
+# Apply operator answer-feature-relation-description
+####################################################
+
+# Retrieves the object from the list of objects in the world
+sp {dialog-event*feature-relation-description*apply*get-object
+   (state <s> ^name dialog-event
+              ^operator <o>
+              ^feature-relation-description <descs>
+              ^top-state.world.objects <objects>)
+   (<o> ^name answer-feature-relation-description
+        ^object <obj>)
+   (<objects> ^object <obj>)
+-->
+   (<s> ^generated yes)
+   (<descs> ^object <obj>)
+}
+
+# Retrieves the relations where the given object is the first predicate                 
+sp {dialog-event*feature-relation-description*apply*answer-feature-relation-description*get-2
+   (state <s> ^name dialog-event
+              ^operator <o>
+              ^generated yes
+              ^feature-relation-description <descs>
+              ^top-state.world.predicates <wpreds>)
+   (<o> ^name answer-feature-relation-description
+        ^object <obj>)
+   (<wpreds> ^predicate <pred>)
+   (<pred> ^instance <instance>
+           ^handle <relation-handle>)
+   (<instance> ^1 <obj>
+               ^2 <pred-2>)
+-->
+   (<descs>	^description <desc>)
+   (<desc> ^position 1 # position of the object to be described
+           ^handle <relation-handle>
+           ^2 <pred-2>)
+}
+
+# Retrieves the relations where the given object is the second predicate
+sp {dialog-event*feature-relation-description*apply*answer-feature-relation-description*get-1
+   (state <s> ^name dialog-event
+              ^operator <o>
+              ^generated yes
+              ^feature-relation-description <descs>
+              ^top-state.world.predicates <wpreds>)
+   (<o> ^name answer-feature-relation-description
+        ^object <obj>)
+   (<wpreds> ^predicate <pred>)
+   (<pred> ^instance <instance>
+           ^handle <relation-handle>)
+   (<instance> ^1 <pred-1>
+               ^2 <obj>)
+-->
+   (<descs>	^description <desc>)
+   (<desc> ^position 2
+           ^1 <pred-1>
+           ^handle <relation-handle>)
+}
+
+# When specified object does not exist in the world
+sp {answer-feature-relation-description*elaborate*feature-relation-description*not-generated
+   (state <s> ^name answer-feature-relation-description
+              ^superstate <ss>)
+   (<ss> ^purpose.type feature-relation-description
+         ^feature-relation-description <descs>)
+   (<descs> -^object)
+-->
+   (<ss> ^generated no)
+}
+
+###############################
+# PR - This will only work for purely mirror relationships (on,below) (above,under), linear,diagonal are yet to be identified.
+sp {answer-feature-relation-description*propose*remove-mirror-descriptions
+   (state <s> ^name answer-feature-relation-description
+              ^superstate <ss>)
+   (<ss> ^generated yes
+         ^purpose.type feature-relation-description
+         ^feature-relation-description <descs>)
+   (<descs> ^object <obj>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name remove-mirror-descriptions)
+}    
+    
+sp {answer-feature-relation-description*elaborate*remove-mirror-descriptions
+   (state <s> ^name answer-feature-relation-description
+              ^operator <o> +
+              ^superstate <ss>)
+   (<o> ^name remove-mirror-descriptions)
+   (<ss> ^generated yes
+         ^purpose.type feature-relation-description
+         ^feature-relation-description <descs>)
+   (<descs> ^object <obj>
+            ^description <desc1>
+            ^description { <> <desc1> <desc2> })
+   (<desc1> ^1 <pred-1>)
+   (<desc2> ^2 <pred-1>)    
+-->
+   (<o> ^description <desc2>)
+}
+
+sp {answer-feature-relation-description*apply*remove-mirror-descriptions
+   (state <s> ^name answer-feature-relation-description
+              ^operator <o>
+              ^superstate <ss>)
+   (<o> ^name remove-mirror-descriptions
+        ^description <desc2>)
+   (<ss> ^generated yes
+         ^purpose.type feature-relation-description
+         ^feature-relation-description <descs>)       
+-->   
+   (<descs> ^description <desc2> -)
+   (<ss> ^duplicates-removed yes)
+}  
+
+sp {answer-feature-relation-description*apply*no-mirror-descriptions
+   (state <s> ^name answer-feature-relation-description
+              ^operator <o>
+              ^superstate <ss>)
+   (<o> ^name remove-mirror-descriptions
+        -^description)
+   (<ss> ^generated yes
+         ^purpose.type feature-relation-description
+         ^feature-relation-description <descs>)       
+-->
+   (<ss> ^duplicates-removed no)
+}  
+#######################################################
+# Report answer using complete-answer-feature-relation-description
+######################################################
+
+sp {answer-feature-relation-description*propose*complete-answer-feature-relation-description
+   (state <s> ^name answer-feature-relation-description
+              ^superstate <ss>)
+   (<ss> ^generated <gen>
+         ^duplicates-removed <rem>
+         ^feature-relation-description <descs>)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name complete-answer-feature-relation-description
+        ^feature-relation-description <descs>)
+   (<descs> ^generated <gen>)
+}
+
+#PR - the reason I am making this substate is in order to handle if multiple objects showed up and this dialog event could not be performed
+
+sp {answer-feature-relation-description*apply*complete-answer-feature-relation-description*mark*performed
+   (state <s> ^name answer-feature-relation-description
+              ^operator.name complete-answer-feature-relation-description
+              ^top-state.interaction.status <status>)
+-->
+   (<status> ^performed.dialog-event <de>)
+   (<de> ^type explanation
+         ^originator agent)
+}
+       
+sp {answer-feature-relation-description*apply*complete-answer-feature-relation-description*send-message
+   (state <s> ^name answer-feature-relation-description
+              ^operator <o>       
+              ^io.output-link <out>)
+   (<o> ^name complete-answer-feature-relation-description
+        ^feature-relation-description <descs>)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type feature-relation-description
+          ^fields.object <descs>)
+}

@@ -15,24 +15,26 @@ sp {resolve-conditions*elaborate*type
 sp {resolve-conditions*elaborate*nlp-set
    (state <s> ^name resolve-conditions
              ^linkstate <ts>)
-   (<ts> ^{<type> << action goal predicate failure heuristic >>}.condition <c>)# ^gtype <type>)
+   (<ts> ^{<type> << action goal predicate failure heuristic >>}.condition <c>)
 -->
    (<s> ^condition <c>)
 }
 
-sp {resolve-conditions*propose*retrieve-predicate-structure
-   (state <s> ^name learn-predicate)
-   (<s> ^gtype <gtype>
-       -^predicate.link <co>
-         ^<gtype> <g>)
-   (<g> ^condition <co>)
-   (<co> ^type concept ^attribute predicate ^name <name>)
--->
-   (<s> ^operator <o> + = >)
-   (<o> ^name chunk-predicate-structure
-        ^<gtype>.condition <co>
-        ^gtype <gtype>)
-}
+#sp {resolve-conditions*propose*retrieve-predicate-structureDEPRICATED
+#   (state <s> ^name learn-predicate)
+#   (<s> ^gtype <gtype>
+#       -^predicate.link <co>
+#         ^<gtype> <g>)
+#   (<g> ^condition <co>)
+#   (<co> ^type concept ^attribute predicate ^name <name>)
+#-->
+#(interrupt)
+##(write (cmd print <g> -d 8))
+#   (<s> ^operator <o> + = >)
+#   (<o> ^name chunk-predicate-structure
+#        ^<gtype>.condition <co>
+#        ^gtype <gtype>)
+#}
 
 #try to evaluate conditions whose arguments have been determined
 sp {resolve-conditions*propose*learn-condition
@@ -44,6 +46,27 @@ sp {resolve-conditions*propose*learn-condition
         ^condition <co>)
 }
 
+#sp {resolve-conditions*reject*learn-condition*typeconcept
+#   (state <s> ^name resolve-conditions
+#              ^operator <o> +)
+#   (<o> ^name learn-condition
+#        ^condition <co>)
+#   (<co> ^type concept)
+#-->
+#   (<s> ^operator <o> -)
+#}
+
+sp {resolve-conditions*reject*learn-condition*input-arg
+   (state <s> ^name resolve-conditions
+              ^operator <o> +)
+   (<o> ^name learn-condition
+        ^condition <co>)
+   (<co> ^attribute input-arg)
+-->
+   (<s> ^operator <o> -)
+}
+
+
 sp {resolve-conditions*prefer*retrieve-predicate-structure*overlearn-condition
    (state <s> ^name resolve-conditions
               ^operator <o2> +
@@ -54,15 +77,15 @@ sp {resolve-conditions*prefer*retrieve-predicate-structure*overlearn-condition
    (<s> ^operator <o2> > <o>)
 }
 
-sp {resolve-conditions*disprefer*concepts
-   (state <s> ^name resolve-conditions
-              ^operator <o> +)
-   (<o> ^name learn-condition
-        ^condition <co>)
-   (<co> ^type concept)
--->
-   (<s> ^operator <o> <)
-}
+#sp {resolve-conditions*disprefer*concepts
+#   (state <s> ^name resolve-conditions
+#              ^operator <o> +)
+#   (<o> ^name learn-condition
+#        ^condition <co>)
+#   (<co> ^type concept)
+#-->
+#   (<s> ^operator <o> <)
+#}
 
 sp {resolve-conditions*disprefer*input-args
    (state <s> ^name resolve-conditions
@@ -74,6 +97,64 @@ sp {resolve-conditions*disprefer*input-args
    (<s> ^operator <o> <)
 }
 
+sp {resolve-conditions*prefer*over*input-args
+   (state <s> ^name resolve-conditions
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name learn-condition
+        ^condition.attribute input-arg)
+   (<o2> ^name learn-condition
+        -^condition.attribute input-arg)
+-->
+   (<s> ^operator <o2> > <o1>)
+}
+
+sp {resolve-conditions*prefer*known-category*over*non-category
+   (state <s> ^name resolve-conditions
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name learn-condition
+        ^condition <c1>)
+   (<c1> ^attribute << color size shape category >>)
+   (<o2> ^name learn-condition
+         ^condition <c2>)
+   (<c2> ^attribute predicate)
+  -{(<c1> ^args.<< 1 2 3 4 5 6 7 8 9 10 >> <c2>)}
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {resolve-conditions*prefer*function*over*non-function
+   (state <s> ^name resolve-conditions
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name learn-condition
+        ^condition <c1>)
+   (<c1> ^type function)
+   (<o2> ^name learn-condition
+         ^condition <c2>)
+   (<c2> -^type function)
+  -{(<c1> ^args.<< 1 2 3 4 5 6 7 8 9 10 >> <c2>)}
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {resolve-conditions*prefer*prepositions*over*predicate
+   (state <s> ^name resolve-conditions
+              ^top-state.world.predicates.predicate.handle <name>
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name learn-condition
+        ^condition <c1>)
+   (<c1> ^attribute prepositions ^name <name>)
+   (<o2> ^name learn-condition
+         ^condition <c2>)
+   (<c2> ^attribute predicate)
+  -{(<c1> ^args.<< 1 2 3 4 5 6 7 8 9 10 >> <c2>)}
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
 sp {resolve-conditions*prefer*learn-condition*childresults
    (state <s> ^name resolve-conditions
               ^operator <o> +)
@@ -82,9 +163,10 @@ sp {resolve-conditions*prefer*learn-condition*childresults
    (<co> ^args.<< 1 2 3 4 5 6 7 8 9 10 >> <c1>)
    (<c1> -^result.set.instance.{1} ^return-type number)#JK think this is right... add rtype
 -->
-   (<s> ^operator <o> <)
+   (<s> ^operator <o> -)# <
 }
 
+#^v reject or disprefer (should never try to learn or resolve if children is absent of results..)
 sp {resolve-conditions*prefer*learn-condition*childresults-under
    (state <s> ^name resolve-conditions
               ^operator <o> +)
@@ -93,7 +175,21 @@ sp {resolve-conditions*prefer*learn-condition*childresults-under
    (<co> ^args.<< 1 2 3 4 5 6 7 8 9 10 >> <c1>)
    (<c1> -^result.set.instance.{1}.<something> -^return-type number)
 -->
-   (<s> ^operator <o> <)
+   (<s> ^operator <o> -)# <
+}
+
+sp {resolve-conditions*prefer*child*over*parent
+   (state <s> ^name resolve-conditions
+              ^operator <o> +
+              ^operator <o2> +)
+   (<o> ^name learn-condition
+        ^condition <co>)
+   (<o2> ^name learn-condition
+        ^condition <co2>)
+   (<co> ^args.<< 1 2 3 4 5 6 7 8 9 10 >> <co2>)
+   (<co2> -^attribute input-arg)
+-->
+   (<s> ^operator <o2> > <o>)
 }
 
 sp {resolve-conditions*prefer*learn-condition*reject-complete

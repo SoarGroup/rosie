@@ -1,0 +1,407 @@
+sp {dialog-event*agent-game-action-description*propose*get-game-details
+   (state <s> ^name dialog-event
+              ^PR-game-details <val>
+              -^generated
+              -^combined
+              #^all-structures-retrieved true
+              ^set <set>)
+   (<set> ^conditions <cond>)
+  # (<cond> ^structure-type <str>)   
+   -{ (<set> ^conditions {> <cond> <cond2>})}
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name get-game-details
+        ^descriptions <descs>
+        ^PR-game-details <val>)
+}
+
+###################################################################
+# Apply operator get-game-details
+###################################################################
+# PR - TODO - consider writing name << resolve-satisfaction-failure dialog-event >>
+sp {states*apply*get-game-details*add-descriptions-to-state
+   (state <s> ^operator <o>
+        	  ^set <set>)
+   (<o> ^name get-game-details
+        ^descriptions <descs>
+        ^PR-game-details <val>)
+-->              
+   (<s> ^descriptions <descs>        
+        ^PR-game-details <val>)
+}
+
+
+# Specifically for resolve-satisfaction failure
+sp {resolve-satisfaction-failure*apply*get-game-details*get-single-object-description
+   (state <s> ^operator <o>
+              ^name resolve-satisfaction-failure
+              ^descriptions <descs>
+              ^set <set>)
+   (<o> ^name get-game-details)
+   (<set> ^conditions <cond>)
+   (<cond> ^name <name>
+           ^args <args>
+           ^parameter <param>
+           ^type << attribute concept >>) #here type is not really adding value, this should probably address condition. for e.g. block is not red and not i do not see a red block.
+   #(<param> ^num 0)
+-->
+   (<descs> ^description <desc>
+            ^obj-desc <obj-desc>)
+   (<desc> ^1 0
+           ^obj-desc <obj-desc>)
+   (<obj-desc> ^1 <cond>
+               ^param-id 0)
+}
+
+sp {dialog-event*apply*get-game-details*add-concept-name-to-descriptions
+   (state <s> ^name dialog-event
+              ^PR-game-details
+              ^operator <o>
+              ^purpose.type agent-game-concept-definition
+              ^sentence <sentence>
+              ^descriptions <descs>)
+   (<o> ^name get-game-details
+        ^descriptions <descs>) 
+-->
+   (<descs> ^sentence <sentence>)
+}
+
+# if there is only one argument, it is typically a property
+# one of the examples that requires this is the failure state of tictactoe (the count of the occupied linear location is 3)
+# the occupied linear location is also a condition on the top state. Use this as a way to distinguish from "all locations are covered"
+# because all locations are covered also is considered similarly
+sp {states*apply*get-game-details*retrieve-one-argument-predicates
+   (state <s> ^PR-game-details
+              ^descriptions <descs>
+              ^operator <o>
+              ^set <set>)
+   (<o> ^name get-game-details
+        ^descriptions <descs>)
+   (<set> ^conditions <cond>)
+   (<cond> ^name <name>
+           ^args <args>
+           ^parameter <param>
+   	   ^negative <neg>)
+   (<args> ^1 <obj1>
+           -^2
+           -^3)
+   (<param> ^1 <first>)
+   (<first> ^param-id <param-id>) # PR - it is not always the first param for eg: adjacent
+-->
+   (<descs> ^obj-desc <obj-desc>)
+   (<obj-desc> ^1 <cond>
+               ^param-id <param-id>
+               ^negative <neg>)
+}
+
+# if only one param-id exists in a prepositional phrase, store it as one argument
+sp {states*apply*get-game-details*retrieve-PP-predicate
+   (state <s> ^PR-game-details
+              ^descriptions <descs>
+              ^operator <o>
+        	  ^set <set>)
+   (<o> ^name get-game-details)
+   (<set> ^conditions <cond>)
+   (<cond> ^name <name>
+   	   ^args <args>
+   	   ^parameter <param>
+   	   ^negative <neg>)
+   (<args> ^1 <obj1>
+           ^2 <obj2>
+           -^3)
+   (<param> ^1 <first>
+            -^2)
+   (<first> ^param-id <param-id>) # PR - you might have to consider the fact that this is a type single and not set, TODO handle it in soar
+-->
+   (<descs> ^obj-desc <obj-desc>
+            ^description <desc>)
+   (<desc> ^prep <name>
+           ^1 <param-id>
+           ^2 id2
+           ^negative <neg>
+           ^id2 <obj2>)
+   (<obj-desc> #^prep <name>
+               ^1 <obj1>
+               #^2 <obj2>
+               ^param-id <param-id>)
+}
+
+# More than one param-id in a prepositional phrase indicates the object in the PP is used somewhere else?
+sp {states*apply*get-game-details*retrieve-PP-and-individual-objects
+   (state <s> ^PR-game-details
+              ^descriptions <descs>
+              ^operator <o>
+        	  ^set <set>)
+   (<o> ^name get-game-details)
+   (<set> ^conditions <cond>)
+   (<cond> ^name <name>
+   	   ^args <args>
+   	   ^parameter <param>
+   	   ^negative <neg>
+       -^return-type number)
+   (<args> ^1 <obj1>
+           ^2 <obj2>
+           -^3) # PR - maybe remove -^3 and instead add a rule that adds a third value if it exists?
+   (<param> ^1 <first>
+            ^2 <second>)
+   (<first> ^param-id <param-id-1>) # PR - you might have to consider the fact that this is a type single and not set
+   (<second> ^param-id <param-id-2>)
+-->
+   (<descs> ^description <desc>
+            ^obj-desc <obj-desc1>
+            ^obj-desc <obj-desc2>)
+   (<desc> ^prep <name>
+           ^1 <param-id-1>
+           ^2 <param-id-2>
+   	   ^negative <neg>)
+   (<obj-desc1> ^1 <obj1>
+                ^param-id <param-id-1>)
+   (<obj-desc2> ^1 <obj2>
+                ^param-id <param-id-2>)
+}
+
+# The following rule handles predicates with the same param-id for a given condition for e.g. Color of object A is color of object B, here both colors will have the same param-id
+# both predicates would have return-type number
+sp {states*apply*get-game-details*retrieve-attribute-based-conditions
+   (state <s> ^PR-game-details
+              ^descriptions <descs>
+              ^operator <o>
+       	  	  ^set <set>)
+   (<o> ^name get-game-details)
+   (<set> ^conditions <cond>
+          ^conditions { <cond2> < <cond> })
+   (<cond> ^name <name>
+           ^return-type number
+           ^args <arg1>
+           ^parameter <param1>)
+   (<cond2> ^name <name>
+            ^return-type number
+            ^args <arg2>
+            ^parameter <param2>)
+   (<param1> ^1.param-id <param-value>
+             ^2.param-id <param-obj1-id>)
+   (<param2> ^1.param-id <param-value>
+             ^2.param-id { <> <param-obj1-id> <param-obj2-id> })
+   (<arg1> -^1
+           ^2 <obj1>)
+   (<arg2> -^1
+           ^2 <obj2>)
+-->
+   (<descs> ^obj-desc <obj-desc1>
+            ^obj-desc <obj-desc2>
+            ^description <desc>)
+   (<obj-desc1> ^1 <obj1>
+            ^param-id <param-obj1-id>)
+   (<obj-desc2> ^1 <obj2>
+            ^param-id <param-obj2-id>)
+   (<desc> ^name <name>
+   	       ^article |the |
+           ^negative false
+           ^prep is
+           ^1 <param-obj1-id>
+           ^2 <param-obj2-id>)
+}
+
+# The following rule handles predicates with the same param-id where one of the predicates is an attribute and the other is a value (String/number), both predicates have
+# return-type number for e.g. The number of matched locations is 5
+sp {states*apply*get-game-details*retrieve-attribute-based-condition-and-value
+   (state <s> ^PR-game-details
+              ^descriptions <descs>
+              ^operator <o>
+        	  ^set <set>)
+   (<o> ^name get-game-details)
+   (<set> ^conditions <cond>
+          ^conditions <cond2>)
+   (<cond> ^name <name>
+           ^return-type number
+           ^args <arg1>
+           ^parameter <param1>)
+   (<arg1> -^1
+           ^2 <obj1>)
+   (<cond2> ^name <name2>
+            ^return-type number
+            ^result <res>
+            ^parameter <param2>)
+   (<param1> ^1.param-id <param-value>
+             ^2.param-id <param-obj1-id>)
+   (<param2> ^1.param-id <param-value>)
+   (<res> ^set <res-set>)
+   (<res-set> ^instance <inst>)
+   (<inst> ^1 <res-val>)
+-->
+   (<descs> ^obj-desc <desc1>
+            ^description <desc>)
+   (<desc1> ^1 <obj1>
+            ^param-id <param-obj1-id>)
+   (<desc> ^name <name>
+           ^article |the |
+           ^negative blah #PR- TODO this may not need a negative at all but hack for now
+           ^prep number
+           ^1 <param-obj1-id>
+           ^2 <res-val>)
+}
+
+# The following rule handles predicates with the same param-id where one of the predicates
+ #is an attribute and the other is a value (String/number), both predicates have
+ # The following rule handles predicates that are related using a function (greater-than,between)
+ #where both attributes are functions (count ) or objects
+sp {states*apply*get-game-details*retrieve-function-based-comparative-values
+   (state <s> ^operator <o>
+              ^descriptions <descs>
+              ^set <set>)
+   (<o> ^name get-game-details)
+   (<set> ^conditions <cond>) #for answer-game-details all three conditions here?, does it matter? i wonder
+   (<cond> ^name <relation>
+           ^return-type number
+           ^args <args>
+           ^parameter <param>
+           ^negative <neg>)
+   (<args> ^1 <cond1>
+           ^2 { <> <cond1> <cond2> })
+   (<param> ^1.param-id <param-cond1-id>
+            ^2.param-id <param-cond2-id>) 
+   (<cond1> ^name <name>
+            ^return-type number
+            ^args <args1>
+            ^parameter <param1>)
+   (<cond2> ^name <name>
+            ^return-type number
+            ^args <args2>
+            ^parameter <param2>)
+   (<args1> -^1
+            ^2 <obj1>)
+   (<param1> ^2.param-id <param-obj1-id>)
+   (<args2> -^1
+            ^2 <obj2>)
+   (<param2> ^2.param-id <param-obj2-id>)
+-->
+   (<descs> ^obj-desc <desc1>
+            ^obj-desc <desc2>
+            ^description <desc>)
+   (<desc1> ^1 <obj1>
+            ^param-id <param-obj1-id>)
+   (<desc2> ^1 <obj2>
+            ^param-id <param-obj2-id>)
+   (<desc> ^name <name>
+           ^relation <relation>
+           ^article |the |
+           ^negative <neg>
+           ^prep relation
+           ^1 <param-obj1-id>
+           ^2 <param-obj2-id>)
+}
+
+# The following rule will fire only in case of actions that have verbs present in them       
+sp {dialog-event*apply*get-game-details*retrieve-verbs
+   (state <s> ^name dialog-event
+              ^PR-game-details
+              ^descriptions <descs>
+              ^set <set>
+              ^verb-structure <verb-struct>
+              ^operator <o>)
+   (<o> ^name get-game-details)
+   (<verb-struct> ^<arg-num> <verb>)
+   (<verb> ^verb-name <verb-name>
+           ^verb-prep <verb-prep>
+           ^1 <param-id1>
+           ^2 <param-id2>)
+-->
+   (<descs> ^verb <verb>)
+}
+
+######################################
+# Propose add generated attribute
+######################################
+# Adding generated attribute after the completion of retrieved game details
+
+sp {states*op-no-change*propose*add-generated-attribute
+   (state <s> ^superstate <ss>
+              ^attribute operator
+              ^impasse no-change)
+   (<ss> ^name << dialog-event resolve-satisfaction-failure >>
+         ^descriptions <descs>
+         #^PR-game-details
+         )
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name add-generated-attribute)
+}
+
+# The following rule fires in case of an operator no-change, no individual description/obj-desc/verb have been added to the ^descriptions
+sp {states*op-no-change*apply*add-generated-attribute*no
+   (state <s> ^superstate <ss>
+              ^attribute operator
+              ^impasse no-change
+              ^operator.name add-generated-attribute)
+   (<ss> ^name << dialog-event resolve-satisfaction-failure >>
+         ^descriptions <descs>
+         #^PR-game-details
+         )
+   (<descs> -^description
+            -^obj-desc
+            -^verb)
+-->
+   (<ss> ^generated no)
+}
+
+sp {states*op-no-change*apply*add-generated-attribute*yes
+   (state <s> ^superstate <ss>
+              ^attribute operator
+              ^impasse no-change
+              ^operator.name add-generated-attribute)
+   (<ss> ^name << dialog-event resolve-satisfaction-failure >>
+         ^descriptions <descs>
+         #^PR-game-details
+         )
+   (<descs> ^<< description obj-desc verb >> <desc>)
+   -{ (<descs> ^<< description obj-desc verb >> {> <desc> <desc2>})}
+-->
+   (<ss> ^generated yes)
+}
+
+########################################################
+# Report answer using complete-answer-get-game-details
+########################################################
+
+# PR - TODO: Add a ^status complete to ^<gtype> in the apply-get-game-details rule and then on that basis it completes 
+sp {dialog-event*propose*complete-answer-get-game-details
+   (state <s> ^name dialog-event
+              ^PR-game-details
+              ^generated <gen>
+              ^combined
+              -^concept-seen
+              #^status complete # adding to check smem referent
+              ^descriptions <descs>)
+-->
+   (<s> ^operator <o> + <)
+   (<o> ^name complete-answer-get-game-details
+        ^descriptions <descs>
+        ^generated <gen>)   
+}
+
+sp {dialog-event*apply*complete-answer-get-game-details*send-message
+   (state <s> ^name dialog-event
+              ^PR-game-details
+              ^purpose.type <type>
+              ^operator <o>
+              ^io.output-link <out>)
+   (<o> ^name complete-answer-get-game-details
+        ^descriptions <descs>
+        ^generated <gen>)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type <type>
+          ^fields.descriptions <descs>)
+   (<descs> ^generated <gen>)
+}
+ 
+sp {dialog-event*apply*complete-answer-get-game-details*mark*performed
+   (state <s> ^name dialog-event
+              ^PR-game-details
+              ^operator.name complete-answer-get-game-details
+              ^top-state.interaction.status <status>)
+-->
+   (<status> ^performed.dialog-event <de>)
+   (<de> ^type explanation
+         ^originator agent)
+}     

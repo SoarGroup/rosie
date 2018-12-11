@@ -44,7 +44,7 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
         
         this.messagePasser = messagePasser;
     	
-        this.setOutputHandlerNames(new String[]{ "send-message", "next-script-sentence" });
+        this.setOutputHandlerNames(new String[]{ "send-message", "next-script-sentence", "stop-java" });
 	}
 	
 	@Override
@@ -113,6 +113,10 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
     	}
     	if (attName.equals("next-script-sentence")){
     		processOutputLinkScript(id);
+    	}
+    	if (attName.equals("stop-java")){
+    		//processOutputLinkScript(id);
+    		System.exit(0);
     	}
     }
     

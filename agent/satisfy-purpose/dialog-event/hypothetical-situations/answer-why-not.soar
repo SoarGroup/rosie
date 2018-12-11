@@ -1,0 +1,113 @@
+sp {dialog-event*propose*answer-why-not
+   (state <s> ^name dialog-event
+              ^purpose <p>)
+   (<p> ^type agent-response-why-not
+        ^parameters <params>
+        ^satisfaction <sat>)   
+   (<params> ^game-handle <game-handle>
+             ^concept-seen <seen>
+             ^type <gtype>
+             ^set <set>)
+ -->
+   (<s> ^operator <o> +) #PR - TODO maybe we ought to put these things onto dialog-event state
+   (<o> ^name answer-why-not
+        ^game-handle <game-handle>
+        ^concept-seen <seen>
+        ^type <gtype>
+        ^set <set>)
+}
+
+sp {answer-why-not*propose*resolve-satisfaction-failure
+   (state <s> ^operator.name wait
+              ^impasse no-change
+              ^superstate <ss>)
+   (<ss> ^name << answer-why-not answer-can-you-see-game-concepts >>)
+-->
+#(interrupt)
+(<ss> ^operator <o> + >)
+(<o> ^name resolve-satisfaction-failure)
+}
+
+# Rule to say waht went wrong when you ask "do you see the goal" instead of on being asked "why not"
+sp {answer-can-you-see-game-concepts*apply*resolve-satisfaction-failure
+   (state <s> ^name resolve-satisfaction-failure
+              ^superstate <ss>
+              ^superstate.superstate <sss>)
+   (<ss> ^operator.name resolve-satisfaction-failure)
+   (<sss> ^name dialog-event
+          ^operator <o1>
+          ^purpose.type <type>
+          ^retrieve-game <game-handle>
+          ^concept-seen <seen>
+          ^gtype <gtype>
+          ^set <unresolved>)
+   (<o1> ^game-handle <game-handle>
+         ^gtype <gtype>
+         ^name answer-can-you-see-game-concepts)
+   (<unresolved> -^<gtype>) # This is to differentiate it from bottom rule
+-->
+   (<s> ^unresolved-conditions <unresolved>
+        ^set <out-cond>
+        ^purpose-type <type>
+        ^concept-seen <seen>
+        ^gtype <gtype>)
+}
+
+#  This rule elaboration is to handle set related errors (when count of matched locations do not match)
+sp {resolve-satisfaction-failure*elaborate*add-type-and-concept-seen
+   (state <s> ^name resolve-satisfaction-failure
+              ^superstate.superstate <ss>)
+   (<ss> ^name dialog-event
+         ^operator <o1>
+         ^retrieve-game <game-handle>
+         ^concept-seen <seen>
+         ^purpose.type <type>
+         ^gtype <gtype>
+         ^set <set>)
+   (<set> ^<gtype> <concept>)
+   (<o1> ^name answer-can-you-see-game-concepts
+         ^game-handle <game-handle>)
+-->
+   (<s> ^purpose-type <type>
+        ^concept-seen <seen>
+        ^gtype <gtype>)
+}
+
+# PR - TODO delete this after deciding how you want to do this/if you want to do this
+#sp {answer-why-not*apply*resolve-satisfaction-failure
+#   (state <s> ^name resolve-satisfaction-failure
+#              ^superstate <ss>
+#              ^superstate.superstate <sss>)
+#   (<sss> ^name dialog-event
+#          ^operator <o1>)
+#   (<ss> ^operator.name resolve-satisfaction-failure)
+#   (<o1> ^name answer-why-not
+#         ^game-handle <game-handle>
+#         ^concept-seen <seen>
+#         ^type <gtype>
+#         ^set <unresolved>)
+#   (<unresolved> -^<gtype>) # This is to differentiate it from bottom rule
+#-->
+#   (<s> ^unresolved-conditions <unresolved>
+#        ^set <out-cond>)
+#}
+
+# PR - TODO delete this after deciding how you want to do this/if you want to do this
+#sp {answer-why-not*elaborate*resolve-satisfaction-failure
+#   (state <s> ^name answer-why-not
+#              ^superstate <ss>
+#              ^operator <o> +)
+#   (<ss> ^name dialog-event
+#          ^operator <o1>)
+#   (<o> ^name resolve-satisfaction-failure)
+#   (<o1> ^name answer-why-not
+#         ^game-handle <game-handle>
+#         ^concept-seen <seen>
+#         ^type <gtype>
+#         ^set <set>)
+#   (<set> ^<gtype> <concept>)
+#   
+#-->
+#   (<ss> ^gtype <gtype>
+#         ^<gtype> <concept>)
+#}

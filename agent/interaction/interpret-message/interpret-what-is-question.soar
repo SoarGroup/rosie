@@ -1,11 +1,13 @@
 ###################################################################
 #
 # interpret-what-is-question
-#   Occurs when the intructor wishes to give additional information about an object
-#   Construction: *-What-is-DP-QT 
-#   	E.g. 'What is this?'
+#   Occurs when the instructor wishes to know the object in a location or its description 
+#   Construction: *-What-is-DP-QT or What-is-DP-QT-PP
+#   	E.g. 'What is this?','What is the color of the block on the stove?'
 #
 ###################################################################
+
+# PR - TODO Future - handle ambiguous references. "What is on the small triangle" returns two small triangles. Send response asking to specify which object.
 
 #######
 # OPERATOR PROPOSAL
@@ -16,6 +18,7 @@ sp {interpret-message*propose*interpret-what-is-question
    (<msg> ^message-type what-is-question
          -^interpreted true)
 -->
+   (interrupt)
    (<s> ^operator <o> +)
    (<o> ^name interpret-what-is-question
         ^message <msg>)
@@ -36,6 +39,94 @@ sp {interpret-message*elaborate*interpret-what-is-question*object
    (<o> ^object <obj>)
 }
 
+# Elaborating for "What is this" question where object is already generated
+sp {interpret-message*elaborate*interpret-what-is-question*object-given
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-what-is-question
+        ^message.arg1 <arg1>)
+   (<arg1> ^item-type object)
+-->
+   (<o> ^generated yes
+        ^object <arg1>)
+}
+ 
+# Retrieving the predicate for which details are being asked by the instructor
+sp {interpret-message*elaborate*interpret-what-is-question*predicate-object
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-what-is-question
+        ^message.arg1 <arg1>)
+   (<arg1> ^item-type predicate
+           ^2 <pred>)
+   (<pred> ^2 <obj>
+           -^handle << goal failure action >>)
+-->
+   (<o> ^property <pred>
+        ^object <obj>)
+}
+
+# Retrieving the goal of the game
+sp {interpret-message*elaborate*interpret-what-is-question*retrieve-goal
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-what-is-question
+        ^message.arg1 <arg1>)
+   (<arg1> ^item-type predicate
+           ^2 <pred>)
+   (<pred> ^2 <game>
+           ^handle goal)
+   (<game> ^handle <game-name>)
+-->
+   (<o> ^type goal
+        ^game <game-name>)
+}
+
+# Retrieving failure concepts of the game
+sp {interpret-message*elaborate*interpret-what-is-question*retrieve-failure
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-what-is-question
+        ^message.arg1 <arg1>)
+   (<arg1> ^item-type predicate
+           ^2 <pred>)
+   (<pred> ^2 <game>
+           ^handle failure)
+   (<game> ^handle <game-name>)
+-->
+   (<o> ^type failure
+        ^game <game-name>)
+}
+
+# Retrieving actions of the game 
+# PR - TODO (all these can be made the same rule and not have three rules for goal,failure,action)
+sp {interpret-message*elaborate*interpret-what-is-question*retrieve-action
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-what-is-question
+        ^message.arg1 <arg1>)
+   (<arg1> ^item-type predicate
+           ^2 <pred>)
+   (<pred> ^2 <game>
+           ^handle action)
+   (<game> ^handle <game-name>)
+-->
+   (<o> ^type action
+        ^game <game-name>)
+}
+
+# Retrieving general concepts of a game
+sp {interpret-message*elaborate*interpret-what-is-question*retrieve-concept-definition
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-what-is-question
+        ^message.arg1 <arg1>)
+   (<arg1> ^sentence <sentence>)
+-->
+   (<o> ^gtype <gtype>
+        ^<gtype> <val>
+        ^sentence <sentence>)
+}
 
 #####
 # OPERATOR APPLICATION
@@ -44,15 +135,167 @@ sp {interpret-message*elaborate*interpret-what-is-question*object
 # Don't even need to do any special processing, just create a response
 sp {interpret-message*apply*interpret-what-is-question*create*message
    (state <s> ^name interpret-message
+              ^instructor-message <msg>
               ^operator <o>)
    (<o> ^name interpret-what-is-question
-        ^message <in-msg>
-        ^object <obj>)
+        ^object <obj>
+        -^property
+        -^generated)
 -->
-   (<in-msg> ^interpreted true)
-   (<s> ^outgoing-message <msg>)
-   (<msg> ^type object-description
-          ^object <obj>)
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type agent-object-description
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<params> ^object <obj>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type explanation
+         ^originator agent)
 }
 
-              
+sp {interpret-message*apply*interpret-what-is-question*create*message*given-object
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>
+              ^operator <o>)
+   (<o> ^name interpret-what-is-question
+        ^object <obj>
+        ^generated <gen>)
+-->
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type agent-object-description
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<params> ^object <obj>
+             ^generated <gen>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type explanation
+         ^originator agent)
+}
+
+# The following sets the message to be handled by the create-predicate-description rule given the property and the object
+sp {interpret-message*apply*interpret-what-is-question*create*predicate-message
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>
+              ^operator <o>)
+   (<o> ^name interpret-what-is-question
+        ^property <prop>
+        ^object <obj>)
+-->
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type agent-predicate-description
+   		^parameters <params>
+        ^satisfaction <sat>)
+   (<params> ^object <obj>
+             ^property <prop>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type explanation
+         ^originator agent)
+}
+
+#PR - TODO Combine the following to become one apply message
+
+# Retrieving goal details from smem from the games that were previously stored in memory
+sp {interpret-message*apply*interpret-what-is-question*create*retrieve-goal-message
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>
+              ^operator <o>)
+   (<o> ^name interpret-what-is-question
+        ^type goal
+        ^game <game>)
+-->
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type agent-goal-description
+   		^parameters <params>
+        ^satisfaction <sat>)
+   (<params> ^type goal
+             ^game <game>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type explanation
+         ^originator agent)
+}
+
+# Retrieving failure details from smem from the games that were previously stored in memory
+sp {interpret-message*apply*interpret-what-is-question*create*retrieve-failure-message
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>
+              ^operator <o>)
+   (<o> ^name interpret-what-is-question
+        ^type failure
+        ^game <game>)
+-->
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type agent-failure-description
+   		^parameters <params>
+        ^satisfaction <sat>)
+   (<params> ^type failure
+             ^game <game>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type explanation
+         ^originator agent)
+}
+
+# Retrieving action details from smem from the games that were previously stored in memory
+sp {interpret-message*apply*interpret-what-is-question*create*retrieve-action-message
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>
+              ^operator <o>)
+   (<o> ^name interpret-what-is-question
+        ^type action
+        ^game <game>)
+-->
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type agent-game-action-description
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<params> ^type action
+             ^game <game>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type explanation
+         ^originator agent)
+}
+
+# Retrieving concept details from smem from the games that were previously stored in memory
+sp {interpret-message*apply*interpret-what-is-question*create*retrieve-concept-definition
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>
+              ^operator <o>)
+   (<o> ^gtype <gtype>
+        ^<gtype> <val>
+        ^sentence <sentence>)
+-->
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type agent-game-concept-definition
+   		^parameters <params>
+        ^satisfaction <sat>)
+   (<params> ^gtype <gtype>
+             ^<gtype> <val>
+             ^sentence <sentence>)
+   (<val> ^condition <cond>)
+   (<cond> ^name <sentence>
+   	   ^type concept
+   	   ^attribute predicate)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type explanation
+         ^originator agent)
+}
+

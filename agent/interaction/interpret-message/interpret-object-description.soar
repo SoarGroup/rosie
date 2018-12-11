@@ -138,7 +138,7 @@ sp {interpret-message*elaborate*interpret-object-description*purpose*train-on-ob
         ^object <obj>
         ^predicate <pred>)
       -{(<s> #^instructor-message.predicate.handle initial 
-          ^top-state.dialog-context.type game-learning)}
+          ^top-state.dialog-context.learning true)}
    (<obj> -^handle message1)
 -->
    (<o> ^purpose train-on-object)
@@ -162,6 +162,47 @@ sp {interpret-message*elaborate*interpret-object-description*purpose*learn-goal-
         ^subclause <sub>)
 -->
    (<o> ^purpose learn-goal-definition)
+}
+
+sp {interpret-message*elaborate*interpret-object-description*purpose*learn-version-number
+   (state <s> ^name interpret-message
+              ^top-state.dialog-context.multiple-num-answer true
+              ^operator <o> +)
+   (<o> ^name interpret-object-description
+        ^predicate.property.handle number)
+-->
+   (<o> ^purpose learn-number-of-x)
+}
+
+
+sp {interpret-message*apply*interpret-object-description*create*segment*learn-number-of-x
+   (state <s> ^name interpret-message
+               ^top-state.interaction.status <status>
+              ^top-state.interaction.changes <changes>
+              ^top-state.dialog-context <dc>
+              ^operator <o>)
+   (<o> ^name interpret-object-description
+        ^purpose learn-number-of-x
+        ^message <msg>
+        ^predicate.handle <num>)
+   (<dc> ^multiple-num-answer <m>)
+-->
+(<dc> ^multiple-num-answer <m> -)
+(<dc> ^number-answer <num>)
+   (<status> ^performed.dialog-event <de>)
+   (<de> ^type process-multiple-question
+         ^originator instructor)
+   (<msg> ^interpreted true)
+   #(<s> ^mark-interpreted <msg>)
+#   (<info> ^purpose <p>
+#           ^originator instructor)
+#   (<p> ^type train-on-object 
+#        ^parameters <params>
+#        ^satisfaction.learning-event.type object)
+#   (<params> ^object <obj>)
+   (<changes> ^outgoing-message <msg1>)
+   (<msg1> ^type ok
+           ^complete-message true)
 }
 
 sp {interpret-message*elaborate*interpret-object-description*purpose*task-completed
@@ -191,7 +232,7 @@ sp {interpret-message*elaborate*interpret-object-description*purpose*teach-relat
         ^object <obj>
         ^relation <rel>)
    -{(<s> #^instructor-message.predicate.handle initial 
-          ^top-state.dialog-context.type game-learning)}
+          ^top-state.dialog-context.learning true)}
    (<obj> -^handle message1)
 -->
    (<o> ^purpose teach-relation)
@@ -263,17 +304,18 @@ sp {interpret-message*apply*interpret-object-description*mark*answer
 
 #  TODO JAMES continue
 ## and make non-if based predicate sentences to test out...
-#purpose: teach new predicate
+#purpose: teach new predicateff
 sp {interpret-message*apply*interpret-object-description*create*segment*teach-new-predicate
 #:interrupt
    (state <s> ^name interpret-message
-              ^top-state.dialog-context.learning-predicate.name <lpred>
+              ^top-state.dialog-context <dc>
               ^top-state.interaction.status <status>
               ^operator <o>)
    (<o> ^name interpret-object-description
         -^purpose
         ^message <msg>)
-   (<msg> ^arg2.{2}.handle <lpred>)
+   (<dc> ^learning-predicate.name <lpred>)
+   #(<msg> ^arg2.{2}.handle <lpred>)
 -->
    (<status> ^performed.dialog-event <de>)
    (<de> ^type process-unknown-word
@@ -287,53 +329,60 @@ sp {interpret-message*apply*interpret-object-description*create*segment*teach-ne
         ^satisfaction <sat>)
    (<sat> ^learning-event.type game)
 }
-sp {interpret-message*apply*interpret-object-description*create*segment*teach-new-predicate*single
-#:interrupt
-   (state <s> ^name interpret-message
-              ^top-state.dialog-context.learning-predicate.name <lpred>
-              ^top-state.interaction.status <status>
-              ^operator <o>)
-   (<o> ^name interpret-object-description
-        -^purpose
-        ^message <msg>)
-   (<msg> ^predicate.handle <lpred> -^arg2)
--->
-   (<status> ^performed.dialog-event <de>)
-   (<de> ^type process-unknown-word
-         ^originator instructor)
-   (<s> ^new-segment-info <info>
-        ^mark-interpreted <msg>)
-   (<info> ^purpose <p>
-           ^originator instructor)
-   (<p> ^type learn-property-predicate
-        ^parameters.message <msg>
-        ^satisfaction <sat>)
-   (<sat> ^learning-event.type game)
-}
+#DEPRICATED
+#sp {interpret-message*apply*interpret-object-description*create*segment*learn-property-predicate
+#   (state <s> ^name interpret-message
+#              ^top-state.dialog-context <dc>
+#              ^operator <o>)
+#   (<o> ^name interpret-object-description
+#        ^message <msg>)
+#   (<dc> ^learning true ^learning-predicate <lp>) #type game-learning
+#   (<lp> ^name <name>)
+#   (<msg> ^arg1.predicates.property <name>)
+#-->
+#  # (<dc> 
+#   (<s> ^new-segment-info <info>
+#        ^mark-interpreted <msg>)
+#   (<info> ^purpose <p>
+#           ^originator instructor)
+#   (<p> ^type learn-property-predicate
+#        ^parameters.message <msg>
+#        ^satisfaction <sat>)
+#   (<sat> ^learning-event.type game)
+#}
+#sp {interpret-message*apply*interpret-object-description*create*segment*teach-new-predicate*single
+##:interrupt
+#   (state <s> ^name interpret-message
+#              ^top-state.dialog-context.learning-predicate.name <lpred>
+#              ^top-state.interaction.status <status>
+#              ^operator <o>)
+#   (<o> ^name interpret-object-description
+#        -^purpose
+#        ^message <msg>)
+#   (<msg> ^predicate.handle <lpred> -^arg2)
+#-->
+#   (<status> ^performed.dialog-event <de>)
+#   (<de> ^type process-unknown-word
+#         ^originator instructor)
+#   (<s> ^new-segment-info <info>
+#        ^mark-interpreted <msg>)
+#   (<info> ^purpose <p>
+#           ^originator instructor)
+#   (<p> ^type learn-property-predicate
+#        ^parameters.message <msg>
+#        ^satisfaction <sat>)
+#   (<sat> ^learning-event.type game)
+#}
 sp {interpret-message*apply*interpret-object-description*copy-old-link
-   (state <s> ^name interpret-message
+#:interrupt
+      (state <s> ^name interpret-message
               ^top-state.dialog-context <dc>
-              ^top-state.dialog-context.learning-predicate.name <lpred>
+              #^top-state.dialog-context.learning-predicate.name <lpred>
               ^operator <o>)
    (<o> ^name interpret-object-description
        -^purpose
         ^message <msg>)
-   (<msg> ^arg2.{2}.handle <lpred>)
-   (<dc> ^learn-link <ll>)
-   (<ll> ^type << action goal failure >>)
--->
-    (<dc> ^store-learn-link <ll>)
-    (<dc> ^learn-link <ll> -)
-}
-sp {interpret-message*apply*interpret-object-description*copy-old-link*arg1
-   (state <s> ^name interpret-message
-              ^top-state.dialog-context <dc>
-              ^top-state.dialog-context.learning-predicate.name <lpred>
-              ^operator <o>)
-   (<o> ^name interpret-object-description
-       -^purpose
-        ^message <msg>)
-   (<msg> ^predicate.handle <lpred> -^arg2)
+ #  (<msg> ^arg2.{2}.handle <lpred>)
    (<dc> ^learn-link <ll>)
    (<ll> ^type << action goal failure >>)
 -->
@@ -341,7 +390,6 @@ sp {interpret-message*apply*interpret-object-description*copy-old-link*arg1
     (<dc> ^learn-link <ll> -)
 }
 
-##>> here
 sp {interpret-message*apply*interpret-object-description*create*context-links
 #:interrupt
    (state <s> ^name interpret-message
@@ -356,9 +404,7 @@ sp {interpret-message*apply*interpret-object-description*create*context-links
    (<pred> ^handle <name> -^2 ^property <p>)
    (<lp> ^name <name>)
 -->
-#(interrupt)
-   (<dc> ^learn-link <ll>
-         ^input-object-1 <obj>)
+   (<dc> ^learn-link <ll>)
    (<ll> ^handle <name> ^item-type predicate ^property <p>)
 }
 sp {interpret-message*apply*interpret-object-description*create*context-links*visual-unary
@@ -374,9 +420,7 @@ sp {interpret-message*apply*interpret-object-description*create*context-links*vi
    (<pred> ^handle <name> -^2 ^item-type predicate -^property)
    (<lp> ^name <name>)
 -->
-#(interrupt)
-   (<dc> ^learn-link <ll>
-         ^input-object-1 <obj>)
+   (<dc> ^learn-link <ll>)
    (<ll> ^handle <name> ^item-type predicate ^property <prop>)
    (<prop> ^handle property ^item-type property ^type visual)
 }
@@ -393,9 +437,7 @@ sp {interpret-message*apply*interpret-object-description*create*context-links*sp
    (<pred> ^handle <name> -^2 ^property <p>)
    (<lp> ^spelling <name> ^name <name2>)
 -->
-#(interrupt)
-   (<dc> ^learn-link <ll>
-         ^input-object-1 <obj>)
+   (<dc> ^learn-link <ll>)
    (<ll> ^handle <name2> ^item-type predicate ^property <p>)
 }
 sp {interpret-message*apply*interpret-object-description*create*context-links*2args*spelling
@@ -411,10 +453,7 @@ sp {interpret-message*apply*interpret-object-description*create*context-links*2a
    (<pred> ^handle <name> ^2 <obj2> -^handle of1)
    (<lp> ^spelling <name> ^name {<name2> <> <name>})
 -->
-#(interrupt)
-   (<dc> ^learn-link <ll>
-         ^input-object-1 <obj>
-         ^input-object-2 <obj2>)
+   (<dc> ^learn-link <ll>)
    (<ll> ^handle <name2> ^item-type predicate)
 } 
 sp {interpret-message*apply*interpret-object-description*create*context-links*2args
@@ -431,10 +470,7 @@ sp {interpret-message*apply*interpret-object-description*create*context-links*2a
    (<lp> ^name <name>)
    (<dc> -^learn-link.handle <name>)
 -->
-#(interrupt)
-   (<dc> ^learn-link <ll>#<pred>
-         ^input-object-1 <obj>
-         ^input-object-2 <obj2>)
+   (<dc> ^learn-link <ll>)
    (<ll> ^handle <name> ^item-type predicate)
 } 
 sp {interpret-message*apply*interpret-object-description*create*context-links*2args*attribute-of
@@ -452,13 +488,9 @@ sp {interpret-message*apply*interpret-object-description*create*context-links*2a
    (<lp> ^name <name>)
    (<dc> -^learn-link.handle <name>)
 -->
-#(interrupt)
-   (<dc> ^learn-link <ll>#<pred>
-         ^output-object-1 <obj> #not sure if want or not... still want this to be arg1, but want to not ignore tests..
-         ^input-object-2 <obj2>)
+   (<dc> ^learn-link <ll>)
    (<ll> ^handle <name> ^item-type predicate)
 }
-
 sp {interpret-message*apply*interpret-object-description*create*context-links*2args*x-of
    (state <s> ^name interpret-message
               ^top-state.dialog-context <dc> 
@@ -476,10 +508,46 @@ sp {interpret-message*apply*interpret-object-description*create*context-links*2a
    (<lp> ^name <name>)
    (<dc> -^learn-link.handle <name>)
 -->
-   (<dc> ^learn-link <ll>#<pred>
-         ^output-object-1 <obj> #not sure if want or not... still want this to be arg1, but want to not ignore tests..
-         ^input-object-2 <o2>)
+   (<dc> ^learn-link <ll>)
    (<ll> ^handle <name> ^item-type predicate)
+}
+sp {interpret-message*apply*interpret-object-description*create*context-links*2args*attribute-of*spelling
+   (state <s> ^name interpret-message
+              ^top-state.dialog-context <dc> 
+              ^operator <o>)
+   (<o> ^name interpret-object-description
+        -^purpose
+        ^message <msg>)
+   (<dc> ^learning-predicate <lp>)
+   #(<msg> ^then-subclause <tc>)
+   (<msg> ^arg1 <obj> ^predicate <pred> -^arg2)
+   (<pred> ^handle of1 ^2 <pred2> ^item-type predicate)
+   (<pred2> ^handle <name> ^2 <obj2>)
+   (<lp> ^spelling <name> ^name {<name2> <> <name>})
+   (<dc> -^learn-link.handle <name2>)
+-->
+   (<dc> ^learn-link <ll>)
+   (<ll> ^handle <name2> ^item-type predicate)
+}
+sp {interpret-message*apply*interpret-object-description*create*context-links*2args*x-of*spelling
+   (state <s> ^name interpret-message
+              ^top-state.dialog-context <dc> 
+              ^operator <o>)
+   (<o> ^name interpret-object-description
+        -^purpose
+        ^message <msg>)
+   (<dc> ^learning-predicate <lp>)
+   #(<msg> ^then-subclause <tc>)
+   (<msg> ^arg1 <obj> ^arg2 <pred> ^arg2 <p3> -^predicate)
+   (<pred> ^handle of1 ^2 <pred2> ^item-type predicate)
+   (<pred2> ^handle <name> ^2 <o2>)
+   (<p3> ^handle <name> ^relation <relp>)
+   (<relp> ^handle of1 ^2 <o2>)
+   (<lp> ^spelling <name> ^name {<name2> <> <name>})
+   (<dc> -^learn-link.handle <name2>)
+-->
+   (<dc> ^learn-link <ll>)
+   (<ll> ^handle <name2> ^item-type predicate)
 }
 
 sp {interpret-message*apply*interpret-object-description*create*context-links*2args*x-of*2
@@ -498,10 +566,27 @@ sp {interpret-message*apply*interpret-object-description*create*context-links*2a
    (<dc> -^learn-link.handle <name>)
   -{(<msg> ^arg2 <ff> <> <pred>)}
 -->
-   (<dc> ^learn-link <ll>#<pred>
-         ^output-object-1 <obj> #not sure if want or not... still want this to be arg1, but want to not ignore tests..
-         ^input-object-2 <o2>)
+   (<dc> ^learn-link <ll>)
    (<ll> ^handle <name> ^item-type predicate)
+}
+sp {interpret-message*apply*interpret-object-description*create*context-links*2args*x-of*2*spelling
+   (state <s> ^name interpret-message
+              ^top-state.dialog-context <dc> 
+              ^operator <o>)
+   (<o> ^name interpret-object-description
+        -^purpose
+        ^message <msg>)
+   (<dc> ^learning-predicate <lp>)
+   #(<msg> ^then-subclause <tc>)
+   (<msg> ^arg1 <obj> ^arg2 <pred>  -^predicate)
+   (<pred> ^handle of1 ^2 <pred2> ^item-type predicate)
+   (<pred2> ^handle <name> ^2 <o2>)
+   (<lp> ^spelling <name> ^name {<name2> <> <name>})
+   (<dc> -^learn-link.handle <name2>)
+  -{(<msg> ^arg2 <ff> <> <pred>)}
+-->
+   (<dc> ^learn-link <ll>)
+   (<ll> ^handle <name2> ^item-type predicate)
 }
 ##
 
@@ -593,24 +678,25 @@ sp {interpret-message*apply*interpret-object-description*teach-location*terminat
 -->
    (<s> ^terminate-segment true)
 }
-#JK teach Rosie your name
-sp {interpret-message*apply*interpret-object-description*create*segment*learn-teacher-name
-   (state <s> ^name interpret-message
-              ^operator <o>)
-   (<o> ^name interpret-object-description
-        ^message <msg>)
-   (<msg> ^arg1 <q> ^predicate <p>)
-   (<q> ^handle name1)
--->
-   (<s> ^new-segment-info <info>
-        ^mark-interpreted <msg>)
-   (<info> ^purpose <p>
-           ^originator instructor)
-   (<p> ^type learn-teacher-name
-        ^parameters.message <msg>
-        ^satisfaction <sat>)
-   (<sat> ^learning-event.type game)
-}
+
+##JK teach Rosie your name
+#sp {interpret-message*apply*interpret-object-description*create*segment*learn-teacher-name
+#   (state <s> ^name interpret-message
+#              ^operator <o>)
+#   (<o> ^name interpret-object-description
+#        ^message <msg>)
+#   (<msg> ^arg1 <q> ^predicate <p>)
+#   (<q> ^handle name1)
+#-->
+#   (<s> ^new-segment-info <info>
+#        ^mark-interpreted <msg>)
+#   (<info> ^purpose <p>
+#           ^originator instructor)
+#   (<p> ^type learn-teacher-name
+#        ^parameters.message <msg>
+#        ^satisfaction <sat>)
+#   (<sat> ^learning-event.type game)
+#}
 
 
 #JK 'the name of the game is x"
@@ -647,6 +733,25 @@ sp {interpret-message*apply*interpret-object-description*puzzle-name*store*smem
     (<ws> ^structure-type N ^number singular ^object-feature handle)
     (<ref> ^property <prop>)
     (<prop> ^handle concept ^type conceptual)
+}
+
+sp {interpret-message*apply*interpret-object-description*store*action
+#:interrupt
+   (state <s> ^name interpret-message
+              ^smem.command <sc>
+              ^operator <o>)
+   (<o> ^name interpret-object-description
+        ^message <msg>)
+   (<msg> ^arg1.{2} <q> ^predicate.word-structure <ws>)
+   (<q> ^handle name1 ^{2}.<< action handle >> action)
+   (<ws> ^referent <ref>)
+   (<ref> ^handle <handle>)
+   #(<q> ^handle name1 ^{2}.<< game handle >> << game1 puzzle1 >>)
+-->
+    (<sc> ^store <ref> <proc> <ws>)
+    (<ws> ^directional true )#^super-type @60999)
+    (<ref> ^type action ^procedural <proc>)
+    (<proc> ^op_name <handle>)
 }
 
 #'the name of the puzzle is x"
@@ -726,7 +831,7 @@ sp {interpret-message*apply*interpret-object-description*create*segment*learn-fa
 
 sp {interpret-message*apply*interpret-object-description*create*segment*learn-goal-initiate-state
    (state <s> ^name interpret-message
-              ^top-state.dialog-context.type game-learning
+              ^top-state.dialog-context.learning true #type game-learning
               ^operator <o>)
    (<o> ^name interpret-object-description
         ^message <msg>)
@@ -744,7 +849,7 @@ sp {interpret-message*apply*interpret-object-description*create*segment*learn-go
 
 sp {interpret-message*apply*interpret-object-description*create*segment*learn-goal-final-state
    (state <s> ^name interpret-message
-              ^top-state.dialog-context.type game-learning
+              ^top-state.dialog-context.learning true #type game-learning
               ^operator <o>)
    (<o> ^name interpret-object-description
         ^message <msg>)
@@ -764,7 +869,7 @@ sp {interpret-message*apply*interpret-object-description*create*segment*learn-go
    (state <s> ^name interpret-message
               ^top-state.dialog-context <dc>
               ^operator <o>)
-   (<dc> -^needs-goal-setup ^type game-learning ^learn-link)
+   (<dc> -^needs-goal-setup ^learn-link ^learning true) #type game-learning
    (<o> ^name interpret-object-description
         ^purpose learn-goal-definition
         ^message <msg>)
@@ -786,7 +891,7 @@ sp {interpret-message*apply*interpret-object-description*create*segment*learn-go
               ^top-state.interaction.changes <changes>
               ^top-state.dialog-context <dc>
               ^operator <o>)
-   (<dc> ^needs-goal-setup ^type game-learning ^learn-link)
+   (<dc> ^needs-goal-setup ^learn-link ^learning true) #type game-learning
    (<o> ^name interpret-object-description
         ^purpose learn-goal-definition
         ^message <msg>)
@@ -798,33 +903,14 @@ sp {interpret-message*apply*interpret-object-description*create*segment*learn-go
               ^complete-message true)
 }
 
-sp {interpret-message*apply*interpret-object-description*create*segment*learn-property-predicate
-   (state <s> ^name interpret-message
-              ^top-state.dialog-context <dc>
-              ^operator <o>)
-   (<o> ^name interpret-object-description
-        ^message <msg>)
-   (<dc> ^type game-learning ^learning-predicate <lp>)
-   (<lp> ^name <name>)
-   (<msg> ^arg1.predicates.property <name>)
--->
-  # (<dc> 
-   (<s> ^new-segment-info <info>
-        ^mark-interpreted <msg>)
-   (<info> ^purpose <p>
-           ^originator instructor)
-   (<p> ^type learn-property-predicate
-        ^parameters.message <msg>
-        ^satisfaction <sat>)
-   (<sat> ^learning-event.type game)
-}
+
 
 ###########################
 # Purpose: equate-objects
 
 sp {interpret-message*apply*interpret-object-description*create*segment*equate-objects
    (state <s> ^name interpret-message
-              -^top-state.dialog-context.type game-learning
+              -^top-state.dialog-context.learning true #type game-learning
               ^operator <o>)
    (<o> ^name interpret-object-description
         ^purpose equate-objects
@@ -850,7 +936,7 @@ sp {interpret-message*apply*interpret-object-description*create*segment*equate-o
 
 sp {interpret-message*apply*interpret-object-description*create*segment*learn-goal-definition
    (state <s> ^name interpret-message
-              -^top-state.dialog-context.type game-learning
+              -^top-state.dialog-context.learning true #type game-learning
               ^operator <o>)
    (<o> ^name interpret-object-description
         ^purpose learn-goal-definition
