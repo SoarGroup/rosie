@@ -9,6 +9,18 @@
 #
 # Desc: Receives the next word as requested
 #
+#   This operator works very differently between Lucia and Rosie,
+#   regardless of whether in test mode or not.
+#
+#   In Lucia each word is requested by a command on the output
+#   link, and then the Java code puts the word on the input link.
+#   The word provided has ^has-terminator true if this is the
+#   last word of the sentence.
+#
+#   In Rosie, the whole sequence of words is elaborated onto
+#   the top state by a rule built during configuration.
+#   The terminating punctuation appears as a separate word.
+#
 
 #    Propose an operator to request the word
 sp {comprehend*propose*next-word
@@ -63,7 +75,22 @@ sp {comprehend*apply*next-word*normal
 
 ############### RULES FOR ROSIE ONLY #################
 
-sp {comprehend*apply*next-word*first-word
+#   Getting the Lucia-like next-word to work with the Rosie
+#   sentence structure is complicated.  There are 4 cases:
+#   Case 1: This is the first word in the sentence, but it
+#           is not the last word.  Here we have to skip over
+#           the initial '*' word in the sentence format.
+#   Case 2: This word is somewhere in the middle.  It is not
+#           the first word, nor is it the last.
+#   Case 3: This is the last word, but not also the first.
+#           Here we have to through away final the '.' word.
+#   case 4: This is both the first word and the last word.
+#           Here we have to skip over the initial '*' word
+#           and throw away the final '.' word.
+#
+
+#   Case 1 apply rule
+sp {comprehend*apply*next-word*first-word-not-last
    (state <s> ^problem-space comprehend
               ^input <i>
               ^operator <o>
@@ -75,14 +102,12 @@ sp {comprehend*apply*next-word*first-word
         ^next nil
         ^content nil)
    #    Skip over the "*" to get to the first real word
-   (<sentence> ^next <first>)
+   (<sentence> ^spelling |*|
+               ^next <first>)
    (<first> ^spelling <text>
             ^next <next>)
    #    Don't fire if this is the last word
-  -(<next> ^next nil)
- -{(<next> ^next <next-next>)
-   (<next-next> ^next nil
-                ^spelling |.|)}
+ -{(<next> ^spelling << |.| |?| |!| >>)}
 -->
    (<i> ^word nil -
         ^word <w>
@@ -99,19 +124,19 @@ sp {comprehend*apply*next-word*first-word
         ^orth <text>
         ^post-punct ||
         ^pre-punct ||
-#        ^previous nil
         ^word <text>
         ^word-count 0)
+   #    CASE 1:
    (write (crlf) (concat |Received word #1: | <text>))
 }
 
+#   Case 2 apply rule
 sp {comprehend*apply*next-word*in-the-middle
    (state <s> ^problem-space comprehend
               ^input <i>
-              ^operator <o>
-              ^sentence <sentence>)
+              ^operator <o>)
    (<o> ^name next-word)
-   (<i> ^word <old-word>
+   (<i> ^word { <old-word> <> nil }
         ^count <old-count>
         ^comprehended true
         ^next { <next> <> nil }
@@ -119,10 +144,9 @@ sp {comprehend*apply*next-word*in-the-middle
    (<next> ^spelling <text>
            ^next <next-next>)
    #    Don't fire if this is the last word
-  -(<next> ^next nil)
- -{(<next> ^next <next-next>)
-   (<next-next> ^next nil
-                ^spelling |.|)}
+  -{(<next> ^next <next-next>)
+    (<next-next> ^next nil
+                 ^spelling << |.| |?| |!| >>)}
 -->
    (<i> ^word <old-word> -
         ^word <w>
@@ -141,14 +165,16 @@ sp {comprehend*apply*next-word*in-the-middle
         ^pre-punct ||
         ^word <text>
         ^word-count <old-count>)
+   #    CASE 1:
    (write (crlf) (concat |Received word #| (+ <old-count> 1) |: | <text>))
 }
 
-sp {comprehend*apply*next-word*last-word
+#   Case 3 apply rule
+sp {comprehend*apply*next-word*last-word-not-first
    (state <s> ^problem-space comprehend
               ^input <i>
               ^operator <o>
-              ^sentence <sentence>)
+)#              ^sentence <sentence>)
    (<o> ^name next-word)
    (<i> ^word <old-word>
         ^count <old-count>
@@ -158,10 +184,8 @@ sp {comprehend*apply*next-word*last-word
    (<next> ^spelling <text>
            ^next <next-next>)
    #    Fire only if this is the last word
-  -(<next> ^next nil)
-   (<next> ^next <next-next>)
    (<next-next> ^next nil
-                ^spelling |.|)
+           ^spelling << |.| |?| |!| >>)
 -->
    (<i> ^word <old-word> -
         ^word <w>
@@ -181,7 +205,51 @@ sp {comprehend*apply*next-word*last-word
         ^pre-punct ||
         ^word <text>
         ^word-count <old-count>)
+   #    CASE 3:
    (write (crlf) (concat |Received word #| (+ <old-count> 1) |: | <text>))
+}
+
+#   Case 4 apply rule
+sp {comprehend*apply*next-word*first-and-last
+   (state <s> ^problem-space comprehend
+              ^input <i>
+              ^operator <o>
+              ^sentence <sentence>)
+   (<o> ^name next-word)
+   (<i> ^word <old-word>
+        ^count <old-count>
+        ^comprehended true
+        ^next nil
+        ^content nil)
+   #    Skip over the "*" to get to the first real word
+   (<sentence> ^spelling |*|
+               ^next <first>)
+   (<first> ^spelling <text>
+            ^next <next>)
+   #    Fire only if this is also the last word
+   (<next> ^next nil
+           ^spelling << |.| |?| |!| >>)
+-->
+   (<i> ^word <old-word> -
+        ^word <w>
+        ^count <old-count> -
+        ^count (+ <old-count> 1)
+        ^comprehended true -
+        ^comprehended false
+        ^next <next> -
+        ^next nil
+        ^content nil -
+        ^content <text>)
+   #    Build a word for Rosie, not all the info there
+   (<w> ^content <text>
+        ^has-terminator true
+        ^orth <text>
+        ^post-punct ||
+        ^pre-punct ||
+        ^word <text>
+        ^word-count <old-count>)
+   #    CASE 4:
+   (write (crlf) (concat |Received word #1: | <text>))
 }
 
 ############### THE SAME FOR BOTH SYSTEMS #################
