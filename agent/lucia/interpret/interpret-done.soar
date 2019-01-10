@@ -1,0 +1,58 @@
+##!
+# @file
+#
+# @created plindes 20150623
+# File: interpret-done.soar
+# Author: Peter Lindes
+# Created: 23 June 2015
+#
+# Desc: This operator is proposed in the interpret substate,
+#       but it is given a worst preference.
+#       Thus it will not be selected until after all other
+#       operators needed in the interpret state
+#       have completed.
+#
+
+#    Propose an operator to finish up the interpret state
+sp {interpret*propose*interpret-done
+   (state <s> ^top-state <ts>
+              ^problem-space interpret)
+-->
+   (<s> ^operator <o> + <)
+   (<o> ^name interpret-done
+        ^debug-info (concat |All decision making is done.| ))
+}
+
+#   This one fires when an action was decided on
+#	It may fire several times
+sp {interpret*apply*interpret-done*action-chosen
+   (state <s> ^top-state <ts>
+              ^superstate <ss>
+              ^problem-space interpret
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name interpret-done)
+   (<ts> ^io.output-link <output>)
+-->
+   #   Post the action to the superstate to complete interpret
+   (<ss> ^action <a>)
+   #   Report the decision to the outside world
+   (<output> ^report-decision <a>)
+}
+
+#   This one fires when NO action was interpreted
+sp {interpret*apply*interpret-done*no-action
+   (state <s> ^top-state <ts>
+              ^superstate <ss>
+              ^problem-space interpret
+              ^operator <o>
+             -^action <a>)
+   (<o> ^name interpret-done)
+   (<ts> ^io.output-link <output>)
+-->
+   #   Post a NONE action to the superstate to complete interpret
+   (<ss> ^action NONE)
+   #   Report the interpretation to the outside world
+   (<output> ^report-decision NONE)
+}
+

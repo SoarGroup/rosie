@@ -212,3 +212,150 @@ sp {comprehend-word*apply*snip*simple-action-before-adverb
    (write (crlf) (concat |Snipping | <action> | to get to | <verb> |.|))
 }
 
+
+##################  Snip a SimpleAction if a RefExpr follows   #####################
+
+#    Propose an operator to snip a SimpleAction to attach an Adverb
+sp {comprehend-word*propose*snip*simple-action-before-refexpr
+   (state <s> ^problem-space comprehend-word
+              ^cxn <refexpr>
+              ^lexical-access done)
+   (<refexpr> ^is.a RefExpr
+             ^m <meaning>)
+   (<meaning> ^referent <> nil )    #   Has been grounded already
+   #    See whether what came before is a SimpleAction
+   (<refexpr> ^previous <action>)
+   (<action> ^is.a SimpleAction)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name snip
+        ^type snip
+        ^goal simple-action-before-refexpr
+        ^debug-info (concat |Snip a SimpleAction to attach a RefExpr.|))
+}
+
+#    Snip away the SimpleAction to get to its verb
+sp {comprehend-word*apply*snip*simple-action-before-refexpr
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <refexpr>)
+   (<o> ^name snip
+        ^type snip
+        ^goal simple-action-before-refexpr)
+   #    Get info for the snip
+   (<refexpr> ^previous <action>)    #   The thing to be cut
+   (<action> ^verb <verb>)          #   What to cut to
+-->
+   #    THIS IS THE SNIP!!!
+   #    Change the previous pointer
+   #    This will orphan the SimpleAction and
+   #    leave it to be garbage collected.
+   #    Instead we'll point to its constituent,
+   #    allowing that to be matched
+   (<refexpr> ^previous <action> -
+              ^previous <verb>)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <action> | to get to | <verb> |.|))
+}
+
+
+##################  Snip to a TransitiveCommand if a Particle follows   #####################
+
+#    Propose an operator to snip some other construction
+#    that covers a TransitiveCommand to attach an Adverb.
+#    Used for things like "If <c> then throw <x> away."
+sp {comprehend-word*propose*snip*to-transitive-command-before-particle
+   (state <s> ^problem-space comprehend-word
+              ^cxn <particle>
+              ^lexical-access done)
+   (<particle> ^is.a Particle
+             ^m <meaning>)
+   (<meaning> ^modifier )    #   Has been looked up already
+   #    See whether what came before has a TransitiveCommand in it
+   (<particle> ^previous <cover>)
+   (<cover> ^constituents.<x> <target>)
+   (<target> ^is.a TransitiveCommand)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name snip
+        ^type snip
+        ^cover <cover>
+        ^target <target>
+        ^goal to-transitive-command-before-particle
+        ^debug-info (concat |Snip to get to a TransitiveCommand to attach a Particle.|))
+}
+
+#    Snip away the cover to get to its TransitiveCommand
+sp {comprehend-word*apply*snip*to-transitive-command-before-particle
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <particle>)
+   (<o> ^name snip
+        ^type snip
+        ^cover <cover>
+        ^target <target>
+        ^goal to-transitive-command-before-particle)
+-->
+   #    THIS IS THE SNIP!!!
+   #    Change the previous pointer
+   #    This will orphan the covering cxn and
+   #    leave it to be garbage collected.
+   #    Instead we'll point to its constituent,
+   #    allowing that to be matched
+   (<particle> ^previous <cover> -
+               ^previous <target>)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <cover> | to get to | <target> |.|))
+}
+
+
+##################  Snip to a SimpleAction if a Direction follows   #####################
+
+#    Propose an operator to snip some other construction
+#    that covers a SimpleAction to attach an Adverb.
+#    Used for things like "If <c> then go forward."
+sp {comprehend-word*propose*snip*to-simple-action-before-direction
+   (state <s> ^problem-space comprehend-word
+              ^cxn <direction>
+              ^lexical-access done)
+   (<direction> ^is.a Direction
+                ^m <m1>)
+   (<m1> ^is.a PropertyDescriptor 
+         ^predicate )    #   Has been looked up already
+   #    See whether what came before has a TransitiveCommand in it
+   (<direction> ^previous <cover>)
+   (<cover> ^constituents.<x> <target>)
+   (<target> ^is.a SimpleAction)        #   Has been looked up already
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name snip
+        ^type snip
+        ^cover <cover>
+        ^target <target>
+        ^goal to-simple-action-before-direction
+        ^debug-info (concat |Snip to get to a TransitiveCommand to attach a Particle.|))
+}
+
+#    Snip away the cover to get to its SimpleAction
+sp {comprehend-word*apply*snip*to-simple-action-before-direction
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <direction>)
+   (<direction> ^is.a Direction)
+   (<o> ^name snip
+        ^type snip
+        ^cover <cover>
+        ^target <target>
+        ^goal to-simple-action-before-direction)
+-->
+   #    THIS IS THE SNIP!!!
+   #    Change the previous pointer
+   #    This will orphan the covering cxn and
+   #    leave it to be garbage collected.
+   #    Instead we'll point to its constituent,
+   #    allowing that to be matched
+   (<direction> ^previous <cover> -
+                ^previous <target>)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <cover> | to get to | <target> |.|))
+}

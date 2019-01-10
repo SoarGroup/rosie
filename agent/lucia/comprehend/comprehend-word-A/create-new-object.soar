@@ -1,0 +1,342 @@
+##!
+# @file
+#
+# @created plindes 20160302
+# File: create-new-object.soar
+# Author: Peter Lindes
+# Created: 2 March 2016
+#
+# Desc:  This handles two kinds of situations
+#
+# Case 1:When an object reference resolves to NONE,
+#        create a new object with its properties.
+#
+# Case 2:For a PropertySet with an indefinite determiner
+#        create a new object with its properties.
+#        Added PL 6/13/2018
+#        There is a lot of duplication in the code,
+#        it could maybe be simplified.
+#
+
+################  For a RefDesc with ^referent NONE  #############
+
+#    Propose an operator to create a new object from a RefDesc
+sp {comprehend-word*propose*create-new-object*no-referent
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done    # May need to see comprehend-word-done as proposed
+              ^match-construction done
+              ^cxn <cxn>
+              ^reference resolved
+              ^top-state <ts>)
+   (<cxn> ^is.a RefExpr
+          ^m <ref-desc>)
+   (<ref-desc> ^is.a RefDesc
+               ^category <rosie-ref-desc>
+               ^referent NONE
+               ^modifiers <modifiers>)
+   (<rosie-ref-desc> ^rosie-category <category> <> nil)
+   #    Find the object list in the world
+   (<ts> ^world.objects <object-list>)
+-->
+   (<s> ^operator <o> + >	#	This must happen before other operators
+        ^modifiers <modifiers>)
+   (<o> ^name create-new-object
+        ^type resolution
+        ^meaning <ref-desc>
+        ^category <category>
+        ^object-list <object-list>
+        ^debug-info (concat |Create a new object from a given RefDesc.|))
+}
+
+#   Create an object with a given Rosie category
+#   and add it to the world
+#   This is used for both cases.
+sp {comprehend-word*apply*create-new-object*category
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name create-new-object
+        ^category <category>
+        ^object-list <object-list>)
+-->
+   #    Create the object on the state
+   (<s> ^new-object <object>)
+   (<object> ^handle (make-constant-symbol |new-object-id|)
+             ^item-type object
+             ^predicates <predicates>
+             ^predicates-copied true)
+   (<predicates> ^category <category>
+                 ^dialog-object true
+                 ^visible false)
+   #    Add it to the world
+   (<object-list> ^object <object>)
+}
+
+#   Post properties from the ref-desc
+#   This applies only to the RefDesc case
+sp {comprehend-word*apply*create-new-object*post-name-property
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name create-new-object
+        ^meaning <ref-desc>)
+   #    Find the object and its predicates
+   (<s> ^new-object <object>)
+   (<object> ^predicates <predicates>)
+   #    Get the name
+   (<ref-desc> ^is.a RefDesc
+               ^category <rosie-ref-desc>
+               ^referent NONE)
+   (<rosie-ref-desc> ^name <name> <> nil)
+-->
+   #    Post a name property
+   (<predicates> ^name <name>)
+   #    Set the referent
+   (<ref-desc> ^referent NONE -
+               ^referent <object>)
+}
+
+#   This applies only to the RefDesc case
+sp {comprehend-word*apply*create-new-object*post-shape-property
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name create-new-object
+        ^meaning <ref-desc>)
+   #    Find the object and its predicates
+   (<s> ^new-object <object>)
+   (<object> ^predicates <predicates>)
+   #    Get the shape
+   (<ref-desc> ^is.a RefDesc
+               ^category <rosie-ref-desc>
+               ^referent NONE)
+   (<rosie-ref-desc> ^shape <shape> <> nil)
+-->
+   #    Post a shape property
+   (<predicates> ^shape <shape>)
+   #    Set the referent
+   (<ref-desc> ^referent NONE -
+               ^referent <object>)
+}
+
+#   This applies only to the RefDesc case
+sp {comprehend-word*apply*create-new-object*post-color-property
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name create-new-object
+        ^meaning <ref-desc>)
+   #    Find the object and its predicates
+   (<s> ^new-object <object>)
+   (<object> ^predicates <predicates>)
+   #    Get the color
+   (<ref-desc> ^is.a RefDesc
+               ^category <rosie-ref-desc>
+               ^referent NONE)
+   (<rosie-ref-desc> ^color <color> <> nil)
+-->
+   #    Post a color property
+   (<predicates> ^color <color>)
+   #    Set the referent
+   (<ref-desc> ^referent NONE -
+               ^referent <object>)
+}
+
+#   This applies only to the RefDesc case
+sp {comprehend-word*apply*create-new-object*post-size-property
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name create-new-object
+        ^meaning <ref-desc>)
+   #    Find the object and its predicates
+   (<s> ^new-object <object>)
+   (<object> ^predicates <predicates>)
+   #    Get the size
+   (<ref-desc> ^is.a RefDesc
+               ^category <rosie-ref-desc>
+               ^referent NONE)
+   (<rosie-ref-desc> ^size <size> <> nil)
+-->
+   #    Post a size property
+   (<predicates> ^size <size>)
+   #    Set the referent
+   (<ref-desc> ^referent NONE -
+               ^referent <object>)
+}
+
+#   This applies only to the RefDesc case
+sp {comprehend-word*apply*create-new-object*post-spatial-shape-property
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name create-new-object
+        ^meaning <ref-desc>)
+   #    Find the object and its predicates
+   (<s> ^new-object <object>)
+   (<object> ^predicates <predicates>)
+   #    Get the spatial shape
+   (<ref-desc> ^is.a RefDesc
+               ^category <rosie-ref-desc>
+               ^referent NONE)
+   (<rosie-ref-desc> ^spatial-shape <spatial-shape> <> nil)
+-->
+   #    Post a spatial-shape property
+   (<predicates> ^spatial-shape <spatial-shape>)
+   #    Set the referent
+   (<ref-desc> ^referent NONE -
+               ^referent <object>)
+}
+
+#   Post any modifiers
+#   This applies only to the RefDesc case
+sp {comprehend-word*apply*create-new-object*modifiers
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^modifiers <modifier> <> nil)
+   (<o> ^name create-new-object
+        ^meaning <ref-desc>)
+   (<ref-desc> ^is.a RefDesc
+               ^category <prop-desc>)
+   #    Get the details of this modifier
+   (<modifier> ^class <class>
+               ^name <name>
+               ^predicate <predicate>
+               ^next <next>)
+   #    Find the object and its predicates
+   (<s> ^new-object <object>)
+   (<object> ^predicates <predicates>)
+-->
+   #    Post a new property
+   (<predicates> ^<class> <name>)
+   #    Get the next modifier
+   (<s> ^modifiers <modifier> -
+        ^modifiers <next>)
+}
+
+
+################  For an indefinite PropertySet  #############
+
+#    Propose an operator to create a new object from a PropertySet
+sp {comprehend-word*propose*create-new-object*property-set
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done    # May need to see comprehend-word-done as proposed
+              ^match-construction done
+              ^cxn <cxn>
+              ^top-state <ts>)
+   (<cxn> ^is.a PropertySet
+          ^m <ps-desc>)
+   (<ps-desc> ^is.a PropertySetDescriptor
+              ^givenness indefinite
+              ^predicate <predicate>
+              ^property <property>
+             -^referent )   # Will be added below
+   (<predicate> ^handle <category>)
+   #    Find the object list in the world
+   (<ts> ^world.objects <object-list>)
+-->
+   (<s> ^operator <o> + >)   #   This must happen before other operators
+   (<o> ^name create-new-object
+        ^type resolution
+        ^meaning <ps-desc>
+#        ^category <category>
+        ^category object    # Gold for 192 wants this, not location
+        ^object-list <object-list>
+        ^debug-info (concat |Create a new object from a given PropertySet.|))
+}
+
+#   This applies only to the PropertySet case
+sp {comprehend-word*apply*create-new-object*property-set*post-shape-property
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name create-new-object
+        ^meaning <ps-desc>)
+   #    Find the object and its predicates
+   (<s> ^new-object <object>)
+   (<object> ^predicates <predicates>)
+   #    Get the shape
+   (<ps-desc> ^is.a PropertySetDescriptor
+               ^property <property>)
+   (<property> ^class shape
+               ^name <shape> <> nil)
+-->
+   #    Post a shape property
+   (<predicates> ^shape <shape>)
+   #    Mark as done
+   (<ps-desc> ^referent <object>)
+}
+
+#   This applies only to the PropertySet case
+sp {comprehend-word*apply*create-new-object*property-set*post-color-property
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name create-new-object
+        ^meaning <ps-desc>)
+   #    Find the object and its predicates
+   (<s> ^new-object <object>)
+   (<object> ^predicates <predicates>)
+   #    Get the color
+   (<ps-desc> ^is.a PropertySetDescriptor
+               ^property <property>)
+   (<property> ^class color
+               ^name <color> <> nil)
+-->
+   #    Post a color property
+   (<predicates> ^color <color>)
+   #    Mark as done
+   (<ps-desc> ^referent <object>)
+}
+
+#   This applies only to the PropertySet case
+sp {comprehend-word*apply*create-new-object*property-set*post-size-property
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name create-new-object
+        ^meaning <ps-desc>)
+   #    Find the object and its predicates
+   (<s> ^new-object <object>)
+   (<object> ^predicates <predicates>)
+   #    Get the size
+   (<ps-desc> ^is.a PropertySetDescriptor
+               ^property <property>)
+   (<property> ^class size
+               ^name <size> <> nil)
+-->
+   #    Post a size property
+   (<predicates> ^size <size>)
+   #    Mark as done
+   (<ps-desc> ^referent <object>)
+}
+
+#   This applies only to the PropertySet case
+sp {comprehend-word*apply*create-new-object*property-set*post-spatial-shape-property
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name create-new-object
+        ^meaning <ps-desc>)
+   #    Find the object and its predicates
+   (<s> ^new-object <object>)
+   (<object> ^predicates <predicates>)
+   #    Get the spatial shape
+   (<ps-desc> ^is.a PropertySetDescriptor
+               ^property <property>)
+   (<property> ^class spatial-shape
+               ^name <spatial-shape> <> nil)
+-->
+   #    Post a spatial-shape property
+   (<predicates> ^spatial-shape <spatial-shape>)
+   #    Mark as done
+   (<ps-desc> ^referent <object>)
+}
+
+#   This applies only to the PropertySet case
+sp {comprehend-word*apply*create-new-object*property-set*nothing-to-post
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name create-new-object
+        ^meaning <ps-desc>)
+   #    Find the object and its predicates
+   (<s> ^new-object <object>)
+   (<object> ^predicates <predicates>)
+   #    Get the spatial shape
+   (<ps-desc> ^is.a PropertySetDescriptor
+               ^property nil)
+-->
+   #    Mark as done
+   (<ps-desc> ^referent <object>)
+}

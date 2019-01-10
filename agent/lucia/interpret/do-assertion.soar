@@ -1,0 +1,463 @@
+##!
+# @file
+#
+# @created plindes 20150623
+# File: do-assertion.soar
+# Author: Peter Lindes
+# Created: 23 June 2015
+#
+# Desc: This operator will create one or more actions
+#       to perform an assertion.
+#
+
+
+#################  GENERAL PROPOSAL   ####################### 
+
+#   Propose an operator to decide to perform an assertion
+sp {interpret*propose*do-assertion
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^comprehension <c>
+              ^discourse <d>
+             -^action <a>)
+   (<c> ^cxn-stack <cxn>)
+   (<cxn> ^m <m>)   #   Sometimes we need to see the syntax
+   (<m> ^is.a Assertion)
+   #    Check that this is not a question
+   (<c> -^word-stack.post-punct |?|)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name do-assertion
+        ^type interpretation
+        ^cxn <cxn>
+        ^meaning <m>
+        ^discourse <d>
+        ^debug-info (concat |Decide to perform an assertion.|))
+}
+
+
+#################  PropertyApplication   ####################### 
+
+#   Assert a PropertyApplication itself, without referent(s)
+sp {interpret*apply*property-application
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-assertion
+        ^meaning <m>)
+   (<m> ^is.a PropertyApplication
+        ^property <property>
+        ^text <text>)
+   (<property> ^predicate <predicate>)
+-->
+   #   Add an action to assert the relation, no arg1 yet
+   (<s> ^assert-prop-app <a-prop-app>)
+   (<a-prop-app> ^action ASSERT-PROPERTY
+	             ^arg2 <predicate>
+                 ^text <text>
+	             ^next nil)
+}
+
+#   Add the target referent(s) to the assertion
+#   This allows handling multiple targets for
+#   the same assertion.
+sp {interpret*apply*property-application*add-targets*referent
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>
+              ^assert-prop-app <a-prop-app>)
+   (<o> ^name do-assertion
+        ^meaning <m>)
+   (<m> ^is.a PropertyApplication
+        ^target <target>)
+   (<target> ^referent { <object> <> nil })
+-->
+   #   Add the target arg(s) to the action
+   (<a-prop-app> ^arg1 <object>)
+}
+
+#   Add the target predicate to the assertion
+sp {interpret*apply*property-application*add-targets*predicate
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>
+              ^assert-prop-app <a-prop-app>)
+   (<o> ^name do-assertion
+        ^meaning <m>)
+   (<m> ^is.a PropertyApplication
+        ^target <target>)
+   (<target> ^predicate { <predicate> <> nil })
+-->
+   #   Add the target arg(s) to the action
+   (<a-prop-app> ^arg1 <predicate>)
+}
+
+#   A special case for when there is no target
+#   If all else worked OK, this might not be needed.
+sp {interpret*apply*property-application*add-targets*no-target
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>
+              ^assert-prop-app <a-prop-app>)
+   (<o> ^name do-assertion
+        ^meaning <m>)
+   (<m> ^is.a PropertyApplication
+        ^target <target>)
+#    Without this special case "The large one is red." crashes.
+   (<target> ^referent nil
+            -^predicate )
+-->
+   #   Add the nil target argto the action
+   (<a-prop-app> ^arg1 nil)
+}
+
+sp {interpret*apply*property-application*done
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>
+              ^assert-prop-app <a-prop-app>)
+   (<o> ^name do-assertion)
+-->
+   #   Post just the relation assertion
+   (<s> ^assert-prop-app <a-prop-app> -
+        ^action <a-prop-app>)
+}
+
+
+#################  PrepPhraseAssertion   ####################### 
+
+#   Assert a PrepPhraseAssertion itself, without referent(s)
+sp {interpret*apply*prep-phrase-assertion
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-assertion
+        ^meaning <m>)
+   (<m> ^is.a PrepPhraseAssertion
+        ^preprel <relation>
+        ^target.referent <subject>
+        ^text <text>)
+   (<relation> ^prep <prep>
+)#               ^object.referent <object>)
+-->
+   #   Add an action to assert the relation, no arg2 yet
+   (<s> ^assert-prep-phrase <a-prep-phrase>)
+   (<a-prep-phrase> ^action ASSERT-RELATION
+                    ^arg1 <subject>
+                    ^relation <prep>
+#                    ^arg2 <object>
+                    ^text <text>
+	                ^next nil)
+}
+
+sp {interpret*apply*prep-phrase-assertion*add-objects
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>
+              ^assert-prep-phrase <a-prep-phrase>)
+   (<o> ^name do-assertion
+        ^meaning <m>)
+   (<m> ^is.a PrepPhraseAssertion
+        ^preprel <relation>
+        ^target.referent <subject>
+        ^text <text>)
+   (<relation> ^object.referent <object>)
+-->
+   #   Add an arg2 to the assertion
+   (<s> ^assert-prep-phrase <a-prep-phrase>)
+   (<a-prep-phrase> ^arg2 <object>)
+}
+
+sp {interpret*apply*prep-phrase-assertion*add-modifier
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>
+              ^assert-prep-phrase <a-prep-phrase>)
+   (<o> ^name do-assertion
+        ^meaning <m>)
+   (<m> ^is.a PrepPhraseAssertion
+        ^preprel <relation>
+        ^target.referent <subject>
+        ^text <text>
+        ^modifier.modifier { <modifier> <> null })
+   (<relation> ^object.referent <object>)
+-->
+   #   Add a modifier to the assertion
+   (<s> ^assert-prep-phrase <a-prep-phrase>)
+   (<a-prep-phrase> ^modifier <modifier>)
+}
+
+sp {interpret*apply*prep-phrase-assertion*done
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>
+              ^assert-prep-phrase <a-prep-phrase>)
+   (<o> ^name do-assertion)
+-->
+   #   Post just the relation assertion
+   (<s> ^assert-prep-phrase <a-prep-phrase> -
+        ^action <a-prep-phrase>)
+}
+
+
+#################  ThisIsAThatAssertion   ####################### 
+
+#   Assert a ThisIsAThatAssertion itself, without predicate(s)
+sp {interpret*apply*this-is-a-that-assertion
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-assertion
+        ^meaning <m>)
+   (<m> ^is.a ThisIsAThatAssertion
+        ^this <this>
+        ^that <that>
+        ^text <text>)
+-->
+   #   Add an action to assert the equivalence relation, no predicates yet
+   (<s> ^assert-this-is-a-that <a-this-is-a-that>)
+   (<a-this-is-a-that> ^action ASSERT-THIS-IS-A-THAT
+                     ^arg1 <this>
+                     ^text <text>
+                     ^next nil)
+}
+
+sp {interpret*apply*this-is-a-that-assertion*add-noun-predicates
+   (state <s> ^problem-space interpret
+              ^operator <o>
+              ^assert-this-is-a-that <a-this-is-a-that>)
+   (<o> ^name do-assertion
+        ^cxn <main-cxn>)
+   #    Hunt down the predicates from a PropertySet
+   (<main-cxn> ^is.a ThisIsAThat
+               ^that <that-cxn>)
+   (<that-cxn> ^is.a PropertySet
+               ^class <class>)
+   (<class> ^is.a PropertyClassName
+            ^m.predicate <predicate>)
+-->
+   #   Add an predicate to the assertion
+   (<s> ^assert-this-is-a-that <a-this-is-a-that>)
+   (<a-this-is-a-that> ^predicate <predicate>)
+}
+
+sp {interpret*apply*this-is-a-that-assertion*add-property-predicates
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>
+              ^assert-this-is-a-that <a-this-is-a-that>
+              ^comprehension <comprehension>)
+   (<o> ^name do-assertion
+        ^cxn <main-cxn>)
+   #    Find the property predicate(s) (only works for a single adjective now)
+   #    Hunt down the predicates from a PropertySet
+   (<main-cxn> ^is.a ThisIsAThat
+               ^that <that-cxn>)
+   (<that-cxn> ^is.a PropertySet
+               ^adj <property>)
+   (<property> ^is.a Property
+               ^m.predicate <predicate>)
+-->
+   #   Add an predicate to the assertion
+   (<s> ^assert-this-is-a-that <a-this-is-a-that>)
+   (<a-this-is-a-that> ^predicate <predicate>)
+}
+
+sp {interpret*apply*this-is-a-that-assertion*done
+   (state <s> ^problem-space interpret
+              ^operator <o>
+              ^assert-this-is-a-that <a-this-is-a-that>)
+   (<o> ^name do-assertion)
+-->
+   #   Post just the assertion
+   (<s> ^assert-this-is-that <a-this-is-a-that> -
+        ^action <a-this-is-a-that>)
+}
+
+
+#################  ConceptIsThatAssertion   ####################### 
+
+#   Assert a ThisIsAThatAssertion itself, without predicate(s)
+sp {interpret*apply*concept-is-that-assertion
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-assertion
+        ^meaning <m>)
+   (<m> ^is.a ConceptIsThatAssertion
+        ^concept <concept>
+        ^assertion <assertion>
+        ^text <text>)
+-->
+   #   Add an action to assert the equivalence relation, no predicates yet
+   (<s> ^assert-concept-is-that <a-concept-is-that>)
+   (<a-concept-is-that> ^action ASSERT-CONCEPT-IS-THAT
+                     ^arg1 <concept>
+                     ^assertion <assertion>
+                     ^text <text>
+                     ^next nil)
+}
+
+sp {interpret*apply*concept-is-that-assertion*done
+   (state <s> ^problem-space interpret
+              ^operator <o>
+              ^assert-concept-is-that <a-concept-is-that>)
+   (<o> ^name do-assertion)
+-->
+   #   Post just the assertion
+   (<s> ^assert-concept-is-that <a-concept-is-that> -
+        ^action <a-concept-is-that>)
+}
+
+
+
+#################  YesNoAnswer   ####################### 
+
+#   Assert a YesNoAnswer
+sp {interpret*apply*yes-no-answer
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-assertion
+        ^meaning <m>)
+   (<m> ^is.a YesNoAnswer
+        ^answer <answer>
+        ^text <text>)
+-->
+   #   Add an action to assert the relation, no arg1 yet
+   (<s> ^assert-prop-app <a-prop-app>)
+   (<a-prop-app> ^action ASSERT-YES-NO
+	             ^arg1 <answer>
+                 ^text <text>
+	             ^next nil)
+}
+
+
+#################  IntransitiveAssertion   ####################### 
+
+#   Assert an IntransitiveAssertion
+sp {interpret*apply*intransitive
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-assertion
+        ^meaning <m>)
+   (<m> ^is.a IntransitiveAssertion
+        ^subject.referent <subject>
+        ^verb.action <verb>
+        ^text <text>)
+-->
+   #   Add an action to assert the statement
+   (<s> ^action <a-intransitive>)
+   (<a-intransitive> ^action ASSERT-INTRANSITIVE
+                     ^subject <subject>
+                     ^verb <verb>
+                     ^text <text>
+                     ^next nil)
+}
+
+
+#################  TransitiveAssertion   ####################### 
+
+#   Assert a TransitiveAssertion where the object has a referent
+sp {interpret*apply*transitive*with-referent
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-assertion
+        ^meaning <m>)
+   (<m> ^is.a TransitiveAssertion
+        ^subject.referent <subject>
+        ^verb.action <verb>
+        ^object.referent { <object> <> nil }
+        ^text <text>)
+-->
+   #   Add an action to assert the statement
+   (<s> ^action <a-transitive>)
+   (<a-transitive> ^action ASSERT-TRANSITIVE
+                   ^subject <subject>
+                   ^verb <verb>
+                   ^object <object>
+                   ^text <text>
+                   ^next nil)
+}
+
+#   Assert a TransitiveAssertion where the object has no referent
+#   but has a predicate
+sp {interpret*apply*transitive*with-predicate
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-assertion
+        ^meaning <m>)
+   (<m> ^is.a TransitiveAssertion
+        ^subject.referent <subject>
+        ^verb.action <verb>
+        ^object.referent nil
+        ^object.predicate <object>
+        ^text <text>)
+-->
+   #   Add an action to assert the statement
+   (<s> ^action <a-transitive>)
+   (<a-transitive> ^action ASSERT-TRANSITIVE
+                   ^subject <subject>
+                   ^verb <verb>
+                   ^object <object>
+                   ^text <text>
+                   ^next nil)
+}
+
+
+#################  TransitiveAssertionPrepPhrase    ####################### 
+
+#   Assert a TransitiveAssertionPrepPhrase
+sp {interpret*apply*transitive-with-prep-phrase*with-referent
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-assertion
+        ^meaning <m>)
+   (<m> ^is.a TransitiveAssertionPrepPhrase
+        ^subject.referent <subject>
+        ^verb.action <verb>
+        ^object.referent { <object> <> nil }
+        ^relation <relation>
+        ^text <text>)
+-->
+   #   Add an action to assert the statement
+   (<s> ^action <a-transitive>)
+   (<a-transitive> ^action ASSERT-TRANSITIVE-PP
+                   ^subject <subject>
+                   ^verb <verb>
+                   ^object <object>
+                   ^relation <relation>
+                   ^text <text>
+                   ^next nil)
+}
+
+#   Assert a TransitiveAssertionPrepPhrase where the object has no referent
+#   but has a predicate
+sp {interpret*apply*transitive-with-prep-phrase*with-predicate
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-assertion
+        ^meaning <m>)
+   (<m> ^is.a TransitiveAssertionPrepPhrase
+        ^subject.referent <subject>
+        ^verb.action <verb>
+        ^object.referent nil
+        ^object.predicate <object>
+        ^relation <relation>
+        ^text <text>)
+-->
+   #   Add an action to assert the statement
+   (<s> ^action <a-transitive>)
+   (<a-transitive> ^action ASSERT-TRANSITIVE-PP
+                   ^subject <subject>
+                   ^verb <verb>
+                   ^object <object>
+                   ^relation <relation>
+                   ^text <text>
+                   ^next nil)
+}

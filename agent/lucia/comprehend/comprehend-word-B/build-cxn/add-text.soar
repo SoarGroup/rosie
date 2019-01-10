@@ -1,0 +1,83 @@
+##!
+# @file
+#
+# @created plindes 20181025
+# File: add-text.soar     in System B
+# Author: Peter Lindes
+# Created: 25 October 2018
+#
+# Desc: Adds the source and text info to a new construction.
+#       Several similar operators are included here:
+#           add-word-info   For lexical constructions
+#           add-text-span   For composite constructions
+#           add-schema-text For schemas
+#
+#   This operator is intended to be selected
+#   in a substate under build-cxn, but it ignores
+#   build-cxn and works with everything
+#   on the comprehend-word superstate.
+#
+
+#    Propose an operator to source and text info to a lexical construction
+sp {build-cxn*propose*add-word-info
+   (state <s> ^superstate <ss>
+             -^text done) #   Retract when this operator completed
+   (<ss> ^problem-space comprehend-word
+         ^operator <ss-o>
+         ^cxn <cxn>
+         ^input <input>)
+   (<cxn> ^cxn-name <name>)
+   #    Get the necessary data
+   (<cxn> ^orth <orth>)
+   (<input> ^word <word>)
+      #    Insure o-support
+   (<ss-o> ^name build-cxn)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name add-word-info
+        ^type construction
+        ^cxn <cxn>
+        ^word <word>
+        ^debug-info (concat |Add the text info to a '| <name> |' construction.|))
+}
+
+#   This apply rule sees a lexical cxn and ingests it
+#   It adds the source and stubs for the various standard
+#   parts of a lexical construction
+sp {build-cxn*apply*add-word-info
+   (state <s> ^superstate <ss>
+              ^operator <o>)
+   (<o> ^name add-word-info
+        ^cxn <cxn>
+        ^word <word>)
+   (<word> ^word-count <count>
+           ^orth <orth>
+           ^content <text>)
+   #    This should not be a multi-word
+#   (<lex> ^m <meaning>
+#         -^multi-word )
+#   THERE IS A PROBLEM HERE - IF A SINGLE WORD AND A MULTI-WORD
+#   FIRE AT THE SAME TIME WE GET A MESS.
+#   THE FOLLOWING CODE DOES NOT WORK TO FIX THAT.  3-21-2016
+#   #   Make sure there's not a multi-word firing at the same time
+# -{(<s> ^cxn <lex2> <> <lex>
+#        ^multi-word )}
+#   #    Find the previous stack and lexical
+#   (<sss> ^comprehension.cxn-stack <stack>
+#          ^comprehension.lex-stack <previous-lex>)
+-->
+   #   Add various needed augmentations
+   (<cxn> ^word <word>  # A link to the input word, can serve to mark as lexical
+          ^source <source>
+          ^text <text>)
+   (<source> ^left <count>
+             ^right <count>)
+   #    Mark this operator as completed
+   (<s> ^text done)
+}
+
+#    Propose an operator to source and text info to a composite construction
+
+
+#    Propose an operator to source and text info to a schema
+

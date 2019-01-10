@@ -1,0 +1,39 @@
+##!
+# @file
+#
+# @created plind 20160304
+# File: select-action.soar
+# Author: Peter Lindes
+# Created: 4 March 2016
+#
+# Desc:  Look for a situation where multiple actions
+#		 were found.  Pick one at random and remove the
+#		 rest.
+#
+
+#    Propose an operator to deal with multiple action
+sp {interpret*propose*select-action
+   (state <s> ^problem-space interpret
+              ^action <action1>
+#	THIS CAUSES LOTS OF PROPOSALS, BUT IT DOES WORK
+#	IS THERE A BETTER WAY???
+			   ^action <action2> <> <action1>)
+-->
+   (<s> ^operator <o> + =)	#	Equal preference, one chosen at random
+   (<o> ^name select-action
+        ^type interpretation
+        ^chosen <action1>	#	Chosen by the random operator selection
+        ^debug-info (concat |Out of multiple actions, pick | <action1> |.|))
+}
+
+sp {interpret*apply*select-action
+   (state <s> ^problem-space interpret
+              ^operator <o>
+              ^action <action>)
+   (<o> ^name select-action
+        ^chosen <chosen1>)
+-->
+   #	Remove them all, then add back the chosen one
+   (<s> ^action <action> -
+        ^action <chosen1>)
+}

@@ -32,6 +32,23 @@ sp {comprehend-word*preference*match-construction-higher-span
    (write (crlf) (concat |Prefer >span: | <cname1> |(| <span1> |) > | <cname2> |(| <span2> |).|))
 }
 
+#    Make a match-construction operator higher than a snip
+#    for one special case.
+#    This avoids multiple snips in a row.
+sp {comprehend-word*preference*match-construction-before-snip
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name match-construction
+         ^cxn-name SubjectVerbObjectPP)
+   (<o2> ^name snip
+         ^goal to-subject-verb-object-before-prep-phrase)
+-->
+   (<s> ^operator <o1> > <o2>)
+   #    Report using this preference
+   (write (crlf) (concat |Prefer match-construction over snip.|))
+}
+
 #    Make an operator of type comparison higher preference
 #    than one of type resolution.
 sp {comprehend-word*preference*comparison-before-resolution
@@ -40,6 +57,18 @@ sp {comprehend-word*preference*comparison-before-resolution
               ^operator <o2> +)
    (<o1> ^type comparison)
    (<o2> ^type resolution)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+#    Make an operator of type comparison higher preference
+#    than one of type construction.
+sp {comprehend-word*preference*comparison-before-construction
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^type comparison)
+   (<o2> ^type construction)
 -->
    (<s> ^operator <o1> > <o2>)
 }
@@ -57,15 +86,31 @@ sp {comprehend-word*preference*attachment-before-resolution
 }
 
 #    Make an operator of type resolution higher preference
-#	 than one of type construction.
+#    than one of type construction.
+#    EXCEPT for an IsThat construction
 sp {comprehend-word*preference*resolution-before-construction
    (state <s> ^problem-space comprehend-word
               ^operator <o1> +
               ^operator <o2> +)
    (<o1> ^type resolution)
-   (<o2> ^type construction)
+   (<o2> ^type construction
+        -^cxn-name IsThat)
 -->
    (<s> ^operator <o1> > <o2>)
+}
+
+#    Make an operator of type construction higher preference
+#    than one of type resolution.
+#    WHEN it is an IsThat construction
+sp {comprehend-word*preference*isthat-before-resolution
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^type resolution)
+   (<o2> ^type construction
+         ^cxn-name IsThat)
+-->
+   (<s> ^operator <o1> < <o2>)
 }
 
 #    Make a fill-slot operator higher preference
@@ -141,13 +186,16 @@ sp {comprehend-word*preference*prep-phrase-with-its-attached-to
    (<s> ^operator <o1> > <o2>)
 }
 
-#   Prefer snip to lookup-concept
+#   Prefer snip to lookup-action or lookup-concept
+#   This helps with "If the green box is large then go forward."
+#   That's because "forward" has two senses and we need to
+#   avoid a tie with looking up the action sense.
 sp {comprehend-word*preference*snip-before-lookup-concept
    (state <s> ^problem-space comprehend-word
               ^operator <o1> +
               ^operator <o2> +)
    (<o1> ^name snip)
-   (<o2> ^name lookup-concept)
+   (<o2> ^name << lookup-action lookup-concept >>)
 -->
    (<s> ^operator <o1> > <o2>)
 }

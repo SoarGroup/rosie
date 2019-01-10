@@ -1,0 +1,691 @@
+##!
+# @file
+#
+# @created plindes 20160302
+# File: act-on-it.soar
+# Author: Peter Lindes
+# Created: 2 March 2016
+#
+# Desc:  Send a message to perform an action on an object.
+#
+
+
+#########     SIMPLE-ACTION or COMMAND-ON-OBJECT or COMMAND-ON-TEXT      #########
+
+#   Propose an operator to perform an action on an object.
+#   We expect all these actions to have three key parameters:
+#   ^arg1, ^arg2, and ^location, some of which may be nil.
+sp {act*propose*act-on-it
+   (state <s> ^problem-space act
+              ^action <a>)
+   (<a> ^action <type> << SIMPLE-ACTION COMMAND-ON-OBJECT COMMAND-ON-TEXT >>
+        ^rosie-action <action>
+        ^arg1 <object>
+        ^arg2 <object2>
+        ^location <location>
+        ^text <text>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name act-on-it
+        ^type <type>
+        ^action <action>
+        ^object <object>
+        ^object2 <object2>
+        ^location <location>
+        ^text <text>
+        ^debug-info (concat |We will create a new action message.|))
+}
+
+#	Build a Rosie message for this action
+sp {act*apply*act-on-it*simple-action
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name act-on-it
+        ^type SIMPLE-ACTION
+        ^action <action>
+        ^object nil
+        ^object2 nil
+        ^location nil
+       -^predicate 
+        ^text <text>)
+   (<a> ^next <next>)
+-->
+   #	Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type command
+              ^action <action>)
+   #   Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+sp {act*apply*act-on-it*simple-action*in-direction
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name act-on-it
+        ^type SIMPLE-ACTION
+        ^action <action>
+        ^object <object>
+        ^object2 nil
+        ^location nil
+       -^predicate 
+        ^text <text>)
+   (<a> ^next <next>)
+   (<object> ^referent <referent>)
+-->
+   #    Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type command
+              ^action <action>
+              ^arg1 <referent>)
+   #   Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+#   Create a transitive action message that has no location
+#   This version works for a single object
+sp {act*apply*act-on-it*no-location*use-object
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name act-on-it
+        ^type COMMAND-ON-OBJECT
+        ^action <action>
+        ^object { <object> <> nil }
+        ^object2 nil
+        ^location nil
+        ^text <text>)
+   (<a> ^next <next>)
+-->
+   #	Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type command
+              ^action <action>
+              ^arg1 <object>)
+   #   Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+#   Create a transitive action message that has no location
+#   This version works for a single object
+sp {act*apply*act-on-it*no-location*use-text-object
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name act-on-it
+        ^type COMMAND-ON-TEXT
+        ^action <action>
+        ^object { <q-text> <> nil }
+        ^object2 nil
+        ^location nil
+        ^text <text>)
+   (<a> ^next <next>)
+-->
+   #    Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type command
+              ^action <action>
+              ^arg1 <question>)
+   # Turn the text into a unique constant
+   # This is all very weird, and doesn't fully match the gold standard
+   # There is looks like something is being added to smem
+   # We'll settle for this for right now.
+   (<question> ^handle (make-constant-symbol <q-text>) )
+   #   Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+#   Create a transitive action message that has a second argument
+#   This version works for two objects
+sp {act*apply*act-on-it*no-location*use-two-objects
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name act-on-it
+        ^type COMMAND-ON-OBJECT
+        ^action <action>
+        ^object { <object> <> nil }
+        #   The proposal calls this a location,
+        #   but it is actually the second object
+        #   of a ditransitive
+        ^object2 { <object2> <> nil }
+        ^location nil
+        ^text <text>)
+   #    Other rules will handle conditional assertions
+  -(<object> ^is.a Assertion)
+   (<a> ^next <next>)
+-->
+   #    Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type command
+              ^action <action>
+              ^arg1 <object>
+              ^arg2 <object2>)
+   #   Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+#   Create a transitive action message that has a second argument
+#   This version works when the first object is a Condition.
+#   This version works for an object with a predicate,
+#   usually this will be for a concept.
+#   This works for a sentence like:
+#   Remember if the lights in the conference room are lit as the response.
+sp {act*apply*act-on-it*object1-is-condtion
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name act-on-it
+        ^type COMMAND-ON-OBJECT
+        ^action <action>
+        ^object { <statement> <> nil }
+        #   The proposal calls this a location,
+        #   but it is actually the second object
+        #   of a ditransitive
+        ^object2 { <object2> <> nil }
+        ^location nil
+        ^text <text>)
+   #    Analyze the statement
+   (<statement> ^is.a PropertyApplication
+                ^target.referent <target>
+                ^property.predicate <predicate>)
+   (<a> ^next <next>)
+-->
+   #    Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type command
+              ^action <action>
+              ^if-subclause <if-subclause>  #   The gold standard is weird here
+              ^arg2 <object2>)
+   (<if-subclause> ^arg1 <target>
+                   ^predicate <predicate>)
+   #   Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+#   This version handles a specific location
+sp {act*apply*act-on-it*with-location
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name act-on-it
+        ^type COMMAND-ON-OBJECT
+        ^action <action>
+        ^object <object>
+        ^object2 nil
+        ^location { <location> <> nil }
+        ^text <text>)
+   (<a> ^next <next>)
+   #	Sort out the parts of the location phrase
+   (<location> ^object.givenness << definite deictic >>
+               ^prep <preposition>
+               ^object.referent <prep-object>)
+-->
+   #	Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type command
+              ^action <action>
+              ^arg1 <object>
+              ^arg2 <loc-predicate>)
+   (<loc-predicate> ^item-type predicate
+                    ^handle <preposition>
+                    ^2 <prep-object>)
+   #   Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+#   This version handles a location set
+sp {act*apply*act-on-it*with-location-set
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name act-on-it
+        ^type COMMAND-ON-OBJECT
+        ^action <action>
+        ^object <object>
+        ^object2 nil
+        ^location { <location> <> nil }
+        ^text <text>)
+   (<a> ^next <next>)
+   #    Sort out the parts of the location set phrase
+   (<location> ^object.givenness indefinite
+               ^object.predicate.handle <prep-relation>
+               ^prep <preposition>)
+-->
+   #    Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type command
+              ^action <action>
+              ^arg1 <object>
+              ^predicate <loc-predicate>)
+   (<loc-predicate> ^item-type predicate
+                    ^handle <preposition>
+                    ^2 <indefinite-location>)
+   #    Create an indefinite-object-id
+   (<indefinite-location> ^handle (make-constant-symbol |new-object-id|)
+                          ^item-type location
+                          ^predicates <indef-loc-preds>
+                          ^predicates-copied true)
+   (<indef-loc-preds> ^category location
+                      ^dialog-object true
+                      ^handle location)
+   #    Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+
+###################     ACTION-WITH-DISTANCE      ####################
+
+#   Propose an operator to perform an action over a distance.
+sp {act*propose*act-on-it*over-distance
+   (state <s> ^problem-space act
+              ^action <a>)
+   (<a> ^action ACTION-WITH-DISTANCE
+        ^rosie-action.action <action>
+        ^arg1 <units>
+        ^arg2 <number>
+        ^text <text>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name act-on-it
+        ^type ACTION-WITH-DISTANCE
+        ^action <action>
+        ^units <units>
+        ^number <number>
+        ^text <text>
+        ^debug-info (concat |Perform an action over a distance.|))
+}
+
+#   Build a Rosie message for this action
+sp {act*apply*act-on-it*over-distance
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name act-on-it
+        ^type ACTION-WITH-DISTANCE
+        ^action <action>
+        ^units <units>
+        ^number <number>
+       -^predicate 
+        ^text <text>)
+   (<a> ^next <next>)
+-->
+   #    Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type command
+              ^action <action>
+              # The gold standard uses two arg1's
+              ^arg1 <units>
+              ^arg1 <number>)
+   #   Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+
+###################     ACT-FOR-TIME      ####################
+
+#   Propose an operator to perform an action for a time.
+sp {act*propose*act-on-it*act-for-time
+   (state <s> ^problem-space act
+              ^action <a>)
+   (<a> ^action ACT-FOR-TIME
+        #   Use the rosie-action from smem directly - ???
+        ^rosie-action <action>
+        ^arg1 <number>
+        ^arg2 <units>
+        ^text <text>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name act-on-it
+        ^type ACT-FOR-TIME
+        ^action <action>
+        ^number <number>
+        ^units <units>
+        ^text <text>
+        ^debug-info (concat |Perform an action over a distance.|))
+}
+
+#   Build a Rosie message for this action
+sp {act*apply*act-on-it*act-for-time
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name act-on-it
+        ^type ACT-FOR-TIME
+        ^action <action>
+        ^number <number>
+        ^units <units>
+       -^predicate 
+        ^text <text>)
+   (<a> ^next <next>)
+-->
+   #    Create a message
+   (<s> ^result <message>)
+   #    Build a message with the right format for this case
+   (<message> ^message-type command
+              ^action <action>
+              ^arg1 <for-time>)
+   (<for-time> ^item-type predicate
+               ^handle for1
+               ^2 <time>)
+   (<time> ^number <number>
+           ^unit <units>)
+   #   Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+
+###################     TERMINATED-ACTION      ####################
+
+#   Propose an operator to perform a TERMINATED-ACTION.
+sp {act*propose*act-on-it*terminated-action
+   (state <s> ^problem-space act
+              ^action <a>)
+   (<a> ^action TERMINATED-ACTION
+        ^rosie-action <action>
+        ^arg1 <object>
+        ^arg2 <until>    #    The predicate
+        ^text <text>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name act-on-it
+        ^type TERMINATED-ACTION
+        ^action <action>
+        ^predicate <until>
+        ^object <object>
+        ^location nil
+        ^text <text>
+        ^debug-info (concat |We will create a new TERMINATED-ACTION message.|))
+}
+
+#   This should work for a UntilThereIsClause -> UntilThereIs
+sp {act*apply*act-on-it*terminated-action-until-there-is
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name act-on-it
+        ^type TERMINATED-ACTION
+        ^action <action>
+        ^predicate <until>
+        ^object nil #   The object is part of the predicate
+        ^location nil
+        ^text <text>)
+   (<a> ^next <next>)
+   (<until> ^is.a UntilThereIs
+            ^object <ref-desc>)
+   (<ref-desc> ^referent <object>)
+-->
+   #    Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type command
+              ^action <action>
+              ^arg2 <until-clause>)
+   (<until-clause> ^until-clause <predicate>)
+   (<predicate> ^predicate <object>)
+   #   Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+#   This should work for an UntilDeclarativeClause -> UntilDeclarative(PropertyApplication)
+sp {act*apply*act-on-it*terminated-action-until-declarative-property-application
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name act-on-it
+        ^type TERMINATED-ACTION
+        ^action <action>
+        ^predicate <until>
+        ^text <text>)
+   (<a> ^next <next>)
+   (<until> ^is.a UntilDeclarative
+            ^assertion <assertion>)
+   (<assertion> ^is.a PropertyApplication
+                ^target <target>
+                ^property <property>)
+   (<target> ^is.a RefDesc
+             ^referent <object>)
+   (<property> ^predicate <predicate>)
+-->
+   #    Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type command
+              ^action <action>
+              ^arg2 <arg2>)
+   (<arg2> ^until-clause <until-clause>)
+   (<until-clause> ^arg1 <object>
+                   ^arg2 <predicate>)
+   #   Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+#   This should work for an UntilDeclarativeClause -> UntilDeclarative(SituationDescriptor)
+##   This case works when there is no number modifier
+sp {act*apply*act-on-it*terminated-action-until-declarative-situation-descriptor#*no-number
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name act-on-it
+        ^type TERMINATED-ACTION
+        ^action <action>
+        ^object nil
+        ^predicate <until>
+        ^text <text>)
+   (<a> ^next <next>)
+   (<until> ^is.a UntilDeclarative
+            ^assertion <assertion>)
+   (<assertion> ^is.a SituationDescriptor
+                ^subject <subject>
+                ^action <clause-action>
+                ^object <object>)
+   (<subject> ^is.a RefDesc
+              ^referent <subject-ref>)
+   (<clause-action> ^action <action-ref>)
+   (<object> ^is.a RefDesc
+             ^referent <object-ref>)
+#   #    Check for the case where there is NO numeric modifier
+# -{(<object> ^is.a RefDesc
+#             ^modifiers { <modifiers> <> nil }
+#             ^referent <object-ref>)
+#   (<modifiers> ^concept-type number
+#                ^concept-handle <number>)}
+-->
+   #    Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type command
+              ^action <action>
+              ^arg2 <arg2>)
+   (<arg2> ^until-clause <until-clause>)
+   (<until-clause> ^action <action-ref>
+                   ^agent <subject-ref>
+                   ^arg1 <object-ref>)
+   #   Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}
+#
+##   This should work for an UntilDeclarativeClause -> UntilDeclarative(SituationDescriptor)
+##   This case works when there IS a number modifier
+##   THIS IS A VERY WEIRD CASE TO HANDLE "Follow the right wall until you see two doors."
+##   WE HAVE TO PRODUCE AN UNREASONABLE MESSAGE TO MATCH THE CURRENT GOLD STANDARD
+#sp {act*apply*act-on-it*terminated-action-until-declarative-situation-descriptor*with-number
+#   (state <s> ^problem-space act
+#              ^operator <o>
+#              ^action <a>)
+#   (<o> ^name act-on-it
+#        ^type TERMINATED-ACTION
+#        ^action <action>
+#        ^object nil
+#        ^predicate <until>
+#        ^text <text>)
+#   (<a> ^next <next>)
+#   (<until> ^is.a UntilDeclarative
+#            ^assertion <assertion>)
+#   (<assertion> ^is.a SituationDescriptor
+#                ^subject <subject>
+#                ^action <clause-action>
+#                ^object <object>)
+#   (<subject> ^is.a RefDesc
+#              ^referent <subject-ref>)
+#   (<clause-action> ^action <action-ref>)
+#   #    Check for the case where there is a numeric modifier
+#   (<object> ^is.a RefDesc
+#             ^modifiers { <modifiers> <> nil }
+#             ^referent <object-ref>)
+#   (<modifiers> ^concept-type number
+#                ^concept-handle <number>)
+#-->
+#   #    Create a message
+#   (<s> ^result <message>)
+#   (<message> ^message-type command
+#              ^action <action>
+#              ^arg2 <arg2>)
+#   (<arg2> ^until-clause <until-clause>)
+#   (<until-clause> ^action <action-ref>
+#                   ^agent <subject-ref>
+#                   ^arg1 <number-ref>)
+#   (<number-ref> ^number <number>)
+#   #   Go on to the next
+#   (<s> ^action <a> -
+#        ^action <next>)
+#}
+
+#   This should work for an UntilDeclarativeClause -> UntilDeclarative(SituationDescriptor)
+#   for the case where the action is an DoItInDirection
+#   In this case we add an arg1 to the message
+#   This case works when there is no number modifier
+sp {act*apply*act-on-it*act-in-direction-until-declarative-situation-descriptor*no-number
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name act-on-it
+        ^type TERMINATED-ACTION
+        ^action <action>
+        ^object { <object1> <> nil }
+        ^predicate <until>
+        ^text <text>)
+   (<a> ^next <next>)
+   (<until> ^is.a UntilDeclarative
+            ^assertion <assertion>)
+   (<assertion> ^is.a SituationDescriptor
+                ^subject <subject>
+                ^action <clause-action>
+                ^object <object2>)
+   (<subject> ^is.a RefDesc
+              ^referent <subject-ref>)
+   (<clause-action> ^action <action-ref>)
+   (<object2> ^is.a RefDesc
+             ^referent <object-ref>)
+   #    Check for the case where there is NO numeric modifier
+ -{(<object2> ^is.a RefDesc
+              ^modifiers { <modifiers> <> nil }
+              ^referent <object-ref>)
+   (<modifiers> ^concept-type number
+                ^concept-handle <number>)}
+-->
+   #    Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type command
+              ^action <action>
+              ^arg1 <object1>
+              ^arg2 <arg2>)
+   (<arg2> ^until-clause <until-clause>)
+   (<until-clause> ^action <action-ref>
+                   ^agent <subject-ref>
+                   ^arg1 <object-ref>)
+   #   Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+#   This should work for an UntilDeclarativeClause -> UntilDeclarative(SituationDescriptor)
+#   for the case where the action is an DoItInDirection
+#   In this case we add an arg1 to the message
+#   This case works when there IS a number modifier
+#   THIS IS A VERY WEIRD CASE TO HANDLE "Follow the right wall until you see two doors."
+#   WE HAVE TO PRODUCE AN UNREASONABLE MESSAGE TO MATCH THE CURRENT GOLD STANDARD
+sp {act*apply*act-on-it*act-in-direction-until-declarative-situation-descriptor*with-number
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name act-on-it
+        ^type TERMINATED-ACTION
+        ^action <action>
+        ^object { <object1> <> nil }
+        ^predicate <until>
+        ^text <text>)
+   (<a> ^next <next>)
+   (<until> ^is.a UntilDeclarative
+            ^assertion <assertion>)
+   (<assertion> ^is.a SituationDescriptor
+                ^subject <subject>
+                ^action <clause-action>
+                ^object <object2>)
+   (<subject> ^is.a RefDesc
+              ^referent <subject-ref>)
+   (<clause-action> ^action <action-ref>)
+   #    Check for the case where there is a numeric modifier
+   (<object2> ^is.a RefDesc
+              ^modifiers { <modifiers> <> nil }
+              ^referent <object-ref>)
+   (<modifiers> ^concept-type number
+                ^concept-handle <number>)
+-->
+   #    Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type command
+              ^action <action>
+              ^arg1 <object1>
+              ^arg2 <arg2>)
+   (<arg2> ^until-clause <until-clause>)
+   (<until-clause> ^action <action-ref>
+                   ^agent <subject-ref>
+                   ^arg1 <number-ref>)
+   (<number-ref> ^number <number>)
+   #   Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+#   This should work for an MoveOnObjectUntil -> TerminatedActionOnObject
+sp {act*apply*act-on-it*terminated-action-on-object
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name act-on-it
+        ^type TERMINATED-ACTION
+        ^action <action>
+        ^predicate <until>
+        ^object <object1> <> nil
+        ^location nil
+        ^text <text>)
+   (<a> ^next <next>)
+   (<until> ^object <ref-desc>)
+   (<ref-desc> ^referent <object2>)
+   #    Get the on-object object
+   (<object1> ^referent <on-object>)
+-->
+   #    Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type command
+              ^action <action>
+              ^arg1 <on-object>
+              ^arg2 <until-clause>)
+   (<until-clause> ^until-clause <predicate>)
+   (<predicate> ^predicate <object2>)
+   #   Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}

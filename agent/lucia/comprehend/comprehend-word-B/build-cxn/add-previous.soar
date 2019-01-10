@@ -1,0 +1,65 @@
+##!
+# @file
+#
+# @created plindes 20181105
+# File: add-previous.soar     in System B
+# Author: Peter Lindes
+# Created: 5 November 2018
+#
+# Desc: Adds a connection to the previous construction to a new construction.
+#
+#   This operator is intended to be selected
+#   in a substate under build-cxn, but it ignores
+#   build-cxn and works with everything
+#   on the comprehend-word superstate.
+#
+
+#    Propose an operator to add a previous link to a new construction
+sp {build-cxn*propose*add-previous
+   (state <s> ^superstate <ss>
+             -^previous done) #   Retract when this operator completed
+   (<ss> ^problem-space comprehend-word
+         ^operator <ss-o>
+         ^cxn <cxn>
+         ^superstate <sss>)
+   (<cxn> ^cxn-name <name>)
+   #    Insure o-support
+      (<ss-o> ^name build-cxn)
+   #    Find the previous construction
+   (<sss> ^comprehension <comprehension>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name add-previous
+        ^type construction
+        ^comprehension <comprehension>
+        ^cxn <cxn>
+        ^debug-info (concat |Add a previous link to a '| <name> |' construction.|))
+}
+
+#   Add a previous link to a new construction
+sp {build-cxn*apply*add-previous
+   (state <s> ^superstate <ss>
+              ^operator <o>)
+   (<o> ^name add-previous
+        ^comprehension <comprehension>
+        ^cxn <cxn>)
+   (<comprehension> ^cxn-stack <stack>)
+-->
+   #    Add the previous link to a construction
+   (<cxn> ^previous <stack>)
+   #    Mark this operator as completed
+   (<s> ^previous done)
+}
+
+#   Add a previous-lex link to a new lexical construction
+sp {build-cxn*apply*add-previous-lex
+   (state <s> ^superstate <ss>
+              ^operator <o>)
+   (<o> ^name add-previous
+        ^comprehension <comprehension>
+        ^cxn <cxn>)
+   (<comprehension> ^lex-stack <previous-lex>)
+-->
+   #    Add a previous-lex link to a lexical construction
+   (<cxn> ^previous-lex <previous-lex>)
+}

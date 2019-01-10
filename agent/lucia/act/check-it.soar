@@ -1,0 +1,59 @@
+##!
+# @file
+#
+# @created plindes 20180614
+# File: act-on-it.soar
+# Author: Peter Lindes
+# Created: 14 June 2018
+#
+# Desc:  Send a message to check on a condition.
+#
+
+
+###################     CHECK-IT-ACTION      ####################
+
+#   Propose an operator to perform an action on an object.
+#   We expect all these actions to have three key parameters:
+#   ^arg1, ^arg2, and ^location, some of which may be nil.
+sp {act*propose*check-it
+   (state <s> ^problem-space act
+              ^action <a>)
+   (<a> ^action CHECK-IT-ACTION
+        ^rosie-action <action>
+        ^arg1 <condition>
+        ^text <text>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name check-it
+        ^action <action>
+        ^arg1 <condition>
+        ^text <text>
+        ^debug-info (concat |Create an action message to check a condition.|))
+}
+
+#   Build a Rosie message to check a PropertyApplication
+sp {act*apply*check-it
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name check-it
+        ^action <action>
+        ^arg1 <condition>
+        ^text <text>)
+   (<condition> ^is.a PropertyApplication
+                ^target.referent <target>
+                ^property.predicate <property>)
+   (<a> ^next <next>)
+-->
+   #    Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type command
+              ^action <action>
+              ^arg1 <arg1>)
+   (<arg1> ^if-subclause <if-subclause>)
+   (<if-subclause> ^arg1 <target>
+                   ^predicate <property>)
+   #   Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}

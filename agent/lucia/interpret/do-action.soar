@@ -1,0 +1,772 @@
+##!
+# @file
+#
+# @created plindes 20160302
+# File: do-action.soar
+# Author: Peter Lindes
+# Created: 2 March 2016
+#
+# Desc:  This operator will create one or more actions
+#        to perform an action instruction found in the input.
+#        
+
+#   Propose an operator to decide to perform an action
+sp {interpret*propose*do-action
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^comprehension <c>
+             -^action <a>)
+   (<c> ^cxn-stack.m <m>)
+   (<m> ^is.a Action
+       -^is.a VerbDefinition        #  Not a simple verb definition
+       -^action.is.a VerbDefinition)#  Not a verb definition with a location
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name do-action
+        ^type interpretation
+        ^meaning <m>
+        ^debug-info (concat |Decide to perform an action.|))
+}
+
+#   Create a simple action with no arguments
+sp {interpret*apply*do-action*simple-action
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-action
+        ^meaning <m>)
+   (<m> ^is.a Action
+       -^is.a TurnToIt
+       -^is.a ActionForTime
+       -^is.a CheckIt
+        ^action <action>
+        ^location nil
+        #	Make sure this is the simplest kind
+        ^direction nil
+       -^object 
+       -^terminator 
+        ^text <text>)
+   (<action> ^is.a ActionDescriptor
+             ^action { <rosie-action> <> nil })
+-->
+   #   Add an action to do the command, no arg1 yet
+   (<s> ^action <a-action>)
+   (<a-action> ^action SIMPLE-ACTION
+               ^rosie-action <rosie-action>
+	           ^arg1 nil
+               ^arg2 nil
+               ^location nil
+               ^text <text>
+	           ^next nil)
+}
+
+#   Create an action to check a condition
+sp {interpret*apply*do-action*check-it-action
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-action
+        ^meaning <m>)
+   (<m> ^is.a CheckIt
+        ^action <action>
+        ^condition <condition>
+         #   Make sure this is the simplest kind
+        ^location nil
+        ^direction nil
+       -^object 
+       -^terminator 
+        ^text <text>)
+   (<action> ^is.a ActionDescriptor
+             ^action { <rosie-action> <> nil })
+-->
+   #   Add an action to do the command, no arg1 yet
+   (<s> ^action <a-action>)
+   (<a-action> ^action CHECK-IT-ACTION
+               ^rosie-action <rosie-action>
+               ^arg1 <condition>
+               ^arg2 nil
+               ^location nil
+               ^text <text>
+               ^next nil)
+}
+
+#   Create a drive action with a direction but no distance
+sp {interpret*apply*do-action*drive-in-direction*no-distance
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-action
+        ^meaning <m>)
+   (<m> ^is.a DoItInDirection
+       -^is.a TurnToIt
+        ^action <action>
+        ^location nil
+        ^direction <direction> <> nil
+       ^object nil
+       -^terminator 
+       -^distance 
+        ^text <text>)
+   (<action> ^is.a ActionDescriptor
+             ^action { <rosie-action> <> nil })
+-->
+   #   Add an action to do the command, no arg1 yet
+   #   For now we're not passing along the direction
+   (<s> ^action <a-action>)
+   (<a-action> ^action SIMPLE-ACTION
+               ^rosie-action <rosie-action>
+               ^arg1 nil
+               ^arg2 nil
+               ^location nil
+               ^text <text>
+               ^next nil)
+}
+
+#   Create a drive action with a direction and with a distance
+sp {interpret*apply*do-action*drive-in-direction*with-distance
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-action
+        ^meaning <m>)
+   (<m> ^is.a Action
+       -^is.a TurnToIt
+        ^action <action>
+        ^location nil
+        ^direction <direction> <> nil
+        ^distance <distance>
+       -^object 
+       -^terminator 
+        ^text <text>)
+   (<action> ^is.a Action
+             ^action { <rosie-action> <> nil })
+   (<distance> ^units.predicate <units>
+               ^number.predicate <number>)
+-->
+   #   Add an action to do the command
+   (<s> ^action <a-action>)
+   (<a-action> ^action ACTION-WITH-DISTANCE
+               ^rosie-action <rosie-action>
+               ^arg1 <units>
+               ^arg2 <number>
+               ^text <text>
+               ^next nil)
+}
+
+#   Create an action along a direction
+sp {interpret*apply*do-action*act-in-direction
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-action
+        ^meaning <m>)
+   (<m> ^is.a Action
+       -^is.a TurnToIt
+        ^action <action>
+        ^location nil
+        ^direction <direction> <> nil
+        ^object <object> <> nil
+       -^terminator 
+        ^text <text>)
+   (<action> ^is.a ActionDescriptor
+             ^action { <rosie-action> <> nil })
+-->
+   #   Add an action to do the command, no arg1 yet
+   #   For now we're not passing along the direction
+   (<s> ^action <a-action>)
+   (<a-action> ^action SIMPLE-ACTION
+               ^rosie-action <rosie-action>
+               ^arg1 <object>
+               ^arg2 nil
+               ^location nil
+               ^text <text>
+               ^next nil)
+}
+
+#   Create a transitive ActOnIt action that has no location
+#   This version works for a single object with a referent
+sp {interpret*apply*do-action*transitive*no-location*use-referent
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-action
+        ^meaning <m>)
+   (<m> ^is.a ActOnIt
+       -^is.a DoTransfer
+        ^action <action>
+        ^object { <object> <> nil }
+       -^object2 
+        ^location nil
+        ^text <text>)
+   (<action> ^is.a ActionDescriptor
+             #  The line below gets double without the '{}'
+             #  Why is that?
+             ^action { <rosie-action> <> nil })
+   (<object> ^is.a RefDesc
+             ^referent <referent>  <> nil
+            -^predicate )
+-->
+   #   Add an action to do the command, no arg1 yet
+   (<s> ^action <a-action>)
+   (<a-action> ^action COMMAND-ON-OBJECT
+               ^rosie-action <rosie-action>
+	           ^arg1 <referent>
+               ^arg2 nil
+               ^location nil
+               ^text <text>
+	           ^next nil)
+}
+
+#   Create a transitive ActOnIt action that has no location
+#   This version works for an AskQuestionCommand
+#   It builds a weird structure to represent the text of the question
+sp {interpret*apply*do-action*transitive*ask-question
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-action
+        ^meaning <m>)
+   (<m> ^is.a AskQuestionCommand
+        ^action <action>
+        ^object { <question> <> nil }
+       -^object2 
+        ^location nil
+        ^text <text>)
+   (<action> ^is.a ActionDescriptor
+             #  The line below gets double without the '{}'
+             #  Why is that?
+             ^action { <rosie-action> <> nil })
+   (<question> ^is.a AskQuestion
+             ^text <q-text>)
+-->
+   #   Add an action to do the command, no arg1 yet
+   (<s> ^action <a-action>)
+   (<a-action> ^action COMMAND-ON-TEXT
+               ^rosie-action <rosie-action>
+               #    Build a string from the text
+               ^arg1 (concat |\|| <q-text> |\||)
+               ^arg2 nil
+               ^location nil
+               ^text <text>
+               ^next nil)
+}
+
+#   Create a ditransitive DoTransfer action that has no location
+#   This version works for one objects and one predicate
+sp {interpret*apply*do-action*transitive*no-location*object-and-predicate
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-action
+        ^meaning <m>)
+   (<m> ^is.a ActOnIt
+        ^is.a DoTransfer
+        ^action <action>
+        ^object { <object> <> nil }
+        ^object2 { <object2> <> nil }
+        ^location nil
+        ^text <text>)
+   (<action> ^is.a ActionDescriptor
+             #  The line below gets double without the '{}'
+             #  Why is that?
+             ^action { <rosie-action> <> nil })
+   (<object> ^is.a RefDesc
+             ^referent <referent>  <> nil
+            -^predicate )
+   (<object2> ^is.a RefDesc
+              # The predicate gives a concept
+              ^predicate { <predicate>  <> nil })
+-->
+   #   Add an action to do the command, no arg1 yet
+   (<s> ^action <a-action>)
+   (<a-action> ^action COMMAND-ON-OBJECT
+               ^rosie-action <rosie-action>
+               ^arg1 <referent>
+               ^arg2 <predicate>
+               ^location nil
+               ^text <text>
+               ^next nil)
+}
+
+#   Create a ditransitive DoTransfer action that has no location
+#   This version works for one object and one predicate
+sp {interpret*apply*do-action*transitive*no-location*two-objects
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-action
+        ^meaning <m>)
+   (<m> ^is.a ActOnIt
+        ^is.a DoTransfer
+        ^action <action>
+        ^object { <object> <> nil }
+        ^object2 { <object2> <> nil }
+        ^location nil
+        ^text <text>)
+   (<action> ^is.a ActionDescriptor
+             #  The line below gets double without the '{}'
+             #  Why is that?
+             ^action { <rosie-action> <> nil })
+   (<object> ^is.a RefDesc
+             ^referent { <referent>  <> nil }
+            -^predicate )
+   (<object2> ^is.a RefDesc
+              ^referent { <referent2>  <> nil }
+             -^predicate )
+-->
+   #   Add an action to do the command, no arg1 yet
+   (<s> ^action <a-action>)
+   (<a-action> ^action COMMAND-ON-OBJECT
+               ^rosie-action <rosie-action>
+               ^arg1 <referent>
+               ^arg2 <referent2>
+               ^location nil
+               ^text <text>
+               ^next nil)
+}
+
+#   Create a transitive ActOnIt action that has no location
+#   This version works for an object with a predicate,
+#   usually this will be for a concept.
+sp {interpret*apply*do-action*transitive*no-location*use-predicate
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-action
+        ^meaning <m>)
+   (<m> ^is.a ActOnIt
+        ^action <action>
+        ^object { <object> <> nil }
+       -^object2 
+        ^location nil
+        ^text <text>)
+   (<action> ^is.a ActionDescriptor
+             #  The line below gets double without the '{}'
+             #  Why is that?
+             ^action { <rosie-action> <> nil })
+   (<object> ^is.a RefDesc
+             ^predicate <predicate> <> nil
+             ^referent nil)
+-->
+   #   Add an action to do the command, no arg1 yet
+   (<s> ^action <a-action>)
+   (<a-action> ^action COMMAND-ON-OBJECT
+               ^rosie-action <rosie-action>
+               ^arg1 <predicate>
+               ^arg2 nil
+               ^location nil
+               ^text <text>
+               ^next nil)
+}
+
+#   Create a ditransitive DoTransfer action
+#   This version works when the first object is a Condition.
+#   This version works for an object with a predicate,
+#   usually this will be for a concept.
+#   This works for a sentence like:
+#   Remember if the lights in the conference room are lit as the response.
+sp {interpret*apply*do-action*transitive*object1-is-condition
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-action
+        ^meaning <m>)
+   (<m> ^is.a ActOnIt
+        ^is.a DoTransfer
+        ^action <action>
+        ^object { <object> <> nil }
+        ^object2 { <object2> <> nil }
+        ^location nil
+        ^text <text>)
+   (<action> ^is.a ActionDescriptor
+             #  The line below gets double without the '{}'
+             #  Why is that?
+             ^action { <rosie-action> <> nil })
+   (<object> ^is.a Condition
+             ^statement { <statement>  <> nil }
+            -^predicate )
+   (<object2> ^is.a RefDesc
+              ^predicate <predicate> <> nil
+              ^referent nil)
+-->
+   #   Add an action to do the command, no arg1 yet
+   (<s> ^action <a-action>)
+   (<a-action> ^action COMMAND-ON-OBJECT
+               ^rosie-action <rosie-action>
+               ^arg1 <statement>
+               ^arg2 <predicate>
+               ^location nil
+               ^text <text>
+               ^next nil)
+}
+
+#   Create a transitive ActOnIt action that has no location
+#   This version works for two predicates,
+#   usually these will be for a concepts.
+sp {interpret*apply*do-action*transitive*no-location*two-predicates
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-action
+        ^meaning <m>)
+   (<m> ^is.a ActOnIt
+        ^action <action>
+        ^object { <object> <> nil }
+        ^object2 { <object2> <> nil } 
+        ^location nil
+        ^text <text>)
+   (<action> ^is.a ActionDescriptor
+             #  The line below gets double without the '{}'
+             #  Why is that?
+             ^action { <rosie-action> <> nil })
+   (<object> ^is.a RefDesc
+             ^predicate <predicate> <> nil
+             ^referent nil)
+   (<object2> ^is.a RefDesc
+              ^predicate <predicate2> <> nil
+              ^referent nil)
+-->
+   #   Add an action to do the command, no arg1 yet
+   (<s> ^action <a-action>)
+   (<a-action> ^action COMMAND-ON-OBJECT
+               ^rosie-action <rosie-action>
+               ^arg1 <predicate>
+               ^arg2 <predicate2>
+               ^location nil
+               ^text <text>
+               ^next nil)
+}
+
+#   Create a transitive ActOnIt action that has a location
+sp {interpret*apply*do-action*transitive*with-location
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-action
+        ^meaning <m>)
+   (<m> ^is.a Action
+        ^action <action>
+        ^location { <location> <> nil }
+        ^text <text>)
+   (<action> ^is.a ActOnIt
+	         ^action { <act-on-it> <> nil }
+	         ^object <object>)
+   (<act-on-it> ^is.a ActionDescriptor
+             	^action <rosie-action>)
+   (<object> ^is.a RefDesc
+             ^referent <referent>)
+   #    Look at the preposition in the location phrase
+   #    This will cause two actions to be generated
+   #    if there are two preposition names.
+   #    We need to rebuild the location in case
+   #    it really is redundant so that we get two different actions
+   #    instead of two copies of the same one
+   (<location> ^prep <prep-name>    #    This is the one that may be redundant
+               ^is <loc-is>
+               ^object <loc-object>
+               ^schema-name <loc-schema-name>
+               ^source <loc-source>
+               ^text <loc-text>)
+-->
+   #   Add an action to do the command, no arg1 yet
+   (<s> ^action <a-action>)
+   (<a-action> ^action COMMAND-ON-OBJECT
+               ^rosie-action <rosie-action>
+	           ^arg1 <referent>
+               ^arg2 nil
+               ^location <new-location>
+               ^text <text>
+	           ^next nil)
+   #    If the rule fires twice, this part will make a unique location for each
+   (<new-location> ^prep <prep-name>    #    This is the one that may be redundant
+	               ^is <loc-is>
+	               ^object <loc-object>
+	               ^schema-name <loc-schema-name>
+	               ^source <loc-source>
+	               ^text <loc-text>)
+}
+
+#   Create a MoveToIt action with no modifier
+sp {interpret*apply*do-action*move-to-target*no-modifer
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-action
+        ^meaning <m>)
+   (<m> ^is.a MoveToIt
+        ^action <action>
+        ^location <location>
+        ^text <text>)
+   (<action> ^is.a ActionDescriptor
+             ^action { <rosie-action> <> nil }
+            -^modifier )
+   (<location> ^is.a PrepRelation)
+-->
+   #   Add an action to do the command
+   (<s> ^action <a-action>)
+   (<a-action> ^action MOVE-TO-TARGET
+               ^rosie-action <rosie-action>
+               ^arg1 <location>
+               ^arg2 nil
+               ^text <text>
+               ^next nil)
+}
+
+#   Create a MoveToIt action with a modifier
+#   There is probably a more general way to handle modifiers.
+sp {interpret*apply*do-action*move-to-target*with-modifer
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-action
+        ^meaning <m>)
+   (<m> ^is.a MoveToIt
+        ^action <action>
+        ^location <location>
+        ^text <text>)
+   (<action> ^is.a ActionDescriptor
+             ^action { <rosie-action> <> nil }
+             ^modifier <modifier>)
+   (<location> ^is.a PrepRelation)
+-->
+   #   Add an action to do the command
+   (<s> ^action <a-action>)
+   (<a-action> ^action MOVE-TO-TARGET
+               ^rosie-action <rosie-action>
+               ^arg1 <location>
+               ^arg2 nil
+               ^modifier <modifier>
+               ^text <text>
+               ^next nil)
+}
+
+#   Create a TurnToIt action that has a direction
+sp {interpret*apply*do-action*turn-to-direction
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-action
+        ^meaning <m>)
+   (<m> ^is.a TurnToIt
+        ^action <action>
+	    ^direction <direction>
+        ^text <text>)
+   (<action> ^is.a ActionDescriptor
+             ^action { <rosie-action> <> nil })
+   (<direction> ^is.a PropertyDescriptor
+             	^class <dir-class>
+                ^name <dir-name>
+                ^predicate <predicate>)
+-->
+   #   Add an action to do the command, no arg1 yet
+   (<s> ^action <a-action>)
+   (<a-action> ^action TURN-TO-DIRECTION
+               ^rosie-action <rosie-action>
+	           ^arg1 <predicate>
+               ^arg2 nil
+               ^text <text>
+	           ^next nil)
+}
+
+#   Create a ActionForTime action
+sp {interpret*apply*do-action*act-for-time
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-action
+        ^meaning <m>)
+   (<m> ^is.a ActionForTime
+        ^action <action>
+        ^time <time>
+        ^text <text>)
+   (<action> ^is.a ActionDescriptor
+             ^action { <rosie-action> <> nil })
+   (<time> ^is.a Measurement
+           ^number.concept-handle <m-number>
+           ^units.concept-handle <m-units>)
+-->
+   #   Add an action to do the command, no arg1 yet
+   (<s> ^action <a-action>)
+   (<a-action> ^action ACT-FOR-TIME
+               ^rosie-action <rosie-action>
+               ^arg1 <m-number>
+               ^arg2 <m-units>
+               ^text <text>
+               ^next nil)
+}
+
+#   Create a TERMINATED-ACTION with no arg1
+#   This should work for an UntilThereIsClause -> UntilThereIs
+#   This should work for an UntilDeclarativeClause -> UntilDeclarative
+sp {interpret*apply*do-action*terminated-action-until
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-action
+        ^meaning <m>)
+   (<m> ^is.a TerminatedAction
+        ^action <action>
+        ^location nil
+        ^terminator <until>    #    The predicate
+        #    Make sure there are no extra things
+       -^object #   The object is part of the terminator
+       -^direction <x> <> nil  # This might not be needed if schemas rearranged
+        ^text <text>)
+   #    Get the action
+   (<action> ^is.a ActionDescriptor
+             ^action { <rosie-action> <> nil })
+-->
+   #   Add an action to do the command, no arg1 yet
+   (<s> ^action <a-action>)
+   (<a-action> ^action TERMINATED-ACTION
+               ^rosie-action <rosie-action>
+               ^arg1 nil
+               ^arg2 <until>    #    The predicate
+               ^text <text>
+               ^next nil)
+}
+
+#   Create a TERMINATED-ACTION with an arg1
+#   This should work for an ActAlongDirectionUntil ->
+#           TerminatedAction(DoItInDirection)
+sp {interpret*apply*do-action*terminated-act-in-direction-until
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-action
+        ^meaning <m>)
+   (<m> ^is.a TerminatedAction
+        ^action <action>
+        ^location nil
+        ^terminator <until>    #    The predicate
+        #    Make sure there are no extra things
+       -^object #   The object is part of the terminator
+       -^direction <x> <> nil  # This might not be needed if schemas rearranged
+        ^text <text>)
+   #    Get the DoItInDirection
+   (<action> ^is.a DoItInDirection
+             ^action { <directed-action> <> nil }
+             ^object.referent <object>)
+   (<directed-action> ^is.a ActionDescriptor
+             ^action { <rosie-action> <> nil })
+-->
+   #   Add an action to do the command, no arg1 yet
+   (<s> ^action <a-action>)
+   (<a-action> ^action TERMINATED-ACTION
+               ^rosie-action <rosie-action>
+               ^arg1 <object>   #   As in "down the hall"
+               ^arg2 <until>    #    The predicate
+               ^text <text>
+               ^next nil)
+}
+
+
+#   Create a TERMINATED-ACTION with no arg1
+#   This should work for an ActAlongDirectionUntil or ActInDirectionUntil ->
+#           TerminatedAction(DoItInDirection)
+sp {interpret*apply*do-action*terminated-act-in-direction-until*no-object
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-action
+        ^meaning <m>)
+   (<m> ^is.a TerminatedAction
+        ^action <action>
+        ^location nil
+        ^terminator <until>    #    The predicate
+        #    Make sure there are no extra things
+       -^object #   The object is part of the terminator
+       -^direction <x> <> nil  # This might not be needed if schemas rearranged
+        ^text <text>)
+   #    Get the DoItInDirection
+   (<action> ^is.a DoItInDirection
+             ^action { <directed-action> <> nil }
+             ^object nil)
+   (<directed-action> ^is.a ActionDescriptor
+             ^action { <rosie-action> <> nil })
+-->
+   #   Add an action to do the command, no arg1 yet
+   (<s> ^action <a-action>)
+   (<a-action> ^action TERMINATED-ACTION
+               ^rosie-action <rosie-action>
+               ^arg1 nil
+               ^arg2 <until>    #    The predicate
+               ^text <text>
+               ^next nil)
+}
+
+##   Create a TERMINATED-ACTION with no arg1
+##   This should work for an UntilDeclarativeClause -> UntilDeclarative
+#sp {interpret*apply*do-action*terminated-action-until-declarative
+#   (state <s> ^problem-space interpret
+#              ^operator <o>)
+#   (<o> ^name do-action
+#        ^meaning <m>)
+#   (<m> ^is.a TerminatedAction
+#        ^action <action>
+#        ^location nil
+#        ^terminator <until>    #    The predicate
+#        #    Make sure there are no extra things
+#       -^object #   The object is part of the terminator
+#       -^direction <x> <> nil  # This might not be needed if schemas rearranged
+#        ^text <text>)
+#   (<until> ^is.a UntilDeclarative)
+#   #    Get the action
+#   (<action> ^is.a ActionDescriptor
+#             ^action { <rosie-action> <> nil })
+#-->
+#   #   Add an action to do the command, no arg1 yet
+#   (<s> ^action <a-action>)
+#   (<a-action> ^action TERMINATED-ACTION
+#               ^rosie-action <rosie-action>
+#               ^arg1 nil
+#               ^arg2 <until>    #    The predicate
+#               ^text <text>
+#               ^next nil)
+#}
+
+#   Create a TERMINATED-ACTION with an arg1
+#   This should work for an MoveOnObjectUntil -> TerminatedActionOnObject
+#   For the case of UntilThereIs
+sp {interpret*apply*do-action*terminated-action-on-object*until-there-is
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-action
+        ^meaning <m>)
+   (<m> ^is.a TerminatedActionOnObject
+        ^action <action>
+        ^location nil
+        ^object <object> 
+        ^terminator <until>    #    The predicate
+        #    Make sure there are no extra things
+       -^direction <x> <> nil  # This might not be needed if schemas rearranged
+        ^text <text>)
+   #    Get the action
+   (<action> ^is.a ActionDescriptor
+             ^action { <rosie-action> <> nil })
+   #    Check the until clause
+   (<until> ^is.a UntilThereIs)
+-->
+   #   Add an action to do the command, no arg1 yet
+   (<s> ^action <a-action>)
+   (<a-action> ^action TERMINATED-ACTION
+               ^rosie-action <rosie-action>
+               ^arg1 <object>
+               ^arg2 <until>    #    The predicate
+               ^text <text>
+               ^next nil)
+}
+
+#   Create a TERMINATED-ACTION with an arg1
+#   This should work for an MoveOnObjectUntil -> TerminatedActionOnObject
+#   For the case of UntilDeclarative
+sp {interpret*apply*do-action*terminated-action-on-object*until-declarative
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-action
+        ^meaning <m>)
+   (<m> ^is.a TerminatedActionOnObject
+        ^action <action>
+        ^location nil
+        ^object <object> 
+        ^terminator <until>    #    The predicate
+        #    Make sure there are no extra things
+       -^direction <x> <> nil  # This might not be needed if schemas rearranged
+        ^text <text>)
+   #    Get the action
+   (<action> ^is.a ActionDescriptor
+             ^action { <rosie-action> <> nil })
+   #    Check the until clause
+   (<until> ^is.a UntilDeclarative)
+   (<object> ^referent <target-object>)
+-->
+   #   Add an action to do the command, no arg1 yet
+   (<s> ^action <a-action>)
+   (<a-action> ^action TERMINATED-ACTION
+               ^rosie-action <rosie-action>
+               ^arg1 <target-object>
+               ^arg2 <until>    #    The predicate
+               ^text <text>
+               ^next nil)
+}

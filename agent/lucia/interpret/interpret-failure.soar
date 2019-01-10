@@ -1,0 +1,169 @@
+##!
+# @file
+#
+# @created plindes 20160303
+# File: interpret-failure.soar
+# Author: Peter Lindes
+# Created: 3 March 2016
+#
+# Desc:  This operator looks for a situation that does not
+#        conform to any known correct result and reports it.
+#
+#        For now a failure will be declared if the comprehension
+#        has a stack with more than one construction on it.
+#        
+
+#   Propose an operator that detects failure due to an imcomplete parse
+sp {interpret*propose*interpret-failure*parse-incomplete
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^comprehension <c>
+             -^action <a>)
+   (<c> ^cxn-stack <cxn>)
+   (<cxn> ^previous { <previous> <> nil })
+-->
+   (<s> ^operator <o> +
+        ^cxn <cxn>)
+   (<o> ^name interpret-failure
+        ^debug-info (concat |Failed due to an incomplete parse.|))
+}
+
+#   Propose an operator that detects failure due a singleton unkown word
+sp {interpret*propose*interpret-failure*singleton-unknown-word
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^comprehension <c>
+             -^action <a>)
+   (<c> ^cxn-stack <cxn>)
+   (<cxn> ^cxn-name |UNKNOWN-WORD|
+          ^previous nil)
+-->
+   (<s> ^operator <o> +
+        ^cxn <cxn>)
+   (<o> ^name interpret-failure
+        ^debug-info (concat |Failed due to a singleton unkown word.|))
+}
+
+#   Propose an operator that detects failure due to a singleton word that was not understood
+sp {interpret*propose*interpret-failure*singleton-word-unknown
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^comprehension <c>
+             -^action <a>)
+   (<c> ^cxn-stack <cxn>)
+   (<cxn> -^cxn-name |UNKNOWN-WORD|
+          -^m <meaning>
+           ^word <word>
+           ^previous nil)
+-->
+   (<s> ^operator <o> +
+        ^cxn <cxn>)
+   (<o> ^name interpret-failure
+        ^debug-info (concat |Failed due to a singleton word that was not understood.|))
+}
+
+##   Propose an operator that detects failure due to a singleton cxn that was not understood
+#sp {interpret*propose*interpret-failure*singleton-cxn-unknown
+#   (state <s> ^top-state <ts> 
+#              ^problem-space interpret
+#              ^comprehension <c>
+#             -^action <a>)
+#   (<c> ^cxn-stack <cxn>)
+#   (<cxn> -^cxn-name |UNKNOWN-WORD|
+#          -^word <word>    #    Not lexical
+#           ^previous nil)
+#-->
+#   (<s> ^operator <o> +
+#        ^cxn <cxn>)
+#   (<o> ^name interpret-failure
+#        ^debug-info (concat |Failed due to a singleton cxn that was not understood.|))
+#}
+
+#   Post a FAILURE action that will be added to
+sp {interpret*apply*interpret-failure
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>
+              ^cxn <cxn> <> nil
+             -^failure <action>)
+   (<o> ^name interpret-failure)
+-->
+   #   Add an action to report the failure
+   (<s> ^failure <a-action>)
+   (<a-action> ^action FAILURE
+               ^result <result>
+               ^next nil)
+   (<result> ^interaction-status <i-status>)
+}
+
+#   Scan the stack for an unknown word
+sp {interpret*apply*interpret-failure*find-unknown
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>
+              ^cxn <cxn> <> nil
+              ^failure <action>)
+   (<o> ^name interpret-failure)
+   (<cxn> ^cxn-name |UNKNOWN-WORD|
+          ^word.orth <orth>
+          ^previous <previous>)
+   (<action> ^result <result>)
+   (<result> ^interaction-status <i-status>)
+-->
+   #    Post this on the state and on to the next
+   (<action> ^text |FAILED! Unknown-word|)
+   (<i-status> ^failure <f>)
+   (<f> ^type unknown-word
+        ^word <orth>)
+   (<s> ^cxn <cxn> -
+        ^cxn <previous>)
+}
+
+sp {interpret*apply*interpret-failure*skip-knowns
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>
+              ^cxn <cxn> <> nil
+              ^failure <action>)
+   (<o> ^name interpret-failure)
+   (<cxn> ^cxn-name <name> <> |UNKNOWN-WORD|
+          ^previous <previous>)
+-->
+   #    On to the next
+   (<s> ^cxn <cxn> -
+        ^cxn <previous>)
+}
+
+#    If no unknowns found in stack, mark a syntactic failure
+sp {interpret*apply*interpret-failure*no-unknown-found
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>
+              ^cxn nil
+              ^failure <action>)
+   (<o> ^name interpret-failure)
+   (<action> ^result <result>)
+   (<result> ^interaction-status <i-status>)
+   (<i-status> -^failure <f>)
+-->
+   #    Mark a syntactic failure
+   (<action> ^text |FAILED!|)
+   (<i-status> ^failure <f>)
+   (<f> ^type syntactic)
+}
+
+sp {interpret*apply*interpret-failure*done
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>
+              ^cxn nil
+              ^failure <action>)
+   (<o> ^name interpret-failure)
+   (<action> ^result <result>)
+   (<result> ^interaction-status <i-status>)
+   (<i-status> ^failure <f>)
+-->
+   #    Post the failure as an action
+   (<s> ^failure <action> -
+        ^action <action>)
+}

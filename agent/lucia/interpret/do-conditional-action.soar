@@ -1,0 +1,90 @@
+##!
+# @file
+#
+# @created plindes 20160407
+# File: do-conditional-action.soar
+# Author: Peter Lindes
+# Created: 7 April 2016
+#
+# Desc:  This operator will create an action with two parts:
+#        a condition and an action to do if true.
+#        
+
+#   Propose an operator to decide to perform a conditional action
+#	If x then y. or If x y.
+sp {interpret*propose*do-conditional-action*if-then-command
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^comprehension <c>
+             -^action <a>)
+   (<c> ^cxn-stack.m <m>)
+   (<m> ^is.a IfThenCommand)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name do-conditional-action
+        ^type interpretation
+        ^meaning <m>
+        ^debug-info (concat |Decide to perform a conditional action.|))
+}
+
+#   Create a conditional action for a PropertyApplication condition
+sp {interpret*apply*do-conditional-action*property-application
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-conditional-action
+        ^meaning <m>)
+   (<m> ^is.a IfThenCommand
+        ^condition <condition>
+        ^command <command>
+        ^text <text>)
+   #    Get the condition info
+   (<condition> ^is.a PropertyApplication
+                ^property <property>
+                ^target <target>)
+   (<property> ^predicate <predicate>)
+   (<target> ^referent <object>)
+   #    Get the command info
+   (<command> ^action.action <rosie-action>)
+-->
+   #   Add an action to do the command
+   (<s> ^action <a-action>)
+   (<a-action> ^action CONDITIONAL-ACTION
+               ^condition <s-condition>
+               ^command <s-command>
+               ^text <text>
+               ^next nil)
+   #    Add the condition info
+   (<s-condition> ^predicate <predicate>
+                  ^arg1 <object>)
+   #    Add the command info
+   (<s-command> ^action <rosie-action>)
+}
+
+#   Create a conditional action for a SituationDescriptor condition
+sp {interpret*apply*do-conditional-action*situation-descriptor
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-conditional-action
+        ^meaning <m>)
+   (<m> ^is.a IfThenCommand
+        ^condition <condition>
+        ^command <command>
+        ^text <text>)
+   #    Get the condition info
+   (<condition> ^is.a SituationDescriptor)
+   #    Get the command info
+   (<command> ^action.action <rosie-action>)
+-->
+   #   Add an action to do the command
+   (<s> ^action <a-action>)
+   (<a-action> ^action CONDITIONAL-ACTION
+               ^condition <condition>
+               ^command <s-command>
+               ^text <text>
+               ^next nil)
+#   #    Add the condition info
+#   (<s-condition> ^predicate <predicate>
+#                  ^arg1 <object>)
+   #    Add the command info
+   (<s-command> ^action <rosie-action>)
+}

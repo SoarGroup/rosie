@@ -1,0 +1,46 @@
+##!
+# @file
+#
+# @created plindes 20181106
+# File: build-cxn-done.soar     in System B
+# Author: Peter Lindes
+# Created: 6 November 2018
+#
+# Desc: After a construction has been completely built out,
+#       mark it on the superstate so build-cxn will retract.
+#
+#   This operator is intended to be selected
+#   in a substate under build-cxn, but it ignores
+#   build-cxn and works with everything
+#   on the comprehend-word superstate.
+#
+
+#    Propose an operator to publish a new construction
+sp {build-cxn*propose*build-cxn-done
+   (state <s> ^superstate <ss>)
+   (<ss> ^problem-space comprehend-word
+         ^operator <ss-o>
+         ^cxn <cxn>)
+   (<ss-o> ^name build-cxn
+           ^smem-cxn <smem-cxn>)
+   (<smem-cxn> ^cxn-name <name>)
+  -(<cxn> ^built true) #   Retract when this operator completed
+-->
+   (<s> ^operator <o> + <)  #   This should run only at the end of build-cxn
+   (<o> ^name build-cxn-done
+        ^type construction
+        ^cxn <cxn>
+        ^debug-info (concat |Add basic attributes to a '| <name> |' construction.|))
+}
+
+#   Mark the new construction as having been built
+sp {build-cxn*apply*build-cxn-done
+   (state <s> ^superstate <ss>
+              ^operator <o>)
+   (<o> ^name build-cxn-done
+        ^cxn <cxn>)
+-->
+   #    Mark the construction as having been fully built
+   (<cxn> ^built true)
+}
+

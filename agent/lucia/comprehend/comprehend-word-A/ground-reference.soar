@@ -22,6 +22,8 @@
 #           - these are handled by lookup-concept
 #       5. the ^givenness of the RefDesc is not "relative-pronoun"
 #           - these should have been resolved previously
+#       6. the ^givenness of the RefDesc is not "proper-name"
+#           - these are handled by ground-proper-name
 #	The operator retracts whenever ^reference resolved is set
 #
 #	The value of the ^category wme of the RefDesc will be
@@ -85,7 +87,8 @@ sp {comprehend-word*propose*ground-reference
    (<ref-desc> ^modifiers <modifiers>
               -^category.rosie-category concept #   Concepts should be looked up in smem
               -^givenness relative-pronoun	#	This should have been resolved previously
-              -^givenness deictic)          #   Ignore "this one" here
+              -^givenness deictic           #   Ignore "this one" here
+              -^givenness proper-name)      #   Proper names handled elsewhere
 -->
    (<s> ^operator <o> +
         ^modifiers <modifiers>)
@@ -110,6 +113,53 @@ sp {comprehend-word*apply*ground-reference*category*already-grounded
    #    Post the referent on the state
    (<s> ^category done
         ^referent <referent>)
+}
+
+#   Look for an object that fits the special case for "the current location"
+#   This rule had a weird interaction with the rule called
+#   comprehend-word*apply*ground-reference*category*not-ONE*spatial-shape*fails.
+#   That rule has to abort the grounding if a spatial shape matches
+#   something in the world but their ^spatial-shape values are different.
+#   That will happen if we have created a new object for "an empty room"
+#   and later want to ground "the current location".
+#   So that other rule now will not fire if we're looking for
+#   "the current location".
+sp {comprehend-word*apply*ground-reference*category*current-location
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   (<ref-desc> ^category <rosie-ref-desc>
+               ^modifiers <modifiers>)
+   #    Get the category
+   (<rosie-ref-desc> ^rosie-category spatial-shape
+                     ^spatial-shape location1)
+   #    Look for the current location
+   (<modifiers> ^is.a PropertyDescriptor
+                ^class state
+                ^predicate <current-property>)
+   (<current-property> ^item-type property
+                       ^type state
+                       ^handle current)
+   #    Select all referents that fit
+   (<ts> ^world <world>)
+   (<world> ^objects.object <object>)
+   (<object> ^item-type location
+             ^predicates <predicates>
+             ^handle <handle>)
+   (<predicates> ^category location
+                 ^property current
+                 ^spatial-shape <spatial-shape>)
+-->
+   #    Post the referent on the RefDesc
+   (<ref-desc> ^referent nil -
+               ^referent <object>)
+   #    Post the referent on the state
+   (<s> ^category done
+        ^referent <object>)
+   #    Set done flag
+   (<s> ^reference resolved)
 }
 
 #   Look for objects of a given Rosie category, NOT for pronoun ONE
@@ -137,6 +187,10 @@ sp {comprehend-word*apply*ground-reference*category*not-ONE
 
 #   Look for objects of a given Rosie category, NOT for pronoun ONE
 #   A special case for spatial-shape
+#   This should fire if there is an object in the world whose ^category
+#   is spatial-shape and whose ^spatial-shape value is the same
+#   as the ^spatial-shape value under the ^category of our RefDesc.
+#   When this matches, we assume we have found the right object.
 sp {comprehend-word*apply*ground-reference*category*not-ONE*spatial-shape
    (state <s> ^problem-space comprehend-word
               ^operator <o>
@@ -161,13 +215,30 @@ sp {comprehend-word*apply*ground-reference*category*not-ONE*spatial-shape
    (<s> ^category done
         ^referent <object>)
 }
+
+#   Look for objects of a given Rosie category, NOT for pronoun ONE
+#   A special case for spatial-shape
+#   This should fire if there is NO object in the world whose ^category
+#   is spatial-shape and whose ^spatial-shape value is the same
+#   as the ^spatial-shape value under the ^category of our RefDesc.
+#   When this matches, we assume we have NOT found the right object.
+#   DO NOT match this rule when we're looking for "the current location."
+#   This rule had a weird interaction with the rule called
+#   comprehend-word*apply*ground-reference*category*current-location.
+#   This rule has to abort the grounding if a spatial shape matches
+#   something in the world but their ^spatial-shape values are different.
+#   That will happen if we have created a new object for "an empty room"
+#   and later want to ground "the current location".
+#   So this rule now will not fire if we're looking for
+#   "the current location".
 sp {comprehend-word*apply*ground-reference*category*not-ONE*spatial-shape*fails
    (state <s> ^problem-space comprehend-word
               ^operator <o>
               ^top-state <ts>)
    (<o> ^name ground-reference
         ^meaning <ref-desc>)
-   (<ref-desc> ^category <rosie-ref-desc>)
+   (<ref-desc> ^category <rosie-ref-desc>
+               ^modifiers <modifiers>)
    #    Get the category
    (<rosie-ref-desc> ^rosie-category spatial-shape
                      ^spatial-shape <category-value>
@@ -176,10 +247,17 @@ sp {comprehend-word*apply*ground-reference*category*not-ONE*spatial-shape*fails
    (<ts> ^world <world>)
    (<world> ^objects.object <object>)
    (<object> ^predicates <predicates>)
-   #    This will fail for <category> == spatial-shape
+   #    This will match for <category> == spatial-shape
    #    if the shapes are not the same.
    (<predicates> ^category spatial-shape
                  ^spatial-shape { <value2> <> <category-value> })
+   #    Inhibit this from firing if the pattern we are trying
+   #    to match is for "the current location."
+ -{(<rosie-ref-desc> ^rosie-category spatial-shape
+                     ^spatial-shape location1)
+   (<modifiers> ^class state
+                ^is.a PropertyDescriptor
+                ^name current)}
 -->
    #    Post NONE referent on the RefDesc
    (<ref-desc> ^referent nil -
@@ -244,6 +322,16 @@ sp {comprehend-word*apply*ground-reference*category-empty
         ^meaning <ref-desc>)
    (<ref-desc> ^category <rosie-ref-desc>
                ^referent nil)
+   #    Don't fire this rule if the RefDesc is for "the current location"
+ -{(<ref-desc> ^category <rd-category>
+               ^givenness definite
+               ^modifiers <modifiers>)
+   (<modifiers> ^is.a PropertyDescriptor
+                ^class state
+                ^predicate <current-property>)
+   (<current-property> ^item-type property
+                       ^type state
+                       ^handle current)}
    #	Get the category
    (<rosie-ref-desc> ^rosie-category { <category> <> nil })
    #	Select all referents of that category

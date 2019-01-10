@@ -1,0 +1,57 @@
+##!
+# @file
+#
+# @created plindes 20181106
+# File: acquire-cxn.soar     in System B
+# Author: Peter Lindes
+# Created: 6 November 2018
+#
+# Desc: The first thing to do in the build-cxn substate is to
+#       publish the construction on the comprehend-word state.
+#
+#   This operator is intended to be selected
+#   in a substate under build-cxn, but it ignores
+#   build-cxn and works with everything
+#   on the comprehend-word superstate.
+#
+
+#    Propose an operator to publish a new construction
+sp {build-cxn*propose*acquire-cxn
+   (state <s> ^superstate <ss>)
+   (<ss> ^problem-space comprehend-word
+         ^operator <ss-o>
+        -^cxn ) #   Retract when this operator completed
+   (<ss-o> ^name build-cxn
+           ^smem-cxn <smem-cxn>)
+   (<smem-cxn> ^cxn-name <name>)
+-->
+   (<s> ^operator <o> + >)  #   This should run only at the start of build-cxn
+   (<o> ^name acquire-cxn
+        ^type construction
+        ^smem-cxn <smem-cxn>
+        ^debug-info (concat |Post a '| <name> |' construction to the superstate.|))
+}
+
+#   Publish a new construction on the comprehend-word state
+sp {build-cxn*apply*acquire-cxn
+   (state <s> ^superstate <ss>
+              ^operator <o>)
+   (<o> ^name acquire-cxn
+        ^smem-cxn <smem-cxn>)
+-->
+   #    Publish the construction
+   (<ss> ^cxn <smem-cxn>)
+}
+
+#   Publish a new lexical construction on the comprehend-word state
+sp {build-cxn*apply*acquire-cxn*lexical
+   (state <s> ^superstate <ss>
+              ^operator <o>)
+   (<o> ^name acquire-cxn
+        ^smem-cxn <smem-cxn>)
+   (<smem-cxn> ^orth <orth>)
+-->
+   #    Publish the construction
+   (<ss> ^lexical <smem-cxn>)
+}
+

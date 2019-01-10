@@ -24,7 +24,7 @@
 sp {comprehend-word*propose*attach-prep-phrase*ref-expr
    (state <s> ^problem-space comprehend-word
               ^cxn <phrase>)
-   (<phrase> ^cxn-name PrepPhrase
+   (<phrase> ^is.a PrepPhrase
             -^attached-to <attach-point>)
    #    See whether what came before was a RefExpr
    (<phrase> ^previous <ref-expr>)
@@ -47,7 +47,7 @@ sp {comprehend-word*propose*attach-prep-phrase*ref-expr
 sp {comprehend-word*propose*attach-prep-phrase*verb-with-args
    (state <s> ^problem-space comprehend-word
               ^cxn <phrase>)
-   (<phrase> ^cxn-name PrepPhrase
+   (<phrase> ^is.a PrepPhrase
             -^attached-to <attach-point>)
    #	See whether what came before was a VerbWithArguments
    (<phrase> ^previous <verb>)
@@ -65,8 +65,11 @@ sp {comprehend-word*propose*attach-prep-phrase*verb-with-args
 sp {comprehend-word*propose*attach-prep-phrase*verb-object
    (state <s> ^problem-space comprehend-word
               ^cxn <phrase>)
-   (<phrase> ^cxn-name PrepPhrase
+   (<phrase> ^is.a PrepPhrase
             -^attached-to <attach-point>)
+   #    Only do this if the preposistion is not a VerbalPreposition
+   (<phrase> ^prep <prep>)
+   (<prep> -^is.a AdverbialPreposition)
    #	See whether what came before was a VerbWithArguments with an object
    (<phrase> ^previous <verb>)
    (<verb> ^is.a VerbWithArguments
@@ -86,7 +89,7 @@ sp {comprehend-word*propose*attach-prep-phrase*verb-object
 sp {comprehend-word*propose*attach-prep-phrase*verb-with-args*has-location
    (state <s> ^problem-space comprehend-word
               ^cxn <phrase>)
-   (<phrase> ^cxn-name PrepPhrase
+   (<phrase> ^is.a PrepPhrase
             -^attached-to <attach-point>)
    #    See whether what came before was a VerbWithArguments
    (<phrase> ^previous <verb>)
@@ -107,7 +110,7 @@ sp {comprehend-word*propose*attach-prep-phrase*verb-with-args*has-location
 sp {comprehend-word*propose*attach-prep-phrase*is-before-ref-expr
    (state <s> ^problem-space comprehend-word
               ^cxn <phrase>)
-   (<phrase> ^cxn-name PrepPhrase
+   (<phrase> ^is.a PrepPhrase
             -^attached-to <attach-point>)
    #    See whether what came before was a RefExpr
    (<phrase> ^previous <ref-expr>)
@@ -131,7 +134,7 @@ sp {comprehend-word*propose*attach-prep-phrase*is-before-ref-expr
 
 #	When both a verb and its object are options,
 #	pick the verb if it requires a location
-sp {comprehend-word*preferencee*attach-prep-phrase*verb-location-before-object-ref-expr
+sp {comprehend-word*preference*attach-prep-phrase*verb-location-before-object-ref-expr
    (state <s> ^problem-space comprehend-word
               ^operator <o1> +
               ^operator <o2> +)
@@ -205,6 +208,47 @@ sp {comprehend-word*preference*attach-prep-phrase*drive-verb-before-verb-with-ar
    #    The other is the verb-with-args
    (<o2> ^name attach-prep-phrase
          ^attach-type |verb-with-args|)
+-->
+   #    Prefer the verb operator
+   (<s> ^operator <o1> > <o2>)
+}
+
+#    Matching an ImperativeWithLocationSet cxn should
+#    be preferred over attach-prep-phrase
+#    and also over matching an ImperativeWithLocation.
+sp {comprehend-word*preference*attach-prep-phrase*imperative-with-location-set-before-attach-prep-phrase
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +
+              ^operator <o3> +)
+   #    One operator is a match-construction for ImperativeWithLocationSet
+   (<o1> ^name match-construction
+         ^cxn-name ImperativeWithLocationSet)
+   #    Another is attach-prep-phrase
+   (<o2> ^name attach-prep-phrase)
+   #    Another is a match-construction for ImperativeWithLocation
+   (<o3> ^name match-construction
+         ^cxn-name ImperativeWithLocation)
+-->
+   #    Prefer the verb operator
+   (<s> ^operator <o1> > <o2>
+        ^operator <o1> > <o3>)
+}
+
+#    When there is a VerbWithArgs and it is a TransitiveVerbDefinitionSentence
+#    then prefer attaching to the verb instead of to its object
+sp {comprehend-word*preference*attach-prep-phrase*verb-definition-before-ref-expr
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   #    One operator is a verb
+   (<o1> ^name attach-prep-phrase
+         ^attach-type |verb-with-args|
+         ^attach-to <verb-with-args>)
+   (<verb-with-args> ^is.a TransitiveVerbDefinitionSentence)
+   #    The other is the verb's object
+   (<o2> ^name attach-prep-phrase
+         ^attach-type |verb-object|)
 -->
    #    Prefer the verb operator
    (<s> ^operator <o1> > <o2>)

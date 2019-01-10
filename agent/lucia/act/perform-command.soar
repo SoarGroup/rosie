@@ -1,0 +1,58 @@
+##!
+# @file
+#
+# @created plindes 20150625
+# File: perform-command.soar
+# Author: Peter Lindes
+# Created: 24 June 2015
+#
+# Desc: Create a new object in the current scene.
+#
+#       3/2/2016: This is rather obsolete.  It does not
+#       apply to actions for Rosie.  It is used for commands
+#       to the Comprehender itself.
+#
+
+#   Propose an operator to perform a command
+sp {act*propose*perform-command
+   (state <s> ^problem-space act
+              ^action <a>)
+   (<a> ^action COMMAND
+        ^arg1 <verb>
+        ^arg2 <object>)
+   (<object> ^text <text>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name perform-command
+        ^verb <verb>
+        ^object <object>
+        ^debug-info (concat |Perform the | <verb> | command on | <text> |.|))
+}
+
+#   Apply perform-command to print the world
+sp {act*apply*perform-command*print-world
+   (state <s> ^top-state <ts>
+              ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name perform-command
+        ^verb PRINT
+        ^object <obj>)
+   (<obj> ^roles <roles>
+          ^text <text>)
+   (<roles> ^category World
+            ^referent OPEN)
+   (<ts> ^discourse.scene <scene>
+         ^io.output-link <output>)
+   (<a> ^next <next>)
+-->
+   #   Print the current scene
+   (<output> ^print-scene <scene>)
+   #   Report the result
+   (<s> ^result <r>)
+   (<r> ^action <a>
+        ^status (concat |Printed the current state of the world.|))
+   #   Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}
