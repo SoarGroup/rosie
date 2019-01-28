@@ -1,26 +1,28 @@
 # try to match the learned subaction against a known proposal 
 
-sp {learn-subaction-proposal*elaborate*match-action
+sp {learn-subaction-proposal*elaborate*match-task-operator
    (state <s> ^name learn-subaction-proposal
               ^subaction-operator <sub>)
 -->
-   (<s> ^match-action.action <sub>)
+   (<s> ^match-task-operator <mto>)
+   (<mto> ^task-operator <sub>
+          ^candidate-tasks <cands>)
 }
 
-sp {learn-subaction-proposal*elaborate*match-action*candidate-action
+sp {learn-subaction-proposal*elaborate*match-task-operator*candidate-task-operator
    (state <s> ^name learn-subaction-proposal
-              ^match-action <ma>
+              ^match-task-operator.candidate-tasks <cands>
               ^operator <o> +)
 -->
-   (<ma> ^candidate-action <o>)
+   (<cands> ^candidate-task-operator <o>)
 }
 
 sp {learn-subaction-proposal*reject*operator*doesnt*match
    (state <s> ^name learn-subaction-proposal
               ^operator <o> +
-              ^match-action <ma>)
-   (<ma> ^candidate-action <o>
-        -^matches-action <o>)
+              ^match-task-operator <mto>)
+   (<mto> ^candidate-tasks.candidate-task-operator <o>
+         -^successful-match <o>)
    (<o> -^name return-unmatched-subaction)
 -->
    (<s> ^operator <o> -)
@@ -29,8 +31,8 @@ sp {learn-subaction-proposal*reject*operator*doesnt*match
 sp {learn-subaction-proposal*indifferent*preference*matched*operator
    (state <s> ^name learn-subaction-proposal
               ^operator <o> +
-              ^match-action <ma>)
-   (<ma> ^matches-action <o>)
+              ^match-task-operator <mto>)
+   (<mto> ^successful-match <o>)
 -->
    (<s> ^operator <o> =)
 }
@@ -39,7 +41,7 @@ sp {TASK*PROPOSE*SUBTASK*learn-subaction-proposal*matched*subaction
    (state <s> ^name learn-subaction-proposal
               ^operator <o>
               ^subaction-operator <sub>
-              ^match-action.matches-action <o>
+              ^match-task-operator.successful-match <o>
               ^superstate.superstate <ss>)
 -->
    (<ss> ^operator <sub> +)
@@ -48,7 +50,7 @@ sp {TASK*PROPOSE*SUBTASK*learn-subaction-proposal*matched*subaction
 sp {learn-subaction-proposal*apply*matched-operator*removed*learned*no*superstate
    (state <s> ^name learn-subaction-proposal
               ^operator <o>
-              ^match-action.matches-action <o>
+              ^match-task-operator.successful-match <o>
               ^subaction-handle <h>
               ^superstate <ss>)
    (<ss> ^name action-state-no-change
