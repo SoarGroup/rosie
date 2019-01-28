@@ -17,6 +17,14 @@ child-action: The child task's action segment
       ^action-space execute
 	  ^world.copy-type shallow)
 
+### Order of things ###
+
+1. The first time an execute-action substate is reached, remove the ^start-of-execution flag
+   OP: remove-start-of-execution
+
+2. Retrieve the TCN 
+
+
 ### Operators ###
 remove-start-of-execution-flag
   When an action-stack segment is first created, it has ^start-of-execution true
@@ -37,20 +45,47 @@ pop-action-segment
 advance-current-subgoal
   If the current-subgoal is satisfied and there is another subgoal, 
     change the current-subgoal on the action-operator
+
+copy-action
+   If we are in an execute-action substate without a segment, 
+   propose copy-action to copy the action-operator and create a new segment
+
+push-action-segment
+   If there is a ^new-action-segment on the state, 
+   Push a new segment onto the stack
+
+add-subaction-to-tcn
+   If a child action came from instruction, 
+   (has ^action-source instruction)
+   Creates a generalized smem version and adds it to the TCN
+
+   Waits until there is a ^created-subaction <h> 
+     then removes it and adds ^learn-subaction-proposal <h>
+
+complete-action
+  If the goal is satisfied, or a failure detected, 
+    add a ^status to the current-action representation
+
+pop-action-segment
+  If the child-action segment has a status, 
+     pop the segment 
   
 
 wait
   If the flag ^propose-wait true is on the state, this will propose a wait operator
 
 
-  apply-learned-subaction-proposal.soar
-  complete-action.soar
-  copy-action.soar
-  learn-task-subaction.soar
-  pop-action-segment.soar
   preferences.soar
-  push-action-segment.soar
 
+
+### Task Learning ###
+
+Task Structure - What arguments are needed
+  A new task command given by the instructor, 
+  Inside generate-action-operator, adds/modifies TCN
+
+Task Goal - What the purpose of the task are
+  
 
 ### Knowledge Needed ###
 Goal Elaboration
@@ -97,7 +132,7 @@ actions in the real world
    If there is a status on the current-action, this will pop it from the stack
 
 
-### learn-task-subaction
+### add-subaction-to-tcn
     If the child-action doesn't match a proposed action, 
     and it is labeled with ^learn-proposal true, 
     then create a new smem rep of that subaction to store (<s> ^store-subaction <sub>)
