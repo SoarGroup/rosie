@@ -9,6 +9,7 @@ sp {perception-monitor*elaborate*object*volume
 -->
 	(<p> ^volume <vol>)
 }
+
 sp {learn-predicate*elaborate*input-args
    (state <s> ^name learn-predicate
               ^gtype <gtype>
@@ -25,6 +26,7 @@ sp {learn-predicate*elaborate*input-args
 -->
    (<res2> ^instance <in1>)
 }
+
 #hmm not sure if right anymore
 #try doing it for non parameters too
 sp {learn-predicate*elaborate*input-args*set-to-single*objects
@@ -44,6 +46,7 @@ sp {learn-predicate*elaborate*input-args*set-to-single*objects
    (<res> ^instance <i15>)
    (<i15> ^1 <obj>)
 }
+
 #JK REMOVED deep-copy sentence change                                                             
 #sp {learn-predicate*elaborate*input-args*learning-predicate
 #   (state <s> ^name learn-predicate
@@ -76,7 +79,7 @@ sp {learn-predicate*elaborate*input-args*object*single
    (<res> ^instance <in>)
    (<in> ^1 <obj>)
 }
-#JK nlp others fix???? qqq HERE
+#JK nlp others fix????  HERE
 sp {learn-predicate*elaborate*input-args*object*single*to*set
    (state <s> ^name learn-predicate
               ^top-state.dialog-context.learning-predicate <lp>
@@ -608,7 +611,6 @@ sp {learn-predicate*apply*completed-creating-versions
 sp {learn-predicate*apply*completed-creating-versions*multiple-versions
    (state <s> ^name learn-predicate
    		  	  ^main-type action
-             #-^top-state.dialog-context.number-answer <na>
               ^action <a1>
 			  ^action {<a2> > <a1>})
     (<a1> ^handle <h1> ^parameter-set.set <i>)
@@ -616,6 +618,7 @@ sp {learn-predicate*apply*completed-creating-versions*multiple-versions
 -->
     (<s> ^multiple-versions true)
 }
+
 sp {learn-predicate*elaborate*multiple-versions*all-results
    (state <s> ^name learn-predicate
    		  	  ^main-type action
@@ -626,15 +629,40 @@ sp {learn-predicate*elaborate*multiple-versions*all-results
 -->
     (<a1> ^all-results <ar>)
 }
+
+sp {learn-predicate*elaborate*multiple-versions*all-results*predicate
+   (state <s> ^name learn-predicate
+   		  	  ^main-type action
+              ^multiple-versions true
+              ^predicate <a1>)
+ -{(state <s>)
+   (<a1> -^parameter-set.set <i>)}
+-->
+    (<a1> ^all-results <ar>)
+}
+
+
+sp {learn-predicate*multiple-versions*substate*disambiguate
+   (state <s> ^superstate <ss>)
+   (<ss> ^name learn-predicate
+	     ^operator.type action
+         ^multiple-versions true)
+-->
+   (<s> ^name disambiguate)
+   #(write (cmd print <s>))
+   #(interrupt)
+}
+
 sp {learn-predicate*elaborate*multiple-versions*all-results*result
    (state <s> ^name learn-predicate
    		  	  ^main-type action
               ^multiple-versions true
-              ^action <a1>)
+              ^<< predicate action >> <a1>)
    (<a1> ^all-results <ar> ^parameter-set.set <i>)
 -->
    (<ar> ^result <i>)
 }
+
 sp {learn-predicate*apply*operator*multiple-versions*num-results
     (state <s1> ^name learn-predicate
 				^top-state.dialog-context.learning true
@@ -649,9 +677,72 @@ sp {learn-predicate*apply*operator*multiple-versions*num-results
 -->
    (<a1> ^num-results (size <ar>))
 }
+
+sp {learn-predicate*apply*operator*multiple-versions*num-results*predicate
+    (state <s1> ^name learn-predicate
+				^top-state.dialog-context.learning true
+                ^multiple-versions true)
+    (<s1> ^main-type {<type> << action goal failure >>} 
+          ^operator <o> 
+          ^predicate <a1>)
+    (<o> ^type <type> -^duplicate-of) 
+    (<a1> ^all-results <ar> ^handle <c1>)
+  -{(state <s1>)
+    (<ar> -^<x>)}
+-->
+   (<a1> ^num-results (size <ar>))
+}
+
+#qqqq
+sp {learn-predicate*apply*operator*multiple-versions*same*interrupt
+    (state <s1> ^name learn-predicateQ
+				^top-state.dialog-context <dc>
+               -^top-state.dialog-context.number-answer-predicate <nr3>
+			   -^top-state.dialog-context.number-answer-predicate <nr5>
+                ^top-state.interaction.changes <c>
+				^predicate <p1>
+				^predicate <p2>
+				^version-list.version <vv>
+                ^multiple-versions true)
+    (<s1> ^main-type action
+#^main-type {<type> << action goal failure >>} 
+          ^operator <o> 
+          ^action <a1>
+          ^action {<a2> > <a1>})
+    (<dc> ^learning true)
+	(<vv> ^handle-spelling <hs1> ^item <i11> <i22>)
+	(<i11> -^auto antonym ^smem-result.handle <e6>)
+	(<i22> -^auto antonym ^smem-result.handle <e7>)
+    (<o> ^type action -^duplicate-of)
+    (<p1> ^link <con1> ^handle <e6> ^num-results <nr3>)
+ 	(<p2> ^link <con2> ^handle <e7> ^num-results {<nr5> <> <nr3>})
+	(<con1> ^negative false)
+	(<con2> ^negative false)
+    (<a1> ^condition <con1> ^num-results <nr> ^handle <c1>)
+    (<a2> ^condition <con2> ^num-results <nr> ^handle <c1>)
+  -{(<s1> ^action {<a3> > <a2>}) #doesnt have a third viable version
+    (<a3> ^num-results)}
+-->
+   (<dc> ^multiple-num-predicate true)
+   (<c> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator agent)
+   (<p> ^type process-multiple-question
+        ^parameters <p>
+        ^satisfaction <sat>)
+   (<p> ^word1 <nr3> ^word2 <nr5>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type process-multiple-question
+          ^originator instructor)
+   (<c> ^outgoing-message <out-msg>)
+   (<out-msg> ^type how-many-predicates #reset-state
+              ^complete-message true  #need?
+              ^fields <f>)
+   (<f> ^predicate <hs1> ^word1 <nr3> ^word2 <nr5>)
+}
 #HERE JAMES add single word response, dialog-context flag, and then use that flag here to decide which gets final-version 
 sp {learn-predicate*apply*operator*multiple-versions*query
-    (state <s1> ^name learn-predicate
+    (state <s1> ^name learn-predicateQ
 				^top-state.dialog-context <dc> 
              -^top-state.dialog-context.number-answer <nr>
               -^top-state.dialog-context.number-answer <nr2>
@@ -665,10 +756,12 @@ sp {learn-predicate*apply*operator*multiple-versions*query
     (<dc> ^learning true)
     (<o> ^type action -^duplicate-of) 
     (<a1> ^num-results <nr> ^handle <c1>)
-    (<a2> ^num-results <nr2> ^handle <c1>)
+    (<a2> ^num-results {<nr2> <> <nr>} ^handle <c1>)
   -{(<s1> ^action {<a3> > <a2>}) #doesnt have a third viable version
     (<a3> ^num-results)}
 -->
+(interrupt)
+#(write (cmd print <a1> -d 5))
    (<dc> ^multiple-num-answer true)
    (<c> ^new-segment-info <info>)
    (<info> ^purpose <p>
@@ -695,6 +788,7 @@ sp {learn-predicate*apply*operator*multiple-versions*query
 #    (<ll> ^argnum <an> -)
 #    (<dc> ^needs-reset true)
 }
+
 #sp {learn-predicate*apply*completed-creating-versions*debug
 #   (state <s> ^name learn-predicate
 #   		  	  ^superstate.superstate <ss>
@@ -711,6 +805,7 @@ sp {learn-predicate*apply*operator*multiple-versions*query
 ##(write (cmd pref <n> nlp -w))
 ##(write (cmd print <n> -d 10))
 #}
+
 #TODO change in all cases, only copy to learn link once detected
 #remove below?
 sp {learn-predicate*apply*completed-creating-versions*single-version
@@ -819,7 +914,7 @@ sp {learn-predicate*elaborate*antonym-table
    (state <s> ^name << game-search learn-predicate >>)
 -->
     (<s> ^antonym-table <st>)
-    (<st> ^pair <t1> <t2> <t3> <t4> <t5> <t6> <t7> <t8> <t9> <t10> <t11>)
+    (<st> ^pair <t1> <t2> <t3> <t4> <t5> <t6> <t7> <t8> <t9> <t10>)# <t11>)
     (<t1> ^word clear covered)
     (<t2> ^word empty covered)
     (<t3> ^word free placed)
@@ -830,7 +925,7 @@ sp {learn-predicate*elaborate*antonym-table
     (<t8> ^word dark light)
     (<t9> ^word full vacant)
 	(<t10> ^word current opposite)
-    (<t11> ^word filled empty)
+    #(<t11> ^word filled empty)
 }
 
 sp {learn-predicate*elaborate*opposite-table
