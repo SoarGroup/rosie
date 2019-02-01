@@ -1,0 +1,63 @@
+# try to match the learned subtask against a known proposal 
+
+sp {learn-subtask-proposal*elaborate*match-task-operator
+   (state <s> ^name learn-subtask-proposal
+              ^subtask-operator <sub>)
+-->
+   (<s> ^match-task-operator <mto>)
+   (<mto> ^task-operator <sub>
+          ^candidate-tasks <cands>)
+}
+
+sp {learn-subtask-proposal*elaborate*match-task-operator*candidate-task-operator
+   (state <s> ^name learn-subtask-proposal
+              ^match-task-operator.candidate-tasks <cands>
+              ^operator <o> +)
+-->
+   (<cands> ^candidate-task-operator <o>)
+}
+
+sp {learn-subtask-proposal*reject*operator*doesnt*match
+   (state <s> ^name learn-subtask-proposal
+              ^operator <o> +
+              ^match-task-operator <mto>)
+   (<mto> ^candidate-tasks.candidate-task-operator <o>
+         -^successful-match <o>)
+   (<o> -^name return-unmatched-subtask)
+-->
+   (<s> ^operator <o> -)
+}
+
+sp {learn-subtask-proposal*indifferent*preference*matched*operator
+   (state <s> ^name learn-subtask-proposal
+              ^operator <o> +
+              ^match-task-operator <mto>)
+   (<mto> ^successful-match <o>)
+-->
+   (<s> ^operator <o> =)
+}
+            
+sp {TASK*PROPOSE*SUBTASK*learn-subtask-proposal*matched*subtask
+   (state <s> ^name learn-subtask-proposal
+              ^operator <o>
+              ^subtask-operator <sub>
+              ^match-task-operator.successful-match <o>
+              ^superstate.superstate <ss>)
+-->
+   (<ss> ^operator <sub> +)
+}
+
+sp {learn-subtask-proposal*apply*matched-operator*removed*learned*no*superstate
+   (state <s> ^name learn-subtask-proposal
+              ^operator <o>
+              ^match-task-operator.successful-match <o>
+              ^subtask-handle <h>
+              ^superstate <ss>)
+   (<ss> ^name action-state-no-change
+         ^task-concept-network.procedural.subtasks.subtask <sub>)
+   (<sub> ^handle <h>
+          ^learned no)
+-->
+   (<sub> ^learned no -)
+}
+

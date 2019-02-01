@@ -1,0 +1,100 @@
+### state.deep-copy-subtasks
+
+# Support structure used when deep copying a list of subtasks
+#   Elaborated automatically [see copy-type.soar]
+
+# First create a map with all subtasks on it
+sp {anystate*deep-copy-subtasks*elaborate*copy
+   (state <s> ^deep-copy-subtasks <dcs>)
+   (<dcs> ^source <source>)
+-->
+   (<s> ^subtasks <subs>)
+   (<dcs> ^copy-subtasks-map <map>)
+}
+
+# Elaborate the top subtask onto the map
+sp {anystate*deep-copy-subtasks*elaborate*next*subtask
+   (state <s> ^deep-copy-subtasks <dcs>)
+   (<dcs> ^source.next { <src-next-sub> <> none }
+          ^copy-subtasks-map <map>)
+-->
+   (<map> ^entry <e>)
+   (<e> ^source <src-next-sub>)
+}
+
+# Recursively elaboration the next subtasks onto the map
+sp {anystate*deep-copy-subtasks*elaborate*subtask*recursively
+   (state <s> ^deep-copy-subtasks.copy-subtasks-map <map>)
+   (<map> ^entry <e>)
+   (<e> ^source <src-sub>)
+   (<src-sub> ^next {<src-next-sub> <> none })
+-->
+   (<map> ^entry <new-e>)
+   (<new-e> ^source <src-next-sub>)
+}
+
+# For each subtask, create a copy of it using the copy-task-operator util (in task-utils)
+sp {anystate*deep-copy-subtasks*elaborate*copy-task-operator*subtask
+   (state <s> ^deep-copy-subtasks.copy-subtasks-map.entry <e>
+              ^deep-copy-world.copy-objects-map <map>)
+   (<e> ^source <src-sub>)
+-->
+   (<s> ^copy-task-operator <ca>)
+   (<ca> ^task-operator <src-sub>
+         ^destination <e>
+         ^copy-name copy
+         ^object-map <map>)
+}
+
+## Then create the new subtasks structure using the subtask copies
+
+# Rule for an empty list of subtasks
+sp {anystate*deep-copy-subtasks*elaborate*next*subtask*none
+   (state <s> ^deep-copy-subtasks <dcs>
+              ^subtasks <subs>)
+   (<dcs> ^source.next none)
+-->
+   (<subs> ^next none)
+}
+
+sp {anystate*deep-copy-subtasks*elaborate*first*subtask
+   (state <s> ^deep-copy-subtasks <dcs>
+              ^subtasks <subs>)
+   (<dcs> ^source.next { <src-sub> <> none }
+          ^copy-subtasks-map.entry <e>)
+   (<e> ^source <src-sub>
+        ^copy <sub-copy>)
+-->
+   (<subs> ^next <sub-copy>)
+}
+
+sp {anystate*deep-copy-subtasks*elaborate*subtask*next*copy
+   (state <s> ^deep-copy-subtasks.copy-subtasks-map <map>)
+   (<map> ^entry <e1> <e2>)
+   (<e1> ^source.next { <next-sub-src> <> none }
+         ^copy <sub-copy>)
+   (<e2> ^source <next-sub-src>
+         ^copy <next-sub-copy>)
+-->
+   (<sub-copy> ^next <next-sub-copy>)
+}
+
+sp {anystate*deep-copy-subtasks*elaborate*subtask*copy*next*none
+   (state <s> ^deep-copy-subtasks.copy-subtasks-map <map>)
+   (<map> ^entry <e>)
+   (<e> ^source.next none
+        ^copy <sub-copy>)
+-->
+   (<sub-copy> ^next none)
+}
+
+
+# LOOKAT
+#sp {anystate*deep-copy-subtasks*elaborate*answer
+#   (state <s> ^deep-copy-subtasks <dcs>)
+#   (<dcs> ^source.answer <h>
+#          ^copy <copy>)
+#-->
+#   (<copy> ^answer <h>)
+#}
+#
