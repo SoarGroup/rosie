@@ -1,0 +1,142 @@
+# Finish the child-task-segment before any other operators
+sp {subproblem*execute*if*child-task-segment*reject*all*others
+   (state <s> -^name execute-task
+              ^problem-space.subproblem execute
+              ^child-task-segment <seg>
+              ^operator <o1> +
+              ^operator { <o2> <> <o1> } +)
+   (<seg> ^task-operator <o1>
+         -^task-source instruction)
+-->
+   (<s> ^operator <o2> -)
+}
+
+# Copy the task to push it onto the stack, reject others
+sp {subproblem*execute*copy-task-operator*reject*all*others
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o1> +
+              ^operator { <o2> <> <o1> <> push-task-segment } +)
+   (<o1> ^name copy-task-operator)
+-->
+   (<s> ^operator <o2> -)
+}
+
+sp {subproblem*execute*prefer*push-task-segment*over*copy-task-operator
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name push-task-segment)
+   (<o2> ^name copy-task-operator)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+## If we want to learn an action model, force a SNC
+sp {subproblem*execute*learn-task-action-model*reject*all*others
+   (state <s> ^problem-space.subproblem execute
+              ^learn-task-action-model true
+              ^operator <o> +)
+-->
+   (<s> ^operator <o> -)
+}
+
+# If we want to learn a task subtask, reject all other operators
+sp {subproblem*execute*add-subtask-to-tcn*reject*all*others
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o1> +
+              ^operator { <o2> <> <o1> } +)
+   (<o1> ^name add-subtask-to-tcn)
+-->
+   (<s> ^operator <o2> -)
+}
+
+# If there is an unproposed subtask, reject all operators (force a state no-change)
+sp {subproblem*execute*reject*operators*if*unlearned*subtask
+   (state <s> -^name execute-task
+              ^problem-space.subproblem execute
+              ^current-task-segment.learn-subtask-proposal <sub-h>
+              ^child-task-segment.task-operator <task-op>
+              ^operator <o> +)
+   -{(<s> ^operator { <sub-op> <> <task-op> } +)
+     (<sub-op> ^subtask-handle <sub-h>)}
+-->
+   (<s> ^operator <o> -)
+}
+
+# Don't complete the task until the agent is done attending to things
+sp {subproblem*execute*prefer*attend-to-scene-change*over*complete-task
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name attend-to-scene-change)
+   (<o2> ^name complete-task)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {subproblem*execute*complete-task*over*failure*handling
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name complete-task)
+   (<o2> ^category failure-handling)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {subproblem*execute*complete-task*over*child*tasks
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o1> +
+              ^operator <o2> +
+             -^child-task-segment.task-operator <o2>)
+   (<o1> ^name complete-task)
+   (<o2> ^task-handle <h>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+# Do smem stuff first
+sp {subproblem*execute*prefer*smem*over*others
+   (state <s> -^name execute-task
+              ^problem-space.subproblem execute
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name << smem-query smem-retrieve smem-retrieve-lti smem-store >> )
+   (<o2> -^name << smem-query smem-retrieve smem-retrieve-lti smem-store copy-task-operator >> )
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {subproblem*execute*prefer*remove-start-of-execution-flag*over*others
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name remove-start-of-execution-flag)
+   (<o2> ^name { <name> <> smem-query <> smem-retrieve <> smem-retrieve-lti <> smem-store})
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {subproblem*execute*reject*subtask
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o> +
+              -^child-task-segment
+              -^created-subtask <sub-h>
+              -^best-pref-eval <o>)
+   (<o> ^task-handle <h>
+        ^subtask-handle <sub-h>)
+-->
+   (<s> ^operator <o> -)
+}
+             
+sp {subproblem*execute*prefer*subgoals*over*tasks
+   (state <s> -^name execute-task
+              ^problem-space.subproblem execute
+             -^child-task-segment
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name << init-current-subgoal advance-current-subgoal >>)
+   (<o2> ^task-handle <h>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}

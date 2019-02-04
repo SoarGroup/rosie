@@ -1,0 +1,142 @@
+############## problem-space.subproblem execute ###############
+
+### State Representation ###
+task-operator: The operator representing this task
+task-concept-network: The root LTI for the smem knowledge about this task
+
+task-stack: The top-state stack representing the current task decomposition
+current-task-segment: The segment on the task-stack for this substate
+parent-task-segment: The parent task's task segment
+child-task-segment: The child task's task segment
+
+
+
+
+### Problem Space ###
+(<ps> ^name action
+      ^subproblem execute
+	  ^world.copy-type shallow)
+
+### Order of things ###
+
+1. The first time an execute-task substate is reached, remove the ^start-of-execution flag
+   OP: remove-start-of-execution
+
+2. Retrieve the TCN 
+
+
+### Operators ###
+remove-start-of-execution-flag
+  When an task-stack segment is first created, it has ^start-of-execution true
+  First time an execute-task substate is reached, this flag is removed
+
+smem-query [retrieve-tcn]
+  Will retrieve the smem info for the task being executed
+
+init-current-subgoal
+  Will initialize ^task-operator.current-subgoal if not present
+
+<child-task-seg>
+  If there is a child-task-segment with an task-operator, propose it
+
+pop-task-segment
+  If the child-task-segment is satisfied, pop it
+
+advance-current-subgoal
+  If the current-subgoal is satisfied and there is another subgoal, 
+    change the current-subgoal on the task-operator
+
+copy-task-operator
+   If we are in an execute-task substate without a segment, 
+   propose copy-task-operator to copy the task-operator and create a new segment
+
+push-task-segment
+   If there is a ^new-task-segment on the state, 
+   Push a new segment onto the stack
+
+add-subtask-to-tcn
+   If a child task came from instruction, 
+   (has ^task-source instruction)
+   Creates a generalized smem version and adds it to the TCN
+
+   Waits until there is a ^created-subtask <h> 
+     then removes it and adds ^learn-subtask-proposal <h>
+
+complete-task
+  If the goal is satisfied, or a failure detected, 
+    add a ^status to the current-task-segment representation
+
+pop-task-segment
+  If the child-task-segment has a status, 
+     pop the segment 
+  
+
+wait
+  If the flag ^propose-wait true is on the state, this will propose a wait operator
+
+
+  preferences.soar
+
+
+### Task Learning ###
+
+Task Structure - What arguments are needed
+  A new task command given by the instructor, 
+  Inside generate-task-operator, adds/modifies TCN
+
+Task Goal - What the purpose of the task are
+  
+
+### Knowledge Needed ###
+Goal Elaboration
+Subtask Proposals
+Selection Knowledge
+
+
+###############################################################
+# Previous
+
+These rules are specific to when the agent is trying to execute
+actions in the real world
+
+### elaborations
+   current-task-segment : task segment, copied from superstate
+   parent-task-segment  : the previous task segment
+   child-task-segment   : the next task segment
+   action-matched <bool> : if the match-task-operator has a match
+
+### validate-child-task-seg
+    If a child-task-segment is there, and it has not been validated, 
+    This will try to match it against proposed task operators
+    If it does match, it will mark the child-task-segment as validated
+
+### apply-primitive-action
+    When a primitive task is selected through preferences in a composite task,
+    Create a new segment to push onto the task stack for that primitive action
+
+### report-success
+    This operator will mark the current-task-segment with ^status success, 
+    and clean up any output commands that were made
+    For composites: proposed if desired.satisfied true
+    For primatives: proposed if the task is finished, 
+      (See proposals in execute-task/execute-primitive-action)
+
+### report-failure
+   This operator will mark the current-task-segment with ^status failure,
+   Remove any commands on the output-link,
+   And will copy any failure info onto the current task (failure-type and failure-info)
+   For primatives: proposed individually if the task fails
+      (See proposals in execute-task/execute-primitive-action)
+
+### pop-finished-action
+   If there is a status on the current-task-segment, this will pop it from the stack
+
+
+### add-subtask-to-tcn
+    If the child-task-segment doesn't match a proposed task, 
+    and it is labeled with ^learn-proposal true, 
+    then create a new smem rep of that subtask to store (<s> ^store-subtask <sub>)
+
+### store-subtask
+    When there is a ^store-subtask <sub> wme on the state, 
+    This will store it in smem and add it to the task-concept-network.procedural info
