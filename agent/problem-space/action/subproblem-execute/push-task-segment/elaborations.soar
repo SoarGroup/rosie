@@ -1,3 +1,10 @@
+sp {problem-space*action*push-task-segment*elaborate*world
+   (state <s> ^name push-task-segment
+              ^top-state.world <w>)
+-->
+   (<s> ^world <w>)
+}
+
 sp {problem-space*action*push-task-segment*elaborate*task-stack
    (state <s> ^name push-task-segment
               ^superstate.task-stack <stack>)
@@ -12,9 +19,177 @@ sp {problem-space*action*push-task-segment*elaborate*segment-to-push
    (<s> ^segment-to-push <seg>)
 }
 
+sp {problem-space*action*push-task-segment*elaborate*task-operator*from*task-segment
+   (state <s> ^name push-task-segment
+              ^segment-to-push.task-operator <task-op>)
+-->
+   (<s> ^task-operator <task-op>)
+}
+
 sp {problem-space*action*push-task-segment*elaborate*attend-to-scene-change
    (state <s> ^name push-task-segment)
 -->
    (<s> ^problem-space <ps>)
    (<ps> ^perception.attend-to-all-perception yes)
 }
+
+############ object-slots ##########
+# Find every object slot for the task from the goal predicates and subtasks
+
+# Mark them as explicit (also appears in the procedural link) or implicit (not in the procedural link)
+
+sp {problem-space*action*push-task-segment*elaborate*object-slots
+   (state <s> ^name push-task-segment)
+-->
+   (<s> ^object-slots <slots>)
+}
+
+sp {problem-space*action*push-task-segment*elaborate*object-slots*from*goal
+   (state <s> ^name push-task-segment
+              ^object-slots <slots>
+              ^task-concept-network.goal.<sg-num> <subgoal>)
+   (<subgoal> ^item-type task-subgoal
+              ^<pred-num> <pred>)
+   (<pred> ^item-type goal-predicate
+           ^{ << 1 2 3 4 5 >> } <obj-slot>)
+-->
+   (<slots> ^object-slot <obj-slot>)
+}
+
+sp {problem-space*action*push-task-segment*elaborate*object-slots*from*subtasks*object*arg
+   (state <s> ^name push-task-segment
+              ^object-slots <slots>
+              ^task-concept-network.procedural.subtasks.subtask <sub>)
+   (<sub> ^<arg-name> <arg>)
+   (<arg> ^arg-type object
+         -^arg-status abstract
+          ^id <obj-slot>)
+-->
+   (<slots> ^object-slot <obj-slot>)
+}
+
+sp {problem-space*action*push-task-segment*elaborate*object-slots*from*subtasks*predicate*arg
+   (state <s> ^name push-task-segment
+              ^object-slots <slots>
+              ^task-concept-network.procedural.subtasks.subtask <sub>)
+   (<sub> ^<arg-name> <arg>)
+   (<arg> ^arg-type predicate
+         -^arg-status abstract
+          ^2 <obj-slot>)
+-->
+   (<slots> ^object-slot <obj-slot>)
+}
+
+sp {problem-space*action*push-task-segment*elaborate*object-slot*explicit*matches*object*arg
+   (state <s> ^name push-task-segment
+              ^object-slots <slots>
+              ^task-concept-network.procedural.<arg-name> <arg>
+              ^task-operator.<arg-name> <ex-arg>)
+   (<slots> ^object-slot <obj-slot>)
+   (<arg> ^arg-type object
+          ^id <obj-slot>)
+   (<ex-arg> ^arg-type object)
+-->
+   (<slots> ^explicit <obj-slot>)
+}
+
+sp {problem-space*action*push-task-segment*elaborate*object-slot*explicit*matches*predicate*arg
+   (state <s> ^name push-task-segment
+              ^object-slots <slots>
+              ^task-concept-network.procedural.<arg-name> <arg>
+              ^task-operator.<arg-name> <ex-arg>)
+   (<slots> ^object-slot <obj-slot>)
+   (<arg> ^arg-type predicate
+          ^id <obj-slot>)
+   (<ex-arg> ^arg-type predicate)
+-->
+   (<slots> ^explicit <obj-slot>)
+}
+
+sp {problem-space*action*push-task-segment*elaborate*object-slot*implicit
+   (state <s> ^name push-task-segment
+              ^object-slots <slots>
+              ^task-concept-network.procedural.<arg-name> <arg>)
+   (<slots> ^object-slot <obj-slot>
+            -^explicit <obj-slot>)
+   (<obj-slot> ^default.<prop> <any>)
+-->
+   (<slots> ^implicit <obj-slot>)
+}
+
+########## merging objects into the world ###############
+sp {push-task-segment*elaborate*object-to-merge*created-implicit-object
+   (state <s> ^name push-task-segment
+              ^create-object-rep.object-rep <obj>)
+-->
+   (<s> ^object-to-merge <obj>)
+}
+
+sp {push-task-segment*elaborate*object-to-merge*task-operator*object
+   (state <s> ^name push-task-segment
+              ^task-operator.<arg-name> <arg>)
+   (<arg> ^arg-type object
+          ^id <obj>)
+-->
+   (<s> ^object-to-merge <obj>)
+}
+
+sp {push-task-segment*elaborate*object-to-merge*task-operator*predicate
+   (state <s> ^name push-task-segment
+              ^task-operator.<arg-name> <arg>)
+   (<arg> ^arg-type predicate
+          ^2 <obj>)
+-->
+   (<s> ^object-to-merge <obj>)
+}
+
+sp {push-task-segment*elaborate*object-to-merge*task-operator*until-clause
+   (state <s> ^name push-task-segment
+              ^task-operator.until-clause.predicate <until-pred>)
+   (<until-pred> ^{ << 1 2 3 4 5 >> } <obj>)
+-->
+   (<s> ^object-to-merge <obj>)
+}
+
+sp {push-task-segment*elaborate*merge-object-workspace
+   (state <s> ^name push-task-segment
+              ^object-to-merge <obj>)
+-->
+   (<s> ^merge-object-workspace <ws>)
+   (<ws> ^source-obj <obj>)
+}
+
+# If the object is already on the world, we're good
+sp {push-task-segment*elaborate*merge-object-workspace*world-obj*exists
+   (state <s> ^name push-task-segment
+              ^merge-object-workspace <ws>
+              ^world.objects <wobjs>)
+   (<ws> ^source-obj <obj>)
+   (<wobjs> ^object <obj>)
+   -{(<obj> ^linked-to <wobj>)
+     (<wobjs> ^object <wobj>)}
+-->
+   (<ws> ^world-obj <obj>)
+}
+
+# If the object matches handles with a world object, elaborate it
+sp {push-task-segment*elaborate*merge-object-workspace*world-obj*handle
+   (state <s> ^name push-task-segment
+              ^merge-object-workspace <ws>
+              ^world.objects.object <wobj>)
+   (<ws> ^source-obj.handle <h>)
+   (<wobj> ^handle <h>)
+-->
+   (<ws> ^world-obj <wobj>)
+}
+
+# If the object has a linked-to argument on it, use that
+sp {push-task-segment*elaborate*merge-object-workspace*world-obj*linked-to
+   (state <s> ^name push-task-segment
+              ^merge-object-workspace <ws>
+              ^world.objects.object <wobj>)
+   (<ws> ^source-obj.linked-to <wobj>)
+-->
+   (<ws> ^world-obj <wobj>)
+}
+

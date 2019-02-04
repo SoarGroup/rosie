@@ -19,10 +19,35 @@ child-task-segment: The child task's task segment
 
 ### Order of things ###
 
-1. The first time an execute-task substate is reached, remove the ^start-of-execution flag
+1. If we are in an execute-task substate without a segment, we need to create the segment
+   OP: copy-task-operator - copy the superstate operator as a task-operator
+							Then create a new-task-segment on the superstate
+
+2. The first time an execute-task substate is reached, remove the ^start-of-execution flag
    OP: remove-start-of-execution
 
-2. Retrieve the TCN 
+3. Retrieve the task-concept-network from smem
+   OP: smem-query
+
+4. Add the first current-subgoal to the task-operator
+   OP: init-current-subgoal
+
+5. If a child task comes from instruction, add a copy of it as a subtask on the TCN
+   OP: add-subtask-to-tcn 
+
+6. If a child task is selected:
+   OP: push-task-segment - The child task will create a new-task-segment on the state, push it
+   OP: <child-task-op>   - We propose the child task operator
+   OP: pop-task-segment  - Once the child is finished (child-task-segment has a status), pop it
+
+7. If a ^propose-wait flag is on the state, then the wait operator will be proposed
+   OP: wait
+
+8. If the current subgoal is satisfied, advance it to the next one (if present)
+   OP: advance-current-subgoal
+
+9. If the final subgoal is achieved, or an error occurs, add a status to the current-task-segment
+   OP: complete-task
 
 
 ### Operators ###
