@@ -1,0 +1,63 @@
+# Don't attend to missing-object on the object being grabbed
+sp {primitive-put-down*reject*attend-to-missing-object*held*object
+   (state <s> ^name primitive-put-down
+              ^operator <o> +
+              ^held-object <obj>)
+   (<o> ^name attend-to-scene-change
+        ^change.type missing-object
+        ^change.object-info.wm-obj <obj>)
+-->
+   (<s> ^operator <o> -)
+}
+
+# Don't attend to new objects while the arm is moving
+# (only evaluate those that were added during the put down as candidates for missing)
+sp {primitive-put-down*reject*attend-to-new-object
+   (state <s> ^name primitive-put-down
+              ^executing-command true
+              ^operator <o> +)
+   (<o> ^name attend-to-scene-change
+        ^change.type new-object)
+-->
+   (<s> ^operator <o> -)
+}
+
+# Don't attend to anything while the arm is moving (except new perception objects)
+sp {primitive-put-down*reject*attend-to-scene-change*all*during*put-down
+   (state <s> ^name primitive-put-down
+              ^executing-command true
+              ^operator <o> +)
+   (<o> ^name attend-to-scene-change
+        ^change.type { <any> <> new-perception-object }
+        ^change.info.category object)
+-->
+   (<s> ^operator <o> -)
+}
+
+# Don't attend at all to the object being put down up while the arm is moving
+sp {primitive-put-down*reject*attend-to-scene-change*grabbed*object
+   (state <s> ^name primitive-put-down
+              ^executing-command true
+              ^operator <o> +
+              ^target-object.handle <handle>)
+   (<o> ^name attend-to-scene-change
+        ^change.object-info.object-handle <handle>)
+-->
+   (<s> ^operator <o> -)
+}
+
+
+sp {primitive-put-down*elaborate*evaluate-new-object*candidate-for-missing-object
+   (state <s> ^name primitive-put-down
+              ^operator <o> +
+              ^held-object.handle <obj-handle>
+              ^held-object.predicates.visible false
+              ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
+   (<o> ^name attend-to-scene-change
+        ^change.type new-object
+        ^change <change>)
+   (<obj-info> ^object-handle <obj-handle>)
+-->
+   (<change> ^candidate-for-missing-object <obj-info>)
+}
+

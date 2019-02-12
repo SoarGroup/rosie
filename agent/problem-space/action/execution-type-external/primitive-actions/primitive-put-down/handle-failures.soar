@@ -1,11 +1,9 @@
-#### Different failure cases that can arise during pick-up
+#### Different failure cases that can arise during put-down
 
-#### What if pickup fails twice? 
-
-sp {primitive-pick-up*propose*handle-execution-failure
-   (state <s> ^name primitive-pick-up
+sp {primitive-put-down*propose*handle-execution-failure
+   (state <s> ^name primitive-put-down
               ^current-task-segment <seg>)
-   (<seg> ^pick-up-command <cmd>)
+   (<seg> ^put-down-command <cmd>)
    (<cmd> ^status << failure interrupted >>)
 -->
    (<s> ^operator <o> + = >)
@@ -15,10 +13,10 @@ sp {primitive-pick-up*propose*handle-execution-failure
         ^command <cmd>)
 }
 
-sp {primitive-pick-up*propose*handle-command-failure
-   (state <s> ^name primitive-pick-up
+sp {primitive-put-down*propose*handle-command-failure
+   (state <s> ^name primitive-put-down
               ^current-task-segment <seg>)
-   (<seg> ^pick-up-command <cmd>)
+   (<seg> ^put-down-command <cmd>)
    (<cmd> ^status error)
 -->
    (<s> ^operator <o> + = >)
@@ -28,12 +26,41 @@ sp {primitive-pick-up*propose*handle-command-failure
         ^command <cmd>)
 }
 
-#sp {primitive-pick-up*fetch*propose*handle-missing-object-failure
-#   (state <s> ^name primitive-pick-up
+#sp {primitive-put-down*fetch*propose*handle-missing-object-failure
+#   (state <s> ^name primitive-put-down
+#              ^current-task-segment <seg>
+#              ^put-down-command.status success
+#              ^target-object <obj>)
+#   (<obj> ^predicates.visible false)
+#-->
+#   (<s> ^operator <o> + = >)
+#   (<o> ^name handle-missing-object-failure
+#        ^category failure-handling
+#        ^task-segment <seg>
+#        ^object <obj>)
+#}
+#
+#sp {primitive-put-down*fetch*elaborate*unrecoverable-failure*goal-failure
+#   (state <s> ^name primitive-put-down
+#              ^current-task-segment <seg>
+#              ^put-down-command.status success
+#              ^target-object.predicates.visible true
+#              ^predicate-satisfied false)
+#-->
+#   (<seg> ^unrecoverable-failure goal-failure)
+#}
+
+
+
+
+
+
+#sp {primitive-put-down*fetch*propose*handle-missing-object-failure
+#   (state <s> ^name primitive-put-down
 #              ^current-task-segment <seg>
 #             -^executing-command true
 #              ^target-object <obj>)
-#   (<seg> -^pick-up-command.status success)
+#   (<seg> -^put-down-command.status success)
 #   (<obj> ^predicates.visible false)
 #-->
 #   (<s> ^operator <o> + = >)
@@ -43,13 +70,13 @@ sp {primitive-pick-up*propose*handle-command-failure
 #        ^object <obj>)
 #}
 
-##### Different failure cases that can arise during pick-up
+##### Different failure cases that can arise during put-down
 #
 ## missing-object: no input-link rep for the object we are trying to pick up
-#sp {primitive-pick-up*magicbot*propose*report-failure*missing-object
-#   (state <s> ^name primitive-pick-up
+#sp {primitive-put-down*magicbot*propose*report-failure*missing-object
+#   (state <s> ^name primitive-put-down
 #              ^problem-space.execution-type external
-#             -^current-task-segment.pick-up-command
+#             -^current-task-segment.put-down-command
 #              -^object-info.input-link-obj
 #               ^target-object.handle <handle>
 #               ^world.robot.arm.state external)
@@ -66,10 +93,10 @@ sp {primitive-pick-up*propose*handle-command-failure
 
             
 ## Report failure if there are no more candidates for the missing object
-#sp {primitive-pick-up*fetch*propose*report-failure
-#   (state <s> ^name primitive-pick-up
+#sp {primitive-put-down*fetch*propose*report-failure
+#   (state <s> ^name primitive-put-down
 #              ^problem-space.execution-type external
-#              ^current-task-segment.pick-up-command.status << failure interrupted >>
+#              ^current-task-segment.put-down-command.status << failure interrupted >>
 #             -^top-state.perception-monitor.object-monitor.new-object-info.status
 #              ^target-object.predicates.visible false)
 #-->
@@ -78,8 +105,8 @@ sp {primitive-pick-up*propose*handle-command-failure
 #}
 #
 ## Report failure if there are no more candidates for the missing object
-#sp {primitive-pick-up*fetch*propose*report-failure*missing*object*reset*complete
-#   (state <s> ^name primitive-pick-up
+#sp {primitive-put-down*fetch*propose*report-failure*missing*object*reset*complete
+#   (state <s> ^name primitive-put-down
 #              ^problem-space.execution-type external
 #              ^current-task-segment.reset-command.status success
 #             -^top-state.perception-monitor.object-monitor.new-object-info.status
@@ -90,10 +117,10 @@ sp {primitive-pick-up*propose*handle-command-failure
 #}
 #
 ## Report failure if there are no more candidates for the missing object
-#sp {primitive-pick-up*fetch*propose*report-failure*missing*object*no*command
-#   (state <s> ^name primitive-pick-up
+#sp {primitive-put-down*fetch*propose*report-failure*missing*object*no*command
+#   (state <s> ^name primitive-put-down
 #              ^problem-space.execution-type external
-#              -^current-task-segment.{ << reset-command pick-up-command >> }
+#              -^current-task-segment.{ << reset-command put-down-command >> }
 #              ^target-object.predicates.visible false)
 #-->
 #   (<s> ^operator <o> +)
@@ -101,8 +128,8 @@ sp {primitive-pick-up*propose*handle-command-failure
 #}
 #
 #
-#sp {primitive-pick-up*fetch*apply*report-failure*remove-arm-status
-#   (state <s> ^name primitive-pick-up
+#sp {primitive-put-down*fetch*apply*report-failure*remove-arm-status
+#   (state <s> ^name primitive-put-down
 #              ^operator.name report-failure
 #              ^target-object.predicates <preds>)
 #   (<preds> ^arm-status moving)
@@ -111,8 +138,8 @@ sp {primitive-pick-up*propose*handle-command-failure
 #}
 #
 ## Report a failure, may lead to more interactions
-#sp {primitive-pick-up*fetch*apply*report-failure*report*failure
-#   (state <s> ^name primitive-pick-up
+#sp {primitive-put-down*fetch*apply*report-failure*report*failure
+#   (state <s> ^name primitive-put-down
 #              ^operator.name report-failure
 #              ^target-object <obj>
 #              -^current-task-segment.stop-asking true
@@ -124,8 +151,8 @@ sp {primitive-pick-up*propose*handle-command-failure
 #}
 #
 ## Mark the task as having failed
-#sp {primitive-pick-up*fetch*apply*report-failure*report*failure*stop-asking
-#   (state <s> ^name primitive-pick-up
+#sp {primitive-put-down*fetch*apply*report-failure*report*failure*stop-asking
+#   (state <s> ^name primitive-put-down
 #              ^operator.name report-failure
 #              ^current-task-segment <seg>)
 #   (<seg> ^stop-asking true)
@@ -134,12 +161,12 @@ sp {primitive-pick-up*propose*handle-command-failure
 #}
 #
 ## Remove the commands from the output-link/current-task-segment
-#sp {primitive-pick-up*fetch*apply*report-failure*remove*commands
-#   (state <s> ^name primitive-pick-up
+#sp {primitive-put-down*fetch*apply*report-failure*remove*commands
+#   (state <s> ^name primitive-put-down
 #              ^current-task-segment <seg>
 #              ^operator.name report-failure
 #              ^io.output-link <out>)
-#   (<seg> ^{ <cmd-type> << pick-up-command reset-command >> } <cmd>)
+#   (<seg> ^{ <cmd-type> << put-down-command reset-command >> } <cmd>)
 #   (<out> ^<cmd-name> <cmd>)
 #-->
 #   (<seg> ^<cmd-type> <cmd> -)
@@ -152,10 +179,10 @@ sp {primitive-pick-up*propose*handle-command-failure
 
 
 ## Report failure if there are no more candidates for the missing object
-#sp {primitive-pick-up*tabletop*propose*report-failure
-#   (state <s> ^name primitive-pick-up
+#sp {primitive-put-down*tabletop*propose*report-failure
+#   (state <s> ^name primitive-put-down
 #              ^problem-space.execution-type external
-#              ^current-task-segment.pick-up-command.status << failure interrupted >>
+#              ^current-task-segment.put-down-command.status << failure interrupted >>
 #             -^top-state.perception-monitor.object-monitor.new-object-info.status
 #              ^target-object.predicates.visible false)
 #-->
@@ -164,8 +191,8 @@ sp {primitive-pick-up*propose*handle-command-failure
 #}
 #
 ## Report failure if there are no more candidates for the missing object
-#sp {primitive-pick-up*tabletop*propose*report-failure*missing*object*reset*complete
-#   (state <s> ^name primitive-pick-up
+#sp {primitive-put-down*tabletop*propose*report-failure*missing*object*reset*complete
+#   (state <s> ^name primitive-put-down
 #              ^problem-space.execution-type external
 #              ^current-task-segment.reset-command.status success
 #             -^top-state.perception-monitor.object-monitor.new-object-info.status
@@ -176,10 +203,10 @@ sp {primitive-pick-up*propose*handle-command-failure
 #}
 #
 ## Report failure if there are no more candidates for the missing object
-#sp {primitive-pick-up*tabletop*propose*report-failure*missing*object*no*command
-#   (state <s> ^name primitive-pick-up
+#sp {primitive-put-down*tabletop*propose*report-failure*missing*object*no*command
+#   (state <s> ^name primitive-put-down
 #              ^problem-space.execution-type external
-#              -^current-task-segment.{ << reset-command pick-up-command >> }
+#              -^current-task-segment.{ << reset-command put-down-command >> }
 #              ^target-object.predicates.visible false)
 #-->
 #   (<s> ^operator <o> +)
@@ -187,8 +214,8 @@ sp {primitive-pick-up*propose*handle-command-failure
 #}
 #
 #
-#sp {primitive-pick-up*tabletop*apply*report-failure*remove-arm-status
-#   (state <s> ^name primitive-pick-up
+#sp {primitive-put-down*tabletop*apply*report-failure*remove-arm-status
+#   (state <s> ^name primitive-put-down
 #              ^operator.name report-failure
 #              ^target-object.predicates <preds>)
 #   (<preds> ^arm-status moving)
@@ -197,8 +224,8 @@ sp {primitive-pick-up*propose*handle-command-failure
 #}
 #
 ## Report a failure, may lead to more interactions
-#sp {primitive-pick-up*tabletop*apply*report-failure*report*failure
-#   (state <s> ^name primitive-pick-up
+#sp {primitive-put-down*tabletop*apply*report-failure*report*failure
+#   (state <s> ^name primitive-put-down
 #              ^operator.name report-failure
 #              ^target-object <obj>
 #              -^current-task-segment.stop-asking true
@@ -210,8 +237,8 @@ sp {primitive-pick-up*propose*handle-command-failure
 #}
 #
 ## Mark the task as having failed
-#sp {primitive-pick-up*tabletop*apply*report-failure*report*failure*stop-asking
-#   (state <s> ^name primitive-pick-up
+#sp {primitive-put-down*tabletop*apply*report-failure*report*failure*stop-asking
+#   (state <s> ^name primitive-put-down
 #              ^operator.name report-failure
 #              ^current-task-segment <seg>)
 #   (<seg> ^stop-asking true)
@@ -220,12 +247,12 @@ sp {primitive-pick-up*propose*handle-command-failure
 #}
 #
 ## Remove the commands from the output-link/current-task-segment
-#sp {primitive-pick-up*tabletop*apply*report-failure*remove*commands
-#   (state <s> ^name primitive-pick-up
+#sp {primitive-put-down*tabletop*apply*report-failure*remove*commands
+#   (state <s> ^name primitive-put-down
 #              ^current-task-segment <seg>
 #              ^operator.name report-failure
 #              ^io.output-link <out>)
-#   (<seg> ^{ <cmd-type> << pick-up-command reset-command >> } <cmd>)
+#   (<seg> ^{ <cmd-type> << put-down-command reset-command >> } <cmd>)
 #   (<out> ^<cmd-name> <cmd>)
 #-->
 #   (<seg> ^<cmd-type> <cmd> -)

@@ -1,0 +1,94 @@
+sp {primitive-put-down*magicbot*propose*internal-put-down
+   (state <s> ^name primitive-put-down
+              ^agent-params.domain magicbot
+              ^problem-space.execution-type external
+              ^held-object <obj>
+              ^top-state.world.robot.arm.state internal
+             -^current-task-segment.put-down-command)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name internal-put-down
+        ^object <obj>)
+}
+
+sp {primitive-put-down*magicbot*apply*internal-put-down*send-confirmation
+   (state <s> ^name primitive-put-down
+              ^agent-params.domain magicbot
+              ^operator <o>
+              ^current-task-segment.received-yes true
+              ^top-state.interaction.changes <c>
+              ^agent-params.arm-simulation-level none)
+   (<o> ^name internal-put-down)
+-->
+   (<c> ^outgoing-message <msg>)
+   (<msg> ^type confirm-put-down
+          ^complete-message true)
+}
+
+sp {primitive-put-down*magicbot*apply*internal-put-down*send-message*no*dest
+   (state <s> ^name primitive-put-down
+              ^agent-params.domain magicbot
+              ^operator <o>
+              ^current-task-segment <seg>
+             -^destination
+              ^top-state.interaction.changes <c>)
+   (<o> ^name internal-put-down
+        ^object <obj>)
+   (<seg> -^sent-message true)
+-->
+   (<c> ^outgoing-message <msg>)
+   (<msg> ^type put-down-item-request
+          ^item <obj>)
+   (<seg> ^sent-message true)
+}
+
+sp {primitive-put-down*magicbot*apply*internal-put-down*send-message*dest*loc
+   (state <s> ^name primitive-put-down
+              ^agent-params.domain magicbot
+              ^operator <o>
+              ^current-task-segment <seg>
+              ^destination.predicates.category location
+              ^top-state.interaction.changes <c>)
+   (<o> ^name internal-put-down
+        ^object <obj>)
+   (<seg> -^sent-message true)
+-->
+   (<c> ^outgoing-message <msg>)
+   (<msg> ^type put-down-item-request
+          ^item <obj>)
+   (<seg> ^sent-message true)
+}
+
+sp {primitive-put-down*magicbot*apply*internal-put-down*send-message*dest*obj
+   (state <s> ^name primitive-put-down
+              ^agent-params.domain magicbot
+              ^operator <o>
+              ^current-task-segment <seg>
+              ^destination <dest>
+              ^top-state.interaction.changes <c>)
+   (<o> ^name internal-put-down
+        ^object <obj>)
+   (<dest> ^predicates.category object
+           ^predicates.{ << name shape >> } <loc>)
+   (<seg> -^sent-message true)
+-->
+   (<c> ^outgoing-message <msg>)
+   (<msg> ^type put-down-item-request
+          ^item <obj>
+          ^location <dest>)
+   (<seg> ^sent-message true)
+}
+
+sp {primitive-put-down*magicbot*apply*internal-put-down*remove*grabbed
+   (state <s> ^name primitive-put-down
+              ^agent-params.domain magicbot
+              ^operator.name internal-put-down
+              ^held-object.predicates <preds>
+              ^current-task-segment <seg>)
+   (<seg> ^received-yes true)
+   (<preds> ^arm-status grabbed)
+-->
+   (<preds> ^arm-status grabbed -
+            ^arm-status not-grabbed)
+   (<seg> ^put-down-command.status success)
+}
