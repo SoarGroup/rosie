@@ -37,7 +37,7 @@ public class SmemTemplate {
 		while((line = templateReader.readLine()) != null){
 			if(line.trim().toUpperCase().equals("#SINGULAR")){
 				hitSingular = true;
-			} else if(hitSingular){
+			} else if(hitSingular || listParamName == null){
 				singularPart.add(line);
 			} else {
 				compoundPart.add(line);
