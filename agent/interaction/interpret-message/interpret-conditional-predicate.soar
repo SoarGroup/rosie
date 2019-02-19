@@ -39,14 +39,15 @@ sp {interpret-message*apply*interpret-done-teaching*create*segment*finished-game
 #######
 # OPERATOR PROPOSAL
 #######
+
+# ASKJAMES
 sp {interpret-message*propose*interpret-conditional-predicate
    (state <s> ^name interpret-message
-              ^top-state.dialog-context.type game-learning
               ^instructor-message <msg>)
    (<msg> ^message-type conditional
          -^interpreted true)
 -->
-#(interrupt)
+   (interrupt)
    (<s> ^operator <o> +)
    (<o> ^name interpret-conditional-predicate
         ^message <msg>)
@@ -81,6 +82,16 @@ sp {interpret-message*elaborate*interpret-conditional-predicate*purpose*learn-pr
 -->
    (<o> ^purpose learn-predicate-definition)
 }
+
+sp {interpret-message*elaborate*interpret-conditional-predicate*purpose*conditional-task
+   (state <s> ^name interpret-message
+              ^top-state.interaction.stack.segment.purpose.type get-next-subaction
+              ^operator <o> +)
+   (<o> ^name interpret-conditional-predicate)
+-->
+   (<o> ^purpose conditional-task)
+}
+
 
 ###########################
 # Purpose: learn-predicate-definition
@@ -541,3 +552,27 @@ sp {interpret-message*apply*interpret-conditional-predicate*remove*unknown-word*
 -->
    (<status> ^failure <f> -)
 }
+
+###########################
+# Purpose: conditional-task
+sp {interpret-message*apply*interpret-conditional-predicate*conditional-task*create*segment
+   (state <s> ^name interpret-message
+              ^top-state.interaction.status <status>
+              ^operator <o>)
+   (<o> ^name interpret-conditional-predicate
+        ^purpose conditional-task
+        ^message <msg>)
+   (<msg> ^if-subclause <if-clause>
+          ^then-subclause <then-clause>)
+-->
+   (<s> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type execute-task
+        ^parameters.command-message <then-clause>
+        ^satisfaction.learning-event.type <task-handle>)
+   (<then-clause> ^conditions <if-clause>)
+   (<msg> ^interpreted true
+          ^task-source instruction)
+}
+
