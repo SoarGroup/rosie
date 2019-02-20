@@ -1,0 +1,50 @@
+# Don't do copy-task-goal if a copy already exists
+sp {task-utils*copy-task-goal*reject*complete-copy-task-goal*if*was-copied
+   (state <s> ^name learn-copy-task-goal-elaboration-rule
+              ^operator <o> +)
+   (<o> ^name << copy-task-argument complete-copy-task-goal >>
+        ^workspace <ws>)
+   (<ws> ^was-copied true)
+-->
+   (<s> ^operator <o> -)
+}
+
+# Prefer higher workspaces 
+# (This probably won't occur, but if there are 2 copy-task-goal-workspaces, 
+#  do all the work from 1 before doing the other)
+sp {task-utils*copy-task-goal*prefer*copy-task-goal*with*higher*workspace
+   (state <s> ^name learn-copy-task-goal-elaboration-rule
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name << copy-task-argument complete-copy-task-goal >>
+         ^workspace <ws1>)
+   (<o2> ^name << copy-task-argument complete-copy-task-goal >>
+         ^workspace < <ws1>)
+-->
+   (<s> ^operator <o1> < <o2>)
+}
+
+sp {task-utils*copy-task-goal*reject*complete-copy-task-goal*if*not*copied
+   (state <s> ^name learn-copy-task-goal-elaboration-rule
+              ^operator <o> +)
+   (<o> ^name complete-copy-task-goal
+        ^workspace.copy-predicate-set <copy-ps>)
+   (<copy-ps> -^arg-copy <copy>)
+-->
+   (<s> ^operator <o> -)
+}
+
+# Don't learn a rule for an empty goal
+sp {task-utils*copy-task-goal*reject*complete-copy-task-goal*if*no*predicates
+   (state <s> ^name learn-copy-task-goal-elaboration-rule
+              ^operator <o> +)
+   (<o> ^name complete-copy-task-goal
+        ^workspace.source-goal <goal>)
+   (<goal> -^pred-count > 0)
+-->
+   (<s> ^operator <o> -)
+}
+
+
+
+
