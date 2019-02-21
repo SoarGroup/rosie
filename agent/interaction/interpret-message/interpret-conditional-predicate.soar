@@ -87,9 +87,22 @@ sp {interpret-message*elaborate*interpret-conditional-predicate*purpose*conditio
    (state <s> ^name interpret-message
               ^top-state.interaction.stack.segment.purpose.type get-next-subaction
               ^operator <o> +)
-   (<o> ^name interpret-conditional-predicate)
+   (<o> ^name interpret-conditional-predicate
+        ^message.then-subclause <then>)
+   (<then> -^arg1.handle goal)
 -->
    (<o> ^purpose conditional-task)
+}
+
+sp {interpret-message*elaborate*interpret-conditional-predicate*purpose*conditional-goal
+   (state <s> ^name interpret-message
+              ^top-state.interaction.stack.segment.purpose.type get-next-subaction
+              ^operator <o> +)
+   (<o> ^name interpret-conditional-predicate
+        ^message.then-subclause <then>)
+   (<then> ^arg1.handle goal)
+-->
+   (<o> ^purpose conditional-goal)
 }
 
 
@@ -574,5 +587,197 @@ sp {interpret-message*apply*interpret-conditional-predicate*conditional-task*cre
    (<then-clause> ^conditions <if-clause>)
    (<msg> ^interpreted true
           ^task-source instruction)
+}
+
+
+###########################
+# Purpose: conditional-goal
+
+#### Operator elaborations
+sp {interpret-message*elaborate*interpret-conditional-predicate*subclause
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-conditional-predicate
+        ^message.then-subclause.subclause <sub>)
+-->
+   (<o> ^subclause <sub>)
+}
+
+sp {interpret-message*elaborate*interpret-conditional-predicate*subclause*level*2
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-conditional-predicate
+        ^subclause.subclause <sub>)
+-->
+   (<o> ^subclause <sub>)
+}
+
+
+sp {interpret-message*interpret-conditional-predicate*conditional-goal*elaborate*subclause*object1
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-conditional-predicate
+        ^purpose conditional-goal
+        ^subclause <sub>)
+   (<sub> ^arg1 <obj>)
+   (<obj> -^linked-to)
+-->
+   (<sub> ^object1 <obj>)
+}
+
+sp {interpret-message*interpret-conditional-predicate*conditional-goal*elaborate*subclause*object1*linked-to
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-conditional-predicate
+        ^purpose conditional-goal
+        ^subclause <sub>)
+   (<sub> ^arg1 <obj>)
+   (<obj> ^linked-to <link>)
+-->
+   (<sub> ^object1 <link>)
+}
+
+sp {interpret-message*interpret-conditional-predicate*conditional-goal*elaborate*relation*subclause*object2
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-conditional-predicate
+        ^purpose conditional-goal
+        ^subclause <sub>)
+   (<sub> ^{ << arg2 predicate >>} <rel>)
+   (<rel> ^2 <obj2>)
+   (<obj2> -^linked-to)
+-->
+   (<rel> ^object2 <obj2>)
+}
+
+sp {interpret-message*interpret-conditional-predicate*conditional-goal*elaborate*subclause*relation*object2*linked-to
+   (state <s> ^name interpret-message
+              ^operator <o> +)
+   (<o> ^name interpret-conditional-predicate
+        ^purpose conditional-goal
+        ^subclause <sub>)
+   (<sub> ^{ << arg2 predicate >>} <rel>)
+   (<rel> ^2 <obj2>)
+   (<obj2> ^linked-to <link>)
+-->
+   (<rel> ^object2 <link>)
+}
+
+### Apply
+
+sp {interpret-message*apply*interpret-conditional-predicate*conditional-goal*create*segment
+   (state <s> ^name interpret-message
+              ^message-context.parameters.task-operator <task-op>
+              ^top-state.interaction.status <status>
+              ^operator <o>)
+   (<o> ^name interpret-conditional-predicate
+        ^purpose conditional-goal
+        ^message <msg>)
+-->
+   (<s> ^new-segment-info <info>
+        ^mark-interpreted <msg>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type learn-goal-definition
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<params> ^task-operator <task-op>)
+   (<sat> ^learning-event.type goal)
+}
+
+sp {interpret-message*apply*interpret-conditional-predicate*conditional-goal*elaborate*goal-predicate*state
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^new-segment-info.purpose.parameters <params>)
+   (<o> ^name interpret-conditional-predicate
+        ^purpose conditional-goal
+        ^subclause <sub>)
+   (<sub> ^object1 <obj>
+          ^predicate.handle <pred-handle>
+         -^predicate.{2} <any>)
+-->
+   (<params> ^goal-predicate <pred>)
+   (<pred> ^type state
+           ^handle <pred-handle>
+           ^1 <obj>)
+}
+
+sp {interpret-message*apply*interpret-conditional-predicate*conditional-goal*elaborate*goal-predicate*relation
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^new-segment-info.purpose.parameters <params>)
+   (<o> ^name interpret-conditional-predicate
+        ^purpose conditional-goal
+        ^subclause <sub>)
+   (<sub> ^object1 <obj1>
+          ^{ << arg2 predicate >>} <rel>)
+   (<rel> ^handle <pred-handle>
+          ^object2 <obj2>)
+-->
+   (<params> ^goal-predicate <pred>)
+   (<pred> ^type relation
+           ^handle <pred-handle>
+           ^1 <obj1>
+           ^2 <obj2>)
+}
+
+sp {interpret-message*apply*interpret-conditional-predicate*conditional-goal*elaborate*params*reference-info
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^new-segment-info.purpose.parameters <params>)
+   (<o> ^name interpret-conditional-predicate
+        ^purpose conditional-goal
+        ^subclause <sub>)
+   (<sub> ^reference-info <info>)
+-->
+   (<params> ^reference-info <info>)
+}
+
+sp {interpret-message*apply*interpret-conditional-predicate*conditional-goal*elaborate*goal-predicate*relation*person
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^new-segment-info.purpose.parameters <params>)
+   (<o> ^name interpret-conditional-predicate
+        ^purpose conditional-goal
+        ^subclause <sub>)
+   (<sub> ^action.handle heard1
+          ^agent <obj1>
+          ^arg1 <obj2>)
+-->
+   (<params> ^goal-predicate <pred>)
+   (<pred> ^type relation
+           ^handle heard2
+           ^1 <obj1>
+           ^2 <obj2>)
+}
+
+sp {interpret-message*apply*interpret-conditional-predicate*conditional-goal*elaborate*goal-condition*relation*person
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^new-segment-info.purpose.parameters <params>)
+   (<o> ^name interpret-conditional-predicate
+        ^purpose conditional-goal
+        ^message.if-subclause <if-sub>)
+   (<if-sub> ^action.handle is1
+             ^arg1 <obj1>
+            -^arg2
+             ^predicate.handle <pred-h>)
+-->
+   (<params> ^goal-condition <cond>)
+   (<cond> ^type state
+           ^handle <pred-h>
+           ^1 <obj1>)
+}
+
+sp {interpret-message*apply*interpret-conditional-predicate*conditional-goal*terminate*segment
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^current-purpose.satisfaction.dialog-event <de>)
+   (<o> ^name interpret-conditional-predicate
+        ^purpose conditional-goal)
+   (<de> ^type goal-description
+         ^originator instructor)
+-->
+   (<s> ^terminate-segment true)
 }
 
