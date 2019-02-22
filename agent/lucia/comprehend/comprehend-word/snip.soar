@@ -1,0 +1,214 @@
+##!
+# @file
+#
+# @created plindes 20160907
+# File: snip.soar
+# Author: Peter Lindes
+# Created: 7 September 2016
+#
+# Desc: This file has several versions of the snip operator.
+#
+
+
+##################  MotionOnObject(TURN) + ON   #####################
+
+#    Propose an operator to snip a MotionOnObject to allow a TurnObjectOn
+sp {comprehend-word*propose*snip*allow-turn-object-on
+   (state <s> ^problem-space comprehend-word
+              ^cxn <on>
+              ^lexical-access done)
+   (<on> ^is.a ON)
+   #    See whether what came before is a MotionOnObject
+   (<on> ^previous <motion>)
+   (<motion> ^is.a MotionOnObject)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name snip
+        ^type snip
+        ^goal allow-turn-object-on
+        ^debug-info (concat |Snip a MotionOnObject to allow a TurnObjectOn.|))
+}
+
+#    Make to the constituents of MotionOnObject
+sp {comprehend-word*apply*snip*allow-turn-object-on
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <on>)
+   (<o> ^name snip
+        ^type snip
+        ^goal allow-turn-object-on)
+   #    Get info for the snip
+   (<on> ^previous <motion>)    #   The thing to be cut
+   (<motion> ^object <object>)  #   What to cut to
+-->
+   #    THIS IS THE SNIP!!!
+   #    Change the previous pointer
+   #    This will orphan the MotionOnObject and
+   #    leave it to be garbage collected.
+   #    Instead we'll point to its constituents,
+   #    allowing that them be matched
+   (<on> ^previous <motion> -
+         ^previous <object>)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <motion> | to get to | <object> |.|))
+}
+
+
+##################  Convert a Noun to an Adjective (Property)   #####################
+
+#    Propose an operator to snip and change a Noun to a Property
+#    This should happen when a new Noun follows a word
+#    which was considered a Noun but could also be a Property.
+#    It should happen right after lexical-access.
+sp {comprehend-word*propose*snip*convert-noun-to-property
+   (state <s> ^problem-space comprehend-word
+              ^cxn <new-noun>
+              ^lexical-access done)
+   #    Look for a Noun preceded by a Noun
+   (<new-noun> ^is.a Noun
+               ^previous-lex <old-noun>)
+   (<old-noun> ^is.a Noun
+               ^alternative-lexical <alt-lex>)
+   (<alt-lex> ^is.a Property
+              ^text <adj-text>)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name snip
+        ^type snip
+        ^goal convert-noun-to-property
+        ^noun <new-noun>
+        ^remove <old-noun>
+        ^alternative <alt-lex>
+        ^debug-info (concat |Snip and replace to convert '| <adj-text> |' from a Noun to a Property.|))
+}
+
+#    Make to the constituents of MotionOnObject
+sp {comprehend-word*apply*snip*convert-noun-to-property
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name snip
+        ^type snip
+        ^goal convert-noun-to-property
+        ^noun <new-noun>
+        ^remove <old-noun>
+        ^alternative <alt-lex>)
+   #    Get info for the snip
+   (<new-noun> ^previous <whatever>         #   The thing to be cut
+               ^previous-lex <old-noun>)    #   The thing to be replaced
+-->
+   #    THIS IS THE SNIP!!!
+   #    Change the previous pointer
+   #    This will orphan higher-level stuff and
+   #    leave it to be garbage collected.
+   #    Instead we'll point to the lexical alternative.
+   (<new-noun> ^previous <whatever> -
+               ^previous <alt-lex>
+               ^previous-lex <old-noun> -
+               ^previous-lex <alt-lex>)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <whatever> | to get to | <alt-lex> |.|))
+}
+
+
+
+##################  Convert ONE-pronoun to ONE-specifier   #####################
+
+#    Propose an operator to snip and change "one" from a pronoun
+#    to a specifier.
+#    This should happen when a Noun follows "one".
+#    It should happen right after lexical-access.
+sp {comprehend-word*propose*snip*convert-one-to-specifier
+   (state <s> ^problem-space comprehend-word
+              ^cxn <new-noun>
+              ^lexical-access done)
+   #    Look for a Noun preceded by a Noun
+   (<new-noun> ^is.a << Noun UnitsName >>
+               ^previous-lex <old-noun>)
+   (<old-noun> ^is.a OnePronoun
+               ^alternative-lexical <alt-lex>)
+   (<alt-lex> ^is.a CardinalNumber
+              ^text one)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name snip
+        ^type snip
+        ^goal convert-one-to-specifier
+        ^noun <new-noun>
+        ^remove <old-noun>
+        ^alternative <alt-lex>
+        ^debug-info (concat |Snip and replace to convert 'one' from a Noun to an NPSpecifier.|))
+}
+
+#    Make to the constituents of MotionOnObject
+sp {comprehend-word*apply*snip*convert-one-to-specifier
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name snip
+        ^type snip
+        ^goal convert-one-to-specifier
+        ^noun <new-noun>
+        ^remove <old-noun>
+        ^alternative <alt-lex>)
+   #    Get info for the snip
+   (<new-noun> ^previous <whatever>         #   The thing to be cut
+               ^previous-lex <old-noun>)    #   The thing to be replaced
+-->
+   #    THIS IS THE SNIP!!!
+   #    Change the previous pointer
+   #    This will orphan higher-level stuff and
+   #    leave it to be garbage collected.
+   #    Instead we'll point to the lexical alternative.
+   (<new-noun> ^previous <whatever> -
+               ^previous <alt-lex>
+               ^previous-lex <old-noun> -
+               ^previous-lex <alt-lex>)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <whatever> | to get to | <alt-lex> |.|))
+}
+
+
+##################  Snip a SimpleAction if an Adverb follows   #####################
+
+#    Propose an operator to snip a SimpleAction to attach an Adverb
+sp {comprehend-word*propose*snip*simple-action-before-adverb
+   (state <s> ^problem-space comprehend-word
+              ^cxn <adverb>
+              ^lexical-access done)
+   (<adverb> ^is.a Adverb
+             ^m <meaning>)
+   (<meaning> ^modifier )    #   Has been looked up already
+   #    See whether what came before is a MotionOnObject
+   (<adverb> ^previous <action>)
+   (<action> ^is.a SimpleAction)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name snip
+        ^type snip
+        ^goal simple-action-before-adverb
+        ^debug-info (concat |Snip a SimpleAction to attach an Adverb.|))
+}
+
+#    Snip away the SimpleAction to get to its verb
+sp {comprehend-word*apply*snip*simple-action-before-adverb
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <adverb>)
+   (<o> ^name snip
+        ^type snip
+        ^goal simple-action-before-adverb)
+   #    Get info for the snip
+   (<adverb> ^previous <action>)    #   The thing to be cut
+   (<action> ^verb <verb>)          #   What to cut to
+-->
+   #    THIS IS THE SNIP!!!
+   #    Change the previous pointer
+   #    This will orphan the SimpleAction and
+   #    leave it to be garbage collected.
+   #    Instead we'll point to its constituent,
+   #    allowing that to be matched
+   (<adverb> ^previous <action> -
+             ^previous <verb>)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <action> | to get to | <verb> |.|))
+}
+

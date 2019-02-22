@@ -1,0 +1,61 @@
+##!
+# @file
+#
+# @created plindes 20160302
+# File: ground-this-n-that.soar
+# Author: Peter Lindes
+# Created: 2 March 2016
+#
+# Desc: Looks up a RefDesc in the context to find its referent.
+#		This version is customized for the Rosie environment.
+#
+#		The result may be a single item, a set of items,
+#		or nothing.
+#
+#	    For now we treat THIS and THAT the same
+#
+#		This version handles only diectic cases, and grounds
+#		a deictic reference to the thing pointed to in the world.
+#
+#		When this operator is applied, any other alternative
+#       lexicals will be deleted by the general selection rule.
+#
+
+#    Propose an operator to resolve deictic THIS or THAT
+sp {comprehend-word*propose*ground-this-n-that*deictic
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done
+              ^cxn <pronoun>
+             -^reference resolved)
+   (<pronoun> ^m <ref-desc>)
+   (<ref-desc> ^is.a RefDesc
+               ^givenness deictic)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name ground-this-n-that
+        ^type resolution
+        ^selected <pronoun>
+        ^meaning <ref-desc>
+        ^debug-info (concat |Find the referent for a deictic this/that RefDesc.|))
+}
+
+#   Look for objects that are pointed to
+sp {comprehend-word*apply*ground-this-n-that*deictic
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name ground-this-n-that
+        ^meaning <ref-desc>)
+   (<ref-desc> ^referent nil
+               ^givenness deictic)
+   #    Select all referents that are pointed to
+   (<ts> ^world <world>)
+   (<world> ^objects.object <object>)
+   (<object> ^predicates <predicates>)
+   (<predicates> ^indicated pointed)
+-->
+   #    Resolve the reference
+   (<ref-desc> ^referent nil -
+               ^referent <object>)
+   (<s> ^reference resolved)
+}

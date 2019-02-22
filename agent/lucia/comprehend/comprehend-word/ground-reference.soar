@@ -1,0 +1,523 @@
+##!
+# @file
+#
+# @created plindes 20160218
+# File: ground-reference.soar
+# Author: Peter Lindes
+# Created: 18 February 2016
+#
+# Desc: Looks up a RefDesc in the context to find its referent.
+#		This version is customized for the Rosie environment.
+#
+#		The result may be a single item, a set of items,
+#		or nothing.
+#
+# Details:
+#	The ground-reference operator is proposed whenever:
+#		1. lexical-access is marked as done
+#		2. match-construction is marked as done
+#		3. the current ^cxn on the state has a meaning
+#			which is a RefDesc
+#       4. the ^rosie-category of the RefDesc is not "concept"
+#           - these are handled by lookup-concept
+#       5. the ^givenness of the RefDesc is not "relative-pronoun"
+#           - these should have been resolved previously
+#	The operator retracts whenever ^reference resolved is set
+#
+#	The value of the ^category wme of the RefDesc will be
+#	a "ref-desc" having a ^rosie-category value that
+#	corresponds to category items in the Rosie ontology.
+#
+#	The *category version of *apply*ground-reference looks in
+#	the world on the top state to find any objects that have
+#	the indicated Rosie category.  All those found will be posted
+#	on the state with a ^referent wme and a ^category done flag is set.
+#	The rule fires once for each candidate found.
+#
+#	The *category-empty version of *apply*ground-reference
+#	looks for the case where no objects in the world have the
+#	indicated Rosie category.  It posts ^referent NONE on the state
+#	as well as ^category done and ^reference resolved flags.
+#	The result is that no referent will be found for this RefDesc.
+#
+#	Once a set of candidate referents has been posted by the *category
+#	rule, they must be filtered by any properties specified.  This is
+#	done by posting filters to the state and then applying them
+#
+#	The *post-name-filter, *post-shape-filter, *post-size-filter, and
+#	*post-color-filter rules create filters of these four types.
+#	Each filter has ^class and ^value attributes.
+#
+#	The *apply-filter rule may fire many times.  Each firing removes
+#	a single candidate from the set if that candidate does not comply
+#	with the requirements of a given filter.  Each firing also removes
+#	its filter from the state, which may be reduncant.
+#
+#	The *remove-filter rule removes any filter which did not apply
+#	to any candidate.
+#
+#	The *modifiers rule looks at the head property description on the 
+#	^modifiers list of the RefDesc, posts a filter for it, and replaces
+#	the head of the list with the ^next modifier.  Thus as many filters
+#	will be applied as needed to apply all the modifiers that were
+#	present in the RefExpr.
+#
+#	Finally either the *done-found or the *done-none rule will fire.
+#	For each ^referent on the state after all the filtering is done,
+#	that referent will put as a ^referent on the original RefDesc.
+#	This will happen multiple times if multiple candidates remain.
+#	If no candidates are left, the *done-none rule will put a
+#	^referent NONE wme on the RefDesc.
+#
+#	Whichever *done- rule fires will post ^reference resolved
+#	on the state, causing the operator to be retracted.
+#
+
+#    Propose an operator to resolve a reference of a RefDesc
+sp {comprehend-word*propose*ground-reference
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done	# May need to see comprehend-word-done as proposed
+              ^match-construction done
+              ^cxn <cxn>
+             -^reference resolved)
+   (<cxn> ^m <ref-desc>)
+   (<ref-desc> ^is.a RefDesc)
+   (<ref-desc> ^modifiers <modifiers>
+              -^category.rosie-category concept #   Concepts should be looked up in smem
+              -^givenness relative-pronoun	#	This should have been resolved previously
+              -^givenness deictic)          #   Ignore "this one" here
+-->
+   (<s> ^operator <o> +
+        ^modifiers <modifiers>)
+   (<o> ^name ground-reference
+        ^type resolution
+        ^meaning <ref-desc>
+        ^debug-info (concat |Find the referent for a given RefDesc.|))
+}
+
+#   Handle the case where the noun already has been grounded
+#   This will happen for KnownObjects
+sp {comprehend-word*apply*ground-reference*category*already-grounded
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   (<ref-desc> ^category <rosie-ref-desc>)
+   #    Get the category
+   (<rosie-ref-desc> ^referent { <referent> <> nil}
+                    -^givenness |one-pronoun|)
+-->
+   #    Post the referent on the state
+   (<s> ^category done
+        ^referent <referent>)
+}
+
+#   Look for objects of a given Rosie category, NOT for pronoun ONE
+sp {comprehend-word*apply*ground-reference*category*not-ONE
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   (<ref-desc> ^category <rosie-ref-desc>)
+   #    Get the category
+   (<rosie-ref-desc> ^rosie-category { <category> <> nil }
+                    -^givenness |one-pronoun|)
+   #    Select all referents of that category
+   (<ts> ^world <world>)
+   (<world> ^objects.object <object>)
+   (<object> ^predicates <predicates>)
+   #    Don't do it here if the category is spatial-shape
+   (<predicates> ^category { <category> <> spatial-shape})
+-->
+   #    Post the referent on the state
+   (<s> ^category done
+        ^referent <object>)
+}
+
+#   Look for objects of a given Rosie category, NOT for pronoun ONE
+#   A special case for spatial-shape
+sp {comprehend-word*apply*ground-reference*category*not-ONE*spatial-shape
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   (<ref-desc> ^category <rosie-ref-desc>)
+   #	Get the category
+   (<rosie-ref-desc> ^rosie-category spatial-shape
+                     ^spatial-shape <category-value>
+                    -^givenness |one-pronoun|)
+   #	Select all referents of that category
+   (<ts> ^world <world>)
+   (<world> ^objects.object <object>)
+   (<object> ^predicates <predicates>)
+   #    This will fail for <category> == spatial-shape
+   #    if the shapes are not the same.
+   (<predicates> ^category spatial-shape
+                 ^spatial-shape <category-value>)
+-->
+   #	Post the referent on the state
+   (<s> ^category done
+        ^referent <object>)
+}
+sp {comprehend-word*apply*ground-reference*category*not-ONE*spatial-shape*fails
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   (<ref-desc> ^category <rosie-ref-desc>)
+   #    Get the category
+   (<rosie-ref-desc> ^rosie-category spatial-shape
+                     ^spatial-shape <category-value>
+                    -^givenness |one-pronoun|)
+   #    Select all referents of that category
+   (<ts> ^world <world>)
+   (<world> ^objects.object <object>)
+   (<object> ^predicates <predicates>)
+   #    This will fail for <category> == spatial-shape
+   #    if the shapes are not the same.
+   (<predicates> ^category spatial-shape
+                 ^spatial-shape { <value2> <> <category-value> })
+-->
+   #    Post NONE referent on the RefDesc
+   (<ref-desc> ^referent nil -
+               ^referent NONE)
+   #    Set done flag
+   (<s> ^category done
+        ^reference resolved)
+}
+
+#   Look for objects of a given Rosie category, FOR pronoun ONE
+#   In this case the set of candidates should come from the
+#   referents already found for "one"
+sp {comprehend-word*apply*ground-reference*category*for-ONE-with-antecedent
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   (<ref-desc> ^category <rosie-ref-desc>)
+   #    Get the category
+   (<rosie-ref-desc> ^rosie-category { <category> <> nil }
+                     ^givenness |one-pronoun|)
+   #    Select all referents of the pronoun
+   (<rosie-ref-desc> ^referent { <object> <> nil })
+-->
+   #    Post the referent on the state
+   (<s> ^category done
+        ^referent <object>)
+}
+
+#   Look for objects of a given Rosie category, FOR pronoun ONE
+#   In this case the set of candidates should come from the
+#   objects in the world
+sp {comprehend-word*apply*ground-reference*category*for-ONE-no-antecedent
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   (<ref-desc> ^category <rosie-ref-desc>)
+   #    Get the category
+   (<rosie-ref-desc> ^rosie-category { <category> <> nil }
+                     ^givenness |one-pronoun|)
+   #    Detect the lack of an antecedent
+   (<rosie-ref-desc> ^referent nil)
+   #    Select all referents of that category
+   (<ts> ^world <world>)
+   (<world> ^objects.object <object>)
+   (<object> ^predicates <predicates>)
+   (<predicates> ^category <category>)
+-->
+   #    Post the referent on the state
+   (<s> ^category done
+        ^referent <object>)
+}
+
+#   There are no objects of a given Rosie category
+sp {comprehend-word*apply*ground-reference*category-empty
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   (<ref-desc> ^category <rosie-ref-desc>
+               ^referent nil)
+   #	Get the category
+   (<rosie-ref-desc> ^rosie-category { <category> <> nil })
+   #	Select all referents of that category
+   (<ts> ^world <world>)
+ -{(<world> ^objects.object <object>)
+   (<object> ^predicates <predicates>)
+   (<predicates> ^category <category>)}
+-->
+   #	Post NONE referent on the RefDesc
+   (<ref-desc> ^referent nil -
+               ^referent NONE)
+   #	Set done flag
+   (<s> ^category done
+        ^reference resolved)
+}
+
+#	Post filters from the ref-desc
+sp {comprehend-word*apply*ground-reference*post-name-filter
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   (<ref-desc> ^category <rosie-ref-desc>)
+   #	Get the name
+   (<rosie-ref-desc> ^name { <name> <> nil })
+-->
+   #	Post a name filter
+   (<s> ^filter <filter>)
+   (<filter> ^class name
+             ^value <name>)
+}
+
+sp {comprehend-word*apply*ground-reference*post-shape-filter
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   (<ref-desc> ^category <rosie-ref-desc>)
+   #	Get the shape
+   (<rosie-ref-desc> ^shape { <shape> <> nil })
+-->
+   #	Post a shape filter
+   (<s> ^filter <filter>)
+   (<filter> ^class shape
+             ^value <shape>)
+}
+
+sp {comprehend-word*apply*ground-reference*post-size-filter
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   (<ref-desc> ^category <rosie-ref-desc>)
+   #	Get the size
+   (<rosie-ref-desc> ^size { <size> <> nil })
+-->
+   #	Post a size filter
+   (<s> ^filter <filter>)
+   (<filter> ^class size
+             ^value <size>)
+}
+
+sp {comprehend-word*apply*ground-reference*post-color-filter
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   (<ref-desc> ^category <rosie-ref-desc>)
+   #	Get the color
+   (<rosie-ref-desc> ^color { <color> <> nil })
+-->
+   #	Post a color filter
+   (<s> ^filter <filter>)
+   (<filter> ^class color
+             ^value <color>)
+}
+
+#	Apply any filter that has been posted
+sp {comprehend-word*apply*ground-reference*apply-filter
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^filter <filter>
+              ^referent <object>)
+   (<o> ^name ground-reference)
+   (<filter> ^class <class>
+             ^value <value>)
+   #	Remove a referent that doesn't pass the filter
+   (<object> ^predicates <predicates>)
+   (<predicates> -^<class> <value>)
+-->
+   #	Delete the referent from the state
+   (<s> ^referent <object> -)
+}
+
+#	Remove a posted filter whether it applied or not 
+sp {comprehend-word*apply*ground-reference*remove-filter
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^filter <filter>)
+   (<o> ^name ground-reference)
+   (<filter> ^class <class>
+             ^value <value>)
+-->
+   #	Delete this filter
+   (<s> ^filter <filter> -)
+}
+
+#   Apply any modifiers
+sp {comprehend-word*apply*ground-reference*modifiers
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^category done
+              ^modifiers { <modifier> <> nil })
+   (<o> ^name ground-reference)
+   #	Get the details of this modifier
+   (<modifier> ^class <class>
+               ^name <name>
+               ^next <next>)
+-->
+   #	Post a new filter
+   (<s> ^filter <filter>)
+   (<filter> ^class <class>
+             ^value <name>)
+   #	Get the next modifier
+   (<s> ^modifiers <modifier> -
+        ^modifiers <next>)
+}
+
+#   Apply any modifiers that have been added AFTER a noun
+#	This applies for relative property clauses
+sp {comprehend-word*apply*ground-reference*modifiers-after*property
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+             -^category done
+              ^modifiers { <modifier> <> nil })
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   #	Get the details of this modifier
+   (<modifier> ^is.a PropertyDescriptor
+               ^class <class>
+               ^name <name>
+               ^predicate <predicate>
+               ^next <next>)
+   #	Get the existing referents on the state
+   (<ref-desc> ^referent { <referent> <> nil })
+-->
+   #	Put the existing referents on the state
+   (<s> ^referent <referent>)
+   #	Post a new filter
+   (<s> ^filter <filter>)
+   (<filter> ^class <class>
+             ^value <name>)
+   #	Get the next modifier
+   (<s> ^modifiers <modifier> -
+        ^modifiers <next>)
+}
+
+#	This applies for relative prep phrase clauses
+sp {comprehend-word*apply*ground-reference*modifiers-after*prep-phrase
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+#             -^category done
+              ^modifiers nil
+              ^cxn <rel-clause>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   #	Look for something like a relative clause
+   (<ref-desc> ^category nil
+               ^givenness nil
+               ^modifiers nil
+)#               ^relation nil)
+   #	Get the details of this prep phrase
+   (<rel-clause> ^head <head>
+                 ^prepPhrase <phrase>)
+   (<phrase> ^m <relation>)
+   #	Get the existing referents on the state
+   (<ref-desc> ^referent <referent>)
+-->
+   #	Put the existing referents on the state
+   (<s> ^referent <referent>)
+#   #	Add a relation
+#   (<ref-desc> ^relation nil -
+#               ^relation <relation>)
+#   #	Post a new filter
+#   (<s> ^filter <filter>)
+#   (<filter> ^class <class>
+#             ^value <name>)
+}
+
+#	Finish resolution - found at least one
+sp {comprehend-word*apply*ground-reference*done-found
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^referent <referent>
+              ^modifiers nil    #    All modifiers have been applied
+             -^filter <filter>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   #	Ignoring givenness for now
+   (<ref-desc> ^referent <old-ref>)
+-->
+   #	Post the referent on the RefDesc
+   (<ref-desc> ^referent <old-ref> -
+               ^referent <referent>)
+   #	Set done flag and remove the referent from the state
+   (<s> ^reference resolved
+        ^referent <referent> -)
+}
+
+#	Finish resolution - found none
+sp {comprehend-word*apply*ground-reference*done-none
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^category done
+              ^modifiers nil    #    All modifiers have been applied
+             -^referent <referent>	#	No referents on the state
+             -^filter <filter>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   #	Ignoring givenness for now
+   (<ref-desc> ^referent nil)	#	No referents on the RefDesc
+   #    Avoid the special case for "one"
+  -(<ref-desc> ^category.givenness one-pronoun)
+-->
+   #	Post the referent on the RefDesc
+   (<ref-desc> ^referent nil -
+               ^referent NONE)
+   #	Set done flag
+   (<s> ^reference resolved)
+}
+
+#   Finish resolution - found none, special case for "one"
+#   THIS VERSION ONLY WORKS FOR A SINGLE MODIFIER!!!
+sp {comprehend-word*apply*ground-reference*done-none*one
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^category done
+              ^modifiers nil    #    All modifiers have been applied
+             -^referent <referent>  #   No referents on the state
+             -^filter <filter>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   #    Ignoring givenness for now
+   (<ref-desc> ^referent nil   #   No referents on the RefDesc
+               ^modifiers <modifiers>)
+   #    Handle the special case for "one"
+  (<ref-desc> ^category <rosie-ref-desc>)
+  (<rosie-ref-desc> ^givenness one-pronoun
+                    ^<attr> nil)
+  (<modifiers> ^class <attr>
+               ^name <value>)
+-->
+   #    Add the modifier predicate
+   (<rosie-ref-desc> ^<attr> nil -
+                     ^<attr> <value>)
+   #    Post the referent on the RefDesc
+   (<ref-desc> ^referent nil -
+               ^referent NONE)
+   #    Set done flag
+   (<s> ^reference resolved)
+}
+
+#	Finish resolution - some were already there
+sp {comprehend-word*apply*ground-reference*done-already-there
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^modifiers nil    #    All modifiers have been applied
+             -^referent <referent>	#	No referents on the state
+             -^filter <filter>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   #	Ignoring givenness for now
+   (<ref-desc> ^referent { <referent> <> nil })	#	Some referents on the RefDesc
+-->
+   #	Set done flag, leave referents there
+   (<s> ^reference resolved)
+}

@@ -1,0 +1,231 @@
+##!
+# @file
+#
+# @created plindes 20150610
+# File: comprehend-word-done.soar
+# Author: Peter Lindes
+# Created: 10 June 2015
+#
+# Desc: This operator is proposed when lexical access is done,
+#       but it is given a worst preference.
+#       Thus it will not be selected until after all other
+#       operators needed in the comprehend-word state
+#       have completed.
+#
+
+#    Propose an operator to finish up the processing of a word
+sp {comprehend-word*propose*comprehend-word-done
+   (state <s> ^top-state <ts>
+              ^problem-space comprehend-word
+              ^lexical-access done
+              ^input <i>)
+   (<i> ^comprehended false
+        ^word.word <text>)
+-->
+   (<s> ^operator <o> + <)
+   (<o> ^name comprehend-word-done
+        ^debug-info (concat |Finished processing word '| <text> |'.| ))
+}
+
+#  Promote all our constructions to the higher level.
+sp {comprehend-word*apply*comprehend-word-done*build-cxn-set
+   (state <s> ^superstate <ss>
+              ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn-set <c-set>)
+   (<o> ^name comprehend-word-done)
+   #	Get the higher-level construction set and a cxn here
+   (<ss> ^comprehension <c>)
+   (<c> ^cxn-set <ss-c-set>)
+   (<c-set> ^cxn <cxn>)
+-->
+   #    Promote the constructions to the higher-level set
+   (<ss-c-set> ^cxn <cxn>)
+}
+
+#   Report the word to the higher states
+#   This handles everything needed for the word
+#   that is at the base of every comprehend-word cycle.
+#   These two apply rules could probably be combined,
+#   but that would make them much harder to read.
+sp {comprehend-word*apply*comprehend-word-done*word
+   (state <s> ^superstate <ss>
+              ^problem-space comprehend-word
+              ^operator <o>
+              ^input <i>
+              ^cxn <cxn>
+              ^lexical <lex>)
+   (<o> ^name comprehend-word-done)
+   (<i> ^word <word>
+        ^comprehended false)
+   (<ss> ^comprehension <c>)
+   (<c> ^word-stack <previous-word>
+        ^lex-stack <previous-lex>)
+  -(<word> ^previous )
+-->
+   #   Put the word on the word stack
+   (<word> ^previous <previous-word>)
+   (<c> ^word-stack <previous-word> -
+        ^word-stack <word>)
+   #   Put the lexical on the lex-stack
+   (<c> ^lex-stack <previous-lex> -
+        ^lex-stack <lex>)
+   #   Mark the word as comprehended
+   (<i> ^comprehended false -
+        ^comprehended true)
+}
+
+#   Report a new cxn to the higher states
+#   This handles whatever construction was finally built
+#   by this comprehend-word cycle, unless that construction
+#   was used to fill a slot in a previous one.
+#   These two apply rules could probably be combined,
+#   but that would make them much harder to read.
+sp {comprehend-word*apply*comprehend-word-done*new-top-cxn
+   (state <s> ^superstate <ss>
+              ^problem-space comprehend-word
+              ^operator <o>
+              ^input <i>
+              ^cxn <cxn>)
+   (<o> ^name comprehend-word-done)
+   (<i> ^word <word>
+        ^comprehended false
+        false)
+   (<ss> ^comprehension <c>)
+   (<c> ^cxn-stack <previous-cxn>)
+   #    Make sure this is not a slot filler
+   (<cxn> -^filled )
+-->
+   #   Put the construction on the cxn-stack
+   (<c> ^cxn-stack <previous-cxn> -
+        ^cxn-stack <cxn>)
+}
+sp {comprehend-word*apply*comprehend-word-done*new-top-filled-cxn
+   (state <s> ^superstate <ss>
+              ^problem-space comprehend-word
+              ^operator <o>
+              ^input <i>
+              ^cxn <cxn>)
+   (<o> ^name comprehend-word-done)
+   (<i> ^word <word>
+        ^comprehended false
+        false)
+   (<ss> ^comprehension <c>)
+   (<c> ^cxn-stack <previous-cxn>)
+   #    Handle one that is a slot filler
+   (<cxn> ^filled <empty-slot>)
+   (<empty-slot> ^cxn <filled-cxn>)
+-->
+   #   Put the construction on the cxn-stack
+   (<c> ^cxn-stack <previous-cxn> -
+        ^cxn-stack <filled-cxn>)
+}
+
+#	Move an empty slot up to the comprehension structure
+sp {comprehend-word*apply*comprehend-word-done*promote-empty-slot
+   (state <s> ^superstate <ss>
+              ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <cxn>)
+   (<o> ^name comprehend-word-done)
+   (<cxn> ^empty-slot <empty>)
+   (<ss> ^comprehension <c>)
+-->
+   #   Put the empty slot up to the comprehension structure
+   (<c> ^empty-slot <empty>)
+   #   Let it know what construction the slot is on
+   (<empty> ^cxn <cxn>)
+   #   Remove it from the construction
+   (<cxn> ^empty-slot <empty> -)
+}
+
+#	Delete an empty slot from before when it has been filled
+sp {comprehend-word*apply*comprehend-word-done*delete-empty-slot
+   (state <s> ^superstate <ss>
+              ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <cxn>)
+   (<o> ^name comprehend-word-done)
+   (<ss> ^comprehension <c>)
+   (<c> ^empty-slot <empty>)
+   (<empty> ^filled <cxn>)
+-->
+   #   Remove it from the comprehension
+   (<c> ^empty-slot <empty> -)
+}
+
+#   Request the next word - not at the end of a segment
+#   THIS IS NOT USED IN ROSIE
+sp {comprehend-word*apply*comprehend-word-done*request-word*not-at-end
+   (state <s> ^top-state <ts>
+              ^problem-space comprehend-word
+              ^cxn <cxn>
+              ^input.word <word>
+              ^operator <o>)
+   (<o> ^name comprehend-word-done)
+   (<ts> ^io.output-link <output>
+         ^next-word <next-word>)
+   (<output> ^request-word complete)
+   #    Don't do it if this is the end of a segment
+  -(<cxn> ^cxn-name ROOT)
+  -(<word> ^has-terminator true)
+-->
+   (<output> ^request-word complete -
+             ^request-word <next-word>)
+}
+
+#   Request the next word - at the end of a segment
+#   THIS IS NOT USED IN ROSIE
+sp {comprehend-word*apply*comprehend-word-done*request-word*at-end
+   (state <s> ^top-state <ts>
+              ^problem-space comprehend-word
+              ^cxn <cxn>
+              ^input.word <word>
+              ^operator <o>)
+   (<o> ^name comprehend-word-done)
+   (<ts> ^io.output-link <output>
+         ^next-word <next-word>)
+   (<output> ^request-word complete)
+   #    Do it if this is the end of a segment
+   (<cxn> ^cxn-name ROOT)
+   (<word> ^has-terminator true)
+-->
+   (<output> ^request-word complete -
+             ^request-word <next-word>)
+}
+
+#  Report that the comprehension is complete
+#  if a ROOT was parsed.
+#  This could be made more general.
+sp {comprehend-word*apply*comprehend-word-done*ROOT-found
+   (state <s> ^superstate <ss>
+              ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <cxn>
+              ^cxn-set <c-set>)
+   (<o> ^name comprehend-word-done)
+   (<cxn> ^cxn-name ROOT)
+   (<ss> ^comprehension <c>)
+-->
+   #    Promote the construction set and set the done flag
+   (<c> ^cxn-set <c-set>
+        ^done true)
+}
+
+#  Report that the comprehension is complete
+#  if the last word has a terminator.
+sp {comprehend-word*apply*comprehend-word-done*terminator-found
+   (state <s> ^superstate <ss>
+              ^problem-space comprehend-word
+              ^operator <o>
+              ^input <i>
+              ^cxn-set <c-set>)
+   (<o> ^name comprehend-word-done)
+   (<i> ^word <word>)
+   (<word> ^has-terminator true)
+   (<ss> ^comprehension <c>)
+-->
+   #    Promote the construction set and set the done flag
+   (<c> ^cxn-set <c-set>
+        ^done true)
+}

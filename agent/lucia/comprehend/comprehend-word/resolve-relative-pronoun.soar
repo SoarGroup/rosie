@@ -1,0 +1,67 @@
+##!
+# @file
+#
+# @created plindes 20160302
+# File: resolve-relative-pronoun.soar
+# Author: Peter Lindes
+# Created: 15 April 2016 from what is now ground-relative-pronoun.soar
+#
+# Desc: Looks for the RefDesc a relative pronoun is attached to,
+#		and copies over its category and referents to this one.
+#
+#		The result may be a single item, a set of items,
+#		or nothing.
+#
+#	    For now we treat THIS and THAT the same
+#
+#		This version handles relative-pronoun cases.
+#		The relative-pronoun version will only be proposed if that
+#		pronoun has already been attached to something.
+#
+
+#    Propose an operator to resolve relative THAT
+sp {comprehend-word*propose*resolve-relative-pronoun*relative
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done	# May need to see comprehend-word-done as proposed
+#              ^match-construction done
+              ^cxn <cxn>
+             -^reference resolved)
+   (<cxn> ^m <ref-desc>)
+   (<ref-desc> ^is.a RefDesc
+               ^referent nil
+               ^givenness relative-pronoun)
+   #	Make sure the pronoun has been attached to something
+   (<cxn> ^attached-to <ref-expr>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name resolve-relative-pronoun
+        ^type resolution
+        ^meaning <ref-desc>
+        ^debug-info (concat |Find the referent for a relative-pronoun this/that RefDesc.|))
+}
+
+#   Look for objects that are pointed to
+sp {comprehend-word*apply*resolve-relative-pronoun*relative
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <relative-pronoun>)
+   (<o> ^name resolve-relative-pronoun
+        ^meaning <ref-desc>)
+   (<ref-desc> ^category nil
+               ^givenness relative-pronoun
+               ^referent nil)
+   #    Find the recent RefDesc
+   (<relative-pronoun> ^attached-to <ref-expr>)
+   (<ref-expr> ^is.a RefExpr
+               ^m <ref-desc2>)
+   #	Get important info from that RefDesc
+   (<ref-desc2> ^category <category>
+                ^referent { <referent> <> nil })
+-->
+   #    Resolve the reference by copying over the referent
+   (<ref-desc> ^category nil -
+               ^category <category>
+               ^referent nil -
+               ^referent <referent>)
+   (<s> ^reference resolved)
+}
