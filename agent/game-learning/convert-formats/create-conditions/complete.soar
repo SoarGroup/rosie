@@ -1,0 +1,167 @@
+sp {create-condition*apply*complete
+   (state <s> ^name create-condition
+             -^relation
+             -^action
+   		  	  ^clause <c>
+              ^condition <co>
+			  ^operator <o>)
+   (<o> ^name complete)
+-->
+   (<c> ^formatted <co>)
+}
+
+sp {create-condition*apply*complete*nlp
+   (state <s> ^name create-condition
+             -^action
+              ^condition <co>
+              ^create-nlp true
+              ^superstate <ss>
+			  ^operator <o>)
+   (<o> ^name complete)
+-->
+   (<ss> ^nlp <co>) 
+}
+
+sp {create-condition*apply*complete*unary-attribute
+   (state <s> ^name create-condition
+			  ^unary-attribute <att>
+			  ^condition-name <val>
+			  #^condition-handle <val>
+   		  	  ^clause <c>
+			  ^superstate <ss>
+			  ^operator <o>)
+   (<o> ^name complete)
+   (<ss> ^parameter <c>)
+-->
+   (<c> ^formatted-attribute <val>)
+}
+sp {create-condition*apply*complete*update-object-count
+   (state <s> ^name create-condition
+             -^action
+              ^increment-obj-count true
+   		  	  ^object-count <oc>
+          	  ^clause <c>
+			  ^superstate <ss>
+			  ^operator <o>)
+   (<o> ^name complete)
+   (<ss> ^object-count <oc>)
+  #-{(<s> ^relation <r>)
+  #  (<c> ^equal-to.modifier.handle negation)}
+-->
+   (<c> ^parameter-index <oc>)
+   (<ss> ^object-count <oc> -)
+   (<ss> ^object-count (+ <oc> 1))
+}
+sp {create-condition*apply*complete*parameter
+   (state <s> ^name create-condition
+              ^relation <c>
+              ^clause <cc>
+             -^action
+              ^condition <co>
+			  ^superstate <ss>
+			  ^operator <o>)
+   (<o> ^name complete)
+  #-{(<cc> ^equal-to.modifier.handle negation)}
+-->
+   (<c> ^formatted <co>)
+   (<cc> ^formatted <co>)
+}
+sp {create-condition*apply*complete*in-set*formatted
+  (state <s> ^name create-condition
+              ^relation <c>
+             -^superstate.superstate.world.predicates.predicate.handle in1
+			  ^superstate <ss>
+			  #^param1 <pi>
+			  ^condition <co>
+			  ^operator <o>)
+   (<o> ^name complete)
+   (<c> ^2 <c2> ^handle in1)
+-->
+   (<c2> ^formatted <co>)
+}
+##check efficiency change
+sp {create-condition*apply*complete*update*parameter*formatted
+   (state <s> ^name create-condition
+             -^action
+              ^condition <co>
+			  ^superstate <ss>
+			  ^operator <o>)
+   (<o> ^name complete)
+   (<ss> ^parameter <p>) 
+   (<p> ^parameter-index <pi>)
+   (<co> ^parameter.{1}.param-id <pi>)
+-->
+   (<p> ^formatted <co>)
+}
+#new efficiency second arguments, add to early abort create-condition
+sp {create-condition*apply*complete*update*parameter2*formatted
+   (state <s> ^name create-condition
+             -^action
+              ^condition <co>
+              ^superstate <ss>
+              ^operator <o>)
+   (<o> ^name complete)
+   (<ss> ^parameter <p>)
+   (<p> ^parameter-index <pi>)
+   (<co> ^parameter.{2} <p2>)
+   (<p2> ^param-id <pi> ^type <rtype>)
+-->
+   (<p> ^formatted <co2>)
+   (<co2> ^args <a> ^attribute 2 ^name argument ^negative false ^parameter <para1> ^result <r> ^rtype <rtype>)
+   (<a> ^1 <co>)
+   (<r> ^set <rs>)
+   (<para1> ^1 <p11>) 
+   (<p11> ^param-id <pi> ^type <rtype>)
+}
+sp {create-condition*apply*complete*update*parameter3*formatted
+   (state <s> ^name create-condition
+             -^action
+              ^condition <co>
+              ^superstate <ss>
+              ^operator <o>)
+   (<o> ^name complete)
+   (<ss> ^parameter <p>)#or condition?
+   (<p> ^parameter-index <pi>)
+   (<co> ^parameter.{3} <p2>)
+   (<p2> ^param-id <pi> ^type <rtype>)
+-->
+   (<p> ^formatted <co2>)
+   (<co2> ^args <a> ^attribute 3 ^name argument ^negative false ^parameter <para1> ^result <r> ^rtype <rtype>)
+   (<a> ^1 <co>)
+   (<r> ^set <rs>)
+   (<para1> ^1 <p11>) #redundant?
+   (<p11> ^param-id <pi> ^type <rtype>)
+}
+
+
+#defult "chunk" for passing
+sp {prechunk*argument*condition*elaborate*results*instance
+:chunk
+    (state <s> ^list <l1> ^{ <a1> << action goal predicate failure heuristic >> } <a2>)
+    (<l1> ^game <g1>)
+    (<a2> ^condition <c1>)
+    (<c1> ^args <a3> ^attribute <n> ^result <r3> ^name argument ^negative false)
+    (<r3> ^set <s4>)
+    (<a3> ^num 1 ^1 <i1>)
+    (<i1> ^result <r2>)
+    (<r2> ^set <s3>)
+    (<s3> ^instance <i5>)
+    (<i5> ^<n> <i6>)
+  -{(<s3> ^instance {<i8> > <i5>})
+    (<i8> ^<n> <i6>)} #bias only create one per object
+-->
+    (<s4> ^instance <i7>)
+    (<i7> ^1 <i6>)
+}
+
+### debug
+sp {create-condition*apply*complete*debug*print
+   (state <s> ^name create-conditionX
+              ^condition <co>
+			  ^superstate <ss>
+			  ^operator <o>)
+   (<o> ^name complete)
+-->
+(write (cmd print <co>))
+(write (cmd pref <ss> condition -w))
+}

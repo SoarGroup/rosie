@@ -1,0 +1,574 @@
+sp {retrieve-all-versions*elaborate*handle-spelling
+   (state <s> ^name retrieve-all-versions
+              ^superstate.operator <so>)
+   (<so> ^handle <handle>)
+-->	
+   (<s> ^handle-spelling <handle> ^version <v>)
+   (<v> ^handle-spelling <handle>)
+}
+sp {retrieve-all-versions*elaborate*smem-query
+   (state <s> ^name retrieve-all-versions
+              ^smem.command <c>
+			  -^multiple true #TODO add
+			  ^handle-spelling <handle>)
+-->	
+   (<c> ^query <cue>
+        ^neg-query <ncue>
+        ^depth 5)
+   (<cue> ^handle <x> ^handle-spelling <handle>) #first try learned concepts
+   (<ncue> ^multiple true)
+}
+sp {retrieve-all-versions*elaborate*smem-query*failure
+:o-support
+   (state <s> ^name retrieve-all-versions
+              ^smem.result.failure <rr>)
+-->
+   (<s> ^no-learned-versions true)
+}
+sp {retrieve-all-versions*elaborate*smem-query*first-retrieved
+:o-support
+   (state <s> ^name retrieve-all-versions             
+              ^smem.result.retrieved <rr>)
+   (<rr> ^handle <cn>)
+-->
+   (<s> ^retrieved <rr> ^first-retrieved <rr>)
+}
+sp {retrieve-all-versions*propose*complete
+   (state <s> ^name retrieve-all-versions
+   		  	  ^completed-all-defaults true
+			 -^synonym-version
+             -^antonym-version
+			  #^completed-all-synonyms true
+   		  	  ^first-retrieved <rr>)
+-->
+   (<s> ^operator <o> + <)
+   (<o> ^name complete)
+}
+sp {retrieve-all-versions*propose*complete*learned
+   (state <s> ^name retrieve-all-versions
+   		  	  ^completed-all-learned true
+			 -^synonym-version
+             -^antonym-version
+   		  	  ^first-retrieved <rr>)
+-->
+   (<s> ^operator <o> + <)
+   (<o> ^name complete)
+}
+sp {retrieve-all-versions*propose*complete*synonym
+   (state <s> ^name retrieve-all-versions
+              -^antonym-version
+   		  	  ^first-retrieved <rr>)
+-{(state <s>)
+  (<s> ^synonym-version <sv>)
+  (<s> -^completed-synonym <sv>)}
+-{(state <s>)
+  (<s> -^synonym-version <sv2>)}
+-->
+   (<s> ^operator <o> + <)
+   (<o> ^name complete)
+}
+sp {retrieve-all-versions*propose*complete*antonym
+   (state <s> ^name retrieve-all-versions
+              -^synonym-version
+   		  	  ^first-retrieved <rr>)
+-{(state <s>)
+  (<s> ^antonym-version <sv>)
+  (<s> -^completed-antonym <sv>)}
+-{(state <s>)
+  (<s> -^antonym-version <sv2>)}
+-->
+   (<s> ^operator <o> + <)
+   (<o> ^name complete)
+}
+sp {retrieve-all-versions*propose*complete*antonym*synonym
+   (state <s> ^name retrieve-all-versions
+   		  	  ^first-retrieved <rr>)
+-{(state <s>)
+  (<s> ^antonym-version <sv>)
+  (<s> -^completed-antonym <sv>)}
+-{(state <s>)
+  (<s> -^antonym-version <sv2>)}
+-{(state <s>)
+  (<s> ^synonym-version <sv>)
+  (<s> -^completed-synonym <sv>)}
+-{(state <s>)
+  (<s> -^synonym-version <sv2>)}
+-->
+   (<s> ^operator <o> + <)
+   (<o> ^name complete)
+}
+sp {retrieve-all-versions*apply*complete*flag
+   (state <s> ^name retrieve-all-versions
+   		  	  ^operator <o>)
+   (<o> ^name complete)
+-->
+  (<s> ^complete-flag true)
+}
+sp {retrieve-all-versions*apply*complete
+   (state <s> ^name retrieve-all-versions
+   		  	  ^retrieved <rr>
+			  ^version <v>
+			  ^no-learned-versions true #TODO hack change
+   		  	  ^operator <o>)
+   (<o> ^name complete)
+-->
+  (<v> ^item <i>)
+  (<i> ^source primitive ^smem-result <rr>)
+}
+sp {retrieve-all-versions*apply*complete*synonym
+   (state <s> ^name retrieve-all-versions
+   		  	  ^synonym-retrieved <rr>
+			  ^version <v>
+			  ^no-learned-versions true #TODO hack change
+   		  	  ^operator <o>)
+   (<o> ^name complete)
+-->
+  (<v> ^item <i>)
+  (<i> ^source primitive ^auto synonym ^smem-result <rr>)
+}
+sp {retrieve-all-versions*apply*complete*antonym
+   (state <s> ^name retrieve-all-versions
+   		  	  ^antonym-retrieved <rr>
+			  ^version <v>
+			  ^no-learned-versions true #TODO hack change
+   		  	  ^operator <o>)
+   (<o> ^name complete)
+-->
+  (<v> ^item <i>)
+  (<i> ^source primitive ^auto antonym ^smem-result <rr>)
+}
+
+sp {retrieve-all-versions*apply*complete*learned
+   (state <s> ^name retrieve-all-versions
+   		  	  ^retrieved <rr>
+			  ^version <v>
+			  -^no-learned-versions #TODO hack change
+   		  	  ^operator <o>)
+   (<o> ^name complete)
+-->
+  (<v> ^item <i>)
+  (<i> ^source learned ^smem-result <rr>)
+  #todo differentiate between this game and other games
+  #TODO do process recursivly to expanded concept children? in terms of looking up all
+}
+
+sp {retrieve-all-versions*apply*complete*structure-type
+   (state <s> ^name retrieve-all-versions
+			  ^version <v>
+     		  ^superstate.structure-type <n>
+   		  	  ^operator <o>)
+   (<o> ^name complete)
+-->
+  (<v> ^structure-type <n>)
+}
+
+sp {retrieve-all-versions*apply*complete*learned*synonym
+   (state <s> ^name retrieve-all-versions
+   		  	  ^synonym-retrieved <rr>
+			  ^version <v>
+			  -^no-learned-versions #TODO hack change
+   		  	  ^operator <o>)
+   (<o> ^name complete)
+-->
+  (<v> ^item <i>)
+  (<i> ^source learned ^auto synonym ^smem-result <rr>)
+}
+sp {retrieve-all-versions*apply*complete*learned*antonym
+   (state <s> ^name retrieve-all-versions
+   		  	  ^antonym-retrieved <rr>
+			  ^version <v>
+			  -^no-learned-versions #TODO hack change
+   		  	  ^operator <o>)
+   (<o> ^name complete)
+-->
+  (<v> ^item <i>)
+  (<i> ^source learned ^auto antonym ^smem-result <rr>)
+}
+sp {retrieve-all-versions*apply*complete*version
+   (state <s> ^name retrieve-all-versions
+   		  	  ^complete-flag true
+			  ^version <v>
+			  ^superstate.superstate.superstate.version-list <vl> #learn-predicate
+   		  	  ^operator <o>)
+   (<o> ^name complete)
+-->
+   (<vl> ^version <v>)
+}
+sp {retrieve-all-versions*apply*complete*initial-result
+   (state <s> ^name retrieve-all-versions
+   		  	  ^complete-flag true
+			  ^version <v>
+			  ^first-retrieved <fv>
+			  ^superstate <ss> #create-condition
+   		  	  ^operator <o>)
+   (<o> ^name complete)
+-->
+   (<ss> ^smem-result <fv>)
+}
+###############################################################
+#todo remove no-learned-versions, want to try primitives even if learn new (like for between ro right)
+#what dont want is empty primitives...
+sp {retrieve-all-versions*propose*retrieve-default-version
+:o-support
+   (state <s> ^name retrieve-all-versions
+   		  	  ^no-learned-versions true #want? need to handle primitive overwrites, but not empty prestored			 
+		 	 -^completed-all-defaults
+			  ^handle-spelling <handle>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name retrieve-default-version
+        ^handle <handle>)
+}
+sp {retrieve-all-versions*propose*retrieve-default-version*next
+:o-support
+   (state <s> ^name retrieve-all-versions
+   		  	  ^no-learned-versions true
+		 	 -^completed-all-defaults
+			  ^retrieved <rr>
+			  ^handle-spelling <handle>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name retrieve-default-version
+   		^just-tried <rr>
+        ^handle <handle>)
+}
+sp {retrieve-all-versions*retract*retrieve-default-version
+   (state <s> ^name retrieve-all-versions
+   		  	 #-^completed-all-defaults
+   		  	  ^operator <o>) 
+   (<o> ^name retrieve-default-version
+   		^completed true)
+-->
+   (<s> ^operator <o> -)
+}
+sp {retrieve-all-versions*prefer*retrieve-default-version*retrieve-synonym-version
+   (state <s> ^name retrieve-all-versions
+   		  	  ^operator <o1> +
+			  ^operator <o2> +) 
+   (<o1> ^name retrieve-default-version)
+   (<o2> ^name retrieve-synonym-version)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+sp {retrieve-all-versions*prefer*retrieve-default-version*retrieve-antonym-version
+   (state <s> ^name retrieve-all-versions
+   		  	  ^operator <o1> +
+			  ^operator <o2> +) 
+   (<o1> ^name retrieve-default-version)
+   (<o2> ^name retrieve-antonym-version)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+sp {retrieve-all-versions*prefer*retrieve-synonym-version*retrieve-antonym-version
+   (state <s> ^name retrieve-all-versions
+   		  	  ^operator <o1> +
+			  ^operator <o2> +) 
+   (<o1> ^name retrieve-synonym-version)
+   (<o2> ^name retrieve-antonym-version)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+###
+sp {retrieve-all-versions*propose*retrieve-learned-version
+:o-support
+   (state <s> ^name retrieve-all-versions
+   		  	 -^no-learned-versions true 
+		 	 -^completed-all-learned
+			 -^completed-all-defaults #TODO remove? for doing mix of primitive and learned
+			  ^retrieved <rr>
+			  ^handle-spelling <handle>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name retrieve-learned-version
+   		^just-tried <rr>
+        ^handle <handle>)
+}
+sp {retrieve-all-versions*retract*retrieve-learned-version
+:o-support
+   (state <s> ^name retrieve-all-versions
+   		  	 #-^completed-all-learned true
+   		  	  ^operator <o>) 
+   (<o> ^name retrieve-learned-version
+   		^completed true)
+-->
+   (<s> ^operator <o> -)
+}
+##
+
+sp {retrieve-all-versions*elaborate*synonym-table
+   (state <s> ^name retrieve-all-versions
+   		  	  ^superstate.superstate.superstate.synonym-table <st>)
+-->
+   (<s> ^synonym-table <st>)
+}
+sp {retrieve-all-versions*elaborate*synonym-table*synonym-version
+   (state <s> ^name retrieve-all-versions
+   		  	  ^handle-spelling <handle>
+   		  	  ^superstate.superstate.superstate.synonym-table.pairs <pp>)
+   (<pp> ^word <handle> ^word {<w2> <> <handle>})
+-->
+   (<s> ^synonym-version <w2>)
+}
+sp {retrieve-all-versions*elaborate*antonym-table
+   (state <s> ^name retrieve-all-versions
+   		  	  ^superstate.superstate.superstate.antonym-table <st>)
+-->
+   (<s> ^antonym-table <st>)
+}
+sp {retrieve-all-versions*elaborate*antonym-table*antonym-version
+   (state <s> ^name retrieve-all-versions
+   		  	  ^handle-spelling <handle>
+   		  	  ^superstate.superstate.superstate.antonym-table.pair <pp>)
+   (<pp> ^word <handle> ^word {<w2> <> <handle>})
+-->
+   (<s> ^antonym-version <w2>)
+}
+
+###qq
+sp {retrieve-all-versions*propose*retrieve-synonym-version*first
+:o-support
+   (state <s> ^name retrieve-all-versions
+   		  	 -^no-learned-versions true 
+		 	  ^completed-all-learned true
+			 -^completed-synonym <w2>
+			 ^synonym-version <w2>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name retrieve-synonym-version
+        ^handle <w2>)
+}
+sp {retrieve-all-versions*propose*retrieve-synonym-version*default*first
+:o-support
+   (state <s> ^name retrieve-all-versions
+   		  	  ^no-learned-versions true
+			  ^completed-all-defaults true
+              -^completed-synonym <w2>
+			  ^synonym-version <w2>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name retrieve-synonym-version
+        ^handle <w2>)
+}
+sp {retrieve-all-versions*propose*retrieve-synonym-version*next
+:o-support
+   (state <s> ^name retrieve-all-versions
+			 -^completed-synonym <w2>
+			  ^synonym-retrieved <rr>
+			  ^synonym-version <w2>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name retrieve-synonym-version
+   		^just-tried <rr>
+        ^handle <w2>)
+}
+sp {retrieve-all-versions*retract*retrieve-synonym-version
+:o-support
+   (state <s> ^name retrieve-all-versions
+   		  	  ^operator <o>) 
+   (<o> ^name retrieve-synonym-version
+   		^completed true)
+-->
+  (<s> ^operator <o> -)
+}
+#qq ant
+sp {retrieve-all-versions*propose*retrieve-antonym-version*first
+:o-support
+   (state <s> ^name retrieve-all-versions
+   		  	 -^no-learned-versions true 
+		 	  ^completed-all-learned true
+			 -^completed-antonym <w2>
+			 ^antonym-version <w2>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name retrieve-antonym-version
+        ^handle <w2>)
+}
+sp {retrieve-all-versions*propose*retrieve-antonym-version*default*first
+:o-support
+   (state <s> ^name retrieve-all-versions
+   		  	  ^no-learned-versions true
+			  ^completed-all-defaults true
+              -^completed-antonym <w2>
+			  ^antonym-version <w2>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name retrieve-antonym-version
+        ^handle <w2>)
+}
+sp {retrieve-all-versions*propose*retrieve-antonym-version*next
+:o-support
+   (state <s> ^name retrieve-all-versions
+			 -^completed-antonym <w2>
+			  ^antonym-retrieved <rr>
+			  ^antonym-version <w2>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name retrieve-antonym-version
+   		^just-tried <rr>
+        ^handle <w2>)
+}
+sp {retrieve-all-versions*retract*retrieve-antonym-version
+:o-support
+   (state <s> ^name retrieve-all-versions
+   		  	  ^operator <o>) 
+   (<o> ^name retrieve-antonym-version
+   		^completed true)
+-->
+  (<s> ^operator <o> -)
+}
+
+
+############################################################
+############################################################
+sp {retrieve-default-version*elaborate*handle-spelling
+   (state <s> ^name retrieve-default-version
+              ^superstate.operator <sop>)
+   (<sop> ^handle <handle>)
+-->
+   (<s> ^handle-spelling <handle>)
+}
+sp {retrieve-default-version*elaborate*smem-query
+   (state <s> ^name retrieve-default-version
+              ^smem.command <c>
+			  ^handle-spelling <handle>)
+-->	
+   (<c> ^query <cue>
+        ^neg-query <ncue> #TODO add neg cue for handle-spelling
+        ^depth 5)
+   (<cue> ^handle <handle>)
+   (<ncue> ^multiple true)
+}
+sp {retrieve-default-version*elaborate*smem-query*prohibit
+   (state <s> ^name retrieve-default-version
+              ^smem.command <com>
+              ^superstate.retrieved <pr>)
+-->	
+   (<com> ^prohibit <pr>)
+}
+sp {retrieve-default-version*elaborate*smem-query*failure
+:o-support
+   (state <s> ^name retrieve-default-version
+   		  	  ^superstate <ss>
+              ^smem.result.failure <rr>)
+-->
+   (<ss> ^completed-all-defaults true)
+}
+sp {retrieve-default-version*elaborate*smem-query*first-retrieved
+:o-support
+   (state <s> ^name retrieve-default-version
+   		  	  ^superstate <ss>
+			 -^smem.command.prohibit
+              ^smem.result.retrieved <rr>)
+   (<rr> ^handle <cn>)
+-->
+   (<ss> ^first-retrieved <rr>)
+}
+sp {retrieve-default-version*elaborate*smem-query*retrieved
+:o-support
+   (state <s> ^name retrieve-default-version
+   		  	  ^superstate <ss>
+              ^smem.result.retrieved <rr>)
+   (<rr> ^handle <cn>)
+-->
+#(write (cmd print <rr> -d 2))
+   (<ss> ^retrieved <rr>)
+}
+
+sp {retrieve-default-version*elaborate*completed-true*failure
+:o-support
+   (state <s> ^name retrieve-default-version
+   		  	  ^superstate <ss>
+              ^smem.result.failure <rr>)
+   (<ss> ^operator <o>)
+-->
+   (<o> ^completed true)
+}
+
+####################################################################
+sp {retrieve-learned-version*elaborate*handle-spelling
+   (state <s> ^name retrieve-learned-version
+              ^superstate.operator <sop>)
+   (<sop> ^handle <handle>)
+-->
+   (<s> ^handle-spelling <handle>)
+}
+sp {retrieve-learned-version*elaborate*smem-query
+   (state <s> ^name retrieve-learned-version
+              ^smem.command <c>
+			  ^handle-spelling <handle>)
+-->	
+   (<c> ^query <cue>
+        ^neg-query <ncue>
+        ^depth 5)
+   (<cue> ^handle <x> ^handle-spelling <handle>)
+   (<ncue> ^multiple true)
+}
+sp {retrieve-learned-version*elaborate*smem-query*prohibit
+   (state <s> ^name retrieve-learned-version
+              ^smem.command <com>
+              ^superstate.retrieved <pr>)
+-->	
+   (<com> ^prohibit <pr>)
+}
+sp {retrieve-learned-version*elaborate*smem-query*failure
+:o-support
+   (state <s> ^name retrieve-learned-version
+   		  	  ^superstate <ss>
+              ^smem.result.failure <rr>)
+-->
+   (<ss> ^completed-all-learned true)
+}
+sp {retrieve-learned-version*elaborate*smem-query*first-retrieved
+:o-support
+   (state <s> ^name retrieve-learned-version
+   		  	  ^superstate <ss>
+			 -^smem.command.prohibit
+              ^smem.result.retrieved <rr>)
+   (<rr> ^handle <cn>)
+-->
+   (<ss> ^first-retrieved <rr>)
+}
+sp {retrieve-learned-version*elaborate*smem-query*retrieved
+:o-support
+   (state <s> ^name retrieve-learned-version
+   		  	  ^superstate <ss>
+              ^smem.result.retrieved <rr>)
+   (<rr> ^handle <cn>)
+-->
+   (<ss> ^retrieved <rr>)
+}
+
+sp {retrieve-learned-version*elaborate*compeleted-true
+:o-support
+   (state <s> ^name retrieve-learned-version
+   		  	  ^superstate <ss>
+              ^smem.result.retrieved <rr>)
+   (<rr> ^handle <cn>)
+   (<ss> ^operator <o>)
+-->
+   (<o> ^completed true)
+}
+
+sp {retrieve-learned-version*elaborate*compeleted-true*failure
+:o-support
+   (state <s> ^name retrieve-learned-version
+   		  	  ^superstate <ss>
+              ^smem.result.failure <rr>)
+   (<ss> ^operator <o>)
+-->
+   (<o> ^completed true)
+}
+
+#######################
+####     DEBUG     ####
+#######################
+sp {retrieve-all-versions*elaborate*smem-query*prohibitPRINT
+   (state <s> ^name retrieve-all-versionsXX
+              ^smem.command <c>)
+   (<c> ^query <q>)
+#(<q> ^handle-spelling empty) 
+-->	
+   (interrupt)
+   (write (cmd print <c> -d 3))
+}

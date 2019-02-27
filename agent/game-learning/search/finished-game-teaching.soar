@@ -22,9 +22,12 @@ sp {finished-game-teaching*propose*setup-search*game-replay
 
 sp {finished-game-teaching*apply*setup-search*printtime
    (state <s> ^name finished-game-teaching
-             -^top-state.dialog-context.structure.multiplayer true
+              ^top-state.dialog-context <dc>
               ^superstate.operator.response yes
               ^operator.name setup-search)
+    (<dc> -^structure.multiplayer true
+	      -^found-solution true)
+ -{(<s> ^top-state.dialog-context.found-solution true)}
 -->
    (write (cmd |ctf endlearntime.txt stats|))
 }
@@ -40,6 +43,19 @@ sp {finished-game-teaching*propose*setup-search*yes
         ^multiplayer false
         ^game-name <name>)
 }
+
+#sp {finished-game-teaching*propose*setup-search*yes1
+#   (state <s> ^name finished-game-teaching
+#   		  	  ^top-state.smap.larger-than1 <clear>
+#             -^top-state.dialog-context.structure.multiplayer true
+#              ^superstate.operator.response yes
+#              ^top-state.dialog-context.structure.handle <name>)
+#-->
+##(write (cmd print <ts> -d 3))
+# #(interrupt)
+#(<s> ^detect-predicate <pred>)
+#(<pred> ^name <clear> ^copy-type shallow ^type binary)
+#}
 
 sp {finished-game-teaching*propose*setup-search*replay
    (state <s> ^name finished-game-teaching
@@ -89,6 +105,15 @@ sp {finished-game-teaching*propose*clean-up-after-learning*no
    (<o> ^name clean-up-after-learning)
 }
 
+sp {apply*clean-up-after-learning*procedural-predicate-learning
+   (state <s> ^name interaction
+              ^top-state <ts>
+              ^operator.name pop-segment)
+   (<ts> ^dialog-context <dc>)
+   (<dc> ^name procedural -^learning-predicate)
+-->
+   (<ts> ^dialog-context <dc> -)
+}
 sp {apply*clean-up-after-learning*capture-data
    (state <s> ^name interaction
               ^top-state <ts>
@@ -101,7 +126,6 @@ sp {apply*clean-up-after-learning*capture-data
    (write (cmd |ctf -a pertaskstats.txt stats|))
    (write (cmd |ctf -a smemuse.txt smem --stats mem-usage|))
 }
-
 sp {finished-game-teaching*apply*clean-up-after-learning
    (state <s> ^name finished-game-teaching
               ^operator <o>
@@ -118,7 +142,6 @@ sp {finished-game-teaching*apply*clean-up-after-learning
          ^originator agent)
    (<dc> ^capture-data yes)
  }
-
 sp {finished-game-teaching*apply*prepare-game
    (state <s> ^name finished-game-teaching
               ^operator <o>

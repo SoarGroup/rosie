@@ -68,8 +68,10 @@ public class AgentMenu extends JMenu{
 	          			  "Enter the session name to backup",
 	          			  "Backup To File",
 	          			  JOptionPane.QUESTION_MESSAGE);
-	        		agent.backup(sessionName);
-	    		}
+	        		if (sessionName != null && !(sessionName.equals(""))){
+				    agent.backup(sessionName);
+				  }
+				}
 	    	}
 	    });
 	    this.add(backupToFileButton);  
@@ -82,11 +84,13 @@ public class AgentMenu extends JMenu{
 	    			JOptionPane.showMessageDialog(null, "The agent must be stopped first");
 	    		} else {
 	        		String sessionName = JOptionPane.showInputDialog(null, 
-	          			  "Enter the session name to backup",
-	          			  "Backup To File",
+	          			  "Enter the session name to restore",
+	          			  "Restore from File",
 	          			  JOptionPane.QUESTION_MESSAGE);
-	        		agent.restore(sessionName);
-	    		}
+                                if (sessionName != null && !(sessionName.equals(""))){
+				    agent.restore(sessionName);
+				 }
+                               }
 	    	}
 	    });
 	    this.add(restoreFromFileButton);  

@@ -298,7 +298,6 @@ sp {find-solution*propose*game-learning-complete
         ^type game
         ^game <name>)
 }
-
 sp {find-solution*propose*game-learning-complete*puzzle
    (state <s> ^name find-solution
               -^replay true
@@ -313,7 +312,6 @@ sp {find-solution*propose*game-learning-complete*puzzle
         ^type puzzle
         ^game <name>)
 }
-
 sp {find-solution*apply*game-learning-complete
    (state <s> ^name find-solution
               ^top-state.dialog-context <dc>
@@ -334,7 +332,6 @@ sp {find-solution*apply*game-learning-complete
          ^originator agent)
    (<dc> ^finished-game-teaching true)
 }
-
 sp {find-solution*propose*game-search*muliplayer
    (state <s> ^name find-solution
               -^found-action
@@ -351,7 +348,6 @@ sp {find-solution*propose*game-search*muliplayer
         ^game <name>)
    (<g> ^game <name> ^type action goal failure heuristic)
 }
-
 #JK temp remove game-scripting
 sp {find-solution*propose*complete-finding-solution
    (state <s> ^name find-solution
@@ -359,18 +355,35 @@ sp {find-solution*propose*complete-finding-solution
               ^world.objects <objs>
               ^found-action)
    (<ts> ^dialog-context <d5>)
-   (<d5> ^perform-action <fa>)
-   (<fa> ^obj1 <oa> ^obj2 <ob> ^dcount <dc> -^mark ^pname <pname>)
+   (<d5> ^perform-action <fa> -^found-solution true)
+   (<fa> ^obj1 <oa> ^obj2 <ob> ^dcount <dc> -^mark ^pname <pname>)#^dcount <dc>
   -{(<d5> ^perform-action <fa2>)
     (<fa2> -^mark ^dcount < <dc>)}
-(<oa> ^handle <id1>)
-(<ob> ^handle <id2>)
-(<objs> ^object <obj1> ^object <obj2>)
-(<obj1> ^handle <id1>)
-(<obj2> ^handle <id2>)
+   (<oa> ^handle <id1>)
+   (<ob> ^handle <id2>)
+   (<objs> ^object <obj1> ^object <obj2>)
+   (<obj1> ^handle <id1>)
+   (<obj2> ^handle <id2>)
 -->
-  (<s> ^operator <o> + = >)
-  (<o> ^name complete-finding-solution)
+   (<s> ^operator <o> + = >)
+   (<o> ^name complete-finding-solution)
+}
+sp {find-solution*propose*complete-finding-solution*1-arg
+   (state <s> ^name find-solution
+              ^top-state <ts>
+              ^world.objects <objs>
+              ^found-action)
+   (<ts> ^dialog-context <d5>)
+   (<d5> ^perform-action <fa> -^found-solution true)
+   (<fa> ^obj1 <oa> -^obj2 ^dcount <dc> -^mark ^pname <pname>)
+  -{(<d5> ^perform-action <fa2>)
+    (<fa2> -^mark ^dcount < <dc>)}
+   (<oa> ^handle <id1>)
+   (<objs> ^object <obj1>)
+   (<obj1> ^handle <id1>)
+-->
+   (<s> ^operator <o> + = >)
+   (<o> ^name complete-finding-solution)
 }
 
 sp {find-solution*propose*complete-finding-solution*number
@@ -383,13 +396,13 @@ sp {find-solution*propose*complete-finding-solution*number
    (<fa> ^obj1 <oa> ^obj2 <ob> ^dcount <dc> -^mark ^pname <pname>)
   -{(<d5> ^perform-action <fa2>)
     (<fa2> -^mark ^dcount < <dc>)}
-(<oa> -^handle)
-(<ob> ^handle <id2>)
-(<objs> ^object <obj2>)
-(<obj2> ^handle <id2>)
+   (<oa> -^handle)
+   (<ob> ^handle <id2>)
+   (<objs> ^object <obj2>)
+   (<obj2> ^handle <id2>)
 -->
-  (<s> ^operator <o> + = >)
-  (<o> ^name complete-finding-solution)
+   (<s> ^operator <o> + = >)
+   (<o> ^name complete-finding-solution)
 }
 
 sp {find-solution*apply*execute-action
@@ -408,18 +421,28 @@ sp {find-solution*elabroate*attend-to-arm
 -->
    (<s> ^attend-to-arm true)
 }
-
+#OBSOLETE marking behavior (uses stack now)
+#sp {find-solution*propose*completed-all-actions
+#   (state <s> ^name find-solution
+#              ^top-state <ts>
+#              ^top-state.dialog-context.perform-action <fa>)
+#   (<fa> ^obj1 <oa> ^obj2 <ob> ^dcount <dc> ^mark)
+#  -{(<ts> ^perform-action <fa2>)
+#    (<fa2> -^mark)}          
+#-->
+#   (<s> ^operator <o> + < =)
+#   (<o> ^name completed-all-actions)
+#}
 sp {find-solution*propose*completed-all-actions
    (state <s> ^name find-solution
               ^top-state <ts>
-              ^top-state.dialog-context.perform-action <fa>)
-   (<fa> ^obj1 <oa> ^obj2 <ob> ^dcount <dc> ^mark)
-  -{(<ts> ^perform-action <fa2>)
-    (<fa2> -^mark)}          
+              ^top-state.dialog-context <dc>)
+   (<dc> ^found-solution true)    
 -->
-   (<s> ^operator <o> + < =)
+   (<s> ^operator <o> + > =)
    (<o> ^name completed-all-actions)
 }
+
 
 sp {find-solution*propose*completed-all-actions*game-lost
    (state <s> ^name find-solution
@@ -452,15 +475,18 @@ sp {find-solution*apply*complete-finding-solution*remove*found-action
    (<g1> ^performed-action <fa>)
 }
 
-sp {find-solution*apply*complete-finding-solution*remove*dialog-context
-   (state <s> ^name find-solution
-              ^operator <o>         
-              ^top-state <ts>)
-   (<o> ^name complete-finding-solution)
-   (<ts> ^dialog-context <dc> ^world-usage external)
--->
-   (<ts> ^dialog-context <dc> -)
-}
+#BROKEN world-usage
+#sp {find-solution*apply*complete-finding-solution*remove*dialog-context
+#   (state <s> ^name find-solution
+#              ^operator <o>         
+#              ^top-state <ts>)
+#   (<o> ^name complete-finding-solution)
+#   (<ts> ^dialog-context <dc> ^agent-params <p3>)#)^world-usage external)
+#   #TODO all world-usage flags broken FIX domain not internal I guess?
+#(<p3> -^domain internal)
+#-->
+#   (<ts> ^dialog-context <dc> -)
+#}
 
 sp {find-solution*apply*complete-finding-solution*remove*game-status
    (state <s> ^name find-solution
@@ -480,6 +506,15 @@ sp {find-solution*apply*complete-finding-solution*remove*game-replay
    (<ts> ^game-replay <dc>)
 -->
    (<ts> ^game-replay <dc> -)
+}
+sp {find-solution*apply*complete-finding-solution*mark*found-solution
+   (state <s> ^name find-solution
+              ^operator <o>         
+              ^top-state <ts>)
+   (<o> ^name complete-finding-solution)
+   (<ts> ^dialog-context <dc>)
+-->
+   (<dc> ^found-solution true)
 }
 
 sp {find-solution*apply*completed-all-actions*remove*dialog-context
@@ -638,7 +673,32 @@ sp {find-solution*apply*complete-finding-solution*task-stack-push
     (<arg2> ^2 <obj2> ^arg-type predicate ^handle <prep>)
 }
 
-sp {find-solution*apply*complete-finding-solution*task-stack-push*number
+sp {find-solution*apply*complete-finding-solution*action-stack-push*set
+   (state <s> ^name find-solution
+              ^operator <o>
+              #^top-state.world.objects <objects>
+              ^top-state.action-stack <as>
+              ^top-state.dialog-context <dc>)
+   (<o> ^name complete-finding-solution)
+   (<dc> ^perform-action <pa>)
+   (<pa> ^dcount <order> ^obj1 <obj1> ^obj2 <obj2> ^pname <prep> ^vname move1)
+   (<as> ^changes <a2>)
+   (<obj1> -^handle ^object <obj1a>)
+   #(<objects> ^object <oa> <ob>)
+   #(<oa> ^handle <h1>)
+   #(<ob> ^handle <h2>)
+   #(<obj1> ^handle <h1>)
+   #(<obj2> ^handle <h2>)
+-->
+    (<a2> ^push <eo>)
+    (<eo> ^execution-operator <eo1> ^order <order>)
+    (<eo1> ^action-handle move1 ^arg1 <arg1> ^arg2 <arg2> ^name op_move1) #todo retrieve from smem
+    (<arg1> ^arg-type object ^id <obj1a>)
+    (<arg2> ^2 <obj2> ^arg-type predicate ^handle <prep>)
+}
+
+
+sp {find-solution*apply*complete-finding-solution*action-stack-push*number
    (state <s> ^name find-solution
               ^operator <o>
               #^top-state.world.objects <objects>
@@ -654,10 +714,29 @@ sp {find-solution*apply*complete-finding-solution*task-stack-push*number
   # (<obj2> ^handle <h2>)
 -->
 	(<a2> ^push <eo>)
-    (<eo> ^task-operator <eo1> ^order <order>)
-    (<eo1> ^task-handle write1 ^arg1 <arg1> ^arg2 <arg2> ^name op_write1) #todo retrieve op_move1
-    (<arg1> ^arg-type number ^id <obj1>)
-    (<arg2> ^2 <obj2> ^arg-type predicate ^handle <prep>)
+    (<eo> ^execution-operator <eo1> ^order <order>)
+    (<eo1> ^action-handle write1 ^arg1 <arg1> ^arg2 <arg2> ^name op_write1) #todo retrieve from smem
+    (<arg1> ^arg-type concept ^handle <obj1>)
+    (<arg2> ^id <obj2> ^arg-type object)
+}
+
+sp {find-solution*apply*complete-finding-solution*action-stack-push*remove
+   (state <s> ^name find-solution
+              ^operator <o>
+              #^top-state.world.objects <objects>
+              ^top-state.action-stack <as>
+              ^top-state.dialog-context <dc>)
+   (<o> ^name complete-finding-solution)
+   (<dc> ^perform-action <pa>)
+   (<pa> ^dcount <order> ^obj1 <obj1> ^vname remove1)
+   (<as> ^changes <a2>)
+  # (<objects> ^object <ob>)
+  # (<ob> ^handle <h2>)
+  # (<obj2> ^handle <h2>)
+-->
+	(<a2> ^push <eo>)
+    (<eo> ^execution-operator <eo1> ^order <order>)
+    (<eo1> ^action-handle remove1 ^arg1 <obj1> ^name op_remove1) #todo retrieve op_remove1
 }
 
 sp {find-solution*apply*complete-finding-solution*write-solution
@@ -668,6 +747,16 @@ sp {find-solution*apply*complete-finding-solution*write-solution
    (write (cmd |ctf solution.txt print (* ^dcount *) -d 3|))
 }
 
+sp {find-solution*prefer*completed-all-actions*over*complete-finding-solution
+   (state <s> ^name find-solution
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name completed-all-actions)
+   (<o2> ^name complete-finding-solution)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
 sp {find-solution*apply*complete-finding-solution*send-message*lose
    (state <s> ^name find-solution
               ^operator <o>
@@ -676,13 +765,12 @@ sp {find-solution*apply*complete-finding-solution*send-message*lose
    (<o> ^name complete-finding-solution)
 -->
    (<changes> ^outgoing-message <msg>)
-   (<msg> ^type easy
+   (<msg> ^type gotit
           ^complete-message true)
 #   (<status> ^performed.learning-event <de>)
 #   (<de> ^type game
 #         ^originator agent)
 }
-
 sp {clean-up*top-state*found-action-aftersolve
    (state <s> ^operator.name complete-interaction
               ^name interaction

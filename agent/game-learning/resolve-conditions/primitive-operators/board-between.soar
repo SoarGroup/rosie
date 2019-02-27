@@ -1,6 +1,5 @@
 # new board-between is inclusive of last param (good for counting dice rolls/mancala, bad for othello...
 sp {board-between*propose*elaborate*args
-#:interrupt
    (state <s> ^name board-between
               ^superstate.operator <o>)
    (<o> ^args <args>
@@ -15,9 +14,7 @@ sp {board-between*propose*elaborate*args
          ^b <a2>
          ^c <a3>)
 }
-
 sp {numeric-between*propose*elaborate*args
-#:interrupt
    (state <s> ^name numeric-between
               ^superstate.operator <o>)
    (<o> ^args <args>
@@ -30,15 +27,22 @@ sp {numeric-between*propose*elaborate*args
          ^b <a2>
          ^c <a3>)
 }
-
 sp {board-between*elaborate*objects
    (state <s> ^name board-between
               ^superstate.operator.name board-between
               ^superstate.condition.rtype set
               ^b <r>
               ^c <r2>)
-   (<r> ^result.set.instance.{1} <obja>)
-   (<r2> ^result.set.instance.{1} {<objb> <> <obja>})
+   (<r> ^result.set <s3>)
+   (<s3> ^instance <i5>)
+   (<i5> ^1 <obja>)
+   (<r2> ^result.set <s35>)
+   (<s35> ^instance <i55>)
+   (<i55> ^1 {<objb> <> <obja>})
+ -{(<s3> ^instance {<i8> > <i5>})
+   (<i8> ^1 <obja>)} #bias only create one per object
+ -{(<s35> ^instance {<i9> > <i55>})
+   (<i9> ^1 <objb>)} #bias only create one per object
 -->
    (<s> ^instance <s1>)
    (<s1> ^2 <obja> ^3 <objb> ^1 <set>)
@@ -56,166 +60,60 @@ sp {board-between*elaborate*object*instance
    (<res> ^instance <s1>)
 }
 
-sp {numeric-between*elaborate*instances*diagonal*single
+sp {numeric-between*elaborate*instances*exclusive
     :o-support
    (state <s> ^name numeric-between
               ^c <r3>
              ^superstate.operator <sop>
               ^b <r2>
               ^linkstate <ls>
-             # ^operator <o>
               ^superstate.condition.rtype single
               ^superstate.condition.result.set <rset>)
    (<ls> ^integer-list <dt>)
    (<dt> ^number <n3>)
-   (<sop> ^name numeric-between ^type between)
-   (<r2> ^result.set.instance.{1} {<obja> < <n3>})
-   (<r3> ^result.set.instance.{1} {<objb> >= <n3>})
+   (<sop> ^name numeric-between ^type between-exclusive)
+   (<r2> ^result.set <s3>)
+   (<s3> ^instance <i5>)
+   (<i5> ^1 {<obja> < <n3>})
+   (<r3> ^result.set <s35>)
+   (<s35> ^instance <i55>)
+   (<i55> ^1 {<objb> > <n3>})
+ -{(<s3> ^instance {<i8> > <i5>})
+   (<i8> ^1 <obja>)} #bias only create one per object
+ -{(<s35> ^instance {<i9> > <i55>})
+   (<i9> ^1 <objb>)} #bias only create one per object
 -->
    (<rset> ^instance <s1>)
    (<s1> ^2 <obja> ^3 <objb> ^1 <n3>)
 }
 
-#sp {board-between*elaborate*result
-#   (state <s> ^name board-between
-#              ^superstate.operator.name board-between)
-#-->
-#   (<s> ^result.set <res>)
-#}
 
-
-#sp {board-between*elaborate*instances*samex
-#   (state <s> ^name board-between
-#             # ^instance <s1>
-#              ^a <r>
-#              ^c <r3>
-#              ^b <r2>
-#              ^superstate.condition.result.set.instance <s1>
-#              ^operator <op>)
-#   (<op> ^name complete ^instance <s1>)
-#   (<r> ^result.<se1>.<o1>.<elem> <obja> ^parameter.result.link.link.<se1>.<o1>.<elem> holder)
-#   (<r2> ^result.<se2>.<o2>.<elem2> <objb> ^parameter.result.link.link.<se2>.<o2>.<elem2> holder)
-#   (<r3> ^result.<se3>.<o3>.<elem3> <objc> ^parameter.result.link.link.<se3>.<o3>.<elem3> holder)
-#   (<objb> ^id <idb> ^x <x> ^y <y1>)
-#   (<obja> ^id <ida> ^x <x> ^y <y2>)
-#   (<objc> ^id <idc> ^x <x>)
-#   (<s1> ^a <obja> ^b <objb> ^c <set>)
-# -{(<objc> ^y {<y> >= <y1>} ^y {<y> >= <y2>})}
-# -{(<objc> ^y {<y> <= <y1>} ^y {<y> <= <y2>})}
-#-->
-#   (<set> ^object <objc>)
-#}
-
-#sp {board-between*elaborate*instances*sameyx
-#   (state <s> ^name board-between
-#           #   ^instance <s1>
-#              ^a <r>
-#              ^c <r3>
-#             ^superstate.operator <sop>
-#              ^b <r2>
-#              ^superstate.condition.result.set.instance <s1>
-#              ^operator <op>)
-#   (<op> ^name complete ^instance <s1>)
-#   (<sop> ^name board-between -^type between-inclusive)
-#   (<r> ^result.set.instance.{1} <objc>)
-#   (<r2> ^result.set.instance.{1} <obja>)
-#   (<r3> ^result.set.instance.{1} <objb>)
-#   (<objb> ^{<xy> << y x >>} <x> ^{<yx> << y x >>} <y1>)
-#   (<obja> ^<xy> <x> ^{<yx> <> <xy>} <y2>)
-#   (<objc> ^<xy> <x>)
-#   (<s1> ^2 <obja> ^3 <objb> ^1 <set>)
-# -{(<objc> ^<yx> {<y> >= <y1>} ^<yx> {<y> >= <y2>})}
-# -{(<objc> ^<yx> {<y> <= <y1>} ^<yx> {<y> <= <y2>})}
-#-->
-#   (<set> ^object <objc>)
-# #  (<s1> ^done true)
-#}
-
-#sp {board-between*elaborate*instances*samey*single
-#    :o-support
-#   (state <s> ^name board-between
-#           #   ^instance <s1>
-#              ^a <r>
-#              ^c <r3>
-#             ^superstate.operator <sop>
-#              ^b <r2>
-#              ^superstate.condition.rtype single
-#              ^superstate.condition.result.set <rset>)#.instance <s1>
-#   #           ^operator <op>)
-#  # (<op> ^name complete ^instance <s1>)
-#   (<sop> ^name board-between ^type between)
-#   (<r> ^rtype single ^result.set.instance.{1} <objc>)
-#   (<r2> ^result.set.instance.{1} <obja>)
-#   (<r3> ^result.set.instance.{1} <objb>)
-#   (<obja> ^predicates <pred1>)
-#   (<objb> ^predicates <pred2>)
-#   (<objc> ^predicates <pred3>)
-#   (<pred1> ^x <x> ^y <y2>)
-#   (<pred2> ^x <x> ^y <y1>)
-#   (<pred3> ^x <x>)
-# -{(<pred3> ^y {<y> >= <y1>} ^y {<y> >= <y2>})}
-# -{(<pred3> ^y {<y> <= <y1>} ^y {<y> <= <y2>})}
-#-->
-#   (<rset> ^instance <s1>)
-#   (<s1> ^2 <obja> ^3 <objb> ^1 <objc>)
-#}
-#sp {board-between*elaborate*instances*samex*single
-#    :o-support
-#   (state <s> ^name board-between
-#           #   ^instance <s1>
-#              ^a <r>
-#              ^c <r3>
-#             ^superstate.operator <sop>
-#              ^b <r2>
-#              ^superstate.condition.rtype single
-#              ^superstate.condition.result.set <rset>)#.instance <s1>
-#   #           ^operator <op>)
-#  # (<op> ^name complete ^instance <s1>)
-#   (<sop> ^name board-between ^type between)
-#   (<r> ^rtype single ^result.set.instance.{1} <objc>)
-#   (<r2> ^result.set.instance.{1} <obja>)
-#   (<r3> ^result.set.instance.{1} <objb>)
-#   (<obja> ^predicates <pred1>)
-#   (<objb> ^predicates <pred2>)
-#   (<objc> ^predicates <pred3>)
-#   (<pred1> ^y <x> ^x <y2>)
-#   (<pred2> ^y <x> ^x <y1>)
-#   (<pred3> ^y <x>)
-# -{(<pred3> ^x {<y> >= <y1>} ^x {<y> >= <y2>})}
-# -{(<pred3> ^x {<y> <= <y1>} ^x {<y> <= <y2>})}
-#-->
-#   (<rset> ^instance <s1>)
-#   (<s1> ^2 <obja> ^3 <objb> ^1 <objc>)
-#}
-
-#sp {board-between*elaborate*instances*samexy*single
-#    :o-support
-#   (state <s> ^name board-between
-#           #   ^instance <s1>
-#              ^a <r>
-#              ^c <r3>
-#             ^superstate.operator <sop>
-#              ^b <r2>
-#              ^superstate.condition.rtype single
-#              ^superstate.condition.result.set <rset>)#.instance <s1>
-#   #           ^operator <op>)
-#  # (<op> ^name complete ^instance <s1>)
-#   (<sop> ^name board-between ^type between)
-#   (<r> ^rtype single ^result.set.instance.{1} <objc>)
-#   (<r2> ^result.set.instance.{1} <obja>)
-#   (<r3> ^result.set.instance.{1} <objb>)
-#   (<obja> ^predicates <pred1>)
-#   (<objb> ^predicates <pred2>)
-#   (<objc> ^predicates <pred3>)
-#   (<pred1> ^{<xy> << x y >>} <x> ^{<yx> << x y >>} <y2>)
-#   (<pred2> ^<xy> <x> ^{<yx> <> <xy>} <y1>)
-#   (<pred3> ^<xy> <x>)
-# -{(<pred3> ^<yx> {<y> >= <y1>} ^<yx> {<y> >= <y2>})}
-# -{(<pred3> ^<yx> {<y> <= <y1>} ^<yx> {<y> <= <y2>})}
-#-->
-#   (<rset> ^instance <s1>)
-#   (<s1> ^2 <obja> ^3 <objb> ^1 <objc>)
-#}
+sp {numeric-between*elaborate*instances*inclusive
+    :o-support
+   (state <s> ^name numeric-between
+              ^c <r3>
+             ^superstate.operator <sop>
+              ^b <r2>
+              ^linkstate <ls>
+              ^superstate.condition.rtype single
+              ^superstate.condition.result.set <rset>)
+   (<ls> ^integer-list <dt>)
+   (<dt> ^number <n3>)
+   (<sop> ^name numeric-between ^type between-inclusive)
+   (<r2> ^result.set <s3>)
+   (<s3> ^instance <i5>)
+   (<i5> ^1 {<obja> <= <n3>})
+   (<r3> ^result.set <s35>)
+   (<s35> ^instance <i55>)
+   (<i55> ^1 {<objb> >= <n3>})
+ -{(<s3> ^instance {<i8> > <i5>})
+   (<i8> ^1 <obja>)} #bias only create one per object
+ -{(<s35> ^instance {<i9> > <i55>})
+   (<i9> ^1 <objb>)} #bias only create one per object
+-->
+   (<rset> ^instance <s1>)
+   (<s1> ^2 <obja> ^3 <objb> ^1 <n3>)
+}
 
 #for single only look right between
 sp {board-between*elaborate*instances*diagonal*single
@@ -239,21 +137,32 @@ sp {board-between*elaborate*instances*diagonal*single
    (<d2> ^result 2 ^pair <p5> <p6>)
    (<p5> ^num <x2> ^num {<x3> <> <x2>})
    (<p6> ^num <y2> ^num {<y3> <> <y2>})
-   (<sop> ^name board-between ^type between)
-   (<r> ^rtype single ^result.set.instance.{1} <objc>)
-   (<r2> ^result.set.instance.{1} <obja>)
-   (<r3> ^result.set.instance.{1} <objb>)
+   (<sop> ^name board-between ^type between-exclusive)
+   (<r> ^rtype single ^result.set <s36>)
+   (<s36> ^instance <i56>)
+   (<i56> ^1 <objc>)
+   (<r2> ^result.set <s3>)
+   (<s3> ^instance <i5>)
+   (<i5> ^1 <obja>)
+   (<r3> ^result.set <s35>)
+   (<s35> ^instance <i55>)
+   (<i55> ^1 <objb>)
    (<obja> ^predicates <pred1>)
    (<objb> ^predicates <pred2>)
    (<objc> ^predicates <pred3>)
    (<pred1> ^x <x2> ^y <y2>)
    (<pred2> ^x <x3> ^y <y3>)
    (<pred3> ^x <x1> ^y <y1>)
+ -{(<s3> ^instance {<i8> > <i5>})
+   (<i8> ^1 <obja>)} #bias only create one per object
+ -{(<s35> ^instance {<i9> > <i55>})
+   (<i9> ^1 <objb>)} #bias only create one per object
+ -{(<s36> ^instance {<i91> > <i56>})
+   (<i91> ^1 <objc>)} #bias only create one per object
 -->
    (<rset> ^instance <s1>)
    (<s1> ^2 <obja> ^3 <objb> ^1 <objc>)
 }
-
 sp {board-between*elaborate*instances*straight*single
     :o-support
    (state <s> ^name board-between
@@ -272,127 +181,35 @@ sp {board-between*elaborate*instances*straight*single
    (<p2> ^num <y1> ^num {<y3> <> <y1>})
    (<d3> ^pair <p3> ^result 2)
    (<p3> ^num <y2> ^num {<y3> <> <y2>})
-   (<sop> ^name board-between ^type between)
-   (<r> ^rtype single ^result.set.instance.{1} <objc>)
-   (<r2> ^result.set.instance.{1} <obja>)
-   (<r3> ^result.set.instance.{1} <objb>)
+   (<sop> ^name board-between ^type between-exclusive)
+   (<r> ^rtype single ^result.set <s36>)
+   (<s36> ^instance <i56>)
+   (<i56> ^1 <objc>)
+   (<r2> ^result.set <s3>)
+   (<s3> ^instance <i5>)
+   (<i5> ^1 <obja>)
+   (<r3> ^result.set <s35>)
+   (<s35> ^instance <i55>)
+   (<i55> ^1 <objb>)
    (<obja> ^predicates <pred1>)
    (<objb> ^predicates <pred2>)
    (<objc> ^predicates <pred3>)
    (<pred1> ^{<xy> << x y >>} <x1> ^{<yx> << x y >>} <y2>)
    (<pred2> ^<xy> <x1> ^{<yx> <> <xy>} <y3>)
    (<pred3> ^<xy> <x1> ^<yx> <y1>)
+ -{(<s3> ^instance {<i8> > <i5>})
+   (<i8> ^1 <obja>)} #bias only create one per object
+ -{(<s35> ^instance {<i9> > <i55>})
+   (<i9> ^1 <objb>)} #bias only create one per object
+ -{(<s36> ^instance {<i91> > <i56>})
+   (<i91> ^1 <objc>)} #bias only create one per object
 -->
    (<rset> ^instance <s1>)
    (<s1> ^2 <obja> ^3 <objb> ^1 <objc>)
 }
-
-sp {board-between*elaborate*instances*samey
-   (state <s> ^name board-between
-           #   ^instance <s1>
-              ^a <r>
-              ^c <r3>
-             ^superstate.operator <sop>
-              ^b <r2>
-              #^instance <s1> #JAMES UNCHUNKED VERSION
-              ^superstate.condition.result.set.instance <s1>
-              ^operator <op>)
-   (<op> ^name complete ^instance <s1>) #JAMES UNCHUNKED VERSION
-   (<sop> ^name board-between ^type between)
-   (<r> ^rtype single ^result.set.instance.{1} <objc>)
-   (<r2> ^result.set.instance.{1} <obja>)
-   (<r3> ^result.set.instance.{1} <objb>)
-   (<obja> ^predicates <pred1>)
-   (<objb> ^predicates <pred2>)
-   (<objc> ^predicates <pred3>)
-   (<pred1> ^x <x> ^y <y2>)
-   (<pred2> ^x <x> ^y <y1>)
-   (<pred3> ^x <x>)
-   (<s1> ^2 <obja> ^3 <objb> ^1 <set>)
- -{(<pred3> ^y {<y> >= <y1>} ^y {<y> >= <y2>})}
- -{(<pred3> ^y {<y> <= <y1>} ^y {<y> <= <y2>})}
--->
-   (<set> ^object <objc>)
-#   (<s1> ^done true)
-}
-sp {board-between*elaborate*instances*samex
-   (state <s> ^name board-between
-           #   ^instance <s1>
-              ^a <r>
-              ^c <r3>
-             ^superstate.operator <sop>
-              ^b <r2>
-              #^instance <s1> #JAMES UNCHUNKED VERSION
-              ^superstate.condition.result.set.instance <s1>
-              ^operator <op>)
-   (<op> ^name complete ^instance <s1>)#JAMES UNCHUNKED VERSION
-   (<sop> ^name board-between ^type between)
-   (<r> ^rtype single ^result.set.instance.{1} <objc>)
-   (<r2> ^result.set.instance.{1} <obja>)
-   (<r3> ^result.set.instance.{1} <objb>)
-   (<obja> ^predicates <pred1>)
-   (<objb> ^predicates <pred2>)
-   (<objc> ^predicates <pred3>)
-   (<pred1> ^y <x> ^x <y2>)
-   (<pred2> ^y <x> ^x <y1>)
-   (<pred3> ^y <x>)
-   (<s1> ^2 <obja> ^3 <objb> ^1 <set>)
- -{(<pred3> ^x {<y> >= <y1>} ^x {<y> >= <y2>})}
- -{(<pred3> ^x {<y> <= <y1>} ^x {<y> <= <y2>})}
--->
-   (<set> ^object <objc>)
-#   (<s1> ^done true)
-}
-
-sp {learn-predicate*elaborate*diff-table
-   (state <s> ^name learn-predicate)
--->
-    (<s> ^diff-table <dtt> ^integer-list <il>)
-    (<il> ^number 0 1 2 3 4 5 6 7 8 9)
-    (<dtt> ^diff <d1> <d2> <d3>)# <d3> <d4> <d5> <d6> <d7> <d8> <d9> <d10>)
-    (<d1> ^pair <p> <p1> <p2> <p3> <p4> ^result 1)
-    (<p> ^num 1 2)
-    (<p1> ^num 3 2)
-    (<p2> ^num 4 3)
-    (<p3> ^num 1 0)
-    (<p4> ^num 5 4)
-    (<d2> ^pair <pa> <pa2> <p21> <p22> ^result 2)
-    (<pa> ^num 1 3)
-    (<pa2> ^num 0 2)
-    (<p21> ^num 4 2)
-    (<p22> ^num 5 3)
-    (<d3> ^pair <pab> <pab2> <pb21> <pb22> ^result 3)
-    (<pab> ^num 1 4)
-    (<pab2> ^num 0 3)
-    (<pb21> ^num 2 5)
-    (<pb22> ^num 3 6)
-}
-sp {game-search*elaborate*diff-table
-   (state <s> ^name game-search)
--->
-    (<s> ^diff-table <dtt> ^integer-list <il>)
-    (<il> ^number 0 1 2 3 4 5 6 7 8 9)
-    (<dtt> ^diff <d1> <d2> <d3>)# <d3> <d4> <d5> <d6> <d7> <d8> <d9> <d10>)
-    (<d1> ^pair <p> <p1> <p2> <p3> <p4> ^result 1)
-    (<p> ^num 1 2)
-    (<p1> ^num 3 2)
-    (<p2> ^num 4 3)
-    (<p3> ^num 1 0)
-    (<p4> ^num 5 4)
-    (<d2> ^pair <pa> <pa2> <p21> <p22> ^result 2)
-    (<pa> ^num 1 3)
-    (<pa2> ^num 0 2)
-    (<p21> ^num 4 2)
-    (<p22> ^num 5 3)
-    (<d3> ^pair <pab> <pab2> <pb21> <pb22> ^result 3)
-    (<pab> ^num 1 4)
-    (<pab2> ^num 0 3)
-    (<pb21> ^num 2 5)
-    (<pb22> ^num 3 6)
-}
-
-#JK TODO figure out inclusive, non inclusive
+#todo add inclusives? for above??? or for numeric?
 sp {board-between*elaborate*instances*samexy*set
+#:interrupt
    (state <s> ^name board-between
               #^instance <s1> #JAMES UNCHUNKED VERSION
               ^a <r>
@@ -402,7 +219,7 @@ sp {board-between*elaborate*instances*samexy*set
               ^superstate.condition.result.set.instance <s1>
               ^operator <op>)
    (<op> ^name complete ^instance <s1>) #JAMES UNCHUNKED VERSION
-   (<sop> ^name board-between ^type between)
+   (<sop> ^name board-between ^type between-exclusive)
    (<r> ^rtype set ^result.set.instance.{1}.<nobj> <objc>)
    (<r2> ^result.set.instance.{1} <obja>)
    (<r3> ^result.set.instance.{1} <objb>)
@@ -413,177 +230,91 @@ sp {board-between*elaborate*instances*samexy*set
    (<pred2> ^<xy> <x> ^{<yx> <> <xy>} <y1>)
    (<pred3> ^<xy> <x>)
    (<s1> ^2 <obja> ^3 <objb> ^1 <set>)
-#  -{(<pred3> ^<yx> {<y> >= <y1>} ^<yx> {<y> >= <y2>})}
-#  -{(<pred3> ^<yx> {<y> <= <y1>} ^<yx> {<y> <= <y2>})}
- -{(<pred3> ^<yx> {<y> > <y1>} ^<yx> {<y> >= <y2>})} #{<y> >= <y1>} 
- -{(<pred3> ^<yx> {<y> < <y1>} ^<yx> {<y> <= <y2>})} #{<y> <= <y1>}
+  -{(<pred3> ^<yx> {<y> >= <y1>} ^<yx> {<y> >= <y2>})} #EXCLUSIVE!!
+  -{(<pred3> ^<yx> {<y> <= <y1>} ^<yx> {<y> <= <y2>})}
+-->
+   (<set> ^object <objc>)
+}
+sp {board-between*elaborate*instances*samexy*set*inclusive
+   (state <s> ^name board-between
+              #^instance <s1> #JAMES UNCHUNKED VERSION
+              ^a <r>
+              ^c <r3>
+             ^superstate.operator <sop>
+              ^b <r2>
+              ^superstate.condition.result.set.instance <s1>
+              ^operator <op>)
+   (<op> ^name complete ^instance <s1>) #JAMES UNCHUNKED VERSION
+   (<sop> ^name board-between ^type between-inclusive)
+   (<r> ^rtype set ^result.set.instance.{1}.<nobj> <objc>)
+   (<r2> ^result.set.instance.{1} <obja>)
+   (<r3> ^result.set.instance.{1} <objb>)
+   (<obja> ^predicates <pred1>)
+   (<objb> ^predicates <pred2>)
+   (<objc> ^predicates <pred3>)
+   (<pred1> ^{<xy> << x y >>} <x> ^{<yx> << x y >>} <y2>)
+   (<pred2> ^<xy> <x> ^{<yx> <> <xy>} <y1>)
+   (<pred3> ^<xy> <x>)
+   (<s1> ^2 <obja> ^3 <objb> ^1 <set>)
+ -{(<pred3> ^<yx> {<y> > <y1>} ^<yx> {<y> >= <y2>})} #INCLUSIVE!! TODO only want to inclusive arg3 last?
+ -{(<pred3> ^<yx> {<y> < <y1>} ^<yx> {<y> <= <y2>})} 
 -->
    (<set> ^object <objc>)
 }
 
-#sp {board-between*elaborate*instances*samex*set
+sp {board-between*elaborate*instances*samexy*single
+   (state <s> ^name board-between
+              #^instance <s1> #JAMES UNCHUNKED VERSION
+              ^a <r>
+              ^c <r3>
+             ^superstate.operator <sop>
+              ^b <r2>
+              ^superstate.condition.result.set.instance <s1>
+              ^operator <op>)
+   (<op> ^name complete ^instance <s1>) #JAMES UNCHUNKED VERSION
+   (<sop> ^name board-between ^type between-exclusive)
+   (<r> ^rtype single ^result.set.instance.{1} <objc>)
+   (<r2> ^result.set.instance.{1} <obja>)
+   (<r3> ^result.set.instance.{1} <objb>)
+   (<obja> ^predicates <pred1>)
+   (<objb> ^predicates <pred2>)
+   (<objc> ^predicates <pred3>)
+   (<pred1> ^{<xy> << x y >>} <x> ^{<yx> << x y >>} <y2>)
+   (<pred2> ^<xy> <x> ^{<yx> <> <xy>} <y1>)
+   (<pred3> ^<xy> <x>)
+   (<s1> ^2 <obja> ^3 <objb> ^1 <set>)
+  -{(<pred3> ^<yx> {<y> >= <y1>} ^<yx> {<y> >= <y2>})} #EXCLUSIVE!!
+  -{(<pred3> ^<yx> {<y> <= <y1>} ^<yx> {<y> <= <y2>})}
+-->
+   (<set> ^object <objc>)
+}
+#TODO JK remove, single object inclusive doesn't make sense for objects?
+#sp {board-between*elaborate*instances*samexy*single*inclusive
 #   (state <s> ^name board-between
-#           #   ^instance <s1>
+#              #^instance <s1> #JAMES UNCHUNKED VERSION
 #              ^a <r>
 #              ^c <r3>
 #             ^superstate.operator <sop>
 #              ^b <r2>
 #              ^superstate.condition.result.set.instance <s1>
 #              ^operator <op>)
-#   (<op> ^name complete ^instance <s1>)
-#   (<sop> ^name board-between ^type between)
-#   (<r> ^rtype set ^result.set.instance.{1}.object <objc>)
+#   (<op> ^name complete ^instance <s1>) #JAMES UNCHUNKED VERSION
+#   (<sop> ^name board-between ^type between-inclusive)
+#   (<r> ^rtype single ^result.set.instance.{1} <objc>)
 #   (<r2> ^result.set.instance.{1} <obja>)
 #   (<r3> ^result.set.instance.{1} <objb>)
 #   (<obja> ^predicates <pred1>)
 #   (<objb> ^predicates <pred2>)
 #   (<objc> ^predicates <pred3>)
-#   (<pred1> ^y <x> ^x <y2>)
-#   (<pred2> ^y <x> ^x <y1>)
-#   (<pred3> ^y <x>)
+#   (<pred1> ^{<xy> << x y >>} <x> ^{<yx> << x y >>} <y2>)
+#   (<pred2> ^<xy> <x> ^{<yx> <> <xy>} <y1>)
+#   (<pred3> ^<xy> <x>)
 #   (<s1> ^2 <obja> ^3 <objb> ^1 <set>)
-# -{(<pred3> ^x {<y> >= <y1>} ^x {<y> >= <y2>})}
-# -{(<pred3> ^x {<y> <= <y1>} ^x {<y> <= <y2>})}
-#-->
-#   (<set> ^object <objc>)
-##   (<s1> ^done true)
-#}
-#sp {board-between*elaborate*instances*sameyx*inclusive
-#   (state <s> ^name board-between
-#           #   ^instance <s1>
-#              ^a <r>
-#              ^c <r3>
-#             ^superstate.operator <sop>
-#              ^b <r2>
-#              ^superstate.condition.result.set.instance <s1>
-#              ^operator <op>)
-#   (<op> ^name complete ^instance <s1>)
-#   (<sop> ^name board-between ^type between-inclusive)
-#   (<r> ^result.set.instance.{1} <objc>)
-#   (<r2> ^result.set.instance.{1} <obja>)
-#   (<r3> ^result.set.instance.{1} <objb>)
-#   (<objb> ^{<xy> << y x >>} <x> ^{<yx> << y x >>} <y1>)
-#   (<obja> ^<xy> <x> ^{<yx> <> <xy>} <y2>)
-#   (<objc> ^<xy> <x>)
-#   (<s1> ^2 <obja> ^3 <objb> ^1 <set>)
-# -{(<objc> ^<yx> {<y> > <y1>} ^<yx> {<y> >= <y2>})}
-# -{(<objc> ^<yx> {<y> < <y1>} ^<yx> {<y> <= <y2>})}
-#-->
-#   (<set> ^object <objc>)
-##   (<s1> ^done true)
-#}
-sp {board-between*elaborate*instances*samey*inclusive
-   (state <s> ^name board-between
-              #^instance <s1> #JAMES UNCHUNKED VERSION
-              ^a <r>
-              ^c <r3>
-             ^superstate.operator <sop>
-              ^b <r2>
-              ^superstate.condition.result.set.instance <s1>
-              ^operator <op>)
-   (<op> ^name complete ^instance <s1>) #JAMES UNCHUNKED VERSION
-   (<sop> ^name board-between ^type between-inclusive)
-   (<r> ^result.set.instance.{1} <objc>)
-   (<r2> ^result.set.instance.{1} <obja>)
-   (<r3> ^result.set.instance.{1} <objb>)
-   (<objb> ^x <x> ^y <y1>)
-   (<obja> ^x <x> ^y <y2>)
-   (<objc> ^x <x>)
-   (<s1> ^2 <obja> ^3 <objb> ^1 <set>)
- -{(<objc> ^y {<y> > <y1>} ^y {<y> >= <y2>})}
- -{(<objc> ^y {<y> < <y1>} ^y {<y> <= <y2>})}
--->
-   (<set> ^object <objc>)
-#   (<s1> ^done true)
-}
-sp {board-between*elaborate*instances*samex*inclusive
-   (state <s> ^name board-between
-              #^instance <s1> #JAMES UNCHUNKED VERSION
-              ^a <r>
-              ^c <r3>
-             ^superstate.operator <sop>
-              ^b <r2>
-              ^superstate.condition.result.set.instance <s1>
-              ^operator <op>)
-   (<op> ^name complete ^instance <s1>) #JAMES UNCHUNKED VERSION
-   (<sop> ^name board-between ^type between-inclusive)
-   (<r> ^result.set.instance.{1} <objc>)
-   (<r2> ^result.set.instance.{1} <obja>)
-   (<r3> ^result.set.instance.{1} <objb>)
-   (<objb> ^y <x> ^x <y1>)
-   (<obja> ^y <x> ^x <y2>)
-   (<objc> ^y <x>)
-   (<s1> ^2 <obja> ^3 <objb> ^1 <set>)
- -{(<objc> ^x {<y> > <y1>} ^x {<y> >= <y2>})}
- -{(<objc> ^x {<y> < <y1>} ^x {<y> <= <y2>})}
--->
-   (<set> ^object <objc>)
-#   (<s1> ^done true)
-}
-#sp {board-between*elaborate*instances*sameyx*inclusive
-#   (state <s> ^name board-between
-#           #   ^instance <s1>
-#              ^a <r>
-#              ^c <r3>
-#             ^superstate.operator.inclusive true
-#              ^b <r2>
-#              ^superstate.condition.result.set.instance <s1>
-#              ^operator <op>)
-#   (<op> ^name complete ^instance <s1>)
-#   (<r> ^result.<se1>.<o1>.<elem> <obja> ^parameter.result.link.link.<se1>.<o1>.<elem> holder)
-#   (<r2> ^result.<se2>.<o2>.<elem2> <objb> ^parameter.result.link.link.<se2>.<o2>.<elem2> holder)
-#   (<r3> ^result.<se3>.<o3>.<elem3> <objb> ^parameter.result.link.link.<se3>.<o3>.<elem3> holder)
-#   (<objb> ^{<xy> << y x >>} <x> ^{<yx> << y x >>} <y1>)
-#   (<obja> ^<xy> <x> ^{<yx> <> <xy>} {<y2> <> <y1>})
-#   (<s1> ^a <obja> ^b <objb> ^c <set>)
-#-->
-#   (<set> ^object <objb>)
-#}
-
-#option inclusive (bit of a hack)
-#useful for counting out places (backgammon,mancala)
-#sp {board-between*elaborate*instances*samex*inclusive
-#   (state <s> ^name board-between
-#            #  ^instance <s1>
-#              ^superstate.operator.inclusive true
-#              ^a <r>
-#              ^c <r3>
-#              ^b <r2>
-#              ^superstate.condition.result.set.instance <s1>
-#              ^operator <op>)
-#   (<op> ^name complete ^instance <s1>)
-#   (<r> ^result.<se1>.<o1>.<elem> <obja> ^parameter.result.link.link.<se1>.<o1>.<elem> holder)
-#   (<r2> ^result.<se2>.<o2>.<elem2> <objb> ^parameter.result.link.link.<se2>.<o2>.<elem2> holder)
-#   (<r3> ^result.<se3>.<o3>.<elem3> <objc> ^parameter.result.link.link.<se3>.<o3>.<elem3> holder)
-#   (<s1> ^a <obja> ^b <objb> ^c <set>)
-#   (<objb> ^id <idb> ^x <x> ^y {<y1> <> <y2>})
-#   (<obja> ^id <ida> ^x <x> ^y <y2>)
-#   (<objc> ^id <idb>)
+# -{(<pred3> ^<yx> {<y> > <y1>} ^<yx> {<y> >= <y2>})} #INCLUSIVE!!
+# -{(<pred3> ^<yx> {<y> < <y1>} ^<yx> {<y> <= <y2>})} 
 #-->
 #   (<set> ^object <objc>)
 #}
-#
-#sp {board-between*elaborate*instances*samey*inclusive
-#   (state <s> ^name board-between
-#          #    ^instance <s1>
-#              ^a <r>
-#              ^c <r3>
-#              ^superstate.operator.inclusive true
-#              ^b <r2>
-#              ^superstate.condition.result.set.instance <s1>
-#              ^operator <op>)
-#   (<op> ^name complete ^instance <s1>)
-#   (<r> ^result.<se1>.<o1>.<elem> <obja> ^parameter.result.link.link.<se1>.<o1>.<elem> holder)
-#   (<r2> ^result.<se2>.<o2>.<elem2> <objb> ^parameter.result.link.link.<se2>.<o2>.<elem2> holder)
-#   (<r3> ^result.<se3>.<o3>.<elem3> <objc> ^parameter.result.link.link.<se3>.<o3>.<elem3> holder)
-#   (<s1> ^a <obja> ^b <objb> ^c <set>)
-#   (<objb> ^id <idb> ^y <x> ^x {<y1> <> <y2>})
-#   (<obja> ^id <ida> ^y <x> ^x <y2>)
-#   (<objc> ^id <idb>)
-#-->
-#   (<set> ^object <objc>)
-#}
-
 sp {numeric-between*propose*complete
    (state <s> ^name numeric-between
               ^instance <instance>)
@@ -592,8 +323,6 @@ sp {numeric-between*propose*complete
    (<o> ^name complete
         ^instance <instance>)
 }
-
-
 sp {board-between*propose*complete
    (state <s> ^name board-between
               ^instance <instance>)
@@ -602,7 +331,7 @@ sp {board-between*propose*complete
    (<o> ^name complete
         ^instance <instance>)
 }
-
+#################################################
 #search control hack
 sp {board-between*perference*complete*samex
    (state <s> ^name board-between
@@ -620,7 +349,6 @@ sp {board-between*perference*complete*samex
 -->
    (<s> ^operator <o1> >)
 }
-
 sp {board-between*perference*complete*samey
    (state <s> ^name board-between
               ^linkstate <ls>
@@ -637,8 +365,6 @@ sp {board-between*perference*complete*samey
 -->
    (<s> ^operator <o1> >)
 }
-
-
 ##TODO general rule #JAMES UNCHUNKED VERSION
 sp {try-different-instance*result #JAMES UNCHUNKED VERSION
    (state <s> ^superstate.superstate.name learn-condition
@@ -646,5 +372,5 @@ sp {try-different-instance*result #JAMES UNCHUNKED VERSION
    (<ss> ^operator <o>)
    (<o> ^name complete ^instance <i>)
 -->
-    (<ss> ^operator <o> -)
+   (<ss> ^operator <o> -)
  }

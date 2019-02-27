@@ -1,10 +1,10 @@
-
-#temp quick version for games, predicates
+#version for games, learning new predicates
 sp {interpret-message*propose*interpret-unknown-word
    (state <s> ^name interpret-message 
               ^instructor-message <msg>)
    (<msg> ^type unknown-word ^word <word>)
 -->
+(interrupt)
 #(write (crlf) (cmd print <msg>))
    (<s> ^operator <o> + > =)
    (<o> ^name interpret-unknown-word
@@ -37,27 +37,40 @@ sp {interpret-message*prefer*interpret-unknown-word*adjacent
     (<s> ^operator <o> > <o2>)
 }
 
-
-# Mark the message as interpreted (retracts operator)
-#   And send message to human
-sp {interpret-message*apply*interpret-unknown-word*remove-new-unknown
+sp {interpret-message*apply*interpret-unknown-word*outside-games
    (state <s> ^name interpret-message
-              #^unprocessed-next nil
-              ^top-state.dialog-context <dc>
+              ^top-state <ts>
               ^operator <o>)
    (<o> ^name interpret-unknown-word
         ^word <word>
         ^message <msg>)
-   (<dc> ^new-unknown <word>)
+   (<ts> -^dialog-context )
 -->
-    (<dc> ^new-unknown <word> -)
+    (<ts> ^dialog-context <dc>)
+    (<dc> ^flag predicate-learning ^learning true ^type game-learning ^name procedural) #game-learning flag probably bad
  }
 
+
+#sp {interpret-message*apply*interpret-unknown-word*remove-new-unknown
+#   (state <s> ^name interpret-message
+#              #^unprocessed-next nil
+#              ^top-state.dialog-context <dc>
+#              ^operator <o>)
+#   (<o> ^name interpret-unknown-word
+#        ^word <word>
+#        ^message <msg>)
+#   (<dc> ^new-unknown <word>)
+#-->
+#    (<dc> ^new-unknown <word> -)
+# }
+
 sp {interpret-message*apply*interpret-unknown-word*create*segment
+:interrupt
    (state <s> ^name interpret-message
               #^unprocessed-next nil
               ^top-state.dialog-context <dc>
               ^top-state.interaction.changes <c>
+              ^top-state.world.objects <wobjs>
               ^operator <o>)
    (<o> ^name interpret-unknown-word
         ^word <word>
@@ -75,7 +88,10 @@ sp {interpret-message*apply*interpret-unknown-word*create*segment
    (<de> ^type process-unknown-word
           ^originator instructor)
    (<dc> ^learning-predicate <lp>)
-   (<lp> ^name <word>)
+   (<lp> ^name <word> ^spelling <word> ^usage-args <ua>)
+   (<ua> ^1 <a1> ^num 1)
+   (<a1> ^rtype set ^parameter.num 0 ^result.set.instance <in1>)
+   (<in1> ^1 (deep-copy <wobjs>))
    (<s> ^mark-interpreted <msg>)
    (<s> ^outgoing-message <out-msg>)
    (<out-msg> ^type unknown-word
@@ -95,11 +111,24 @@ sp {interpret-message*apply*interpret-unknown-word*store-smem-word*X-OBJ-ADJ
 		-^word frog
 		-^word piece
         -^word knight
+        -^word sprite
+		-^word peg
+        -^word person
+		-^word agent
+        -^word actor
+        -^word manager
 		-^word toad
+   	    -^word goose
+        -^word bean
+        -^word passenger
+		-^word line
+		-^word group
+        -^word fox
 		-^word diagonally
         -^word larger #temp no after for non scripted
 		-^word jumpable
 		-^word grape
+		-^word matches
    		-^word adjacent #temp no after for non scripted
    		-^word << on in below above near under behind around besides supporting >>
 		-^word grapefruit
@@ -136,8 +165,9 @@ sp {interpret-message*apply*interpret-unknown-word*store-smem-word*noun
               ^operator <o>)
    (<o> ^name interpret-unknown-word
         ^word <word>
-        ^word << knight piece tile box frog toad grape grapefruit missionary cannibal goose bean fox child adult player >>
+        ^word << peg sprite knight person agent actor manager piece tile box frog toad grape grapefruit missionary cannibal goose bean fox passenger line group child adult player >>
         ^message <msg>)
+(<msg> -^after of)
   # (<msg> ^before << a the an >> ^after |.|)
 -->
 (write |NOUN| (crlf))
@@ -369,6 +399,7 @@ sp {interpret-message*apply*interpret-unknown-word*store-smem-word*x-to*no*msg
     
 }
 
+#added to?
 #other -to
 #next to, adjacent
 #TODO hack lost information that following word is to and has 2 args... need to recover
@@ -408,7 +439,7 @@ sp {interpret-message*apply*interpret-unknown-word*store-smem-word*prep
               ^operator <o>)
    (<o> ^name interpret-unknown-word
         ^word <word>
-		 ^word << on in below above near under behind around besides supporting >>
+		 ^word << matches on in below above near under behind around besides supporting >>
         ^message <msg>)
    (<msg> -^after << than to of >> -^after |.|)#^before is
 -->
