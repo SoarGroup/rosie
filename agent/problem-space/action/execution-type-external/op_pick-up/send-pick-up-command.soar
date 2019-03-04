@@ -1,0 +1,68 @@
+
+sp {op_pick-up1*propose*send-pick-up-command
+   (state <s> ^name op_pick-up1
+              ^target-object <obj>
+              ^desired <d>)
+   (<obj> ^predicates <preds>)
+   (<preds> ^visible true
+            ^inreach inreach
+            ^arm-status not-grabbed)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name send-pick-up-command
+        ^item-type command-operator
+        ^object <obj>)
+}
+
+sp {op_pick-up1*reject*send-pick-up-command*already*sent
+   (state <s> ^name op_pick-up1
+              ^operator <o> +
+              ^current-task-segment.pick-up-command)
+   (<o> ^name send-pick-up-command)
+-->
+   (<s> ^operator <o> -)
+}
+
+sp {op_pick-up1*internal*apply*send-pick-up-command*change*arm-status
+   (state <s> ^name op_pick-up1
+              ^problem-space.execution-type internal
+              ^operator <o>)
+   (<o> ^name send-pick-up-command
+        ^object.predicates <preds>)
+   (<preds> ^arm-status not-grabbed)
+-->
+   (<preds> ^arm-status not-grabbed -
+            ^arm-status grabbed)
+}
+
+sp {op_pick-up1*external*apply*send-pick-up-command*ai2thor
+   (state <s> ^name op_pick-up1
+              ^problem-space.execution-type external
+              ^agent-params.domain ai2thor
+              ^operator <o>
+              ^io.output-link <ol>
+              ^current-task-segment <seg>)
+   (<o> ^name send-pick-up-command
+        ^object.handle <h>)
+-->
+   (<ol> ^perform-action <pa>)
+   (<pa> ^item-type output-command
+         ^name pick-up
+         ^object <h>)
+   (<seg> ^pick-up-command <pa>)
+}
+
+sp {op_pick-up1*external*apply*send-pick-up-command*internal
+   (state <s> ^name op_pick-up1
+              ^problem-space.execution-type external
+              ^agent-params.domain internal
+              ^operator <o>
+              ^current-task-segment <seg>)
+   (<o> ^name send-pick-up-command
+        ^object <obj>)
+-->
+   (<seg> ^pick-up-command <cmd>)
+   (<cmd> ^item-type output-command
+          ^name pick-up
+          ^object <obj>)
+}
