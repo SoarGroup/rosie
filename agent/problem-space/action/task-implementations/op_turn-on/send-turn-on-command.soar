@@ -1,0 +1,132 @@
+sp {op_turn-on1*propose*send-turn-on-command
+   (state <s> ^name op_turn-on1
+              ^target-object <obj>)
+   (<obj> ^predicates <preds>)
+   (<preds> ^is-visible1 visible1
+            ^is-reachable1 reachable1
+            ^activation1 off2)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name send-turn-on-command
+        ^item-type command-operator
+        ^object <obj>)
+}
+
+sp {op_turn-on1*reject*send-turn-on-command*already*sent
+   (state <s> ^name op_turn-on1
+              ^operator <o> +
+              ^current-task-segment.turn-on-command)
+   (<o> ^name send-turn-on-command)
+-->
+   (<s> ^operator <o> -)
+}
+
+### model send-turn-on-command
+sp {op_turn-on1*internal*apply*send-turn-on-command*change*activation
+   (state <s> ^name op_turn-on1
+              ^problem-space.execution-type internal
+              ^operator <o>)
+   (<o> ^name send-turn-on-command
+        ^object.predicates <preds>)
+   (<preds> ^activation1 off2)
+-->
+   (<preds> ^activation1 off2 -
+            ^activation1 on2)
+}
+
+
+### ai2thor + internal
+
+# not a microwave - turn-on
+sp {op_turn-on1*external*apply*send-turn-on-command*ai2thor*internal
+   (state <s> ^name op_turn-on1
+              ^problem-space.execution-type external
+              ^agent-params.domain << ai2thor internal >>
+              ^operator <o>
+              ^io.output-link <ol>
+              ^current-task-segment <seg>)
+   (<o> ^name send-turn-on-command
+        ^object <obj>)
+   (<obj> ^handle <h>
+          -^predicates.name microwave1)
+-->
+   (<ol> ^perform-action <pa>)
+   (<pa> ^item-type output-command
+         ^name turn-on
+         ^object <h>)
+   (<seg> ^turn-on-command <pa>)
+}
+
+# turn on microwave - default 30 secs
+sp {op_turn-on1*external*apply*send-turn-on-command*ai2thor*internal*microwave*default*secs
+   (state <s> ^name op_turn-on1
+              ^problem-space.execution-type external
+              ^agent-params.domain << ai2thor internal >>
+              ^operator <o>
+              ^io.output-link <ol>
+              ^task-operator <task-op>
+              ^current-task-segment <seg>)
+   (<o> ^name send-turn-on-command
+        ^object <obj>)
+   (<obj> ^handle <h>
+          ^predicates.name microwave1)
+   (<task-op> -^until-clause.<pnum>.type duration)
+-->
+   (<ol> ^perform-action <pa>)
+   (<pa> ^item-type output-command
+         ^name set-timer
+         ^object <h>
+         ^time 30)
+   (<seg> ^turn-on-command <pa>)
+}
+
+# turn on microwave - time from duration in seconds
+sp {op_turn-on1*external*apply*send-turn-on-command*ai2thor*internal*microwave*duration*secs
+   (state <s> ^name op_turn-on1
+              ^problem-space.execution-type external
+              ^agent-params.domain << ai2thor internal >>
+              ^operator <o>
+              ^io.output-link <ol>
+              ^task-operator.until-clause.<pnum> <dur>
+              ^current-task-segment <seg>)
+   (<o> ^name send-turn-on-command
+        ^object <obj>)
+   (<obj> ^handle <h>
+          ^predicates.name microwave1)
+   (<dur> ^type duration
+          ^number <num>
+          ^unit seconds)
+-->
+   (<ol> ^perform-action <pa>)
+   (<pa> ^item-type output-command
+         ^name set-timer
+         ^object <h>
+         ^time <num>)
+   (<seg> ^turn-on-command <pa>)
+}
+
+# turn on microwave - time from duration in minutes
+sp {op_turn-on1*external*apply*send-turn-on-command*ai2thor*internal*microwave*duration*min
+   (state <s> ^name op_turn-on1
+              ^problem-space.execution-type external
+              ^agent-params.domain << ai2thor internal >>
+              ^operator <o>
+              ^io.output-link <ol>
+              ^task-operator.until-clause.<pnum> <dur>
+              ^current-task-segment <seg>)
+   (<o> ^name send-turn-on-command
+        ^object <obj>)
+   (<obj> ^handle <h>
+          ^predicates.name microwave1)
+   (<dur> ^type duration
+          ^number <num>
+          ^unit minutes)
+-->
+   (<ol> ^perform-action <pa>)
+   (<pa> ^item-type output-command
+         ^name set-timer
+         ^object <h>
+         ^time (* <num> 60))
+   (<seg> ^turn-on-command <pa>)
+}
+
