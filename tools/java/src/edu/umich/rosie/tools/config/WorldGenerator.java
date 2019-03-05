@@ -91,7 +91,7 @@ public class WorldGenerator {
 							outputWriter.write(")\n");
 							index= index +1;
 							outputWriter.write("(" + objs.get(index) + " ^item-type object ^handle object-" + index + " ^predicates <pr" + index + ">)\n");
-							outputWriter.write("(<pr" + index + "> ^visible true ");
+							outputWriter.write("(<pr" + index + "> ^is-visible1 visible1 ");
 							flag = 1;   
 						} else if (line.contains("predicate ")) {
 							if (flag == 1){
