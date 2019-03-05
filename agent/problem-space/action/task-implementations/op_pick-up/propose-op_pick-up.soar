@@ -1,0 +1,103 @@
+################ propose op_pick-up1 ###################
+
+# Pick up for environments without doors
+sp {problem-space*action*propose*op_pick-up1*simple
+   (state <s> ^problem-space <ps>
+              ^world <w>
+              ^agent-params.domain << tabletop magicbot fetch >>)
+   (<ps> ^name action
+         ^propose-subtasks true)
+   (<w> ^objects <objs>
+        ^predicates.predicate <in-pred>)
+   (<objs> ^object <obj>
+          -^object.predicates.arm-status grabbed)
+   (<obj> ^predicates <preds>)
+   (<preds> ^category object
+            ^grabbable grabbable
+            ^arm-status not-grabbed)
+   (<in-pred> ^handle in1)
+   -{(<in-pred> ^instance <i>)
+     (<i> ^1 <obj> ^{2}.predicates.door2)}
+-->
+   (<s> ^operator <op> +)
+   (<op> ^name op_pick-up1 
+         ^item-type task-operator
+         ^task-handle pick-up1
+         ^arg1 <arg1>)
+   (<arg1> ^arg-type object
+           ^id <obj>)
+}
+
+# Pick up for environments w/ doors, but the object is not in a receptacle with a door
+sp {problem-space*action*propose*op_pick-up1*no*door
+   (state <s> ^problem-space <ps>
+              ^world <w>
+              ^agent-params.domain << internal ai2thor >>)
+   (<ps> ^name action
+         ^propose-subtasks true)
+   (<w> ^objects <objs>
+        ^predicates.predicate <in-pred>)
+   (<objs> ^object <obj>
+          -^object.predicates.arm-status grabbed)
+   (<obj> ^predicates <preds>)
+   (<preds> ^category object
+            ^grabbable grabbable
+            ^arm-status not-grabbed)
+   (<in-pred> ^handle in1)
+   -{(<in-pred> ^instance <i>)
+     (<i> ^1 <obj> ^{2}.predicates.door2)}
+-->
+   (<s> ^operator <op> +)
+   (<op> ^name op_pick-up1 
+         ^item-type task-operator
+         ^task-handle pick-up1
+         ^arg1 <arg1>)
+   (<arg1> ^arg-type object
+           ^id <obj>)
+}
+
+# Pick up for environments w/ doors, for something in a receptacle with a door
+sp {problem-space*action*propose*op_pick-up1*door
+   (state <s> ^problem-space <ps>
+              ^world <w>
+              ^agent-params.domain << internal ai2thor >>)
+   (<ps> ^name action
+         ^propose-subtasks true)
+   (<w> ^objects <objs>
+        ^predicates.predicate <in-pred>)
+   (<objs> ^object <obj>
+          -^object.predicates.arm-status grabbed)
+   (<obj> ^predicates <preds>)
+   (<preds> ^category object
+            ^grabbable grabbable
+            ^arm-status not-grabbed)
+   (<in-pred> ^handle in1
+              ^instance <i>))
+   (<i> ^1 <obj> ^{2}.predicates.door2 open2)
+-->
+   (<s> ^operator <op> +)
+   (<op> ^name op_pick-up1 
+         ^item-type task-operator
+         ^task-handle pick-up1
+         ^arg1 <arg1>)
+   (<arg1> ^arg-type object
+           ^id <obj>)
+}
+
+# SPCASE: Don't pick up something if its already satisfying a relation goal predicate
+sp {action*reject*op_pick-up1*in*goal
+   (state <s> ^problem-space.name action
+              ^operator <o> +
+             -^child-task-segment
+              ^desired.<gpnum> <gp>
+              ^world.predicates.predicate <wpred>)
+   (<o> ^name op_pick-up1
+        ^arg1.id <obj1>)
+   (<gp> ^type relation ^handle <ph> ^1 <obj1> ^2 <obj2>)
+   (<wpred> ^handle <ph>
+            ^instance <i>)
+   (<i> ^1 <obj1> ^2 <obj2>)
+-->
+   (<s> ^operator <o> -)
+}
+
