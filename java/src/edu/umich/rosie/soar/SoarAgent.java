@@ -215,6 +215,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         System.out.print("\n");
 
 		if(config.startRunning){
+			System.out.println("RUNNING");
 			start();
 		}
     }

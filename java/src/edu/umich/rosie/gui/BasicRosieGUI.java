@@ -27,8 +27,6 @@ public class BasicRosieGUI extends JFrame
 
 	private JButton startStopButton;
 	
-	
-	
 	private LanguageConnector language;
 
     public BasicRosieGUI(Properties props)
