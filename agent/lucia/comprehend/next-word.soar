@@ -1,0 +1,299 @@
+##!
+# @file
+#
+# @created plindes 20150610
+# File: next-word.soar
+# Author: Peter Lindes
+# Created: 10 June 2015
+# Rewritten: 18 May 2017    Version to run within Rosie
+#
+# Desc: Receives the next word as requested
+#
+#   This operator works very differently between Lucia and Rosie,
+#   regardless of whether in test mode or not.
+#
+#   In Lucia each word is requested by a command on the output
+#   link, and then the Java code puts the word on the input link.
+#   The word provided has ^has-terminator true if this is the
+#   last word of the sentence.
+#
+#   In Rosie, the whole sequence of words is elaborated onto
+#   the top state by a rule built during configuration.
+#   The terminating punctuation appears as a separate word.
+#
+
+#    Propose an operator to request the word
+sp {comprehend*propose*next-word
+   (state <s> ^top-state <ts>
+              ^problem-space comprehend
+              ^input <i>
+             -^no-more true
+             -^comprehension.done true)
+   (<ts> ^io.output-link <output>)
+  -(<i> ^comprehended false)
+   #    This check only matters for Lucia, not for Rosie
+  -(<output> ^request-word complete)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name next-word
+        ^debug-info (concat |Receive the input word that was requested.|))
+}
+
+############### RULES FOR LUCIA ONLY #################
+
+sp {comprehend*apply*next-word*normal
+   (state <s> ^top-state <ts>
+              ^problem-space comprehend
+              ^input <i>
+              ^operator <o>)
+   (<o> ^name next-word)
+   (<ts> ^io.input-link.word <w>
+         ^io.output-link <output>
+         ^next-word <next-word>)
+  -(<w> ^no-more true)
+   (<i> ^word <old-w>
+        ^count <old-c>
+        ^comprehended true)
+   (<w> ^word <text>)
+-->
+   (<i> ^word <old-w> -
+        ^word <w>
+        ^count <old-c> -
+        ^count (+ <old-c> 1)
+        ^comprehended true -
+        ^comprehended false)
+   #    DON'T TRY TO PUT THE WORD ON THE CURRENT STATE DIRECTLY
+   #    OR THE GDS WILL BLOW YOU AWAY!!!!
+   (write (crlf) (concat |Received word #| (+ <old-c> 2) |: | <text>))
+   #    Clean up the output link
+   (<output> ^request-word <next-word> -
+             ^request-word complete)
+   #    Update the word counter
+   (<ts> ^next-word <next-word> -
+         ^next-word (+ <next-word> 1))
+}
+
+############### RULES FOR ROSIE ONLY #################
+
+#   Getting the Lucia-like next-word to work with the Rosie
+#   sentence structure is complicated.  There are 4 cases:
+#   Case 1: This is the first word in the sentence, but it
+#           is not the last word.  Here we have to skip over
+#           the initial '*' word in the sentence format.
+#   Case 2: This word is somewhere in the middle.  It is not
+#           the first word, nor is it the last.
+#   Case 3: This is the last word, but not also the first.
+#           Here we have to through away final the '.' word.
+#   case 4: This is both the first word and the last word.
+#           Here we have to skip over the initial '*' word
+#           and throw away the final '.' word.
+#
+
+#   Case 1 apply rule
+sp {comprehend*apply*next-word*first-word-not-last
+   (state <s> ^problem-space comprehend
+              ^input <i>
+              ^operator <o>
+              ^sentence <sentence>)
+   (<o> ^name next-word)
+   (<i> ^word nil
+        ^count -1
+        ^comprehended true
+        ^next nil
+        ^content nil)
+   #    Skip over the "*" to get to the first real word
+   (<sentence> ^spelling |*|
+               ^next <first>)
+   (<first> ^spelling <text>
+            ^next <next>)
+   #    Don't fire if this is the last word
+ -{(<next> ^spelling << |.| |?| |!| >>)}
+-->
+   (<i> ^word nil -
+        ^word <w>
+        ^count -1 -
+        ^count 1
+        ^comprehended true -
+        ^comprehended false
+        ^next nil -
+        ^next <next>
+        ^content nil -
+        ^content <text>)
+   #    Build a word for Rosie, not all the info there
+   (<w> ^content <text>
+        ^orth <text>
+        ^post-punct ||
+        ^pre-punct ||
+        ^word <text>
+        ^word-count 0)
+   #    CASE 1:
+   (write (crlf) (concat |Received word #1: | <text>))
+}
+
+#   Case 2 apply rule
+sp {comprehend*apply*next-word*in-the-middle
+   (state <s> ^problem-space comprehend
+              ^input <i>
+              ^operator <o>)
+   (<o> ^name next-word)
+   (<i> ^word { <old-word> <> nil }
+        ^count <old-count>
+        ^comprehended true
+        ^next { <next> <> nil }
+        ^content <old-text>)
+   (<next> ^spelling <text>
+           ^next <next-next>)
+   #    Don't fire if this is the last word
+  -{(<next> ^next <next-next>)
+    (<next-next> ^next nil
+                 ^spelling << |.| |?| |!| >>)}
+-->
+   (<i> ^word <old-word> -
+        ^word <w>
+        ^count <old-count> -
+        ^count (+ <old-count> 1)
+        ^comprehended true -
+        ^comprehended false
+        ^next <next> -
+        ^next <next-next>
+        ^content <old-text> -
+        ^content (concat <old-text> | | <text>))
+   #    Build a word for Rosie, not all the info there
+   (<w> ^content <text>
+        ^orth <text>
+        ^post-punct ||
+        ^pre-punct ||
+        ^word <text>
+        ^word-count <old-count>)
+   #    CASE 1:
+   (write (crlf) (concat |Received word #| (+ <old-count> 1) |: | <text>))
+}
+
+#   Case 3 apply rule
+sp {comprehend*apply*next-word*last-word-not-first
+   (state <s> ^problem-space comprehend
+              ^input <i>
+              ^operator <o>
+)#              ^sentence <sentence>)
+   (<o> ^name next-word)
+   (<i> ^word <old-word>
+        ^count <old-count>
+        ^comprehended true
+        ^next { <next> <> nil }
+        ^content <old-text>)
+   (<next> ^spelling <text>
+           ^next <next-next>)
+   #    Fire only if this is the last word
+   (<next-next> ^next nil
+           ^spelling << |.| |?| |!| >>)
+-->
+   (<i> ^word <old-word> -
+        ^word <w>
+        ^count <old-count> -
+        ^count (+ <old-count> 1)
+        ^comprehended true -
+        ^comprehended false
+        ^next <next> -
+        ^next nil
+        ^content <old-text> -
+        ^content (concat <old-text> | | <text>))
+   #    Build a word for Rosie, not all the info there
+   (<w> ^content <text>
+        ^has-terminator true
+        ^orth <text>
+        ^post-punct ||
+        ^pre-punct ||
+        ^word <text>
+        ^word-count <old-count>)
+   #    CASE 3:
+   (write (crlf) (concat |Received word #| (+ <old-count> 1) |: | <text>))
+}
+
+#   Case 4 apply rule
+sp {comprehend*apply*next-word*first-and-last
+   (state <s> ^problem-space comprehend
+              ^input <i>
+              ^operator <o>
+              ^sentence <sentence>)
+   (<o> ^name next-word)
+   (<i> ^word <old-word>
+        ^count <old-count>
+        ^comprehended true
+        ^next nil
+        ^content nil)
+   #    Skip over the "*" to get to the first real word
+   (<sentence> ^spelling |*|
+               ^next <first>)
+   (<first> ^spelling <text>
+            ^next <next>)
+   #    Fire only if this is also the last word
+   (<next> ^next nil
+           ^spelling << |.| |?| |!| >>)
+-->
+   (<i> ^word <old-word> -
+        ^word <w>
+        ^count <old-count> -
+        ^count (+ <old-count> 1)
+        ^comprehended true -
+        ^comprehended false
+        ^next <next> -
+        ^next nil
+        ^content nil -
+        ^content <text>)
+   #    Build a word for Rosie, not all the info there
+   (<w> ^content <text>
+        ^has-terminator true
+        ^orth <text>
+        ^post-punct ||
+        ^pre-punct ||
+        ^word <text>
+        ^word-count <old-count>)
+   #    CASE 4:
+   (write (crlf) (concat |Received word #1: | <text>))
+}
+
+############### THE SAME FOR BOTH SYSTEMS #################
+
+#   Start accumulating the text of the sentence.
+sp {comprehend*apply*next-word*normal*start-sentence
+   (state <s> ^top-state <ts>
+              ^problem-space comprehend
+              ^input <i>
+              ^operator <o>)
+   (<o> ^name next-word)
+   (<ts> ^io.input-link.word <w>)
+  -(<w> ^no-more true)
+   (<i> ^content nil)
+   (<w> ^content <content>)
+-->
+   (<i> ^content nil -
+        ^content <content>)
+}
+
+#   Continue accumulating the text of the sentence.
+sp {comprehend*apply*next-word*normal*build-sentence
+   (state <s> ^top-state <ts>
+              ^problem-space comprehend
+              ^input <i>
+              ^operator <o>)
+   (<o> ^name next-word)
+   (<ts> ^io.input-link.word <w>)
+  -(<w> ^no-more true)
+   (<i> ^content { <sentence> <> nil })
+   (<w> ^content <content>)
+-->
+   (<i> ^content <sentence> -
+        ^content (concat <sentence> | | <content>))
+}
+
+sp {comprehend*apply*next-word*no-more
+   (state <s> ^top-state <ts>
+              ^problem-space comprehend
+              ^operator <o>)
+   (<o> ^name next-word)
+   (<ts> ^io.input-link.word <w>)
+   (<w> ^no-more true)
+-->
+   (<s> ^no-more true)
+   (write (crlf) (concat |NO MORE INPUT|))
+}

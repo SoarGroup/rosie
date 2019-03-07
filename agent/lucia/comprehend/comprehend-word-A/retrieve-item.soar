@@ -1,0 +1,137 @@
+##!
+# @file
+#
+# @created plindes 20160215
+# File: retrieve-item.soar
+# Author: Peter Lindes
+# Created: 15 February 2016
+#
+# Desc:  When an smem retrieval has been done, get the results.
+#
+#        Also, the rule to post the smem query is here as well.
+#
+
+#   A rule shared between several operators
+#   Put a retrieval query on the smem link
+sp {comprehend-word*apply*lookup-operator*do-query
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <cxn>
+              ^smem.command <command>)
+   (<o> ^name << lookup-property lookup-adverb ground-known-object >>)
+   #    Find a retrieval request
+   (<s> ^retrieval <r>)
+   (<r> ^cxn <cxn>
+        ^handle <handle>)
+-->
+   #    Add a command to the smem link
+   (<command> ^query <q>
+              ^depth 2)
+   (<q> ^handle <handle>)
+}
+
+#    Propose an operator to retrieve an item that has been queried for
+sp {comprehend-word*propose*retrieve-item
+   (state <s> ^problem-space comprehend-word
+              ^cxn <cxn>
+              ^smem.command.query <q>)
+   (<s> ^retrieval <r>)
+   (<r> ^cxn <cxn>
+        ^handle <handle>)
+-->
+   (<s> ^operator <o> > +)
+   (<o> ^name retrieve-item
+        ^retrieval <r>
+        ^debug-info (concat |Retrieve the item with handle | <handle>  | from smem.|))
+}
+
+#   Get the retrieved item and put it where it belongs
+#   This is for the case where the target attribute is not there yet
+sp {comprehend-word*apply*retrieve-item*success*attribute-does-not-exist
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <cxn>
+              ^smem.command <command>
+              ^smem.result <result>)
+   (<o> ^name retrieve-item
+        ^retrieval <r>)
+   #    Get the retrieval information
+   (<s> ^retrieval <r>)
+   (<r> ^cxn <cxn>
+        ^handle <handle>
+        ^target <target>
+        ^attribute <attr>)
+   #    See that the target it not there yet
+  -(<target> ^<attr> )
+   #    Find the result in SMEM
+   (<result> ^success <q>
+             ^retrieved <lti>)
+   (<lti> ^handle <handle>)    #    To filter out lower level items
+-->
+   #    Put the retrieved item where it belongs
+   #    In this case, create a new wme
+   (<target> ^<attr> <lti>)
+   #    Delete the query
+   (<command> ^query <q> -)
+   #    Delete the retrieval message
+   (<s> ^retrieval <r> -)
+}
+
+#   Get the retrieved item and put it where it belongs
+#   This is for the case where the target attribute is there already
+sp {comprehend-word*apply*retrieve-item*success*attribute-does-exist
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <cxn>
+              ^smem.command <command>
+              ^smem.result <result>)
+   (<o> ^name retrieve-item
+        ^retrieval <r>)
+   #    Get the retrieval information
+   (<s> ^retrieval <r>)
+   (<r> ^cxn <cxn>
+        ^handle <handle>
+        ^target <target>
+        ^attribute <attr>)
+   #    See that the target is already there
+   (<target> ^<attr> <old-value>)
+   #    Find the result in SMEM
+   (<result> ^success <q>
+             ^retrieved <lti>)
+   (<lti> ^handle <handle>)    #    To filter out lower level items
+-->
+   #    Put the retrieved item where it belongs
+   #    In this case, replace the old wme
+   (<target> ^<attr> <old-value> -
+             ^<attr> <lti>)
+   #    Delete the query
+   (<command> ^query <q> -)
+   #    Delete the retrieval message
+   (<s> ^retrieval <r> -)
+}
+
+#    Deal with a failed retrieval
+sp {comprehend-word*apply*retrieve-item*failure
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <cxn>
+              ^smem.command <command>
+              ^smem.result <result>)
+   (<o> ^name retrieve-item
+        ^retrieval <r>)
+   #    Get the retrieval information
+   (<s> ^retrieval <r>)
+   (<r> ^cxn <cxn>
+        ^handle <handle>
+        ^target <target>
+        ^attribute <attr>)
+   #    Find the result in SMEM
+   (<result> ^failure <q>)
+-->
+   #    Put the retrieved item where it belongs
+   (<target> ^<attr> FAILURE)
+   #    Delete the query
+   (<command> ^query <q> -)
+   #    Delete the retrieval message
+   (<s> ^retrieval <r> -)
+}

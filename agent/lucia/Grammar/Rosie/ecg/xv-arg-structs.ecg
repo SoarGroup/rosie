@@ -1,0 +1,289 @@
+// To handle transfer commands
+// This just adds a second object to
+// an already existing TransitiveCommand.
+// An alternative approach would be
+// to snip the TransitiveCommand and
+// rebuild.
+// That would require a smart snipper.
+construction DiTransitiveCommand
+   subcase of Imperative
+   constructional
+      constituents
+         command : TransitiveCommand
+         theme: RefExpr
+   meaning: DoTransfer
+      constraints
+         self.m.action <--> command.verb.m
+         self.m.object <--> command.object.m
+         self.m.object2 <--> theme.m
+
+// Constructions to handle "Remember <x> as <y>."
+general construction RememberAasB
+   subcase of Imperative
+ 
+construction RememberRefExprasB
+   subcase of RememberAasB
+   constructional
+      constituents
+	     verb: REMEMBER
+         object : RefExpr
+         connector : AS
+         target : RefExpr
+   meaning: DoTransfer
+      constraints
+         self.m.action <--> verb.m
+         self.m.object <--> object.m
+         self.m.object2 <--> target.m
+ 
+construction RememberConditionasB
+   subcase of RememberAasB
+   constructional
+      constituents
+	     verb: REMEMBER
+         condition : IfCondition
+         connector : AS
+         target : RefExpr
+   meaning: DoTransfer
+      constraints
+         self.m.action <--> verb.m
+         self.m.object <--> condition.m
+         self.m.object2 <--> target.m
+
+// A whole new system for handle "If <condition> then <imperative>" sentences
+general construction Conditional
+
+// Conditional commands
+construction IfConditionThenCommand
+   subcase of Conditional
+   constructional
+      constituents
+         conditionPart: IfConditionThen
+         command: Imperative
+   meaning: IfThenCommand
+      constraints
+         self.m.condition <--> conditionPart.condition.declarative.m
+         self.m.command <--> command.m
+
+construction IfCondition
+   constructional
+      constituents
+         if: IF
+         declarative: Declarative
+   meaning: Condition
+      constraints
+         self.m.statement <--> declarative.m
+
+construction IfConditionThen
+   subcase of Conditional
+   constructional
+      constituents
+         condition: IfCondition
+         then: THEN
+
+construction IfConditionCommand
+   subcase of Conditional
+   constructional
+      constituents
+         condition: IfCondition
+         command: Imperative
+   meaning: IfThenCommand
+      constraints
+         self.m.condition <--> condition.declarative.m
+         self.m.command <--> command.m
+
+//	Constructions to handle sentences like "Check if <Declarative>."
+construction CheckCondition
+   constructional
+      constituents
+	     action: CHECK
+         condition: IfCondition
+   meaning: CheckIt
+      constraints
+         self.m.action <--> action.m
+         self.m.condition <--> condition.declarative.m
+
+
+// A way to handle things like "Wait for one minute."
+// This method is very general, probably
+// it would be better to have more specific
+// constructions that allow for distinguishing
+// between between time periods and other end conditions.
+construction ActionForTimePeriod
+   subcase of Imperative
+   constructional
+      constituents
+         verb: ActionVerb
+         for: FOR
+         end: NumberOfUnits
+   meaning: ActionForTime
+      constraints
+         self.m.action <--> verb.m
+         self.m.time <--> end.m
+
+// A command addressed explicitly to Rosie
+construction RosieCommand
+   subcase of Imperative
+   constructional
+      constituents
+         rosie: ROSIE
+         verb: ActionVerb
+         object: RefExpr
+   meaning: ActOnIt
+      constraints
+         self.m.action <--> verb.m
+         self.m.object <--> object.m
+
+// A subject followed by a verb
+// This satisfies an intransitive clause,
+// and serves as the beginning of a transitive one.
+construction SubjectVerb
+   subcase of Declarative
+   constructional
+      constituents
+         subject: RefExpr
+         verb: ActionVerb
+   meaning: IntransitiveAssertion
+      constraints
+         self.m.subject <--> subject.m
+         self.m.verb <--> verb.m
+
+// A SubjectVerb followed by an object
+// This satisfies a transitive clause.
+construction SubjectVerbObject
+   subcase of Declarative
+   constructional
+      constituents
+         subjectVerb: SubjectVerb
+         object: RefExpr
+   meaning: TransitiveAssertion
+      constraints
+         self.m.subject <--> subjectVerb.subject.m
+         self.m.verb <--> subjectVerb.verb.m
+         self.m.object <--> object.m
+
+// An SVO sentence with a PP for the whole clause
+construction SubjectVerbObjectPP
+   subcase of Declarative
+   constructional
+      constituents
+         clause: SubjectVerbObject
+         prepPhrase: PrepPhrase
+   meaning: TransitiveAssertionPrepPhrase
+      constraints
+         self.m.subject <--> clause.subjectVerb.subject.m
+         self.m.verb <--> clause.subjectVerb.verb.m
+         self.m.object <--> clause.object.m
+         self.m.relation <--> prepPhrase.m
+
+// Two steps to allow a declarative goal
+construction ConceptIsThat
+   constructional
+      constituents
+         idea: RefExpr
+         isThat: IsThat
+
+construction ConceptIsThatDeclarative
+   subcase of Declarative
+   constructional
+      constituents
+         firstPart: ConceptIsThat
+         statement: Declarative
+   meaning: ConceptIsThatAssertion
+      constraints
+         self.m.concept <--> firstPart.idea.m
+         self.m.assertion <--> statement.m
+
+//	Constructions for dealing with negations
+//	A negation
+construction Negation
+   constructional
+      constituents
+         toBe: FiniteToBe
+         negator: NOT
+   meaning
+      constraints
+         self.m <--> negator.m
+
+//	A way to handle negated "is PP" assertions
+construction RefIsNotPrepPhrase
+   subcase of Declarative
+   constructional
+      constituents
+         ref : RefExpr
+         tobe : Negation
+         phrase : PrepPhrase
+   meaning: PrepPhraseAssertion
+      constraints
+         self.m.preprel <--> phrase.m
+         self.m.target <--> ref.m
+		 self.m.modifier <--> tobe.m
+
+//	This is like RefIsPrepPhrase
+//	A PropertySet will get a new object created for it
+construction PropertySetIsPrepPhrase
+   subcase of Declarative
+   constructional
+      constituents
+         ref : PropertySet
+         tobe : FiniteToBe
+         phrase : PrepPhrase
+   meaning: PrepPhraseAssertion
+      constraints
+         self.m.preprel <--> phrase.m
+         self.m.target <--> ref.m
+
+construction PropertySetIsNotPrepPhrase
+   subcase of Declarative
+   constructional
+      constituents
+         ref : PropertySet
+         tobe : Negation
+         phrase : PrepPhrase
+   meaning: PrepPhraseAssertion
+      constraints
+         self.m.preprel <--> phrase.m
+         self.m.target <--> ref.m
+		 self.m.modifier <--> tobe.m
+
+// Constructions for "Ask <Question>." commands
+construction AskQuestion
+   subcase of Imperative
+   constructional
+      constituents
+         verb : ASK
+         question : Question
+   meaning: AskQuestionCommand
+      constraints
+         self.m.action <--> verb.m
+         self.m.object <--> question.m
+
+// Constructions to define new verbs
+construction TransitiveVerbDefinitionSentence
+   subcase of Imperative
+   constructional
+      constituents
+         word : UNKNOWN-WORD
+         object : RefExpr
+   meaning: TransitiveVerbDefinition
+      constraints
+         self.m.word <--> word.word.orth
+         self.m.object <--> object.m
+
+// An UNKNOWN-WORD all by itself might be
+// a definition of an intransitive imperative verb,
+// but we can't use a construction to recognize that
+// since it would gobble up every UNKNOWN-WORD
+// at the beginning of a sentence and lots of other
+// definitions would not work.
+// Therefore, we only allow an intransitive imperative
+// to be defined with an addition PP defining a location.
+construction IntransitiveVerbDefinitionSentence
+   subcase of Imperative
+   constructional
+      constituents
+         word : UNKNOWN-WORD
+		 location: PrepPhrase
+   meaning: IntransitiveVerbDefinition
+      constraints
+         self.m.word <--> word.word.orth
+		 self.m.location <--> location.m

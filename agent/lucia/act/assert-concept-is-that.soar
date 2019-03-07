@@ -1,0 +1,297 @@
+##!
+# @file
+#
+# @created plindes 20180612
+# File: assert-concept-is-that.soar
+# Author: Peter Lindes
+# Created: 12 June 2018
+#
+#	This file handles assertions with the general form:
+#   "The goal is that <declarative>."
+#	It has code for the operator:
+#       assert-concept-is-that
+#
+
+
+#################  ASSERT-CONCEPT-IS-THAT   ####################### 
+
+#   Propose an operator to create a definition of a goal or such
+sp {act*propose*assert-concept-is-that
+   (state <s> ^problem-space act
+              ^action <a>
+)#             -^result.subclause )    #    Wait until subclause added
+   (<a> ^action ASSERT-CONCEPT-IS-THAT
+        ^arg1 <concept>
+        ^assertion <assertion>
+        ^text <text>)
+   (<concept> ^predicate <predicate>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name assert-concept-is-that
+        ^arg1 <predicate>
+        ^assertion <assertion>
+        ^text <text>
+        ^debug-info (concat |We will create a new definition according to '| <text> |.'|))
+}
+
+#   Build a message to make a new definition of a goal or such
+#   This version works for simple assertions
+sp {act*apply*assert-concept-is-that*create-message*simple-assertion
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name assert-concept-is-that
+        ^arg1 <concept>
+        ^assertion <assertion>)
+  -(<assertion> ^is.a CompoundAssertion)
+   (<a> ^next <next>)
+-->
+   #    Create a message
+   (<s> ^result <message>
+        ^assertion <assertion>) #   Post a single assertion to the state
+   (<message> ^message-type object-description
+              ^arg1 <concept>)
+}
+
+#   This version works for compound assertions
+sp {act*apply*assert-concept-is-that*create-message*compound-assertion
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name assert-concept-is-that
+        ^arg1 <concept>
+        ^assertion <assertion>)
+   (<assertion> ^is.a CompoundAssertion
+                ^assertion1 <assertion1>
+                ^assertion2 <assertion2>)
+   (<a> ^next <next>)
+-->
+   #    Create a message
+   (<s> ^result <message>
+        ^assertion <assertion1>  #   Post two assertions to the state
+        ^assertion <assertion2>)
+   (<message> ^message-type object-description
+              ^arg1 <concept>
+              ^subclause <subclauses>)  #   Another level will go here
+}
+
+#   Add a subclause to the state for PropertyApplication clauses
+sp {act*apply*assert-concept-is-that*add-subclause*property-application
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>
+              ^result <message>
+              ^assertion <assertion>)
+   (<o> ^name assert-concept-is-that)
+   #    Check the type of assertion
+   (<assertion> ^is.a PropertyApplication
+                ^target.referent <object>
+                ^property <property>)
+   (<property> ^predicate <predicate>)
+   (<a> ^next <next>)
+-->
+   #    Add subclause
+   (<s> ^subclause <subclause>)
+   (<subclause> ^arg1 <object>
+                ^predicate <predicate>)
+}
+
+#   Add the subclause to the state for clauses with "is"
+sp {act*apply*assert-concept-is-that*add-subclause*is-assertions
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>
+              ^result <message>
+              ^assertion <assertion>)
+   (<o> ^name assert-concept-is-that)
+   #    Check the type of assertion
+   (<assertion> ^is.a << PrepPhraseAssertion ThisIsAThatAssertion >>
+                ^target.referent <object>
+                ^preprel <preprel>)
+   (<preprel> ^prep <prep>
+              ^object.referent <prep-object>)
+   (<a> ^next <next>)
+-->
+   #    Add subclause
+   (<s> ^subclause <subclause>)
+   (<subclause> ^arg1 <object>
+                ^predicate <predicate>)
+   (<predicate> ^2 <prep-object>
+                ^handle <prep>
+                ^item-type predicate)
+}
+
+#   Add the subclause here for SV clauses
+sp {act*apply*assert-concept-is-that*add-subclause*subject-verb
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>
+              ^result <message>
+              ^assertion <assertion>)
+   (<o> ^name assert-concept-is-that)
+   #    Check the type of assertion
+   (<assertion> ^is.a IntransitiveAssertion
+                ^subject.referent <subject>
+                ^verb.action <verb>)
+   (<a> ^next <next>)
+-->
+   #    Add subclause
+   (<s> ^subclause <subclause>)
+   (<subclause> ^agent <subject>
+                ^action <verb>)
+}
+
+#   Add the subclause here for SVO clauses with objects with referents
+sp {act*apply*assert-concept-is-that*add-subclause*svo*referent
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>
+              ^result <message>
+              ^assertion <assertion>)
+   (<o> ^name assert-concept-is-that)
+   #    Check the type of assertion
+   (<assertion> ^is.a TransitiveAssertion
+                ^subject.referent <subject>
+                ^verb.action <verb>
+                ^object.referent { <object> <> nil })
+   (<a> ^next <next>)
+-->
+   #    Add subclause
+   (<s> ^subclause <subclause>)
+   (<subclause> ^agent <subject>
+                ^action <verb>
+                ^arg1 <object>)
+}
+
+#   Add the subclause here for SVO clauses with objects with predicates
+sp {act*apply*assert-concept-is-that*add-subclause*svo*predicate
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>
+              ^result <message>
+              ^assertion <assertion>)
+   (<o> ^name assert-concept-is-that)
+   #    Check the type of assertion
+   (<assertion> ^is.a TransitiveAssertion
+                ^subject.referent <subject>
+                ^verb.action <verb>
+                ^object.predicate <object>)
+   (<a> ^next <next>)
+-->
+   #    Add subclause
+   (<s> ^subclause <subclause>)
+   (<subclause> ^agent <subject>
+                ^action <verb>
+                ^arg1 <object>)
+}
+
+#   Add the subclause for an SVO with a PrepPhrase
+sp {act*apply*assert-concept-is-that*add-subclause*svo*prep-phrase
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>
+              ^result <message>
+              ^assertion <assertion>)
+   (<o> ^name assert-concept-is-that)
+   #    Check the type of assertion
+   (<assertion> ^is.a TransitiveAssertionPrepPhrase
+                ^subject.referent <subject>
+                ^verb.action <verb>
+                ^object.predicate <object>
+                ^relation <prep-phrase>)
+   (<prep-phrase> ^prep <prep>
+                  ^object.referent <prep-object>)
+   (<a> ^next <next>)
+-->
+   #    Add subclause
+   (<s> ^subclause <subclause>)
+   (<subclause> ^agent <subject>
+                ^action <verb>
+                ^arg1 <object>
+                ^arg2 <relation>)
+   (<relation> ^item-type predicate
+                ^handle <prep>
+                ^2 <prep-object>)
+}
+
+#   Add a modifier if present
+#   This version works for simple assertions
+sp {act*apply*assert-concept-is-that*add-modifier*simple-assertion
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>
+              ^result <message>
+              ^subclause <subclause>)
+   (<o> ^name assert-concept-is-that
+        ^arg1 <concept>
+        ^assertion <assertion>)
+   (<assertion> -^is.a CompoundAssertion
+                 ^modifier.modifier <modifier>)
+   (<a> ^next <next>)
+-->
+   #    Add a modifier
+   (<subclause> ^modifier <modifier>)
+}
+
+#   Add a modifier if present
+#   This rule should fire once for each sub-assertion
+#   that has a modifier
+sp {act*apply*assert-concept-is-that*add-modifier*compound-assertion
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>
+              ^result <message>
+              ^subclause <subclause>)
+   (<o> ^name assert-concept-is-that
+        ^arg1 <concept>
+        ^assertion <sub-assertion>)
+   (<sub-assertion> ^is.a CompoundAssertion
+                    ^<< assertion1 assertion2 >> <assertion>)
+   (<assertion> ^modifier.modifier <modifier>)
+   (<a> ^next <next>)
+-->
+   #    Add a modifier
+   (<subclause> ^modifier <modifier>)
+}
+
+#   Clean up by adding any subclauses to the message
+#   This version works for simple assertions
+sp {act*apply*assert-concept-is-that*clean-up*simple-assertion
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>
+              ^result <message>
+              ^subclause <subclause>)
+   (<o> ^name assert-concept-is-that
+        ^arg1 <concept>
+        ^assertion <assertion>)
+  -(<assertion> ^is.a CompoundAssertion)
+   (<a> ^next <next>)
+-->
+   #    Add a subclause
+   (<message> ^subclause <subclause>)
+   #    On to the next action
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+#   This version works for compound assertions
+#   This rule should fire once for each sub-assertion
+sp {act*apply*assert-concept-is-that*clean-up*compound-assertion
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>
+              ^result <message>
+              ^subclause <sub-subclause>)
+   (<o> ^name assert-concept-is-that
+        ^assertion <assertion>)
+   (<assertion> ^is.a CompoundAssertion)
+   (<message> ^subclause <subclause>)
+   (<a> ^next <next>)
+-->
+   #    Add a subclause
+   (<subclause> ^subclause <sub-subclause>)
+   #    On to the next action
+   (<s> ^action <a> -
+        ^action <next>)
+}

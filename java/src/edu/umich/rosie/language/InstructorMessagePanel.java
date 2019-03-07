@@ -6,7 +6,6 @@ import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Properties;
 
@@ -16,6 +15,7 @@ import javax.swing.JPanel;
 
 import edu.umich.rosie.language.LanguageConnector.MessageType;
 
+@SuppressWarnings("serial")
 public class InstructorMessagePanel extends JPanel{
 	
 	private ChatPanel chat;

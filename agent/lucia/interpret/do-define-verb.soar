@@ -1,0 +1,168 @@
+##!
+# @file
+#
+# @created plindes 20180618
+# File: do-define-verb.soar
+# Author: Peter Lindes
+# Created: 18 June 2018
+#
+# Desc: This operator will create an action
+#       to perform the definition of a new word.
+#
+
+
+#################  VerbDefinition   ####################### 
+
+#   Propose an operator to decide to perform a definition
+sp {interpret*propose*do-define-verb*intransitive-or-no-location
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^comprehension <c>
+              ^discourse <d>
+             -^action <a>)
+   (<c> ^cxn-stack.m <m>)
+   (<m> ^is.a VerbDefinition
+        ^word <word>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name do-define-verb
+        ^type interpretation
+        ^meaning <m>
+        ^discourse <d>
+        ^debug-info (concat |Define the verb '| <word> |'.|))
+}
+
+#   Propose an operator to decide to perform a definition
+sp {interpret*propose*do-define-verb*transitive-with-location
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^comprehension <c>
+              ^discourse <d>
+             -^action <a>)
+   (<c> ^cxn-stack.m <m>)
+   (<m> ^action <action>)
+   (<action> ^is.a VerbDefinition
+             ^word <word>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name do-define-verb
+        ^type interpretation
+        ^meaning <m>
+        ^discourse <d>
+        ^debug-info (concat |Define the verb '| <word> |' with a location.|))
+}
+
+#   Build a definition action
+sp {interpret*apply*do-define-verb*transitive*no-location
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-define-verb
+        ^meaning <m>)
+   (<m> ^is.a TransitiveVerbDefinition
+        ^word <word>
+        ^object.referent <object>
+       -^location )
+-->
+   #   Add an action to define the property, no arg1 yet
+   (<s> ^define-verb <a-verb-def>)
+   (<a-verb-def> ^action DEFINE-VERB
+                 ^object <object>
+                 ^text <word>
+                 ^next nil)
+}
+
+#   Build a definition action
+sp {interpret*apply*do-define-verb*transitive*with-location
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-define-verb
+        ^meaning <m>)
+   (<m> ^action <action>
+        ^location <location>)
+   (<action> ^is.a TransitiveVerbDefinition
+	         ^word <word>
+	         ^object.referent <object>
+	        -^location )
+   #    Look at the preposition in the location phrase
+   #    This will cause two actions to be generated
+   #    if there are two preposition names.
+   #    We need to rebuild the location in case
+   #    it really is redundant so that we get two different actions
+   #    instead of two copies of the same one
+   (<location> ^prep <prep-name>    #    This is the one that may be redundant
+               ^is <loc-is>
+               ^object <loc-object>
+               ^schema-name <loc-schema-name>
+               ^source <loc-source>
+               ^text <loc-text>)
+-->
+   #   Add an action to define the property, no arg1 yet
+   (<s> ^define-verb <a-verb-def>)
+   (<a-verb-def> ^action DEFINE-VERB
+                 ^object <object>
+                 ^location <new-location>
+                 ^text <word>
+                 ^next nil)
+   #    If the rule fires twice, this part will make a unique location for each
+   (<new-location> ^prep <prep-name>    #    This is the one that may be redundant
+                   ^is <loc-is>
+                   ^object <loc-object>
+                   ^schema-name <loc-schema-name>
+                   ^source <loc-source>
+                   ^text <loc-text>)
+}
+
+#   Build a definition action
+sp {interpret*apply*do-define-verb*intransitive-with-location
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-define-verb
+        ^meaning <m>)
+   (<m> ^is.a IntransitiveVerbDefinition
+        ^location <location>
+        ^word <word>)
+   #    Look at the preposition in the location phrase
+   #    This will cause two actions to be generated
+   #    if there are two preposition names.
+   #    We need to rebuild the location in case
+   #    it really is redundant so that we get two different actions
+   #    instead of two copies of the same one
+   (<location> ^prep <prep-name>    #    This is the one that may be redundant
+               ^is <loc-is>
+               ^object <loc-object>
+               ^schema-name <loc-schema-name>
+               ^source <loc-source>
+               ^text <loc-text>)
+-->
+   #   Add an action to define the property, no arg1 yet
+   (<s> ^define-verb <a-verb-def>)
+   (<a-verb-def> ^action DEFINE-VERB
+                 ^location <new-location>
+                 ^text <word>
+                 ^next nil)
+   #    If the rule fires twice, this part will make a unique location for each
+   (<new-location> ^prep <prep-name>    #    This is the one that may be redundant
+                   ^is <loc-is>
+                   ^object <loc-object>
+                   ^schema-name <loc-schema-name>
+                   ^source <loc-source>
+                   ^text <loc-text>)
+}
+
+sp {interpret*apply*do-define-verb*done
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>
+              ^define-verb <a-verb-def>)
+   (<o> ^name do-define-verb)
+#   (<a-verb-def> ^object <object>)
+-->
+   #   Post just the relation assertion
+   (<s> ^define-verb <a-verb-def> -
+        ^action <a-verb-def>)
+}
+
+

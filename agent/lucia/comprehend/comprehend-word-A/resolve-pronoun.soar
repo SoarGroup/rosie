@@ -1,0 +1,262 @@
+##!
+# @file
+#
+# @created plindes 20160303
+# File: resolve-pronoun.soar
+# Author: Peter Lindes
+# Created: 3 March 2016
+#
+# Desc:  Looks up a RefDesc with givenness of "pronoun" or "one-pronoun"
+#        in the context to find its referent.
+#
+#		 The result may be a single item, a set of items,
+#		 or nothing.
+#
+#        The current version only deals with "nom" case.
+#        Possesives, "pos" case, will be treated as properties.
+#
+
+#    Propose an operator to resolve the reference of a pronoun
+sp {comprehend-word*propose*resolve-pronoun
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done
+              ^cxn <cxn>
+             -^reference resolved)
+   (<cxn> ^features <features>
+          ^m <ref-desc>)
+   (<ref-desc> ^is.a RefDesc
+               ^givenness << pronoun one-pronoun >>)
+   #    For now, only deal with nominal case
+   (<features> ^case |nom|)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name resolve-pronoun
+        ^type resolution
+        ^features <features>
+        ^meaning <ref-desc>
+        ^debug-info (concat |Find the referent for a given pronoun.|))
+}
+
+#   Look for the referent of "you".
+sp {comprehend-word*apply*resolve-pronoun*found-you
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name resolve-pronoun
+        ^features <features>
+        ^meaning <ref-desc>)
+   (<features> ^person |2nd|)
+   (<ref-desc> ^givenness pronoun
+               ^referent <old-ref>)
+   #    Just look for Rosie in the world
+   (<ts> ^world <world>)
+   (<world> ^robot <robot>)
+   (<robot> ^handle rosie)
+-->
+   #    Post the referent on the RefDesc
+   (<ref-desc> ^referent <old-ref> -
+               ^referent <robot>)
+   #    Set done flag
+   (<s> ^reference resolved)
+}
+
+#   Create a referent of "me".
+sp {comprehend-word*apply*resolve-pronoun*create-me
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name resolve-pronoun
+        ^features <features>
+        ^meaning <ref-desc>)
+   (<features> ^person |1st|)
+   (<ref-desc> ^givenness pronoun
+               ^referent <old-ref>)
+#   #    Just look for Rosie in the world
+#   (<ts> ^world <world>)
+#   (<world> ^robot <robot>)
+#   (<robot> ^handle rosie)
+-->
+   #    Post the referent on the RefDesc
+   (<ref-desc> ^referent <old-ref> -
+               ^referent <me>)
+   #    Create a mew referent
+   (<me> ^handle me
+         ^item-type object
+         ^property nil) #   Need to lookup person
+   #    Set done flag
+   (<s> ^reference resolved)
+}
+
+#   Look for objects that might fit this pronoun
+#   This case: ^cxn-stack.cxn.m.object.referent has it
+#   This works for previous sentences like: Pick up the green sphere.
+sp {comprehend-word*apply*resolve-pronoun*found-case-1
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name resolve-pronoun
+        ^features <features>
+        ^meaning <ref-desc>)
+  -(<features> ^person |1st|)   #   Don't try on "me"
+  -(<features> ^person |2nd|)   #   Don't try on "you"
+   (<ref-desc> ^givenness << pronoun one-pronoun >>
+               ^category <category>
+               ^referent <old-ref>)
+   #	See if we can find it in the past discourse
+   #    THIS IS ONE VERY CRUDE SPECIAL CASE
+   #    IT WILL NEED A MUCH MORE GENERAL SOLUTION ONE DAY
+   (<ts> ^discourse <discourse>)
+   (<discourse> ^last-segment <segment>)
+   (<segment> ^comprehension <comprehension>)
+   (<comprehension> ^cxn-stack <cxn>)
+   #    The cxn's meaning has the object we want
+   (<cxn> ^m <meaning>)
+   (<meaning> ^object <object>)
+   (<object> ^referent <referent>)
+-->
+   #    Post the referent on the RefDesc
+   (<ref-desc> ^referent <old-ref> -
+               ^referent <referent>)
+   #    Set done flag
+   (<s> ^reference resolved)
+}
+
+#   Look for objects that might fit this pronoun
+#   This case: ^cxn-stack.cxn.command.object.m.referent has it
+#   This works for previous sentences like: Put the green sphere in the pantry.
+sp {comprehend-word*apply*resolve-pronoun*found-case-2
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name resolve-pronoun
+        ^features <features>
+        ^meaning <ref-desc>)
+  -(<features> ^person |1st|)   #   Don't try on "me"
+  -(<features> ^person |2nd|)   #   Don't try on "you"
+   (<ref-desc> ^givenness << pronoun one-pronoun >>
+               ^category <category>
+               ^referent <old-ref>)
+   #    See if we can find it in the past discourse
+   #    THIS IS A SECOND VERY CRUDE SPECIAL CASE
+   #    IT WILL NEED A MUCH MORE GENERAL SOLUTION ONE DAY
+   (<ts> ^discourse <discourse>)
+   (<discourse> ^last-segment <segment>)
+   (<segment> ^comprehension <comprehension>)
+   (<comprehension> ^cxn-stack <cxn>)
+   #    The cxn's meaning does NOT have the object we want
+ -{(<cxn> ^m <meaning>)
+   (<meaning> ^object <object>)
+   (<object> ^referent <referent>)}
+   #    But it's command constituent does
+   (<cxn> ^command <command>)
+   (<command> ^object <object>)
+   (<object> ^m <meaning>)
+   (<meaning> ^referent <referent>)
+-->
+   #    Post the referent on the RefDesc
+   (<ref-desc> ^referent <old-ref> -
+               ^referent <referent>)
+   #    Set done flag
+   (<s> ^reference resolved)
+}
+
+#   Look for objects that might fit this pronoun
+#   This case: ^cxn-stack.cxn.m.predicate.object.referent has it
+#   This works for previous sentences like: What is on the red triangle?
+sp {comprehend-word*apply*resolve-pronoun*found-case-3
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name resolve-pronoun
+        ^features <features>
+        ^meaning <ref-desc>)
+  -(<features> ^person |2nd|)   #   Don't try on "you"
+   (<ref-desc> ^givenness << pronoun one-pronoun >>
+               ^category <category>
+               ^referent <old-ref>)
+   #    See if we can find it in the past discourse
+   #    THIS IS A THIRD VERY CRUDE SPECIAL CASE
+   #    IT WILL NEED A MUCH MORE GENERAL SOLUTION ONE DAY
+   (<ts> ^discourse <discourse>)
+   (<discourse> ^last-segment <segment>)
+   (<segment> ^comprehension <comprehension>)
+   (<comprehension> ^cxn-stack <cxn>)
+   #    The cxn's meaning does NOT have the object we want
+ -{(<cxn> ^m <meaning>)
+   (<meaning> ^object <object>)
+   (<object> ^referent <referent>)}
+   #    And it's command constituent does NOT
+ -{(<cxn> ^command <command>)
+   (<command> ^object <object>)
+   (<object> ^m <meaning>)
+   (<meaning> ^referent <referent>)}
+   #    But it's there on the ^predicate.object
+   (<cxn> ^m <meaning>)
+   (<meaning> ^predicate <predicate>)
+   (<predicate> ^object <object>)
+   (<object> ^referent <referent>)
+-->
+   #    Post the referent on the RefDesc
+   (<ref-desc> ^referent <old-ref> -
+               ^referent <referent>)
+   #    Set done flag
+   (<s> ^reference resolved)
+}
+
+#   Deal with when no referent is found by any of the 3 cases
+sp {comprehend-word*apply*resolve-pronoun*not-found-1-2-3
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name resolve-pronoun
+        ^features <features>
+        ^meaning <ref-desc>)
+  -(<features> ^person |2nd|)   #   Don't try on "you"
+   (<ref-desc> ^givenness << pronoun one-pronoun >>
+               ^category <category>
+               ^referent <old-ref>)
+   #    See if we can find it in the past discourse
+   #    THIS IS A VERY CRUDE SPECIAL CASE
+   #    IT WILL NEED A MUCH MORE GENERAL SOLUTION ONE DAY
+   (<ts> ^discourse <discourse>)
+   (<discourse> ^last-segment <segment>)
+   (<segment> ^comprehension <comprehension>)
+   (<comprehension> ^cxn-stack <cxn>)
+   #    NOT case 1
+  -{(<cxn> ^m <meaning>)
+   (<meaning> ^object <object>)
+   (<object> ^referent <referent>)}
+   #    NOT case 2
+ -{(<cxn> ^command <command>)
+   (<command> ^object <object>)
+   (<object> ^m <meaning>)
+   (<meaning> ^referent <referent>)}
+   #    NOT case 3
+ -{(<cxn> ^m <meaning>)
+   (<meaning> ^predicate <predicate>)
+   (<predicate> ^object <object>)
+   (<object> ^referent <referent>)}
+-->
+   #    Set done flag
+   #    The referent should still be nil
+   (<s> ^reference resolved)
+}
+
+#   Deal with the situation when there is no previous segment
+sp {comprehend-word*apply*resolve-pronoun*not-found-no-history
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name resolve-pronoun
+        ^meaning <ref-desc>)
+   (<ref-desc> ^givenness << pronoun one-pronoun >>
+               ^category <category>
+               ^referent <old-ref>)
+   #    There is no past discourse
+   (<ts> ^discourse <discourse>)
+   (<discourse> ^last-segment nil)
+-->
+   #    Set done flag
+   #    The referent should still be nil
+   (<s> ^reference resolved)
+}

@@ -1,0 +1,335 @@
+##!
+# @file
+#
+# @created plindes 20160308
+# File: attach-prep-phrase.soar
+# Author: Peter Lindes
+# Created: 8 March 2016
+#
+# Desc:  Whenever a PrepPhrase it matched, see where to attach it.
+#
+#		This operator can have many proposals for different situations,
+#		some preference rules to pick which one to select now,
+#		and one some apply rules that do the attachment, with snips as needed.
+#
+#		If several proposals are made, just one must be selected,
+#		so preferences must be set accordingly.  This file contains
+#		some rules for setting relative preferences.
+#
+
+
+##################	PROPOSALS	#####################
+
+#    Propose an operator to attach a PrepPhrase to the previous RefExpr
+sp {comprehend-word*propose*attach-prep-phrase*ref-expr
+   (state <s> ^problem-space comprehend-word
+              ^cxn <phrase>)
+   (<phrase> ^is.a PrepPhrase
+            -^attached-to <attach-point>)
+   #    See whether what came before was a RefExpr
+   (<phrase> ^previous <ref-expr>)
+   (<ref-expr> ^is.a RefExpr)
+   #    Exception: don't propose if what comes before the RefExpr
+   #    is a FiniteToBe at the start of the sentence.
+ -{(<ref-expr> ^previous <finite-to-be>)
+   (<finite-to-be> ^is.a FiniteToBe
+                   ^previous nil)}
+-->
+   (<s> ^operator <o> > +)
+   (<o> ^name attach-prep-phrase
+        ^attach-type |ref-expr|
+        ^prep-phrase <phrase>
+        ^attach-to <ref-expr>
+        ^debug-info (concat |Attach PrepPhrase | <phrase> | to the RefExpr | <ref-expr> |.|))
+}
+
+#    Propose an operator to attach a PrepPhrase to the previous VerbWithArguments
+sp {comprehend-word*propose*attach-prep-phrase*verb-with-args
+   (state <s> ^problem-space comprehend-word
+              ^cxn <phrase>)
+   (<phrase> ^is.a PrepPhrase
+            -^attached-to <attach-point>)
+   #	See whether what came before was a VerbWithArguments
+   (<phrase> ^previous <verb>)
+   (<verb> ^is.a VerbWithArguments)
+-->
+   (<s> ^operator <o> > +)
+   (<o> ^name attach-prep-phrase
+        ^attach-type |verb-with-args|
+        ^prep-phrase <phrase>
+        ^attach-to <verb>
+        ^debug-info (concat |Attach PrepPhrase | <phrase> | to the VerbWithArguments | <verb> |.|))
+}
+
+#    Propose to attach a PrepPhrase to the RefExpr that is the object of the previous verb
+sp {comprehend-word*propose*attach-prep-phrase*verb-object
+   (state <s> ^problem-space comprehend-word
+              ^cxn <phrase>)
+   (<phrase> ^is.a PrepPhrase
+            -^attached-to <attach-point>)
+   #    Only do this if the preposistion is not a VerbalPreposition
+   (<phrase> ^prep <prep>)
+   (<prep> -^is.a AdverbialPreposition)
+   #	See whether what came before was a VerbWithArguments with an object
+   (<phrase> ^previous <verb>)
+   (<verb> ^is.a VerbWithArguments
+           ^object <ref-expr>)
+   (<ref-expr> ^is.a RefExpr)
+-->
+   (<s> ^operator <o> > +)
+   (<o> ^name attach-prep-phrase
+        ^attach-type |verb-object|
+        ^prep-phrase <phrase>
+        ^attach-to <ref-expr>
+        ^debug-info (concat |Attach PrepPhrase | <phrase> | to the RefExpr | <ref-expr> |.|))
+}
+
+#    Propose an operator to attach a PrepPhrase to the previous VerbWithArguments
+#    This is for the case where a location is already attached
+sp {comprehend-word*propose*attach-prep-phrase*verb-with-args*has-location
+   (state <s> ^problem-space comprehend-word
+              ^cxn <phrase>)
+   (<phrase> ^is.a PrepPhrase
+            -^attached-to <attach-point>)
+   #    See whether what came before was a VerbWithArguments
+   (<phrase> ^previous <verb>)
+   (<verb> ^is.a VerbWithArguments
+           ^location <location>)
+-->
+   (<s> ^operator <o> > +)
+   (<o> ^name attach-prep-phrase
+        ^attach-type |verb-with-args-has-loc|
+        ^location <location>
+        ^prep-phrase <phrase>
+        ^attach-to nil    #    The new verb to attach to has not yet been created
+        ^verb-to-cut <verb>
+        ^debug-info (concat |Rework the VerbWithArguments | <verb> | to add | <phrase> |.|))
+}
+
+#    Propose an operator to attach a PrepPhrase to the FiniteToBe before the previous RefExpr
+sp {comprehend-word*propose*attach-prep-phrase*is-before-ref-expr
+   (state <s> ^problem-space comprehend-word
+              ^cxn <phrase>)
+   (<phrase> ^is.a PrepPhrase
+            -^attached-to <attach-point>)
+   #    See whether what came before was a RefExpr
+   (<phrase> ^previous <ref-expr>)
+   (<ref-expr> ^is.a RefExpr)
+   #    Propose if what comes before the RefExpr
+   #    is a FiniteToBe at the start of the sentence.
+   (<ref-expr> ^previous <finite-to-be>)
+   (<finite-to-be> ^is.a FiniteToBe
+                   ^previous nil)
+-->
+   (<s> ^operator <o> > +)
+   (<o> ^name attach-prep-phrase
+        ^attach-type |is-before-ref-expr|
+        ^prep-phrase <phrase>
+        ^attach-to <finite-to-be>
+        ^debug-info (concat |Attach PrepPhrase | <phrase> | to the FiniteToBe | <finite-to-be> |.|))
+}
+
+
+##################	PREFERENCES	#####################
+
+#	When both a verb and its object are options,
+#	pick the verb if it requires a location
+sp {comprehend-word*preference*attach-prep-phrase*verb-location-before-object-ref-expr
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   #	One operator is a verb
+   (<o1> ^name attach-prep-phrase
+         ^attach-to <verb>)
+   (<verb> ^is.a VerbWithArguments
+             ^object <object>)
+   #	The other is the verb's object
+   (<o2> ^name attach-prep-phrase
+         ^attach-to <object>)
+   (<object> ^is.a RefExpr)
+   #	The verb needs a location target
+   (<verb> ^verb <verb2>)
+   (<verb2> ^is.a ActionVerbNeedsTarget)
+-->
+   #	Prefer the verb operator
+   (<s> ^operator <o1> > <o2>)
+}
+
+#	When both a verb and its object are options,
+#	pick the object if the verb does not require a location
+sp {comprehend-word*preference*attach-prep-phrase*object-ref-expr-before-verb-location
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   #	One operator is a verb
+   (<o1> ^name attach-prep-phrase
+         ^attach-to <verb>)
+   (<verb> ^is.a VerbWithArguments
+             ^object <object>)
+   #	The other is the verb's object
+   (<o2> ^name attach-prep-phrase
+         ^attach-to <object>)
+   (<object> ^is.a RefExpr)
+   #	The verb does not need a location target
+   (<verb> ^verb <verb2>)
+   (<verb2> -^is.a ActionVerbNeedsTarget)
+-->
+   #	Prefer the verb operator
+   (<s> ^operator <o1> < <o2>)
+}
+
+#    When there is a VerbWithArgs and it already has a location,
+#    prefer switching the already attached location to the object
+#    and making the current PrepPhrase be the new location
+sp {comprehend-word*preference*attach-prep-phrase*verb-has-location-before-verb-with-args
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   #    One operator is a verb
+   (<o1> ^name attach-prep-phrase
+         ^attach-type |verb-with-args-has-loc|)
+   #    The other is the verb's object
+   (<o2> ^name attach-prep-phrase
+         ^attach-type |verb-with-args|)
+-->
+   #    Prefer the verb operator
+   (<s> ^operator <o1> > <o2>)
+}
+
+#    When there is a VerbWithArgs and its verb is a DriveVerb,
+#    prefer snipping down to the DriveVerb
+sp {comprehend-word*preference*attach-prep-phrase*drive-verb-before-verb-with-args
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   #    One operator is a drive-verb
+   (<o1> ^name attach-and-snip
+         ^attach-type |drive-verb|)
+   #    The other is the verb-with-args
+   (<o2> ^name attach-prep-phrase
+         ^attach-type |verb-with-args|)
+-->
+   #    Prefer the verb operator
+   (<s> ^operator <o1> > <o2>)
+}
+
+#    Matching an ImperativeWithLocationSet cxn should
+#    be preferred over attach-prep-phrase
+#    and also over matching an ImperativeWithLocation.
+sp {comprehend-word*preference*attach-prep-phrase*imperative-with-location-set-before-attach-prep-phrase
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +
+              ^operator <o3> +)
+   #    One operator is a match-construction for ImperativeWithLocationSet
+   (<o1> ^name match-construction
+         ^cxn-name ImperativeWithLocationSet)
+   #    Another is attach-prep-phrase
+   (<o2> ^name attach-prep-phrase)
+   #    Another is a match-construction for ImperativeWithLocation
+   (<o3> ^name match-construction
+         ^cxn-name ImperativeWithLocation)
+-->
+   #    Prefer the verb operator
+   (<s> ^operator <o1> > <o2>
+        ^operator <o1> > <o3>)
+}
+
+#    When there is a VerbWithArgs and it is a TransitiveVerbDefinitionSentence
+#    then prefer attaching to the verb instead of to its object
+sp {comprehend-word*preference*attach-prep-phrase*verb-definition-before-ref-expr
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   #    One operator is a verb
+   (<o1> ^name attach-prep-phrase
+         ^attach-type |verb-with-args|
+         ^attach-to <verb-with-args>)
+   (<verb-with-args> ^is.a TransitiveVerbDefinitionSentence)
+   #    The other is the verb's object
+   (<o2> ^name attach-prep-phrase
+         ^attach-type |verb-object|)
+-->
+   #    Prefer the verb operator
+   (<s> ^operator <o1> > <o2>)
+}
+
+
+##################	APPLICATIONS	#####################
+
+#    Make the attachment that was chosen
+sp {comprehend-word*apply*attach-prep-phrase*attach-chosen
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name attach-prep-phrase
+        ^attach-type <type>
+        ^prep-phrase <phrase>
+        ^attach-to <attach-point>)
+-->
+   #	Attach this PrepPhrase to the verb
+   (<phrase> ^attached-to <attach-point>)
+   #   Write a message for the attachment.
+   (write (crlf) (concat |Attach phrase | <phrase> | to type | <type> | at point | <attach-point> | .|))
+}
+
+#    Snip for the verb-object case
+sp {comprehend-word*apply*attach-prep-phrase*snip-to-verb-object
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name attach-prep-phrase
+        ^attach-type |verb-object|
+        ^prep-phrase <phrase>
+        ^attach-to <attach-point>)		#	What to replace it with
+   #	Get info for the snip
+   (<phrase> ^previous <verb-with-args>)#	The thing to be cut
+-->
+   #	THIS IS THE SNIP!!!
+   #	Change the previous pointer
+   #	This will orphan the VerbWithArguments and
+   #	leave it to be garbage collected.
+   #	Instead we'll point to its object,
+   #	allowing that to be matched
+   (<phrase> ^previous <verb-with-args> -
+             ^previous <attach-point>)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <verb-with-args> | to get to | <attach-point> | .|))
+}
+
+#    Snip for the verb-with-args-has-loc case
+#    This is a case with two PP's
+#    This is a complicated one that snips to VP cxn's
+#    and puts the PP as pending on the state.
+sp {comprehend-word*apply*attach-prep-phrase*snip-verb-with-args-has-loc
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <cxn>)
+   (<o> ^name attach-prep-phrase
+        ^attach-type |verb-with-args-has-loc|
+        ^location <old-location>    #    Must be moved to point to the object
+        ^prep-phrase <new-location> #    Will be made pending on the state
+        ^attach-to nil              #    No attachment point yet
+        ^verb-to-cut <top-verb>)    #    Top verb with location to be cut
+   #    Get info for the snip
+   (<cxn> ^previous <top-verb>)
+   (<top-verb> ^location <old-location>
+               ^command <command>)  #    This will be cut too
+   (<command> ^verb <original-verb>
+              ^object <original-object>)    #    The old location should attach to this
+-->
+   #    THIS IS THE SNIP!!!
+   #    Update the state
+   (<s> ^cxn <cxn> -
+        ^cxn <old-location>
+        ^cxn-pending <new-location>)
+   #    Update the original (first) PrepPhrase
+   (<old-location> ^attached-to <command> -
+                   ^previous <command> -
+                   ^attached-to <original-object>
+                   ^previous <original-object>)
+   #    Update the new (second) PrepPhrase
+   (<new-location> ^previous <top-verb> -
+                   ^previous nil)    #    It's previous doesn't exist yet
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <top-verb> | for verb-with-args-has-loc to attach |
+                    <old-location> | to | <original-object> |  .|))
+}

@@ -1,0 +1,41 @@
+##!
+# @file
+#
+# @created plindes 20150611
+# File: no-more-input.soar
+# Author: Peter Lindes
+# Created: 11 June 2015
+#
+# Desc: Terminates comprehension when the input says "no-more"
+#
+
+#	Propose an operator when a word request produces "no-more"
+sp {comprehend*propose*no-more-input
+   (state <s> ^problem-space comprehend
+              ^no-more true
+              ^comprehension <c>)
+  -(<c> ^done true)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name no-more-input
+   		^debug-info (concat |There is no more input.|))
+}
+
+sp {comprehend*apply*no-more-input
+   (state <s> ^top-state <ts>
+              ^problem-space comprehend
+              ^operator <o>
+              ^comprehension <c>
+              ^input <i>)
+   (<o> ^name no-more-input)
+   (<i> ^word <w>)
+-->
+   #   Post the comprehension to the top state as done
+   #   This should make the comprehend operator complete
+   (<ts> ^comprehension <c>)
+   (<c> ^done true
+        ^no-more true)
+   #   Also mark the input so comprehend will quit
+   (<i> ^word <w> -
+        ^word no-more)
+}

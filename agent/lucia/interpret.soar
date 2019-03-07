@@ -1,0 +1,95 @@
+##!
+# @file
+#
+# @created plindes 20170522
+# File: interpret.soar
+# Author: Peter Lindes
+# Created: 22 May 2017
+# Modified: 29 November 2018    Version to run in the Rosie agent
+#
+# Desc: Sees a meaning the has been built up through
+#       comprehension and converts it to a message
+#       for Rosie to act on.
+#
+#       This version modified to run in different enviroments.
+#       In Lucia mode it runs on the top state.
+#       In Rosie mode it runs on the dialog-event state.
+#
+
+
+##############  PROPOSE INTERPRET FOR LUCIA MODE    #########################
+
+#   Propose an operator to interpret a parsed sentence
+sp {top-state*propose*interpret*lucia-mode
+   (state <s> ^name rosie
+              ^agent-params.parser lucia
+              ^agent-params.parser-test true
+              ^comprehension <c>
+              ^discourse <d>
+             -^action )
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name interpret
+        ^comprehension <c>
+        ^discourse <d>
+        ^debug-info (concat |Decide what to do about the language input.|))
+}
+
+#   Do this before next sentence
+sp {top-state*preference*interpret-before-next-sentence
+   (state <s> ^superstate nil
+              ^agent-params.parser-test true
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name interpret)
+   (<o2> ^name test-next-sentence)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+
+##############  POST THE INTERPRETATION TO THE TEST DATA    #########################
+
+#   Post the message to the test data for lucia
+sp {interpret*apply*interpret-done*parser-test*lucia
+   (state <s> ^top-state <ts>
+              ^problem-space interpret
+              ^operator <o>
+              ^message <message>)
+   (<o> ^name interpret-done)
+   (<ts> ^parser-test <test>)
+-->
+   #    Put the message on the test data
+   (<test> ^message <message>)
+}
+
+#   Post the message to the test data for laird
+sp {termination-processing*apply*check-failure*parser-test
+   (state <s> ^name termination-processing
+              ^operator <o>
+              ^segment.semantics <message>
+              ^top-state <ts>)
+   (<o> ^name check-failure)
+   (<ts> ^parser-test <test>)
+-->
+   #    Put the message on the test data
+   (<test> ^message <message>)
+}
+
+
+##############  PROPOSE INTERPRET FOR ROSIE MODE    #########################
+
+#   Propose an operator to interpret a parsed sentence
+sp {dialog-event*propose*interpret*rosie-mode
+   (state <s> ^name dialog-event
+              ^top-state.agent-params.parser lucia
+              ^top-state.comprehension <c>
+              ^top-state.discourse <d>
+             -^action )
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name interpret
+        ^comprehension <c>
+        ^discourse <d>
+        ^debug-info (concat |Decide what to do about the language input.|))
+}

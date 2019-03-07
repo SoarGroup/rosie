@@ -1,0 +1,88 @@
+##!
+# @file
+#
+# @created plindes 20150608
+# File: comprehend-word.soar
+# Author: Peter Lindes
+# Created: 8 June 2015
+# Updated: 22 May 2017    Version to run within Rosie
+#
+# Desc: Comprehends a single word of language input
+#       This will generate a substate where the work will be done.
+#
+
+#	Propose an operator to comprehend a single word of language
+sp {comprehend*propose*comprehend-word
+   (state <s> ^problem-space comprehend
+              ^input <i>)
+   (<i> ^comprehended false)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name comprehend-word
+        ^input <i>
+   	    ^debug-info (concat |Comprehend a single word of language input.|))
+}
+
+#    Here's an extra apply rule to apply schema constraints
+#    This rule fires when needed on the substate
+#	 THIS RULE MAY SEEM SUPERFLUOUS, BUT IT IS ESSENTIAL
+sp {comprehend-word*apply*schema-constraint
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^<< cxn cxn-new >> <cxn>)
+   (<o> ^type construction)
+   #    Look for a constraint hook
+   (<cxn> ^m <schema>)
+   (<schema> ^constraint <cnst>
+             ^<attr> <old-value>)
+   (<cnst> ^attr <attr>
+           ^value <value>)
+-->
+   #    Apply the constraint and remove the hook
+   (<schema> ^constraint <cnst> -
+             ^<attr> <old-value> -
+             ^<attr> <value>)
+}
+
+#	THE FOLLOWING TWO RULES ARE TO GET THE NEXT WORD,
+#	IF THERE IS ONE.
+#	One or the other should fire before going to the substate.
+sp {comprehend*apply*comprehend-word*next-word*normal
+   (state <s> ^top-state <ts>
+              ^problem-space comprehend
+              ^input <i>
+              ^operator <o>)
+   (<o> ^name comprehend-word)
+   (<ts> ^io.input-link.word <w>
+         ^io.output-link <output>)
+  -(<w> ^no-more true)
+   (<i> ^word <old-w>
+        ^count <old-c>
+        ^comprehended true)
+   (<w> ^word <text>)
+-->
+   (<i> ^word <old-w> -
+        ^word <w>
+        ^count <old-c> -
+        ^count (+ <old-c> 1)
+        ^comprehended true -
+        ^comprehended false)
+   #    DON'T TRY TO PUT THE WORD ON THE CURRENT STATE DIRECTLY
+   #    OR THE GDS WILL BLOW YOU AWAY!!!!
+   (write (crlf) (concat |Received word #| (+ <old-c> 2) |: | <text>))
+   #	Clean up the output link
+   (<output> ^request-word (+ <old-c> 1) -
+             ^request-word complete)
+}
+
+sp {comprehend*apply*comprehend-word*next-word*no-more
+   (state <s> ^top-state <ts>
+              ^problem-space comprehend
+              ^operator <o>)
+   (<o> ^name comprehend-word)
+   (<ts> ^io.input-link.word <w>)
+   (<w> ^no-more true)
+-->
+   (<s> ^no-more true)
+   (write (crlf) (concat |NO MORE INPUT|))
+}

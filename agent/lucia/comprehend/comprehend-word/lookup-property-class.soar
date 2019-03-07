@@ -1,0 +1,63 @@
+##!
+# @file
+#
+# @created plindes 20160407
+# File: lookup-property-class-class.soar
+# Author: Peter Lindes
+# Created: 7 April 2016
+#
+# Desc: Looks up a PropertyClassDescriptor in the context to find its referent.
+#		This version is customized for the Rosie environment.
+#
+
+#    Propose an operator to resolve the reference of a PropertyClassDescriptor
+sp {comprehend-word*propose*lookup-property-class
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done	# May need to see comprehend-word-done as proposed
+              ^cxn <cxn>
+             -^reference resolved
+             -^smem.command.query <q>)
+   (<cxn> ^m <prop-class-desc>)
+   (<prop-class-desc> ^is.a PropertyClassDescriptor
+               -^predicate )
+-->
+   (<s> ^operator <o> > +)
+   (<o> ^name lookup-property-class
+        ^type resolution
+        ^property-class <prop-class-desc>
+        ^debug-info (concat |Find the referent for a given PropertyClassDescriptor.|))
+}
+
+sp {comprehend-word*apply*lookup-property-class
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <cxn>)
+   (<o> ^name lookup-property-class
+        ^property-class <prop-class-desc>)
+   (<prop-class-desc> ^name <value>)
+-->
+   #	Request a retrieval of the predicate
+   (<s> ^retrieval <r>)
+   (<r> ^cxn <cxn>
+        ^handle <value>
+        ^target <prop-class-desc>
+        ^attribute predicate)
+}
+
+#	Put a retrieval query on the smem link
+sp {comprehend-word*apply*lookup-property-class*do-query
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <cxn>
+              ^smem.command <command>)
+   (<o> ^name lookup-property-class)
+   #	Find a retrieval request
+   (<s> ^retrieval <r>)
+   (<r> ^cxn <cxn>
+        ^handle <handle>)
+-->
+   #	Add a command to the smem link
+   (<command> ^query <q>
+              ^depth 2)
+   (<q> ^handle <handle>)
+}

@@ -1,0 +1,49 @@
+##!
+# @file
+#
+# @created plind 20160422
+# File: get-first-word.soar
+# Author: Peter Lindes
+# Created: 22 April 2016
+#
+# Desc: Request the first word of a segment
+#
+
+#    Propose an operator to request the first word of a segment
+sp {comprehend*propose*get-first-word
+   (state <s> ^top-state <ts>
+              ^problem-space comprehend
+              ^input <i>
+#             -^no-more true
+             -^comprehension.done true)
+   (<ts> ^io.output-link <output>)
+   (<i> ^count <count>
+       -^comprehended false)
+   (<output> ^request-word complete)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name get-first-word
+        ^count <count>
+        ^debug-info (concat |Request the first word of a segment.|))
+}
+
+#	Request that first word
+sp {comprehend*apply*get-first-word
+   (state <s> ^top-state <ts>
+              ^problem-space comprehend
+              ^operator <o>
+              ^input <i>)
+   (<o> ^name get-first-word
+        ^count <count>)
+   (<ts> ^io.output-link <output>
+         ^next-word <next-word>)
+   (<output> ^request-word complete)
+   (<i> ^count <count>)
+-->
+   #    Request the next word
+   (<output> ^request-word complete -
+             ^request-word <next-word>)
+   #    Set up the input count
+   (<i> ^count <count> -
+        ^count <next-word>)
+}

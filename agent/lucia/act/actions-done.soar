@@ -1,0 +1,87 @@
+##!
+# @file
+#
+# @created plindes 20150624
+# File: actions-done.soar
+# Author: Peter Lindes
+# Created: 24 June 2015
+#
+# Desc: The whole action sequence has been completed,
+#       so complete the act substate.
+#
+
+#   Propose an operator to complete the act substate
+sp {act*propose*actions-done
+   (state <s> ^problem-space act
+              ^action nil)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name actions-done
+        ^debug-info (concat |All selected actions have been performed.|))
+}
+
+#   Create a place to collect the actions
+sp {act*apply*actions-done*create-action-results
+   (state <s> ^problem-space act
+              ^operator <o>
+             -^action-results <r>)
+   (<o> ^name actions-done)
+-->
+   (<s> ^action-results <r>)
+}
+
+#   Collect the results from each action by firing this several times
+sp {act*apply*actions-done*add-result
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action-results <results>
+              ^result <r>)
+   (<o> ^name actions-done)
+-->
+   (<results> ^r <r>)
+   (<s> ^result <r> -)
+}
+
+#   Clear out any previous report-results commands
+sp {act*apply*comprehend*clear-report-results
+   (state <s> ^top-state <ts>
+              ^problem-space act
+              ^operator <o>)
+   (<o> ^name actions-done)
+   (<ts>^io.output-link <output>)
+   (<output> ^report-results <rr>)
+-->
+   (<output> ^report-results <rr> -)
+}
+
+#   Clear out any print-scene commands from this cycle
+sp {act*apply*comprehend*clear-print-scene
+   (state <s> ^top-state <ts>
+              ^problem-space act
+              ^operator <o>)
+   (<o> ^name actions-done)
+   (<ts>^io.output-link <output>)
+   (<output> ^print-scene <scene>)
+-->
+   (<output> ^print-scene <scene> -)
+}
+
+#   Put the collected results on the superstate to complete the substate
+sp {act*apply*actions-done*complete
+   (state <s> ^top-state <ts>
+              ^superstate <ss> 
+              ^problem-space act
+              ^operator <o>
+              ^action-results <results>
+             -^result <r>)
+   (<o> ^name actions-done)
+   (<ts> ^io.output-link <output>)
+   #   There should be no old commands on the output link
+  -(<output> ^report-results <rr>)
+  -(<output> ^print-scene <scene>)
+-->
+   (<ss> ^action-results <results>)
+   #   Report the results to the outside world
+   (<output> ^report-results <results>)
+}
+

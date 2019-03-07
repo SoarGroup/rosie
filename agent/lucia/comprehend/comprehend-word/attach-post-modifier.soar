@@ -1,0 +1,145 @@
+##!
+# @file
+#
+# @created plindes 20160318
+# File: attach-post-modifier.soar
+# Author: Peter Lindes
+# Created: 18 March 2016
+#
+# Desc:  When a modifier comes after a noun, such as in "un bloque verde",
+#		 often the RefExpr for the NP will have already been absorbed
+#		 by another construction.  We need to snip that construction
+#		 and apply the modifier, so then the higher-level construction
+#		 can be rebuilt with the updated RefExpr.
+#
+
+#   Propose an operator to attach a Property to the previous RefExpr
+#	This should work for a verb with an object
+sp {comprehend-word*propose*attach-post-modifier*verb-object
+   (state <s> ^problem-space comprehend-word
+              ^cxn <property>)
+   #	Match a Property that has been resolved
+   (<property> ^is.a Property
+               ^m.predicate )
+   #    See whether what came before has a RefExpr
+   (<property> ^previous <verb-with-args>)
+   (<verb-with-args> ^object <attach-point>)
+   (<attach-point> ^is.a RefExpr)
+-->
+   (<s> ^operator <o> > +)
+   (<o> ^name attach-post-modifier
+        ^attach-type |verb-object|
+        ^property <property>
+        ^attach-to <attach-point>
+        ^debug-info (concat |Attach Property | <property> | to the RefExpr | <attach-point> |.|))
+}
+
+#	This should work for a RefIsPrepPhrase
+sp {comprehend-word*propose*attach-post-modifier*ref-is-prep-phrase
+   (state <s> ^problem-space comprehend-word
+              ^cxn <property>)
+   #	Match a Property that has been resolved
+   (<property> ^is.a Property
+               ^m.predicate )
+   #    See whether what came before has a RefExpr
+   (<property> ^previous <ref-is-prep-phrase>)
+   (<ref-is-prep-phrase> ^is.a RefIsPrepPhrase
+                         ^phrase <prep-phrase>)
+   (<prep-phrase> ^object <attach-point>)
+   (<attach-point> ^is.a RefExpr)
+-->
+   (<s> ^operator <o> > +)
+   (<o> ^name attach-post-modifier
+        ^attach-type |ref-is-prep-phrase|
+        ^property <property>
+        ^attach-to <attach-point>
+        ^debug-info (concat |Attach Property | <property> | to the RefExpr | <attach-point> |.|))
+}
+
+#    This should work for a ActionVerbNeedsTarget
+sp {comprehend-word*propose*attach-post-modifier*action-verb-needs-target
+   (state <s> ^problem-space comprehend-word
+              ^cxn <property>)
+   #    Match a Property that has been resolved
+   (<property> ^is.a Property
+               ^m.predicate )
+   #    See whether what came before has a RefExpr
+   (<property> ^previous <action-verb-needs-target>)
+   (<action-verb-needs-target> ^is.a ActionVerbNeedsTarget
+                               ^target <prep-phrase>)
+   (<prep-phrase> ^object <attach-point>)
+   (<attach-point> ^is.a RefExpr)
+-->
+   (<s> ^operator <o> > +)
+   (<o> ^name attach-post-modifier
+        ^attach-type |action-verb-needs-target|
+        ^property <property>
+        ^attach-to <attach-point>
+        ^debug-info (concat |Attach Property | <property> | to the RefExpr | <attach-point> |.|))
+}
+
+#	This should work for a ImperativeWithLocation
+sp {comprehend-word*propose*attach-post-modifier*imperative-with-location
+   (state <s> ^problem-space comprehend-word
+              ^cxn <property>)
+   #	Match a Property that has been resolved
+   (<property> ^is.a Property
+               ^m.predicate )
+   #    See whether what came before has a RefExpr
+   (<property> ^previous <imperative-with-location>)
+   (<imperative-with-location> ^is.a ImperativeWithLocation
+                               ^location <location>)
+   (<location> ^object <attach-point>)
+   (<attach-point> ^is.a RefExpr)
+-->
+   (<s> ^operator <o> > +)
+   (<o> ^name attach-post-modifier
+        ^attach-type |imperative-with-location|
+        ^property <property>
+        ^attach-to <attach-point>
+        ^debug-info (concat |Attach Property | <property> | to the RefExpr | <attach-point> |.|))
+}
+
+#    Snip for the verb-object case
+sp {comprehend-word*apply*attach-post-modifier*snip-to-object
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name attach-post-modifier
+        ^attach-type << |verb-object| |ref-is-prep-phrase| |imperative-with-location| |action-verb-needs-target| >>
+        ^property <property>
+        ^attach-to <attach-point>)
+   #	Get info for the snip
+   (<property> ^previous <higher-level>)#	The thing to be cut
+-->
+   #	THIS IS THE SNIP!!!
+   #	Change the previous pointer
+   #	This will orphan the higher level cxn and
+   #	leave it to be garbage collected.
+   #	Instead we'll point to its object,
+   #	allowing that to be matched
+   (<property> ^previous <higher-level> -
+             ^previous <attach-point>)
+   (<higher-level> ^snipped true)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <higher-level> | to get to | <attach-point> | .|))
+}
+
+#    Clear out a filled slot
+sp {comprehend-word*apply*attach-post-modifier*clear-filled-slot
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <cxn>)
+   (<o> ^name attach-post-modifier
+        ^attach-type |action-verb-needs-target|
+        ^property <property>
+        ^attach-to <attach-point>)
+   #    Find a slot that was filled
+   (<cxn> ^is.a Property
+          ^previous <previous>)
+   (<previous> ^is.a ActionVerbNeedsTarget
+               ^empty-slot <slot>)
+   (<slot> ^filled <filler>)
+-->
+   #    Unfill the sloat
+   (<slot> ^filled <filler> -)
+}

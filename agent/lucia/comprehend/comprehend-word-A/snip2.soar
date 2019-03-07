@@ -1,0 +1,165 @@
+##!
+# @file
+#
+# @created plindes 20160907
+# File: snip.soar
+# Author: Peter Lindes
+# Created: 7 September 2016
+#
+# Desc: This file has several versions of the snip operator.
+#
+
+
+##################  Snip to a SubjectVerb if a RefExpr follows   #####################
+
+#    Propose an operator to snip some other construction
+#    that covers a SubjectVerb to attach an RefExpr as an object.
+#    Used for things like "The goal is that Bob heard the message."
+sp {comprehend-word*propose*snip*to-subject-verb-before-refexpr
+   (state <s> ^problem-space comprehend-word
+              ^cxn <refexpr>
+              ^lexical-access done)
+   (<refexpr> ^is.a RefExpr
+                ^m <m1>)
+   (<m1> ^is.a RefDesc)    #  ???   Has been grounded already
+   #    See whether what came before has a SubjectVerb in it
+   (<refexpr> ^previous <cover>)
+   (<cover> ^constituents.<x> <target>)
+   (<target> ^is.a SubjectVerb)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name snip
+        ^type snip
+        ^cover <cover>
+        ^target <target>
+        ^goal to-subject-verb-before-refexpr
+        ^debug-info (concat |Snip to get to a SubjectVerb to attach a RefExpr.|))
+}
+
+#    Snip away the cover to get to its SubjectVerb
+sp {comprehend-word*apply*snip*to-subject-verb-before-refexpr
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <refexpr>)
+   (<refexpr> ^is.a RefExpr)
+   (<o> ^name snip
+        ^type snip
+        ^cover <cover>
+        ^target <target>
+        ^goal to-subject-verb-before-refexpr)
+-->
+   #    THIS IS THE SNIP!!!
+   #    Change the previous pointer
+   #    This will orphan the covering cxn and
+   #    leave it to be garbage collected.
+   #    Instead we'll point to its constituent,
+   #    allowing that to be matched
+   (<refexpr> ^previous <cover> -
+              ^previous <target>)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <cover> | to get to | <target> |.|))
+}
+
+
+##################  Snip to a SubjectVerb[Object] if a PrepPhrase follows   #####################
+
+#    Propose an operator to snip some other construction
+#    that covers a SubjectVerbObject to attach an RefExpr as an object.
+#    Used for things like "The goal is that Bob heard the message."
+sp {comprehend-word*propose*snip*to-subject-verb-object-before-prep-phrase
+   (state <s> ^problem-space comprehend-word
+              ^cxn <prep-phrase>
+              ^lexical-access done)
+   (<prep-phrase> ^is.a PrepPhrase
+                  ^m <m1>)
+   #    See whether what came before has a SubjectVerb
+   #    or a SubjectVerbObject in it
+   (<prep-phrase> ^previous <cover>)
+   (<cover> ^constituents.<x> <target>)
+   (<target> ^is.a << SubjectVerb SubjectVerbObject >>)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name snip
+        ^type snip
+        ^cover <cover>
+        ^target <target>
+        ^goal to-subject-verb-object-before-prep-phrase
+        ^debug-info (concat |Snip to get to a SubjectVerb[Object] to attach a PrepPhrase.|))
+}
+
+#    Snip away the cover to get to its SubjectVerb
+sp {comprehend-word*apply*snip*to-subject-verb-object-before-prep-phrase
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <prep-phrase>)
+   (<prep-phrase> ^is.a PrepPhrase)
+   (<o> ^name snip
+        ^type snip
+        ^cover <cover>
+        ^target <target>
+        ^goal to-subject-verb-object-before-prep-phrase)
+-->
+   #    THIS IS THE SNIP!!!
+   #    Change the previous pointer
+   #    This will orphan the covering cxn and
+   #    leave it to be garbage collected.
+   #    Instead we'll point to its constituent,
+   #    allowing that to be matched
+   (<prep-phrase> ^previous <cover> -
+              ^previous <target>)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <cover> | to get to | <target> |.|))
+}
+
+
+##################  SNIPS NEEDED FOR CASES WITH CONJUNCTIONS   #####################
+
+##################  Snip to a Declarative if a AndDeclarative follows   #####################
+
+#    Propose an operator to snip some other construction
+#    that covers a Declarative to attach an AndDeclarative
+#    in order to form a complete DeclarativeAndDeclarative.
+#    Used for things like
+#    "The goal is that the box is in the kitchen and the sphere is purple."
+sp {comprehend-word*propose*snip*to-declarative-before-and-declarative
+   (state <s> ^problem-space comprehend-word
+              ^cxn <and-declarative>
+              ^lexical-access done)
+   (<and-declarative> ^is.a AndDeclarative)
+   #    See whether what came before has a Declarative in it
+   (<and-declarative> ^previous <cover>)
+   (<cover> ^constituents.<x> <target>)
+   (<target> ^is.a Declarative)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name snip
+        ^type snip
+        ^cover <cover>
+        ^target <target>
+        ^goal to-declarative-before-and-declarative
+        ^debug-info (concat |Snip to get to a Declarative to attach an AndDeclarative.|))
+}
+
+#    Snip away the cover to get to its Declarative
+sp {comprehend-word*apply*snip*to-declarative-before-and-declarative
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <and-declarative>)
+   (<and-declarative> ^is.a AndDeclarative)
+   (<o> ^name snip
+        ^type snip
+        ^cover <cover>
+        ^target <target>
+        ^goal to-declarative-before-and-declarative)
+-->
+   #    THIS IS THE SNIP!!!
+   #    Change the previous pointer
+   #    This will orphan the covering cxn and
+   #    leave it to be garbage collected.
+   #    Instead we'll point to its constituent,
+   #    allowing that to be matched
+   (<and-declarative> ^previous <cover> -
+                      ^previous <target>)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <cover> | to get to | <target> |.|))
+}

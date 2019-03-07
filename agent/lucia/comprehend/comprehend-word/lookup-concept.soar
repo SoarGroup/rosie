@@ -1,0 +1,183 @@
+##!
+# @file
+#
+# @created plind 20161222
+# File: lookup-concept.soar
+# Author: Peter Lindes
+# Created: 22 December 2016
+#
+# Desc: Looks up a RefDesc whose category is a Concept.
+#       This version is customized for the Rosie environment.
+#
+
+
+#    Propose an operator to resolve the reference of a Concept
+#    for a number
+sp {comprehend-word*propose*lookup-concept*simple
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done  # May need to see comprehend-word-done as proposed
+              ^cxn <cxn>
+             -^reference resolved
+             -^smem.command.query <q>)
+   (<cxn> ^m <meaning>)
+   (<meaning> ^is.a Concept
+               ^rosie-category concept
+               ^concept-handle <concept>
+              -^givenness number
+              -^predicate )
+-->
+   (<s> ^operator <o> > + =)    #   May need more if multiple lexicals
+   (<o> ^name lookup-concept
+        ^type resolution
+        ^r-type concept
+        ^cxn <cxn>
+        ^concept <concept>
+        ^debug-info (concat |Find the referent for the Concept | <concept> |.|))
+}
+
+sp {comprehend-word*apply*lookup-concept*simple
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name lookup-concept
+        ^r-type concept
+        ^cxn <cxn>
+        ^concept <concept>)
+   (<cxn> ^m <meaning>)
+   (<meaning> ^is.a Concept
+             -^concept-type number)
+-->
+   #    Request a retrieval of the predicate
+   (<s> ^retrieval <r>)
+   (<r> ^cxn <cxn>
+        ^handle <concept>
+        ^target <meaning>
+        ^attribute predicate)
+}
+
+
+#    Propose an operator to resolve the reference of a Concept
+#    based on its category
+sp {comprehend-word*propose*lookup-concept*by-category
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done  # May need to see comprehend-word-done as proposed
+              ^cxn <cxn>
+             -^reference resolved
+             -^smem.command.query <q>)
+   (<cxn> ^m <ref-desc>)
+   (<ref-desc> ^is.a RefDesc
+               ^category <category>
+              -^predicate )
+   (<category> ^rosie-category concept
+               ^concept-handle <concept>)
+-->
+   (<s> ^operator <o> > + =)    #   May need more if multiple lexicals
+   (<o> ^name lookup-concept
+        ^type resolution
+        ^r-type concept
+        ^cxn <cxn>
+        ^concept <concept>
+        ^debug-info (concat |Find the referent for a given Concept.|))
+}
+
+sp {comprehend-word*apply*lookup-concept*by-category
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name lookup-concept
+        ^r-type concept
+        ^cxn <cxn>
+        ^concept <concept>)
+   (<cxn> ^m <ref-desc>)
+   (<ref-desc> ^is.a RefDesc
+               ^category <category>
+              -^predicate )
+   (<category> ^rosie-category concept
+               ^concept-handle <concept>)
+-->
+   #    Request a retrieval of the predicate
+   (<s> ^retrieval <r>)
+   (<r> ^cxn <cxn>
+        ^handle <concept>
+        ^target <ref-desc>
+        ^attribute predicate)
+}
+
+
+#    Propose an operator to resolve the reference of a Concept
+#    for a number
+sp {comprehend-word*propose*lookup-concept*for-number
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done  # May need to see comprehend-word-done as proposed
+              ^cxn <cxn>
+             -^reference resolved
+             -^smem.command.query <q>)
+   (<cxn> ^m <concept>)
+   (<concept> ^is.a Concept
+              ^concept-type number
+              ^concept-handle <handle>
+             -^predicate )
+-->
+   (<s> ^operator <o> > + =)    #   May need more if multiple lexicals
+   (<o> ^name lookup-concept
+        ^type resolution
+        ^r-type concept
+        ^cxn <cxn>
+        ^concept <handle>
+        ^debug-info (concat |Find the referent for the Number | <handle> |.|))
+}
+
+#   This is terrible since it needs a separate rule
+#   for every possible number just to convert it
+#   from a string to an actual number.
+#   This could be fixed either by allowing numbers as values
+#   in ECG <-- clauses or by having the handles in smem
+#   be strings.
+sp {comprehend-word*apply*lookup-concept*for-number*1
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name lookup-concept
+        ^r-type concept
+        ^cxn <cxn>
+        ^concept |1|)
+   (<cxn> ^m <ref-desc>)
+-->
+   #    Request a retrieval of the predicate
+   (<s> ^retrieval <r>)
+   (<r> ^cxn <cxn>
+        ^handle 1
+        ^target <ref-desc>
+        ^attribute predicate)
+}
+sp {comprehend-word*apply*lookup-concept*for-number*2
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name lookup-concept
+        ^r-type concept
+        ^cxn <cxn>
+        ^concept |2|)
+   (<cxn> ^m <ref-desc>)
+-->
+   #    Request a retrieval of the predicate
+   (<s> ^retrieval <r>)
+   (<r> ^cxn <cxn>
+        ^handle 2
+        ^target <ref-desc>
+        ^attribute predicate)
+}
+
+#   Put a retrieval query on the smem link
+sp {comprehend-word*apply*lookup-concept*do-query
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <cxn>
+              ^smem.command <command>)
+   (<o> ^name lookup-concept)
+   #    Find a retrieval request
+   (<s> ^retrieval <r>)
+   (<r> ^cxn <cxn>
+        ^handle <handle>)
+-->
+   #    Add a command to the smem link
+   (<command> ^query <q>
+              ^depth 2)
+   (<q> ^handle <handle>)
+}

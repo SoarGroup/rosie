@@ -1,0 +1,287 @@
+##!
+# @file
+#
+# @created plind 20160219
+# File: preferences.soar
+# Author: Peter Lindes
+# Created: 19 February 2016
+#
+# Desc: Sometimes in the comprehend-word state we may have
+#		multiple operators proposed at once.
+#		The rules in this file add preferences so as to
+#		resolve operator ties.
+#
+
+#    For multiple match-construction operators, pick the
+#    one with the largest value for ^span.
+sp {comprehend-word*preference*match-construction-higher-span
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name match-construction
+         ^span <span1>)
+   (<o2> ^name match-construction
+         ^span < <span1>)
+   #    Get data for report
+   (<o1> ^cxn-name <cname1>)
+   (<o2> ^cxn-name <cname2>
+         ^span <span2>)
+-->
+   (<s> ^operator <o1> > <o2>)
+   #    Report using this preference
+   (write (crlf) (concat |Prefer >span: | <cname1> |(| <span1> |) > | <cname2> |(| <span2> |).|))
+}
+
+#    Make a match-construction operator higher than a snip
+#    for one special case.
+#    This avoids multiple snips in a row.
+sp {comprehend-word*preference*match-construction-before-snip
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name match-construction
+         ^cxn-name SubjectVerbObjectPP)
+   (<o2> ^name snip
+         ^goal to-subject-verb-object-before-prep-phrase)
+-->
+   (<s> ^operator <o1> > <o2>)
+   #    Report using this preference
+   (write (crlf) (concat |Prefer match-construction over snip.|))
+}
+
+#    Make an operator of type comparison higher preference
+#    than one of type resolution.
+sp {comprehend-word*preference*comparison-before-resolution
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^type comparison)
+   (<o2> ^type resolution)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+#    Make an operator of type comparison higher preference
+#    than one of type construction.
+sp {comprehend-word*preference*comparison-before-construction
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^type comparison)
+   (<o2> ^type construction)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+#    Make an operator of type attachment higher preference
+#    than one of type resolution.
+sp {comprehend-word*preference*attachment-before-resolution
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^type attachment)
+   (<o2> ^type resolution)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+#    Make an operator of type resolution higher preference
+#    than one of type construction.
+#    EXCEPT for an IsThat construction
+sp {comprehend-word*preference*resolution-before-construction
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^type resolution)
+   (<o2> ^type construction
+        -^cxn-name IsThat)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+#    Make an operator of type construction higher preference
+#    than one of type resolution.
+#    WHEN it is an IsThat construction
+sp {comprehend-word*preference*isthat-before-resolution
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^type resolution)
+   (<o2> ^type construction
+         ^cxn-name IsThat)
+-->
+   (<s> ^operator <o1> < <o2>)
+}
+
+#    Make a fill-slot operator higher preference
+#    than a match-construction operator.
+sp {comprehend-word*preference*fill-slot-before-match-construction
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name fill-slot)
+   (<o2> ^name match-construction)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+#    Make a resolution operator operator higher preference
+#    than a fill-slot.
+sp {comprehend-word*preference*resolution-before-fill-slot
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^type resolution)
+   (<o2> ^name fill-slot)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+#    Make a resolve-this-n-that operator higher preference
+#    than a resolve-reference operator.
+sp {comprehend-word*preference*resolve-this-n-that-before-resolve-reference
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name resolve-this-n-that)
+   (<o2> ^name resolve-reference)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+#    Make an operator of type resolution higher preference
+#	 than create-new-object.
+sp {comprehend-word*preference*resolution-before-create-new-object
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^type resolution)
+   (<o2> ^name create-new-object)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+#    If a match-construction associates a PrepPhrase with something
+#    that comes before it, but that something is not the same
+#    thing that attach-prep-phrase chose as the attached-to point,
+#    then prefer an operator that does associate with the thing
+#    attached-to.
+sp {comprehend-word*preference*prep-phrase-with-its-attached-to
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +
+              ^cxn <cxn>)
+   #    Look for an attached PrepPhrase
+   (<cxn> ^is.a PrepPhrase
+          ^attached-to <attach-point>
+          ^previous <previous>)
+   (<o1> ^name match-construction
+         ^<constituent1-0> <cxn>
+         ^{ <constituent1-1> <> previous } <attach-point>
+         ^{ <constituent1-2> <> previous } { <previous> <> <attach-point> })
+   (<o2> ^name match-construction
+         ^<constituent2-0> <cxn>
+         ^{ <constituent2-1> <> previous } <previous>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+#   Prefer snip to lookup-action or lookup-concept
+#   This helps with "If the green box is large then go forward."
+#   That's because "forward" has two senses and we need to
+#   avoid a tie with looking up the action sense.
+sp {comprehend-word*preference*snip-before-lookup-concept
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name snip)
+   (<o2> ^name << lookup-action lookup-concept >>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+
+#   A very special case to distinguish between match-construction
+#   operators for PropertySet and SpecNoun.
+#   For a determiner followed by "location" or something similar
+#   that can be either a PropertySet or a CommonNoun,
+#   choose the noun interpretation of the determiner if definite
+#   and the class name if the determiner is indefinite
+sp {comprehend-word*preference*match-construction-noun-before-properties
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name match-construction
+         ^cxn-name << BareNoun SpecNoun SpecPropNoun >>
+         ^spec <det>)
+   (<o2> ^name match-construction
+         ^cxn-name PropertySet
+         ^det <det>)
+   (<det> ^m.givenness definite)
+   #    Get data for report
+   (<o1> ^cxn-name <cname1>)
+   (<o2> ^cxn-name <cname2>)
+   (<det> ^cxn-name <det-name>)
+-->
+   (<s> ^operator <o1> > <o2>)
+   #    Report using this preference
+   (write (crlf) (concat |Prefer NP/PropSet if definite: | <cname1> | > | <cname2> |, det = | <det-name> |.|))
+}
+
+sp {comprehend-word*preference*match-construction-properties-before-noun
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name match-construction
+         ^cxn-name PropertySet
+         ^det <det>)
+   (<o2> ^name match-construction
+         ^cxn-name << BareNoun SpecNoun SpecPropNoun >>
+         ^spec <det>)
+   (<det> ^m.givenness indefinite)
+   #    Get data for report
+   (<o1> ^cxn-name <cname1>)
+   (<o2> ^cxn-name <cname2>)
+   (<det> ^cxn-name <det-name>)
+-->
+   (<s> ^operator <o1> > <o2>)
+   #    Report using this preference
+   (write (crlf) (concat |Prefer PropSet/NP if indefinite: | <cname1> | > | <cname2> |, det = | <det-name> |.|))
+}
+
+#   For a PropertySet with just a noun, prefer BareNoun
+sp {comprehend-word*preference*match-construction-bare-noun-before-property
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name match-construction
+         ^cxn-name BareNoun)
+   (<o2> ^name match-construction
+         ^cxn-name PropertySet
+         ^span 1)
+   #    Get data for report
+   (<o1> ^cxn-name <cname1>)
+   (<o2> ^cxn-name <cname2>)
+-->
+   (<s> ^operator <o1> > <o2>)
+   #    Report using this preference
+   (write (crlf) (concat |Prefer BareNoun/PropSet: | <cname1> | > | <cname2> |.|))
+}
+
+##   Prefer NumberOfUnits over a SpecNoun 
+#sp {comprehend-word*preference*match-construction-NumberOfUnits-before-SpecNoun
+#   (state <s> ^problem-space comprehend-word
+#              ^operator <o1> +
+#              ^operator <o2> +)
+#   (<o1> ^name match-construction
+#         ^cxn-name NumberOfUnits)
+#   (<o2> ^name match-construction
+#         ^cxn-name SpecNoun)
+#   #    Get data for report
+#   (<o1> ^cxn-name <cname1>)
+#   (<o2> ^cxn-name <cname2>)
+#-->
+#   (<s> ^operator <o1> > <o2>)
+#   #    Report using this preference
+#   (write (crlf) (concat |Prefer NumberOfUnits/SpecNoun: | <cname1> | > | <cname2> |.|))
+#}

@@ -1,0 +1,176 @@
+##!
+# @file
+#
+# @created plindes 20160830
+# File: attach-and-snip.soar
+# Author: Peter Lindes
+# Created: 30 August 2016
+#
+# Desc: This file has several versions of the attach-and-snip operator.
+#
+#
+#		This operator can have many proposals for different situations,
+#		and some apply rules that do the attachment, with snips as needed.
+#
+#       When this operator is applied, any other alternative
+#       lexicals will be deleted by the general selection rule.
+#
+
+
+##################	Direction to SimpleAction	#####################
+
+#    Propose an operator to attach a Direction to the previous SimpleAction
+sp {comprehend-word*propose*attach-and-snip*to-simple-action
+   (state <s> ^problem-space comprehend-word
+              ^cxn <direction>
+              ^lexical-access done)
+   (<direction> ^is.a Direction
+               -^attached-to <attach-point>)
+   #    See whether what came before has a SimpleAction
+   (<direction> ^previous <conditional>)
+   (<conditional> ^is.a Conditional
+                  ^then <then>)
+   (<then> ^is.a ThenCommand
+           ^command <command>)
+   (<command> ^is.a SimpleAction)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name attach-and-snip
+        ^type attachment
+        ^selected <direction>
+        ^attach-type |simple-action|
+        ^direction <direction>
+        ^attach-to <command>
+        ^debug-info (concat |Attach Direction | <direction> | to the SimpleAction | <command> |.|))
+}
+
+#    Make the attachment and snip to the SimpleAction
+sp {comprehend-word*apply*attach-and-snip*to-simple-action
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name attach-and-snip
+        ^attach-type |simple-action|
+        ^direction <direction>
+        ^attach-to <attach-point>)      #   What to replace it with
+   #    Get info for the snip
+   (<direction> ^previous <conditional>)#   The thing to be cut
+-->
+   #    THIS IS THE SNIP!!!
+   #    Change the previous pointer
+   #    This will orphan the Conditional and
+   #    leave it to be garbage collected.
+   #    Instead we'll point to its command,
+   #    allowing that to be matched
+   (<direction> ^previous <conditional> -
+                ^previous <attach-point>)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <conditional> | to get to | <attach-point> | .|))
+   #	Attach this Direction to the SimpleAction
+   (<direction> ^attached-to <attach-point>)
+   #   Write a message for the attachment.
+   (write (crlf) (concat |Attach Direction | <direction> | to SimpleAction | <attach-point> | .|))
+}
+
+
+##################  UntilClause to ActionVerb   #####################
+
+#    Propose an operator to attach an UntilClause to a previous ActionVerb
+sp {comprehend-word*propose*attach-and-snip*to-action-verb
+   (state <s> ^problem-space comprehend-word
+              ^cxn <until>
+              ^lexical-access done)
+   (<until> ^is.a UntilClause
+           -^attached-to <attach-point>)
+   #    See whether what came before has an ActionVerb
+   (<until> ^previous <action>)
+   (<action> ^is.a SimpleAction
+             ^verb <verb>)
+   (<verb> ^is.a ActionVerb)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name attach-and-snip
+        ^type attachment
+        ^attach-type |action-verb|
+        ^until <until>
+        ^attach-to <verb>
+        ^debug-info (concat |Attach UntilClause | <until> | to the ActionVerb | <verb> |.|))
+}
+
+#    Make the attachment and snip to the ActionVerb
+sp {comprehend-word*apply*attach-and-snip*to-action-verb
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name attach-and-snip
+        ^attach-type |action-verb|
+        ^until <until>
+        ^attach-to <attach-point>)  #   What to replace it with
+   #    Get info for the snip
+   (<until> ^previous <action>)     #   The thing to be cut
+-->
+   #    THIS IS THE SNIP!!!
+   #    Change the previous pointer
+   #    This will orphan the SimpleAction and
+   #    leave it to be garbage collected.
+   #    Instead we'll point to its verb,
+   #    allowing that to be matched
+   (<until> ^previous <action> -
+            ^previous <attach-point>)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <action> | to get to | <attach-point> | .|))
+   #    Attach this UntilClause to the ActionVerb
+   (<until> ^attached-to <attach-point>)
+   #   Write a message for the attachment.
+   (write (crlf) (concat |Attach UntilClause | <until> | to ActionVerb | <attach-point> | .|))
+}
+
+
+##################  PrepPhrase to DriveVerb   #####################
+
+#    Propose an operator to attach an PrepPhrase to a previous DriveVerb
+sp {comprehend-word*propose*attach-and-snip*to-drive-verb
+   (state <s> ^problem-space comprehend-word
+              ^cxn <prep-phrase>
+              ^lexical-access done)
+   (<prep-phrase> ^is.a PrepPhrase
+                 -^attached-to <attach-point>)
+   #    See whether what came before has an DriveVerb
+   (<prep-phrase> ^previous <action>)
+   (<action> ^is.a SimpleAction
+             ^verb <verb>)
+   (<verb> ^is.a DriveVerb)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name attach-and-snip
+        ^type attachment
+        ^attach-type |drive-verb|
+        ^prep-phrase <prep-phrase>
+        ^attach-to <verb>
+        ^debug-info (concat |Attach PrepPhrase | <prep-phrase> | to the DriveVerb | <verb> |.|))
+}
+
+#    Make the attachment and snip to the ActionVerb
+sp {comprehend-word*apply*attach-and-snip*to-drive-verb
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name attach-and-snip
+        ^attach-type |drive-verb|
+        ^prep-phrase <prep-phrase>
+        ^attach-to <attach-point>)  #   What to replace it with
+   #    Get info for the snip
+   (<prep-phrase> ^previous <action>)     #   The thing to be cut
+-->
+   #    THIS IS THE SNIP!!!
+   #    Change the previous pointer
+   #    This will orphan the SimpleAction and
+   #    leave it to be garbage collected.
+   #    Instead we'll point to its verb,
+   #    allowing that to be matched
+   (<prep-phrase> ^previous <action> -
+                  ^previous <attach-point>)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <action> | to get to | <attach-point> | .|))
+   #    Attach this UntilClause to the ActionVerb
+   (<prep-phrase> ^attached-to <attach-point>)
+   #   Write a message for the attachment.
+   (write (crlf) (concat |Attach PrepPhrase | <prep-phrase> | to DriveVerb | <attach-point> | .|))
+}

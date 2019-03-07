@@ -1,0 +1,174 @@
+##!
+# @file
+#
+# @created plindes 20150608
+# File: comprehend-done.soar
+# Author: Peter Lindes
+# Created: 8 June 2015
+# Adapted: 3 January 2019
+#
+# Desc: Finishes the process of comprehending a segment of text
+#
+#       The adapted version has some rules with two versions:
+#       one for pure Lucia and one for Lucia in Rosie.
+#
+
+#	Propose an operator to finish comprehension
+sp {comprehend*propose*comprehend-done
+   (state <s> ^top-state <ts>
+         	  ^problem-space comprehend
+              ^comprehension <c>)
+   (<c> ^done true)
+  -(<ts> ^comprehension <c>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name comprehend-done
+   		^debug-info (concat |The comprehension of a segment is completed.|))
+}
+
+#   Show and pass along the complete content of the segment.
+sp {comprehend*apply*comprehend-done*show-content*first-time
+   (state <s> ^top-state <ts>
+              ^problem-space comprehend
+              ^operator <o>
+              ^comprehension <c>
+              ^input <i>)
+   (<o> ^name comprehend-done)
+   (<c> ^cxn-stack.m <m>)    # Who cares about the meaning here?
+   (<ts> ^discourse.last-segment nil)
+   (<i> ^content <content>)
+  -(<c> ^content )
+-->
+   #    Add the content to the comprehension
+   (<c> ^content <content>)
+   #    Print a report
+   (write (crlf) (concat |Sentence #1: "| <content> |"|))
+   #    Reset the content accumlator
+   (<i> ^content <content> -
+        ^content nil)
+}
+
+#   Show and pass along the complete content of the segment.
+sp {comprehend*apply*comprehend-done*show-content*after-first-time
+   (state <s> ^top-state <ts>
+              ^problem-space comprehend
+              ^operator <o>
+              ^comprehension <c>
+              ^input <i>)
+   (<o> ^name comprehend-done)
+   (<c> ^cxn-stack.m <m>)    # Who cares about the meaning here?
+   (<ts> ^discourse.last-segment.count <old-s-num>)
+   (<i> ^content <content>)
+  -(<c> ^content )
+-->
+   #    Add the content to the comprehension
+   (<c> ^content <content>)
+   #    Print a report
+   (write (crlf) (concat |Sentence #| (+ 1 <old-s-num>) |: "| <content> |"|))
+   #    Reset the content accumlator
+   (<i> ^content <content> -
+        ^content nil)
+}
+
+
+############### RULES FOR LUCIA ONLY #################
+
+#   Once the substate has marked this operator as done,
+#   do some more things to complete the process
+#   of comprehending a single segment of input.
+#   This one fires when a meaning was found
+sp {comprehend*apply*comprehend-done*with-meaning*lucia
+   (state <s> ^top-state <ts>
+         	  ^problem-space comprehend
+              ^operator <o>
+              ^comprehension <c>)
+   (<ts> ^name comprehender)
+   (<o> ^name comprehend-done)
+   (<c> ^cxn-stack.m <m>)    # Who cares about the meaning here?
+   (<ts> ^io.output-link <output>)
+-->
+   #Add the comprehension WME to the top state
+   (<ts> ^comprehension <c>)    # Who cares about the meaning here?
+   #   Report the comprehension to the outside world
+   (<output> ^report-comprehension <c>)
+}
+
+#   This one fires when NO meaning was found
+sp {comprehend*apply*comprehend-done*no-meaning*lucia
+   (state <s> ^top-state <ts>
+              ^problem-space comprehend
+              ^operator <o>
+              ^comprehension <c>)
+   (<ts> ^name comprehender)
+   (<o> ^name comprehend-done)
+  -(<c> ^cxn-stack.m <m>)    # Who cares about the meaning here?
+   (<ts> ^io.output-link <output>)
+-->
+   #Add the comprehension WME to the top state
+   (<ts> ^comprehension <c>)    # Show the syntax even if no meaning
+   #   Report the comprehension to the outside world
+   (<output> ^report-comprehension <c>)
+}
+
+
+############### RULES FOR ROSIE ONLY #################
+
+#   Once the substate has marked this operator as done,
+#   do some more things to complete the process
+#   of comprehending a single segment of input.
+#   This one fires when a meaning was found
+sp {comprehend*apply*comprehend-done*with-meaning*rosie
+   (state <s> ^top-state <ts>
+              ^problem-space comprehend
+              ^operator <o>
+              ^comprehension <c>)
+   (<ts> ^name rosie)
+   (<o> ^name comprehend-done)
+   (<c> ^cxn-stack.m <m>)    # Who cares about the meaning here?
+   (<ts> ^discourse <d>
+         ^count <count>
+         ^io.output-link <output>)
+   #    Find the last segment
+   (<d> ^last-segment <previous>)
+-->
+   #Add the comprehension WME to the top state
+   (<ts> ^comprehension <c>)    # Who cares about the meaning here?
+    #    Put a record of this segment on the discourse link
+    (<d> ^segment <g>
+         ^last-segment <previous> -
+         ^last-segment <g>)
+    (<g> ^count (+ <count> 1)
+         ^comprehension <c>
+         ^previous <previous>)
+   #   Report the comprehension to the outside world
+   (<output> ^report-comprehension <c>)
+}
+
+#   This one fires when NO meaning was found
+sp {comprehend*apply*comprehend-done*no-meaning*rosie
+   (state <s> ^top-state <ts>
+              ^problem-space comprehend
+              ^operator <o>
+              ^comprehension <c>)
+   (<ts> ^name rosie)
+   (<o> ^name comprehend-done)
+  -(<c> ^cxn-stack.m <m>)    # Who cares about the meaning here?
+   (<ts> ^discourse <d>
+         ^count <count>
+         ^io.output-link <output>)
+   #    Find the last segment
+   (<d> ^last-segment <previous>)
+-->
+   #Add the comprehension WME to the top state
+   (<ts> ^comprehension <c>)    # Show the syntax even if no meaning
+    #    Put a record of this segment on the discourse link
+    (<d> ^segment <g>
+         ^last-segment <previous> -
+         ^last-segment <g>)
+    (<g> ^count (+ <count> 1)
+         ^comprehension <c>
+         ^previous <previous>)
+   #   Report the comprehension to the outside world
+   (<output> ^report-comprehension <c>)
+}
+

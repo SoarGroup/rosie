@@ -18,7 +18,7 @@ public class RosieConfig {
 
 	// A set of property names used in the config file
 	public static final HashSet<String> PROP_NAMES = new HashSet<String>(
-			Arrays.asList("agent-name", "agent-dir", "domain", "parser", "simulate-perception",
+			Arrays.asList("agent-name", "agent-dir", "domain", "parser", "parser-test", "simulate-perception",
 					"sentence-source", "sentences-file", "world-file", "smem-config-file", 
 					"custom-soar-file", "custom-smem-file"));
 	
@@ -46,6 +46,13 @@ public class RosieConfig {
 	public static final String DEFAULT_PARSER = "laird";
 	public static final HashSet<String> VALID_PARSERS = new HashSet<String>(
 			Arrays.asList("laird", "lucia"));
+	
+	// parser-test = << true false >>  [OPTIONAL] - Whether to parse in test mode
+	//    DEFAULT - false
+	public String parser_test;
+	public static final String DEFAULT_PARSER_TEST = "false";
+	public static final HashSet<String> VALID_PARSER_TESTS = new HashSet<String>(
+			Arrays.asList("true", "false"));
 	
 	// sentence-source = << chat scripts >>  [OPTIONAL] - Where sentences come from
 	//    DEFAULT - chat
@@ -102,9 +109,10 @@ public class RosieConfig {
 		
 		// agent-dir
 		if (props.containsKey("agent-dir")){
-			this.agentDir = props.getProperty("agent-dir");
+			this.agentDir = props.getProperty("agent-dir").replaceAll("\\\\", "/");
 		} else {
 			this.agentDir = configFile.getParent() + "/agent";
+			this.agentDir = this.agentDir.replaceAll("\\\\", "/");
 		}
 		
 		// domain
@@ -137,6 +145,17 @@ public class RosieConfig {
 			}
 		} else {
 			parser = DEFAULT_PARSER;
+		}
+		
+		// parser-test
+		if (props.containsKey("parser-test")){
+			this.parser_test = props.getProperty("parser-test").toLowerCase();
+			if(!VALID_PARSER_TESTS.contains(this.parser_test)){
+				throw new RosieConfigException("parser " + this.parser + " is not valid\n" + 
+						"Must be one of: " + VALID_PARSERS.toString());
+			}
+		} else {
+			parser_test = DEFAULT_PARSER_TEST;
 		}
 		
 		// sentence-source
@@ -205,6 +224,7 @@ public class RosieConfig {
 		sb.append("domain = " + this.domain + "\n");
 		sb.append("simulate-perception = " + new Boolean(this.simulate_perception).toString() + "\n");
 		sb.append("parser = " + this.parser + "\n");
+		sb.append("parser-test = " + this.parser_test + "\n");
 		sb.append("sentence-source = " + this.sentenceSource + "\n");
 
 		if(this.sentencesFile != null){

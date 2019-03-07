@@ -1,0 +1,102 @@
+##!
+# @file
+#
+# @created plindes 20181129
+# File: sentence-complete.soar
+# Author: Peter Lindes
+# Created: 29 November 2018
+#
+# Desc: Code to run within the Rosie agent
+#       after all operations in a sentence are done.
+#
+#    Basically in either test or normal mode, for the Lucia parser,
+#    This should remove ^action, ^action-result, and ^ comprehension
+#    from the top state and put the message that was built
+#    on the interaction stack.
+#
+
+
+##############  SENTENCE-COMPLETE FOR LUCIA MODE    #########################
+
+#   Propose when all sentence processing is done
+#   When we're on the top state in test mode
+sp {top-state*propose*sentence-complete
+   (state <s> ^name rosie
+              ^top-state <ts>)
+   (<ts> ^agent-params <params>
+         ^action <action>
+         ^action-results <results>
+         ^comprehension <comprehension>
+         ^interaction.status <status>)
+   (<params> ^parser lucia)
+  -(<status> ^new-message )
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name sentence-complete)
+}
+
+#   Apply in test mode
+sp {top-state*apply*sentence-complete
+   (state <s> ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name sentence-complete)
+   (<ts> ^agent-params <params>
+         ^action <action>
+         ^action-results <results>
+         ^comprehension <comprehension>
+         ^interaction.status <status>)
+   (<params> ^parser lucia)
+   (<results> ^r <message>)
+  -(<status> ^new-message )
+-->
+   #    Delete the intermediate results and post the final message
+   (<ts> ^action <action> -
+         ^action-results <results> -
+         ^comprehension <comprehension> -)
+   (<status> ^new-message <message>)
+}
+
+
+##############  SENTENCE-COMPLETE FOR ROSIE MODE    #########################
+
+#   When we're in the dialog-event state in normal mode
+sp {dialog-event*propose*sentence-complete
+   (state <s> ^name dialog-event
+              ^top-state <ts>
+              ^action <action>
+              ^action-results <results>)
+   (<ts> ^agent-params <params>
+         ^comprehension <comprehension>
+         ^interaction.status <status>)
+   (<params> ^parser lucia)
+  -(<status> ^new-message )
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name sentence-complete)
+}
+
+#   Apply in normal mode
+sp {dialog-event*apply*sentence-complete
+   (state <s> ^operator <o>
+              ^top-state <ts>
+              ^action <action>
+              ^action-results <results>)
+   (<o> ^name sentence-complete)
+   (<ts> ^agent-params <params>
+         ^comprehension <comprehension>
+         ^interaction.status <status>)
+   (<params> ^parser lucia)
+   (<results> ^r <message>)
+  -(<status> ^new-message )
+-->
+   #    Delete the intermediate results
+   (<s> ^action <action> -
+        ^action-results <results> -)
+   (<ts> ^comprehension <comprehension> -)
+   #    Post the message and the dialog event info
+   (<status> ^new-message <message>
+             ^performed <performed>)
+   (<performed> ^dialog-event <d>)
+   (<d> ^originator agent
+        ^type process-sentence)
+}

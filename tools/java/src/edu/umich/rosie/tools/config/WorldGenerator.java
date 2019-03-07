@@ -22,6 +22,7 @@ public class WorldGenerator {
 					new FileOutputStream(outputFile), "utf-8"));
 			
 			String gFile = inputFile.getName().replace(".world", "");
+			gFile = gFile.replaceAll(".", "");
 			
 			//outputWriter.write("# Placeholder for auto-generated world file");
 			outputWriter.write("\nsp {top-state*apply*create-internal-world*" + gFile + "\n");
@@ -91,7 +92,7 @@ public class WorldGenerator {
 							outputWriter.write(")\n");
 							index= index +1;
 							outputWriter.write("(" + objs.get(index) + " ^item-type object ^handle object-" + index + " ^predicates <pr" + index + ">)\n");
-							outputWriter.write("(<pr" + index + "> ^is-visible1 visible1 ");
+							outputWriter.write("(<pr" + index + "> ^is-visible1 visible1 ^arm-status not-grabbed");
 							flag = 1;   
 						} else if (line.contains("predicate ")) {
 							if (flag == 1){

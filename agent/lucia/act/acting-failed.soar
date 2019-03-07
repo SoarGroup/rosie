@@ -1,0 +1,154 @@
+##!
+# @file
+#
+# @created plindes 20160409
+# File: acting-failed.soar
+# Author: Peter Lindes
+# Created: 9 April 2016
+#
+# Desc:  Detect and recover from a crash within act or act-on-it.
+#
+
+#####################   FOR act OPERATOR    ################
+
+#    Propose an operator to detect a crash
+sp {act*propose*acting-failed*state-no-change*act
+   (state <s> ^attribute state
+              ^impasse no-change
+              ^superstate <ss>)
+   (<ss> ^problem-space act
+         ^superstate <sss>
+         ^attribute operator
+         ^impasse no-change)
+   (<sss> -^result 
+           ^top-state <ts>)
+   (<ts> ^action <action>)
+-->
+   (<s> ^operator <o> > +)
+   (<o> ^name acting-failed
+        ^debug-info (concat |No operator proposed in state | <ss> | for action | <action> |.|))
+}
+
+sp {act*propose*acting-failed*tie*act
+   (state <s> ^attribute state
+              ^impasse no-change
+              ^superstate <ss>)
+   (<ss> ^problem-space act
+         ^superstate <sss>
+         ^attribute operator
+         ^impasse tie)
+   (<sss> -^result 
+           ^top-state <ts>)
+   (<ts> ^action <action>)
+-->
+   (<s> ^operator <o> > +)
+   (<o> ^name acting-failed
+        ^debug-info (concat |Operator tie in state | <ss> | for action | <action> |.|))
+}
+
+#    Apply the operator to recover from the crash
+#    by posting a FAILURE action
+sp {act*apply*acting-failed*act
+   (state <s> ^attribute state
+              ^impasse no-change
+              ^superstate <ss>
+              ^operator <o>)
+   (<o> ^name acting-failed
+        ^debug-info <debug-info>)
+   (<ss> ^problem-space act
+         ^superstate <sss>)
+   (<sss> ^top-state <ts>)
+   (<ts> ^io.output-link <output>
+         ^action <action>)
+   (<action> ^next <next>)
+-->
+   #   Report the failure
+   (<ss> ^result <message>)
+   (<message> ^action FAILURE
+              ^result <result>
+               ^text |FAILURE! Action not known.|
+               ^next nil)
+   (<result> ^interaction-status <i-status>)
+   (<i-status> ^failure <f>)
+   (<f> ^type acting)
+   #   Report the failure to the outside world
+   (<output> ^report-decision <message>)
+   #    Report what happened
+   (write (concat <debug-info>))
+   #   Go on to the next
+   (<ss> ^action <action> -
+         ^action <next>)
+}
+
+
+#####################   FOR ANY OPERATOR UNDER act    ################
+
+
+#    Propose an operator to detect a crash
+sp {act*propose*acting-failed*any-operator-under-act*state-no-change
+   (state <s> ^attribute state
+              ^impasse no-change
+              ^superstate <ss>)
+   (<ss> ^superstate <sss>
+         ^attribute operator
+         ^impasse no-change)
+   #    Make sure we're another level down
+   #    after a proposed act-xx operator failed
+   (<sss> ^top-state { <ts> <> <sss> })
+   (<ts> ^action <action>)
+-->
+   (<s> ^operator <o> > +)
+   (<o> ^name acting-failed
+        ^debug-info (concat |Operator under act failed in state | <sss> | for action | <action> |.|))
+}
+
+sp {act*propose*acting-failed*any-operator-under-act*tie
+   (state <s> ^attribute state
+              ^impasse no-change
+              ^superstate <ss>)
+   (<ss> ^problem-space act-on-it
+         ^superstate <sss>
+         ^attribute operator
+         ^impasse tie)
+   (<sss> -^result 
+           ^top-state { <ts> <> <sss> })
+   (<ts> ^action <action>
+         ^operator.name act)
+-->
+   (<s> ^operator <o> > +)
+   (<o> ^name acting-failed
+        ^debug-info (concat |Operator tie in state | <sss> | for action | <action> |.|))
+}
+
+#    Apply the operator to recover from the crash
+#    by posting a FAILURE action
+sp {act*apply*acting-failed*any-operator-under-act
+   (state <s> ^attribute state
+              ^impasse no-change
+              ^superstate <ss>
+              ^operator <o>)
+   (<o> ^name acting-failed
+        ^debug-info <debug-info>)
+   (<ss> ^superstate <sss>)
+   (<sss> ^top-state { <ts> <> <sss> })
+   (<ts> ^io.output-link <output>
+         ^action <action>)
+   (<action> ^next <next>)
+-->
+   #   Report the failure
+   (<sss> ^result <message>)
+   (<message> ^action FAILURE
+              ^result <result>
+               ^text |FAILURE! Action can't be performed.|
+               ^next nil)
+   (<result> ^interaction-status <i-status>)
+   (<i-status> ^failure <f>)
+   (<f> ^type failed-to-act)
+   #   Report the failure to the outside world
+   (<output> ^report-decision <message>)
+   #    Report what happened
+   (write (concat <debug-info>))
+   #   Go on to the next
+   (<sss> ^action <action> -
+         ^action <next>)
+}

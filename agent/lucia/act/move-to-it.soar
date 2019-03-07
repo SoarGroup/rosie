@@ -1,0 +1,85 @@
+##!
+# @file
+#
+# @created plindes 20160401
+# File: move-to-it.soar
+# Author: Peter Lindes
+# Created: 1 April 2016
+#
+# Desc:  Send a message to perform an action move to a location.
+#
+
+#   Propose an operator to create an relation
+sp {act*propose*move-to-it
+   (state <s> ^problem-space act
+              ^action <a>)
+   (<a> ^action MOVE-TO-TARGET
+        ^rosie-action <action>
+        ^arg1 <location>
+        ^arg2 nil
+        ^text <text>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name move-to-it
+        ^action <action>
+        ^location <location>
+        ^text <text>
+        ^debug-info (concat |We will create a message to move to a location.|))
+}
+
+#    Build a Rosie message for this action
+sp {act*apply*move-to-it*no-modifier
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name move-to-it
+        ^action <action>
+        ^location <location> <> nil    #    This is the PrepRelation
+        ^text <text>)
+   (<a> ^modifier nil 
+        ^next <next>)
+   #    Get the location details
+   (<location> ^prep <handle>
+               ^object.referent <object>)
+-->
+   #    Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type command
+              ^action <action>
+              ^predicate <predicate>)
+   (<predicate> ^item-type predicate
+                ^handle <handle>
+                ^2 <object>)
+   #   Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+#    Build a Rosie message for this action with a modifier
+sp {act*apply*move-to-it*with-modifier
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name move-to-it
+        ^action <action>
+        ^location <location> <> nil    #    This is the PrepRelation
+        ^text <text>)
+   (<a> ^modifier.modifier { <modifier> <> nil }
+        ^next <next>)
+   #    Get the location details
+   (<location> ^prep <handle>
+               ^object.referent <object>)
+-->
+   #    Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type command
+              ^action <action>
+              ^predicate <predicate>
+              ^modifier <modifier>)
+   (<predicate> ^item-type predicate
+                ^handle <handle>
+                ^2 <object>)
+   #   Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}

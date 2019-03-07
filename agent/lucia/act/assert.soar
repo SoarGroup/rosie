@@ -1,0 +1,442 @@
+##!
+# @file
+#
+# @created plindes 20160406
+# File: assert.soar
+# Author: Peter Lindes
+# Created: 6 April 2016
+#
+#	This file combines all assert actions in one place.
+#	It has code for several operators, see details below:
+#       assert-yes-no
+#		assert-object
+#		assert-property
+#		assert-relation
+#       assert-this-is-that
+#       assert-intransitive
+#       assert-transitive
+#
+#	It might be good to consolidate all these into a single
+#	operator name with different data.
+#
+
+
+#################  ASSERT-YES-NO   ####################### 
+
+#   Propose an operator to create yes/no message
+sp {act*propose*assert-yes-no
+   (state <s> ^problem-space act
+              ^action <a>)
+   (<a> ^action ASSERT-YES-NO
+        ^arg1 <answer>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name assert-yes-no
+        ^answer <answer>
+        ^debug-info (concat |We will create a new yes/no message.|))
+}
+
+#   Create a yes/no message
+sp {act*apply*assert-yes-no
+   (state <s> ^top-state <ts>
+              ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name assert-yes-no
+        ^answer <answer>)
+   (<a> ^next <next>)
+-->
+   #	Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type <answer>)
+   #   Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+
+#################  ASSERT-OBJECT   ####################### 
+
+#   Propose an operator to create an object
+sp {act*propose*assert-object
+   (state <s> ^problem-space act
+              ^action <a>)
+   (<a> ^action ASSERT-OBJECT
+        ^arg1 <object>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name assert-object
+        ^object <object>
+        ^debug-info (concat |We will create a new object.|))
+}
+
+#   Create a new object in the current scene
+sp {act*apply*assert-object
+   (state <s> ^top-state <ts>
+              ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name assert-object
+        ^object <obj>)
+   (<obj> ^roles <roles>
+          ^source <source>
+          ^text <text>)
+   (<roles> ^category <cat>
+            ^referent OPEN)
+   (<ts> ^discourse.scene.objects <set>)
+   (<a> ^next <next>)
+-->
+   #   Create the object
+   #   Record its source to allow future reference resolution
+   (<set> ^o <x>)
+   (<x> ^is-a <cat>
+        ^source <source>
+        ^text <text>)
+#   #   Resolve the reference   BLOWS THE GDS
+#   OBJECTS SHOULD BE CREATED AT RESOLUTION TIME, NOT IN ACTIONS
+#   (<roles> ^referent OPEN -
+#            ^referent <x>)
+   #   Report the result
+   (<s> ^result <r>)
+   (<r> ^action <a>
+        ^status (concat |Created object | <x> | of type | <cat> |.|))
+   #   Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+
+#################  ASSERT-PROPERTY   ####################### 
+#       This version will add multiple arg1's to the
+#       result message if there were multiple referents.
+#
+
+#   Propose an operator to create a relation
+#   No target referent(s) yet
+sp {act*propose*assert-property
+   (state <s> ^problem-space act
+              ^action <a>
+             -^result.arg1 )    #    Wait until target(s) added
+   (<a> ^action ASSERT-PROPERTY
+        ^arg2 <predicate>
+        ^text <text>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name assert-property
+        ^predicate <predicate>
+        ^text <text>
+        ^debug-info (concat |We will create a new property according to '| <text> |'|))
+}
+
+#   Build a message to make a new relation in the current scene ???
+#   Still no target referent(s)
+sp {act*apply*assert-property*create-message
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name assert-property
+        ^predicate <predicate>)
+   (<a> ^next <next>)
+-->
+   #	Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type object-description
+              ^predicate <predicate>)
+}
+
+#   Add the target referent(s) here
+sp {act*apply*assert-property*add-target
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>
+              ^result <message>)
+   (<o> ^name assert-property
+        ^predicate <predicate>)
+   (<a> ^arg1 <object>
+        ^next <next>)
+-->
+   #    Add target referent(s)
+   (<message> ^arg1 <object>)
+   #    On to the next action
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+
+#################  ASSERT-RELATION   ####################### 
+#       The relation given may have multiple arg2's.
+#       In this case multiple assert-relation's will be
+#       proposed, all with an "=" preference.
+#       The selected one wins and the rest drop out.
+
+#   Propose an operator to create an relation
+sp {act*propose*assert-relation
+   (state <s> ^problem-space act
+              ^action <a>)
+   (<a> ^action ASSERT-RELATION
+        ^arg1 <subject>
+        ^relation <relation>
+        ^arg2 <object>
+        ^text <text>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name assert-relation
+        ^subject <subject>
+        ^relation <relation>
+        ^object <object>
+        ^text <text>
+        ^debug-info (concat |We will create a new relation.|))
+}
+
+#	Build a Rosie message for this relation
+#   Case for no modifier
+sp {act*apply*assert-relation*no-modifier
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name assert-relation
+        ^subject <subject>
+        ^relation <prep-name>	#	Given by a preposition
+        ^object <object>
+        ^text <text>)
+   (<a> -^modifier
+         ^next <next>)
+-->
+   #	Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type object-description
+              ^arg1 <subject>
+              ^predicate <predicate>)
+   (<predicate> ^2 <object>
+                ^handle <prep-name>	#	How could we look this up?
+                ^item-type predicate)
+   #   Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+#   Build a Rosie message for this relation
+#   Case with a modifier
+sp {act*apply*assert-relation*with-modifier
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name assert-relation
+        ^subject <subject>
+        ^relation <prep-name>   #   Given by a preposition
+        ^object <object>
+        ^text <text>)
+   (<a> ^modifier <modifier>
+        ^next <next>)
+-->
+   #    Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type object-description
+              ^arg1 <subject>
+              ^predicate <predicate>
+              ^modifier <modifier>)
+   (<predicate> ^2 <object>
+                ^handle <prep-name> #   How could we look this up?
+                ^item-type predicate)
+   #   Go on to the next
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+
+#################  ASSERT-THIS-IS-A-THAT   ####################### 
+
+#   Propose an operator to create an equivalence relation
+sp {act*propose*assert-this-is-a-that
+   (state <s> ^problem-space act
+              ^action <a>
+             -^result.predicate )    #    Wait until predicate(s) added
+   (<a> ^action ASSERT-THIS-IS-A-THAT
+        ^arg1 <this>
+        ^text <text>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name assert-this-is-a-that
+        ^arg1 <this>
+        ^text <text>
+        ^debug-info (concat |We will create a new equivalence according to '| <text> |.'|))
+}
+
+#   Build a message to make a new equivalence relation
+#   Still no target referent(s)
+sp {act*apply*assert-this-is-a-that*create-message
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name assert-this-is-a-that
+        ^arg1 <this>)
+   (<this> ^referent <referent>)
+   (<a> ^next <next>)
+-->
+   #    Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type object-description
+              ^arg1 <referent>)
+}
+
+#   Add the target predicate(s) here
+#   This may fire multiple times
+sp {act*apply*assert-this-is-a-that*add-predicate
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>
+              ^result <message>)
+   (<o> ^name assert-this-is-a-that)
+   (<a> ^predicate <predicate>
+        ^next <next>)
+-->
+   #    Add target predicate(s)
+   (<message> ^predicate <predicate>)
+   #    On to the next action
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+
+#################  ASSERT-INTRANSITIVE   ####################### 
+
+#   Propose an operator to create an intransitive statement
+sp {act*propose*assert-intransitive
+   (state <s> ^problem-space act
+              ^action <a>
+             -^result )
+   (<a> ^action ASSERT-INTRANSITIVE
+        ^subject <subject>
+        ^verb <verb>
+        ^text <text>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name assert-intransitive
+        ^subject <subject>
+        ^verb <verb>
+        ^text <text>
+        ^debug-info (concat |We will create an intransitive statement according to '| <text> |.'|))
+}
+
+#   Build a message to make a new definition of a goal or such
+sp {act*apply*assert-intransitive*create-message
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name assert-intransitive
+        ^subject <subject>
+        ^verb <verb>)
+   (<a> ^next <next>)
+-->
+   #    Create a message
+   #    This message is nowhere in the gold standard yet.
+   (<s> ^result <message>)
+   (<message> ^message-type statement
+              ^agent <subject>
+              ^action <verb>)
+   #    On to the next action
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+
+#################  ASSERT-TRANSITIVE   ####################### 
+
+#   Propose an operator to create a transitive statement
+sp {act*propose*assert-transitive
+   (state <s> ^problem-space act
+              ^action <a>
+             -^result )
+   (<a> ^action ASSERT-TRANSITIVE
+        ^subject <subject>
+        ^verb <verb>
+        ^object <object>
+        ^text <text>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name assert-transitive
+        ^subject <subject>
+        ^verb <verb>
+        ^object <object>
+        ^text <text>
+        ^debug-info (concat |We will create a transitive statement according to '| <text> |.'|))
+}
+
+#   Build a message to make a new definition of a goal or such
+sp {act*apply*assert-transitive*create-message
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name assert-transitive
+        ^subject <subject>
+        ^verb <verb>
+        ^object <object>)
+   (<a> ^next <next>)
+-->
+   #    Create a message
+   #    This message is nowhere in the gold standard yet.
+   (<s> ^result <message>)
+   (<message> ^message-type statement
+              ^agent <subject>
+              ^action <verb>
+              ^arg1 <object>)
+   #    On to the next action
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+
+#################  ASSERT-TRANSITIVE-PP   ####################### 
+
+#   Propose an operator to create a transitive statement
+sp {act*propose*assert-transitive-prep-phrase
+   (state <s> ^problem-space act
+              ^action <a>
+             -^result )
+   (<a> ^action ASSERT-TRANSITIVE-PP
+        ^subject <subject>
+        ^verb <verb>
+        ^object <object>
+        ^relation <relation>
+        ^text <text>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name assert-transitive-prep-phrase
+        ^subject <subject>
+        ^verb <verb>
+        ^object <object>
+        ^relation <relation>
+        ^text <text>
+        ^debug-info (concat |We will create a transitive statement according to '| <text> |.'|))
+}
+
+#   Build a message to make a new definition of a goal or such
+sp {act*apply*assert-transitive-prep-phrase*create-message
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name assert-transitive-prep-phrase
+        ^subject <subject>
+        ^verb <verb>
+        ^object <object>
+        ^relation <prep-phrase>)
+   (<prep-phrase> ^prep <prep>
+                  ^object.referent <prep-object>)
+   (<a> ^next <next>)
+-->
+   #    Create a message
+   #    This message is nowhere in the gold standard yet.
+   (<s> ^result <message>)
+   (<message> ^message-type statement
+              ^agent <subject>
+              ^action <verb>
+              ^arg1 <object>
+              ^arg2 <relation>)
+   (<relation> ^item-type predicate
+                ^handle <prep>
+                ^2 <prep-object>)
+   #    On to the next action
+   (<s> ^action <a> -
+        ^action <next>)
+}
+

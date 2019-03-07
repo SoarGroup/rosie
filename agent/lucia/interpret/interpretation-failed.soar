@@ -1,0 +1,73 @@
+##!
+# @file
+#
+# @created plindes 20160316
+# File: interpretation-failed.soar
+# Author: Peter Lindes
+# Created: 8 March 2016
+#
+# Desc:  Detect and recover from a crash within interpret.
+#
+
+#    Propose an operator to detect a crash
+sp {interpret*propose*interpretation-failed*no-change
+   (state <s> ^attribute state
+              ^impasse no-change
+              ^superstate <ss>)
+   (<ss> ^attribute operator
+         ^impasse no-change
+         ^superstate <sss>)
+   (<sss> ^problem-space interpret
+          ^operator <crasher>
+         -^action )
+-->
+   (<s> ^operator <o> > +)
+   (<o> ^name interpretation-failed
+        ^culprit <crasher>
+        ^debug-info (concat |Operator | <crasher> | in state | <sss> | failed.|))
+}
+
+sp {interpret*propose*interpretation-failed*tie
+   (state <s> ^attribute state
+              ^impasse no-change
+              ^superstate <ss>)
+   (<ss> ^attribute operator
+         ^impasse tie
+         ^superstate <sss>)
+   (<sss> ^problem-space interpret)
+-->
+   (<s> ^operator <o> > +)
+   (<o> ^name interpretation-failed
+        ^debug-info (concat |Operator tie in state | <sss> |.|))
+}
+
+#    Apply the operator to recover from the crash
+#    by posting a FAILURE action
+sp {interpret*apply*interpretation-failed
+   (state <s> ^attribute state
+              ^impasse no-change
+              ^superstate <ss>
+              ^operator <o>)
+   (<o> ^name interpretation-failed
+        ^debug-info <message>)
+   (<ss> ^attribute operator
+         ^superstate <sss>)
+   (<sss> ^problem-space interpret
+          ^top-state <ts>)
+   (<ts> ^io.output-link <output>
+        -^action )
+-->
+   #   Add an action to report the failure
+   (<sss> ^action <action>)
+   (<action> ^action FAILURE
+             ^result <result>
+             ^text |FAILED!|
+             ^next nil)
+   (<result> ^interaction-status <i-status>)
+   (<i-status> ^failure <f>)
+   (<f> ^type interpretation)
+   #   Report the interpretation to the outside world
+   (<output> ^report-decision <action>)
+   #    Report what happened
+   (write (concat <message>))
+}

@@ -1,0 +1,198 @@
+##!
+# @file
+#
+# @created plindes 20160329
+# File: apply-comparison.soar
+# Author: Peter Lindes
+# Created: 29 March 2016
+#
+# Desc: When a RefDesc has referents and a relation,
+#		and the relation is a comparative pronoun,
+#		apply that relation to the referents.
+#
+#		The result may be a single item, a set of items,
+#		or nothing.
+#
+#		The operator works in four steps:
+#		1. It is proposed if we have ^reference resoloved, a RefDesc, a relation
+#			with a comparative preposition, and there is no ^comparison done.
+#
+#			The proposal creates the operator with two main arguments:
+#			the RefDesc to do comparisons on and the relation to apply.
+#
+#		2. A rule examines the relation and posts on the state both the comparison
+#			type to be applied and the reference value to compare to.
+#
+#		3. A set of rules for each comparison type fire, perhaps multiple times,
+#			to check the property of each referent against the reference value.
+#			Each referent that passes is posted to the state on a ^comparison-passed
+#			wme, and each referent that fails is posted on a ^comparison-failed wme.
+#
+#		4. Some cleanup rules fire to remove each referent that failed and get rid
+#			of all the ^comparison-x wmes.  If none passed, a ^referent nil is put
+#			on the RefDesc.  Finally ^comparison done is posted and the operator retracts.
+#
+#	NOTE: For sizes we assume the possible values are small1, medium1, and large1 and
+#			the possible comparison relations are smaller-than1 and larger-than1
+#
+
+#    STEP 1: Propose an operator select among referents according to a comparative relation
+sp {comprehend-word*propose*apply-comparison
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done	# May need to see comprehend-word-done as proposed
+              ^match-construction done
+              ^cxn <cxn>
+              ^reference resolved
+             -^comparison done)
+   #	Check for a RefDesc with a relation and at least one referent
+   (<cxn> ^m <ref-desc>)
+   (<ref-desc> ^is.a RefDesc)
+   (<ref-desc> ^relation <relation>)
+   #	Check if the relation is a comparative pronoun
+   (<relation> ^prep { << smaller-than1 larger-than1 >> <prep> }	#	There may be more
+               ^object <object>)
+-->
+   #	Propose the operator
+   (<s> ^operator <o> +)
+   (<o> ^name apply-comparison
+        ^type comparison
+        ^meaning <ref-desc>
+        ^relation <relation>
+        ^debug-info (concat |Compare the referent(s) of | <ref-desc> | to see if they are | <prep> | than | <object> |.|))
+}
+
+#   STEP 2: Examine the relation and post its comparison and reference value
+sp {comprehend-word*apply*apply-comparison*size
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name apply-comparison
+        ^meaning <ref-desc>
+        ^relation <relation>)
+   #    Get the information on the relation
+   (<relation> ^prep { << smaller-than1 larger-than1 >> <prep> }
+               ^object.referent <object>)
+   (<object> ^predicates <perdicates>)
+   (<perdicates> ^size <size>)
+-->
+   #	Post the information to the state
+   (<s> ^comparison <prep>
+        ^reference-value <size>)
+}
+
+#   STEP 3: Test a referent using the LARGER-THAN relation
+sp {comprehend-word*apply*apply-comparison*large-larger-than-medium-or-small
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^comparison larger-than1
+              ^reference-value << small1 medium1 >>)
+   (<o> ^name apply-comparison
+        ^meaning <ref-desc>)
+   #    Get size of one of the existing referents
+   (<ref-desc> ^referent <object>)
+   (<object> ^predicates.size large1)
+-->
+   #    This referent passed
+   (<s> ^comparison-passed <object>)
+}
+
+sp {comprehend-word*apply*apply-comparison*medium-larger-than-small
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^comparison larger-than1
+              ^reference-value small1)
+   (<o> ^name apply-comparison
+        ^meaning <ref-desc>)
+   #    Get size of one of the existing referents
+   (<ref-desc> ^referent <object>)
+   (<object> ^predicates.size medium1)
+-->
+   #    This referent passed
+   (<s> ^comparison-passed <object>)
+}
+
+sp {comprehend-word*apply*apply-comparison*nothing-larger-than-large
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^comparison larger-than1
+              ^reference-value large1)
+   (<o> ^name apply-comparison
+        ^meaning <ref-desc>)
+   #    Get one of the existing referents
+   (<ref-desc> ^referent <object>)
+-->
+   #    This referent failed
+   (<s> ^comparison-failed <object>)
+}
+
+sp {comprehend-word*apply*apply-comparison*medium-or-small-not-larger-than-medium
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^comparison larger-than1
+              ^reference-value medium1)
+   (<o> ^name apply-comparison
+        ^meaning <ref-desc>)
+   #    Get one of the existing referents
+   (<ref-desc> ^referent <object>)
+   (<object> ^predicates.size << small1 medium1 >>)
+-->
+   #    This referent failed
+   (<s> ^comparison-failed <object>)
+}
+
+sp {comprehend-word*apply*apply-comparison*small-not-larger-than-small
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^comparison larger-than1
+              ^reference-value small1)
+   (<o> ^name apply-comparison
+        ^meaning <ref-desc>)
+   #    Get one of the existing referents
+   (<ref-desc> ^referent <object>)
+   (<object> ^predicates.size small1)
+-->
+   #    This referent failed
+   (<s> ^comparison-failed <object>)
+}
+
+#   STEP 3: Test a referent using the SMALLER-THAN relation
+#	TBD
+
+
+#	STEP 4: Clean up the referents and complete the operator
+sp {comprehend-word*apply*apply-comparison*cleann-up-one-that-passed
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^comparison-passed <object>
+              ^comparison <prep>
+              ^reference-value <value>)
+   (<o> ^name apply-comparison
+        ^meaning <ref-desc>)
+   #    Get a referent that passed
+   (<ref-desc> ^referent <object>)
+-->
+   #    Remove its flag
+   (<s> ^comparison-passed <object> -)
+   #	Clean up the state
+   (<s>  ^comparison <prep> -
+         ^reference-value <value> -
+         ^comparison done)
+}
+
+sp {comprehend-word*apply*apply-comparison*cleann-up-one-that-failed
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^comparison-failed <object>)
+   (<o> ^name apply-comparison
+        ^meaning <ref-desc>)
+   #    Get a referent that passed
+   (<ref-desc> ^referent <object>)
+-->
+   #	Delete it from the referent set
+   (<ref-desc> ^referent <object> -)
+   #    Remove its flag
+   (<s> ^comparison-failed <object> -)
+   #	Clean up the state
+   (<s>  ^comparison <prep> -
+         ^reference-value <value> -
+         ^comparison done)
+}

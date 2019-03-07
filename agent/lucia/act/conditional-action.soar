@@ -1,0 +1,76 @@
+##!
+# @file
+#
+# @created plindes 20160407
+# File: conditional-action.soar
+# Author: Peter Lindes
+# Created: 7 April 2016
+#
+# Desc: Create a message for a conditional action
+#
+
+#   Propose an operator to create a message for a conditional action
+sp {act*propose*conditional-action
+   (state <s> ^problem-space act
+              ^action <a>
+             -^result.arg1 )    #    Wait until target(s) added
+   (<a> ^action CONDITIONAL-ACTION
+        ^condition <s-condition>
+        ^command <s-command>
+        ^text <text>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name conditional-action
+        ^condition <s-condition>
+        ^command <s-command>
+        ^debug-info (concat |We will create a new condtional action message.'|))
+}
+
+#   Create a message for a conditional action
+sp {act*apply*conditional-action*create-message
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name conditional-action
+        ^condition <s-condition>
+        ^command <s-command>)
+  -(<s-condition> ^is.a SituationDescriptor)
+   (<a> ^next <next>)
+-->
+   #    Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type conditional
+              ^if-subclause <s-condition>
+              ^then-subclause <s-command>)
+   #    On to the next action
+   (<s> ^action <a> -
+        ^action <next>)
+}
+
+#   Create a message for a conditional with a SituationDescriptor condition
+sp {act*apply*conditional-action*create-message*situation-descriptor
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name conditional-action
+        ^condition <s-condition>
+        ^command <s-command>)
+   (<s-condition> ^is.a SituationDescriptor
+                ^action.action <action>
+                ^subject.referent <subject>
+                ^object.referent <object>)
+   (<a> ^next <next>)
+-->
+   #    Create a message
+   (<s> ^result <message>)
+   (<message> ^message-type conditional
+              ^if-subclause <condition>
+              ^then-subclause <s-command>)
+   #    Build the condition
+   (<condition> ^action <action>
+                ^agent <subject>
+                ^arg1 <object>)
+   #    On to the next action
+   (<s> ^action <a> -
+        ^action <next>)
+}

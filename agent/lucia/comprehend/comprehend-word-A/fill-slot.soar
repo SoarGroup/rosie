@@ -1,0 +1,132 @@
+##!
+# @file
+#
+# @created plindes 20150924
+# File: fill-slot.soar
+# Author: Peter Lindes
+# Created: 24 September 2015
+#
+# Desc: When the construction we have just built matches the type
+#       of an empty slot in a/the previous construction,
+#       use this new construction fo fill the slot.
+#
+#		3/2/2016: Change this to find the empty slot on the
+#		comprehension structure above instead of on the
+#		previous construction.  This makes it possible for
+#		an empty slot to be filled after some intervening stuff.
+#
+#		4/12/2016: Put the one for previous back in - needed???
+#
+#		7/20/2016: Change to not propose if it would skip over stuff.
+#		Actually, the idea was to compare the right side of the cxn
+#		to be filled with the left side of the filler and only allow
+#		the fill-slot to be proposed of they were adjacent, meaning
+#		that they must differ by 1.  However, this is not possible
+#		with the current ^source data since Soar does not allow
+#		arithmetic expressions to do right >= left - 1 on the LHS.
+#		So, it appears the only way to do this would be to change
+#		all the ^source objects to add a left-1 wme, since you can
+#		do arithmetic on the RHS.  For now, we will only explain
+#		this option in comments and only implement it when we really
+#		need it.
+#
+
+#    Propose an operator to fill an empty slot on the comprehension
+sp {comprehend-word*propose*fill-slot*comprehension
+   (state <s> ^superstate <ss>
+              ^problem-space comprehend-word
+              ^lexical-access done
+              ^cxn <cxn>)
+   #    Find a type of the current construction
+   (<cxn> ^is.a <c-type>
+#          ^source.left-1 <left-1>	#	FOR FUTURE DEVELOPMENT
+         -^attached-to )	#	If attached, that overrides fill-slot
+   #    Find an empty slot of this type
+   (<ss> ^comprehension.empty-slot <empty>)
+   (<empty> ^cxn <fill-cxn>
+            ^name <slot-name>
+            ^type <c-type>
+           -^filled )
+   (<fill-cxn> ^<slot-name> <name>)
+#               -^source.right >= <left-1>)	#	FOR FUTURE DEVELOPMENT
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name fill-slot
+        ^empty-slot <empty>
+        ^<slot-name> <name>
+        ^debug-info (concat |Fill slot | <empty> | in | <fill-cxn>
+                             | with | <cxn> |.|))
+}
+
+#    Propose an operator to fill an empty slot on the previous
+sp {comprehend-word*propose*fill-slot*previous
+   (state <s> ^superstate <ss>
+              ^problem-space comprehend-word
+              ^lexical-access done
+              ^cxn <cxn>)
+   #    Find a type of the current construction
+   (<cxn> ^is.a <c-type>
+          ^previous <previous>
+         -^attached-to )	#	If attached, that overrides fill-slot
+   #	Only look at previous if there's none on the comprehension
+   (<ss> -^comprehension.empty-slot <empty>)
+   #    Find an empty slot of this type
+   (<previous> ^empty-slot <empty>)
+   (<empty> ^cxn <fill-cxn>
+            ^name <slot-name>
+            ^type <c-type>
+           -^filled )
+   (<fill-cxn> ^<slot-name> <name>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name fill-slot
+        ^empty-slot <empty>
+        ^<slot-name> <name>
+        ^debug-info (concat |Fill slot | <empty> | in | <fill-cxn>
+                             | with | <cxn> |.|))
+}
+
+#   Apply the fill-slot operator
+sp {comprehend-word*apply*fill-slot
+   (state <s> ^superstate <ss>
+              ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <cxn>
+              ^lexical <lex>)
+   (<o> ^name fill-slot
+        ^empty-slot <empty>
+        ^<slot-name> <name>)
+   (<empty> ^cxn <fill-cxn>
+            ^name <slot-name>
+            ^type <c-type>
+           -^filled <cxn>)
+   #    Get the actual slot wme, its consituents, etc.
+   (<fill-cxn> ^<slot-name> <name>
+               ^constituents <constituents>
+               ^source <source1>
+               ^text <text1>)
+   (<constituents> ^<slot-name> <name>)
+   #    Get the previous lexical and the previous link
+   (<ss> ^comprehension.lex-stack <previous-lex>)
+   #    Get the filling cxn source and text information
+   (<cxn> ^source <source2>
+          ^text <text2>)
+   (<source1> ^left <left>)
+   (<source2> ^right <right>)
+-->
+   #    Replace the old target with the new one
+   (<fill-cxn> ^<slot-name> nil -	#	????????????
+               ^<slot-name> <cxn>)
+   (<constituents> ^<slot-name> <name> -
+                   ^<slot-name> <cxn>)
+   #    Replace the source and text
+   (<fill-cxn> ^source <source1> -
+               ^source <source-new>
+               ^text <text1> -
+               ^text (concat <text1> | | <text2>))
+   (<source-new> ^left <left>
+                 ^right <right>)
+   #    Mark the slot as filled
+   (<empty> ^filled <cxn>)
+   (<cxn> ^filled <empty>)
+}

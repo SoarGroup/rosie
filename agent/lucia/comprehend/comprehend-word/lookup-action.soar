@@ -1,0 +1,118 @@
+##!
+# @file
+#
+# @created plindes 20160222
+# File: lookup-action.soar
+# Author: Peter Lindes
+# Created: 25 February 2016
+#
+# Desc: Looks up an Action in the context to find its referent.
+#		This version is customized for the Rosie environment.
+#
+#       Alternative proposals handle special situations
+#
+
+
+##################  NORMAL CASE   #####################
+
+#    Propose an operator to resolve the reference of an Action
+sp {comprehend-word*propose*lookup-action
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done	# May need to see comprehend-word-done as proposed
+              ^cxn <cxn>
+             -^reference resolved
+             -^smem.command.query <q>)
+   (<cxn> ^m <action-desc>)
+   (<action-desc> ^is.a ActionDescriptor
+               -^action )
+-->
+   (<s> ^operator <o> > + =)    #   May need more if multiple lexicals
+   (<o> ^name lookup-action
+        ^type resolution
+        ^action-desc <action-desc>
+        ^debug-info (concat |Find the referent for a given ActionDescriptor.|))
+}
+
+sp {comprehend-word*apply*lookup-action
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <cxn>)
+   (<o> ^name lookup-action
+        ^action-desc <action-desc>)
+   (<cxn> ^m <action-desc>)    #    This is the correct one we're looking for
+   (<action-desc> ^class { <class> <> nil }
+                  ^name { <value> <> nil })
+-->
+   #	Request a retrieval of the predicate
+   (<s> ^retrieval <r>)
+   (<r> ^cxn <cxn>
+        ^handle <value>
+        ^target <action-desc>
+        ^attribute action)
+}
+
+
+##################  CASE FOR A CHANGED ACTION   #####################
+
+#    Propose an operator to resolve the reference of an Action
+#    after the action has been changed
+#    For example, for TurnObjectOn the verb as originally "turn1"
+#    and now needs to be looked up for "turn-on1".
+sp {comprehend-word*propose*lookup-action*action-changed
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done  # May need to see comprehend-word-done as proposed
+              ^cxn <cxn>
+             -^reference resolved
+             -^smem.command.query <q>)
+   (<cxn> ^is.a VerbWithArguments
+          ^verb <verb>)
+   (<verb> ^m <action-desc>)
+   (<action-desc> ^is.a ActionDescriptor
+                 -^action { <action> <> nil }
+                  ^action nil)  #   The previous lookup has been wiped out
+-->
+   (<s> ^operator <o> > + =)    #   May need more if multiple lexicals
+   (<o> ^name lookup-action
+        ^type resolution
+        ^action-desc <action-desc>
+        ^debug-info (concat |Find the referent for a changed ActionDescriptor.|))
+}
+
+sp {comprehend-word*apply*lookup-action*action-changed
+   (state <s> ^problem-space comprehend-word
+              ^cxn <cxn>
+              ^operator <o>)
+   (<o> ^name lookup-action
+        ^action-desc <action-desc>)
+   (<action-desc> ^class { <class> <> nil }
+                  ^name { <value> <> nil }
+                  ^action nil)  #   The previous lookup has been wiped out
+-->
+   #    Remove the old action
+#   (<action-desc> ^action nil -)   #   This blows the GDS
+   #    Request a retrieval of the predicate
+   (<s> ^retrieval <r>)
+   (<r> ^cxn <cxn>
+        ^handle <value>
+        ^target <action-desc>
+        ^attribute action)
+}
+
+
+##################  UNIVERSAL RULE(S)   #####################
+
+#   Put a retrieval query on the smem link
+sp {comprehend-word*apply*lookup-action*do-query
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^smem.command <command>)
+   (<o> ^name lookup-action)
+   #    Find a retrieval request
+   (<s> ^retrieval <r>)
+   (<r> ^handle <handle>)
+-->
+   #    Add a command to the smem link
+   (<command> ^query <q>
+              ^depth 3)
+   (<q> ^handle <handle>)
+}

@@ -1,0 +1,124 @@
+##!
+# @file
+#
+# @created plindes 20160218
+# File: ground-relation.soar
+# Author: Peter Lindes
+# Created: 9 March 2016
+#
+# Desc: When a RefDesc has referents and a relation,
+#       filter the referents down to only those that
+#       also satisfy the relation.
+#		This version is customized for the Rosie environment.
+#
+#		The result may be a single item, a set of items,
+#		or nothing.
+#
+
+#    Propose an operator select among referents according to a relation
+sp {comprehend-word*propose*ground-relation
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done	# May need to see comprehend-word-done as proposed
+              ^match-construction done
+              ^cxn <cxn>
+              ^reference resolved
+             -^relation done
+              #    Don't do this if the relation was a comparison
+             -^comparison done)
+   (<cxn> ^m <ref-desc>)
+   (<ref-desc> ^is.a RefDesc)
+   (<ref-desc> ^relation { <relation> <> nil })
+-->
+   (<s> ^operator <o> +
+        ^modifiers <modifiers>)
+   (<o> ^name ground-relation
+        ^type resolution
+        ^meaning <ref-desc>
+        ^relation <relation>
+        ^debug-info (concat |Find the referent of | <ref-desc> | that satisfies the relation | <relation> |.|))
+}
+
+#   Look for a referent that satisfies the relation
+sp {comprehend-word*apply*ground-relation*find-it
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name ground-relation
+        ^meaning <ref-desc>
+        ^relation <relation>)
+   #    Get one of the existing referents
+   (<ref-desc> ^referent <object>)
+   #    Get the information on the relation
+   (<relation> ^prep <handle>
+               ^object.referent <related>)
+   #    Look for that relation in the world
+   (<ts> ^world <world>)
+   (<world> ^predicates <predicates>)
+   (<predicates> ^predicate <pred>)
+   (<pred> ^handle <handle>
+           ^instance <instance>)
+   (<instance> ^1 <object>
+               ^2 <related>)
+-->
+   #    Post the related referent on the state
+   (<s> ^related <object>)
+}
+
+#   What if none fit the relation
+sp {comprehend-word*apply*ground-relation*find-none
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name ground-relation
+        ^meaning <ref-desc>
+        ^relation <relation>)
+   #    Get one of the existing referents
+ -{(<ref-desc> ^referent <object>)
+   #    Get the information on the relation
+   (<relation> ^prep <handle>
+               ^object.referent <related>)
+   #    Look for that relation in the world
+   (<ts> ^world <world>)
+   (<world> ^predicates <predicates>)
+   (<predicates> ^predicate <pred>)
+   (<pred> ^handle <handle>
+           ^instance <instance>)
+   (<instance> ^1 <object>
+               ^2 <related>)}
+-->
+   #    Post the related referent on the state
+   (<s> ^related nil)
+}
+
+#   Remove unrelated referents
+sp {comprehend-word*apply*ground-relation*remove-others
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^related { <related> <> nil })
+   (<o> ^name ground-relation
+        ^meaning <ref-desc>)
+   #    Get one of the existing referents
+   (<ref-desc> ^referent { <object> <> <related> })
+-->
+   #    Remove this referent
+   (<ref-desc> ^referent <object> -)
+   #    Set done flag
+   (<s> ^relation done)
+}
+
+#   Remove all referents, add a nil referent
+sp {comprehend-word*apply*ground-relation*remove-all
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^related nil)
+   (<o> ^name ground-relation
+        ^meaning <ref-desc>)
+   #    Get one of the existing referents
+   (<ref-desc> ^referent <object>)
+-->
+   #    Remove this referent and add one with nil
+   (<ref-desc> ^referent <object> -
+               ^referent nil)
+   #    Set done flag
+   (<s> ^relation done)
+}

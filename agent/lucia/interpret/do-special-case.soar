@@ -1,0 +1,52 @@
+##!
+# @file
+#
+# @created plind 20161222
+# File: do-special-case.soar
+# Author: Peter Lindes
+# Created: 22 December 2016
+#
+# Desc: In this file we have variations of a do-special-case
+#       operator to interpret certain minimal sentences.
+#
+
+
+#   Propose an operator to handle "done" as a complete sentence
+sp {interpret*propose*do-special-case
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^comprehension <c>
+             -^action <a>)
+   (<c> ^cxn-stack <cxn>)
+   (<cxn> ^m <m>
+          ^previous nil)
+   (<m> ^is.a PropertyDescriptor
+        ^name task-completed
+        ^text <text>)
+   #    Check that this is not a question
+   (<c> -^word-stack.post-punct |?|)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name do-special-case
+        ^type finished
+        ^text <text>
+        ^debug-info (concat |Decide to do a task-completed action.|))
+}
+
+#   Assert a PropertyApplication itself, without referent(s)
+sp {interpret*apply*do-special-case*finished
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-special-case
+        ^type finished
+        ^text <text>)
+-->
+   #   Add an action to do the special case
+   (<s> ^action <a-action>)
+   (<a-action> ^action SPECIAL-CASE
+               ^rosie-action finished
+               ^text <text>
+               ^next nil)
+}
+

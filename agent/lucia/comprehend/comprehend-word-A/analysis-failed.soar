@@ -1,0 +1,142 @@
+##!
+# @file
+#
+# @created plindes 20160401
+# File: analysis-failed.soar
+# Author: Peter Lindes
+# Created: 1 April 2016
+#
+# Desc:  Detect and recover from a crash within comprehend-word.
+#
+
+#    Propose an operator to detect a crash
+sp {comprehend-word*propose*analysis-failed*no-change
+   (state <s> ^attribute state
+              ^impasse no-change
+              ^superstate <ss>)
+   (<ss> ^attribute operator
+         ^impasse no-change
+         ^superstate <sss>)
+   (<sss> ^problem-space comprehend-word
+          ^operator <crasher>)
+-->
+   (<s> ^operator <o> > +)
+   (<o> ^name analysis-failed
+        ^culprit <crasher>
+        ^debug-info (concat |Operator | <crasher> | in state | <sss> | failed.|))
+}
+
+sp {comprehend-word*propose*analysis-failed*tie
+   (state <s> ^attribute state
+              ^impasse no-change
+              ^superstate <ss>)
+   (<ss> ^attribute operator
+         ^impasse tie
+         ^superstate <sss>)
+   (<sss> ^problem-space comprehend-word)
+-->
+   (<s> ^operator <o> > +)
+   (<o> ^name analysis-failed
+       ^debug-info (concat |Operator tie in state | <sss> |.|))
+}
+
+#    Apply the operator to recover from the crash
+sp {comprehend-word*apply*analysis-failed
+   (state <s> ^attribute state
+              ^impasse no-change
+              ^superstate <ss>
+              ^operator <o>)
+   (<o> ^name analysis-failed
+        ^debug-info <message>)
+   #	Get data from the superstate
+   (<ss> ^attribute operator
+         ^superstate <sss>)
+   #	Get data from the comprehend-word state
+   (<sss> ^problem-space comprehend-word
+          ^superstate <ssss>
+          ^top-state <ts>
+          ^input <i>
+          ^cxn <cxn>)
+   (<ssss> ^comprehension <c>)
+   (<c> ^word-stack <previous-word>
+        ^lex-stack <previous-lex>
+        ^cxn-stack <previous-cxn>)
+   #	Get data from the top state
+   (<ts> ^io.output-link <output>)
+   (<output> ^request-word complete)
+   (<i> ^word <word>
+        ^count <count>
+        ^comprehended false)
+-->
+   #   Set up everything to terminate comprehend word
+   #   Put the word on the word stack
+   (<word> ^previous <previous-word>)
+   (<c> ^word-stack <previous-word> -
+        ^word-stack <word>)
+   #   Put the lexical on the lex-stack
+   (<c> ^lex-stack <previous-lex> -
+        ^lex-stack <lex>)
+   #   Put the construction on the cxn-stack
+   (<c> ^cxn-stack <previous-cxn> -
+        ^cxn-stack <cxn>)
+   #   Mark the word as comprehended
+   (<i> ^comprehended false -
+        ^comprehended true)
+   #    Request the next word
+   (<output> ^request-word complete -
+             ^request-word <count>)
+   #    Report what happened
+   (write (concat <message>))
+}
+
+#  Report that the comprehension is complete
+#  if a ROOT was parsed.
+#  This could be made more general.
+sp {comprehend-word*apply*analysis-failed*ROOT-found
+   (state <s> ^attribute state
+              ^impasse no-change
+              ^superstate <ss>
+              ^operator <o>)
+   (<o> ^name analysis-failed)
+   #	Get data from the superstate
+   (<ss> ^attribute operator
+         ^superstate <sss>)
+   #	Get data from the comprehend-word state
+   (<sss> ^problem-space comprehend-word
+          ^superstate <ssss>
+          ^cxn <cxn>)
+   #	Get remaining info
+   (<cxn> ^cxn-name ROOT)
+   (<ssss> ^comprehension <c>)
+-->
+   #    Promote the construction set and set the done flag
+   (<c> ^cxn-set <c-set>
+        ^done true)
+}
+
+#  Report that the comprehension is complete
+#  if the last word has a terminator.
+sp {comprehend-word*apply*analysis-failed*terminator-found
+   (state <s> ^attribute state
+              ^impasse no-change
+              ^superstate <ss>
+              ^operator <o>)
+   (<o> ^name analysis-failed)
+   #	Get data from the superstate
+   (<ss> ^attribute operator
+         ^superstate <sss>)
+   #	Get data from the comprehend-word state
+   (<sss> ^problem-space comprehend-word
+          ^superstate <ssss>
+          ^input <i>
+          ^cxn <cxn>
+          ^cxn-set <c-set>)
+   #	Get remaining info
+   (<i> ^word <word>)
+   (<word> ^has-terminator true)
+   (<ssss> ^comprehension <c>)
+-->
+   #    Promote the construction set and set the done flag
+   (<c> ^cxn-set <c-set>
+        ^done true)
+}

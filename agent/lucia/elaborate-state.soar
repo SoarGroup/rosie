@@ -1,0 +1,250 @@
+###########################################################################
+#
+# This first part of the file is copied from the OntoSoar project
+# without any changes (so far on 5/29/2015).
+#
+###########################################################################
+
+# File: elaborate-state.soar
+# Authors: Peter Lindes
+# Created: Oct 14, 2013
+# Modified: 22 May 2017     To work within Rosie
+#
+
+#    When an operator is selected on any state
+#    and it has no direct application productions,
+#    there will be an operator no change impasse
+#    and a new sub-state will be created.
+#
+#    This production will label that new sub-state
+#    with a problem-state name and a pointer
+#    to the top state, as well as all the arguments
+#	 of the operator that caused the impasse.
+
+sp {elaborate*sub-state*top
+   (state <s> ^superstate <ss>)
+   (<ss> ^superstate nil
+         ^operator <op>)
+   (<op> ^name <name>)
+-->
+    (<s> ^name <name>
+         ^problem-space <name>
+         ^top-state <ss>)
+}
+
+sp {elaborate*sub-state*lower
+   (state <s> ^superstate <ss>)
+   (<ss> -^superstate nil
+         ^operator <op>
+         ^top-state <ts>)
+   (<op> ^name <name>)
+-->
+    (<s> ^name <name>
+         ^problem-space <name>
+         ^top-state <ts>)
+}
+
+# io
+# Copy the io link to all substates
+#sp {all*elaborate*io
+#   (state <s> ^superstate.io <io>)
+#-->
+#   (<s> ^io <io>)
+#}
+
+sp {elaborate*sub-state*args
+   (state <s> ^superstate <ss>)
+   (<ss> ^operator <op>)
+   (<op> ^{<arg> <> name} <value> )
+-->
+    (<s> ^<arg> <value>)
+}
+
+#sp {any*apply*print-debug-info
+#   (state <s> ^operator <o>)
+#   (<o> ^name <any>
+#        ^debug-info <info>)
+#-->
+#   (write (crlf) (concat |        | <info>))
+#}
+
+
+###########################################################################
+#
+# This second part of the file is copied from the Rosie project.
+# All the substance is commented out for now.
+# Eventually these two parts will need to be reconciled.
+#
+###########################################################################
+
+# Elaborations for topstate and substates
+
+# name
+# Name a state using the selected superstate operator's name
+#sp {all*elaborate*name
+#   (state <s> ^superstate.operator.name <name>)
+#-->
+#   (<s> ^name <name>)
+#}
+#
+#sp {topstate*elaborate*intermediate
+#   (state <s> ^superstate nil)
+#-->
+#   (<s> ^intermediate <int>)
+#}
+
+
+# problemspace
+# every state has a problemspace
+#sp {all*elaborate*problemspace
+#   (state <s> ^topstate <ts>)
+#-->
+#   (<s> ^problemspace <ps>)
+#}
+
+#sp {all*elaborate*in-focus
+#   (state <s> ^topstate <ts>
+#              -^problemspace games)
+#-->
+#   (<s> ^in-focus <if>)
+#}
+
+
+### all states have environments
+#sp {all*elaborate*environment
+#   (state <s> ^topstate <ts>
+#             -^problemspace games)
+#-->
+#   (<s> ^environment <env>)
+#   (<env> ^intermediate <int>)
+#}
+
+# topstate/top-state
+# Copy direct top-state link to all substates
+# (yes, having both is dumb)
+#sp {all*elaborate*top-state*topstate
+#   (state <s> ^superstate <ss>)
+#   (<ss> ^topstate <ts>
+#        -^operator.name evaluate-operator)
+#-->
+#   (<s> ^topstate <ts>
+#   	^top-state <ts>)
+#}
+#
+#sp {topstate*elaborate*top-state
+#   (state <s> ^topstate <ts>)
+#-->
+#   (<s> ^top-state <ts>)
+#}
+
+# io
+# Copy the io link to all substates
+#sp {all*elaborate*io
+#   (state <s> ^superstate.io <io>
+#	      -^name selection
+#	      -^problemspace.state.dont-copy io
+#             -^name learn-param
+#             -^name setup-search
+#   	      -^name action-policy)
+#-->
+#   (<s> ^io <io>)
+#}
+
+# self
+# Copy the self link from the input-link to the topstate
+#sp {topstate*elaborate*self
+#   (state <s> ^io.input-link <il>
+#   	      ^topstate <s>)
+#   (<il> ^self <self>)
+# -->
+#   (<s> ^self <self>)
+#}
+
+# object
+# Copy objects to substate, if not in language problem-space
+#sp {all*elaborate*object
+#   (state <s> ^superstate <ss>
+#      	  -^problem-space << lgsoar message-interpretation >>
+#	  -^problemspace.state.dont-copy object
+#          -^name learn-param
+#          -^name setup-search
+#	  -^name selection)
+#   (<ss> -^problem-space << lgsoar message-interpretation >>
+#   	 ^object <obj>)
+#-->
+#  (<s> ^object <obj>)
+#}
+
+# pointed-object
+# Elaborate the topstate with which object is being pointed at
+#sp {topstate*apply*operator*remove*old*pointed
+#   (state <s> ^superstate nil
+#              ^operator <o>
+#              ^io.input-link.pointed-object <new-id>
+#              ^pointed-object {<old-id> <> <new-id>})
+#-->
+#   (<s> ^pointed-object <old-id> -)
+#}
+
+#sp {topstate*apply*operator*add*pointed
+#   (state <s> ^superstate nil
+#              ^operator <o>
+#              ^io.input-link.pointed-object <id>
+#             -^pointed-object <id>)
+#-->
+#   (<s> ^pointed-object <id>)
+#}
+
+# Elaborate topstate: top-segment
+#sp {topstate*elaborate*top-segment
+#   (state <s> ^topstate <s>
+#              ^interaction.stack.segment <seg>)
+#-->
+#   (<s> ^top-segment <seg>)
+#}
+
+# kind
+## Elaborate a state as non-atomic/atomic if the operator proposed in superstate in non-atomic/atomic
+
+#sp {elaborate*atomicity
+#   (state <s> ^superstate.operator <sop>)
+#   (<sop> ^kind <atom>)
+#-->
+#   (<s> ^kind <atom>)
+#}
+
+# If clear-interaction-stack is present, terminate the top segment
+#sp {topstate*clear-stack*elaborate*terminate-segment
+#   (state <s> ^topstate <s>
+#              ^clear-interaction-stack true
+#              ^interaction.stack.segment <seg>)
+#   (<seg> ^id <> 0)
+#-->
+#   (<s> ^terminate-segment <seg>)
+#}
+
+
+### SM: elaborate ignore-set - useful for matching and prefering actions 
+
+#sp {all*elaborate*ignore-set
+#   (state <s> ^problemspace <ps>
+#             -^problemspace games)
+#-->
+#   (<s> ^ignore-set <nm>)
+#   (<nm> ^attribute applied
+#   	 ^attribute information
+#	 ^attribute _relation
+#	 ^attribute _metadata
+#	 ^attribute actions
+#	 ^attribute action-type
+#	 ^attribute matched
+#	 ^attribute _instantiation-of
+#	 ^attribute op_name)
+#}
+#
+#sp {topstate*elaborate*agent-info
+#   (state <s> ^topstate <s>)
+#-->
+#   (<s> ^agent-info <info>)
+#}
+

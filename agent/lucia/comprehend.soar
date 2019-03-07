@@ -1,0 +1,83 @@
+##!
+# @file
+#
+# @created Peter 20150602
+# File: comprehend.soar
+# Author: Peter Lindes
+# Created: 2 June 2015
+# Rewritten: 25 May 2017    For both pure Lucia and Lucia in Rosie
+#
+# Desc: Comprehends a segment of language input
+#
+
+#   The pure Lucia version
+#   Propose an operator to comprehend a segment of language
+sp {comprehender*propose*comprehend
+   (state <s> ^superstate nil 
+              ^problem-space comprehender
+              ^discourse <d>
+              ^count <count>
+             -^no-more-input true)
+  -(<s> ^comprehension <c>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name comprehend
+        ^comprehension <c>
+        ^input <i>
+        ^count (+ <count> 1)
+        ^debug-info (concat |Comprehend a segment of language input.|))
+   #    Create an comprehension data structure on the comprehend state
+   (<c> ^cxn-stack nil
+        ^cxn-set <c-set>
+        ^lex-stack nil
+        ^word-stack nil)
+   #    Create an input data structure on the comprehend state
+   (<i> ^word nil
+        ^count -1
+        ^comprehended true
+        ^content nil
+        ^next nil)
+}
+
+#   Before dropping to the substate, clear out
+#   any previous report-comprehension command
+#   For Lucia only
+sp {comprehender*apply*comprehend*clear-report-comprehension
+   (state <s> ^superstate nil 
+              ^problem-space comprehender
+              ^operator <o>
+              ^io.output-link <output>)
+   (<o> ^name comprehend)
+   (<output> ^report-comprehension <rc>)
+-->
+   (<output> ^report-comprehension <rc> -)
+}
+
+#   The Lucia in Rosie version
+#	Propose an operator to comprehend a segment of language
+#satisfaction of stack calls comprehension
+sp {dialog-event*propose*comprehend
+   (state <s> ^name dialog-event
+              ^purpose <p>
+              ^top-state.agent-params.parser lucia
+             -^top-state.comprehension ) # Quit when a comprehension posted
+   (<p> ^type process-sentence ^parameters.sentence <sentence>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name comprehend
+        ^sentence <sentence>
+        ^comprehension <c>
+        ^input <i>
+        ^debug-info (concat |Comprehend a segment of language input.|))
+   #    Create an comprehension data structure on the comprehend state
+   (<c> ^cxn-stack nil
+        ^cxn-set <c-set>
+        ^lex-stack nil
+        ^word-stack nil)
+   #    Create an input data structure on the comprehend state
+   (<i> ^word nil
+        ^count -1
+        ^comprehended true
+        ^content nil
+        ^next nil)
+}

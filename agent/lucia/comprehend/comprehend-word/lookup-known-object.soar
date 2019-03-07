@@ -1,0 +1,56 @@
+##!
+# @file
+#
+# @created plind 20170209
+# File: lookup-known-object.soar
+# Author: Peter Lindes
+# Created: 9 February 2017
+#
+# Desc: Looks up a KnownObject in the context to find its referent.
+#       This version is customized for the Rosie environment.
+#
+#       A KnownObject is an object like "kitchen" that is defined in smem.
+#
+
+#   Propose an operator to resolve the reference of a KnownObject
+sp {comprehend-word*propose*lookup-known-object
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done  # May need to see comprehend-word-done as proposed
+              ^cxn <cxn>
+             -^reference resolved
+             -^smem.command.query <q>)
+   (<cxn> ^m <known-object>)
+   (<known-object> ^is.a KnownObject
+                   ^handle <handle>
+                  -^referent { <object> <> nil })
+-->
+   (<s> ^operator <o> > + =)    #   May need more if multiple lexicals
+   (<o> ^name lookup-known-object
+        ^type resolution
+        ^r-type known-object
+        ^cxn <cxn>
+        ^handle <handle>
+        ^known-object <known-object>
+        ^debug-info (concat |Find the referent for a given KnownObject.|))
+}
+
+#   Make a retrieval request
+#   The rule *apply*lookup-property-or-adverb-or-known-object*do-query
+#   defined elsewhere will set up an smem query.
+sp {comprehend-word*apply*lookup-known-object
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name lookup-known-object
+        ^r-type known-object
+        ^cxn <cxn>
+        ^handle <handle>
+        ^known-object <known-object>)
+-->
+   #    Request a retrieval of the predicate
+   (<s> ^retrieval <r>)
+   (<r> ^cxn <cxn>
+        ^handle <handle>
+        ^target <known-object>
+        ^attribute referent)
+}
+
