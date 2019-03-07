@@ -27,8 +27,6 @@ public class BasicRosieGUI extends JFrame
 
 	private JButton startStopButton;
 	
-	
-	
 	private LanguageConnector language;
 
     public BasicRosieGUI(Properties props)
@@ -62,7 +60,6 @@ public class BasicRosieGUI extends JFrame
     	soarAgent.createAgent();
     	
     	this.setVisible(true);
-    	soarAgent.start();
     }
 
     private void setupMenu(){
