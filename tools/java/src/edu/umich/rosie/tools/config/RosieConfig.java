@@ -10,6 +10,7 @@ import java.util.Properties;
 public class RosieConfig {
 
 	// A custom exception thrown if there is an error in the configuration file
+	@SuppressWarnings("serial")
 	public static class RosieConfigException extends Exception {
 		public RosieConfigException(String message){
 			super(message);
@@ -18,7 +19,9 @@ public class RosieConfig {
 
 	// A set of property names used in the config file
 	public static final HashSet<String> PROP_NAMES = new HashSet<String>(
-			Arrays.asList("agent-name", "agent-dir", "domain", "parser", "parser-test", "simulate-perception",
+			Arrays.asList("agent-name", "agent-dir", "domain",
+					"parser", "parser-test", "hypothetical",
+					"simulate-perception",
 					"sentence-source", "sentences-file", "world-file", "smem-config-file", 
 					"custom-soar-file", "custom-smem-file"));
 	
@@ -52,6 +55,13 @@ public class RosieConfig {
 	public String parser_test;
 	public static final String DEFAULT_PARSER_TEST = "false";
 	public static final HashSet<String> VALID_PARSER_TESTS = new HashSet<String>(
+			Arrays.asList("true", "false"));
+	
+	// hypothetical = << true false >>  [OPTIONAL] - Whether to parse hypothetically in test mode
+	//    DEFAULT - false
+	public String hypothetical;
+	public static final String DEFAULT_HYPOTHETICAL = "false";
+	public static final HashSet<String> VALID_HYPOTHETICALS = new HashSet<String>(
 			Arrays.asList("true", "false"));
 	
 	// sentence-source = << chat scripts >>  [OPTIONAL] - Where sentences come from
@@ -151,11 +161,22 @@ public class RosieConfig {
 		if (props.containsKey("parser-test")){
 			this.parser_test = props.getProperty("parser-test").toLowerCase();
 			if(!VALID_PARSER_TESTS.contains(this.parser_test)){
-				throw new RosieConfigException("parser " + this.parser + " is not valid\n" + 
-						"Must be one of: " + VALID_PARSERS.toString());
+				throw new RosieConfigException("parser_test " + this.parser_test + " is not valid\n" + 
+						"Must be one of: " + VALID_PARSER_TESTS.toString());
 			}
 		} else {
 			parser_test = DEFAULT_PARSER_TEST;
+		}
+		
+		// hypothetical
+		if (props.containsKey("hypothetical")){
+			this.hypothetical = props.getProperty("hypothetical").toLowerCase();
+			if(!VALID_HYPOTHETICALS.contains(this.hypothetical)){
+				throw new RosieConfigException("hypothetical " + this.hypothetical + " is not valid\n" + 
+						"Must be one of: " + VALID_HYPOTHETICALS.toString());
+			}
+		} else {
+			hypothetical = DEFAULT_HYPOTHETICAL;
 		}
 		
 		// sentence-source
@@ -225,6 +246,7 @@ public class RosieConfig {
 		sb.append("simulate-perception = " + new Boolean(this.simulate_perception).toString() + "\n");
 		sb.append("parser = " + this.parser + "\n");
 		sb.append("parser-test = " + this.parser_test + "\n");
+		sb.append("hypothetical = " + this.hypothetical + "\n");
 		sb.append("sentence-source = " + this.sentenceSource + "\n");
 
 		if(this.sentencesFile != null){

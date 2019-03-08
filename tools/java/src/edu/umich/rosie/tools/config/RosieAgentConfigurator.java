@@ -7,7 +7,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Properties;
 
@@ -54,7 +53,8 @@ public class RosieAgentConfigurator {
 		
 		//	Parser testing info
 		agentConfigFile.write("parser = " + config.parser + "\n");
-		agentConfigFile.write("parser-test = " + config.parser_test + "\n\n");
+		agentConfigFile.write("parser-test = " + config.parser_test + "\n");
+		agentConfigFile.write("hypothetical = " + config.hypothetical + "\n\n");
 
 		// messages-file
 		if (config.sentenceSource.equals("chat") && config.sentencesFile != null && config.sentencesFile.exists()){
@@ -136,6 +136,7 @@ public class RosieAgentConfigurator {
 		}
 		agentSourceFile.write("   (<p> ^parser " + config.parser + ")\n");
 		agentSourceFile.write("   (<p> ^parser-test " + config.parser_test + ")\n");
+		agentSourceFile.write("   (<p> ^hypothetical " + config.hypothetical + ")\n");
 		agentSourceFile.write("   (<p> ^sentence-source " + config.sentenceSource + ")\n");
 		agentSourceFile.write("}\n\n");
 
