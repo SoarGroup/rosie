@@ -31,7 +31,7 @@ public class SVSTester {
 
 	public SVSTester(Properties props){
 		SoarAgent agent = new SoarAgent(props);
-		agent.createAgent();
+		agent.createAgent(false);
 		StringBuilder sb = new StringBuilder();
 		sb.append(SVSCommands.addBox("box1", new double[]{1, 1, 0}, new double[]{0.5, 0.5, 0.5}));
 		sb.append(SVSCommands.addBox("box2", new double[]{1, -0.5, 0}, new double[]{0.5, 0.5, 0.5}));

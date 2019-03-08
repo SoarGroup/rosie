@@ -1,17 +1,14 @@
 package edu.umich.rosie.soar;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.util.Properties;
 import java.util.*;
 
 import edu.umich.rosie.soarobjects.Time;
 
 
+import edu.umich.soar.debugger.SWTApplication;
 import sml.*;
 import sml.Agent.PrintEventInterface;
 import sml.Agent.RunEventInterface;
@@ -157,7 +154,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         return languageConn;
     }
     
-    public void createAgent(){
+    public void createAgent(boolean debug){
         System.out.println("SoarAgent::createAgent()");
         // Initialize Soar Agent
         if(config.remoteConnection){
@@ -172,9 +169,13 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 			}
         }
         
+        //	If the debug flag is not set, this will run
+        //	the Java debugger with two windows.
         if (config.spawnDebugger){
-            debuggerSpawned = agent.SpawnDebugger(kernel.GetListenerPort());
-            System.out.println("Spawn Debugger: " + (debuggerSpawned ? "SUCCESS" : "FAIL"));
+        	if (!debug) {
+                debuggerSpawned = agent.SpawnDebugger(kernel.GetListenerPort());
+                System.out.println("Spawn Debugger: " + (debuggerSpawned ? "SUCCESS" : "FAIL"));
+        	}
         }
 
         runEventCallbackIds.add(agent.RegisterForRunEvent(smlRunEventId.smlEVENT_BEFORE_INPUT_PHASE, this, null));
@@ -214,11 +215,40 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 
         System.out.print("\n");
 
-		if(config.startRunning){
+        //	If the debug flag is set, this will run
+        //	the Java debugger as a single window.
+        //	The other way creates two windows.
+		if(!debug && config.startRunning){
 			System.out.println("RUNNING");
-			start();
+   			start();
+		} else if (debug) {
+			runAgent(true);
 		}
     }
+	
+    /**
+     * An alternative way of running the agent
+     */
+	public void runAgent(boolean debug) {
+		if (debug) {
+			try {
+				SWTApplication swtApp = new SWTApplication();
+				swtApp.startApp(new String[]{"-remote"});
+				System.exit(0); // is there a better way to get the Soar thread to stop? 
+			}
+			catch (Exception e) {
+				e.printStackTrace();
+			}
+		} else {
+			this.getAgent().RunSelfForever();
+			this.getAgent().RunSelf(1000);
+			if (this.getAgent().GetDecisionCycleCounter() > 10) {	//990) {
+				System.out.println("Agent reached dc "
+									+ this.getAgent().GetDecisionCycleCounter()
+									+ ", terminating.");
+			}
+		}
+	}
 
     /**
      * Spawns a new thread that invokes a run command on the agent
@@ -426,7 +456,8 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 
     }
 
-    @Override
+    @SuppressWarnings("incomplete-switch")
+	@Override
     public void runEventHandler(int id, Object data, Agent agent, int phase) {
         smlRunEventId eventId = smlRunEventId.swigToEnum(id);
         switch(eventId){

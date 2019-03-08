@@ -1,7 +1,17 @@
+/*
+ * This program takes two arguments:
+ * 	args[0] is a path to the config file and is required to run
+ * 	args[1] is optional.  If it is set to DEBUG then the program
+ * 		is run in a single SoarJavaDebugger window and the thread
+ * 		exits when the window is closed.
+ * 		Otherwise, two windows are launched and the thread
+ * 		does not exit when the windows are closed.
+ * 		PL 3/8/2019.
+ * 
+ */
+
 package edu.umich.rosie;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Properties;
@@ -10,14 +20,13 @@ import edu.umich.rosie.language.InternalMessagePasser;
 import edu.umich.rosie.language.LanguageConnector;
 import edu.umich.rosie.soar.SoarAgent;
 
-@SuppressWarnings("serial")
 public class RosieCLI
 {
 	private SoarAgent soarAgent;
 
 	private LanguageConnector language;
 
-    public RosieCLI(Properties props)
+    public RosieCLI(Properties props, boolean debug)
     {
     	soarAgent = new SoarAgent(props);
     	
@@ -26,7 +35,7 @@ public class RosieCLI
     	language = new LanguageConnector(soarAgent, props, internalPasser);
     	soarAgent.setLanguageConnector(language);
 
-    	soarAgent.createAgent();
+    	soarAgent.createAgent(debug);
     }
 
 	public void run(){
@@ -54,15 +63,21 @@ public class RosieCLI
 			return;
 		}
         
-        RosieCLI cli = new RosieCLI(props);
-		//cli.run();
-		while(true){
-//	cli.isRunning()){
-			try{
-				Thread.sleep(10);
-			} catch (InterruptedException e){
-				break;
-			}
-		}
+        //	Run in debugger mode if args[1] says so
+        boolean debug = args.length > 1 && args[1].equals("DEBUG");
+        
+        @SuppressWarnings("unused")
+		RosieCLI cli = new RosieCLI(props, debug);
+ 		//cli.run();
+		while(!debug){
+//    	cli.isRunning()){
+    			try{
+    				Thread.sleep(10);
+    			} catch (InterruptedException e){
+    				break;
+    			}
+    	}
     }
+        
+        
 }
