@@ -5,11 +5,21 @@ import random, re, string
 #all in main comment out due to primitive adjacent failure? on movable/jumpable
 
 gamelist=[
+"I8puzzle",
+"Blocksworld",
+"Kstackedfrogs",
+"Lazystackedfrogs",
+"Tower5",
+"Picaria",
+"Holes9",
+"Fifteenpuzzle",
+"Mens3",
+"Tictactoe",
 "agbfox",
 "blocksworld",
 "colorken",
-#"cannibals", #maybe?
-#"dsokoban", #maybe?
+"cannibals",
+"dsokoban", #maybe?
 #"ektour", #maybe?
 "frog",
 "golf",
@@ -26,8 +36,8 @@ gamelist=[
 "rtravelsales",
 "stackedfrogs",
 "tripeaks",
-#"usolitaireR",#maybe?
-#"vsolitaire", #maybe?
+"usolitaireR",#maybe?
+"vsolitaire", #maybe?
 "wives",
 "xsudoku",
 "ysorting",
@@ -41,16 +51,16 @@ gamelist=[
 "6nkings",
 #"7kswap",
 "8puzzle",
-#19 ^test3
 #sometimesbroken
-#17
 #"ksideswap", #maybe? idk
-#"othello"
+#"othello",
 #"familycross",
 #needs fixing
 ]
 
-#shuffled = ["7kswap"]
+shuffled = ["Kstackedfrogs"]
+
+
 #gamelist=[
 ##"ubreakthrough",
 #"kconnect3",
@@ -70,7 +80,7 @@ gamelist=[
 #"blocksworldno"
 
 print len(gamelist)
-shuffled = random.sample(gamelist, len(gamelist))
+#shuffled = random.sample(gamelist, len(gamelist))
 #shuffled = gamelist
 
 newscript = ""
@@ -90,14 +100,14 @@ final = ""
 for line in newscript.splitlines():
     mylist = line.split(',')
     for sentence in mylist:
-        if "name of an action" in sentence or "name of the goal" in sentence or "name of the action" in sentence or "name of a failure" in sentence:
+        if "name of an action" in sentence or "name of the goal" in sentence or "name of the action" in sentence or "name of a failure" in sentence or "name of the failure" in sentence or "name of a goal" in sentence:
             #result.write(sentence + ".\n")
             final += sentence + ".\n";
             if sentence in learnedlist: #don't need to learn
                 break;
             else:
                 learnedlist += sentence
-        elif "then it is" in sentence or "then the location is" in sentence or "then the block is" in sentence:
+        elif "then it is" in sentence or "then the location is" in sentence or "then the block is" in sentence or "then they are" in sentence:
             if sentence in learnedlist:
                 continue;
             else:

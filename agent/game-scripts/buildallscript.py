@@ -3,10 +3,20 @@ import random, re, string
 ##needs fixing
 # shuffle,survo,suko,sujiko,kakuro all cause of filled missing bug in goal
 gamelist=[
+"I8puzzle",
+"Blocksworld",
+"Kstackedfrogs",
+"Lazystackedfrogs",
+"Tower5",
+"Picaria",
+"Holes9",
+"Fifteenpuzzle",
+"Mens3",
+"Tictactoe",
 "agbfox",
 "blocksworld",
 "colorken",
-#"cannibals", #maybe?
+#"cannibals",
 #"dsokoban", #maybe?
 #"ektour", #maybe?
 "frog",
@@ -24,8 +34,8 @@ gamelist=[
 "rtravelsales",
 "stackedfrogs",
 "tripeaks",
-#"usolitaireR",#maybe?
-#"vsolitaire", #maybe?
+"usolitaireR",#maybe?
+"vsolitaire", #maybe?
 "wives",
 "xsudoku",
 "ysorting",
@@ -39,11 +49,9 @@ gamelist=[
 "6nkings",
 #"7kswap",
 "8puzzle",
-#19 ^test3
 #sometimesbroken
-#17
 #"ksideswap", #maybe? idk
-#"othello"
+#"othello",
 #"familycross",
 #needs fixing
 ]
@@ -55,13 +63,14 @@ x = [[0 for i in range(length)] for j in range(length)]
 print x
 createdcount = 0
 #MAKE LOOP here, 
-while createdcount < (length*6 - 13):
+#while createdcount < (length*7 - 11):
+while createdcount < 1:
     #print "trying"
     shuffled = random.sample(gamelist, length)
     ind = 0
     while ind < length:
         origid = gamelist.index(shuffled[ind])
-        if x[origid][ind] > 6:
+        if x[origid][ind] > 7:
             break;
         ind+=1
     if ind != length:
@@ -88,13 +97,13 @@ while createdcount < (length*6 - 13):
     for line in newscript.splitlines():
         mylist = line.split(',')
         for sentence in mylist:
-            if "name of an action" in sentence or "name of the goal" in sentence or "name of the action" in sentence or "name of a failure" in sentence:
+            if "name of an action" in sentence or "name of the goal" in sentence or "name of the action" in sentence or "name of a failure" in sentence or "name of the failure" in sentence or "name of a goal" in sentence:
                 final += sentence + ".\n";
                 if sentence in learnedlist: #don't need to learn
                     break;
                 else:
                     learnedlist += sentence
-            elif "then it is" in sentence or "then the location is" in sentence or "then the block is" in sentence:
+            elif "then it is" in sentence or "then the location is" in sentence or "then the block is" in sentence or "then they are" in sentence:
                 if sentence in learnedlist:
                     continue;
                 else:

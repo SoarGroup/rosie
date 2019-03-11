@@ -28,11 +28,11 @@ do
 	cp $rfile soar-game.script
 	rfilename=${rfile%$suffix}
 	
-	#b="fg34z8mrjb95top"
-	#if [ "$rfilename" \< "$b" ]; then
-	#	echo $rfilename
-	#	continue
-	#fi
+	b="xnrvamwfKp5LhMtbc2yBzlHq1u3giTkjsP64FI8T"
+	if [ "$rfilename" \< "$b" ]; then
+		echo $rfilename
+		continue
+	fi
 	#echo "oops"
 	
 	#BUILD VERSION 2

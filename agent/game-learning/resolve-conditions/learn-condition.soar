@@ -1,9 +1,21 @@
 sp {learn-condition*elaborate*conditions
    (state <s> ^name learn-condition
-              ^superstate.operator.condition <co>)
+   		  	  ^superstate.operator.condition <co>)
 -->
    (<s> ^condition <co>)
 }
+
+sp {learn-condition*elaborate*conditions*intterupt
+   (state <s> ^name learn-conditionX
+   		  	  ^superstate <ss>
+              ^superstate.operator.condition <co>)
+(<co> ^function board-between)
+-->
+   (write (cmd pref <ss>))
+   (write (cmd print <co> -d 3))
+   (interrupt)
+}
+
 #temp if go back to retrieveal model may need to chunk here
 sp {learn-condition*impasse
    (state <s> ^superstate.name learn-condition
@@ -268,24 +280,6 @@ sp {resolve-conditions*propose*resolve-learn-next
    (<o> ^name resolve-learn-next
    		^condition <a1>)
 }
-sp {resolve-conditions*prefer*resolve-learn-next*over*resolve-learn-next
-   (state <s> ^name resolve-conditions
-              ^linkstate.version-list <vl>
-              ^operator <o1> +
-              ^operator <o2> +)
-   (<o1> ^name resolve-learn-next ^condition <a1>)
-   (<o2> ^name resolve-learn-next ^condition <a2>)
-   (<a1> ^name <name1>)
-   (<a2> ^name <name2>)
-   (<vl> ^version <v1> <v2>)
-   (<v1> ^handle-spelling <hs> ^item.smem-result <sr1> ^structure-type N)
-   (<sr1> ^handle <name1>)
-   (<v2> ^handle-spelling <hs1> ^item.smem-result <sr2> ^structure-type ADJ)
-   (<sr2> ^handle <name2>)
--->
-(interrupt)
-   (<s> ^operator <o1> > <o2>)
-}
 
 sp {resolve*resolve-ungroundable*tie*alphanumeric*bias
    (state <s> ^superstate <ss>
@@ -308,7 +302,29 @@ sp {resolve*resolve-ungroundable*tie*alphanumeric*bias
    (<ss> ^operator <o1> > <o2>)
 }
 
-
+sp {resolve-conditions*prefer*resolve-ungroundable*over*resolve-ungroundable*notsyn
+   (state <s> ^name resolve-conditions
+              ^linkstate.version-list <vl>
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name resolve-ungroundable ^condition <a1>)
+   (<o2> ^name resolve-ungroundable ^condition {<a2> <> <a1>})
+   (<a1> ^name <name1>)
+   (<a2> ^name <name2>)
+   (<vl> ^version <v1> 
+   		 ^version <v2>)
+   (<v1> ^handle-spelling <hs> ^item <i2>)
+   (<i2> -^auto ^smem-result <sr1>)# ^structure-type N)
+   (<sr1> ^handle <name1>)
+   (<v2> ^handle-spelling <hs1> ^item <i3>)
+   (<i3> ^auto ^smem-result <sr2>)# ^structure-type ADJ)
+   (<sr2> ^handle <name2>)
+-->
+#(write (cmd print <v1> -d 4))
+#(write (cmd print <v2> -d 4))
+   (<s> ^operator <o1> > <o2>)
+}
+#qqqq
 sp {resolve*resolve-ungroundable*tie*argnum*bias
    (state <s> ^superstate <ss>
               ^item <o1>
@@ -512,12 +528,15 @@ sp {resolve-conditions*apply*resolve-learn-next*interrupt*debug
 -->
    (interrupt)
 }
+
+#qqqq
 sp {resolve-conditions*apply*resolve-ungroundable*interrupt*debug
-   (state <s> ^name resolve-conditions
+   (state <s> ^name resolve-conditionsX
    		  	  #^linkstate <ls>
 			  ^top-state.dialog-context <dc>
                ^linkstate <la>
-   		  	  ^operator <o>)
+			   ^operator.name resolve-ungroundable
+   		  	  ^operator <o> +)
    (<o> ^name resolve-ungroundable ^condition <co>)
    ###(<ls> ^<type> <t> ^gtype <type>)
    ###(<t> ^link <co>)
@@ -525,7 +544,8 @@ sp {resolve-conditions*apply*resolve-ungroundable*interrupt*debug
    #(<co> ^name <prep>)
    #(<s> ^top-state.world.predicates.predicate.handle <prep>)#not primitive that exists
 -->
-   #(write (cmd pref <s>))
+   #(write (cmd pref <o> -w))
+   #(write (cmd print <o> -d 3))
    #(interrupt)
 }
 #sp {resolve-conditions*apply*resolve-ungroundable*elaborate*possible
@@ -629,6 +649,8 @@ sp {resolve-conditions*apply*resolve-ungroundable*finished-version*numeric
    (<h1> ^handle <word> ^handle-spelling <name> ^property <prop>) #steal from clear
    (<prop> ^handle numeric ^type conceptual)
 }
+
+#qqq make this rule for resolve-ungroundable
 sp {resolve-conditions*prefer*resolve-learn-next*over*resolve-learn-next
    (state <s> ^name resolve-conditions
               ^linkstate.version-list <vl>
@@ -662,6 +684,7 @@ sp {resolve-conditions*apply*resolve-learn-next
    (<v> ^handle-spelling <hs> ^item.smem-result <sr1>)
    (<sr1> ^handle <name2>)
 -->
+#(write (cmd print <co> -d 5))
    (<c> ^new-segment-info <info>)
    (<info> ^purpose <p>
            ^originator agent)
@@ -691,6 +714,7 @@ sp {resolve-conditions*apply*resolve-ungroundable
    (<ts> ^dialog-context <dc>)
    (<co> ^name {<name2> <> <word>} ^args <args>)
 -->
+#(write (cmd print <co> -d 20))
    (<c> ^new-segment-info <info>)
    (<info> ^purpose <p>
            ^originator agent)
