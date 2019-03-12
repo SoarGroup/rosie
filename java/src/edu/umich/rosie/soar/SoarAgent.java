@@ -30,6 +30,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 
         public Boolean verbose;
         public Boolean writeLog;
+		public String logFilename;
         public Boolean writeStandardOut;
         
         public Boolean parserTest;
@@ -64,6 +65,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
             speechFile = props.getProperty("speech-file", "audio_files/sample");
 
             writeLog = props.getProperty("enable-log", "false").equals("true");
+			logFilename = props.getProperty("log-filename", "rosie-log.txt");
         }
     }
 
@@ -154,7 +156,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         return languageConn;
     }
     
-    public void createAgent(boolean debug){
+    public void createAgent(){
         System.out.println("SoarAgent::createAgent()");
         // Initialize Soar Agent
         if(config.remoteConnection){
@@ -169,13 +171,9 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 			}
         }
         
-        //	If the debug flag is not set, this will run
-        //	the Java debugger with two windows.
         if (config.spawnDebugger){
-        	if (!debug) {
-                debuggerSpawned = agent.SpawnDebugger(kernel.GetListenerPort());
-                System.out.println("Spawn Debugger: " + (debuggerSpawned ? "SUCCESS" : "FAIL"));
-        	}
+			debuggerSpawned = agent.SpawnDebugger(kernel.GetListenerPort());
+			System.out.println("Spawn Debugger: " + (debuggerSpawned ? "SUCCESS" : "FAIL"));
         }
 
         runEventCallbackIds.add(agent.RegisterForRunEvent(smlRunEventId.smlEVENT_BEFORE_INPUT_PHASE, this, null));
@@ -184,11 +182,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 
         if(config.writeLog){
             try {
-            	String logName = (config.parserTest)?
-            						(config.parser.equals("lucia"))?
-            							"lucia-log.txt" : "laird-log.txt"
-            						: "rosie-log.txt";
-                logWriter = new PrintWriter(new FileWriter(logName));
+                logWriter = new PrintWriter(new FileWriter(config.logFilename));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -215,41 +209,11 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 
         System.out.print("\n");
 
-        //	If the debug flag is set, this will run
-        //	the Java debugger as a single window.
-        //	The other way creates two windows.
-		if(!debug && config.startRunning){
-			System.out.println("RUNNING");
+		if(config.startRunning){
    			start();
-		} else if (debug) {
-			runAgent(true);
 		}
     }
 	
-    /**
-     * An alternative way of running the agent
-     */
-	public void runAgent(boolean debug) {
-		if (debug) {
-			try {
-				SWTApplication swtApp = new SWTApplication();
-				swtApp.startApp(new String[]{"-remote"});
-				System.exit(0); // is there a better way to get the Soar thread to stop? 
-			}
-			catch (Exception e) {
-				e.printStackTrace();
-			}
-		} else {
-			this.getAgent().RunSelfForever();
-			this.getAgent().RunSelf(1000);
-			if (this.getAgent().GetDecisionCycleCounter() > 10) {	//990) {
-				System.out.println("Agent reached dc "
-									+ this.getAgent().GetDecisionCycleCounter()
-									+ ", terminating.");
-			}
-		}
-	}
-
     /**
      * Spawns a new thread that invokes a run command on the agent
      */

@@ -57,7 +57,7 @@ public class BasicRosieGUI extends JFrame
 
     	setupMenu();
     	
-    	soarAgent.createAgent(false);
+    	soarAgent.createAgent();
     	
     	this.setVisible(true);
     }
