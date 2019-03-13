@@ -1,12 +1,6 @@
 /*
  * This program takes two arguments:
  * 	args[0] is a path to the config file and is required to run
- * 	args[1] is optional.  If it is set to DEBUG then the program
- * 		is run in a single SoarJavaDebugger window and the thread
- * 		exits when the window is closed.
- * 		Otherwise, two windows are launched and the thread
- * 		does not exit when the windows are closed.
- * 		PL 3/8/2019.
  * 
  */
 
@@ -20,13 +14,15 @@ import edu.umich.rosie.language.InternalMessagePasser;
 import edu.umich.rosie.language.LanguageConnector;
 import edu.umich.rosie.soar.SoarAgent;
 
+import edu.umich.soar.debugger.SWTApplication;
+
 public class RosieCLI
 {
 	private SoarAgent soarAgent;
 
 	private LanguageConnector language;
 
-    public RosieCLI(Properties props, boolean debug)
+    public RosieCLI(Properties props)
     {
     	soarAgent = new SoarAgent(props);
     	
@@ -35,16 +31,11 @@ public class RosieCLI
     	language = new LanguageConnector(soarAgent, props, internalPasser);
     	soarAgent.setLanguageConnector(language);
 
-    	soarAgent.createAgent(debug);
+    	soarAgent.createAgent();
     }
 
 	public void run(){
-		soarAgent.sendCommand("run 2000");
-		//soarAgent.start();
-	}
-
-	public boolean isRunning(){
-		return soarAgent.isRunning();
+		soarAgent.sendCommand("run");
 	}
 
     public static void main(String[] args) {
@@ -63,21 +54,22 @@ public class RosieCLI
 			return;
 		}
         
-        //	Run in debugger mode if args[1] says so
-        boolean debug = args.length > 1 && args[1].equals("DEBUG");
+        boolean spawnDebugger = props.getProperty("spawn-debugger", "false").equals("true");
+		props.setProperty("spawn-debugger", "false");
         
         @SuppressWarnings("unused")
-		RosieCLI cli = new RosieCLI(props, debug);
- 		//cli.run();
-		while(!debug){
-//    	cli.isRunning()){
-    			try{
-    				Thread.sleep(10);
-    			} catch (InterruptedException e){
-    				break;
-    			}
-    	}
+		RosieCLI cli = new RosieCLI(props);
+		if(spawnDebugger){
+			try {
+				SWTApplication swtApp = new SWTApplication();
+				swtApp.startApp(new String[]{"-remote"});
+				System.exit(0); // is there a better way to get the Soar thread to stop? 
+			}
+			catch (Exception e) {
+				e.printStackTrace();
+			}
+		} else {
+			cli.run();
+		}
     }
-        
-        
 }
