@@ -58,7 +58,8 @@ gamelist=[
 #needs fixing
 ]
 
-shuffled = ["Kstackedfrogs"]
+shuffled = ["8men","frog"]
+#"stackedfrogs"]
 
 
 #gamelist=[

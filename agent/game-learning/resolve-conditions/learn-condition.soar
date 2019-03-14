@@ -238,6 +238,7 @@ sp {learn-condition*apply*ungroundable-condition
 -->
    (<ss> ^operator <o> -) #consider less than pref?
 }
+
 sp {resolve-conditions*propose*resolve-ungroundable
    (state <s> ^operator.name wait
               ^impasse no-change
@@ -250,16 +251,55 @@ sp {resolve-conditions*propose*resolve-ungroundable
 -{(<co> ^name <prep>)
   (<s> ^top-state.world.predicates.predicate.handle <prep>)} #not primitive that exists
 -->
-   (<ss> ^operator <o> + >) # =      
+   (<ss> ^operator <o> + <) # =      
    (<o> ^name resolve-ungroundable
    		^condition <co>)
 }
+
+#null case, all can be grounded
+sp {resolve-conditions*propose*resolve-ungroundable*none
+   (state <s> ^operator.name wait
+              ^impasse no-change
+              ^quiescence t 
+              ^superstate <ss>
+              ^superstate.superstate <sss>)
+   (<ss> ^name resolve-conditions)
+   (<sss> ^name chunk-predicate-impasse)
+-{(<ss> ^condition <co>)
+   (<co> -^result.set.<x>)}
+-->
+   (<ss> ^operator <o> + <) # =      
+   (<o> ^name resolve-ungroundable)
+}
+
+#xqxqxqxq
+sp {resolve-conditions*apply*completed-learning*true
+   (state <s> ^name resolve-conditions
+   		  	  ^linkstate <ls>
+			  ^quiescence t
+   		  	  ^operator <o>)
+   (<o> ^name << resolve-ungroundable resolve-learn-next >>)
+-->
+#(write (cmd pref <s>))
+   (<ls> ^completed-learning true)
+}
+
 sp {resolve-conditions*prefer*resolve-ungroundable*over*resolve-learn-next
    (state <s> ^name resolve-conditions
               ^operator <o1> +
               ^operator <o2> +)
    (<o1> ^name resolve-ungroundable)
    (<o2> ^name resolve-learn-next)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {resolve-conditions*prefer*resolve-ungroundable*condition
+   (state <s> ^name resolve-conditions
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name resolve-ungroundable ^condition <co>)
+   (<o2> ^name resolve-ungroundable -^condition)
 -->
    (<s> ^operator <o1> > <o2>)
 }
