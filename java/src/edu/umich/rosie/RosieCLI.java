@@ -57,8 +57,7 @@ public class RosieCLI
         boolean spawnDebugger = props.getProperty("spawn-debugger", "false").equals("true");
 		props.setProperty("spawn-debugger", "false");
         
-        @SuppressWarnings("unused")
-		RosieCLI cli = new RosieCLI(props);
+        RosieCLI cli = new RosieCLI(props);
 		if(spawnDebugger){
 			try {
 				SWTApplication swtApp = new SWTApplication();

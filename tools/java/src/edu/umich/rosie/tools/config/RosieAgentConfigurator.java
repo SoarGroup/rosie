@@ -187,9 +187,14 @@ public class RosieAgentConfigurator {
     		System.exit(0);
     	}
     	
+    	//	Figure out the path to the config file
     	String configFilename = args[0];
+    	String currentDirectory = System.getProperty("user.dir");
+    	if (configFilename.startsWith(currentDirectory))
+    		configFilename = configFilename.substring(currentDirectory.length());
+   		configFilename = System.getProperty("user.dir") + "/" + configFilename;
     	
-    	File configFile = new File(System.getProperty("user.dir") + "/" + configFilename);
+    	File configFile = new File(configFilename);
     	if(!configFile.exists()){
     		System.err.println("\nThe file " + configFilename + " does not exist");
     		System.exit(0);
