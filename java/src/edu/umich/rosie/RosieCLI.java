@@ -38,6 +38,10 @@ public class RosieCLI
 		soarAgent.sendCommand("run");
 	}
 
+	public void shutdown(){
+		soarAgent.kill();
+	}
+
     public static void main(String[] args) {
     	if(args.length == 0){
     		System.err.println("RosieCLI: Need path to config file as argument");
@@ -62,6 +66,7 @@ public class RosieCLI
 			try {
 				SWTApplication swtApp = new SWTApplication();
 				swtApp.startApp(new String[]{"-remote"});
+				cli.shutdown();
 				System.exit(0); // is there a better way to get the Soar thread to stop? 
 			}
 			catch (Exception e) {
@@ -69,6 +74,7 @@ public class RosieCLI
 			}
 		} else {
 			cli.run();
+			cli.shutdown();
 		}
     }
 }
