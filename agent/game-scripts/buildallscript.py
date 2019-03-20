@@ -1,59 +1,61 @@
 import random, re, string
 
-##needs fixing
-# shuffle,survo,suko,sujiko,kakuro all cause of filled missing bug in goal
 gamelist=[
-"I8puzzle",
-"Blocksworld",
-"Kstackedfrogs",
-"Lazystackedfrogs",
-"Tower5",
-"Picaria",
-"Holes9",
-"Fifteenpuzzle",
-"Mens3",
-"Tictactoe",
 "agbfox",
+"Atower5",
 "blocksworld",
+"Blocksworld",
 "colorken",
-#"cannibals",
-#"dsokoban", #maybe?
-#"ektour", #maybe?
+"Cannibals",
+"dsokoban",
+"Dshuffle",
+"ektour",
+"E8men",
 "frog",
+"Fifteenpuzzle",
 "golf",
 "husbands",
+"Holes9",
 "ijigsawdoku",
+"I8puzzle",
 "jmahjong",
+"Jsujiko",
 "kenken",
+"Kstackedfrogs",
 "logi5",
+"Lazystackedfrogs",
 "mapcolor",
+"Mens3",
 "nsudoku",
-#"othello",
+"othello",
+"Osuko",
 "pyramid",
+"Picaria",
 "queens",
 "rtravelsales",
+"Rsurvo",
 "stackedfrogs",
+"Swap",
 "tripeaks",
-"usolitaireR",#maybe?
-"vsolitaire", #maybe?
+"Tictactoe",
+"usolitaireR",
+"Ukakuro",
+"vsolitaire",
 "wives",
 "xsudoku",
+"Xbreakthrough",
 "ysorting",
 "zmaze",
-#"0nknights", #maybe?
+"0nknights",
 "1nrooks",
 "2pushmaze",
 "3tower",
 "4tower",
 "5puzzle",
 "6nkings",
-#"7kswap",
+"7familycross",
 "8puzzle",
-#sometimesbroken
-#"ksideswap", #maybe? idk
-#"othello",
-#"familycross",
-#needs fixing
+"9ksideswap"
 ]
 
 length = len(gamelist)
@@ -63,18 +65,30 @@ x = [[0 for i in range(length)] for j in range(length)]
 print x
 createdcount = 0
 #MAKE LOOP here, 
-#while createdcount < (length*7 - 11):
-while createdcount < 1:
+#while createdcount < (length*7):
+while createdcount < 3000:
     #print "trying"
     shuffled = random.sample(gamelist, length)
-    ind = 0
-    while ind < length:
-        origid = gamelist.index(shuffled[ind])
-        if x[origid][ind] > 7:
-            break;
-        ind+=1
-    if ind != length:
-        continue; #already have 3 results for one game slot make new one
+    
+    #ind = 0
+    #bad = 0
+    #while ind < length:
+    #    origid = gamelist.index(shuffled[ind])
+    #    if x[origid][ind] == 0:
+    #        bad+=-60
+    #    if x[origid][ind] > 2:
+    #        bad+=12
+    #    if x[origid][ind] > 3:
+    #        bad+=25
+    #    if x[origid][ind] > 4:
+    #        bad+=35
+    #    if x[origid][ind] > 5:
+    #        bad+=60
+    #    ind+=1
+    #if bad > 0:
+    #    continue;
+    #if ind != length:
+    #    continue; #already have 3 results for one game slot make new one
     ind = 0
     print createdcount
     while ind < length:
@@ -103,7 +117,7 @@ while createdcount < 1:
                     break;
                 else:
                     learnedlist += sentence
-            elif "then it is" in sentence or "then the location is" in sentence or "then the block is" in sentence or "then they are" in sentence:
+            elif "then it is" in sentence or "then the location is" in sentence or "then the block is" in sentence or "then they are" in sentence or "then the object is" in sentence:
                 if sentence in learnedlist:
                     continue;
                 else:

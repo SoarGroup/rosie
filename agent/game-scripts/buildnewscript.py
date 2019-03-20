@@ -5,90 +5,87 @@ import random, re, string
 #all in main comment out due to primitive adjacent failure? on movable/jumpable
 
 gamelist=[
-"I8puzzle",
-"Blocksworld",
-"Kstackedfrogs",
-"Lazystackedfrogs",
-"Tower5",
-"Picaria",
-"Holes9",
-"Fifteenpuzzle",
-"Mens3",
-"Tictactoe",
 "agbfox",
+"Atower5",
 "blocksworld",
+"Blocksworld",
 "colorken",
-"cannibals",
-"dsokoban", #maybe?
-#"ektour", #maybe?
+"Cannibals",
+"dsokoban",
+"Dshuffle",
+"ektour",
+"E8men",
 "frog",
+"Fifteenpuzzle",
 "golf",
 "husbands",
+"Holes9",
 "ijigsawdoku",
+"I8puzzle",
 "jmahjong",
+"Jsujiko",
 "kenken",
+"Kstackedfrogs",
 "logi5",
+"Lazystackedfrogs",
 "mapcolor",
+"Mens3",
 "nsudoku",
-#"othello",
+"othello",
+"Osuko",
 "pyramid",
+"Picaria",
 "queens",
 "rtravelsales",
+"Rsurvo",
 "stackedfrogs",
+"Swap",
 "tripeaks",
-"usolitaireR",#maybe?
-"vsolitaire", #maybe?
+"Tictactoe",
+"usolitaireR",
+"Ukakuro",
+"vsolitaire",
 "wives",
 "xsudoku",
+"Xbreakthrough",
 "ysorting",
 "zmaze",
-#"0nknights", #maybe?
+"0nknights",
 "1nrooks",
 "2pushmaze",
 "3tower",
 "4tower",
 "5puzzle",
 "6nkings",
-#"7kswap",
+"7familycross",
 "8puzzle",
-#sometimesbroken
-#"ksideswap", #maybe? idk
-#"othello",
-#"familycross",
-#needs fixing
+"9ksideswap"
 ]
 
-shuffled = ["8men","frog"]
-#"stackedfrogs"]
-
-
-#gamelist=[
 ##"ubreakthrough",
+#xshuffled = ["Osuko","Jsujiko","Rsurvo","Dshuffle","8puzzle","xsudoku","Ukakuro"]
+shuffled = ["Ukakuro"]
+#"Ukakuro"]
+#"Ubreakthrough"]
+#"Lazystackedfrogs"]
+#"8men","frog"]
+#"stackedfrogs"]
+#gamelist=[
 #"kconnect3",
 #"aconnect3",
 #"econnect4",
-##"15ipuzzleno",
-##"x5towerno",
-#"worldblocksno",
-#"yiso5puzzleno",
-#"iso8puzzleno",
-##"picaria",
-#"4towerno",
 #"risk",
-##"9holes",
-##"mens3",
-#"tictactoe",
-#"blocksworldno"
+#hexapawn
 
 print len(gamelist)
 #shuffled = random.sample(gamelist, len(gamelist))
+#shuffled = random.sample(xshuffled, len(xshuffled))
 #shuffled = gamelist
-
 newscript = ""
 scriptname = ""
 for game in shuffled:
     scriptname += game[0];
-    target = open(game + ".test", 'r')
+    target = open(game + ".test5", 'r')
     newscript+= target.read(20000)
     newscript+= "\n";
     target.close()
@@ -108,7 +105,7 @@ for line in newscript.splitlines():
                 break;
             else:
                 learnedlist += sentence
-        elif "then it is" in sentence or "then the location is" in sentence or "then the block is" in sentence or "then they are" in sentence:
+        elif "then it is" in sentence or "then the location is" in sentence or "then the block is" in sentence or "then they are" in sentence or "then the object is" in sentence:
             if sentence in learnedlist:
                 continue;
             else:
