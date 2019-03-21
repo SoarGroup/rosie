@@ -85,7 +85,7 @@ newscript = ""
 scriptname = ""
 for game in shuffled:
     scriptname += game[0];
-    target = open(game + ".test5", 'r')
+    target = open(game + ".test", 'r')
     newscript+= target.read(20000)
     newscript+= "\n";
     target.close()
