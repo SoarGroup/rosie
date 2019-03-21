@@ -1,7 +1,9 @@
-suffix=".preparse"
+suffix=".parse"
 stats=".stats"
 maxstats=".maxstats"
 smem=".smem"
+csv=".csv"
+
 #smemq=".smemq"
 #smems=".smems"
 #smemtq=".smemtq"
@@ -12,33 +14,45 @@ topstate=".top"
 dialog=".dialog"
 pertaskstats=".pertaskstats"
 #pertaskstats2=".pertaskstats2"
+dc=".dc"
 
-rm statsmax.txt
-rm pertaskstats.txt
-rm smemuse.txt
-for rfile in *.preparse
+
+rm statsmax.txt -f
+rm pertaskstats.txt -f
+rm smemuse.txt -f
+rm statsdc.txt -f
+
+for rfile in *.parse
 do
 	
 	cp $rfile soar-game.script
 	rfilename=${rfile%$suffix}
 	
-	#b="fg34z8mrjb95top"
+	#b="xnrvamwfKp5LhMtbc2yBzlHq1u3giTkjsP64FI8T"
 	#if [ "$rfilename" \< "$b" ]; then
 	#	echo $rfilename
 	#	continue
 	#fi
 	#echo "oops"
-	java SentencesToSoar soar-game.script
-	cp soar-game.soar /home/jrkirk/rosie2/rosie-project/rosie/agent/language-comprehension/comprehension/test-sentences/
-	/home/jrkirk/rosie2/rosie-project/soar/out/./soar -s game-data-agent.soar stop
-	cp stats.txt testresult/$rfilename$stats
-	cp statsm.txt testresult/$rfilename$maxstats
-	cp s1.txt testresult/$rfilename$topstate
-	cp soar-game.script testresult/$rfilename$dialog
 	
-	cp pertaskstats.txt testresult/$rfilename$pertaskstats
-	cp smemuse.txt testresult/$rfilename$smem
+	#BUILD VERSION 2
+    cp $ROSIE_PROJ/rosie/agent/game-scripts/soar-game.script $ROSIE_HOME/test-agents/game/example.sentences
+    /home/jrkirk/rosie2/scripts/build_agent game >> out.txt
 	
+    #BUILD VERSION 1
+	#java SentencesToSoar soar-game.script
+	#cp soar-game.soar /home/jrkirk/rosie2/rosie-project/rosie/agent/language-comprehension/comprehension/test-sentences/
+	/home/jrkirk/rosie2/rosie-project/soar/out/./soar -s game-agent.soar stop
+	#/home/jrkirk/rosie2/rosie-project/soar/out/./soar -s game-data-agent.soar stop
+	cp stats.txt data/$rfilename$stats
+	cp statsm.txt data/$rfilename$maxstats
+	cp s1.txt data/$rfilename$topstate
+	cp soar-game.script data/$rfilename$dialog
+	
+	cp pertaskstats.txt data/$rfilename$pertaskstats
+	cp smemuse.txt data/$rfilename$smem
+	cp statsdc.txt data/$rfilename$dc
+
 	#cp smemquery.txt newresults4/$rfilename$smemq
 	#cp smemstore.txt newresults4/$rfilename$smems
 	#cp smemtimestore.txt newresults4/$rfilename$smemts
@@ -56,5 +70,7 @@ do
 	rm statsm.txt
 	rm pertaskstats.txt
 	rm smemuse.txt
+	rm statsdc.txt
+
 		
 done

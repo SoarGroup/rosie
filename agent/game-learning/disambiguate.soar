@@ -1,0 +1,255 @@
+sp {disambiguate*elaborate*versions
+   (state <s> ^name disambiguate
+   		  	  ^superstate <ss>)
+   (<ss> ^main-type <mt> ^operator <o> ^version-list <vl>)
+   (<o> ^type <t>)
+-->
+   (<s> ^multiple-versions true
+   		^main-type <mt>
+   		^version-list <vl>
+		^operator-type <t>)
+#  (write (cmd print <s>))
+#  (interrupt)
+}
+
+sp {disambiguate*elaborate*interrupt
+   (state <s> ^name disambiguate
+   		  	  ^top-state.dialog-context <dc>
+   		  	  ^superstate <ss>)
+   (<ss> ^main-type goal ^goal <g>)
+   (<dc> ^number-answer <n>)
+-->
+(write (cmd print <g> -d 3))
+   (interrupt)
+}
+
+############################################
+#######   disambiguate preferences   #######
+sp {prefer*how-many-top*over*how-many-predicate*disambiguate
+   (state <s> ^name disambiguate
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name how-many-top)
+   (<o2> ^name how-many-predicates)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+sp {prefer*over*give-new-state*disambiguate
+   (state <s> ^name disambiguate
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name << how-many-top how-many-predicates >>)
+   (<o2> ^name give-new-state)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+### DISAMBIGUATION STRATEGIES ###
+# how-many-top concepts
+# how-many-predicates  
+# give-new-state
+# 
+# 
+### INCOMPLETE  ###
+# run predicates with all objects as input and look for difference
+# ask for comparison of origin of differing predicates in valid interpretations
+# change state by removing objects or something?, and asking if still present
+# ^this actually good maybe weird to implement
+# ask question about subsititued synonym
+# 
+# 
+# ask if object x is predicate y
+# ^ by index 
+# ^ by unary predicate difference [is it red
+# ^ by binary predicate difference [is it below x]
+# ^ by recursision? is it below unary different object [is it below a red object]
+# 
+# 
+# pred-def-correct [need Preeti's work]
+# top-def-correct 
+# 
+# 
+##### Levels of interactive strain/catagories
+# requires state inspection
+# requires counting [or estimating relative counts] of instances
+# requires confirming corrects of language definition
+# requires setuping another state
+# 
+###other dimensions
+# number of words used to teach
+# number of states demonstrated
+#
+# cognitive effort [how much needs to be computed]
+# ^ number of words rosie says[that need to be undersood]
+#
+#### Types of responses
+#  YES/NO
+#  number [of x]
+#  change state/ok
+# 
+# 
+#### Knowledge to leverage
+#  recognition structure
+#  situated instance
+#  meta knowledge of past knowledge [learned from where?]
+#  
+###################################################
+######  propose list of operator strategies  ######
+sp {disambiguate*propose*how-many-top
+   (state <s> ^name disambiguate
+   		  	  ^operator-type <type>
+   		  	  ^main-type <type>
+			  ^superstate <ss>)
+   (<ss> ^<type> <a1>
+         ^<type> {<a2> > <a1>})
+   (<a1> ^num-results <nr> ^handle <c1>)
+   (<a2> ^num-results {<nr2> <> <nr>} ^handle <c1>)
+ -{(<ss> ^<type> {<a3> > <a2>}) #doesnt have a third viable version
+   (<a3> ^num-results)}
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name how-many-top
+   		^type <type>)
+}
+
+sp {disambiguate*propose*how-many-predicates
+   (state <s> ^name disambiguate
+   		  	  ^main-type <type>
+			  ^operator-type <type>
+    		  ^superstate <ss>
+			  ^version-list.version <vv>)
+    (<ss> ^<type> <a1>
+          ^<type> {<a2> > <a1>})
+	(<ss> ^predicate <p1> ^predicate <p2>)
+    (<vv> ^handle-spelling <hs1> ^item <i11> <i22>)
+    (<i11> -^auto antonym ^smem-result.handle <e6>)
+    (<i22> -^auto antonym ^smem-result.handle <e7>)
+    (<p1> ^link <con1> ^handle <e6> ^num-results <nr3>)
+    (<p2> ^link <con2> ^handle <e7> ^num-results {<nr5> <> <nr3>})
+    (<con1> ^negative false)
+    (<con2> ^negative false)
+    (<a1> ^condition <con1> ^num-results <nr> ^handle <c1>)
+    (<a2> ^condition <con2> ^num-results <nr> ^handle <c1>)
+  -{(<ss> ^<type> {<a3> > <a2>}) #doesnt have a third viable version
+    (<a3> ^num-results)}
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name how-many-predicates)
+}
+
+sp {disambiguate*propose*give-new-state
+   (state <s> ^name disambiguate)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name give-new-state)
+}
+
+#####################################################
+sp {disambiguate*apply*give-new-state
+    (state <s1> ^name disambiguate
+                ^top-state.dialog-context <dc>
+               -^top-state.dialog-context.got-new-state 
+                ^top-state.interaction.changes <c>
+				^superstate <ss>
+				^main-type <type>
+				^operator <o>)
+	(<o> ^name give-new-state)
+    (<dc> ^learning true)
+-->
+   (<dc> ^needs-new-state true)
+   (<c> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator agent)
+   (<p> ^type process-give-new-state
+        ^parameters <p>
+        ^satisfaction <sat>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type single-word-response
+          ^originator instructor)
+   (<c> ^outgoing-message <out-msg>)
+   (<out-msg> ^type give-new-state
+              ^complete-message true #need?
+              ^fields <f>)
+   (<f> ^type <type>)
+}
+
+sp {disambiguate*apply*how-many-predicates
+    (state <s1> ^name disambiguate
+                ^top-state.dialog-context <dc>
+               -^top-state.dialog-context.number-answer-predicate <nr3>
+               -^top-state.dialog-context.number-answer-predicate <nr5>
+                ^top-state.interaction.changes <c>
+				^superstate <ss>
+				^main-type {<type> << action goal failure >>}
+				^operator <o>
+                ^version-list.version <vv>)
+	(<o> ^name how-many-predicates)
+    (<ss> ^<type> <a1>
+          ^<type> {<a2> > <a1>})
+    (<dc> ^learning true)
+	(<ss> ^predicate <p1> ^predicate <p2>)
+    (<vv> ^handle-spelling <hs1> ^item <i11> <i22>)
+    (<i11> -^auto antonym ^smem-result.handle <e6>)
+    (<i22> -^auto antonym ^smem-result.handle <e7>)
+   #(<o> ^type <type> -^duplicate-of)
+    (<p1> ^link <con1> ^handle <e6> ^num-results <nr3>)
+    (<p2> ^link <con2> ^handle <e7> ^num-results {<nr5> <> <nr3>})
+    (<con1> ^negative false)
+    (<con2> ^negative false)
+    (<a1> ^condition <con1> ^num-results <nr> ^handle <c1>)
+    (<a2> ^condition <con2> ^num-results <nr> ^handle <c1>)
+  -{(<ss> ^<type> {<a3> > <a2>}) #doesnt have a third viable version
+    (<a3> ^num-results)}
+-->
+   (<dc> ^multiple-num-predicate true)
+   (<c> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator agent)
+   (<p> ^type process-multiple-question
+        ^parameters <p>
+        ^satisfaction <sat>)
+   (<p> ^word1 <nr3> ^word2 <nr5>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type process-multiple-question
+          ^originator instructor)
+   (<c> ^outgoing-message <out-msg>)
+   (<out-msg> ^type how-many-predicates #reset-state
+              ^complete-message true  #need?
+              ^fields <f>)
+   (<f> ^predicate <hs1> ^word1 <nr3> ^word2 <nr5>)
+}
+
+sp {disambiguate*apply*how-many-top
+    (state <s1> ^name disambiguate
+                ^top-state.dialog-context <dc>
+               -^top-state.dialog-context.number-answer <nr>
+               -^top-state.dialog-context.number-answer <nr2>
+                ^top-state.interaction.changes <c>
+				^superstate <ss>
+				^operator <o>)
+	(<o> ^name how-many-top ^type <type>)
+    (<ss> ^<type> <a1>
+          ^<type> {<a2> > <a1>})
+    (<dc> ^learning true)
+   #(<o> ^type <type> -^duplicate-of)
+    (<a1> ^num-results <nr> ^handle <c1>)
+    (<a2> ^num-results {<nr2> <> <nr>} ^handle <c1>)
+  -{(<ss> ^<type> {<a3> > <a2>}) #doesnt have a third viable version
+    (<a3> ^num-results)}
+-->
+   (<dc> ^multiple-num-answer true)
+   (<c> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator agent)
+   (<p> ^type process-multiple-question
+        ^parameters <p>
+        ^satisfaction <sat>)
+   (<p> ^word1 <nr> ^word2 <nr2>)
+   (<sat> ^dialog-event <de>)
+   (<de> ^type process-multiple-question
+          ^originator instructor)
+   (<c> ^outgoing-message <out-msg>)
+   (<out-msg> ^type how-many-concepts #how-many-actions
+              ^complete-message true #need?
+              ^fields <f>)
+   (<f> ^word1 <nr> ^word2 <nr2> ^type <type>)
+}

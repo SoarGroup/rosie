@@ -1,9 +1,32 @@
 sp {learn-condition*elaborate*conditions
    (state <s> ^name learn-condition
-              ^superstate.operator.condition <co>)
+   		  	  ^superstate.operator.condition <co>)
 -->
    (<s> ^condition <co>)
 }
+
+sp {learn-condition*elaborate*conditions*intterupt
+   (state <s> ^name learn-conditionX
+   		  	  ^superstate <ss>
+              ^superstate.operator.condition <co>)
+(<co> ^function board-between)
+-->
+   (write (cmd pref <ss>))
+   (write (cmd print <co> -d 3))
+   (interrupt)
+}
+
+sp {learn-condition*elaborate*conditions*intteruptasdfasdf
+   (state <s> #^name learn-condition
+   		  	  ^superstate <ss>
+			  ^impasse conflict)
+#(<co> ^function board-between)
+-->
+   (write (cmd pref <ss>))
+ # (write (cmd print <co> -d 3))
+   (interrupt)
+}
+
 #temp if go back to retrieveal model may need to chunk here
 sp {learn-condition*impasse
    (state <s> ^superstate.name learn-condition
@@ -226,6 +249,7 @@ sp {learn-condition*apply*ungroundable-condition
 -->
    (<ss> ^operator <o> -) #consider less than pref?
 }
+
 sp {resolve-conditions*propose*resolve-ungroundable
    (state <s> ^operator.name wait
               ^impasse no-change
@@ -238,16 +262,56 @@ sp {resolve-conditions*propose*resolve-ungroundable
 -{(<co> ^name <prep>)
   (<s> ^top-state.world.predicates.predicate.handle <prep>)} #not primitive that exists
 -->
-   (<ss> ^operator <o> + >) # =      
+   (<ss> ^operator <o> + <) # =      
    (<o> ^name resolve-ungroundable
    		^condition <co>)
 }
+
+#null case, all can be grounded
+sp {resolve-conditions*propose*resolve-ungroundable*none
+   (state <s> ^operator.name wait
+              ^impasse no-change
+              ^quiescence t 
+              ^superstate <ss>
+              ^superstate.superstate <sss>)
+   (<ss> ^name resolve-conditions)
+   (<sss> ^name chunk-predicate-impasse)
+-{(<ss> ^condition <co>)
+   (<co> -^result.set.<x>)}
+-->
+   (<ss> ^operator <o> + <) # =      
+   (<o> ^name resolve-ungroundable)
+}
+
+#xqxqxqxq
+sp {resolve-conditions*apply*completed-learning*true
+#:interrupt
+   (state <s> ^name resolve-conditions
+   		  	  ^linkstate <ls>
+			  ^quiescence t
+   		  	  ^operator <o>)
+   (<o> ^name << resolve-ungroundable resolve-learn-next >>)
+-->
+#(write (cmd pref <s>))
+   (<ls> ^completed-learning true)
+}
+
 sp {resolve-conditions*prefer*resolve-ungroundable*over*resolve-learn-next
    (state <s> ^name resolve-conditions
               ^operator <o1> +
               ^operator <o2> +)
    (<o1> ^name resolve-ungroundable)
    (<o2> ^name resolve-learn-next)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {resolve-conditions*prefer*resolve-ungroundable*condition
+   (state <s> ^name resolve-conditions
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name resolve-ungroundable ^condition <co>)
+   (<o2> ^name resolve-ungroundable -^condition)
 -->
    (<s> ^operator <o1> > <o2>)
 }
@@ -268,24 +332,6 @@ sp {resolve-conditions*propose*resolve-learn-next
    (<o> ^name resolve-learn-next
    		^condition <a1>)
 }
-sp {resolve-conditions*prefer*resolve-learn-next*over*resolve-learn-next
-   (state <s> ^name resolve-conditions
-              ^linkstate.version-list <vl>
-              ^operator <o1> +
-              ^operator <o2> +)
-   (<o1> ^name resolve-learn-next ^condition <a1>)
-   (<o2> ^name resolve-learn-next ^condition <a2>)
-   (<a1> ^name <name1>)
-   (<a2> ^name <name2>)
-   (<vl> ^version <v1> <v2>)
-   (<v1> ^handle-spelling <hs> ^item.smem-result <sr1> ^structure-type N)
-   (<sr1> ^handle <name1>)
-   (<v2> ^handle-spelling <hs1> ^item.smem-result <sr2> ^structure-type ADJ)
-   (<sr2> ^handle <name2>)
--->
-(interrupt)
-   (<s> ^operator <o1> > <o2>)
-}
 
 sp {resolve*resolve-ungroundable*tie*alphanumeric*bias
    (state <s> ^superstate <ss>
@@ -298,11 +344,62 @@ sp {resolve*resolve-ungroundable*tie*alphanumeric*bias
    (<ss> ^name resolve-conditions
          ^operator <o1> +
          ^operator <o2> +)
-   (<o1> ^name resolve-ungroundable ^condition.name <s1> < <s2>)
-   (<o2> ^name resolve-ungroundable ^condition.name <s2>)
+   (<o1> ^name resolve-ungroundable ^condition <co1>)
+   (<co1> ^args.num <nu> ^name <s1> < <s2>)
+   (<o2> ^name resolve-ungroundable ^condition <co2>)
+   (<co2>  ^args.num <nu> ^name <s2>)
    (<cs1> ^handle <s1> ^count 1)#only at same count
    (<cs2> ^handle <s2> ^count 1)
 -->
+(write (cmd print <o1> -d 10))
+(write | OVER alphanumeric |)
+(write (cmd print <o2> -d 10))
+#(interrupt)
+   (<ss> ^operator <o1> > <o2>)
+}
+
+sp {resolve-conditions*prefer*resolve-ungroundable*over*resolve-ungroundable*notsyn
+   (state <s> ^name resolve-conditions
+              ^linkstate.version-list <vl>
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name resolve-ungroundable ^condition <a1>)
+   (<o2> ^name resolve-ungroundable ^condition {<a2> <> <a1>})
+   (<a1> ^name <name1>)
+   (<a2> ^name <name2>)
+   (<vl> ^version <v1> 
+   		 ^version <v2>)
+   (<v1> ^handle-spelling <hs> ^item <i2>)
+   (<i2> -^auto ^smem-result <sr1>)# ^structure-type N)
+   (<sr1> ^handle <name1>)
+   (<v2> ^handle-spelling <hs1> ^item <i3>)
+   (<i3> ^auto ^smem-result <sr2>)# ^structure-type ADJ)
+   (<sr2> ^handle <name2>)
+-->
+#(write (cmd print <v1> -d 4))
+#(write (cmd print <v2> -d 4))
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {resolve*resolve-ungroundable*tie*argnum*bias
+   (state <s> ^superstate <ss>
+              ^item <o1>
+			  ^quiescence t
+			  ^item <o2>
+			  ^condition-set <cs1>
+			  ^condition-set <cs2>
+              ^choices multiple)
+   (<ss> ^name resolve-conditions
+         ^operator <o1> +
+         ^operator <o2> +)
+   (<o1> ^name resolve-ungroundable ^condition <co1>)
+   (<co1> ^args.num <nu> < <nu2> ^name <s1>)
+   (<o2> ^name resolve-ungroundable ^condition <co2>)
+   (<co2>  ^args.num <nu2> ^name <s2>)
+   (<cs1> ^handle <s1> ^count 1)#only at same count
+   (<cs2> ^handle <s2> ^count 1)
+-->
+
    (<ss> ^operator <o1> > <o2>)
 }
 
@@ -322,6 +419,9 @@ sp {prefer*resolve-ungroundable*higher*count
    (<cs1> ^handle <s1> ^count <c2>)
    (<cs2> ^handle <s2> ^count {<c3> < <c2>})
 -->
+#(write (cmd print <o1> -d 3))
+#(write | OVER count |)
+#(write (cmd print <o2> -d 3))
    (<ss> ^operator <o1> > <o2>)
 }
 sp {prefer*resolve-ungroundable*same-concept*lowest
@@ -339,9 +439,40 @@ sp {prefer*resolve-ungroundable*same-concept*lowest
    (<c1> ^name <s1>)
    (<c2> ^name <s1>)
    (<cs1> ^handle <s1> ^count {<n2> > 1})
+  -{(<c1> ^args <ar>)
+    (<ar> ^1 <ar1>)
+    (<ar1> -^result.set.instance.{1}.<y>)}
 -->
    (<ss> ^operator <o1> > <o2>)
 }
+sp {prefer*resolve-ungroundable*same-concept*with-children
+   (state <s> ^superstate <ss>
+              ^item <o1>
+			  ^quiescence t
+			  ^item <o2>
+			  ^condition-set <cs1>
+              ^choices multiple)
+   (<ss> ^name resolve-conditions
+         ^operator <o1> +
+         ^operator <o2> +)
+   (<o1> ^name resolve-ungroundable ^condition <c1>)
+   (<o2> ^name resolve-ungroundable ^condition <c2>)
+   (<c1> ^name <s1>)
+   (<c2> ^name <s1>)
+   (<cs1> ^handle <s1> ^count {<n2> > 1})
+   (<c2> ^args <ars>)
+   (<ars> ^1 <ars1>)
+   (<ars1> -^result.set.instance.{1}.<x>)
+  -{(<c1> ^args <ar>)
+    (<ar> ^1 <ar1>)
+    (<ar1> -^result.set.instance.{1}.<y>)}
+-->
+#(write (cmd print <o1> -d 3))
+#(write | OVER same children |)
+#(write (cmd print <o2> -d 3))
+   (<ss> ^operator <o1> > <o2>)
+}
+
 sp {resolve*resolve-ungroundable*elaborate*set
    (state <s> ^superstate <ss>
               ^quiescence t
@@ -394,15 +525,108 @@ sp {resolve-conditions*prefer*resolve-ungroundable*function*concept
 -->
    (<s> ^operator <o1> > <o2>)
 }
+
+
 sp {resolve-conditions*prefer*resolve-ungroundable*child
    (state <s> ^name resolve-conditions
               ^operator <o1> +
               ^operator <o2> +)
-   (<o1> ^name resolve-ungroundable ^condition.args <a>)
-   (<o2> ^name resolve-ungroundable ^condition <c2>)
+   (<o1> ^name resolve-ungroundable ^condition <c1>)
+   (<c1> ^args <a> -^type concept)
    (<a> ^<< 1 2 3 >> <c2>)
+   (<o2> ^name resolve-ungroundable ^condition <c2>)
 -->
+#(write (cmd print <o2> -d 3))
+#(write | OVER CHILD|)
+#(write (cmd print <o1> -d 3))
    (<s> ^operator <o2> > <o1>)
+}
+
+sp {resolve-conditions*prefer*resolve-ungroundable*child*d2
+   (state <s> ^name resolve-conditions
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name resolve-ungroundable ^condition <c1>)
+   (<c1> ^args <a> -^type concept)
+   (<a> ^<< 1 2 3 >> <c3>)
+   (<c3> ^args <a3>)
+   (<a3> ^<< 1 2 3 >> <c2>)
+   (<o2> ^name resolve-ungroundable ^condition <c2>)
+-->
+#(write (cmd print <o2> -d 3))
+#(write | OVER CHILD|)
+#(write (cmd print <o1> -d 3))
+   (<s> ^operator <o2> > <o1>)
+}
+
+
+sp {resolve-conditions*prefer*resolve-ungroundable*childargument
+   (state <s> ^name resolve-conditions
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name resolve-ungroundable ^condition <c1>)
+   (<c1> ^args <a> -^type concept)
+   (<a> ^<< 1 2 3 >> <c3>)
+   (<c3> ^name argument ^attribute <n> ^args.{1}.args.<n> <c2>)
+   (<o2> ^name resolve-ungroundable ^condition <c2>)
+-->
+(write (cmd print <o2> -d 3))
+(write | OVER this new |)
+(write (cmd print <o1> -d 3))
+   (<s> ^operator <o2> > <o1>)
+#(interrupt)
+}
+
+sp {resolve-conditions*prefer*resolve-ungroundable*child*concept
+   (state <s> ^name resolve-conditions
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name resolve-ungroundable ^condition <c1>)
+   (<c1> ^args <a> ^type concept)
+   (<a> ^<< 1 2 3 >> <c2>)
+   (<o2> ^name resolve-ungroundable ^condition <c2>)
+   (<c2> ^type concept)
+-->
+#(write (cmd print <o2> -d 3))
+#(write | OVER CONCEPT CHILD |)
+#(write (cmd print <o1> -d 3))
+   (<s> ^operator <o2> > <o1>)
+}
+
+sp {resolve-conditions*prefer*resolve-ungroundable*child*concept*d2
+   (state <s> ^name resolve-conditions
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name resolve-ungroundable ^condition <c1>)
+   (<c1> ^args <a> ^type concept)
+   (<a> ^<< 1 2 3 >> <c3>)
+   (<c3> ^args <a3>)
+   (<a3> ^<< 1 2 3 >> <c2>)
+   (<o2> ^name resolve-ungroundable ^condition <c2>)
+   (<c2> ^type concept)
+-->
+#(write (cmd print <o2> -d 3))
+#(write | OVER CONCEPT CHILD |)
+#(write (cmd print <o1> -d 3))
+   (<s> ^operator <o2> > <o1>)
+}
+
+sp {resolve-conditions*prefer*resolve-ungroundable*childargument*concept
+   (state <s> ^name resolve-conditions
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name resolve-ungroundable ^condition <c1>)
+   (<c1> ^args <a> ^type concept)
+   (<a> ^<< 1 2 3 >> <c3>)
+   (<c3> ^name argument ^attribute <n> ^args.{1}.args.<n> <c2>)
+   (<o2> ^name resolve-ungroundable ^condition <c2>)
+   (<c2> ^type concept)
+-->
+(write (cmd print <o2> -d 3))
+(write | OVEVER yes |)
+(write (cmd print <o1> -d 3))
+   (<s> ^operator <o2> > <o1>)
+#(interrupt)
 }
 #NOT sure about this bias..
 sp {resolve-conditions*prefer*resolve-ungroundable*concept*usedcurrent*first
@@ -431,6 +655,9 @@ sp {resolve-conditions*prefer*resolve-ungroundable*type*concept
    (<co1> ^type concept)
    (<co2> -^type concept)
 -->
+#(write (cmd print <o1> -d 3))
+#(write | OVER CONCEPT|)
+#(write (cmd print <o2> -d 3))
    (<s> ^operator <o1> > <o2>)
 }
 #sp {resolve-conditions*prefer*resolve-ungroundable*same*name*bias
@@ -459,19 +686,24 @@ sp {resolve-conditions*apply*resolve-learn-next*interrupt*debug
 -->
    (interrupt)
 }
+
+#qqqq
 sp {resolve-conditions*apply*resolve-ungroundable*interrupt*debug
    (state <s> ^name resolve-conditionsX
-   		  	  #^linkstate <ls>
-			  ^top-state.dialog-context <dc>
-               ^linkstate <la>
-   		  	  ^operator <o>)
-   (<o> ^name resolve-ungroundable ^condition <co>)
-   ##(<ls> ^<type> <t> ^gtype <type>)
-   ##(<t> ^link <co>)
-   ##(<co> ^name on1)
-   (<co> ^name <prep>)
-   (<s> ^top-state.world.predicates.predicate.handle <prep>)#not primitive that exists
+   		  	  ^top-state.dialog-context <dc>
+              ^linkstate <ls>
+			  ^operator.name resolve-ungroundable)
+(<ls> ^failure <f> ^superstate.name transfer-action-goal)
+#   		  	  ^operator <o> +)
+ #  (<o> ^name resolve-ungroundable ^condition <co>)
+   ###(<ls> ^<type> <t> ^gtype <type>)
+   ###(<t> ^link <co>)
+   ###(<co> ^name on1)
+   #(<co> ^name <prep>)
+   #(<s> ^top-state.world.predicates.predicate.handle <prep>)#not primitive that exists
 -->
+   #(write (cmd pref <o> -w))
+   (write (cmd print <f> -d 10))
    (interrupt)
 }
 #sp {resolve-conditions*apply*resolve-ungroundable*elaborate*possible
@@ -575,6 +807,8 @@ sp {resolve-conditions*apply*resolve-ungroundable*finished-version*numeric
    (<h1> ^handle <word> ^handle-spelling <name> ^property <prop>) #steal from clear
    (<prop> ^handle numeric ^type conceptual)
 }
+
+#qqq make this rule for resolve-ungroundable
 sp {resolve-conditions*prefer*resolve-learn-next*over*resolve-learn-next
    (state <s> ^name resolve-conditions
               ^linkstate.version-list <vl>
@@ -608,6 +842,7 @@ sp {resolve-conditions*apply*resolve-learn-next
    (<v> ^handle-spelling <hs> ^item.smem-result <sr1>)
    (<sr1> ^handle <name2>)
 -->
+#(write (cmd print <co> -d 5))
    (<c> ^new-segment-info <info>)
    (<info> ^purpose <p>
            ^originator agent)
@@ -637,6 +872,7 @@ sp {resolve-conditions*apply*resolve-ungroundable
    (<ts> ^dialog-context <dc>)
    (<co> ^name {<name2> <> <word>} ^args <args>)
 -->
+#(write (cmd print <co> -d 20))
    (<c> ^new-segment-info <info>)
    (<info> ^purpose <p>
            ^originator agent)

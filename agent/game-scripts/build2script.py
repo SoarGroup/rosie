@@ -2,6 +2,7 @@ import random, re, string
 
 gamelist=[
 #"ubreakthrough",
+"othello",
 "lfamilycrossno",
 #"2pushmazeno",
 #"dsokobanno",
@@ -29,13 +30,12 @@ gamelist=[
 #"mens3",
 "tictactoe",
 "blocksworldno",
-"zmazeno",
-"othello"]
+"zmazeno"]
 
 #o8p4chfj5gr9mtbz3
 print len(gamelist)
-shuffled = random.sample(gamelist, len(gamelist))
-#shuffled = gamelist
+#shuffled = random.sample(gamelist, len(gamelist))
+shuffled = gamelist
 
 newscript = ""
 scriptname = ""

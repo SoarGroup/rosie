@@ -182,8 +182,12 @@ public class AgentMessageParser
 		    return translateCurrentTime(fieldsId);
                 } else if(type.equals("reset-state")){
 		    return translateResetState(fieldsId);
-                } else if(type.equals("how-many-actions")){
-		    return translateHowManyActions(fieldsId);
+                } else if(type.equals("how-many-predicates")){
+		    return translateHowManyPredicates(fieldsId);
+                } else if(type.equals("how-many-concepts")){
+		    return translateHowManyConcepts(fieldsId);
+                } else if(type.equals("give-new-state")){
+		    return translateGiveNewState(fieldsId);
                 } 
 		//conversational messages
 		else if(type.equals("generic"))
@@ -232,8 +236,48 @@ public class AgentMessageParser
 		return result;
 	}
 	
-	public static String translateHowManyActions(Identifier fieldsId){
-    	String result = "How many available actions are there ";
+// REPLACED WITH MORE GENERAL VERSION
+//	public static String translateHowManyActions(Identifier fieldsId){
+//    	String result = "How many available actions are there ";
+//    	String word = SoarUtil.getValueOfAttribute(fieldsId, "word1");
+//    	
+//    	if (word != null)
+//    	{
+//    		//word = word.replaceAll("\\d", "");
+//    		result += word + " or ";
+//    	}
+//        String word2 = SoarUtil.getValueOfAttribute(fieldsId, "word2");
+//    	
+//    	if (word2 != null)
+//    	{
+//    		//word2 = word2.replaceAll("\\d", "");
+//    		result += word2;
+//    	}
+//    	String word3 = SoarUtil.getValueOfAttribute(fieldsId, "word3");
+//    	
+//    	if (word3 != null)
+//    	{
+//    		//word3 = word3.replaceAll("\\d", "");
+//    		result += " or " + word3;
+//    	}
+//    	result += "?";
+//    	
+//    	return result;
+//    }
+//	
+	public static String translateHowManyConcepts(Identifier fieldsId){
+    	String type = SoarUtil.getValueOfAttribute(fieldsId, "type");
+    	
+    	if (type != null)
+    	{
+    		type = type.replaceAll("\\d", "");
+    	}
+		else
+		{
+			type = "ERROR";
+		}
+		
+		String result = "How many " + type + "s are there ";
     	String word = SoarUtil.getValueOfAttribute(fieldsId, "word1");
     	
     	if (word != null)
@@ -248,18 +292,59 @@ public class AgentMessageParser
     		//word2 = word2.replaceAll("\\d", "");
     		result += word2;
     	}
-    	String word3 = SoarUtil.getValueOfAttribute(fieldsId, "word3");
+    	result += "?";
     	
-    	if (word3 != null)
+    	return result;
+    }
+	
+	public static String translateHowManyPredicates(Identifier fieldsId){
+    	String type = SoarUtil.getValueOfAttribute(fieldsId, "predicate");
+    	
+    	if (type != null)
     	{
-    		//word3 = word3.replaceAll("\\d", "");
-    		result += " or " + word3;
+    		type = type.replaceAll("\\d", "");
+    	}
+		else
+		{
+			type = "ERROR";
+		}
+		
+		String result = "How many " + type + " objects are there ";
+    	String word = SoarUtil.getValueOfAttribute(fieldsId, "word1");
+    	
+    	if (word != null)
+    	{
+    		//word = word.replaceAll("\\d", "");
+    		result += word + " or ";
+    	}
+        String word2 = SoarUtil.getValueOfAttribute(fieldsId, "word2");
+    	
+    	if (word2 != null)
+    	{
+    		//word2 = word2.replaceAll("\\d", "");
+    		result += word2;
     	}
     	result += "?";
     	
     	return result;
     }
 
+	public static String translateGiveNewState(Identifier fieldsId){
+    	String type = SoarUtil.getValueOfAttribute(fieldsId, "type");
+    	
+    	if (type != null)
+    	{
+    		type = type.replaceAll("\\d", "");
+    	}
+		else
+		{
+			type = "ERROR";
+		}
+		
+		String result="Having trouble interpreting. Please setup another state containing the " + type + ".";
+    	
+    	return result;
+    }
 	
 	public static String translateLearnedUnknownWord(Identifier fieldsId){
 	    	String result = "Ok, I have learned ";

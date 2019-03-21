@@ -1,0 +1,10 @@
+python buildnewscript.py
+sh buildrun2.sh
+python buildnewscript.py
+sh buildrun2.sh
+python buildnewscript.py
+sh buildrun2.sh
+python buildnewscript.py
+sh buildrun2.sh
+python buildnewscript.py
+sh buildrun2.sh
