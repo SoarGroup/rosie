@@ -7,8 +7,6 @@ import java.util.*;
 
 import edu.umich.rosie.soarobjects.Time;
 
-
-import edu.umich.soar.debugger.SWTApplication;
 import sml.*;
 import sml.Agent.PrintEventInterface;
 import sml.Agent.RunEventInterface;
