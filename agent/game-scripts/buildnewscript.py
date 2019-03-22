@@ -11,9 +11,9 @@ gamelist=[
 "Blocksworld",
 "colorken",
 "Cannibals",
-"dsokoban",
+"dsokoban", 
 "Dshuffle",
-"ektour",
+"ektour", #b
 "E8men",
 "frog",
 "Fifteenpuzzle",
@@ -22,29 +22,29 @@ gamelist=[
 "Holes9",
 "ijigsawdoku",
 "I8puzzle",
-#"jmahjong",
+"jmahjong", #b
 "Jsujiko",
 "kenken",
-#"Kstackedfrogs",
+"Kstackedfrogs", #b
 "logi5",
-#"Lazystackedfrogs",
+"Lazystackedfrogs", #b
 "mapcolor",
 "Mens3",
 "nsudoku",
 "othello",
 "Osuko",
-"pyramid",
+"pyramid", #b
 "Picaria",
-"queens",
-"rtravelsales",
+"queens", #b
+"rtravelsales", #b
 "Rsurvo",
-#"stackedfrogs",
+"stackedfrogs", #b
 "Swap",
 "tripeaks",
 "Tictactoe",
-#"usolitaireR",
+"usolitaireR", #b
 "Ukakuro",
-#"vsolitaire",
+"vsolitaire", #b
 "wives",
 "xsudoku",
 "Xbreakthrough",
@@ -64,8 +64,7 @@ gamelist=[
 
 ##"ubreakthrough",
 #xshuffled = ["Osuko","Jsujiko","Rsurvo","Dshuffle","8puzzle","xsudoku","Ukakuro"]
-#shuffled = ["vsolitaire"]
-#"Ukakuro"]
+shuffled = ["usolitaireR"]
 #"Ubreakthrough"]
 #"Lazystackedfrogs"]
 #"8men","frog"]
@@ -78,7 +77,7 @@ gamelist=[
 #hexapawn
 
 print len(gamelist)
-shuffled = random.sample(gamelist, len(gamelist))
+#shuffled = random.sample(gamelist, len(gamelist))
 #shuffled = random.sample(xshuffled, len(xshuffled))
 #shuffled = gamelist
 newscript = ""
