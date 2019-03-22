@@ -22,12 +22,12 @@ gamelist=[
 "Holes9",
 "ijigsawdoku",
 "I8puzzle",
-"jmahjong",
+#"jmahjong",
 "Jsujiko",
 "kenken",
-"Kstackedfrogs",
+#"Kstackedfrogs",
 "logi5",
-"Lazystackedfrogs",
+#"Lazystackedfrogs",
 "mapcolor",
 "Mens3",
 "nsudoku",
@@ -38,13 +38,13 @@ gamelist=[
 "queens",
 "rtravelsales",
 "Rsurvo",
-"stackedfrogs",
+#"stackedfrogs",
 "Swap",
 "tripeaks",
 "Tictactoe",
-"usolitaireR",
+#"usolitaireR",
 "Ukakuro",
-"vsolitaire",
+#"vsolitaire",
 "wives",
 "xsudoku",
 "Xbreakthrough",
@@ -64,7 +64,7 @@ gamelist=[
 
 ##"ubreakthrough",
 #xshuffled = ["Osuko","Jsujiko","Rsurvo","Dshuffle","8puzzle","xsudoku","Ukakuro"]
-shuffled = ["8puzzle"]
+#shuffled = ["vsolitaire"]
 #"Ukakuro"]
 #"Ubreakthrough"]
 #"Lazystackedfrogs"]
@@ -78,7 +78,7 @@ shuffled = ["8puzzle"]
 #hexapawn
 
 print len(gamelist)
-#shuffled = random.sample(gamelist, len(gamelist))
+shuffled = random.sample(gamelist, len(gamelist))
 #shuffled = random.sample(xshuffled, len(xshuffled))
 #shuffled = gamelist
 newscript = ""

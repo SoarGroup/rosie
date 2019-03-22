@@ -72,7 +72,7 @@ for infile in glob.glob('*.world'):
                         result.write(")\n")
                         index= index +1
                         result.write("(" + str(objid[index])+ " ^item-type object ^handle object-" + str(index) + " ^predicates <pr" + str(index) + ">)\n")
-                        result.write("(<pr" + str(index) + "> ^visible true ")
+                        result.write("(<pr" + str(index) + "> ")#^visible true ")
                         flag = 1        
                 elif "predicate " in line:
                         if flag == 1:
