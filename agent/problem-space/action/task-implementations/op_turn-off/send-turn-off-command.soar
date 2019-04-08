@@ -1,3 +1,5 @@
+### Send the low-level turn-off command when the target is visible and reachable ###
+
 sp {op_turn-off1*propose*send-turn-off-command
    (state <s> ^name op_turn-off1
               ^target-object <obj>)
@@ -9,19 +11,12 @@ sp {op_turn-off1*propose*send-turn-off-command
    (<s> ^operator <o> + =)
    (<o> ^name send-turn-off-command
         ^item-type command-operator
+        ^command-name turn-off-command
         ^object <obj>)
 }
 
-sp {op_turn-off1*reject*send-turn-off-command*already*sent
-   (state <s> ^name op_turn-off1
-              ^operator <o> +
-              ^current-task-segment.turn-off-command)
-   (<o> ^name send-turn-off-command)
--->
-   (<s> ^operator <o> -)
-}
+### model send-turn-off-command (during planning) ###
 
-### model send-turn-off-command
 sp {op_turn-off1*internal*apply*send-turn-off-command*change*activation
    (state <s> ^name op_turn-off1
               ^problem-space.execution-type internal
@@ -34,7 +29,9 @@ sp {op_turn-off1*internal*apply*send-turn-off-command*change*activation
             ^activation1 off2)
 }
 
-### ai2thor and internal
+
+### ai2thor and internal ###
+
 sp {op_turn-off1*external*apply*send-turn-off-command*ai2thor*internal
    (state <s> ^name op_turn-off1
               ^problem-space.execution-type external
@@ -43,11 +40,33 @@ sp {op_turn-off1*external*apply*send-turn-off-command*ai2thor*internal
               ^io.output-link <ol>
               ^current-task-segment <seg>)
    (<o> ^name send-turn-off-command
+        ^command-name <cmd-name>
         ^object.handle <h>)
 -->
    (<ol> ^perform-action <pa>)
    (<pa> ^item-type output-command
          ^name turn-off
          ^object <h>)
-   (<seg> ^turn-off-command <pa>)
+   (<seg> ^<cmd-name> <pa>)
+}
+
+
+### tabletop ###
+
+sp {op_turn-off1*external*apply*send-turn-off-command*tabletop
+   (state <s> ^name op_turn-off1
+              ^problem-space.execution-type external
+              ^agent-params.domain tabletop
+              ^operator <o>
+              ^io.output-link <ol>
+              ^current-task-segment <seg>)
+   (<o> ^name send-turn-off-command
+        ^command-name <cmd-name>
+        ^object.handle <h>)
+-->
+   (<ol> ^set-state <set>)
+   (<set> ^object-handle <h>
+          ^name activation1
+          ^value off2)
+   (<seg> ^<cmd-name> <set>)
 }

@@ -1,11 +1,12 @@
-sp {execute*op_open1*propose*simulate-open-command
+### For the internal environment, simulate the open command on the top-state world ###
+
+sp {op_open1*propose*simulate-open-command
    (state <s> ^name op_open1
               ^problem-space.execution-type external
               ^agent-params.domain internal
               ^current-task-segment <seg>)
    (<seg> ^open-command <cmd>)
-   (<cmd> ^name << open set-timer >>
-         -^status complete)
+   (<cmd> -^status complete)
 -->
    (<s> ^operator <o> +)
    (<o> ^name simulate-open-command
@@ -13,7 +14,7 @@ sp {execute*op_open1*propose*simulate-open-command
         ^command <cmd>)
 }
 
-sp {execute*op_open1*apply*simulate-open-command*mark*command*complete
+sp {op_open1*apply*simulate-open-command*mark*command*complete
    (state <s> ^name op_open1
               ^operator <o>)
    (<o> ^name simulate-open-command
@@ -22,9 +23,27 @@ sp {execute*op_open1*apply*simulate-open-command*mark*command*complete
    (<cmd> ^status complete)
 }
 
-sp {execute*op_open1*apply*simulate-open-command*change*door2
+
+### simulate-perception = false, change on the object directly ###
+
+sp {op_open1*apply*simulate-open-command*change*door2
    (state <s> ^name op_open1
               ^operator.name simulate-open-command
+             -^agent-params.simulate-perception true
+              ^target-object.predicates <preds>)
+   (<preds> ^door2 closed2)
+-->
+   (<preds> ^door2 closed2 -
+            ^door2 open2)
+}
+
+
+### simulate-perception = true, change on the perception-monitor ###
+
+sp {op_open1*apply*simulate-open-command*simulate-perception*change*door2
+   (state <s> ^name op_open1
+              ^operator.name simulate-open-command
+              ^agent-params.simulate-perception true
               ^target-object <obj>
               ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
    (<obj-info> ^input-link-obj.property <il-prop>
@@ -35,5 +54,4 @@ sp {execute*op_open1*apply*simulate-open-command*change*door2
    (<vals> ^closed2 1.00 -
            ^open2 1.00)
 }
-
 

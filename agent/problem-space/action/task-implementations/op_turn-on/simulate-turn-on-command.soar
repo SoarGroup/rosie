@@ -1,11 +1,12 @@
-sp {execute*op_turn-on1*propose*simulate-turn-on-command
+### For the internal environment, simulate the turn-on command on the top-state world ###
+
+sp {op_turn-on1*propose*simulate-turn-on-command
    (state <s> ^name op_turn-on1
               ^problem-space.execution-type external
               ^agent-params.domain internal
               ^current-task-segment <seg>)
    (<seg> ^turn-on-command <cmd>)
-   (<cmd> ^name << turn-on set-timer >>
-         -^status complete)
+   (<cmd> -^status complete)
 -->
    (<s> ^operator <o> +)
    (<o> ^name simulate-turn-on-command
@@ -13,7 +14,7 @@ sp {execute*op_turn-on1*propose*simulate-turn-on-command
         ^command <cmd>)
 }
 
-sp {execute*op_turn-on1*apply*simulate-turn-on-command*mark*command*complete
+sp {op_turn-on1*apply*simulate-turn-on-command*mark*command*complete
    (state <s> ^name op_turn-on1
               ^operator <o>)
    (<o> ^name simulate-turn-on-command
@@ -22,9 +23,47 @@ sp {execute*op_turn-on1*apply*simulate-turn-on-command*mark*command*complete
    (<cmd> ^status complete)
 }
 
-sp {execute*op_turn-on1*apply*simulate-turn-on-command*change*activation
+
+### simulate-perception = false, change on the object directly ###
+
+sp {op_turn-on1*apply*simulate-turn-on-command*change*activation1
    (state <s> ^name op_turn-on1
               ^operator.name simulate-turn-on-command
+             -^agent-params.simulate-perception true
+              ^target-object.predicates <preds>)
+   (<preds> ^activation1 off2)
+-->
+   (<preds> ^activation1 off2 -
+            ^activation1 on2)
+}
+
+# If an object is in a microwave, make it hot
+sp {op_turn-on1*apply*simulate-turn-on-command*microwave*make*contents*hot
+   (state <s> ^name op_turn-on1
+              ^operator.name simulate-turn-on
+             -^agent-params.simulate-perception true
+              ^target-object <mic>
+              ^world <w>)
+   (<mic> ^predicates.name microwave1)
+   (<w> ^objects.object <obj>
+        ^predicates.predicate <pred>)
+   (<pred> ^handle in1
+           ^instance <i>)
+   (<i> ^1 <obj> ^2 <mic>)
+   (<obj> ^predicates <obj-preds>)
+   (<obj-preds> ^temperature { <old-temp> <> hot1 })
+-->
+   (<obj-preds> ^temperature <old-temp> -
+                ^temperature hot1)
+}
+
+
+### simulate-perception = true, change on the perception-monitor ###
+
+sp {op_turn-on1*apply*simulate-turn-on-command*simulate-perception*change*activation
+   (state <s> ^name op_turn-on1
+              ^operator.name simulate-turn-on-command
+              ^agent-params.simulate-perception true
               ^target-object <obj>
               ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
    (<obj-info> ^input-link-obj.property <il-prop>
@@ -36,9 +75,10 @@ sp {execute*op_turn-on1*apply*simulate-turn-on-command*change*activation
            ^on2 1.00)
 }
 
-sp {execute*op_turn-on1*apply*simulate-turn-on-command*set-timer
+sp {op_turn-on1*apply*simulate-turn-on-command*simulate-perception*set-timer
    (state <s> ^name op_turn-on1
               ^operator <o>
+              ^agent-params.simulate-perception true
               ^target-object <obj>
               ^io.input-link.time.clock.elapsed-seconds <secs>
               ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
@@ -53,9 +93,11 @@ sp {execute*op_turn-on1*apply*simulate-turn-on-command*set-timer
    (<il-prop> ^turn-off-time (+ <secs> (* <t> 10)))
 }
 
-sp {execute*op_turn-on1*apply*simulate-turn-on*microwave*make*hot
+# If an object is in a microwave, make it hot
+sp {op_turn-on1*apply*simulate-turn-on-command*simulate-perception*microwave*make*hot
    (state <s> ^name op_turn-on1
               ^operator.name simulate-turn-on
+              ^agent-params.simulate-perception true
               ^target-object <mic>
               ^top-state.perception-monitor.object-monitor.object-info <obj-info>
               ^world <w>)

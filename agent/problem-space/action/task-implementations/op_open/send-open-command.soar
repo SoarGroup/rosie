@@ -1,3 +1,5 @@
+### Send the low-level open command when the door is visible and reachable ###
+
 sp {op_open1*propose*send-open-command
    (state <s> ^name op_open1
               ^target-object <obj>)
@@ -9,19 +11,13 @@ sp {op_open1*propose*send-open-command
    (<s> ^operator <o> + =)
    (<o> ^name send-open-command
         ^item-type command-operator
+        ^command-name open-command
         ^object <obj>)
 }
 
-sp {op_open1*reject*send-open-command*already*sent
-   (state <s> ^name op_open1
-              ^operator <o> +
-              ^current-task-segment.open-command)
-   (<o> ^name send-open-command)
--->
-   (<s> ^operator <o> -)
-}
 
-### model send-open-command
+### model send-open-command ###
+
 sp {op_open1*internal*apply*send-open-command*change*door
    (state <s> ^name op_open1
               ^problem-space.execution-type internal
@@ -34,7 +30,9 @@ sp {op_open1*internal*apply*send-open-command*change*door
             ^door2 open2)
 }
 
-### ai2thor and internal
+
+### ai2thor and internal ###
+
 sp {op_open1*external*apply*send-open-command*ai2thor*internal
    (state <s> ^name op_open1
               ^problem-space.execution-type external
@@ -43,11 +41,33 @@ sp {op_open1*external*apply*send-open-command*ai2thor*internal
               ^io.output-link <ol>
               ^current-task-segment <seg>)
    (<o> ^name send-open-command
+        ^command-name <cmd-name>
         ^object.handle <h>)
 -->
    (<ol> ^perform-action <pa>)
    (<pa> ^item-type output-command
          ^name open
          ^object <h>)
-   (<seg> ^open-command <pa>)
+   (<seg> ^<cmd-name> <pa>)
+}
+
+
+### tabletop ###
+
+sp {op_open1*external*apply*send-open-command*tabletop
+   (state <s> ^name op_open1
+              ^problem-space.execution-type external
+              ^agent-params.domain tabletop
+              ^operator <o>
+              ^io.output-link <ol>
+              ^current-task-segment <seg>)
+   (<o> ^name send-open-command
+        ^command-name <cmd-name>
+        ^object.handle <h>)
+-->
+   (<ol> ^set-state <set>)
+   (<set> ^object-handle <h>
+          ^name door2
+          ^value open2)
+   (<seg> ^<cmd-name> <set>)
 }

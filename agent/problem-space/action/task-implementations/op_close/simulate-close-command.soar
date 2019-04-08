@@ -1,11 +1,12 @@
-sp {execute*op_close1*propose*simulate-close-command
+### For the internal environment, simulate the close command on the top-state world ###
+
+sp {op_close1*propose*simulate-close-command
    (state <s> ^name op_close1
               ^problem-space.execution-type external
               ^agent-params.domain internal
               ^current-task-segment <seg>)
    (<seg> ^close-command <cmd>)
-   (<cmd> ^name close
-         -^status complete)
+   (<cmd> -^status complete)
 -->
    (<s> ^operator <o> +)
    (<o> ^name simulate-close-command
@@ -13,7 +14,7 @@ sp {execute*op_close1*propose*simulate-close-command
         ^command <cmd>)
 }
 
-sp {execute*op_close1*apply*simulate-close-command*mark*command*complete
+sp {op_close1*apply*simulate-close-command*mark*command*complete
    (state <s> ^name op_close1
               ^operator <o>)
    (<o> ^name simulate-close-command
@@ -22,9 +23,27 @@ sp {execute*op_close1*apply*simulate-close-command*mark*command*complete
    (<cmd> ^status complete)
 }
 
-sp {execute*op_close1*apply*simulate-close-command*change*door2
+
+### simulate-perception = false, change on the object directly ###
+
+sp {op_close1*apply*simulate-close-command*change*door2
    (state <s> ^name op_close1
               ^operator.name simulate-close-command
+             -^agent-params.simulate-perception true
+              ^target-object.predicates <preds>)
+   (<preds> ^door2 open2)
+-->
+   (<preds> ^door2 open2 -
+            ^door2 closed2)
+}
+
+
+### simulate-perception = true, change on the perception-monitor ###
+
+sp {op_close1*apply*simulate-close-command*simulate-perception*change*door2
+   (state <s> ^name op_close1
+              ^operator.name simulate-close-command
+              ^agent-params.simulate-perception true
               ^target-object <obj>
               ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
    (<obj-info> ^input-link-obj.property <il-prop>
@@ -35,5 +54,4 @@ sp {execute*op_close1*apply*simulate-close-command*change*door2
    (<vals> ^open2 1.00 -
            ^closed2 1.00)
 }
-
 
