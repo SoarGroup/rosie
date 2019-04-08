@@ -1,32 +1,35 @@
-###############################################################################
-#
-# Inside the execute-follow-wall1 substate, this will put a follow-wall command on the output link
-#
-###############################################################################
+### send the low-level follow-wall command to the output-link when the until-clause is satisfied ###
 
 sp {op_follow-wall1*propose*send-follow-wall-command
    (state <s> ^name op_follow-wall1
-              ^problem-space.execution-type external
-              ^wall-side <side>
-              -^current-task-segment.follow-wall-command
-              -^current-task-segment.stop-command)
+              ^direction-id <dir>
+             -^current-task-segment.stop-command)
 -->
-   (<s> ^operator <o> +)
+   (<s> ^operator <o> + =)
    (<o> ^name send-follow-wall-command
-        ^side <side>)
+        ^item-type command-operator
+        ^command-name follow-wall-command
+        ^direction <dir>)
 }
 
-sp {op_follow-wall1*apply*send-follow-wall-command*no*until
+
+### magicbot ###
+
+sp {op_follow-wall1*external*apply*send-follow-wall-command*magicbot
    (state <s> ^name op_follow-wall1
+              ^problem-space.execution-type external
+              ^agent-params.domain magicbot
               ^operator <o>
               ^current-task-segment <seg>
               ^top-state.io.output-link <out>)
    (<o> ^name send-follow-wall-command
-        ^side <side>)
+        ^command-name <cmd-name>
+        ^direction.side <side>)
 -->
    (<out> ^do-control-law <law>)
    (<law> ^name follow-wall
           ^parameters.side <side>
           ^termination-condition.name stabilized)
-   (<seg> ^follow-wall-command <law>)
+   (<seg> ^<cmd-name> <law>)
 }
+
