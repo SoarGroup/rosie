@@ -1,19 +1,41 @@
+### Ask the person to stop following the robot ###
+
 sp {op_stop-leading1*propose*send-message
-  (state <s> ^name op_stop-leading1
-             ^problem-space.execution-type external
-             ^current-task-segment <seg>)
+   (state <s> ^name op_stop-leading1
+              ^current-task-segment <seg>
+              ^person <person>)
    (<seg> -^sent-message)
 -->
-  (<s> ^operator <o> + >)
-  (<o> ^name send-message)
+   (<s> ^operator <o> + =)
+   (<o> ^name send-message
+        ^item-type command-operator
+        ^person <person>)
 }
 
-sp {op_stop-leading1*apply*send-message
-  (state <s> ^name op_stop-leading1
-             ^operator.name send-message
-             ^person.predicates.name <name>
-             ^current-task-segment <seg>
-             ^top-state.interaction.changes <c>)
+
+### internal send-message (during planning) ###
+
+sp {op_stop-leading1*internal*apply*send-message*mark*received-yes
+   (state <s> ^name op_stop-leading1
+              ^problem-space.execution-type internal
+              ^operator.name send-message
+              ^current-task-segment <seg>)
+-->
+   (<seg> ^received-yes true
+          ^sent-message true)
+}
+
+
+### external send-message ###
+
+sp {op_stop-leading1*external*apply*send-message*add*to*interaction*stack
+   (state <s> ^name op_stop-leading1
+              ^problem-space.execution-type external
+              ^operator <o>
+              ^current-task-segment <seg>
+              ^top-state.interaction.changes <c>)
+   (<o> ^name send-message
+        ^person.predicates.name <name>)
 -->
    (<c> ^outgoing-message <msg>)
    (<msg> ^type stop-leading
