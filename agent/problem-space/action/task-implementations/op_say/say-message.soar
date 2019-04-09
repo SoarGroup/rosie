@@ -1,25 +1,83 @@
-sp {op_say*propose*say-message
+### Send the message to the interaction stack as an outgoing-message ###
+
+sp {op_say*propose*say-message*no*person
    (state <s> ^name op_say1
-              ^problem-space.execution-type external
-             -^current-task-segment.said
-              ^sentence <msg>)
+              ^sentence <msg>
+             -^person)
 -->
-   (<s> ^operator <o> + >)
+   (<s> ^operator <o> + =)
    (<o> ^name say-message
-        ^message <msg>)
+        ^item-type command-operator
+        ^command-name send-message
+        ^sentence <msg>)
 }
 
-sp {op_say*apply*say-message*send*message
+sp {op_say*propose*say-message*person
    (state <s> ^name op_say1
+              ^sentence <msg>
+              ^person <person>)
+   (<person> ^predicates.is-visible1 visible1)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name say-message
+        ^item-type command-operator
+        ^command-name send-message
+        ^sentence <msg>
+        ^person <person>)
+}
+
+### model say-message ###
+
+sp {op_say1*internal*apply*say-message*add*heard*predicate
+   (state <s> ^name op_say1
+              ^problem-space.execution-type internal
+              ^sentence-obj <msg>
+              ^operator <o>
+              ^world.predicates.predicate <heard>)
+   (<o> ^name say-message
+        ^person <person>)
+   (<heard> ^handle heard2)
+  -{(<heard> ^instance <i>)
+    (<i> ^1 <person> ^2 <msg>)}
+-->
+   (<heard> ^instance <i>)
+   (<i> ^1 <person> ^2 <msg>)
+}
+
+
+### execute say-message (all domains) ###
+
+sp {op_say*external*apply*say-message*send*message
+   (state <s> ^name op_say1
+              ^problem-space.execution-type external
               ^operator <o>
               ^top-state.interaction.changes <changes>
               ^current-task-segment <seg>)
    (<o> ^name say-message
-        ^message <msg>)
+        ^command-name <cmd-name>
+        ^sentence <msg>)
 -->
    (<changes> ^outgoing-message <send>)
    (<send> ^type say-sentence
            ^complete-message true
            ^fields.sentence <msg>)
-   (<seg> ^said true)
+   (<seg> ^<cmd-name> <send-msg>)
+   (<send-msg> ^status complete)
 }
+
+sp {op_say1*external*apply*say-message*add*heard*predicate
+   (state <s> ^name op_say1
+              ^problem-space.execution-type external
+              ^sentence-obj <msg>
+              ^operator <o>
+              ^world.predicates.predicate <heard>)
+   (<o> ^name say-message
+        ^person <person>)
+   (<heard> ^handle heard2)
+  -{(<heard> ^instance <i>)
+    (<i> ^1 <person> ^2 <msg>)}
+-->
+   (<heard> ^instance <i>)
+   (<i> ^1 <person> ^2 <msg>)
+}
+
