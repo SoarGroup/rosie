@@ -1,24 +1,31 @@
-###### SUCCESS ######
+#### GOAL SATISFACTION ####
 
-# elaborate goal (desired) at satisfied - drive command reports it was successful
-sp {op_drive1*elaborate*desired*satisfied
+# No until-clause, wait until the drive-command is successful
+sp {op_drive1*elaborate*desired*satisfied*no*until-clause
    (state <s> ^name op_drive1
               ^problem-space.execution-type external
-              ^current-task-segment.drive-command.status success)
+              ^current-task-segment.drive-command.status success
+             -^task-operator.until-clause)
 -->
    (<s> ^desired.satisfied true)
 }
 
-###### FAILURE ######
-
-# execution-failure: The drive command got a failure status
-sp {op_drive1*elaborate*failure*execution-failure
+# The until-clause is satisfied and the agent has stopped
+sp {op_drive1*elaborate*desired*satisfied*until-clause
    (state <s> ^name op_drive1
               ^problem-space.execution-type external
-              ^current-task-segment.drive-command.status { <status> << error failure interrupted >> })
+              ^current-task-segment.stop-command.status success
+              ^task-operator.until-clause.satisfied true)
 -->
-   (<s> ^failure <f>)
-   (<f> ^type execution-failure
-        ^command drive
-        ^error-status <status>)
+   (<s> ^desired.satisfied true)
+}
+
+# The until-clause is satisfied even before the agent starts driving
+sp {op_drive1*elaborate*desired*satisfied*until-clause*no*command*sent
+   (state <s> ^name op_drive1
+              ^problem-space.execution-type external
+             -^current-task-segment.drive-command
+              ^task-operator.until-clause.satisfied true)
+-->
+   (<s> ^desired.satisfied true)
 }
