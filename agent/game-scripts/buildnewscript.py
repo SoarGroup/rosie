@@ -64,7 +64,8 @@ gamelist=[
 
 ##"ubreakthrough",
 #xshuffled = ["Osuko","Jsujiko","Rsurvo","Dshuffle","8puzzle","xsudoku","Ukakuro"]
-shuffled = ["Ukakuro"]
+shuffled = ["colorken"]
+#Ukakuro"]
 #"Ubreakthrough"]
 #"Lazystackedfrogs"]
 #"8men","frog"]
