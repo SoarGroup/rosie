@@ -1,0 +1,67 @@
+# If a command comes back with status error, there was some error in the command syntax
+# or it was not a valid command
+
+sp {subproblem*execute*propose*handle-command-failure
+   (state <s> ^problem-space.subproblem execute
+              ^current-task-segment.<cmd-name> <cmd>)
+   (<cmd> ^status error)
+-->
+   (<s> ^operator <o> + = >)
+   (<o> ^name handle-command-failure
+        ^category failure-handling
+        ^command-name <cmd-name>
+        ^command <cmd>)
+}
+
+### Elaboration info on how to handle the failure
+
+# By default - terminate the task segment
+sp {subproblem*execute*elaborate*handle-command-failure*handler*default
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o> +
+             -^handle-failure-info.command-failure.<cmd-name>)
+   (<o> ^name handle-command-failure
+        ^command-name <cmd-name>)
+-->
+   (<o> ^handler.action terminate)
+}
+
+# If handler info is present on the state, use that
+sp {subproblem*execute*elaborate*handle-command-failure*handler*from*handle-failure-info
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o> +
+              ^handle-failure-info.command-failure.<cmd-name> <handler>)
+   (<o> ^name handle-command-failure
+        ^command-name <cmd-name>)
+-->
+   (<o> ^handler <handler>)
+}
+
+### Application
+
+# Print info if the print-task-failures flag is set
+sp {subproblem*execute*apply*handle-command-failure*debug*print
+   (state <s> ^problem-space.subproblem execute
+              ^agent-params.print-task-failures true
+              ^operator <o>)
+   (<o> ^name handle-command-failure
+        ^category failure-handling
+        ^command-name <cmd-name>
+        ^command <cmd>)
+-->
+   (write |The following | <cmd-name> | resulted in an error:|  (crlf))
+   (write (cmd print <cmd> -d 3)  (crlf))
+}
+
+sp {subproblem*execute*apply*handle-command-failure*terminate
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o>
+              ^current-task-segment <seg>)
+   (<o> ^name handle-command-failure
+        ^handler.action terminate
+        ^command-name <cmd-name>
+        ^command <cmd>)
+-->
+   (<seg> ^status failure)
+}
+

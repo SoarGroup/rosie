@@ -1,0 +1,104 @@
+
+#sp {topstate*elaborate*cozmo-waypoints
+#   (state <s> ^superstate nil)
+#-->
+#   (<s> ^cozmo-waypoints <wps>)
+#   (<wps> ^waypoint <wp1> <wp2> <wp3> <wp4>)
+#   (<wp1> ^x 0.0 ^y 0.0 ^current true)
+#   (<wp2> ^x 3.0 ^y 0.0)
+#   (<wp3> ^x 0.0 ^y 3.0)
+#   (<wp4> ^x 3.0 ^y 3.0)
+#}
+
+sp {print*pos
+   (state <s> ^superstate nil
+              ^io.input-link.self.pose <p>)
+   (<p> ^x <x> ^y <y> ^z <z> ^yaw <yaw>)
+-->
+   (write |POSE: | <x> |, | <y> |, | <z> |, | <yaw> (crlf))
+}
+
+sp {test-localization*prefer*approach-next-waypoint*origin
+   (state <s> ^superstate nil
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name approach-next-waypoint
+         ^waypoint <wp>)
+   (<wp> ^x 0.0 ^y 0.0)
+   (<o2> ^name approach-next-waypoint
+         ^waypoint <> <wp>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {topstate*propose*approach-next-waypoint
+   (state <s> ^superstate nil
+              ^cozmo-waypoints.waypoint <wp>)
+   (<wp> -^current true)
+-->
+   (<s> ^operator <o> + < =)
+   (<o> ^name approach-next-waypoint
+        ^waypoint <wp>)
+}
+
+sp {topstate*apply*approach-next-waypoint*mark*current
+   (state <s> ^superstate nil
+              ^operator <o>)
+   (<o> ^name approach-next-waypoint
+        ^waypoint <wp>)
+-->
+   (<wp> ^current true)
+}
+
+sp {topstate*apply*approach-next-waypoint*remove*current
+   (state <s> ^superstate nil
+              ^operator <o>
+              ^cozmo-waypoints.waypoint <old-wp>)
+   (<o> ^name approach-next-waypoint
+        ^waypoint { <wp> <> <old-wp> })
+   (<old-wp> ^current true)
+-->
+   (<old-wp> ^current true -)
+}
+
+sp {topstate*apply*approach-next-waypoint*approach
+   (state <s> ^superstate nil
+              ^operator <o>
+              ^task-stack.queued-tasks <q>)
+   (<o> ^name approach-next-waypoint
+        ^waypoint <wp>)
+   (<wp> ^x <x> ^y <y>)
+-->
+   (<q> ^task <qt>)
+   (<qt> ^order 1
+         ^task-operator <task-op>)
+   (<task-op> ^name op_approach1
+              ^item-type task-operator
+              ^task-handle approach1
+              ^arg1 <arg1>)
+   (<arg1> ^arg-type coordinate
+           ^coord <wp>)
+   (write |I'm going to position | <x> |, | <y> (crlf))
+}
+
+#
+#sp {topstate*apply*drive-next-waypoint*drive
+#   (state <s> ^superstate nil
+#              ^operator <o>
+#              ^task-stack.queued-tasks <q>)
+#   (<o> ^name drive-next-waypoint
+#        ^waypoint <wp>)
+#   (<wp> ^x <x> ^y <y>)
+#-->
+#   (<q> ^task <qt>)
+#   (<qt> ^order 1
+#         ^task-operator <task-op>)
+#   (<task-op> ^name op_go-to-xy1
+#              ^item-type task-operator
+#              ^task-handle go-to-xy1
+#              ^arg1 <arg1>)
+#   (<arg1> ^arg-type coordinate
+#           ^coord <wp>)
+#   (write |I'm driving| <x> |, | <y> (crlf))
+#}
+#
