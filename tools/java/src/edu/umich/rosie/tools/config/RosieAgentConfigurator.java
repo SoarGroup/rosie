@@ -60,6 +60,15 @@ public class RosieAgentConfigurator {
 		if (config.sentenceSource.equals("chat") && config.sentencesFile != null && config.sentencesFile.exists()){
 			agentConfigFile.write("messages-file = " + config.sentencesFile.getAbsolutePath().replaceAll("\\\\", "/") + "\n\n");
 		}
+
+		// map-info-file
+		if (config.mapInfoFile != null){
+			agentConfigFile.write("map-info-file = " + config.mapInfoFile.getAbsolutePath().replaceAll("\\\\", "/") + "\n\n");
+		}
+		// object-info-file
+		if (config.objectInfoFile != null){
+			agentConfigFile.write("object-info-file = " + config.objectInfoFile.getAbsolutePath().replaceAll("\\\\", "/") + "\n\n");
+		}
 		
 		// Other Settings
 		for(Map.Entry<String, String> e : config.otherSettings.entrySet()){

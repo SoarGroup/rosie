@@ -23,7 +23,7 @@ public class RosieConfig {
 					"parser", "parser-test", "hypothetical",
 					"simulate-perception",
 					"sentence-source", "sentences-file", "world-file", "smem-config-file", 
-					"custom-soar-file", "custom-smem-file"));
+					"custom-soar-file", "custom-smem-file", "map-info-file", "object-info-file"));
 	
 	// agent-name = <string> [OPTIONAL] - The name of the agent (used as root of file names)
 	//   DEFAULT - The name of the config file (minus extension)
@@ -93,6 +93,14 @@ public class RosieConfig {
 	// custom-smem-file = <filename> [OPTIONAL]
 	//     A file containing smem adds that will be sourced by the agent
 	public File customSmemFile;
+
+	// map-info-file = <filename> [OPTIONAL]
+	//     A file containing information about the map the agent is driving in (room regions)
+	public File mapInfoFile;
+
+	// object-info-file = <filename> [OPTIONAL]
+	//     A file containing information used to simulate or annotate object properties 
+	public File objectInfoFile;
 
 	// Any other properties in the file will be put into the created rosie.config file
 	public HashMap<String, String> otherSettings;
@@ -225,6 +233,20 @@ public class RosieConfig {
 			this.customSmemFile = null;
 		}
 		
+		// map-info-file
+		if (props.containsKey("map-info-file")){
+			this.mapInfoFile = new File(configDir + "/" + props.getProperty("map-info-file"));
+		} else {
+			this.mapInfoFile = null;
+		}
+		
+		// object-info-file
+		if (props.containsKey("object-info-file")){
+			this.objectInfoFile = new File(configDir + "/" + props.getProperty("object-info-file"));
+		} else {
+			this.objectInfoFile = null;
+		}
+		
 		// otherSettings
 		// Anything else in the config file will be 
 		this.otherSettings = new HashMap<String, String>();
@@ -293,6 +315,25 @@ public class RosieConfig {
 		} else {
 			sb.append("custom-smem-file = None\n");
 		}
+
+		if(this.mapInfoFile != null){
+			sb.append("map-info-file = " + this.mapInfoFile.getName() + "\n");
+			if(!this.mapInfoFile.exists()){
+				sb.append("  !!! File does not exist !!!\n");
+			}
+		} else {
+			sb.append("map-info-file = None\n");
+		}
+
+		if(this.objectInfoFile != null){
+			sb.append("object-info-file = " + this.objectInfoFile.getName() + "\n");
+			if(!this.objectInfoFile.exists()){
+				sb.append("  !!! File does not exist !!!\n");
+			}
+		} else {
+			sb.append("object-info-file = None\n");
+		}
+		
 		
 		for(Map.Entry<String, String> e : this.otherSettings.entrySet()){
 			sb.append(e.getKey() + " = " + e.getValue() + "\n");
