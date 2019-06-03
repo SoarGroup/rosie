@@ -127,6 +127,16 @@ public class RosieAgentConfigurator {
 		}
 
 		agentSourceFile.write("popd\n\n");
+
+		// Internal world and map files used for task learning environments
+		if(config.internalWorldFile != null){
+			agentSourceFile.write("# Sourcing the internal-world used by the agent\n");
+			agentSourceFile.write("source " + config.internalWorldFile.getAbsolutePath().replaceAll("\\\\", "/") + "\n\n");
+		}
+		if(config.waypointMapFile != null){
+			agentSourceFile.write("# Sourcing the waypoint map used for navigation\n");
+			agentSourceFile.write("source " + config.waypointMapFile.getAbsolutePath().replaceAll("\\\\", "/") + "\n\n");
+		}
 		
 		// Custom soar file
 		if (config.customSoarFile != null && config.customSoarFile.exists()){

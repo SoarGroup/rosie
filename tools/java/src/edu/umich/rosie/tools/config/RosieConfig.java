@@ -23,7 +23,8 @@ public class RosieConfig {
 					"parser", "parser-test", "hypothetical",
 					"simulate-perception",
 					"sentence-source", "sentences-file", "world-file", "smem-config-file", 
-					"custom-soar-file", "custom-smem-file", "map-info-file", "object-info-file"));
+					"custom-soar-file", "custom-smem-file", 
+					"map-info-file", "object-info-file", "internal-world-file", "waypoint-map-file"));
 	
 	// agent-name = <string> [OPTIONAL] - The name of the agent (used as root of file names)
 	//   DEFAULT - The name of the config file (minus extension)
@@ -101,6 +102,14 @@ public class RosieConfig {
 	// object-info-file = <filename> [OPTIONAL]
 	//     A file containing information used to simulate or annotate object properties 
 	public File objectInfoFile;
+
+	// internal-world-file = <filename> [OPTIONAL]
+	//     A file inside agent/manage-world-state/world/internal-worlds used to initialize the top-state world
+	public File internalWorldFile;
+
+	// waypoint-map-file = <filename> [OPTIONAL]
+	//     A file inside agent/manage-world-state/world/maps which defines a waypoint map used for navigation
+	public File waypointMapFile;
 
 	// Any other properties in the file will be put into the created rosie.config file
 	public HashMap<String, String> otherSettings;
@@ -247,6 +256,20 @@ public class RosieConfig {
 			this.objectInfoFile = null;
 		}
 		
+		// internal-world-file
+		if (props.containsKey("internal-world-file")){
+			this.internalWorldFile = new File(this.rosieHome + "/agent/manage-world-state/world/internal-worlds/" + props.getProperty("internal-world-file"));
+		} else {
+			this.internalWorldFile = null;
+		}
+		
+		// waypoint-map-file
+		if (props.containsKey("waypoint-map-file")){
+			this.waypointMapFile = new File(this.rosieHome + "/agent/manage-world-state/world/maps/" + props.getProperty("waypoint-map-file"));
+		} else {
+			this.waypointMapFile = null;
+		}
+		
 		// otherSettings
 		// Anything else in the config file will be 
 		this.otherSettings = new HashMap<String, String>();
@@ -332,6 +355,24 @@ public class RosieConfig {
 			}
 		} else {
 			sb.append("object-info-file = None\n");
+		}
+
+		if(this.internalWorldFile != null){
+			sb.append("internal-world-file = " + this.internalWorldFile.getName() + "\n");
+			if(!this.internalWorldFile.exists()){
+				sb.append("  !!! File does not exist !!!\n");
+			}
+		} else {
+			sb.append("internal-world-file = None\n");
+		}
+
+		if(this.waypointMapFile != null){
+			sb.append("waypoint-map-file = " + this.waypointMapFile.getName() + "\n");
+			if(!this.waypointMapFile.exists()){
+				sb.append("  !!! File does not exist !!!\n");
+			}
+		} else {
+			sb.append("waypoint-map-file = None\n");
 		}
 		
 		

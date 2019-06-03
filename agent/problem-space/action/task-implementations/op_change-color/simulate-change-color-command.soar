@@ -1,0 +1,59 @@
+### For the internal environment, simulate the change-color command on the top-state world ###
+
+sp {op_change-color1*propose*simulate-change-color-command
+   (state <s> ^name op_change-color1
+              ^problem-space.execution-type external
+              ^agent-params.domain internal
+              ^current-task-segment <seg>)
+   (<seg> ^change-color-command <cmd>)
+   (<cmd> -^status complete)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name simulate-change-color-command
+        ^item-type command-operator
+        ^command <cmd>)
+}
+
+sp {op_change-color1*apply*simulate-change-color-command*mark*command*complete
+   (state <s> ^name op_change-color1
+              ^operator <o>)
+   (<o> ^name simulate-change-color-command
+        ^command <cmd>)
+-->
+   (<cmd> ^status complete)
+}
+
+
+### simulate-perception = false, change on the object directly ###
+
+sp {op_change-color1*apply*simulate-change-color-command*change*color1
+   (state <s> ^name op_change-color1
+              ^operator.name simulate-change-color-command
+             -^agent-params.simulate-perception true
+              ^target-object.predicates <preds>
+              ^desired-color <new-color>)
+   (<preds> ^color <old-color>)
+-->
+   (<preds> ^color <old-color> -
+            ^color <new-color>)
+}
+
+### simulate-perception = true, change on the perception-monitor ###
+
+sp {op_change-color1*apply*simulate-change-color-command*simulate-perception*change*color
+   (state <s> ^name op_change-color1
+              ^operator.name simulate-change-color-command
+              ^agent-params.simulate-perception true
+              ^target-object <obj>
+              ^desired-color <new-color>
+              ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
+   (<obj-info> ^input-link-obj.property <il-prop>
+               ^wm-obj <obj>)
+   (<il-prop> ^property-handle color
+              ^values <vals>)
+   (<vals> ^<old-color> 1.00)
+-->
+   (<vals> ^<old-color> 1.00 -
+           ^<new-color> 1.00)
+}
+

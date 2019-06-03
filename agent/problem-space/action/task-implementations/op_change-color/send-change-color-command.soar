@@ -1,0 +1,55 @@
+### Send the low-level change-color command when the target is visible and reachable ###
+
+sp {op_change-color1*propose*send-change-color-command
+   (state <s> ^name op_change-color1
+              ^target-object <obj>
+              ^desired-color <color>)
+   (<obj> ^predicates <preds>)
+   (<preds> ^is-visible1 visible1
+            ^color <> <color>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name send-change-color-command
+        ^item-type command-operator
+        ^command-name change-color-command
+        ^object <obj>
+        ^color <color>)
+}
+
+
+### model send-change-color-command (during planning) ###
+
+sp {op_change-color1*internal*apply*send-change-color-command*change*color
+   (state <s> ^name op_change-color1
+              ^problem-space.execution-type internal
+              ^operator <o>)
+   (<o> ^name send-change-color-command
+        ^object.predicates <preds>
+        ^color <new-color>)
+   (<preds> ^color <old-color>)
+-->
+   (<preds> ^color <old-color> -
+            ^color <new-color>)
+}
+
+### cozmo/internal
+
+sp {op_change-color1*external*apply*send-change-color-command*cozmo
+   (state <s> ^name op_change-color1
+              ^problem-space.execution-type external
+              ^operator <o>
+              ^agent-params.domain << internal cozmo >>
+              ^current-task-segment <seg>
+              ^top-state.io.output-link <out>)
+   (<o> ^name send-change-color-command
+        ^command-name <cmd-name>
+        ^object.handle <objh>
+        ^color <color>)
+-->
+   (<out> ^change-block-color <cc>)
+   (<cc> ^item-type output-command
+         ^object-id <objh>
+         ^color <color>)
+   (<seg> ^<cmd-name> <rc>)
+}
+
