@@ -1,0 +1,134 @@
+# Propose match-smem-object using object handle
+sp {add-object-to-world*propose*match-smem-object*using*handle
+   (state <s> ^name add-object-to-world
+              ^source-type <> perception-obj <> smem-obj
+              ^source-obj.handle <obj-handle>
+             -^matches-smem-object)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name match-smem-object
+        ^type handle
+        ^cue <cue>)
+   (<cue> ^object-instance true
+          ^handle <obj-handle>)
+}
+
+sp {add-object-to-world*propose*match-smem-object*using*imagined*properties
+   (state <s> ^name add-object-to-world
+              ^source-type imagined-obj
+              ^source-obj.predicates <preds>
+              ^matches-smem-object none
+             -^matched-smem-predicates)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name match-smem-object
+        ^type predicate
+        ^cue <cue>)
+   (<cue> ^object-instance true)
+}
+
+sp {add-object-to-world*elaborate*match-smem-object*cue*using*imagined*properties
+   (state <s> ^name add-object-to-world
+              ^operator <o> +
+              ^source-type imagined-obj
+              ^source-obj.predicates.<prop-name> <pred-name>)
+   (<o> ^name match-smem-object
+        ^type predicate
+        ^cue <cue>)
+-->
+   (<cue> ^<prop-name> <pred-name>)
+}
+
+sp {add-object-to-world*apply*match-smem-object*predicate*result*mark*matched-smem-predicates
+   (state <s> ^name add-object-to-world
+              ^operator <o>
+              ^smem.result <res>
+              ^smem.command <cmd>)
+   (<o> ^name match-smem-object
+        ^type predicate
+        ^cue <cue>)
+   (<res> ^{ << success failure >> } <cue>)
+-->
+   (<s> ^matched-smem-predicates true)
+}
+
+## For a perception object, if a handle match isn't found
+##    then try to match just based on predicates
+#
+## Propose match-smem-object using perception-obj predicates
+#sp {add-object-to-world*propose*match-smem-object*from*perception
+#   (state <s> ^name add-object-to-world
+#              ^source-type perception-obj
+#              -^matches-smem-object)
+#-->
+#   (<s> ^operator <o> +)
+#   (<o> ^name match-smem-object
+#        ^cue <cue>)
+#   (<cue> ^object-instance true
+#          ^item-type object)
+#}
+#
+#sp {add-object-to-world*reject*match-smem-object*no*perceptual*properties
+#   (state <s> ^name add-object-to-world
+#              ^operator <o> +
+#              ^source-obj.property <s
+#              ^
+#              ^perception-object-info <obj-info>)
+#   (<o> ^name match-smem-object)
+#   (<obj-info> -^properties.property-info.predicate-handle)
+#-->
+#   (<s> ^operator <o> -)
+#}
+#
+#sp {add-object-to-world*elaborate*match-smem-object*cue*from*perception
+#   (state <s> ^name add-object-to-world
+#              ^source-type perception-obj
+#              ^perception-object-info <obj-info>
+#              ^operator <o> +)
+#   (<o> ^name match-smem-object
+#        ^cue <cue>)
+#   (<obj-info> ^properties.property-info <prop-info>)
+#   (<prop-info> ^property-handle <prop>
+#                ^predicate-handle <pred>)
+#-->
+#   (<cue> ^<prop> <pred>)
+#}
+
+# Create the query             
+sp {add-object-to-world*apply*match-smem-object*create*query
+   (state <s> ^name add-object-to-world
+              ^operator <o>
+              ^smem.command <cmd>)
+   (<o> ^name match-smem-object
+        ^cue <cue>)
+-->
+   (<cmd> ^query <cue>)
+}
+
+# Success: Copy the object as matches-smem-object
+sp {add-object-to-world*apply*match-smem-object*success*copy*object
+   (state <s> ^name add-object-to-world
+              ^operator <o>
+              ^smem.result <res>
+              ^smem.command <cmd>)
+   (<o> ^name match-smem-object
+        ^cue <cue>)
+   (<res> ^success <cue>
+          ^retrieved <obj-lti>)
+-->
+   (<s> ^matches-smem-object <obj-lti>)
+   (<cmd> ^query <cue> -)
+}
+        
+# Failure: Create ^matches-smem-object none
+sp {add-object-to-world*apply*match-smem-object*failure*mark*matches*none
+   (state <s> ^name add-object-to-world
+              ^operator <o>
+              ^smem.result.failure <cue>
+              ^smem.command <cmd>)
+   (<o> ^name match-smem-object
+        ^cue <cue>)
+-->
+   (<s> ^matches-smem-object none)
+   (<cmd> ^query <cue> -)
+}

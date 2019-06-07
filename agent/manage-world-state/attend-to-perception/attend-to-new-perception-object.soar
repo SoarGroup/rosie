@@ -1,12 +1,28 @@
+# Discrepancy - new-perception-object
+
+### For noisy external environments, the agent will make sure the object is real and stable
+#       before adding it to the world by waiting and monitoring its position/volume
+
+sp {anystate*elaborate*attend-to-perception*new-perception-object*object-info
+   (state <s> ^operator <o> +)
+   (<o> ^name attend-to-perception
+        ^discrepancy.type new-perception-object)
+-->
+   (<o> ^object-info <obj-info>)
+}
+
 # Add a confirmed false flag, and sets a time to check if the object is still stable
 sp {anystate*apply*attend-to-perception*new-perception-object*add*status
    (state <s> ^operator <o>
+              ^agent-params.domain << tabletop magicbot cozmo >>
               ^io.input-link.time.seconds <t>
               ^agent-params.stability-check-duration <dur>
               ^top-state.perception-monitor.object-monitor.new-objects <new-objs>)
    (<o> ^name attend-to-perception
-        ^type new-perception-object
-        ^perception-obj <perc-obj>)
+        ^discrepancy <disc>
+        ^object-info <obj-info>)
+   (<disc> ^type new-perception-object
+           ^perception-obj <perc-obj>)
 -->
    (<new-objs> ^object-info <obj-info>)
    (<obj-info> ^perception-obj <perc-obj>
@@ -17,24 +33,42 @@ sp {anystate*apply*attend-to-perception*new-perception-object*add*status
 # Creates filters to monitor if the object changes position/size
 sp {anystate*apply*attend-to-perception*new-perception-object*create*filters
    (state <s> ^operator <o>
+              ^agent-params.domain << tabletop magicbot cozmo >>
               ^top-state.svs.command <cmd>)
    (<o> ^name attend-to-perception
-        ^change <change>)
-   (<change> ^type new-perception-object
-             ^object-info <obj-info>)
-   (<obj-info> ^perception-obj.id <id>)
+        ^discrepancy <disc>
+        ^object-info <obj-info>)
+   (<disc> ^type new-perception-object
+           ^perception-obj.object-handle <objh>)
 -->
    (<cmd> ^extract <pos>)
    (<pos> ^type monitor_position
           ^a <pa>)
    (<pa> ^type node
-         ^id <id>)
+         ^id <objh>)
    (<obj-info> ^position-monitor <pos>)
    
    (<cmd> ^extract <vol>)
    (<vol> ^type monitor_volume
           ^a <va>)
    (<va> ^type node
-         ^id <id>)
+         ^id <objh>)
    (<obj-info> ^volume-monitor <vol>)
+}
+
+
+### For stable environments, just add the object to the world
+
+sp {anystate*apply*attend-to-perception*new-perception-object*internal*add*object
+   (state <s> ^operator <o>
+              ^agent-params.domain << internal ai2thor >>
+              ^top-state.perception-monitor.world-changes <changes>)
+   (<o> ^name attend-to-perception
+        ^discrepancy <disc>)
+   (<disc> ^type new-perception-object
+           ^perception-obj <perc-obj>)
+-->
+   (<changes> ^add-object-to-world <ao2w>)
+   (<ao2w> ^source-obj <perc-obj> 
+           ^source-type perception-obj)
 }

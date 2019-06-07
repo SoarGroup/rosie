@@ -258,7 +258,7 @@ public class RosieConfig {
 		
 		// internal-world-file
 		if (props.containsKey("internal-world-file")){
-			this.internalWorldFile = new File(this.rosieHome + "/agent/manage-world-state/world/internal-worlds/" + props.getProperty("internal-world-file"));
+			this.internalWorldFile = new File(this.rosieHome + "/agent/manage-world-state/simulate-perception/internal-worlds/" + props.getProperty("internal-world-file"));
 		} else {
 			this.internalWorldFile = null;
 		}
