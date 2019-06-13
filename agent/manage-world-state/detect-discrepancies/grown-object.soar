@@ -1,0 +1,41 @@
+
+###################################################
+#
+# Discrepancy: grown-object
+#   The volume of the perception object is significantly larger than the belief object
+# Handling: attend-to-perception/grown-object
+#
+# object-info.differences
+#   belief-vol <vol> - filter to extract belief-obj volume
+#   perception-vol <vol> - filter to extract perception-obj volume
+#   vol-diff <diff> - perception-vol/belief-vol
+#   has-grown true - true if vol-diff > vol-high-diff-threshold
+#   growth-wait true - true if not yet time recheck-growth-at <t> 
+#
+###################################################
+
+### NOTE: vol-diff elaboration is in shrunken-object.soar
+
+sp {detect-discrepancies*grown-object*elaborate*object-info*has-grown
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info.differences <diffs>
+              ^agent-params.vol-high-diff-threshold <high>)
+   (<diffs> ^vol-diff > <high>)
+-->
+   (<diffs> ^has-grown true)
+}
+
+sp {detect-discrepancies*grown-object*elaborate*perception-monitor*discrepancies*grown-object
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>
+              ^world.robot.arm.moving-status stopped)
+   (<perc-mon> ^discrepancies <dics>
+               ^object-monitor.object-info <obj-info>)
+   (<obj-info> ^differences <diffs>)
+   (<diffs> ^has-grown true
+           -^growth-wait true)
+-->
+   (<discs> ^grown-object <disc>)
+   (<disc> ^object-info <obj-info>)
+}
+

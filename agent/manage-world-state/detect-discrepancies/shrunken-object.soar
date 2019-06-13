@@ -1,0 +1,69 @@
+###################################################
+#
+# Discrepancy: shrunken-object
+#   The volume of the perception object is significantly smaller than the belief object
+# Handling: attend-to-perception/shrunken-object
+#
+# object-info.differences
+#   belief-vol <vol> - filter to extract belief-obj volume
+#   perception-vol <vol> - filter to extract perception-obj volume
+#   vol-diff <diff> - perception-vol/belief-vol
+#   has-shrunk true - true if vol-diff < vol-low-diff-threshold
+#
+###################################################
+
+sp {detect-discrepancies*shrunken-object*elaborate*object-info*compare-volume*svs-command
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info <obj-info>
+              ^svs.command <cmd>)
+   (<obj-info> ^perception-obj.id <perc-id>
+               ^belief-obj.id <bel-id>
+               ^differences <diffs>)
+-->
+   (<cmd> ^extract <perc-vol> <bel-vol>)
+   (<perc-vol> ^type volume
+               ^a <pa>
+               ^volume_type scale)
+   (<pa> ^type node
+         ^id <perc-id>)
+   (<bel-vol> ^type volume
+              ^a <ba>
+              ^volume_type scale)
+   (<ba> ^type node
+         ^id <bel-id>)
+   (<diffs> ^belief-vol <bel-vol>
+            ^perception-vol <perc-vol>)
+}
+
+sp {detect-discrepancies*shrunken-object*elaborate*object-info*vol-diff
+   (state <s> ^superstate nil 
+              ^perception-monitor.object-monitor.object-info.differences <diffs>)
+   (<diffs> ^belief-vol.result.record.value <bel-vol>
+            ^perception-vol.result.record.value <perc-vol>)
+-->
+   # Add a cubic mm to each to avoid divide by 0
+   (<diffs> ^vol-diff (/ (+ <perc-vol> 0.000000001) (+ <bel-vol> 0.000000001)))
+}
+
+sp {detect-discrepancies*shrunken-object*elaborate*object-info*has-shrunk
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info.differences <diffs>
+              ^agent-params.vol-low-diff-threshold <low>)
+   (<diffs> ^vol-diff < <low>)
+-->
+   (<diffs> ^has-shrunk true)
+}
+
+sp {detect-discrepancies*shrunken-object*elaborate*perception-monitor*discrepancies*shrunken-object
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^discrepancies <dics>
+               ^object-monitor.object-info <obj-info>)
+   (<obj-info> ^differences.has-shrunk true
+               ^status.is-occluded false)
+-->
+   (<discs> ^shrunken-object <disc>)
+   (<disc> ^object-info <obj-info>)
+}
+
+

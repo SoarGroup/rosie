@@ -1,0 +1,85 @@
+###################################################
+#
+# Discrepancy: moved-object
+#   The positions of the belief and perception objs are significantly different
+# Handling: attend-to-perception/moved-object
+#
+# object-info.differences
+#   compare-position <compare> - svs filter
+#   pos-diff <diff> - svs filter result 
+#
+###################################################
+
+sp {detect-discrepancies*shrunken-object*elaborate*object-info*compare-position*svs-filter
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info <obj-info>
+              ^svs.command <cmd>)
+   (<obj-info> ^perception-obj.id <perc-id>
+               ^belief-obj.id <bel-id>
+               ^differences <diffs>)
+-->
+   (<cmd> ^extract <compare>)
+   (<compare> ^type distance 
+              ^a <a>
+              ^b <b>
+              ^distance_type centroid)
+   (<a> ^type node
+        ^id <perc-id>)
+   (<b> ^type node
+        ^id <bel-id>)
+   (<diffs> ^compare-position <compare>)
+}
+
+# Note: with magicbot, we compare the object's position to the robot (we don't perceive it when holding it)
+sp {detect-discrepancies*shrunken-object*elaborate*object-info*compare-position*svs-filter*held*object
+   (state <s> ^superstate nil
+              ^agent-params.domain << cozmo magicbot >>
+              ^perception-monitor.object-monitor.object-info <obj-info>
+              ^svs.command <cmd>)
+   (<obj-info> -^perception-obj
+               ^belief-obj.id <bel-id>
+               ^wm-obj.predicates.arm-status grabbed
+               ^differences <diffs>)
+-->
+   (<cmd> ^extract <compare>)
+   (<compare> ^type distance 
+              ^a <a>
+              ^b <b>
+              ^distance_type centroid)
+   (<a> ^type node
+        ^id robot)
+   (<b> ^type node
+        ^id <bel-id>)
+   (<diffs> ^compare-position <compare>)
+}
+
+sp {detect-discrepancies*shrunken-object*elaborate*object-info*pos-diff
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info.differences <diffs>)
+   (<diffs> ^compare-position.result.record.value <val>)
+-->
+   (<diffs> ^pos-diff <val>)
+}
+
+sp {detect-discrepancies*shrunken-object*elaborate*object-info*has-moved
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info.differences <diffs>
+              ^agent-params.pos-diff-threshold <thresh>)
+   (<diffs> ^pos-diff > <thresh>)
+-->
+   (<diffs> ^has-moved true)
+}
+
+sp {detect-discrepancies*moved-object*elaborate*perception-monitor*discrepancies*moved-object
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^discrepancies <dics>
+               ^object-monitor.object-info <obj-info>)
+   (<obj-info> ^differences.has-moved true
+               ^status.is-occluded false)
+-->
+   (<discs> ^moved-object <disc>)
+   (<disc> ^object-info <obj-info>)
+}
+
+
