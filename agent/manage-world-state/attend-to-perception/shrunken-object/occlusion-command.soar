@@ -1,0 +1,52 @@
+# If we did not find any contained fragments, check to see if it is occluded
+
+# occlusion-command: see agent/svs-command-operators
+sp {attend-to-perception*shrunken-object*propose*occlusion-command
+   (state <s> ^name attend-to-perception
+              ^discrepancy-type shrunken-object
+              ^object-info <obj-info>
+             -^found-contained-fragment true
+             -^object-occluded false)
+   (<obj-info> ^belief-id <bel-id>
+               ^perception-obj.id <perc-id>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name occlusion-command
+        ^object-id <bel-id>
+        ^remove-id <perc-id>
+        ^object-source perception)
+}
+
+# If occluded, add to the status, removing the shrunken discrepancy for some time
+sp {attend-to-perception*shrunken-object*apply*occlusion-command*is-occluded*mark*occlusion-timeout
+   (state <s> ^name attend-to-perception
+              ^discrepancy-type shrunken-object
+              ^operator.name occlusion-command
+              ^object-info <obj-info>
+              ^object-occluded true
+              ^io.input-link.time.seconds <secs>
+              ^agent-params.occlusion-check-period <t>)
+-->
+   (<obj-info> ^occlusion-timeout (+ <secs> <t>))
+}
+
+
+# In rare cases this command will fail, so we redo it
+sp {attend-to-perception*shrunken-object*propose*redo-occlusion-command
+   (state <s> ^name attend-to-perception
+              ^discrepancy-type shrunken-object
+              ^occlusion-command-result failure)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name redo-occlusion-command)
+}
+
+sp {attend-to-perception*shrunken-object*apply*redo-occlusion-command
+   (state <s> ^name attend-to-perception
+              ^discrepancy-type shrunken-object
+              ^operator.name redo-occlusion-command
+              ^occlusion-command-result failure)
+-->
+   (<s> ^occlusion-command-result failure -)
+}
+

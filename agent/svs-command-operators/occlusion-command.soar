@@ -4,116 +4,175 @@
 # (<s> ^operator <o>)
 # (<o> ^name occlusion-command
 #      ^object-id <id>
-#      ^candidate-set <cand>   # Optional: the set of objects to check for occlusion (svs filter)
-#      ^eye <eye>			   # Optional: The point at which the occlusion should be checked (Defaults to ^id eye))
+#      ^object-source << belief perception >> # Optional: If given, use a tag_select for object-source + arm
+#      ^remove-id <id> # Optional: Don't include the given object in the occlusion command
+#      ^eye-id <eye>	  # Optional: The point at which the occlusion should be checked (Defaults to ^id eye))
 #
-# Returns either ^occlusion-command.result # or ^occlusion-command.result none
-# (none should only be returned in rare error cases)
-# The returned number represents an estimation of how occluded the given object is
+# Returns occlusion-command-result.occlusion-value <num> (number between 0 and 1)
+# Returns occlusion-command-result failure if this failed (rare error case)
 ###############################################################################
 
-sp {anystate*occlusion-command*elaborate*used-candidate-set*default
+# object-source: indicates whether to use all nodes or just the ones with the given source type (belief/perception)
+sp {anystate*elaborate*occlusion-command*node-set*no*object-source
    (state <s> ^operator <o> +)
    (<o> ^name occlusion-command
-       -^candidate-set)
+       -^object-source)
 -->
-   (<o> ^used-candidate-set.type all_nodes)
+   (<o> ^node-set <set>)
+   (<set> ^type all_nodes)
 }
 
-sp {anystate*occlusion-command*elaborate*used-candidate-set*copy
+sp {anystate*elaborate*occlusion-command*node-set*tag_select*object-source
    (state <s> ^operator <o> +)
    (<o> ^name occlusion-command
-        ^candidate-set <cand>)
+        ^object-source <src>)
 -->
-   (<o> ^used-candidate-set <cand>)
+   (<o> ^node-set <set>)
+   (<set> ^type combine_nodes
+          ^a <arm>
+          ^a <nodes>)
+   (<arm> ^type node
+          ^id arm)
+   (<nodes> ^type tag_select
+		      ^a.type all_nodes
+		      ^tag_name object-source 
+            ^tag_value <src>)
 }
 
-sp {anystate*occlusion-command*elaborate*used-eye*default
+# remove-id: remove the given id from the node-set if it exists
+sp {anystate*elaborate*occlusion-command*filtered-node-set*no*remove-id
    (state <s> ^operator <o> +)
    (<o> ^name occlusion-command
-       -^eye)
+        ^node-set <set>
+       -^remove-id)
 -->
-   (<o> ^used-eye <eye>)
+   (<o> ^filtered-node-set <set>)
+}
+
+sp {anystate*elaborate*occlusion-command*filtered-node-set*remove-id
+   (state <s> ^operator <o> +)
+   (<o> ^name occlusion-command
+        ^node-set <nodes>
+        ^remove-id <id>)
+-->
+   (<o> ^filtered-node-set <filt-set>)
+   (<filt-set> ^type remove_node
+               ^id <id>
+               ^a <nodes>)
+}
+
+# eye: The object to use as the eye when checking occlusion
+sp {anystate*elaborate*occlusion-command*eye-node*default
+   (state <s> ^operator <o> +)
+   (<o> ^name occlusion-command
+       -^eye-id)
+-->
+   (<o> ^eye-node <eye>)
    (<eye> ^type node
           ^id eye)
 }
 
-sp {anystate*occlusion-command*elaborate*used-eye*copy
+sp {anystate*elaborate*occlusion-command*eye-node*from*eye-id
    (state <s> ^operator <o> +)
    (<o> ^name occlusion-command
-        ^eye <eye>)
+        ^eye-id <eye-id>)
 -->
-   (<o> ^used-eye <eye>)
+   (<o> ^eye-node <eye>)
+   (<eye> ^type node
+          ^id <eye-id>)
 }
 
-# Create the extract command
-sp {anystate*occlusion-command*apply*create-occlusion-filter
+# full occlusion filter
+sp {anystate*elaborate*occlusion-command*occlusion-filter
+   (state <s> ^operator <o> +)
+   (<o> ^name occlusion-command
+        ^object-id <id>
+        ^filtered-node-set <nodes>
+        ^eye-node <eye>)
+-->
+   (<o> ^occlusion-filter <filter>)
+   (<filter> ^type occlusion
+             ^a <node>
+             ^b <nodes>
+             ^eye <eye>)
+   (<node> ^type node
+           ^id <id>)
+}
+
+# Add command to svs command
+sp {anystate*apply*occlusion-command*add*to*svs*command
    (state <s> ^operator <o>
               ^top-state.svs.command <cmd>)
    (<o> ^name occlusion-command
-        ^object-id <id>
-        ^used-candidate-set <candidates>
-        ^used-eye <eye>)
+        ^occlusion-filter <filter>)
 -->
-   (<cmd> ^extract_once <occlusion>)
-   (<occlusion> ^type occlusion
-                ^a <node>
-                ^b <candidates>
-                ^eye <eye>)
-   (<node> ^type node
-           ^id <id>)
-   (<s> ^occlusion-filter <occlusion>)
+   (<cmd> ^extract_once <filter>)
 }
 
 # Remove the command from the svs.command link
 sp {anystate*occlusion-command*apply*cleanup
-   (state <s> ^operator.name occlusion-command
-              ^occlusion-filter <occlusion>
+   (state <s> ^operator <o>
               ^top-state.svs.command <cmd>)
-   (<cmd> ^extract_once <occlusion>)
-   (<occlusion> ^result <res>)
+   (<o> ^name occlusion-command
+        ^occlusion-filter <filter>)
+   (<cmd> ^extract_once <filter>)
+   (<filter> ^result <res>)
 -->
-   (<cmd> ^extract_once <occlusion> -)
+   (<cmd> ^extract_once <filter> -)
 }
 
 # Copy result of the successful command to the superstate
-sp {anystate*occlusion-command*apply*create-result*success
-   (state <s> ^operator.name occlusion-command
-              ^occlusion-filter.result.record.value <val>)
+sp {anystate*occlusion-command*elaborate*occlusion-value*from*record
+   (state <s> ^operator <o> +)
+   (<o> ^name occlusion-command
+        ^occlusion-filter.result.record.value <val>)
 -->
-   (<s> ^occlusion-command.result <val>)
+   (<o> ^occlusion-value <val>)
 }
 
 # There was no valid result given, return none
-sp {anystate*occlusion-command*apply*create-result*failure
-   (state <s> ^operator.name occlusion-command
-              ^occlusion-filter.result <res>)
+sp {anystate*occlusion-command*elaborate*occlusion-value*default
+   (state <s> ^operator <o> +)
+   (<o> ^name occlusion-command
+        ^occlusion-filter.result <res>)
    (<res> -^record.value <val>)
 -->
-   (<s> ^occlusion-command.result 0)
+   (<o> ^occlusion-value 0.0)
 }
 
-sp {anystate*occlusion-command*apply*create-result*success*no-result
-   (state <s> ^operator.name occlusion-command
-              ^occlusion-filter <filter>)
+sp {anystate*occlusion-command*elaborate*occlusion-value*no*result
+   (state <s> ^operator <o> +)
+   (<o> ^name occlusion-command
+        ^occlusion-filter <filter>)
    (<filter> ^status success
             -^result)
 -->
-   (<s> ^occlusion-command.result 0)
+   (<o> ^occlusion-value 0.0)
 }
 
-sp {occlusion-command*state-no-change*redo*occlusion*operator
+sp {anystate*apply*occlusion-command*create*occlusion-command-result*success
+   (state <s> ^operator <o>
+              ^agent-params.print-perception <flag>)
+   (<o> ^name occlusion-command
+        ^occlusion-value <val>)
+-->
+   (<s> ^occlusion-command-result <val>)
+   (write (ifeq <flag> true (concat |occlusion-command for object | <id> | returned | <val> (crlf)) ||))
+}
+
+sp {occlusion-command*state-no-change*report*occlusion-command-result*failure
    (state <s> ^superstate.name occlusion-command
               ^attribute state 
               ^impasse no-change 
-              ^superstate <ss>
+              ^superstate.superstate <sss>
               ^agent-params.print-perception <flag>)
-   (<ss> ^superstate <sss>
-        -^occlusion-command.result)
    (<sss> ^operator <o>)
-   (<o> ^name occlusion-command)
+   (<o> ^name occlusion-command
+        ^object-id <id>
+        ^occlusion-filter <filter>)
+   (<filter> -^result)
 -->
-   (<sss> ^redo-command true)
-   (write (ifeq <flag> true (concat |Have to redo occlusion check| (crlf)) ||))
+   (<sss> ^occlusion-command-result failure)
+   (write (ifeq <flag> true (concat |occlusion-command for object | <id> | failed| (crlf)) ||))
 }
        

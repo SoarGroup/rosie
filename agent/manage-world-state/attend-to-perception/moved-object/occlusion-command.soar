@@ -1,0 +1,61 @@
+### occlusion-command
+# If the object was moved, we need to see if we can trust the new position
+#   by checking to see whether it is occluded
+
+# For some domains, occlusion doesn't affect positions
+sp {attend-to-perception*moved-object*elaborate*object-occluded*false*simulated*domains
+   (state <s> ^name attend-to-perception
+              ^discrepancy-type moved-object
+              ^agent-params.domain << magicbot cozmo >>)
+-->
+   (<s> ^object-occluded false)
+}
+
+# occlusion-command: see agent/svs-command-operators
+sp {attend-to-perception*moved-object*propose*occlusion-command
+   (state <s> ^name attend-to-perception
+              ^discrepancy-type moved-object
+              ^object-info <obj-info>
+             -^object-occluded false)
+   (<obj-info> ^belief-id <bel-id>
+               ^perception-obj.id <perc-id>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name occlusion-command
+        ^object-id <bel-id>
+        ^remove-id <perc-id>
+        ^object-source perception)
+}
+
+# If occluded, add to the status, removing the moved discrepancy for some time
+sp {attend-to-perception*moved-object*apply*occlusion-command*is-occluded*mark*occlusion-timeout
+   (state <s> ^name attend-to-perception
+              ^discrepancy-type moved-object
+              ^operator.name occlusion-command
+              ^object-info <obj-info>
+              ^object-occluded true
+              ^io.input-link.time.seconds <secs>
+              ^agent-params.occlusion-check-period <t>)
+-->
+   (<obj-info> ^occlusion-timeout (+ <secs> <t>))
+}
+
+# In rare cases this command will fail, so we redo it
+sp {attend-to-perception*moved-object*propose*redo-occlusion-command
+   (state <s> ^name attend-to-perception
+              ^discrepancy-type moved-object
+              ^occlusion-command-result failure)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name redo-occlusion-command)
+}
+
+sp {attend-to-perception*moved-object*apply*redo-occlusion-command
+   (state <s> ^name attend-to-perception
+              ^discrepancy-type moved-object
+              ^operator.name redo-occlusion-command
+              ^occlusion-command-result failure)
+-->
+   (<s> ^occlusion-command-result failure -)
+}
+
