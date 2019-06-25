@@ -1,6 +1,109 @@
+source apply-attend-to-perception.soar
+
 source elaborations.soar
+source preferences.soar
+
+### Discrepancies
+
+### new-perception-object
+# discrepancy-info.perception-obj <obj>
+#   <obj> is from the input-link.objects.object <obj>
+# There is a new object on the input-link
+# Will incorporate the object into the world, 
+#   either adding it or merging it with an existing object
 
 pushd new-perception-object
 source new-perception-object_source.soar
 popd
 
+
+### different-robot-status
+# discrepancy-info.robot-status <status>
+#  OR
+# discrepancy-info.arm-status <status>
+# There is a change to the status of the robot/arm
+# Will update the moving-status on the robot or arm in the world
+
+source different-robot-status.soar
+
+
+### different-waypoint
+# discrepancy-info.waypoint-handle <wp-handle>
+# There is a different current-waypoint on the input-link
+# Will update the current-waypoint and current-location information
+#   and possibly do a context change of removing old objects 
+#   and loading new expected ones from epmem
+
+pushd different-waypoint
+source different-waypoint_source.soar
+popd
+
+
+### moved-object
+# discrepancy-info.object-info <obj-info>
+# The positions of the perception-obj and belief-obj significantly differ
+# Will either update the belief object pose, or if occluded, ignore the move
+
+pushd moved-object
+source moved-object_source.soar
+popd
+
+### different-arm-status
+# discrepancy-info.object-info <obj-info>
+#                 .arm-status << grabbed not-grabbed >>
+# The arm-status of an object has changed (is now grabbed/not-grabbed)
+# Will update the arm-status predicate on the object
+
+source different-arm-status.soar
+
+
+### different-visibility
+# discrepancy-info.object-info <obj-info>
+#                 .is-visible1 << visible1 not-visible1 >>
+# The visibility of an object has changed (is now visible/not-visible)
+# Will update the is-visible1 predicate on the object
+
+source different-visibility.soar
+
+
+### new-object-predicate
+# discrepancy-info.object-info <obj-info>
+#                 .property-handle <prop>
+#                 .predicate-handle <pred>
+# An object predicate has changed (e.g. door=closed)
+# Will update the given predicate on the object 
+
+source new-object-predicate.soar
+
+
+### missing-object
+# discrepancy-info.object-info <obj-info>
+# A belief object should be visible, but there is no perception object
+# Will either fix a tracking error by changing the perception ids, 
+#   ignore it because of occlusion, or delete the object from WM
+
+pushd missing-object
+source missing-object_source.soar
+popd
+
+
+### shrunken-object
+# discrepancy-info.object-info <obj-info>
+# A belief object is much larger than the perception object
+# Will either merge with another perception-id, 
+#   ignore it because of occlusion, or update the pose
+
+pushd shrunken-object
+source shrunken-object_source.soar
+popd
+
+
+### grown-object
+# discrepancy-info.object-info <obj-info>
+# A belief object is much smaller than the perception object
+# Will either merge with another missing object
+#   or update the pose
+
+pushd grown-object
+source grown-object_source.soar
+popd

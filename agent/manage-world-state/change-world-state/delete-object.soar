@@ -1,0 +1,61 @@
+##### delete-object
+# Delete the object from the world
+
+# Delete object-info from object-monitor (not for task objects)
+sp {anystate*apply*change-world-state*delete-object*remove*object-info
+   (state <s> ^operator <o>
+              ^top-state.svs.command <cmd>
+              ^top-state.perception-monitor.object-monitor <obj-mon>)
+   (<o> ^name change-world-state
+        ^delete-object <obj-info>)
+   (<obj-mon> ^object-info <obj-info>)
+   (<obj-info> -^wm-obj.task-object true)
+-->
+   (<obj-mon> ^object-info <obj-info> -)
+}
+
+# Delete object from the world
+sp {anystate*apply*change-world-state*delete-object*remove*object-info
+   (state <s> ^operator <o>
+              ^top-state.world.objects <objs>)
+   (<o> ^name change-world-state
+        ^delete-object.wm-obj <obj>)
+   (<objs> -^task-object true
+            ^object <obj>)
+-->
+   (<objs> ^object <obj> -)
+}
+
+# Removes the belief-obj from svs
+sp {anystate*apply*change-world-state*delete-object*remove*belief-obj*from*svs
+   (state <s> ^operator <o>
+              ^top-state.svs.command <cmd>)
+   (<o> ^name change-world-state
+        ^delete-object.belief-id <id>)
+-->
+   (<cmd> ^delete_node.id <id>)
+}
+
+# Removes any predicate instances involving the object
+sp {anystate*apply*change-world-state*delete-object*remove*belief-obj*from*svs
+   (state <s> ^operator <o>
+              ^top-state.world.predicates.predicate <pred>)
+   (<o> ^name change-world-state
+        ^delete-object.wm-obj <obj>)
+   (<pred> ^instance <i>)
+   (<i> ^<num> <obj>)
+   (<obj> -^task-object true)
+-->
+   (<pred> ^instance <i> -)
+}
+
+# If print-perception is on, print a message
+sp {anystate*apply*change-world-state*delete-object*print-perception
+   (state <s> ^operator <o>
+              ^agent-params.print-perception true)
+   (<o> ^name change-world-state
+        ^delete-object.object-handle <obj-handle>)
+-->
+   (write |change-world-state: delete-object on object | <obj-handle> (crlf))
+}
+   
