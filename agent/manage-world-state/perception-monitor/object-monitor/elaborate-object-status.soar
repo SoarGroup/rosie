@@ -11,6 +11,50 @@ sp {top-state*perception-monitor*object-monitor*object-info*elaborate*status
 
 ##################################################################
 #
+# in-view << true false >>
+#   true if the belief object is in the robot's view volume (should be visible)
+#
+#################################################################
+
+# Fully Observable Environments, objects are always in view
+sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*in-view*true*tabletop*domain
+   (state <s> ^superstate nil
+              ^agent-params.domain << internal tabletop fetch ai2thor >>
+              ^perception-monitor.object-monitor.object-info <obj-info>)
+   (<obj-info> ^status <status>)
+-->
+   (<status> ^in-view true)
+}
+
+# Partially Observable Domains, objects are in view if they intersect the view volume
+sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*in-view*true
+   (state <s> ^superstate nil
+              ^agent-params.domain << magicbot cozmo >>
+              ^perception-monitor.object-monitor.object-info <obj-info>
+              ^perception-monitor.robot-view-filter.result.record <r>)
+   (<obj-info> ^belief-obj.id <bel-id>
+               ^status <status>)
+   (<r> ^params.b <bel-id>
+        ^value true)
+-->
+   (<status> ^in-view true)
+}
+
+sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*in-view*false
+   (state <s> ^superstate nil
+              ^agent-params.domain << magicbot cozmo >>
+              ^perception-monitor.object-monitor.object-info <obj-info>
+              ^perception-monitor.robot-view-filter.result.record <r>)
+   (<obj-info> ^belief-obj.id <bel-id>
+               ^status <status>)
+   (<r> ^params.b <bel-id>
+        ^value false)
+-->
+   (<status> ^in-view false)
+}
+
+##################################################################
+#
 # is-visible1 << visible1 not-visible1 >>
 #   true if the belief-obj has a perception-obj
 #
@@ -27,10 +71,11 @@ sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*vis
 
 sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*visible1*current-location
    (state <s> ^superstate nil
-           ^perception-monitor.input-link.self.current-waypoint.waypoint-handle <wp-handle>
+              ^agent-params.domain internal
+              ^perception-monitor.input-link.self.current-waypoint.waypoint-handle <wp-handle>
               ^perception-monitor.object-monitor.object-info <obj-info>)
    (<obj-info> ^status <status>
-            ^wm-obj.waypoint <wp-handle>)
+               ^input-link-obj.waypoint <wp-handle>)
 -->
    (<status> ^is-visible1 visible1)
 }
@@ -43,6 +88,7 @@ sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*not
 -->
    (<status> ^is-visible1 not-visible1)
 }
+
 
 ##################################################################
 #
@@ -71,97 +117,22 @@ sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*occ
    (<status> ^occlusion-timer-expired true)
 }
 
-###################################################
-#
-# stability-timer-expired true
-#   created when the check-stability-time is passed
-#
-###################################################
-
-sp {top-state*perception-monitor*object-monitor*new-object-info*stability-timer-expired
-   (state <s> ^superstate nil
-              ^perception-monitor.object-monitor.new-object-info <obj-info>
-              ^io.input-link.time.seconds <t>)
-   (<obj-info> ^status <status>
-               ^check-stability-time <= <t>)
--->
-   (<status> ^stability-timer-expired true)
-}
-
-###################################################
-#
-# growth-timer-expired true
-#   created when the check-growth-time is passed
-#
-###################################################
-
-sp {top-state*perception-monitor*object-monitor*object-info*growth-timer-expired
-   (state <s> ^superstate nil
-              ^perception-monitor.object-monitor.object-info <obj-info>
-              ^io.input-link.time.seconds <t>)
-   (<obj-info> ^status <status>
-               ^check-growth-time <= <t>)
--->
-   (<status> ^growth-timer-expired true)
-}
-
 ##################################################################
 #
-# in-view << true false >>
-#   true if the belief object is in the robot's view volume
+# shared-perception-obj true
+#   true if the object shares a perception-obj with another object
 #
 #################################################################
 
-# Objects are always in view in the tabletop domain
-sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*in-view*true*tabletop*domain
+sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*shared-perception-obj*true
    (state <s> ^superstate nil
-              ^agent-params.domain << tabletop fetch ai2thor >>
-              ^perception-monitor.object-monitor.object-info <obj-info>)
-   (<obj-info> ^status <status>)
--->
-   (<status> ^in-view true)
-}
-
-sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*in-view*true
-   (state <s> ^superstate nil
-              ^perception-monitor.object-monitor.object-info <obj-info>
-              ^perception-monitor.robot-view-filter.result.record <r>)
-   (<obj-info> ^belief-obj.id <bel-id>
+              ^perception-monitor.object-monitor <obj-mon>)
+   (<obj-mon> ^object-info <obj-info>
+              ^object-info { <other-info> <> <obj-info> })
+   (<obj-info> ^perception-obj <perc-obj>
                ^status <status>)
-   (<r> ^params.b <bel-id>
-        ^value true)
+   (<other-info> ^perception-obj <perc-obj>)
 -->
-   (<status> ^in-view true)
-}
-
-sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*in-view*false
-   (state <s> ^superstate nil
-              ^perception-monitor.object-monitor.object-info <obj-info>
-              ^perception-monitor.robot-view-filter.result.record <r>)
-   (<obj-info> ^belief-obj.id <bel-id>
-               ^status <status>)
-   (<r> ^params.b <bel-id>
-        ^value false)
--->
-   (<status> ^in-view false)
-}
-
-#################################################################
-#
-# internal dynamics (used to simulate things)
-#
-#################################################################
-
-sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*needs-turned-off*true
-   (state <s> ^superstate nil
-              ^agent-params.domain internal
-              ^perception-monitor.object-monitor.object-info <obj-info>
-              ^io.input-link.time.clock.elapsed-seconds <secs>)
-   (<obj-info> ^input-link-obj.property <prop>
-               ^status <status>)
-   (<prop> ^property-handle activation1 
-           ^turn-off-time <= <secs>)
--->
-   (<status> ^needs-turned-off true)
+   (<status> ^shared-perception-obj true)
 }
 
