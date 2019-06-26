@@ -21,23 +21,56 @@ sp {match-existing-object*elaborate*object-monitor*from*top-state
 -->
    (<s> ^object-monitor <omon>)
 }
-              
 
-# WME used to hold results from overlap tests
-sp {match-existing-object*elaborate*overlap-results
+
+### Elaborate the new-perception-obj predicates that it is confident about
+# (Confidence is above 0.1 and there is no other predicate within 20% confidence)
+
+sp {match-existing-object*elaborate*new-object-predicates
    (state <s> ^name match-existing-object)
 -->
-   (<s> ^overlap-results <cmd>)
+   (<s> ^new-object-predicates <preds>)
 }
 
-# Elaborates information from the object-monitor for an overlapping object
-sp {match-existing-object*elaborate*overlap-result*overlapper-info
+sp {match-existing-object*elaborate*predicate-info*input-link
    (state <s> ^name match-existing-object
-              ^overlap-results.result <res>
-              ^object-monitor.object-info <known-obj-info>)
-   (<res> ^object-b <known-bel-id>)
-   (<known-obj-info> ^belief-obj.id <known-bel-id>)
+              ^perception-obj.property <prop>)
+   (<prop> ^property-handle <prop-handle>
+           ^values <vals>)
 -->
-   (<res> ^overlapper-info <known-obj-info>)
+   (<s> ^predicate-info <pred-info>)
+   (<pred-info> ^property-handle <prop-handle>
+                ^values <vals>)
 }
-   
+
+sp {match-existing-object*elaborate*predicate-info*hypothesis
+   (state <s> ^name match-existing-object
+              ^predicate-info <pred-info>)
+   (<pred-info> ^values.<pred-handle> { <conf> > 0.1 })
+-->
+   (<pred-info> ^hypothesis <h>)
+   (<h> ^predicate-handle <pred-handle>
+        ^confidence <conf>)
+}
+
+sp {match-existing-object*elaborate*predicate-info*hypothesis*lower-threshold
+   (state <s> ^name match-existing-object
+              ^predicate-info.hypothesis <h>)
+   (<h> ^confidence <conf>)
+-->
+   (<h> ^lower-threshold (* <conf> .8))
+}
+
+sp {match-existing-object*elaborate*new-object-predicates*predicate
+   (state <s> ^name match-existing-object
+              ^predicate-info <pred-info>
+              ^new-object-predicates <preds>)
+   (<pred-info> ^property-handle <prop-handle>
+                ^hypothesis <best-h>)
+   (<best-h> ^predicate-handle <pred-handle>
+             ^lower-threshold <thresh>)
+   -{(<pred-info> ^hypothesis { <other-h> <> <best-h> })
+     (<other-h> ^confidence > <thresh>)}
+-->
+   (<preds> ^<prop-handle> <pred-handle>)
+}

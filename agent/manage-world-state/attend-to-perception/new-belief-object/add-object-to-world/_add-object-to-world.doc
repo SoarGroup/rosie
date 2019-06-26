@@ -1,0 +1,133 @@
+###### State Representation #####
+
+^source-type << perception-obj smem-obj epmem-obj imagined-obj >>
+	The type of the object being used to add a new object-info rep
+^source-obj <obj> 
+	The object being used to add a new object-info representation
+^object-handle <handle>
+	The handle of the object
+^wm-obj <obj>
+	Representation for a top-state.world object that will be added
+^belief-id <id>
+	The id to be used when creating a belief object
+^perception-id <id>
+	The id to use to look for a perception object to get updates
+^perception-obj <obj>
+	An svs object that contains the perceptual information for the object
+^input-link-obj <obj>
+	An object on the input-link containing information about the object
+^smem-obj <obj>
+	Information about the object retrieved from semantic memory
+^epmem-obj <obj>
+	Information about the object retrieved from episodic memory
+^is-visible1 << visible1 not-visible1 >>
+	A flag for whether the object is currently being observed
+^predicates.<prop> <pred>
+	A set of predicates to put on the object, can come from perception, smem, or epmem
+	Will also create on the state the wmes ^perception-predicate, ^smem-predicate, ^epmem-predicate
+
+##### Cases #####
+
+create-belief-object:
+- epmem-obj that matches a world object with no belief-obj
+- epmem-obj that matches an smem object with no belief-obj
+
+
+
+epmem-obj:
+	match-smem-object
+	-> Success
+		-> Existing object info
+			-> Belief object
+				ignore-new-object
+			-> No belief object
+				create-belief-object, ignore-new-object
+		-> Non-existing object info
+			create-world-object, create-object-info
+	-> Failure
+		-> Existing object info
+			ignore-new-object
+		-> Non-existing object-info
+			create-world-object, create-object-info
+
+smem-obj:
+	-> Existing object info
+        ignore-new-object
+	-> Non-existing object-info
+        create-world-object, create-object-info
+	
+imagined-obj:
+	-> Existing object info
+        ignore-new-object
+	-> Non-existing object-info
+        create-world-object, create-object-info
+
+perception-obj:
+	match-world-object
+	-> Success
+		link-to-existing-object
+	match-smem-object
+	-> Success
+		-> existing object info
+			-> visible
+				reject-smem-match
+			-> not-visible
+				link-to-existing-object
+		-> non-existing object-info
+			create-world-object, create-object-info
+	-> Failure
+		-> Existing object info
+			ignore-new-object
+		-> Non-existing object-info
+			create-world-object, create-object-info
+
+##### Operators + order #####
+
+create-belief-object
+reject-smem-match
+link-to-existing-object
+ignore-new-object
+match-world-object
+match-smem-object
+create-world-object
+create-object-info
+
+
+##### Operator Info #####
+
+# match-world-object
+	If the object source was from perception, try to match it against the current world
+		To see if there's a stale world object that fits the new perception
+	Result is a ^match-world-result <obj-info> or ^match-world-result none
+
+# link-to-existing-object
+	If the object source was from perception and it matched a world object, 
+		Update the perception-id on that world object (substate will exit)
+		
+# match-smem-object
+	Try to search for information about the object in semantic memory
+	Result is either a ^smem-obj <obj> or ^no-smem-object-retrieved true flag
+	
+# reject-smem-match
+	If we got an smem-obj matching a perception-obj, but that object is 
+	already in the world and connected with a different perception-obj, 
+	Then reject that smem-obj as a match
+	
+# create-belief-object
+	If the epmem-obj matches an existing object-info without a belief object, 
+		create a belief object using the stored information
+
+# ignore-new-object
+	This will remove the new-object change from the changes list
+	Happens if its an epmem object we already know about
+
+# create-world-object
+	Does the work of creating a representation for the object on the top-state world
+	Will create a wm-obj representation if not already there
+	
+# create-object-info
+	Creates a new object-info structure on the object-monitor
+	Does many other updates including:
+		Adding a belief object
+		Adds an in predicate for the current location
+		

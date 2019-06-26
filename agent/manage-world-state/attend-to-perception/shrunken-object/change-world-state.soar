@@ -1,7 +1,10 @@
+### change-world-state: implemented in manage-world-state/change-world-state
+
+
+### update-object-pose
 # If we cannot find any contained objects and it is not occluded,
 #   update the pose to the new scale
 
-# (implemented in manage-world-state/change-world-state)
 sp {attend-to-perception*shrunken-object*propose*change-world-state*update-object-pose
    (state <s> ^name attend-to-perception
               ^discrepancy-type shrunken-object
@@ -13,3 +16,51 @@ sp {attend-to-perception*shrunken-object*propose*change-world-state*update-objec
    (<o> ^name change-world-state
         ^update-object-pose <obj-info>)
 }
+
+
+### merge-perception-objects
+# If the object overlaps 1 or more new perception object fragments, 
+# Merge all of them with the existing perception-id
+
+sp {attend-to-perception*shrunken-object*propose*change-world-state*merge-perception-objects
+   (state <s> ^name attend-to-perception
+              ^discrepancy-type shrunken-object
+              ^found-contained-fragment true
+              ^object-info.perception-id <perc-id>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name change-world-state
+        ^merge-perception-objects <merge>)
+   (<merge> ^core-perception-id <perc-id>)
+}
+
+sp {attend-to-perception*shrunken-object*elaborate*change-world-state*merging-perception-ids
+   (state <s> ^name attend-to-perception
+              ^discrepancy-type shrunken-object
+              ^operator <o> +
+              ^contained-fragment-id <merge-id>)
+   (<o> ^name change-world-state
+        ^merge-perception-objects <merge>)
+-->
+   (<merge> ^merging-perception-id <merge-id>)
+}
+
+
+### change-world-state/state-no-change
+# Reset the superstate and try again
+
+sp {attend-to-perception*shrunken-object*change-world-state*SNC*reset*superstate
+   (state <s> ^superstate.name change-world-state
+              ^attribute state 
+              ^impasse no-change 
+              ^superstate.superstate <sss>)
+   (<sss> ^name attend-to-perception
+          ^discrepancy-type shrunken-object
+          ^intersect-command <int-cmd>
+          ^overlap-results <over-res>)
+-->
+   (<sss> ^intersect-command <int-cmd> -
+          ^overlap-results <over-res> -
+          ^overlap-results <new-over-res>)
+}
+

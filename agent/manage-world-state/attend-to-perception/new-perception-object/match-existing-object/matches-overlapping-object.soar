@@ -1,9 +1,14 @@
-# Propose matches-overlapping-object for each object overlapping the perception object
-sp {matches-known-object*propose*matches-overlapping-object
-   (state <s> ^name match-known-object
+### matches-overlapping-object: The new-perception-object matches
+#     an existing object based on overlapping the bounding volume
+
+### Case 1: The new-perception-obj overlaps an object without a perception-obj
+
+sp {match-existing-object*propose*matches-overlapping-object*missing*perception-obj
+   (state <s> ^name match-existing-object
               ^overlap-results.result <res>)
    (<res> ^overlapper-info <obj-info>
           ^overlap <val>)
+   (<obj-info> -^perception-obj)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name matches-overlapping-object
@@ -11,17 +16,44 @@ sp {matches-known-object*propose*matches-overlapping-object
         ^overlap <val>)
 }
 
-# If matching a visible object, the overlap must exceed the contained-threshold to count
-sp {match-existing-object*reject*matches-overlapping-object*not*enough*overlap
+
+### Case 2: The new-perception-obj overlaps an object with a shared-perception-obj
+# (The object shares a perception-obj with another, meaning they might be segmented together)
+
+sp {match-existing-object*propose*matches-overlapping-object*shared-perception-obj
    (state <s> ^name match-existing-object
-              ^operator <o> +
+              ^overlap-results.result <res>
               ^agent-params.contained-threshold <thresh>)
-   (<o> ^name matches-overlapping-object
-        ^overlapping-object.status.is-visible1 visible1
-        ^overlap < <thresh>)
+   (<res> ^overlapper-info <obj-info>
+          ^overlap { <val> > <thresh> })
+   (<obj-info> ^status.shared-perception-obj true)
 -->
-   (<s> ^operator <o> -)
+   (<s> ^operator <o> + =)
+   (<o> ^name matches-overlapping-object
+        ^overlapping-object <obj-info>
+        ^overlap <val>)
 }
+
+
+### Case 3: The new-perception-obj is contained within an existing belief-obj
+#     which is not a receptacle (receptacles can hold other items inside)
+
+sp {match-existing-object*propose*matches-overlapping-object*contained*by*other
+   (state <s> ^name match-existing-object
+              ^overlap-results.result <res>
+              ^agent-params.contained-by-threshold <thresh>)
+   (<res> ^overlapper-info <obj-info>
+          ^overlap { <val> > <thresh> })
+   (<obj-info> ^wm-obj.predicates <preds>)
+   (<preds> -^receptacle receptacle)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name matches-overlapping-object
+        ^overlapping-object <obj-info>
+        ^overlap <val>)
+}
+
+### Preferences
 
 # Prefer more overlap when matching
 sp {match-existing-object*prefer*matches-overlapping-object*with*more*overlap
@@ -36,9 +68,22 @@ sp {match-existing-object*prefer*matches-overlapping-object*with*more*overlap
    (<s> ^operator <o1> > <o2>)
 }
 
+# Reject match if it differs on color
+sp {match-exisiting-object*reject*matches-overlapping-object*different*color
+   (state <s> ^name match-existing-object
+              ^operator <o> +
+              ^new-object-predicates.color <color>)
+   (<o> ^name matches-overlapping-object
+        ^overlapping-object.wm-obj.predicates.color <> <color>)
+-->
+   (<s> ^operator <o> -)
+}
+
+### Application
+
 # Report the match to the superstate
-sp {matches-known-object*apply*matches-overlapping-object
-   (state <s> ^name match-known-object
+sp {match-existing-object*apply*matches-overlapping-object
+   (state <s> ^name match-existing-object
               ^operator <o>
               ^superstate <ss>)
    (<o> ^name matches-overlapping-object
@@ -47,4 +92,14 @@ sp {matches-known-object*apply*matches-overlapping-object
    (<ss> ^matches-existing-object <obj-info>)
 }
 
-
+# If print-perception is on, print a message about the match
+sp {match-existing-object*apply*matches-object-predicates*print-perception
+   (state <s> ^name match-existing-object
+              ^operator <o>
+              ^perception-obj.object-handle <new-obj>
+              ^agent-params.print-perception true)
+   (<o> ^name matches-overlapping-object
+        ^overlapping-object.object-handle <matching-obj>)
+-->
+   (write |match-existing-object: Object | <new-obj> | matches | <matching-obj> | via overlap|(crlf))
+}

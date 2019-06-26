@@ -1,0 +1,71 @@
+### change-world-state
+# If the new-perception-obj does match an existing one, 
+#   change the world to resolve the discrepancy
+
+
+### Case 1: If the matched object has no perception object, change the perception-id
+sp {attend-to-perception*new-perception-object*propose*change-world-state*change-perception-id*no*perception-obj
+   (state <s> ^name attend-to-perception
+              ^discrepancy-type new-perception-object
+              ^perception-obj.object-handle <perc-id>
+              ^matches-existing-object { <existing-obj> <> none })
+   (<existing-obj> -^perception-obj)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name change-world-state
+        ^change-perception-id <chg>)
+   (<chg> ^object-info <existing-obj>
+          ^perception-id <perc-id>)
+}
+
+### Case 2: If the matched object has a shared-perception-obj, change the perception-id
+sp {attend-to-perception*new-perception-object*propose*change-world-state*change-perception-id*shared-perception-obj
+   (state <s> ^name attend-to-perception
+              ^discrepancy-type new-perception-object
+              ^perception-obj.object-handle <perc-id>
+              ^matches-existing-object { <existing-obj> <> none })
+   (<existing-obj> ^status.shared-perception-obj true)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name change-world-state
+        ^change-perception-id <chg>)
+   (<chg> ^object-info <existing-obj>
+          ^perception-id <perc-id>)
+}
+
+### Case 3: If the matched object has a perception-obj, merge the perception-objs
+sp {attend-to-perception*new-perception-object*propose*change-world-state*merge-perception-objects
+   (state <s> ^name attend-to-perception
+              ^discrepancy-type new-perception-object
+              ^perception-obj.object-handle <perc-id>
+              ^matches-existing-object { <existing-obj> <> none })
+   (<existing-obj> -^status.shared-perception-obj true
+                    ^perception-obj.id <other-id>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name change-world-state
+        ^merge-perception-objects <merge>)
+   (<merge> ^core-perception-id <other-id>
+            ^merging-perception-id <perc-id>)
+}
+
+### create-belief-object
+# If the matched object has no belief-obj, create one
+
+sp {attend-to-perception*new-perception-object*elaborate*change-world-state*create-belief-object
+   (state <s> ^name attend-to-perception
+              ^discrepancy-type new-perception-object
+              ^perception-obj.object-handle <perc-id>
+              ^matches-existing-object { <existing-obj> <> none }
+              ^operator <o> +)
+   (<o> ^name change-world-state)
+   (<existing-obj> ^object-handle <obj-handle>
+                   ^belief-id <bel-id>
+                  -^belief-obj)
+-->
+   (<o> ^create-belief-object <bel>)
+   (<bel> ^object-handle <obj-handle>
+          ^perception-id <perc-id>
+          ^belief-id <bel-id>)
+}
+

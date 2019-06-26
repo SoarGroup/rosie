@@ -1,5 +1,10 @@
-### If the object is contained by another perception-object
+### change-world-state: implemented in manage-world-state/change-world-state
+
+
+### change-perception-id
+# If the object is contained by another perception-object
 # Then set its perception-id to that of the containing object
+
 sp {attend-to-perception*missing-object*propose*change-world-state*change-perception-id
    (state <s> ^name attend-to-perception
               ^discrepancy-type missing-object
@@ -14,8 +19,37 @@ sp {attend-to-perception*missing-object*propose*change-world-state*change-percep
 }
 
 
+### merge-perception-objects
+# If the object overlaps 1 or more new perception object fragments, 
+# Merge all of them with the existing perception-id
+
+sp {attend-to-perception*missing-object*propose*change-world-state*merge-perception-objects
+   (state <s> ^name attend-to-perception
+              ^discrepancy-type missing-object
+              ^found-contained-fragment true
+              ^object-info.perception-id <perc-id>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name change-world-state
+        ^merge-perception-objects <merge>)
+   (<merge> ^core-perception-id <perc-id>)
+}
+
+sp {attend-to-perception*missing-object*elaborate*change-world-state*merging-perception-ids
+   (state <s> ^name attend-to-perception
+              ^discrepancy-type missing-object
+              ^operator <o> +
+              ^contained-fragment-id <merge-id>)
+   (<o> ^name change-world-state
+        ^merge-perception-objects <merge>)
+-->
+   (<merge> ^merging-perception-id <merge-id>)
+}
+
+
+### delete-object
 # If we cannot determine a good reason why the object is missing, remove it from the world
-# (implemented in manage-world-state/change-world-state)
+
 sp {attend-to-perception*missing-object*propose*change-world-state*delete-object
    (state <s> ^name attend-to-perception
               ^discrepancy-type missing-object
@@ -27,4 +61,22 @@ sp {attend-to-perception*missing-object*propose*change-world-state*delete-object
         ^delete-object <obj-info>)
 }
 
+
+### change-world-state/state-no-change
+# Reset the superstate and try again
+
+sp {attend-to-perception*missing-object*change-world-state*SNC*reset*superstate
+   (state <s> ^superstate.name change-world-state
+              ^attribute state 
+              ^impasse no-change 
+              ^superstate.superstate <sss>)
+   (<sss> ^name attend-to-perception
+          ^discrepancy-type missing-object
+          ^intersect-command <int-cmd>
+          ^overlap-results <over-res>)
+-->
+   (<sss> ^intersect-command <int-cmd> -
+          ^overlap-results <over-res> -
+          ^overlap-results <new-over-res>)
+}
 

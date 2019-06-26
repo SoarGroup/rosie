@@ -1,0 +1,46 @@
+### merge-perception-objects
+# Tell perception to merge the given objects via a modify-scene command on the output-link
+
+sp {anystate*change-world-state*merge-perception-objects*elaborate*modify-scene-command
+   (state <s> ^operator <o> +)
+   (<o> ^name change-world-state
+        ^merge-perception-objects <merge>)
+-->
+   (<merge> ^modify-scene-command <cmd>)
+}
+
+sp {anystate*apply*change-world-state*merge-perception-objects*copy*modify-scene-command
+   (state <s> ^operator <o> +
+              ^io.output-link <out>)
+   (<o> ^name change-world-state
+        ^merge-perception-objects <merge>)
+   (<merge> ^modify-scene-command <cmd>
+            ^core-perception-id <perc-id>)
+-->
+   (<out> ^modify-scene <cmd>)
+   (<cmd> ^type link
+          ^destination-handle <perc-id>)
+}
+
+sp {anystate*apply*change-world-state*merge-perception-objects*copy*merging-perception-ids
+   (state <s> ^operator <o> +
+              ^top-state.io.output-link <out>)
+   (<o> ^name change-world-state
+        ^merge-perception-objects <merge>)
+   (<merge> ^modify-scene-command <cmd>
+            ^merging-perception-id <merge-id>)
+-->
+   (<cmd> ^source-handle <merge-id>)
+}
+
+# If print-perception is on, print a message
+sp {anystate*apply*change-world-state*merge-perception-objects*print-perception
+   (state <s> ^operator <o>
+              ^agent-params.print-perception true)
+   (<o> ^name change-world-state
+        ^merge-perception-objects <merge>)
+-->
+   (write |change-world-state: merge-perception-objects| (crlf))
+   (write (cmd print <merge>) (crlf))
+}
+

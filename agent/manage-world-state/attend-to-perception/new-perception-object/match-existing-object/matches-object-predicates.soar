@@ -1,194 +1,155 @@
+### matches-object-predicates
+# match an existing object based on the predicates they share
 
-# Elaborate the predicates to use when matching
-sp {match-existing-object*elaborate*predicates-to-match
-   (state <s> ^name match-existing-object)
--->
-   (<s> ^predicates-to-match <ptm>)
-}
+### Case 1: Always try to match any missing-objects specified by superstate
+# (just match on predicates, don't worry about overlapping)
 
-
-### Here we make sure that only unambiguous, confidence predicates are used
-
-sp {match-existing-object*elaborate*predicate-info*input-link
+sp {match-existing-object*propose*matches-object-predicates*missing-object
    (state <s> ^name match-existing-object
-              ^perception-obj.property <prop>)
-   (<prop> ^property-handle <prop-handle>
-           ^values <vals>)
--->
-   (<s> ^predicate-info <pred-info>)
-   (<pred-info> ^property-handle <prop-handle>
-                ^values <vals>)
-}
-
-sp {match-existing-object*elaborate*predicate-info*hypothesis
-   (state <s> ^name match-existing-object
-              ^predicate-info <pred-info>)
-   (<pred-info> ^values.<pred-handle> { <conf> > 0.1 })
--->
-   (<pred-info> ^hypothesis <h>)
-   (<h> ^predicate-handle <pred-handle>
-        ^confidence <conf>)
-}
-
-sp {match-existing-object*elaborate*predicate-info*hypothesis*lower-threshold
-   (state <s> ^name match-existing-object
-              ^predicate-info.hypothesis <h>)
-   (<h> ^confidence <conf>)
--->
-   (<h> ^lower-threshold (* <conf> .8))
-}
-
-sp {match-existing-object*elaborate*predicates-to-match*predicate
-   (state <s> ^name match-existing-object
-              ^predicate-info <pred-info>
-              ^predicates-to-match <ptm>)
-   (<pred-info> ^property-handle <prop-handle>
-                ^hypothesis <best-h>)
-   (<best-h> ^predicate-handle <pred-handle>
-             ^lower-threshold <thresh>)
-   -{(<pred-info> ^hypothesis { <other-h> <> <best-h> })
-     (<other-h> ^confidence > <thresh>)}
--->
-   (<ptm> ^<prop-handle> <pred-handle>)
-}
-
-#####
-
-# Level 1: Visual Characteristics
-# Level 2: State Characteristics
-# Level 3: Status Characteristics
-
-sp {match-existing-object*elaborate*
-
-# Elaborate a set of candidates to match using predicates
-sp {match-existing-object*elaborate*candidate-set
-   (state <s> ^name match-existing-object
-              ^predicates-to-match <any>)
--->
-   (<s> ^candidate-set <set>)
-}
-
-sp {match-existing-object*elaborate*candidate-set*candidate
-   (state <s> ^name match-existing-object
-              ^object-monitor.object-info <obj-info>
-              ^candidate-set <set>)
--->
-   (<set> ^candidate <cand>)
-   (<cand> ^object-info <obj-info>)
-}
-
-##### Operator matches-object-predicates
-
-# for each valid candidate, propose matches-object-predicates
-sp {match-existing-object*propose*matches-object-predicates
-   (state <s> ^name match-existing-object
-              ^predicates-to-match <preds>
-              ^candidate-set.candidate <cand>)
-   (<cand> ^valid true)
+              ^match-missing-object <obj>)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name matches-object-predicates
-        ^candidate <cand>)
+        ^object-info <obj>
+        ^matching-counts <mc>)
 }
 
+### Case 2: Match any objects without belief objects
+
+sp {match-existing-object*propose*matches-object-predicates*no*belief-obj
+   (state <s> ^name match-existing-object
+              ^perception-monitor.object-monitor.object-info <obj-info>)
+   (<obj-info> -^belief-obj <bel>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name matches-object-predicates
+        ^object-info <obj>
+        ^matching-counts <mc>)
+}
+
+### Elaborate matching predicates
+
+sp {match-existing-object*elaborate*matches-object-predicates*matching-predicate
+   (state <s> ^name match-existing-object
+              ^operator <o> +
+              ^new-object-predicates.<prop> <pred>)
+   (<o> ^name matches-object-predicates
+        ^object-info.wm-obj.predicates.<prop> <pred>)
+-->
+   (<o> ^matching-predicate <pred>)
+}
+
+# Count the number of matching predicates
+# start with the lowest predicate as 1
+sp {match-existing-object*elaborate*matches-object-predicates*matching-counts*initial
+   (state <s> ^name match-existing-object
+              ^operator <o> +
+              ^new-object-predicates.<prop> <pred>)
+   (<o> ^name matches-object-predicates
+        ^matching-predicate <min-pred>
+       -^matching-predicate < <min-pred>
+        ^matching-counts <counts>)
+-->
+   (<counts> ^<min-pred> 1)
+}
+
+# add a +1 count for each 'next' predicate (no predicate between it and previous)
+sp {matching-existing-object*elaborate*matching-object-predicates*matching-counts*next
+   (state <s> ^name match-existing-object
+              ^operator <o> +
+              ^new-object-predicates.<prop> <pred>)
+   (<o> ^name matches-object-predicates
+        ^matching-predicate { <next-pred> > <prev-pred> }
+       -^matching-predicate { > <pred-pred> < <next-pred> }
+        ^matching-counts <counts>)
+   (<counts> ^<prev-pred> <prev-count>)
+-->
+   (<counts> ^<next-pred> (+ <prev-count> 1))
+}
+
+# elaborate the max count as the number of matching predicates
+sp {matching-existing-object*elaborate*matching-object-predicates*number-matching-predicates
+   (state <s> ^name match-existing-object
+              ^operator <o> +
+              ^new-object-predicates.<prop> <pred>)
+   (<o> ^name matches-object-predicates
+        ^matching-counts <counts>)
+   (<counts> ^<max-pred> <max-count>
+            -^<better-pred> > <max-count>)
+-->
+   (<o> ^number-matching-predicates <max-count>)
+}
+
+### Elaborate conflicting predicates
+
+sp {match-existing-object*elaborate*matches-object-predicates*conflicting-predicate
+   (state <s> ^name match-existing-object
+              ^operator <o> +
+              ^new-object-predicates.<prop> <pred>)
+   (<o> ^name matches-object-predicates
+        ^object-info.wm-obj.predicates.<prop> { <> <pred> })
+-->
+   (<o> ^conflicting-predicate <pred>)
+}
+
+
+### Preferences
+
+# Prefer matches with more matching predicates
+sp {match-existing-object*prefer*matches-object-predicates*higher*matching-predicate*count
+   (state <s> ^name match-existing-object
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name matches-object-predicates
+         ^matching-predicate-count <c>)
+   (<o2> ^name matches-object-predicates
+         ^matching-predicate-count < <c>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+# Reject if no matching predicates
+sp {match-existing-object*reject*matches-object-predicates*no*matching-predicate
+   (state <s> ^match-existing-object
+              ^operator <o> +)
+   (<o> ^name matches-object-predicates
+        -^matching-predicate)
+-->
+   (<s> ^operator <o> -)
+}
+
+# Reject if any conflicting predicate
+sp {match-existing-object*reject*matches-object-predicates*conflicting-predicate
+   (state <s> ^match-existing-object
+              ^operator <o> +)
+   (<o> ^name matches-object-predicates
+        ^conflicting-predicate)
+-->
+   (<s> ^operator <o> -)
+}
+
+### Application
+
+# copy the match to the superstate
 sp {match-existing-object*apply*matches-object-predicates*report*to*superstate
    (state <s> ^name match-existing-object
               ^operator <o>
               ^superstate <ss>)
    (<o> ^name matches-object-predicates
-        ^candidate.object-info <obj-info>)
+        ^object-info <obj-info>)
 -->
    (<ss> ^matches-existing-object <obj-info>)
 }
 
-#### Elaborations to determine the candidate set and to identify valid matches
-
-### HARDCODED: which predicates to ignore when matching
-sp {match-existing-object*elaborate*ignore-predicates
-   (state <s> ^name match-existing-object)
--->
-   (<s> ^ignore-predicates <ign>)
-   (<ign> ^predicate handle item-type object-instance predicates in-smem room1 storage1 arm-status is-confirmed1 is-visible1 is-connected1 is-grabbable1 is-reachable1 dialog-object)
-}
-
-# If there is a predicate-conflict, mark the candidate as valid=false
-sp {match-existing-object*elaborate*candidate-set*candidate*valid*false*predicate-conflict
+# If print-perception is on, print a message about the match
+sp {match-existing-object*apply*matches-object-predicates*print-perception
    (state <s> ^name match-existing-object
-              ^candidate-set.candidate <cand>)
-   (<cand> ^predicate-conflict true)
--->
-   (<cand> ^valid false)
-}
-
-# If there is no valid=false, then mark valid=true
-sp {match-existing-object*elaborate*candidate-set*candidate*valid*true*none*false
-   (state <s> ^name match-existing-object
-              ^candidate-set.candidate <cand>)
-   (<cand> -^valid false)
--->
-   (<cand> ^valid true)
-}
-
-# Don't match a perception object against an already confirmed object
-sp {match-existing-object*elaborate*candidate-set*candidate*valid*false*already*confirmed
-   (state <s> ^name match-existing-object
-              ^source-type perception-obj
-              ^candidate-set.candidate <cand>
-             -^match-missing-object <obj>)
-   (<cand> ^object-info <obj>)
-   (<obj> ^wm-obj.predicates.is-confirmed1 confirmed1)
--->
-   (<cand> ^valid false)
-}
-
-### Check for a predicate conflict
-
-# Predicate on the candidate is different
-sp {match-existing-object*elaborate*candidate*predicate-conflict*1
-   (state <s> ^name match-existing-object
-              ^candidate-set.candidate <cand>
-              ^predicates-to-match <obj-preds>
-             -^ignore-predicates.predicate <prop>)
-   (<cand> ^object-info.wm-obj.predicates <cand-preds>)
-   (<obj-preds> ^<prop> <pred>)
-   (<cand-preds> ^<prop> <> <pred>)
--->
-   (<cand> ^predicate-conflict true)
-}
-
-# Predicate on the matching object is different
-sp {match-existing-object*elaborate*candidate*predicate-conflict*2
-   (state <s> ^name match-existing-object
-              ^candidate-set.candidate <cand>
-              ^predicates-to-match <obj-preds>
-             -^ignore-predicates.predicate <prop>)
-   (<cand> ^object-info.wm-obj.predicates <cand-preds>)
-   (<cand-preds> ^<prop> <pred>)
-   (<obj-preds> ^<prop> <> <pred>)
--->
-   (<cand> ^predicate-conflict true)
-}
-
-#sp {match-existing-object*elaborate*candidate*predicate-conflict*3
-#   (state <s> ^name match-existing-object
-#              ^candidate-set.candidate <cand>
-#              ^predicates-to-match <obj-preds>
-#             -^ignore-predicates.predicate <prop>)
-#   (<cand> ^object-info.wm-obj.predicates <cand-preds>)
-#   (<obj-preds> ^<prop> <pred>)
-#   (<cand-preds> -^<prop>)
-#-->
-#   (<cand> ^predicate-conflict true)
-#}
-
-# If print-perception is on, print a message about a conflict
-sp {match-existing-object*predicate-conflict*print-perception*print
-   (state <s> ^name match-existing-object
-              ^object-handle <handle>
-              ^candidate-set.candidate <cand>
+              ^operator <o>
+              ^perception-obj.object-handle <new-obj>
               ^agent-params.print-perception true)
-   (<cand> ^object-info.object-handle <cand-handle>
-           ^predicate-conflict true)
+   (<o> ^name matches-object-predicates
+        ^object-info.object-handle <matching-obj>)
 -->
-   (write |Matching | <handle> | against | <cand-handle> | failed: predicate conflict| (crlf))
+   (write |match-existing-object: Object | <new-obj> | matches | <matching-obj> | via predicates|(crlf))
+   (write (cmd print <o>) (crlf))
 }
