@@ -6,8 +6,8 @@
 # Structure:
 # (<s> ^operator <o>)
 # (<o> ^name construct-world-object
-#      ^object-handle <h>
-#      ^predicates <preds>
+#      ^source-type << perception >>
+#      ^source-obj <obj>
 #      ^result-destination <dest>  # OPTIONAL
 #      ^result-name <res-name>)    # OPTIONAL
 #
@@ -18,6 +18,20 @@
 #
 #################################################################################
 
+sp {anystate*elaborate*construct-world-object*source-type*perception
+   (state <s> ^operator <o> +)
+   (<o> ^name construct-world-object
+        ^source-type perception
+        ^source-obj <il-obj>)
+   (<il-obj> ^object-handle <h>
+             ^property <prop>)
+   (<prop> ^property-handle category
+           ^values.<cat> <conf>)
+-->
+   (<o> ^object-handle <h>
+        ^predicates <preds>)
+   (<preds> ^category <cat>)
+}
 
 sp {anystate*elaborate*construct-world-object*workspace
    (state <s> ^operator <o> +)
@@ -38,9 +52,9 @@ sp {anystate*apply*construct-world-object*smem-query*category-info
    (<o> ^name construct-world-object
         ^predicates.category <cat>)
 -->
-   (<cmd> ^query <q>)
-   (<q> ^cue.handle <cat>
-        ^depth 8)
+   (<cmd> ^query <q>
+          ^depth 8)
+   (<q> ^handle <cat>)
 }
 
 sp {anystate*apply*construct-world-object*smem-query*copy*result
@@ -51,37 +65,42 @@ sp {anystate*apply*construct-world-object*smem-query*copy*result
         ^workspace <ws>)
    (<smem> ^result <res>
            ^command <cmd>)
-   (<res> ^success <cue>
+   (<res> ^success <q>
           ^retrieved <cat-lti>)
-   (<cue> ^handle <cat>)
-   (<cmd> ^query <q>)
-   (<q> ^cue <cue>)
+   (<q> ^handle <cat>)
+   (<cmd> ^query <q>
+          ^depth <d>)
 -->
    (<ws> ^category-info <cat-lti>)
-   (<cmd> ^query <q> -)
+   (<cmd> ^query <q> -
+          ^depth <d> -)
 }
 
 sp {anystate*elaborate*construct-world-object-workspace*categories*category*base
    (state <s> ^construct-world-object-workspace <ws>)
-   (<ws> ^category-info.handle <cat>
+   (<ws> ^category-info <cat>
          ^categories <cats>)
 -->
    (<cats> ^category <cat>)
-}
-
-sp {anystate*elaborate*construct-world-object-workspace*categories*category*supercategory
-   (state <s> ^construct-world-object-workspace.categories <cats>)
-   (<cats> ^category.supercategory.handle { <cat> <> none1 })
--->
-   (<cats> ^category <cat>)
-}
-
-sp {anystate*elaborate*construct-world-object-workspace*all-categories
-   (state <s> ^construct-world-object-workspace <ws>)
-   (<ws> ^categories.category.supercategory.handle none1)
--->
    (<ws> ^all-categories-copied true)
+
 }
+
+# TODO: Add multiple categories
+#sp {anystate*elaborate*construct-world-object-workspace*categories*category*supercategory
+#   (state <s> ^construct-world-object-workspace.categories <cats>)
+#   (<cats> ^category.supercategory <super>)
+#   (<super> ^handle <> none1)
+#-->
+#   (<cats> ^category <super>)
+#}
+#
+#sp {anystate*elaborate*construct-world-object-workspace*all-categories
+#   (state <s> ^construct-world-object-workspace <ws>)
+#   (<ws> ^categories.category.supercategory.handle none1)
+#-->
+#   (<ws> ^all-categories-copied true)
+#}
 
 sp {anystate*apply*construct-world-object*create*base
    (state <s> ^operator <o>)

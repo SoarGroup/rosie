@@ -10,9 +10,9 @@ sp {anystate*elaborate*attend-to-perception*new-perception-object*object-info*fr
               ^top-state.perception-monitor.object-monitor <obj-mon>)
    (<o> ^name attend-to-perception
         ^discrepancy-type new-perception-object
-        ^discrepancy-info.perception-obj <perc-obj>)
+        ^discrepancy-info.input-link-obj <il-obj>)
    (<obj-mon> ^new-object-info <obj-info>)
-   (<obj-info> ^perception-obj <perc-obj>)
+   (<obj-info> ^input-link-obj <il-obj>)
 -->
    (<o> ^object-info <obj-info>)
 }
@@ -37,11 +37,11 @@ sp {anystate*apply*attend-to-perception*new-perception-object*add*status
               ^top-state.perception-monitor.object-monitor <obj-mon>)
    (<o> ^name attend-to-perception
         ^discrepancy-type new-perception-object
-        ^discrepancy-info.perception-obj <perc-obj>
+        ^discrepancy-info.input-link-obj <il-obj>
         ^new-object-info <obj-info>)
 -->
    (<obj-mon> ^new-object-info <obj-info>)
-   (<obj-info> ^perception-obj <perc-obj>
+   (<obj-info> ^input-link-obj <il-obj>
                ^check-stability-time (+ <t> <dur>)
                ^number-checks 0)
 }
@@ -53,7 +53,7 @@ sp {anystate*apply*attend-to-perception*new-perception-object*create*filters
               ^top-state.svs.command <cmd>)
    (<o> ^name attend-to-perception
         ^discrepancy-type new-perception-object
-        ^discrepancy-info.perception-obj.object-handle <objh>
+        ^discrepancy-info.input-link-obj <objh>
         ^new-object-info <obj-info>)
 -->
    (<cmd> ^extract <pos>)
@@ -69,4 +69,34 @@ sp {anystate*apply*attend-to-perception*new-perception-object*create*filters
    (<va> ^type node
          ^id <objh>)
    (<obj-info> ^volume-monitor <vol>)
+}
+
+# If a new-perception-object prematurely disappears from the input-link, remove the new-object-info for it
+sp {top-state*remove*new-object-info*disappeared
+   :o-support
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^object-monitor <obj-mon>
+              -^input-link.objects.object <il-obj>)
+   (<obj-mon> ^new-object-info <obj-info>)
+   (<obj-info> ^input-link-obj <il-obj>)
+-->
+   (<obj-mon> ^new-object-info <obj-info> -)
+}
+
+sp {top-state*remove*new-object-info*filters*disappeared
+   :o-support
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>
+              ^svs.command <cmd>)
+   (<perc-mon> ^object-monitor <obj-mon>
+              -^input-link.objects.object <il-obj>)
+   (<obj-info> ^input-link-obj <il-obj>
+               ^position-monitor <pos>
+               ^volume-monitor <vol>)
+   (<cmd> ^extract <pos>
+          ^extract <vol>)
+-->
+   (<cmd> ^extract <pos> -
+          ^extract <vol> -)
 }

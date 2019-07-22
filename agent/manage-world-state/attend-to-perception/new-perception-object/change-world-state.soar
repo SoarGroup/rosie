@@ -4,12 +4,12 @@
 
 
 ### Case 1: If the matched object has no perception object, change the perception-id
-sp {attend-to-perception*new-perception-object*propose*change-world-state*change-perception-id*no*perception-obj
+sp {attend-to-perception*new-perception-object*propose*change-world-state*change-perception-id*no*input-link-obj
    (state <s> ^name attend-to-perception
               ^discrepancy-type new-perception-object
-              ^perception-obj.object-handle <perc-id>
+              ^input-link-obj.object-handle <perc-id>
               ^matches-existing-object { <existing-obj> <> none })
-   (<existing-obj> -^perception-obj)
+   (<existing-obj> -^input-link-obj)
 -->
    (<s> ^operator <o> +)
    (<o> ^name change-world-state
@@ -18,13 +18,13 @@ sp {attend-to-perception*new-perception-object*propose*change-world-state*change
           ^perception-id <perc-id>)
 }
 
-### Case 2: If the matched object has a shared-perception-obj, change the perception-id
-sp {attend-to-perception*new-perception-object*propose*change-world-state*change-perception-id*shared-perception-obj
+### Case 2: If the matched object has a shared-input-link-obj, change the perception-id
+sp {attend-to-perception*new-perception-object*propose*change-world-state*change-perception-id*shared-input-link-obj
    (state <s> ^name attend-to-perception
               ^discrepancy-type new-perception-object
-              ^perception-obj.object-handle <perc-id>
+              ^input-link-obj.object-handle <perc-id>
               ^matches-existing-object { <existing-obj> <> none })
-   (<existing-obj> ^status.shared-perception-obj true)
+   (<existing-obj> ^status.shared-input-link-obj true)
 -->
    (<s> ^operator <o> +)
    (<o> ^name change-world-state
@@ -33,14 +33,14 @@ sp {attend-to-perception*new-perception-object*propose*change-world-state*change
           ^perception-id <perc-id>)
 }
 
-### Case 3: If the matched object has a perception-obj, merge the perception-objs
+### Case 3: If the matched object has a input-link-obj, merge the perception-objs
 sp {attend-to-perception*new-perception-object*propose*change-world-state*merge-perception-objects
    (state <s> ^name attend-to-perception
               ^discrepancy-type new-perception-object
-              ^perception-obj.object-handle <perc-id>
+              ^input-link-obj.object-handle <perc-id>
               ^matches-existing-object { <existing-obj> <> none })
-   (<existing-obj> -^status.shared-perception-obj true
-                    ^perception-obj.id <other-id>)
+   (<existing-obj> -^status.shared-input-link-obj true
+                    ^input-link-obj.object-handle <other-id>)
 -->
    (<s> ^operator <o> +)
    (<o> ^name change-world-state
@@ -55,7 +55,7 @@ sp {attend-to-perception*new-perception-object*propose*change-world-state*merge-
 sp {attend-to-perception*new-perception-object*elaborate*change-world-state*create-belief-object
    (state <s> ^name attend-to-perception
               ^discrepancy-type new-perception-object
-              ^perception-obj.object-handle <perc-id>
+              ^input-link-obj.object-handle <perc-id>
               ^matches-existing-object { <existing-obj> <> none }
               ^operator <o> +)
    (<o> ^name change-world-state)
@@ -73,7 +73,7 @@ sp {attend-to-perception*new-perception-object*elaborate*change-world-state*crea
 sp {attend-to-perception*new-perception-object*propose*change-world-state*add-object-to-world
    (state <s> ^name attend-to-perception
               ^discrepancy-type new-perception-object
-              ^perception-obj.object-handle <perc-id>
+              ^input-link-obj.object-handle <perc-id>
               ^constructed-world-object <obj>)
 -->
    (<s> ^operator <o> +)
@@ -81,4 +81,33 @@ sp {attend-to-perception*new-perception-object*propose*change-world-state*add-ob
         ^add-object-to-world <add>)
    (<add> ^object <obj>
           ^perception-id <perc-id>)
+}
+
+
+### Apply change-world-state: clean up the new-object-info on the object-monitor
+sp {attend-to-perception*new-perception-object*apply*change-world-state*remove*new-object-info
+   (state <s> ^name attend-to-perception
+              ^discrepancy-type new-perception-object
+              ^operator.name change-world-state
+              ^object-info <obj-info>
+              ^top-state.perception-monitor.object-monitor <obj-mon>)
+   (<obj-mon> ^new-object-info <obj-info>)
+-->
+   (<obj-mon> ^new-object-info <obj-info> -)
+}
+
+# also remove the svs filters
+sp {attend-to-perception*new-perception-object*apply*change-world-state*remove*monitoring*filters
+   (state <s> ^name attend-to-perception
+              ^discrepancy-type new-perception-object
+              ^operator.name change-world-state
+              ^superstate.operator.new-object-info <obj-info>
+              ^top-state.svs.command <cmd>)
+   (<obj-info> ^position-monitor <pos>
+               ^volume-monitor <vol>)
+   (<cmd> ^extract <pos>
+          ^extract <vol>)
+-->
+   (<cmd> ^extract <pos> -
+          ^extract <vol> -)
 }
