@@ -18,21 +18,22 @@
 #
 #################################################################################
 
-sp {anystate*elaborate*construct-world-object*source-type*perception
+# Categories:
+# intrinsic: category, color, shape, size, weight, name, proper-name
+# extrinsic: is-visible, is-reachable, door open/closed, activation on/off, temperature
+# affordances: is-grabbable
+
+### All source-types
+
+# Elaborate an identifier to collect the object's predicates
+sp {anystate*elaborate*construct-world-object*predicates
    (state <s> ^operator <o> +)
-   (<o> ^name construct-world-object
-        ^source-type perception
-        ^source-obj <il-obj>)
-   (<il-obj> ^object-handle <h>
-             ^property <prop>)
-   (<prop> ^property-handle category
-           ^values.<cat> <conf>)
+   (<o> ^name construct-world-object)
 -->
-   (<o> ^object-handle <h>
-        ^predicates <preds>)
-   (<preds> ^category <cat>)
+   (<o> ^predicates <preds>)
 }
 
+# The construct-world-object-workspace is used to put intermediate information
 sp {anystate*elaborate*construct-world-object*workspace
    (state <s> ^operator <o> +)
    (<o> ^name construct-world-object
@@ -46,11 +47,98 @@ sp {anystate*elaborate*construct-world-object*workspace
          ^new-object-preds <new-preds>)
 }
 
-sp {anystate*apply*construct-world-object*smem-query*category-info
+# If there is no category specified, default to entity1 (the most generic category)
+sp {anystate*elaborate*construct-world-object*default*category*entity1
+   (state <s> ^operator <o> +)
+   (<o> ^name construct-world-object
+        ^predicates <preds>)
+   (<preds> -^category <> entity1)
+-->
+   (<preds> ^category entity1)
+}
+
+################ source-type perception ###############
+# source-obj is from input-link.object.object:
+#(<obj> ^object-handle <h>
+#       ^property <p1> <p2> ...)
+#(<p1> ^property-handle <prop1-handle>
+#      ^predicate-handle <pred1-handle>)
+#(<p2> ^property-handle <prop2-handle>
+#      ^predicate-handle <pred2-handle>)
+
+sp {anystate*elaborate*construct-world-object*source-type*perception
+   (state <s> ^operator <o> +)
+   (<o> ^name construct-world-object
+        ^source-type perception
+        ^source-obj <il-obj>)
+   (<il-obj> ^object-handle <h>)
+-->
+   (<o> ^object-handle <h>)
+}
+
+sp {anystate*elaborate*construct-world-object*source-type*perception*predicates
+   (state <s> ^operator <o> +)
+   (<o> ^name construct-world-object
+        ^source-type perception
+        ^source-obj.property <prop>
+        ^predicates <preds>)
+   (<prop> ^property-handle <prop-h>
+           ^predicate-handle <pred-h>)
+-->
+   (<preds> ^<prop-h> <pred-h>)
+}
+
+################ source-type smem ###############
+# source-obj is an object-instance in semantic memory
+#(<obj> ^handle <obj-h>
+#       ^object-instance true
+#       ^item-type object
+#       ^<pred1> <prop1>
+#       ^<pred2> <prop2> 
+#       ...
+#)
+
+sp {anystate*elaborate*construct-world-object*source-type*smem
+   (state <s> ^operator <o> +)
+   (<o> ^name construct-world-object
+        ^source-type smem
+        ^source-obj <smem-obj>)
+   (<smem-obj> ^handle <h>)
+-->
+   (<o> ^object-handle <h>)
+}
+
+sp {anystate*elaborate*construct-world-object*source-type*smem*predicates
+   (state <s> ^operator <o> +)
+   (<o> ^name construct-world-object
+        ^source-type smem
+        ^source-obj.{ <prop-h> <> handle <> object-instance <> item-type } <pred-h>
+        ^predicates <preds>)
+-->
+   (<preds> ^<prop-h> <pred-h>)
+}
+
+##### Retrieve category information (to get ontology)
+
+sp {anystate*apply*construct-world-object*smem-query*category-info*one*category
    (state <s> ^operator <o>
               ^smem.command <cmd>)
    (<o> ^name construct-world-object
-        ^predicates.category <cat>)
+        ^predicates <preds>)
+   (<preds> ^category <cat>
+           -^category <> <cat>
+           -^root-category)
+-->
+   (<cmd> ^query <q>
+          ^depth 8)
+   (<q> ^handle <cat>)
+}
+
+sp {anystate*apply*construct-world-object*smem-query*category-info*root-category
+   (state <s> ^operator <o>
+              ^smem.command <cmd>)
+   (<o> ^name construct-world-object
+        ^predicates.root-category <cat>)
 -->
    (<cmd> ^query <q>
           ^depth 8)
@@ -70,37 +158,31 @@ sp {anystate*apply*construct-world-object*smem-query*copy*result
    (<q> ^handle <cat>)
    (<cmd> ^query <q>
           ^depth <d>)
+   (<ws> ^categories <cats>)
 -->
    (<ws> ^category-info <cat-lti>)
+   (<cats> ^category <cat-lti>
+           ^root-category <cat-lti>)
    (<cmd> ^query <q> -
           ^depth <d> -)
 }
 
-sp {anystate*elaborate*construct-world-object-workspace*categories*category*base
-   (state <s> ^construct-world-object-workspace <ws>)
-   (<ws> ^category-info <cat>
-         ^categories <cats>)
+sp {anystate*elaborate*construct-world-object-workspace*categories*category*supercategory
+   (state <s> ^construct-world-object-workspace.categories <cats>)
+   (<cats> ^category.supercategory <super>)
+   (<super> ^handle <> none1)
 -->
-   (<cats> ^category <cat>)
-   (<ws> ^all-categories-copied true)
-
+   (<cats> ^category <super>)
 }
 
-# TODO: Add multiple categories
-#sp {anystate*elaborate*construct-world-object-workspace*categories*category*supercategory
-#   (state <s> ^construct-world-object-workspace.categories <cats>)
-#   (<cats> ^category.supercategory <super>)
-#   (<super> ^handle <> none1)
-#-->
-#   (<cats> ^category <super>)
-#}
-#
-#sp {anystate*elaborate*construct-world-object-workspace*all-categories
-#   (state <s> ^construct-world-object-workspace <ws>)
-#   (<ws> ^categories.category.supercategory.handle none1)
-#-->
-#   (<ws> ^all-categories-copied true)
-#}
+sp {anystate*elaborate*construct-world-object-workspace*all-categories
+   (state <s> ^construct-world-object-workspace <ws>)
+   (<ws> ^categories.category.supercategory.handle none1)
+-->
+   (<ws> ^all-categories-copied true)
+}
+
+### Create the base object structure
 
 sp {anystate*apply*construct-world-object*create*base
    (state <s> ^operator <o>)
@@ -127,6 +209,17 @@ sp {anystate*apply*construct-world-object*copy*category
    (<preds> ^category <cat>)
 }
 
+sp {anystate*apply*construct-world-object*copy*root-category
+   (state <s> ^operator <o>)
+   (<o> ^name construct-world-object
+        ^workspace <ws>
+        ^predicates.waypoint <wp-h>)
+   (<ws> ^categories.root-category.handle <root-cat>
+         ^new-object-rep <obj>)
+-->
+   (<obj> ^root-category <root-cat>)
+}
+
 sp {anystate*apply*construct-world-object*copy*affordance
    (state <s> ^operator <o>)
    (<o> ^name construct-world-object
@@ -137,15 +230,25 @@ sp {anystate*apply*construct-world-object*copy*affordance
    (<preds> ^affordance1 <aff>)
 }
 
-### instrinsic-predicate
+sp {anystate*apply*construct-world-object*copy*waypoint
+   (state <s> ^operator <o>)
+   (<o> ^name construct-world-object
+        ^workspace <ws>
+        ^predicates.waypoint <wp-h>)
+   (<ws> ^new-object-rep <obj>)
+-->
+   (<obj> ^waypoint <wp-h>)
+}
+
+### intrinsic-predicate
 # HARDCODED: need to be better at this
 # predicates which to use when creating the object
 sp {anystate*apply*construct-world-object*copy*instrinsic*predicates
    (state <s> ^operator <o>)
    (<o> ^name construct-world-object
+        ^predicates.{ <prop> << proper-name name category color shape size weight >> } <pred>
         ^workspace <ws>)
-   (<ws> ^predicates.{ <prop> << proper-name name category color shape size weight >> } <pred>
-         ^new-object-preds <preds>)
+   (<ws> ^new-object-preds <preds>)
 -->
    (<preds> ^<prop> <pred>)
 }

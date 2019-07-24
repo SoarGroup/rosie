@@ -11,6 +11,31 @@ sp {top-state*perception-monitor*object-monitor*object-info*elaborate*status
 
 ##################################################################
 #
+# is-in-svs1 << in-svs1 not-in-svs1 >>
+#   whether the object has a belief object in svs
+#
+##################################################################
+
+sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*in-svs1
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info <obj-info>)
+   (<obj-info> ^belief-obj <bel-obj>
+               ^status <status>)
+-->
+   (<status> ^is-in-svs1 in-svs1)
+}
+
+sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*not-in-svs1
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info <obj-info>)
+   (<obj-info> ^status <status>)
+   (<status> -^is-in-svs1 in-svs1)
+-->
+   (<status> ^is-in-svs1 not-in-svs1)
+}
+
+##################################################################
+#
 # in-view << true false >>
 #   true if the belief object is in the robot's view volume (should be visible)
 #
@@ -56,26 +81,15 @@ sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*in-
 ##################################################################
 #
 # is-visible1 << visible1 not-visible1 >>
-#   true if the belief-obj has a perception-obj
+#   true if there is an input-link-obj for the object
 #
 ##################################################################
 
 sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*visible1
    (state <s> ^superstate nil
               ^perception-monitor.object-monitor.object-info <obj-info>)
-   (<obj-info> ^perception-obj <perc-obj>
+   (<obj-info> ^input-link-obj <il-obj>
                ^status <status>)
--->
-   (<status> ^is-visible1 visible1)
-}
-
-sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*visible1*current-location
-   (state <s> ^superstate nil
-              ^agent-params.domain internal
-              ^perception-monitor.input-link.self.current-waypoint.waypoint-handle <wp-handle>
-              ^perception-monitor.object-monitor.object-info <obj-info>)
-   (<obj-info> ^status <status>
-               ^input-link-obj.waypoint <wp-handle>)
 -->
    (<status> ^is-visible1 visible1)
 }
@@ -89,6 +103,47 @@ sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*not
    (<status> ^is-visible1 not-visible1)
 }
 
+##################################################################
+#
+# is-reachable1 << reachable1 not-reachable1 >>
+#   whether the object is in reach of the arm (can pick-up)
+#
+##################################################################
+
+# For some domains, if an object is visible it is reachable
+sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*reachable1*if*visible
+   (state <s> ^superstate nil
+              ^agent-params.domain << fetch tabletop cozmo internal >>
+              ^perception-monitor.object-monitor.object-info <obj-info>)
+   (<obj-info> ^input-link-obj <il-obj>
+               ^status <status>)
+   (<status> ^is-visible1 visible1)
+-->
+   (<status> ^is-reachable1 reachable1)
+}
+
+# For some domains, we get the reachable info from the input-link
+sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*reachable1*if*visible
+   (state <s> ^superstate nil
+              ^agent-params.domain << ai2thor >>
+              ^perception-monitor.object-monitor.object-info <obj-info>)
+   (<obj-info> ^input-link-obj.property <prop>
+               ^status <status>)
+   (<prop> ^property-handle is-reachable1
+           ^predicate-handle <is-reachable>)
+-->
+   (<status> ^is-reachable1 <is-reachable>)
+}
+
+# Default: not-reachable
+sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*not-reachable1
+   (state <s> ^superstate nil
+              ^perception-monitor.object-monitor.object-info <obj-info>)
+   (<obj-info> ^status <status>)
+   (<status> -^is-reachable1 reachable1)
+-->
+   (<status> ^is-reachable1 not-reachable1)
+}
 
 ##################################################################
 #
