@@ -24,10 +24,12 @@ sp {ground-referent*compare*index-semantic-memory
    (<s> ^operator <op1> > <op2>)
 }
 
+### AM 8/19 - Changed how objects are indexed into semantic memory, 
+
 sp {ground-referent*apply*index-semantic-memory*not-cat-loc-name
    (state <s> ^operator.name index-semantic-memory
              -^superstate.name evaluate-operator
-             -^constraint.property.handle << name location category >>)
+             -^constraint.property.handle << category >>)
 -->
    (<s> ^sm-proto-referent <pr>)
    (<pr> ^predicates <pred>
@@ -37,34 +39,38 @@ sp {ground-referent*apply*index-semantic-memory*not-cat-loc-name
    #(write (crlf) |Nothing passed all constraints for definite non-name/location/category referent. Checking Semantic Memory.|)
 }
 
-#sp {ground-referent*apply*index-semantic-memory*category
-#   (state <s> ^operator.name index-semantic-memory
-#             -^superstate.name evaluate-operator
-#              ^constraint <con>)
-#   (<con> ^property.handle category 
-#          ^handle <cat>)
-#-->
-#   (<s> ^proto-referent <pr>)
-#   (<pr> ^predicates <pred>)
-#   (<pred> ^item-type <cat>
-#   	       ^object-instance true)
-#   (write (crlf) |Nothing passed all constraints for definite category referent. Checking Semantic Memory.|)
-#}
-
-sp {ground-referent*apply*index-semantic-memory*location-name
+# If it has a category it must match the root-category of the object
+# (e.g. 'the kitchen' will match a kitchen object, but not 'the location')
+sp {ground-referent*apply*index-semantic-memory*category
    (state <s> ^operator.name index-semantic-memory
              -^superstate.name evaluate-operator
               ^constraint <con>)
-   (<con> ^property <prop>
-          ^item-type <item-type>)
-   (<prop> ^handle << location name >>)
+   (<con> ^property.handle category 
+          ^handle <cat>)
 -->
-   (<s> ^sm-proto-referent <pr>)
+   (<s> ^proto-referent <pr>)
    (<pr> ^predicates <pred>)
-   (<pred> ^item-type object # AM: EDIT: This only works for objects
-   	       ^object-instance true)
-  # (write (crlf) |Nothing passed all constraints for definite location/name referent. | <item-type> |. Checking Semantic Memory.|)
+   (<pred> ^item-type object
+   	     ^object-instance true
+           ^root-category <cat>)
+   (write (crlf) |Nothing passed all constraints for definite category referent. Checking Semantic Memory.|)
 }
+
+# AM: I don't think we need this anymore (the default behavior is sufficient)
+#sp {ground-referent*apply*index-semantic-memory*proper-name
+#   (state <s> ^operator.name index-semantic-memory
+#             -^superstate.name evaluate-operator
+#              ^constraint <con>)
+#   (<con> ^property <prop>
+#          ^item-type <item-type>)
+#   (<prop> ^handle proper-name)
+#-->
+#   (<s> ^sm-proto-referent <pr>)
+#   (<pr> ^predicates <pred>)
+#   (<pred> ^item-type object # AM: EDIT: This only works for objects
+#   	     ^object-instance true)
+#  # (write (crlf) |Nothing passed all constraints for definite location/name referent. | <item-type> |. Checking Semantic Memory.|)
+#}
 
 sp {ground-referent*apply*index-semantic-memory*smem
    (state <s> ^operator <op>
