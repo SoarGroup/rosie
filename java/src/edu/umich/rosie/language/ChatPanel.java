@@ -103,7 +103,8 @@ public class ChatPanel extends JPanel implements IMessagePasser.IMessageListener
 			Date d = new Date();
 			
 			//String fullMessage = dc + " " + dateFormat.format(d) + " ";
-			String fullMessage = dateFormat.format(d) + " ";
+			//String fullMessage = dateFormat.format(d) + " ";
+			String fullMessage = "";
 			switch(message.type){
 			case INSTRUCTOR_MESSAGE:
 				fullMessage += "Mentor: ";
@@ -191,12 +192,12 @@ public class ChatPanel extends JPanel implements IMessagePasser.IMessageListener
         JSplitPane pane1 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, pane,
                 pane2);
 
-        pane1.setDividerLocation(325);
-        pane2.setDividerLocation(600);
+         pane1.setDividerLocation(350);//325
+         pane2.setDividerLocation(100); //600
         
         this.setLayout(new BorderLayout());
         this.add(pane1, BorderLayout.CENTER);
-        this.setSize(800, 450);
+        this.setSize(1200, 600);
         parentFrame.getRootPane().setDefaultButton(sendButton);
     }
     
@@ -273,11 +274,16 @@ public class ChatPanel extends JPanel implements IMessagePasser.IMessageListener
 			chatField.setText(history.get(historyIndex));
 		}
     }
-
+    public void updateChatHistory(String msg)
+    {
+    	history.add(msg);
+    	historyIndex = history.size();
+    	//messageLogger.sendMessage(msg, MessageType.INSTRUCTOR_MESSAGE);
+    }
     /*****************************************
      * Event Handling for Send Button
      */
-    
+
     private void sendButtonClicked(){
     	String msg = chatField.getText().trim();
     	if(msg.length() == 0){

@@ -86,7 +86,8 @@ public class InstructorMessagePanel extends JPanel{
 	public void addMessage(String message){
 		if(!messages.containsKey(message)){
 			JButton button = new JButton(message);
-			button.setMinimumSize(new Dimension(600, 50));
+			//button.setMinimumSize(new Dimension(600, 50));
+			//button.setMaximumSize(new Dimension(400, 30));
 			button.addActionListener(new ActionListener(){
 				public void actionPerformed(ActionEvent arg0) {
 					sendMessage(((JButton)arg0.getSource()).getText());

@@ -43,23 +43,23 @@ public class AgentMessageParser
 	public static String translateAgentMessage(Identifier id){
 		if(simpleMessages == null){
 			simpleMessages = new HashMap<String, String>();
-			simpleMessages.put("ok", "Ok");
-			simpleMessages.put("unable-to-satisfy", "I couldn't do that");
+			simpleMessages.put("ok", "Ok.");
+			simpleMessages.put("unable-to-satisfy", "I couldn't do that.");
 			simpleMessages.put("unable-to-interpret-message", "I don't understand.");
 			simpleMessages.put("missing-object", "I lost the object I was using. Can you help me find it?");
-			simpleMessages.put("index-object-failure", "I couldn't find the referenced object");
-			simpleMessages.put("no-proposed-action", "I couldn't do that");
-			simpleMessages.put("missing-argument", "I need more information to do that action");
+			simpleMessages.put("index-object-failure", "I couldn't find the referenced object.");
+			simpleMessages.put("no-proposed-action", "I couldn't do that.");
+			simpleMessages.put("missing-argument", "I need more information to do that action.");
 			simpleMessages.put("learn-location-failure", "I don't know where I am.");
 			simpleMessages.put("get-goal-info", "What is the goal?");
-			simpleMessages.put("no-action-context-for-goal", "I don't know what action that goal is for");
+			simpleMessages.put("no-action-context-for-goal", "I don't know what action that goal is for.");
 			simpleMessages.put("get-next-subaction", "What do I do next?");
 			simpleMessages.put("confirm-pick-up", "I have picked up the object.");
 			simpleMessages.put("confirm-put-down", "I have put down the object.");
 			simpleMessages.put("find-success", null);//"SUCCESS");
 			simpleMessages.put("find-failure", null);//"FAILURE");
-			simpleMessages.put("stop-leading", "You can stop following me");
-			simpleMessages.put("retrospective-learning-failure", "I was unable to learn the task policy");
+			simpleMessages.put("stop-leading", "You can stop following me.");
+			simpleMessages.put("retrospective-learning-failure", "I was unable to learn the task policy.");
 			
 			//added for games and puzzles
 			simpleMessages.put("your-turn", "Your turn.");
@@ -69,16 +69,16 @@ public class AgentMessageParser
 			simpleMessages.put("describe-game", "Please setup the game.");
 			simpleMessages.put("describe-puzzle", "Please setup the puzzle.");
 			simpleMessages.put("setup-goal", "Please setup the goal state.");
-			simpleMessages.put("tell-me-go", "Ok, tell me when to go.");
+			simpleMessages.put("tell-me-go", "Tell me when to go.");
 			simpleMessages.put("setup-failure", "Please setup the failure condition.");
-			simpleMessages.put("define-actions", "Can you describe the legal actions?");
+			simpleMessages.put("define-actions", "Please describe the actions, goals, and failure conditions."); //Can you define the actions?
 			simpleMessages.put("describe-action", "What are the conditions of the action.");
-			simpleMessages.put("describe-goal", "Please describe or demonstrate the goal.");
+			simpleMessages.put("describe-goal", "Please describe the goal.");
 			simpleMessages.put("describe-failure", "Please describe the failure condition.");
-			simpleMessages.put("learned-goal", "I have learned the goal.");
-			simpleMessages.put("learned-action", "I have learned the action.");
-			simpleMessages.put("learned-failure", "I have learned the failure condition.");
-			simpleMessages.put("learned-heuristic", "I have learned the heuristic.");
+			simpleMessages.put("learned-goal", "I've learned the goal.");
+			simpleMessages.put("learned-action", "I've learned the action.");
+			simpleMessages.put("learned-failure", "I've learned the failure condition.");
+			simpleMessages.put("learned-heuristic", "I've learned the heuristic.");
 			simpleMessages.put("already-learned-goal", "I know that goal and can recognize it.");
 			simpleMessages.put("already-learned-action", "I know that action and can recognize it.");
 			simpleMessages.put("already-learned-failure", "I know that failure condition and can recognize it.");
@@ -90,7 +90,7 @@ public class AgentMessageParser
 			return null;
 		}
 
-		System.out.println("Got Message:" + type);
+		//System.out.println("Got Message:" + type);
 		if(simpleMessages.containsKey(type)){
 			return simpleMessages.get(type);
 		}
@@ -277,7 +277,7 @@ public class AgentMessageParser
 			type = "ERROR";
 		}
 		
-		String result = "How many " + type + "s are there ";
+		String result = "How many instances of this " + type + " are there, ";
     	String word = SoarUtil.getValueOfAttribute(fieldsId, "word1");
     	
     	if (word != null)
@@ -292,6 +292,15 @@ public class AgentMessageParser
     		//word2 = word2.replaceAll("\\d", "");
     		result += word2;
     	}
+    	
+    	String word3 = SoarUtil.getValueOfAttribute(fieldsId, "word3");
+    	
+    	if (word3 != null)
+    	{
+    		//word2 = word2.replaceAll("\\d", "");
+    		result += " or " + word3;
+    	}
+    	
     	result += "?";
     	
     	return result;
@@ -309,7 +318,7 @@ public class AgentMessageParser
 			type = "ERROR";
 		}
 		
-		String result = "How many " + type + " objects are there ";
+		String result = "How many " + type + " objects are there, ";
     	String word = SoarUtil.getValueOfAttribute(fieldsId, "word1");
     	
     	if (word != null)
@@ -341,19 +350,19 @@ public class AgentMessageParser
 			type = "ERROR";
 		}
 		
-		String result="Having trouble interpreting. Please setup another state containing the " + type + ".";
+		String result="I couldn't determine the correct interpretation in this state. Please setup another state containing the " + type + ".";
     	
     	return result;
     }
 	
 	public static String translateLearnedUnknownWord(Identifier fieldsId){
-	    	String result = "Ok, I have learned ";
+	    	String result = "Ok, I've learned the meaning of '";
 	    	String word = SoarUtil.getValueOfAttribute(fieldsId, "word");
 	    	
 	    	if (word != null)
 	    	{
 	    		word = word.replaceAll("\\d", "");
-	    		result += word;
+	    		result += word + "' for this context.";
 	    	}
 	    	return result;
         }
@@ -393,18 +402,28 @@ public class AgentMessageParser
 	    	}
 	    	return result;
 	}
-
-	public static String translateUnknownDefinedWord(Identifier fieldsId){
-	    	String result = "I cannot satisfy ";
-	    	String word = SoarUtil.getValueOfAttribute(fieldsId, "word");
-	    	if (word != null)
-	    	{
-	    		word = word.replaceAll("\\d", "");
-	    		result += word;
-	    	}
-	    	result+= ". Can you define it?";
-	    	return result;
-        }
+   	public static String translateUnknownDefinedWord(Identifier fieldsId){
+    	String result = "Please describe the meaning of '";
+    	String word = SoarUtil.getValueOfAttribute(fieldsId, "word");
+    	if (word != null)
+    	{
+    		word = word.replaceAll("\\d", "");
+    		result += word;
+    	}
+    	result+= "' in this context.";
+    	return result;
+}
+//	public static String translateUnknownDefinedWord(Identifier fieldsId){
+//	    	String result = "I can't see any ";
+//	    	String word = SoarUtil.getValueOfAttribute(fieldsId, "word");
+//	    	if (word != null)
+//	    	{
+//	    		word = word.replaceAll("\\d", "");
+//	    		result += word;
+//	    	}
+//	    	result+= " objects. Can you give a definition?";
+//	    	return result;
+//    }
 	    	
         public static String translateGeneric(Identifier fieldsId){
     	        String result = null;

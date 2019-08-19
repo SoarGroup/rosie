@@ -1,6 +1,6 @@
 import random, re, string
 
-gamelist=[
+gamelix=[
 "agbfox",
 "Atower5",
 "blocksworld",
@@ -57,6 +57,17 @@ gamelist=[
 "8puzzle",
 "9ksideswap"
 ]
+#gamelist = ["queens","Mens3","xsudoku"]
+#gamelist = ["nsudoku","Holes9","Cannibals"]
+#gamelist = ["agbfox","1nrooks","Tictactoe"]
+gamelist = ["colorken","6nkings","husbands"]
+
+
+# all related
+#gamelist = ["agbfox","Cannibals","husbands"]
+#gamelist = ["colorken","nsudoku","xsudoku"]
+#gamelist = ["Tictactoe","Holes9","Mens3"]
+#gamelist = ["queens","1nrooks","6nkings"]
 
 length = len(gamelist)
 print length
@@ -66,7 +77,7 @@ print x
 createdcount = 0
 #MAKE LOOP here, 
 #while createdcount < (length*7):
-while createdcount < 3000:
+while createdcount < 50:
     #print "trying"
     shuffled = random.sample(gamelist, length)
     

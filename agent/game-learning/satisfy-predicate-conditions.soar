@@ -92,6 +92,7 @@ sp {satisfy-predicate-conditions*propose*finished-learning-predicate
     (<a1> ^parameter-set <p1> ^handle <c1>)
     (<p1> ^set <i1>)
 -->
+  #  (interrupt)
     (<s1> ^operator <o1> + =)
     (<o1> ^name finished-learning-predicate)
 }
@@ -146,10 +147,28 @@ sp {satisfy-predicate-conditions*elaborate-finished-learning*learning-vis
     (state <s1> ^top-state.dialog-context.learning true 
                 ^superstate <ss>
                -^top-state.agent-params.prevent-output-link true
+               -^top-state.dialog-context.number-answer
+               -^top-state.dialog-context.needs-new-state
                 ^top-state.io.output-link <ol>)
     (<s1> ^main-type {<type> << action goal failure >>} ^operator <o> ^<type> <a1>)
-    (<o> ^type <type> -^duplicate-of) 
-    (<a1> ^parameter-set <p1> ^handle <c1> ^final-version true ^nlp-set <nps>)
+    (<o> ^type <type> -^duplicate-of -^name format-conditions)
+    (<a1> ^parameter-set <p1> ^handle <c1> ^nlp-set <nps> ^final-version true)
+-->
+    (<ol> ^learning-vis <lv>)
+    (<lv> ^solutions (deep-copy <p1>) 
+           ^structure (deep-copy <nps>))
+}
+
+sp {satisfy-predicate-conditions*elaborate-finished-learning*learning-vis*new-state
+    (state <s1> ^top-state.dialog-context.learning true 
+                ^superstate <ss>
+               -^top-state.agent-params.prevent-output-link true
+               -^top-state.dialog-context.number-answer
+                ^top-state.dialog-context.needs-new-state
+                ^top-state.io.output-link <ol>)
+    (<s1> ^main-type {<type> << action goal failure >>} ^operator <o> ^<type> <a1>)
+    (<o> ^type <type> -^duplicate-of -^name format-conditions)
+    (<a1> ^parameter-set <p1> ^handle <c1> ^nlp-set <nps>)# ^final-version true)
 -->
     (<ol> ^learning-vis <lv>)
     (<lv> ^solutions (deep-copy <p1>) 
@@ -294,12 +313,14 @@ sp {satisfy-predicate-conditions*elaborate-finished-learning*final-version*multi
   # (<dc> ^number-answer-predicate <num> -) #or remove later..yeah..
 }
 
-# TODO need deep-copy here?
+# TODO need deep-copy here? #...
 sp {satisfy-predicate-conditions*apply*finished-learning*elab-store-link
     (state <s1> ^top-state.dialog-context.learning true
-                ^top-state.dialog-context.learn-link <ll>
+                ^top-state.dialog-context <dc> 
                 ^operator.name finished-learning)
     (<ll> ^predicate-structure)
+    (<dc> ^learn-link <ll>)
+  -{(<dc> ^learn-link {<l2> > <ll>})}#TODO just do test for most recent?
 -->
     (<s1> ^store-link (deep-copy <ll>))
 }
@@ -458,12 +479,13 @@ sp {satisfy-purpose*finished-learning*apply*complete*remove-learn-link
                 ^operator <o>
                -^top-state.new-spelling #HACKy
                 ^top-state.dialog-context <dc>)
-    (<dc> ^learn-link <ll>)
+    (<dc> ^learn-link <ll> -^store-learn-link) ###?
     (<ll> ^argnum <a>) #means built
     (<o> ^name performed-event
          -^event.learning-event.type game-name
          -^event.dialog-event.type process-unknown-word
         -^event.dialog-event.type process-sentence)
+  -{(<dc> ^learn-link {<l2> > <ll>})}#TODO just do test for most recent?
 -->
    (<dc> ^learn-link <ll> -)
 }
@@ -473,10 +495,11 @@ sp {satisfy-purpose*finished-learning*apply*complete*remove-learn-link*alreadyle
                 ^operator <o>
                -^top-state.new-spelling #HACKy
                 ^top-state.dialog-context <dc>)
-    (<dc> ^learn-link <ll>)
+    (<dc> ^learn-link <ll> -^store-learn-link) #???
     (<ll> ^argnum <a> ^final-version true) #means built
     (<o> ^name performed-event
          ^event.learning-event.type game-name)
+  -{(<dc> ^learn-link {<l2> > <ll>})}#TODO just do test for most recent?
 -->
    (<dc> ^learn-link <ll> -)
 }
@@ -526,6 +549,18 @@ sp {interaction*apply*performed-event*game-learning*clean*dialog-contexct*number
     (<dc> ^number-answer <na>)
 -->
     (<dc> ^number-answer <na> -)
+}
+
+sp {interaction*apply*performed-event*game-learning*clean*dialog-contexct*needs-new-state
+    (state <s1> ^name interaction
+                ^top-state <top>
+                ^operator <o>)
+    (<o> ^name performed-event
+         ^event.learning-event.type game)
+    (<top> ^dialog-context <dc>)
+    (<dc> ^needs-new-state <na>)
+-->
+    (<dc> ^needs-new-state <na> -)
 }
 
 sp {interaction*apply*performed-event*game-learning*clean*dialog-contexct*number-answer-predicate
@@ -854,9 +889,9 @@ sp {satisfy-predicate-conditions*elaborate*condition-instance*single-to-set*para
     (<r1> ^set <s2>)
     (<t1> ^nlp-set <n1> ^link <c4> ^primary-rtype single)#^instance <i1> 
     (<n1> ^aname <c2>)
-    -{(state <s1>)
+   -{(state <s1>)
      (<set> -^<something>)}
-   -{(<set> ^object <obj>)
+   -{(<set> ^<object> <obj>) #(<set> ^object <obj>)
     -{(<t1> ^instance <i1>)
       (<i1> ^1 <obj>)}}
    -{(<s3> ^instance {<i8> < <i5>})
@@ -865,6 +900,7 @@ sp {satisfy-predicate-conditions*elaborate*condition-instance*single-to-set*para
     (<s2> ^instance <i1>)
     (<i1> ^1 <set>)
 }
+
 sp {satisfy-predicate-conditions*elaborate*condition-instance*set-single-set*parameters
     (state <s1> ^gtype <c3> ^list <l1> ^<c3> <a1> ^<c1> <t1>)
     (<l1> ^game <g1>)
@@ -884,7 +920,7 @@ sp {satisfy-predicate-conditions*elaborate*condition-instance*set-single-set*par
     (<n1> ^aname <c2>)
     -{(state <s1>)
      (<set> -^<something>)}
-   -{(<set> ^object <obj>)
+   -{(<set> ^<object> <obj>) #(<set> ^object <obj>)
     -{(<t1> ^instance <i2>)
       (<i2> ^1 <obja> ^2 <obj>)}}
    -{(<s3> ^instance {<i8> < <i5>})

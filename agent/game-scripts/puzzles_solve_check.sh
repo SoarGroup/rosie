@@ -158,6 +158,7 @@ c=1
 rm pertaskstats.txt -f
 rm smemuse.txt -f
 
+#declare -a arr=("sudoku" "logi5" "jigsawdoku" "cannibals")
 for game in "${arr[@]}"
 do
 	#for rfile in $game.$game

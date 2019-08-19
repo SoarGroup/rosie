@@ -63,32 +63,32 @@ for infile in glob.glob('*.world'):
 			result.write(" <" + str(chunks[1])+ ">")
 
 	flag = 0
-	index = -1
-	index2 = -1
+	index = 0
+	index2 = 0
 
 	predicates = ""
 	for line in stats.splitlines():
                 if "objid" in line:
                         result.write(")\n")
                         index= index +1
-                        result.write("(" + str(objid[index])+ " ^item-type object ^handle object-" + str(index) + " ^predicates <pr" + str(index) + ">)\n")
+                        result.write("(" + str(objid[index-1])+ " ^item-type object ^handle object-" + str(index) + " ^predicates <pr" + str(index) + ">)\n")
                         result.write("(<pr" + str(index) + "> ")#^visible true ")
                         flag = 1        
                 elif "predicate " in line:
                         if flag == 1:
-                                index=-1
+                                index=0
                         result.write(")\n" + predicates)
                         predicates = ""
                         index= index +1
-                        result.write("(<" + str(predid[index])+ "> ^item-type predicate ^handle " + str(predid[index]) + " ^instance ")
+                        result.write("(<" + str(predid[index-1])+ "> ^item-type predicate ^handle " + str(predid[index-1]) + " ^instance ")
                         flag = 2
                 elif "predicate-set " in line:
                         if flag == 1:
-                                index=-1
+                                index=0
                         result.write(")\n" + predicates)
                         predicates = ""
                         index= index +1
-                        result.write("(<" + str(predid[index])+ "> ^item-type predicate ^handle " + str(predid[index]) + " ^instance ")
+                        result.write("(<" + str(predid[index-1])+ "> ^item-type predicate ^handle " + str(predid[index-1]) + " ^instance ")
                         flag = 3
                 elif line.strip():
                         if flag == 1:

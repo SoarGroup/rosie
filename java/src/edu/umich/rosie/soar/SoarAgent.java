@@ -155,7 +155,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
     }
     
     public void createAgent(){
-        System.out.println("SoarAgent::createAgent()");
+        //System.out.println("SoarAgent::createAgent()");
         // Initialize Soar Agent
         if(config.remoteConnection){
 			agent = kernel.GetAgentByIndex(0);
@@ -357,19 +357,19 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         agent.ExecuteCommandLine("epmem --set database memory");
 
         if(config.smemSource != null){
-        	System.out.println("------------- SOURCING SMEM ---------------");
+        	//System.out.println("------------- SOURCING SMEM ---------------");
             String res = agent.ExecuteCommandLine("source " + config.smemSource);
             parseSmemSourceInfo(res);
         }
 
         if(config.agentSource != null){
-        	System.out.println("---------- SOURCING PRODUCTIONS -----------");
-            System.out.println(config.agentSource);
+        	//System.out.println("---------- SOURCING PRODUCTIONS -----------");
+            //System.out.println(config.agentSource);
         	String res = agent.ExecuteCommandLine("source " + config.agentSource + " -v");
             if(config.verbose){
                 parseAgentSourceInfo(res);
             } else {
-                System.out.println("Sourced Productions");
+                //System.out.println("Sourced Productions");
             }
         }
     }
@@ -384,9 +384,9 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
             if(line.startsWith("Knowledge")){
                 continue;
             }
-            System.out.println(line);
+            //System.out.println(line);
         }
-        System.out.println("Loaded Semantic Memory");
+        //System.out.println("Loaded Semantic Memory");
     }
 
     private void parseAgentSourceInfo(String info){
@@ -409,7 +409,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
             	replaced.add(line.substring(21, line.length()));
             	continue;
             }
-            System.out.println(line);
+            //System.out.println(line);
         }
         System.out.println("DUPLICATE RULES:");
         for(String rule : replaced){

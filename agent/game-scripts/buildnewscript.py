@@ -4,14 +4,15 @@ import random, re, string
 # shuffle,survo,suko,sujiko,kakuro all cause of filled missing bug in goal
 #all in main comment out due to primitive adjacent failure? on movable/jumpable
 
+#gamelist=[
+#"agbfox",
+#"Atower5",
+#"blocksworld",
+#"Blocksworld",
+#"colorken",
+#"Cannibals",
+#"dsokoban",
 gamelist=[
-"agbfox",
-"Atower5",
-"blocksworld",
-"Blocksworld",
-"colorken",
-"Cannibals",
-"dsokoban", 
 "Dshuffle",
 "ektour", #b
 "E8men",
@@ -25,7 +26,7 @@ gamelist=[
 "jmahjong", #b
 "Jsujiko",
 "kenken",
-"Kstackedfrogs", #b
+"Kstackedfrogs", #b ###### failing asks for 24 or 32 what?
 "logi5",
 "Lazystackedfrogs", #b
 "mapcolor",
@@ -61,21 +62,26 @@ gamelist=[
 "8puzzle",
 "9ksideswap"
 ]
-
-##"ubreakthrough",
 #xshuffled = ["Osuko","Jsujiko","Rsurvo","Dshuffle","8puzzle","xsudoku","Ukakuro"]
-shuffled = ["colorken"]
-#Ukakuro"]
-#"Ubreakthrough"]
-#"Lazystackedfrogs"]
-#"8men","frog"]
-#"stackedfrogs"]
+#shuffled = ["colorken","nsudoku","xsudoku"]
+#shuffled = ["Tictactoe","Holes9","Mens3"]
+#shuffled = ["queens","1nrooks","6nkings"]
+#shuffled = ["dsokoban"]
+#shuffled = ["Cannibals","husbands","agbfox"]
+
+shuffled = ["Mens3","queens","xsudoku"]
+
+#new
+#"nbishops"]
+#"Gkingtour"]
+###########################
+########################
 #gamelist=[
 #"kconnect3",
 #"aconnect3",
 #"econnect4",
 #"risk",
-#hexapawn
+#"hexapawn"
 
 print len(gamelist)
 #shuffled = random.sample(gamelist, len(gamelist))
@@ -85,7 +91,7 @@ newscript = ""
 scriptname = ""
 for game in shuffled:
     scriptname += game[0];
-    target = open(game + ".test", 'r')
+    target = open(game + ".test8", 'r')
     newscript+= target.read(20000)
     newscript+= "\n";
     target.close()
@@ -97,7 +103,10 @@ final = ""
 
 for line in newscript.splitlines():
     mylist = line.split(',')
-    for sentence in mylist:
+    for sent in mylist:
+        list1 = list(sent)
+        list1[0] = list1[0].upper()
+        sentence = ''.join(list1)
         if "name of an action" in sentence or "name of the goal" in sentence or "name of the action" in sentence or "name of a failure" in sentence or "name of the failure" in sentence or "name of a goal" in sentence:
             #result.write(sentence + ".\n")
             final += sentence + ".\n";
