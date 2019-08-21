@@ -68,8 +68,8 @@ gamelist=[
 #shuffled = ["queens","1nrooks","6nkings"]
 #shuffled = ["dsokoban"]
 #shuffled = ["Cannibals","husbands","agbfox"]
-
-shuffled = ["Mens3","queens","xsudoku"]
+shuffled = ["husbands"]
+#shuffled = ["Mens3","queens","xsudoku"]
 
 #new
 #"nbishops"]
@@ -91,7 +91,7 @@ newscript = ""
 scriptname = ""
 for game in shuffled:
     scriptname += game[0];
-    target = open(game + ".test8", 'r')
+    target = open(game + ".test", 'r')
     newscript+= target.read(20000)
     newscript+= "\n";
     target.close()
