@@ -42,41 +42,51 @@ sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*not
 #################################################################
 
 # Fully Observable Environments, objects are always in view
-sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*in-view*true*tabletop*domain
+sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*in-view*true*tabletop
    (state <s> ^superstate nil
-              ^agent-params.domain << internal tabletop fetch ai2thor >>
+              ^agent-params.domain << tabletop fetch >>
               ^perception-monitor.object-monitor.object-info <obj-info>)
    (<obj-info> ^status <status>)
 -->
    (<status> ^in-view true)
 }
 
-# Partially Observable Domains, objects are in view if they intersect the view volume
+# Fully Observable Within Room - only the current room is fully visible (essentially just test if on input-link)
 sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*in-view*true
    (state <s> ^superstate nil
-              ^agent-params.domain << magicbot cozmo >>
-              ^perception-monitor.object-monitor.object-info <obj-info>
-              ^perception-monitor.robot-view-filter.result.record <r>)
-   (<obj-info> ^belief-obj.id <bel-id>
+              ^agent-params.domain << internal ai2thor >>
+              ^perception-monitor.object-monitor.object-info <obj-info>)
+   (<obj-info> ^input-link-obj <il-obj>
                ^status <status>)
-   (<r> ^params.b <bel-id>
-        ^value true)
 -->
    (<status> ^in-view true)
 }
 
 sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*in-view*false
    (state <s> ^superstate nil
+              ^agent-params.domain << internal ai2thor >>
+              ^perception-monitor.object-monitor.object-info <obj-info>)
+   (<obj-info> -^input-link-obj <il-obj>
+               ^status <status>)
+-->
+   (<status> ^in-view false)
+}
+
+# Partially Observable Domains, objects are in view if they intersect the view volume
+sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*in-view*from*filter
+   (state <s> ^superstate nil
               ^agent-params.domain << magicbot cozmo >>
               ^perception-monitor.object-monitor.object-info <obj-info>
               ^perception-monitor.robot-view-filter.result.record <r>)
    (<obj-info> ^belief-obj.id <bel-id>
                ^status <status>)
    (<r> ^params.b <bel-id>
-        ^value false)
+        ^value { <value> << true false >> })
 -->
-   (<status> ^in-view false)
+   (<status> ^in-view <value>)
 }
+
+
 
 ##################################################################
 #
@@ -116,6 +126,7 @@ sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*rea
               ^agent-params.domain << fetch tabletop cozmo internal >>
               ^perception-monitor.object-monitor.object-info <obj-info>)
    (<obj-info> ^input-link-obj <il-obj>
+               ^wm-obj.affordance1 grabbable1
                ^status <status>)
    (<status> ^is-visible1 visible1)
 -->
@@ -139,7 +150,8 @@ sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*rea
 sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*not-reachable1
    (state <s> ^superstate nil
               ^perception-monitor.object-monitor.object-info <obj-info>)
-   (<obj-info> ^status <status>)
+   (<obj-info> ^status <status>
+               ^wm-obj.affordance1 grabbable1)
    (<status> -^is-reachable1 reachable1)
 -->
    (<status> ^is-reachable1 not-reachable1)
