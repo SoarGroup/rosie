@@ -1,142 +1,138 @@
+### store-goal: Once the goal is generalized, we insert it into the goal-graph on the TCN
+
+### PROPOSAL: if the goal is generalized but not stored
+
 sp {learn-goal-definition*propose*store-goal
    (state <s> ^name learn-goal-definition
-              ^goal-structure <goal>
+              ^goal-node <goal>
               ^generalized-goal <gpreds>
              -^stored <gpred>)
 -->
    (<s> ^operator <o> + <)
    (<o> ^name store-goal
-        ^goal-structure <goal>
+        ^goal-node <goal>
         ^goal-predicates <gpreds>)
 }
 
-sp {learn-goal-definition*apply*store-goal*add*goal-structure*to*tcn
+### ELABORATIONS
+
+sp {learn-goal-definition*elaborate*store-goal*goal-conditions
+   (state <s> ^name learn-goal-definition
+              ^operator <o> +
+              ^generalize-task-argument <arg>)
+   (<o> ^name store-goal)
+   (<arg> ^arg-type predicate-set
+          ^type goal-conditions
+          ^general-arg-rep <conds>)
+-->
+   (<o> ^goal-conditions <conds>)
+}
+
+### APPLICATION
+
+# If there is no goal-graph on the TCN, create one
+sp {learn-goal-definition*apply*store-goal*add*goal-graph*TCN
    (state <s> ^name learn-goal-definition
               ^operator <o>
               ^task-concept-network <tcn>
               ^smem.command <cmd>)
    (<o> ^name store-goal
-        ^goal-structure <goal>)
-   (<tcn> -^goal)
+        ^goal-node <goal>)
+   (<tcn> -^goal-graph)
 -->
-   (<tcn> ^goal <goal>)
-   (<cmd> ^store <tcn>)
+   (<tcn> ^goal-graph <graph>)
+   (<graph> ^first <goal> ^goal <goal>)
+   (<goal> ^next none)
+   (<cmd> ^store <tcn> <graph> <goal>)
 }
 
-sp {learn-goal-definition*apply*store-goal*create*subgoal
+# If there is already a goal-graph, add the new goal-node to it
+sp {learn-goal-definition*apply*store-goal*add*goal-node*to*goal-graph
    (state <s> ^name learn-goal-definition
               ^operator <o>
-              ^task-concept-network.goal <goal>
+              ^task-concept-network.goal-graph <graph>
               ^smem.command <cmd>)
    (<o> ^name store-goal
-        ^goal-predicates <gpreds>)
-   (<goal> -^subgoal-count)
+        ^goal-node <goal>)
 -->
-   (<goal> ^subgoal-count 1
-           ^1 <subgoal1>)
-   (<subgoal1> ^handle (make-constant-symbol |tasksubgoal|))
-   (<cmd> ^store <goal> <subgoal1>)
+   (<graph> ^goal <goal>)
+   (<cmd> ^store <graph>)
 }
 
+# If there is a current-goal, insert this new node after it
+sp {learn-goal-definition*apply*store-goal*insert*goal-node*after*current-goal
+   (state <s> ^name learn-goal-definition
+              ^operator <o>
+              ^smem.command <cmd>
+              ^current-goal <cur-goal>)
+   (<o> ^name store-goal
+        ^goal-node <goal>)
+   (<cur-goal> ^next <next>)
+-->
+   (<cur-goal> ^next <next> -
+               ^next <goal>)
+   (<goal> ^next <next>)
+   (<cmd> ^store <cur-goal> <goal>)
+}
+
+# Add the generalized goal predicates onto the goal-node
 sp {learn-goal-definition*apply*store-goal*add*predicates
    (state <s> ^name learn-goal-definition
               ^operator <o>
-              ^task-concept-network.goal.{1} <subgoal1>
               ^smem.command <cmd>)
    (<o> ^name store-goal
+        ^goal-node <goal>
         ^goal-predicates <gpreds>)
 -->
-   (<subgoal1> ^predicates <gpreds>)
-   (<cmd> ^store <subgoal1> <gpreds>)
+   (<goal> ^predicates <gpreds>)
+   (<cmd> ^store <goal> <gpreds>)
    (<s> ^stored <gpreds>)
 }
 
-sp {learn-goal-definition*apply*store-goal*predicate
+# Add the generalized goal conditions onto the goal-node
+sp {learn-goal-definition*apply*store-goal*add*conditions
    (state <s> ^name learn-goal-definition
               ^operator <o>
               ^smem.command <cmd>)
    (<o> ^name store-goal
-        ^goal-predicates.{ <pred-num> << 1 2 3 4 5 >> } <pred>)
+        ^goal-node <goal>
+        ^goal-conditions <conds>)
 -->
-   (<cmd> ^store <pred>)
+   (<goal> ^conditions <conds>)
+   (<cmd> ^store <goal> <conds>)
 }
 
-sp {learn-goal-definition*apply*store-goal*predicate*arg
+
+### Store each goal predicate, making sure to get the entire substructure
+
+sp {learn-goal-definition*apply*store-goal*store*predicate*level1
    (state <s> ^name learn-goal-definition
               ^operator <o>
               ^smem.command <cmd>)
    (<o> ^name store-goal
-        ^goal-predicates.<pred-num>.{ << id 1 2 3 4 5 >> } <arg>)
+        ^{ << goal-predicates goal-conditions >> }.{ << 1 2 3 4 5 >> } <val>)
 -->
-   (<cmd> ^store <arg>)
+   (<cmd> ^store <val>)
 }
 
-sp {learn-goal-definition*apply*store-goal*predicate*arg*default
+sp {learn-goal-definition*apply*store-goal*store*predicate*level2
    (state <s> ^name learn-goal-definition
               ^operator <o>
               ^smem.command <cmd>)
    (<o> ^name store-goal
-        ^goal-predicates.<pred-num>.{ << id 1 2 3 4 5 >> }.default <def>)
+        ^{ << goal-predicates goal-conditions >> }.<pnum>.{ << id 1 2 3 4 5 >> } <val>)
 -->
-   (<cmd> ^store <def>)
+   (<cmd> ^store <val>)
 }
 
-sp {learn-goal-definition*apply*store-goal*predicate*arg*imagined
+sp {learn-goal-definition*apply*store-goal*store*predicate*level3
    (state <s> ^name learn-goal-definition
               ^operator <o>
               ^smem.command <cmd>)
    (<o> ^name store-goal
-        ^goal-predicates.<pred-num>.{ << id 1 2 3 4 5 >> }.imagined <img>)
+        ^{ << goal-predicates goal-conditions >> }.<pnum>.<anum>.{ << default imagined >> } <val>)
 -->
-   (<cmd> ^store <img>)
+   (<cmd> ^store <val>)
 }
 
-sp {learn-goal-definition*apply*store-goal*conditions
-   (state <s> ^name learn-goal-definition
-              ^operator <o>
-              ^smem.command <cmd>)
-   (<o> ^name store-goal
-        ^goal-predicates.conditions <conds>)
--->
-   (<cmd> ^store <conds>)
-}
 
-sp {learn-goal-definition*apply*store-goal*condition*predicate
-   (state <s> ^name learn-goal-definition
-              ^operator <o>
-              ^smem.command <cmd>)
-   (<o> ^name store-goal
-        ^goal-predicates.conditions.{ << 1 2 3 4 5 >> } <pred>)
--->
-   (<cmd> ^store <pred>)
-}
-
-sp {learn-goal-definition*apply*store-goal*condition*predicate*arg
-   (state <s> ^name learn-goal-definition
-              ^operator <o>
-              ^smem.command <cmd>)
-   (<o> ^name store-goal
-        ^goal-predicates.conditions.<pred-num>.{ << id 1 2 3 4 5 >> } <arg>)
--->
-   (<cmd> ^store <arg>)
-}
-
-sp {learn-goal-definition*apply*store-goal*condition*predicate*arg*default
-   (state <s> ^name learn-goal-definition
-              ^operator <o>
-              ^smem.command <cmd>)
-   (<o> ^name store-goal
-        ^goal-predicates.conditions.<pred-num>.{ << id 1 2 3 4 5 >> }.default <def>)
--->
-   (<cmd> ^store <def>)
-}
-
-sp {learn-goal-definition*apply*store-goal*condition*predicate*arg*imagined
-   (state <s> ^name learn-goal-definition
-              ^operator <o>
-              ^smem.command <cmd>)
-   (<o> ^name store-goal
-        ^goal-predicates.conditions.<pred-num>.{ << id 1 2 3 4 5 >> }.imagined <img>)
--->
-   (<cmd> ^store <img>)
-}
