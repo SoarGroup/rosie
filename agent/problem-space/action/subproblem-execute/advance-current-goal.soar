@@ -1,0 +1,111 @@
+# This operator will advance the current-goal on the task-operator
+#   when the current goal in the goal-graph has been completed
+
+### PROPOSALS
+
+# For a new task, advance to the first goal
+sp {subproblem*execute*propose*advance-current-goal*first
+   (state <s> ^problem-space.subproblem execute
+              ^task-operator <task-op>)
+   (<task-op> ^current-goal first)
+-->
+   (<s> ^operator <o> + > =)
+   (<o> ^name advance-current-goal
+        ^current-goal first)
+}
+
+# When the current goal is satisfied, advance to the next
+sp {subproblem*execute*propose*advance-current-goal
+   (state <s> ^problem-space.subproblem execute
+              ^task-operator <task-op>
+              ^desired <des>)
+   (<des> ^handle <goal-handle>
+          ^satisfied true)
+   (<task-op> ^current-goal <goal-handle>)
+-->
+   (<s> ^operator <o> + > =)
+   (<o> ^name advance-current-goal
+        ^current-goal <goal-handle>)
+}
+
+### ELABORATE next-goal
+
+# If current-goal=first, Choose the first goal from the goal-graph
+sp {subproblem*execute*elaborate*advance-current-goal*first
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o> +
+              ^task-concept-network.goal-graph.first.handle <goal-handle>)
+   (<o> ^name advance-current-goal
+        ^current-goal first)
+-->
+   (<o> ^next-goal <goal-handle>)
+}
+
+# Otherwise, follow the current goal's next pointer
+sp {subproblem*execute*elaborate*advance-current-goal*next
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o> +
+              ^task-concept-network.goal-graph.goal <g>)
+   (<o> ^name advance-current-goal
+        ^current-goal <goal-handle>)
+   (<g> ^handle <goal-handle>
+        ^next.handle <next-handle>)
+-->
+   (<o> ^next-goal <next-handle>)
+}
+
+# If the current goal has next=complete, we make current-goal=complete
+sp {subproblem*execute*elaborate*advance-current-goal*complete
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o> +
+              ^task-concept-network.goal-graph.goal <g>)
+   (<o> ^name advance-current-goal
+        ^current-goal <goal-handle>)
+   (<g> ^handle <goal-handle>
+        ^next complete)
+-->
+   (<o> ^next-goal complete)
+}
+
+### APPLICATION
+
+sp {subproblem*execute*apply*advance-current-goal*change*current-goal
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o>
+              ^task-operator <task-op>)
+   (<o> ^name advance-current-goal
+        ^current-goal <cur-handle>
+        ^next-goal <next-handle>)
+   (<task-op> ^current-goal <cur-handle>)
+-->
+   (<task-op> ^current-goal <cur-handle> -
+              ^current-goal <next-handle>)
+}
+
+sp {subproblem*execute*apply*advance-current-goal*remove*performed-subtask
+   (state <s> ^problem-space.subproblem execute
+              ^operator.name advance-current-goal
+              ^task-operator <task-op>)
+   (<task-op> ^performed <sub-h>)
+-->
+   (<task-op> ^performed <sub-h> -)
+}
+
+## 
+#sp {subproblem*execute*propose*advance-current-goal*unsatisfied*conditional*action
+#   (state <s> ^problem-space.subproblem execute
+#              ^evaluate-subtask-conditions.instantiation <i>
+#              ^task-concept-network.goal <g>
+#              ^task-operator <task-op>)
+#   (<g> ^goal-count <c>
+#        ^{ <g-num> < <c> }.handle <goal-handle>)
+#   (<task-op> ^current-goal <goal-handle>)
+#   (<i> -^satisfied true)
+#-->
+#   (<s> ^operator <o> + > =)
+#   (<o> ^name advance-current-goal
+#        ^next-goal-num (+ <g-num> 1))
+#}
+
+
+
