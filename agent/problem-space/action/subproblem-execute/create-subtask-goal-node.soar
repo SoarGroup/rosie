@@ -1,0 +1,102 @@
+# Create a new goal node if there are no goals
+sp {subproblem*execute*propose*create-subtask-goal-node*first
+   (state <s> ^problem-space.subproblem execute
+              ^task-operator.current-goal first
+             -^subtask-goal-node
+              ^new-task-segment.task-operator.subtask-handle <sub-handle>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name create-subtask-goal-node
+        ^sub-handle <sub-handle>
+        ^goal-node <node>
+        ^goal-handle (make-constant-symbol |taskgoal|))
+}
+
+# Create a new goal node if there is no next goal
+sp {subproblem*execute*propose*create-subtask-goal-node*no*next
+   (state <s> ^problem-space.subproblem execute
+              ^task-operator.current-goal <goal-handle>
+              ^desired <des>
+             -^subtask-goal-node
+              ^task-concept-network.goal-graph.goal <goal>
+              ^new-task-segment.task-operator.subtask-handle <sub-handle>)
+   (<des> ^handle <goal-handle>
+          ^satisfied true)
+   (<goal> ^handle <goal-handle>
+           ^next none)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name create-subtask-goal-node
+        ^sub-handle <sub-handle>
+        ^goal-node <node>
+        ^goal-handle (make-constant-symbol |taskgoal|))
+}
+
+
+# Create the goal node structure
+sp {subproblem*execute*apply*create-subtask-goal-node*create*subtask-goal-node
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o>
+              ^smem.command <cmd>)
+   (<o> ^name create-subtask-goal-node
+        ^sub-handle <sub-handle>
+        ^goal-node <node>
+        ^goal-handle <goal-handle>)
+-->
+   (<s> ^subtask-goal-node <node>)
+   (<node> ^item-type task-goal
+           ^handle <goal-handle>
+           ^predicates <preds>)
+   (<preds>  ^pred-count 1
+             ^1 <pred1>)
+   (<pred1> ^type subtask
+            ^subtask-handle <sub-handle>)
+   (<cmd> ^store <node> <preds> <pred1>)
+}
+
+# If there is no goal-graph on the TCN, create one
+sp {subproblem*execute*apply*create-subtask-goal-node*add*goal-graph*TCN
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o>
+              ^task-concept-network <tcn>
+              ^smem.command <cmd>)
+   (<o> ^name create-subtask-goal-node
+        ^goal-node <goal>)
+   (<tcn> -^goal-graph)
+-->
+   (<tcn> ^goal-graph <graph>)
+   (<graph> ^first <goal> ^goal <goal>)
+   (<goal> ^next none)
+   (<cmd> ^store <tcn> <graph>)
+}
+
+# If there is already a goal-graph, add the new goal-node to it
+sp {subproblem*execute*apply*create-subtask-goal-node*add*goal-node*to*goal-graph
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o>
+              ^task-concept-network.goal-graph <graph>
+              ^smem.command <cmd>)
+   (<o> ^name create-subtask-goal-node
+        ^goal-node <goal>)
+-->
+   (<graph> ^goal <goal>)
+   (<cmd> ^store <graph>)
+}
+
+# If there is a current-goal, insert this new node after it
+sp {subproblem*execute*apply*create-subtask-goal-node*insert*goal-node*after*current-goal
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o>
+              ^smem.command <cmd>
+              ^task-concept-network.goal-graph.goal <cur-goal>
+              ^task-operator.current-goal <goal-handle>)
+   (<o> ^name create-subtask-goal-node
+        ^goal-node <goal>)
+   (<cur-goal> ^handle <goal-handle>
+               ^next <next>)
+-->
+   (<cur-goal> ^next <next> -
+               ^next <goal>)
+   (<goal> ^next <next>)
+   (<cmd> ^store <cur-goal>)
+}

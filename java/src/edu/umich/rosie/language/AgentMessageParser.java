@@ -51,7 +51,7 @@ public class AgentMessageParser
 			simpleMessages.put("no-proposed-action", "I couldn't do that");
 			simpleMessages.put("missing-argument", "I need more information to do that action");
 			simpleMessages.put("learn-location-failure", "I don't know where I am.");
-			simpleMessages.put("get-goal-info", "What is the goal?");
+			simpleMessages.put("get-next-goal", "What is the next goal or subtask?");
 			simpleMessages.put("no-action-context-for-goal", "I don't know what action that goal is for");
 			simpleMessages.put("get-next-subaction", "What do I do next?");
 			simpleMessages.put("confirm-pick-up", "I have picked up the object.");
