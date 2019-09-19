@@ -69,6 +69,7 @@ sp {subproblem*execute*elaborate*advance-current-goal*complete
 
 ### APPLICATION
 
+# Change the current-goal on the task-operator
 sp {subproblem*execute*apply*advance-current-goal*change*current-goal
    (state <s> ^problem-space.subproblem execute
               ^operator <o>
@@ -82,6 +83,7 @@ sp {subproblem*execute*apply*advance-current-goal*change*current-goal
               ^current-goal <next-handle>)
 }
 
+# If any subtasks were marked as performed, remove those flags from the task-operator
 sp {subproblem*execute*apply*advance-current-goal*remove*performed-subtask
    (state <s> ^problem-space.subproblem execute
               ^operator.name advance-current-goal
@@ -94,11 +96,30 @@ sp {subproblem*execute*apply*advance-current-goal*remove*performed-subtask
 # If there is no next goal, ask the instructor
 sp {subproblem*execute*apply*advance-current-goal*no*next-goal*initiate-interaction
    (state <s> ^problem-space.subproblem execute
-              ^operator <o>)
+              ^operator <o>
+             -^current-task-segment.finish-task true)
    (<o> ^name advance-current-goal
-        -^next-goal)
+       -^next-goal)
 -->
    (<s> ^initiate-interaction ask-for-goal)
+}
+
+# If there is no next goal but we were told "You are done" (task-finished true)
+#    we update the goal in the goal-graph to have ^next complete to mark the task endpoint
+sp {subproblem*execute*apply*advance-current-goal*mark*current-goal*next*complete
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o>
+              ^task-concept-network.goal-graph.goal <cur-goal>
+              ^current-task-segment.finish-task true
+              ^smem.command <cmd>)
+   (<o> ^name advance-current-goal
+        ^current-goal <goal-handle>)
+   (<cur-goal> ^handle <goal-handle>
+               ^next none)
+-->
+   (<cur-goal> ^next none -
+               ^next complete)
+   (<cmd> ^store <cur-goal>)
 }
 
 ## 
