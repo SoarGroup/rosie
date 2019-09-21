@@ -1,0 +1,73 @@
+# Insert the new procedural goal-node into the goal-graph before the current-goal
+
+sp {push-procedural-subgoal*propose*add-node-to-goal-graph
+   (state <s> ^name push-procedural-subgoal
+              ^task-concept-network.goal-graph <graph>
+              ^subtask-goal-node <goal>)
+   (<graph> -^goal <goal>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name add-node-to-goal-graph
+        ^goal-graph <graph>
+        ^goal-node <goal>)
+}
+
+sp {push-procedural-subgoal*elaborate*add-node-to-goal-graph*current-goal
+   (state <s> ^name push-procedural-subgoal
+              ^operator <o> +
+              ^task-operator.current-goal <cur-handle>
+              ^task-concept-network.goal-graph.goal <cur-goal>)
+   (<o> ^name add-node-to-goal-graph)
+   (<cur-goal> ^handle <cur-handle>)
+-->
+   (<o> ^current-goal <cur-goal>)
+}
+
+# Add the goal node to the goal-graph before the current goal
+sp {push-procedural-subgoal*apply*add-node-to-goal-graph
+   (state <s> ^name push-procedural-subgoal
+              ^operator <o>)
+   (<o> ^name add-node-to-goal-graph
+        ^goal-graph <graph>
+        ^goal-node <goal>
+        ^current-goal <cur-goal>)
+-->
+   (<graph> ^goal <goal>)
+   (<goal> ^next <cur-goal>)
+
+   (<s> ^to-store <graph>)
+}
+
+# If the current-goal is the first goal, change the first pointer to the new goal node
+sp {push-procedural-subgoal*apply*add-node-to-goal-graph*change*first
+   (state <s> ^name push-procedural-subgoal
+              ^operator <o>)
+   (<o> ^name add-node-to-goal-graph
+        ^goal-graph <graph>
+        ^goal-node <goal>
+        ^current-goal <cur>)
+   (<graph> ^first <cur>)
+-->
+   (<graph> ^first <cur> -
+            ^first <goal>)
+}
+
+# If any other goals point to the current-goal, insert the new goal node between them
+sp {push-procedural-subgoal*apply*add-node-to-goal-graph*insert*before*current-goal
+   (state <s> ^name push-procedural-subgoal
+              ^operator <o>)
+   (<o> ^name add-node-to-goal-graph
+        ^goal-graph <graph>
+        ^goal-node <goal>
+        ^current-goal <cur>)
+   (<graph> ^goal <prev>
+            ^goal <cur>)
+   (<prev> ^next <cur>)
+-->
+   (<prev> ^next <cur> -
+           ^next <goal>)
+   
+   (<s> ^to-store <prev>)
+}
+
+
