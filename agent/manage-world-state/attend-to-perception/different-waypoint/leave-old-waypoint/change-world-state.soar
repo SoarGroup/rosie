@@ -1,0 +1,86 @@
+sp {leave-old-waypoint*propose*change-world-state
+   (state <s> ^name leave-old-waypoint)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name change-world-state)
+}
+
+# Remove current-waypoint from robot
+sp {leave-old-waypoint*apply*change-world-state*remove*old-waypoint
+   (state <s> ^name leave-old-waypoint
+              ^operator.name change-world-state
+              ^old-waypoint <wp>
+              ^top-state.world.robot <rob>)
+   (<rob> ^current-waypoint <wp>)
+-->
+   (<rob> ^current-waypoint <wp> -)
+}
+
+# Remove current-location from robot
+sp {leave-old-waypoint*apply*change-world-state*remove*old-location
+   (state <s> ^name leave-old-waypoint
+              ^operator.name change-world-state
+              ^old-location <loc>
+              ^top-state.world.robot <rob>)
+   (<rob> ^current-location <loc>)
+-->
+   (<rob> ^current-location <loc> -)
+}
+
+# Delete everything from the world (note that task objects will not be deleted)
+sp {leave-old-waypoint*elaborate*change-world-state*delete*old-location
+   (state <s> ^name leave-old-waypoint
+              ^operator <o> +
+              ^top-state.perception-monitor.object-monitor.object-info <obj-info>
+              ^top-state.world.objects.object <obj>)
+   (<o> ^name change-world-state)
+   (<obj-info> ^wm-obj <obj>)
+-->
+   (<o> ^delete-object <obj-info>)
+}
+        
+# Delete all objects from working memory
+sp {leave-old-waypoint*apply*change-world-state*attend*delete-object
+   (state <s> ^name leave-old-waypoint
+              ^operator.name change-world-state
+              ^top-state.perception-monitor.changes <chgs>
+              ^confirmed-object <obj>
+              ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
+   (<obj-info> ^wm-obj <obj>)
+   (<obj> -^task-object true
+          -^predicates.arm-status grabbed)
+-->
+   (<chgs> ^change <c>)
+   (<c> ^type delete-object
+        ^object-info <obj-info>)
+}
+
+# Remove svs filters from command
+sp {leave-old-waypoint*apply*change-world-state*cleanup*svs*filters
+   (state <s> ^name leave-old-waypoint
+              ^operator.name change-world-state
+              ^{ <type> << position-filter rotation-filter scale-filter >> } <filter>
+              ^top-state.svs.command <cmd>)
+   (<cmd> ^extract_once <filter>)
+-->
+   (<cmd> ^extract_once <filter> -)
+}
+
+# SCANOP
+#sp {leave-old-waypoint*apply*change-world-state*remove*scanned*flags
+#   (state <s> ^name leave-old-waypoint
+#              ^operator.name change-world-state
+#              ^top-state.world.robot <rob>)
+#   (<rob> ^{ <att> << havent-scanned scanned >> } <loc> )
+#-->
+#   (<rob> ^<att> <loc> -)
+#}
+   
+sp {leave-old-waypoint*remove*any*metric*info
+   (state <s> ^name leave-old-waypoint
+              ^operator.name change-world-state
+              ^top-state.world.objects.object <obj>)
+   (<obj> ^{ <att> << position rotation scale >> } <val>)
+-->
+   (<obj> ^<att> <val> -)
+}
