@@ -13,6 +13,93 @@ sp {task-utils*construct-task-argument*elaborate*construct-task-argument*object*
 }
 
 
+### add-category-info
+###    If there is no root-category, retrieve it and all supercategories
+
+# retrieve the smem info about the root-category
+sp {task-utils*construct-task-argument*elaborate*smem-query*category-info
+   (state <s> ^construct-task-argument <arg>
+             -^category-info.handle <cat>)
+   (<arg> ^arg-type object
+          ^source <src-obj>)
+   (<src-obj> -^object-instance true
+              -^root-category
+               ^predicates.category <cat>)
+-->
+   (<s> ^smem-query <q>)
+   (<q> ^cue.handle <cat>
+        ^destination <s>
+        ^result-name category-info
+        ^depth 8)
+}
+
+# Propose an operator to copy the categories from the smem category-info
+sp {task-utils*construct-task-argument*propose*add-category-info
+   (state <s> ^construct-task-argument <arg>
+              ^category-info <lti>)
+   (<arg> ^arg-type object
+          ^source <src-obj>)
+   (<src-obj> -^object-instance true
+              -^root-category
+               ^predicates.category <cat>)
+   (<lti> ^handle <cat>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name add-category-info
+        ^argument <arg>
+        ^object <src-obj>
+        ^category <lti>
+        ^root-category <lti>)
+}
+
+# Elaborate super categories onto the operator 
+sp {task-utils*construct-task-argument*elaborate*category-info*supercategory
+   (state <s> ^construct-task-argument <arg>
+              ^operator <o> +)
+   (<o> ^name add-category-info
+        ^argument <arg>
+        ^category.supercategory <supercat>)
+   (<supercat> ^handle <> none1)
+-->
+   (<o> ^category <supercat>)
+}
+
+# Copy the root-category
+sp {task-utils*construct-task-argument*apply*add-category-info*root-category
+   (state <s> ^construct-task-argument <arg>
+              ^operator <o>)
+   (<o> ^name add-category-info
+        ^argument <arg>
+        ^object <src-obj>
+        ^root-category.handle <cat>)
+-->
+   (<src-obj> ^root-category <cat>)
+}
+
+# Copy the other categories
+sp {task-utils*construct-task-argument*apply*add-category-info*copy*category
+   (state <s> ^construct-task-argument <arg>
+              ^operator <o>)
+   (<o> ^name add-category-info
+        ^argument <arg>
+        ^object.predicates <preds>
+        ^category.handle <cat>)
+-->
+   (<preds> ^category <cat>)
+}
+
+# Copy affordances
+sp {task-utils*construct-task-argument*apply*add-category-info*copy*affordance
+   (state <s> ^construct-task-argument <arg>
+              ^operator <o>)
+   (<o> ^name add-category-info
+        ^argument <arg>
+        ^object.predicates <preds>
+        ^category.affordance1.handle <aff>)
+-->
+   (<preds> ^affordance1 <aff>)
+}
+
 ### If it is an smem-object, convert it into a world object representation
 # using construct-world-object (Implemented in manage-world-state/construct-world-object.soar)
 sp {task-utils*construct-task-argument*propose*construct-world-object*from*smem
