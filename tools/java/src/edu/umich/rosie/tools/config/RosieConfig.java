@@ -104,11 +104,11 @@ public class RosieConfig {
 	public File objectInfoFile;
 
 	// internal-world-file = <filename> [OPTIONAL]
-	//     A file inside agent/manage-world-state/world/internal-worlds used to initialize the top-state world
+	//     A file inside agent/manage-world-state/internal-worlds used to initialize the top-state world
 	public File internalWorldFile;
 
 	// waypoint-map-file = <filename> [OPTIONAL]
-	//     A file inside agent/manage-world-state/world/maps which defines a waypoint map used for navigation
+	//     A file inside agent/manage-world-state/waypoint-maps which defines a waypoint map used for navigation
 	public File waypointMapFile;
 
 	// Any other properties in the file will be put into the created rosie.config file
@@ -258,14 +258,14 @@ public class RosieConfig {
 		
 		// internal-world-file
 		if (props.containsKey("internal-world-file")){
-			this.internalWorldFile = new File(this.rosieHome + "/agent/manage-world-state/simulate-perception/internal-worlds/" + props.getProperty("internal-world-file"));
+			this.internalWorldFile = new File(this.rosieHome + "/agent/manage-world-state/internal-worlds/" + props.getProperty("internal-world-file"));
 		} else {
 			this.internalWorldFile = null;
 		}
 		
 		// waypoint-map-file
 		if (props.containsKey("waypoint-map-file")){
-			this.waypointMapFile = new File(this.rosieHome + "/agent/manage-world-state/world/maps/" + props.getProperty("waypoint-map-file"));
+			this.waypointMapFile = new File(this.rosieHome + "/agent/manage-world-state/waypoint-maps/" + props.getProperty("waypoint-map-file"));
 		} else {
 			this.waypointMapFile = null;
 		}
