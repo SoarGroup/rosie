@@ -118,14 +118,13 @@ public class ChatPanel extends JPanel implements IMessagePasser.IMessageListener
 			
 			fullMessage += message.message + "\n";
 
-			try{
-				int origLength = chatDoc.getLength();
-				System.out.println(origLength);
-				chatDoc.insertString(origLength, fullMessage, msgStyle);
-			} catch (BadLocationException e){
-				// Should never encounter this
-				System.err.println("Failed to add message to chat window");
-			}
+			//try{
+			//	int origLength = chatDoc.getLength();
+			//	chatDoc.insertString(origLength, fullMessage, msgStyle);
+			//} catch (BadLocationException e){
+			//	// Should never encounter this
+			//	System.err.println("Failed to add message to chat window");
+			//}
 	
 			// AM: Will make it auto scroll to bottom
 			int end = chatDoc.getLength();
