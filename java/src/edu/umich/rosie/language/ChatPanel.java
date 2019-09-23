@@ -117,9 +117,10 @@ public class ChatPanel extends JPanel implements IMessagePasser.IMessageListener
 			}
 			
 			fullMessage += message.message + "\n";
-			
+
 			try{
 				int origLength = chatDoc.getLength();
+				System.out.println(origLength);
 				chatDoc.insertString(origLength, fullMessage, msgStyle);
 			} catch (BadLocationException e){
 				// Should never encounter this
