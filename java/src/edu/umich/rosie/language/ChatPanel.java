@@ -117,6 +117,7 @@ public class ChatPanel extends JPanel implements IMessagePasser.IMessageListener
 			}
 			
 			fullMessage += message.message + "\n";
+			System.out.println(fullMessage);
 
 			//try{
 			//	int origLength = chatDoc.getLength();

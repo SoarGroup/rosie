@@ -39,6 +39,17 @@ sp {op_put-down1*reject*send-put-down-command*already*sent
    (<s> ^operator <o> -)
 }
 
+### model send-put-down-command ###
+
+sp {op_put-down1*internal*best*pref*send-put-down-command
+   (state <s> ^name op_put-down1
+              ^problem-space.execution-type internal
+              ^operator <o> +)
+   (<o> ^name send-put-down-command)
+-->
+   (<s> ^operator <o> >)
+}
+
 sp {op_put-down1*internal*apply*send-put-down-command*change*arm-status
    (state <s> ^name op_put-down1
               ^problem-space.execution-type internal
@@ -54,15 +65,20 @@ sp {op_put-down1*internal*apply*send-put-down-command*change*arm-status
 sp {op_put-down1*internal*apply*send-put-down-command*add*predicate
    (state <s> ^name op_put-down1
               ^problem-space.execution-type internal
+              ^predicate-handle <ph>
               ^operator <o>
               ^world <w>)
    (<o> ^name send-put-down-command
-        ^object.predicates <preds>)
-   (<preds> ^arm-status grabbed)
+        ^object <obj>
+        ^destination <dest>)
+   (<w> ^predicates.predicate <pred>)
+   (<pred> ^handle <ph>)
 -->
-   (<preds> ^arm-status grabbed -
-            ^arm-status not-grabbed)
+   (<pred> ^instance <i>)
+   (<i> ^1 <obj> ^2 <dest>)
 }
+
+### ai2thor ###
 
 sp {op_put-down1*external*apply*send-put-down-command*ai2thor
    (state <s> ^name op_put-down1
@@ -114,3 +130,44 @@ sp {op_put-down1*external*apply*send-put-down-command*cozmo*current
    (<pdo> ^item-type output-command)
    (<seg> ^<cmd-name> <pdo>)
 }
+
+### magicbot ###
+
+sp {op_put-down1*external*apply*send-put-down-command*magicbot
+   (state <s> ^name op_put-down1
+              ^problem-space.execution-type external
+              ^agent-params.domain magicbot
+              ^operator <o>
+              ^io.output-link <ol>
+              ^current-task-segment <seg>)
+   (<o> ^name send-put-down-command
+        ^object.perception-id <perc-id>
+        ^command-name <cmd-name>)
+-->
+   (<ol> ^do-control-law <cmd>)
+   (<cmd> ^name put-down
+          ^item-type output-command
+          ^termination-condition <term>)
+   (<term> ^name holding
+           ^parameters <params>)
+   (<params> ^object-id (int <perc-id>)
+             ^negated true)
+
+   (<seg> ^<cmd-name> <cmd>)
+}
+
+sp {execute*op_put-down1*apply*send-put-down-command*add*in*current-location
+   (state <s> ^name op_put-down1
+              ^problem-space.execution-type external
+              ^operator.name send-put-down-command
+              ^held-object <obj>
+              ^world.robot.current-location <loc>
+              ^world.predicates.predicate <pred>)
+   (<pred> ^handle in1)
+   -{ (<pred> ^instance <i>)
+      (<i> ^1 <obj> ^2 <loc>) }
+-->
+   (<pred> ^instance <i>)
+   (<i> ^1 <obj> ^2 <loc>)
+}
+

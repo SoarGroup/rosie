@@ -1,4 +1,3 @@
-
 # If we were told to go to an object (^target-object <obj>)
 # Then find the object's position and drive to a position 1.5 meteres in front of it
 
@@ -6,44 +5,91 @@ sp {op_approach*elaborate*svs-filter*node_position*object
    (state <s> ^name op_approach1
               ^problem-space.execution-type external
               ^target-object.svs-obj.id <obj-id>
-              ^top-state.svs.command <cmd>)
+               ^top-state.svs.command <cmd>)
 -->
-    (<cmd> ^extract_once <dist>)
-    (<dist> ^type distance
-           ^a <robot>
-           ^b <obj>
-           ^distance_type hull)
-    (<robot> ^type node
-             ^id robot_body)
+    (<cmd> ^extract <pos>)
+    (<pos> ^type node_position
+            ^a <obj>)
     (<obj> ^type node
            ^id <obj-id>)
-
-   (<s> ^distance_filter <dist>)
+    (<s> ^object-position-filter <pos>)
 }
 
-sp {op_approach*elaborate*object-distance*from*filter*result
+sp {op_approach*elaborate*object-position*from*filter
    (state <s> ^name op_approach1
-              ^distance_filter.result.record.value <d>)
+              ^object-position-filter.result.record.value <p>)
 -->
-   (<s> ^target-object-distance <d>)
+    (<s> ^target-object-position <p>)
+}
+
+sp {op_approach*elaborate*svs-filter*node_position*robot
+   (state <s> ^name op_approach1
+              ^problem-space.execution-type external
+              ^top-state.svs.command <cmd>)
+-->
+    (<cmd> ^extract <pos>)
+    (<pos> ^type node_position
+            ^a <obj>)
+    (<obj> ^type node
+           ^id robot)
+    (<s> ^robot-position-filter <pos>)
+}
+
+sp {op_approach*elaborate*robot-position*from*filter
+   (state <s> ^name op_approach1
+              ^robot-position-filter.result.record.value <p>)
+-->
+    (<s> ^robot-position <p>)
+}
+          
+sp {op_approach*elaborate*calculation
+   (state <s> ^name op_approach1
+              ^problem-space.execution-type external
+              ^robot-position <rp>
+              ^target-object-position <op>)
+   (<rp> ^x <rx> ^y <ry>)
+   (<op> ^x <ox> ^y <oy>)
+-->
+   (<s> ^calculations <c>)
+   (<c> ^robot-x <rx> ^robot-y <ry>
+        ^object-x <ox> ^object-y <oy>)
+}
+
+sp {op_approach*elaborate*calculations*distance
+   (state <s> ^name op_approach1
+              ^calculations <c>)
+   (<c> ^robot-x <rx> ^robot-y <ry>
+        ^object-x <ox> ^object-y <oy>)
+-->
+   (<c> ^distance (sqrt (+ (* (- <ox> <rx>) (- <ox> <rx>) )
+                           (* (- <oy> <ry>) (- <oy> <ry>) ) ) ) )
+}
+
+sp {op_approach*elaborate*calculations*theta
+   (state <s> ^name op_approach1
+              ^calculations <c>)
+   (<c> ^robot-x <rx> ^robot-y <ry>
+        ^object-x <ox> ^object-y <oy>)
+-->
+   (<c> ^theta (atan2 (- <oy> <ry>) (- <ox> <rx>) ) )
 }
 
 sp {op_approach*elaborate*calcuations*drive-x*drive-y
    (state <s> ^name op_approach1
-              ^problem-space.execution-type external
-              ^target-object-distance <d>
-              ^io.input-link.self.pose <pose>)
-   (<pose> ^x <x> ^y <y> ^yaw <theta>)
+              ^calculations <c>)
+   (<c> ^robot-x <rx> ^robot-y <ry>
+        ^object-x <ox> ^object-y <oy>
+        ^theta <theta>)
 -->
-   (<s> ^calculations <c>)
-   (<c> ^drive-x (+ <x> (* <d> (cos <theta>) ) ) )
-   (<c> ^drive-y (+ <y> (* <d> (sin <theta>) ) ) )
+   (<c> ^drive-x (- <ox> (* 1.0 (cos <theta>) ) ) )
+   (<c> ^drive-y (- <oy> (* 1.0 (sin <theta>) ) ) )
 }
 
 sp {op_approach1*propose*send-drive-to-xy-command
    (state <s> ^name op_approach1
               ^problem-space.execution-type external
               ^calculations <c>
+              ^current-task-segment.face-command
               -^current-task-segment.drive-command)
   (<c> ^drive-x <x>
        ^drive-y <y>)
@@ -64,9 +110,11 @@ sp {op_approach1*apply*send-drive-to-xy-command*send
    (<pos> ^x <x> ^y <y>)
 -->
     (<out> ^do-control-law <law>)
-    (<law> ^name drive-xy
+    (<law> ^item-type output-command
+           ^name drive-xy
            ^parameters <params>
            ^termination-condition.name stabilized)
     (<params> ^x <x> ^y <y>)
    (<seg> ^drive-command <law>)
 }
+

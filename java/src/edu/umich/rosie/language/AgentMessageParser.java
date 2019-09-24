@@ -1184,56 +1184,58 @@ public class AgentMessageParser
 	
 	public static String translateObjectDescription(Identifier fields){
 		Identifier descSetId = SoarUtil.getIdentifierOfAttribute(fields, "object");
-		if(descSetId == null){
-			return "An object";
-		}
-		
-		// Verifying if object description was generated successfully
-		String generated = SoarUtil.getValueOfAttribute(descSetId, "generated");
-		if(generated.equals("yes"))	{
-			String desc="", returnDesc = "";
-			
-			if (descSetId.GetNumberChildren() == 2)
-			{
-				Identifier descId = SoarUtil.getIdentifierOfAttribute(descSetId, "object");
-				desc = generateObjectDescription(descId); 
-				if(desc.charAt(0) == 'a' || desc.charAt(0) == 'e' || desc.charAt(0) == 'i' || 
-						desc.charAt(0) == 'o' || desc.charAt(0) == 'u'){
-					return "An " + desc;
-				} else {
-					return "A " + desc;
-				}
-			}
-			
-			// Counter for individual description WMEs
-			int i = 0;
-			WMElement descWME = descSetId.FindByAttribute("object",i);
-			
-			// Retrieving multiple objects if they exist
-			while (descWME != null)
-			{
-				Identifier descId = descWME.ConvertToIdentifier();
-				desc = generateObjectDescription(descId); 
-				if(desc.charAt(0) == 'a' || desc.charAt(0) == 'e' || desc.charAt(0) == 'i' || 
-						desc.charAt(0) == 'o' || desc.charAt(0) == 'u'){
-					desc = "An " + desc;
-				} else {
-					desc = "A " + desc;
-				}
-				
-				returnDesc += desc + ", ";
-				descWME = descSetId.FindByAttribute("object",++i);
-			}
-			
-			returnDesc = returnDesc.substring(0,returnDesc.length()-2); // removing unnecessary comma
-			// replacing last comma by and
-			int lastcomma = returnDesc.lastIndexOf(',');
-			returnDesc = returnDesc.substring(0, lastcomma) + " and" + returnDesc.substring(lastcomma+1);
-			return "A" + returnDesc.substring(1).toLowerCase();			
-		}
-		else {
-			return "Nothing";
-		}	
+		return generateObjectDescription(descSetId); 
+
+	//	if(descSetId == null){
+	//		return "An object";
+	//	}
+	//	
+	//	// Verifying if object description was generated successfully
+	//	String generated = SoarUtil.getValueOfAttribute(descSetId, "generated");
+	//	if(generated == null || generated.equals("yes"))	{
+	//		String desc="", returnDesc = "";
+	//		
+	//		if (descSetId.GetNumberChildren() == 2)
+	//		{
+	//			Identifier descId = SoarUtil.getIdentifierOfAttribute(descSetId, "object");
+	//			desc = generateObjectDescription(descId); 
+	//			if(desc.charAt(0) == 'a' || desc.charAt(0) == 'e' || desc.charAt(0) == 'i' || 
+	//					desc.charAt(0) == 'o' || desc.charAt(0) == 'u'){
+	//				return "An " + desc;
+	//			} else {
+	//				return "A " + desc;
+	//			}
+	//		}
+	//		
+	//		// Counter for individual description WMEs
+	//		int i = 0;
+	//		WMElement descWME = descSetId.FindByAttribute("object",i);
+	//		
+	//		// Retrieving multiple objects if they exist
+	//		while (descWME != null)
+	//		{
+	//			Identifier descId = descWME.ConvertToIdentifier();
+	//			desc = generateObjectDescription(descId); 
+	//			if(desc.charAt(0) == 'a' || desc.charAt(0) == 'e' || desc.charAt(0) == 'i' || 
+	//					desc.charAt(0) == 'o' || desc.charAt(0) == 'u'){
+	//				desc = "An " + desc;
+	//			} else {
+	//				desc = "A " + desc;
+	//			}
+	//			
+	//			returnDesc += desc + ", ";
+	//			descWME = descSetId.FindByAttribute("object",++i);
+	//		}
+	//		
+	//		returnDesc = returnDesc.substring(0,returnDesc.length()-2); // removing unnecessary comma
+	//		// replacing last comma by and
+	//		int lastcomma = returnDesc.lastIndexOf(',');
+	//		returnDesc = returnDesc.substring(0, lastcomma) + " and" + returnDesc.substring(lastcomma+1);
+	//		return "A" + returnDesc.substring(1).toLowerCase();			
+	//	}
+	//	else {
+	//		return "Nothing";
+	//	}	
 	}
 	
 	public static boolean startsWithVowel(String adj){
@@ -1530,7 +1532,11 @@ public class AgentMessageParser
 			att_val.put(att, val);
 		}
 		
-		if(att_val.containsKey("shape"))
+		if (SoarUtil.getValueOfAttribute(descId, "root-category") != null)
+		{
+			root = SoarUtil.getValueOfAttribute(descId, "root-category");
+		}
+		else if(att_val.containsKey("shape"))
 		{
 			root = att_val.get("shape");
 		}
