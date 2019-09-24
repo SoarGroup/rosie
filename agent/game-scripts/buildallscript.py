@@ -60,9 +60,10 @@ gamelix=[
 #gamelist = ["queens","Mens3","xsudoku"]
 #gamelist = ["nsudoku","Holes9","Cannibals"]
 #gamelist = ["agbfox","1nrooks","Tictactoe"]
-gamelist = ["colorken","6nkings","husbands"]
 
+#gamelist = ["colorken","6nkings","husbands"]
 
+gamelist = ["kenken","frog","8puzzle"]
 # all related
 #gamelist = ["agbfox","Cannibals","husbands"]
 #gamelist = ["colorken","nsudoku","xsudoku"]
@@ -111,7 +112,7 @@ while createdcount < 50:
     scriptname = ""
     for game in shuffled:
         scriptname += game[0];
-        target = open(game + ".test5", 'r')
+        target = open(game + ".testZ", 'r')
         newscript+= target.read(20000)
         newscript+= "\n";
         target.close()
