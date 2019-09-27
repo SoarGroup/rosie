@@ -4,42 +4,41 @@ import random, re, string
 # shuffle,survo,suko,sujiko,kakuro all cause of filled missing bug in goal
 #all in main comment out due to primitive adjacent failure? on movable/jumpable
 
-#gamelist=[
+gamelist=[
 #"agbfox",
 #"Atower5",
 #"blocksworld",
 #"Blocksworld",
 #"colorken",
 #"Cannibals",
-#"dsokoban",
-gamelist=[
-"Dshuffle",
-"ektour", #b
-"E8men",
-"frog",
-"Fifteenpuzzle",
-"golf",
-"husbands",
-"Holes9",
-"ijigsawdoku",
-"I8puzzle",
-"jmahjong", #b
-"Jsujiko",
-"kenken",
-"Kstackedfrogs", #b ###### failing asks for 24 or 32 what?
-"logi5",
-"Lazystackedfrogs", #b
-"mapcolor",
-"Mens3",
-"nsudoku",
-"othello",
-"Osuko",
-"pyramid", #b
+#"dsokoban", #broke
+#"Dshuffle",
+#"ektour", #b
+#"E8men",
+#"frog",
+#"Fifteenpuzzle",
+#"golf",
+#"husbands",
+#"Holes9",
+#"ijigsawdoku",
+#"I8puzzle",
+#"jmahjong", #b
+#"Jsujiko",
+#"kenken",
+#"Kstackedfrogs", #broke ###### failing asks for 24 or 32 what?
+#"logi5",
+#"Lazystackedfrogs", #broke
+#"mapcolor",
+#"Mens3",
+#"nsudoku",
+#"othello",
+#"Osuko",
+##"pyramid", #broken
 "Picaria",
 "queens", #b
 "rtravelsales", #b
 "Rsurvo",
-"stackedfrogs", #b
+#"stackedfrogs", #b
 "Swap",
 "tripeaks",
 "Tictactoe",
@@ -52,7 +51,7 @@ gamelist=[
 "ysorting",
 "zmaze",
 "0nknights",
-"1nrooks",
+#"1nrooks",
 "2pushmaze",
 "3tower",
 "4tower",
@@ -66,9 +65,10 @@ gamelist=[
 #shuffled = ["colorken","nsudoku","xsudoku"]
 #shuffled = ["Tictactoe","Holes9","Mens3"]
 #shuffled = ["queens","1nrooks","6nkings"]
-#shuffled = ["dsokoban"]
+shuffled = ["pyramid"]
+#shuffled = ["Mens3"]
 #shuffled = ["Cannibals","husbands","agbfox"]
-shuffled = ["husbands"]
+#shuffled = ["husbands"]
 #shuffled = ["Mens3","queens","xsudoku"]
 
 #new
