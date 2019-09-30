@@ -44,6 +44,45 @@ sp {top-state*propose*interaction*interaction-change
 
 #######################################################
 # 
+# Propose: satisfy-purpose
+#
+########################################################
+
+sp {top-state*propose*satisfy-purpose
+   (state <s> ^top-state <s>
+             #-^parser-testing true
+		      ^interaction.stack.segment.purpose {<p> <> none})
+   (<p> -^type << goal-description >>
+	     -^category goal)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name satisfy-purpose
+        ^purpose <p>)
+}
+
+sp {top-state*reject*satisfy-purpose*if*executing*task
+   (state <s> ^superstate nil
+              ^operator <o> +)
+   (<o> ^name satisfy-purpose
+        ^purpose <p>)
+   (<p> ^type execute-task
+        ^parameters.task-operator <task>)
+-->
+   (<s> ^operator <o> -)
+}
+
+sp {top-state*reject*satisfy-purpose*if*executing*learned*game
+   (state <s> ^superstate nil
+              ^operator <o> +
+              ^task-stack.queued-tasks.task <task>)
+   (<o> ^name satisfy-purpose
+        ^purpose.type << finished-game-learning >>)
+-->
+   (<s> ^operator <o> -)
+}
+
+#######################################################
+# 
 # Propose: push task segment
 #
 ########################################################
@@ -59,7 +98,7 @@ sp {top-state*propose*push-task-segment*new-task-segment
         ^segment <seg>)
 }
 
-sp {top-state*propose*push-task-segment*task-operator
+sp {top-state*propose*push-task-segment*queued*task
    (state <s> ^superstate nil
               ^task-stack <stack>)
    (<stack> ^top none
@@ -71,18 +110,6 @@ sp {top-state*propose*push-task-segment*task-operator
    (<o> ^name push-task-segment
         ^order <order>
         ^segment <qtask>)
-}
-
-sp {top-state*apply*execute-task*remove*queued-task
-	(state <s> ^superstate nil
-               ^operator <o>
-               ^task-stack.queued-tasks <queue>)
- (<o> ^name execute-task
-      ^task-segment.task-operator <task-op>)
- (<queue> ^task <qtask>)
- (<qtask> ^task-operator <task-op>)
--->
-(<queue> ^task <qtask> -)        
 }
 
 sp {top-state*prefer*push-task-segment*lower*order
@@ -99,50 +126,12 @@ sp {top-state*prefer*push-task-segment*lower*order
 
 #######################################################
 # 
-# Propose: satisfy-purpose
+# Propose: execute-task
 #
 ########################################################
 
-sp {top-state*propose*satisfy-purpose
-   (state <s> ^top-state <s>
-             #-^parser-testing true
-		      ^interaction.stack.segment.purpose {<p> <> none})
-   (<p> -^type << action-command execute-task goal-description >>
-	-^category goal)
--->
-   (<s> ^operator <o> +)
-   (<o> ^name satisfy-purpose
-        ^purpose <p>)
-}
-
-sp {prefer*execute-task*over*satisfy-purpose*finished-game-learning
-  (state <s> ^superstate nil
-              ^interaction.stack.segment.purpose.type << finished-game-learning >>
-              ^operator <o1> +
-              ^operator <o2> +)
-  (<o1> ^name execute-task)
-  (<o2> ^name satisfy-purpose)
--->
-  (<s> ^operator <o1> > <o2>)
-}
-
-#JK stop actions from occur when running internal
-#turn off to allow writting
-#sp {prefer*satisfy-purpose*over*execute-task*finished-game-learning*internal
-#  (state <s> ^superstate nil
-#             ^agent-params.domain internal
-#             ^interaction.stack.segment.purpose.type << finished-game-learning >>
-#              ^operator <o1> +
-#              ^operator <o2> +)
-#  (<o2> ^name << execute-task manage-action-stack >>)
-#  (<o1> ^name satisfy-purpose)
-#-->
-#  (<s> ^operator <o1> > <o2>)
-#}
-
 sp {top-state*propose*execute-task
    (state <s> ^superstate nil
-              ^interaction.stack.segment.purpose.type << finished-game-learning execute-task >>
               ^task-stack.bottom { <seg> <> none })
 -->
    (<s> ^operator <o> +)
@@ -150,9 +139,9 @@ sp {top-state*propose*execute-task
         ^task-segment <seg>)
 }
 
-sp {top-state*propose*execute-task*empty*interaction
+sp {top-state*propose*execute-task*finished-game-learning
    (state <s> ^superstate nil
-              ^interaction.stack.segment.purpose none
+              ^interaction.stack.segment.purpose.type finished-game-learning 
               ^task-stack.bottom { <seg> <> none })
 -->
    (<s> ^operator <o> +)
@@ -160,63 +149,19 @@ sp {top-state*propose*execute-task*empty*interaction
         ^task-segment <seg>)
 }
 
-### Will take a command message and create a new task segment with it
-sp {top-state*propose*handle-new-task-command
-   (state <s> ^superstate nil
-              ^interaction.stack.segment.purpose <p>)
-   (<p> ^type { <type> << execute-task whenever-task >> }
-        ^parameters <params>)
-   (<params> ^command-message <msg>)
+
+sp {top-state*apply*execute-task*remove*queued-task
+	(state <s> ^superstate nil
+               ^operator <o>
+               ^task-stack.queued-tasks <queue>)
+ (<o> ^name execute-task
+      ^task-segment.task-operator <task-op>)
+ (<queue> ^task <qtask>)
+ (<qtask> ^task-operator <task-op>)
 -->
-   (<s> ^operator <o> +)
-   (<o> ^name handle-new-task-command
-        ^type <type>
-        ^command-message <msg>)
+(<queue> ^task <qtask> -)        
 }
 
-sp {top-state*elaborate*handle-new-task-command*conditions
-   (state <s> ^superstate nil
-              ^operator <o> +
-              ^interaction.stack.segment.purpose <p>)
-   (<o> ^name handle-new-task-command)
-   (<p> ^type << execute-task whenever-task >>
-        ^parameters.conditions <conds>)
--->
-   (<o> ^conditions <conds>)
-}
-
-### Handle a whenever statement
-sp {top-state*propose*handle-new-whenever-task
-   (state <s> ^superstate nil
-              ^task-stack.new-whenever-task <seg>)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name handle-new-whenever-task
-        ^segment <seg>)
-}
-
-#sp {top-state*propose*learning*action-type
-#   (state <s> ^top-state <s>
-#				^interaction.stack.segment.purpose <p>)
-#   (<p> ^satisfaction.learning-event)
-#   (<p> ^type << action-command >>)
-#-->
-#   (<s> ^operator <o> +)
-#   (<o> ^name action-learning
-#        ^purpose <p>)
-#}
-#
-#sp {top-state*propose*learning*goal
-#   (state <s> ^top-state <s>
-#			 ^interaction.stack.segment.purpose <p>)
-#   (<p> ^satisfaction.learning-event)
-#   (<p> ^category goal)
-#-->
-#   (<s> ^operator <o> +)
-#   (<o> ^name action-learning
-#        ^purpose <p>)
-#}
-#
 #sp {top-state*propose*lookup-preposition
 #   (state <s> ^prepositions.prep.name <name>
 #              ^superstate nil
