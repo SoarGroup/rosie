@@ -1,16 +1,59 @@
+############################### handle-type-execute ################################
+#
+# When the instructor tells the agent to perform a task, 
+#   it pushes a new interaction segment with a purpose of executing a task 
+# This will trigger satisfy-purpose/task-event/handle-type-execute
+#
+# In this state, the agent prepares a new task segement for the task-stack
+#    and constructs a task-operator to go onto it
+# If the task is a new one, it will also create and store some procedural info
+#    onto the task-concept-network
+
+
+# <s> ^interaction-purpose <p>  # from superoperator - the execute-task purpose info
+# <s> ^command-message <msg>    # from interaction-purpose.parameters - the command to execute
+# <s> ^conditions <conds>       # from interaction-purpose.parameters, optional
 source elaborations.soar
 source preferences.soar
 
+# Step 1: Retrieve the task-concept-network and copy onto the state
+#   adds: <s> ^task-concept-network <tcn>
 source retrieve-tcn.soar
 
-source construct-task-operator.soar
-source mark-argument-missing.soar
 
+# Step 2: If the TCN does not have any procedural info, create it and mark for storing
+source add-procedural-link-to-tcn.soar
+
+
+# Step 3: Construct the new task-operator using the command-message 
+#         (see problem-space/action/task-utils/construct)
+#   adds: <s> ^task-operator <task-op>
+source construct-task-operator.soar
+
+
+# Step 4: Create a new task-segment structure to push onto the task-stack
+#   adds: <s> ^new-task-segment <seg>
 source create-new-task-segment.soar
 
-source add-procedural-link-to-tcn.soar
+
+# Step 5: If the task-operator has an argument which is not on the TCN, 
+#         add it to the structure and mark for storing
+#   adds: <s> ^task-concept-network.procedural.<arg-name> <arg>
 source add-argument-to-tcn.soar
 
+
+# Step 6: Store anything that needs stored into smem (<s> ^to-store <lti>)
 source store-smem-concepts.soar
 
+
+# Step 7: If the task-operator is missing an argument which is on the TCN, 
+#         flag it as missing on the task operator 
+#   adds: <s> ^task-operator.missing-argument <arg-name>
+source mark-argument-missing.soar
+
+
+# Step 8: When everything is finished: 
+#         Copy the new-task-segment onto top-state.task-stack.new-task-segment
+#         Copy the task-operator onto top-state.interaction.stack.segment.purpose.parameters.task-operator
+#         (Will retract satisfy-purpose and propose push-task-segment onto the top-state)
 source complete-handle-new-task-command.soar
