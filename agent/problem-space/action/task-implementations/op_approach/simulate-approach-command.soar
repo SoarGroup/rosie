@@ -23,23 +23,55 @@ sp {op_approach1*apply*simulate-approach-command*mark*command*complete
    (<cmd> ^status complete)
 }
 
+
+### simulate-perception = false, change is-reachable on the object directly ###
+
 sp {op_approach1*apply*simulate-approach-command*change*reachable
    (state <s> ^name op_approach1
-              ^operator.name simulate-approach-command
-              ^target-object.predicates <preds>)
+              ^operator <o>
+             -^agent-params.simulate-perception true)
+   (<o> ^name simulate-approach-command
+        ^command.object.predicates <preds>)
    (<preds> ^is-reachable1 not-reachable1)
 -->
    (<preds> ^is-reachable1 not-reachable1 -
             ^is-reachable1 reachable1)
 }
 
-sp {op_approach1*apply*simulate-approach-command*change*visible
+
+### simulate-perception = true, change is-reachable on the perception-monitor ###
+
+sp {op_approach1*apply*simulate-approach-command*simulate-perception*change*reachable
    (state <s> ^name op_approach1
-              ^operator.name simulate-approach-command
-              ^target-object.predicates <preds>)
-   (<preds> ^is-visible1 not-visible1)
+              ^operator <o>
+              ^agent-params.simulate-perception true
+              ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
+   (<o> ^name simulate-approach-command
+        ^command.object <obj>)
+   (<obj-info> ^input-link-obj.property <il-prop>
+               ^wm-obj <obj>)
+   (<il-prop> ^property-handle is-reachable1
+              ^values <vals>)
 -->
-   (<preds> ^is-visible1 not-visible1 -
-            ^is-visible1 visible1)
+   (<vals> ^not-reachable1 1.00 -
+           ^reachable1 1.00)
 }
+
+sp {op_approach1*apply*simulate-approach-command*simulate-perception*make*others*not-reachable
+   (state <s> ^name op_approach1
+              ^operator <o>
+              ^agent-params.simulate-perception true
+              ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
+   (<o> ^name simulate-approach-command
+        ^command.object <obj>)
+   (<obj-info> ^input-link-obj.property <il-prop>
+               ^wm-obj { <wobj> <> <obj> })
+   (<il-prop> ^property-handle is-reachable1
+              ^values <vals>)
+   (<vals> ^reachable 1.00)
+-->
+   (<vals> ^reachable1 1.00 -
+           ^not-reachable1 1.00)
+}
+
 

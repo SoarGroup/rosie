@@ -6,9 +6,30 @@ sp {op_approach1*elaborate*target-object*superoperator
    (<s> ^target-object <obj>)
 }
 
-sp {op_approach1*elaborate*target-coord*superoperator
+# For the magicbot: 
+# Calculate the position to drive to, 1.0 meters in front of target-object
+
+# theta from the robot to the target object
+sp {op_approach*elaborate*angle-to-target
    (state <s> ^name op_approach1
-              ^task-operator.arg1.coord <coord>)
+              ^current-task-segment <seg>)
+   (<seg> ^robot-coord <rc>
+          ^target-coord <tc>)
+   (<rc> ^x <rx> ^y <ry>)
+   (<tc> ^x <tx> ^y <ty>)
 -->
-   (<s> ^target-coord <coord>)
+   (<s> ^angle-to-target (atan2 (- <ty> <ry>) (- <tx> <rx>) ) )
 }
+
+# calculate a point 1 meter from the object's position towards the robot
+sp {op_approach*elaborate*goal-coord
+   (state <s> ^name op_approach1
+              ^angle-to-target <theta>
+              ^current-task-segment.target-coord <tc>)
+   (<tc> ^x <tx> ^y <ty>)
+-->
+   (<s> ^goal-coord <gc>)
+   (<gc> ^x (- <tx> (* 1.0 (cos <theta>) ) ) )
+   (<gc> ^y (- <ty> (* 1.0 (sin <theta>) ) ) )
+}
+

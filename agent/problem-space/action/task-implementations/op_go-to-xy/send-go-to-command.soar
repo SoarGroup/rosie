@@ -1,12 +1,14 @@
 ### send the low-level go-to command to the output-link when the until-clause is satisfied ###
 
 sp {op_go-to-xy1*propose*send-go-to-command
-   (state <s> ^name op_go-to-xy1)
+   (state <s> ^name op_go-to-xy1
+              ^target-coord <coord>)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name send-go-to-command
         ^item-type command-operator
-        ^command-name go-to-command)
+        ^command-name go-to-command
+        ^coordinate <coord>)
 }
 
 
@@ -15,20 +17,43 @@ sp {op_go-to-xy1*propose*send-go-to-command
 sp {op_go-to-xy1*external*apply*send-go-to-command*cozmo
    (state <s> ^name op_go-to-xy1
               ^problem-space.execution-type external
-              ^operator <o>
               ^agent-params.domain cozmo
+              ^operator <o>
               ^current-task-segment <seg>
-              ^target-coord <coord>
               ^io.input-link.self.pose.yaw <yaw>
               ^top-state.io.output-link <out>)
    (<o> ^name send-go-to-command
-        ^command-name <cmd-name>)
+        ^command-name <cmd-name>
+        ^coordinate <coord>)
    (<coord> ^x <x> ^y <y>)
 -->
    (<out> ^go-to-pose <gtp>)
    (<gtp> ^item-type output-command
-          ^x (* <x> 100.0)
-          ^y (* <y> 100.0)
-          ^orientation (* <yaw> 57.3) )
+          ^x <x>
+          ^y <y>
+          ^orientation <yaw>)
    (<seg> ^<cmd-name> <gtp>)
+}
+
+### magicbot ###
+
+sp {op_go-to-xy1*external*apply*send-go-to-command*magicbot
+   (state <s> ^name op_go-to-xy1
+              ^problem-space.execution-type external
+              ^agent-params.domain magicbot
+              ^operator <o>
+              ^current-task-segment <seg>
+              ^top-state.io.output-link <out>)
+   (<o> ^name send-go-to-command
+        ^command-name <cmd-name>
+        ^coordinate <coord>)
+   (<coord> ^x <x> ^y <y>)
+-->
+   (<out> ^do-control-law <law>)
+   (<law> ^name drive-xy
+          ^item-type output-command
+          ^parameters <params>
+          ^termination-condition.name stabilized)
+   (<params> ^x <x> ^y <y>)
+   (<seg> ^<cmd-name> <law>)
 }
