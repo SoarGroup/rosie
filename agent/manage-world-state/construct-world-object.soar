@@ -2,11 +2,13 @@
 # construct-world-object
 #
 # utility operator for creating an object in the proper world representation
+# Can essentially be proposed anywhere
+# Note: This operator will take 2 dc's, as it has to do an smem retrieval
 #
 # Structure:
 # (<s> ^operator <o>)
 # (<o> ^name construct-world-object
-#      ^source-type << perception smem >>
+#      ^source-type << perception smem tcn-obj-slot imagined >>
 #      ^source-obj <obj>
 #      ^result-destination <dest>  # OPTIONAL
 #      ^result-name <res-name>)    # OPTIONAL
@@ -15,8 +17,6 @@
 # If no result info is given, defaults as 
 # (<s> ^constructed-world-object <cons>)
 # (<cons> ^source <src-obj> ^result <constructed-obj>)
-#
-# Note: This operator will take 2 dc's, as it has to do an smem retrieval
 #
 #################################################################################
 
@@ -68,7 +68,7 @@ sp {anystate*elaborate*construct-world-object*default*category*entity1
 #(<p2> ^property-handle <prop2-handle>
 #      ^predicate-handle <pred2-handle>)
 
-sp {anystate*elaborate*construct-world-object*source-type*perception
+sp {anystate*elaborate*construct-world-object*perception*object-handle
    (state <s> ^operator <o> +)
    (<o> ^name construct-world-object
         ^source-type perception
@@ -78,7 +78,7 @@ sp {anystate*elaborate*construct-world-object*source-type*perception
    (<o> ^object-handle <h>)
 }
 
-sp {anystate*elaborate*construct-world-object*source-type*perception*predicates
+sp {anystate*elaborate*construct-world-object*perception*predicates
    (state <s> ^operator <o> +)
    (<o> ^name construct-world-object
         ^source-type perception
@@ -100,7 +100,7 @@ sp {anystate*elaborate*construct-world-object*source-type*perception*predicates
 #       ...
 #)
 
-sp {anystate*elaborate*construct-world-object*source-type*smem
+sp {anystate*elaborate*construct-world-object*smem*object-handle
    (state <s> ^operator <o> +)
    (<o> ^name construct-world-object
         ^source-type smem
@@ -110,7 +110,7 @@ sp {anystate*elaborate*construct-world-object*source-type*smem
    (<o> ^object-handle <h>)
 }
 
-sp {anystate*elaborate*construct-world-object*source-type*smem*predicates
+sp {anystate*elaborate*construct-world-object*smem*predicates
    (state <s> ^operator <o> +)
    (<o> ^name construct-world-object
         ^source-type smem
@@ -127,15 +127,15 @@ sp {anystate*elaborate*construct-world-object*source-type*smem*predicates
 #       ...
 #)
 
-sp {anystate*elaborate*construct-world-object*source-type*tcn-obj-slot*object-handle*new
+sp {anystate*elaborate*construct-world-object*tcn-obj-slot*object-handle*new
    (state <s> ^operator <o> +)
    (<o> ^name construct-world-object
         ^source-type tcn-obj-slot)
 -->
-   (<o> ^object-handle (make-constant-symbol |obj-hand|))
+   (<o> ^object-handle (make-constant-symbol |obj|))
 }
 
-sp {anystate*elaborate*construct-world-object*source-type*tcn-obj-slot*predicates
+sp {anystate*elaborate*construct-world-object*tcn-obj-slot*predicates
    (state <s> ^operator <o> +)
    (<o> ^name construct-world-object
         ^source-type tcn-obj-slot
@@ -145,8 +145,72 @@ sp {anystate*elaborate*construct-world-object*source-type*tcn-obj-slot*predicate
    (<preds> ^<prop-h> <pred-h>)
 }
 
+################ source-type imagined ###############
+# source-obj is information which can be used to construct a new object
+#(<obj> ^object-handle <h> # Optional: if missing it will create a new one
+#       ^predicates <preds>)
+#(<preds> ^category <cat>  # Required: the root category of the object
+#         ^<prop1> <pred1> # Optional: additional predicates
+#          ... )
+
+sp {anystate*elaborate*construct-world-object*imagined*object-handle
+   (state <s> ^operator <o> +)
+   (<o> ^name construct-world-object
+        ^source-type imagined
+        ^source-obj.object-handle <h>)
+-->
+   (<o> ^object-handle <h>)
+}
+
+sp {anystate*elaborate*construct-world-object*imagined*object-handle*new
+   (state <s> ^operator <o> +)
+   (<o> ^name construct-world-object
+        ^source-type imagined
+        ^source-obj <src-obj>)
+   (<src-obj> -^object-handle <h>
+               ^predicates.root-category <cat>)
+-->
+   (<o> ^object-handle (make-constant-symbol (concat <cat> |_|)))
+}
+
+sp {anystate*elaborate*construct-world-object*imagined*object-handle*new*no*root
+   (state <s> ^operator <o> +)
+   (<o> ^name construct-world-object
+        ^source-type imagined
+        ^source-obj <src-obj>)
+   (<src-obj> -^object-handle <h>
+              -^predicates.root-category <cat>)
+-->
+   (<o> ^object-handle (make-constant-symbol |obj|))
+}
+
+sp {anystate*elaborate*construct-world-object*imagined*predicates
+   (state <s> ^operator <o> +)
+   (<o> ^name construct-world-object
+        ^source-type imagined
+        ^source-obj <src-obj>
+        ^predicates <preds>)
+   (<src-obj> ^predicates.<prop-h> <pred-h>)
+-->
+   (<preds> ^<prop-h> <pred-h>)
+}
+
 
 ##### Retrieve category information (to get ontology)
+
+sp {ASSERT*anystate*apply*construct-world-object*only*one*category*predicate
+   (state <s> ^operator <o>
+              ^smem.command <cmd>)
+   (<o> ^name construct-world-object
+        ^predicates <preds>)
+   (<preds> ^category <cat>
+            ^category { <cat2> <> <cat> }
+           -^root-category)
+-->
+   (halt)
+   (write |ASSERTION VIOLATED: construct-world-object has two categories with no root-category specified: | <cat> | | <cat2> (crlf))
+   (write (cmd print -d 5 <o>) (crlf))
+}
 
 sp {anystate*apply*construct-world-object*smem-query*category-info*one*category
    (state <s> ^operator <o>
@@ -273,7 +337,7 @@ sp {anystate*apply*construct-world-object*copy*waypoint
 sp {anystate*apply*construct-world-object*copy*instrinsic*predicates
    (state <s> ^operator <o>)
    (<o> ^name construct-world-object
-        ^predicates.{ <prop> << proper-name name category color shape size weight >> } <pred>
+        ^predicates.{ <prop> << proper-name name category color shape size weight sentence modifier1 >> } <pred>
         ^workspace <ws>)
    (<ws> ^new-object-preds <preds>)
 -->

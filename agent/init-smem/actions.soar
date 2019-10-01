@@ -742,11 +742,12 @@ smem --add {
 
    (@ask1 ^handle ask1 ^procedural <proc301> ^item-type action ^learn-proposal true ^perform once ^goal-graph <graph301>)
    (<proc301> ^op_name op_ask1
-             ^arg1 <parg3011>
-             ^match no)
+              ^arg1 <parg3011>)
    (<parg3011> ^arg-type object ^required true ^id <obj-slot3011>)
    (<graph301> ^first <goal3011> ^goal <goal3011>)
-      (<goal3011> ^handle ask1goal1 ^item-type task-goal ^custom-goal true ^next complete)
+      (<goal3011> ^handle ask1goal1 ^item-type task-goal ^predicates <gpreds3011> ^next complete)
+         (<gpreds3011> ^pred-count 1 ^1 <gpred301g1p1>)
+            (<gpred301g1p1> ^type execute-command ^command-name ask-command)
 }
 
 ### +@say1 [302]
@@ -759,9 +760,22 @@ smem --add {
               ^arg2 <parg3022>)
    (<parg3021> ^arg-type object ^required true ^id <obj-slot3021>)
    (<parg3022> ^arg-type object ^id <obj-slot3022>)
-   (<graph302> ^first <goal3021> ^goal <goal3021>)
-      (<goal3021> ^handle say1goal1 ^item-type task-goal ^custom-goal true ^next complete)
-   # TODO: conditional goal on whether there is an arg2 person
+   (<graph302> ^first <goal3021> ^goal <goal3021> ^goal <goal3022>)
+
+      # If there is no arg2, then the goal is to perform the say-command
+      (<goal3021> ^handle say1goal1 ^item-type task-goal ^conditions <gconds3021> ^predicates <gpreds3021> ^next <goal3022>)
+         (<gconds3021> ^pred-count 1 ^1 <gcond302g1p1>)
+            (<gcond302g1p1> ^type missing-argument ^argument-name arg2)
+         (<gpreds3021> ^pred-count 1 ^1 <gpred302g1p1>)
+            (<gpred302g1p1> ^type execute-command ^command-name say-command)
+
+      # If there is an arg2, then the goal is that the person heard the message
+      (<goal3022> ^handle say1goal2 ^item-type task-goal ^conditions <gconds3022> ^predicates <gpreds3022> ^next complete)
+         (<gconds3022> ^pred-count 1 ^1 <gcond302g2p1>)
+            (<gcond302g2p1> ^type has-argument ^argument-name arg2)
+         (<gpreds3022> ^pred-count 1 ^1 <gpred302g2p1>)
+            (<gpred302g2p1> ^type relation ^id <pred-slot3021> ^1 <obj-slot3021> ^2 <obj-slot3022>)
+
 }
 
 ### +@announce1 [303]

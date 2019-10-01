@@ -1,0 +1,68 @@
+### Ask the message via the interaction stack ###
+
+sp {op_ask1*propose*send-ask-command
+   (state <s> ^name op_ask1
+              ^sentence <sent>
+             -^current-task-segment.answer)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name send-ask-command
+        ^item-type command-operator
+        ^command-name ask-command
+        ^sentence <sent>)
+}
+
+### send-ask-command (all domains) ###
+
+# Send the asked sentence to the interaction stack
+sp {op_ask*apply*send-ask-command*send*message
+   (state <s> ^name op_ask1
+              ^operator <o>
+              ^top-state.interaction.changes <changes>
+              ^current-task-segment <seg>)
+   (<o> ^name send-ask-command
+        ^sentence <msg>
+        ^command-name <cmd-name>)
+-->
+   (<changes> ^outgoing-message <send>)
+   (<send> ^type say-sentence
+           ^complete-message true
+           ^fields.sentence <msg>)
+
+   (<seg> ^<cmd-name> <ask-cmd>)
+   (<ask-cmd> ^item-type output-command
+              ^outgoing-message <send>)
+}
+
+# Push a new segment with the purpose of waiting for an answer
+sp {op_ask*apply*send-ask-command*push*segment*wait-for-answer
+   (state <s> ^name op_ask1
+              ^operator <o>
+              ^top-state.interaction.changes <changes>
+              ^current-task-segment <seg>)
+   (<o> ^name send-ask-command
+        ^sentence <msg>)
+-->
+   (<changes> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+   	   ^originator agent)
+   (<p> ^type wait-for-answer
+        ^parameters.current-task-segment <seg>
+   	  ^satisfaction.dialog-event <de>)
+   (<de> ^type object-description
+         ^type object-definition
+         ^type quoted-sentence
+         ^type yes no williams
+         ^originator instructor)
+}
+
+# Remove any other answered predicates
+sp {op_ask*apply*send-ask-command*remove*answered*predicates
+   (state <s> ^name op_ask1
+              ^operator.name send-ask-command
+              ^world.objects.object <obj>)
+   (<obj> ^predicates <preds>)
+   (<preds> ^modifier1 answered1)
+-->
+   (<preds> ^modifier1 answered1 -)
+}

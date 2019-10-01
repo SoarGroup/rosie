@@ -1,107 +1,28 @@
 #### constructing object arguments
 
+# If the object is not in the world, create a proper world object representation
+# using construct-world-object (Implemented in manage-world-state/construct-world-object.soar)
 
-# If it is not an smem object, it is already in the proper representation
-sp {task-utils*construct-task-argument*elaborate*construct-task-argument*object*world-object*not*smem*not*linked
-   (state <s> ^construct-task-argument <arg>)
+# Check to see if there is already a world-object
+
+sp {task-utils*construct-task-argument*elaborate*construct-task-argument*world-object
+   (state <s> ^construct-task-argument <arg>
+              ^top-state.world.objects.object <src-obj>)
    (<arg> ^arg-type object
           ^source <src-obj>)
-   (<src-obj> ^item-type object
-             -^object-instance true) # not from smem
 -->
    (<arg> ^world-object <src-obj>)
 }
 
-
-### add-category-info
-###    If there is no root-category, retrieve it and all supercategories
-
-# retrieve the smem info about the root-category
-sp {task-utils*construct-task-argument*elaborate*smem-query*category-info
-   (state <s> ^construct-task-argument <arg>
-             -^category-info.handle <cat>)
+sp {task-utils*construct-task-argument*elaborate*construct-task-argument*world-object*from*source
+   (state <s> ^construct-task-argument <arg>)
    (<arg> ^arg-type object
-          ^source <src-obj>)
-   (<src-obj> -^object-instance true
-              -^root-category
-               ^predicates.category <cat>)
+          ^source.world-object <obj>)
 -->
-   (<s> ^smem-query <q>)
-   (<q> ^cue.handle <cat>
-        ^destination <s>
-        ^result-name category-info
-        ^depth 8)
+   (<arg> ^world-object <obj>)
 }
 
-# Propose an operator to copy the categories from the smem category-info
-sp {task-utils*construct-task-argument*propose*add-category-info
-   (state <s> ^construct-task-argument <arg>
-              ^category-info <lti>)
-   (<arg> ^arg-type object
-          ^source <src-obj>)
-   (<src-obj> -^object-instance true
-              -^root-category
-               ^predicates.category <cat>)
-   (<lti> ^handle <cat>)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name add-category-info
-        ^argument <arg>
-        ^object <src-obj>
-        ^category <lti>
-        ^root-category <lti>)
-}
-
-# Elaborate super categories onto the operator 
-sp {task-utils*construct-task-argument*elaborate*category-info*supercategory
-   (state <s> ^construct-task-argument <arg>
-              ^operator <o> +)
-   (<o> ^name add-category-info
-        ^argument <arg>
-        ^category.supercategory <supercat>)
-   (<supercat> ^handle <> none1)
--->
-   (<o> ^category <supercat>)
-}
-
-# Copy the root-category
-sp {task-utils*construct-task-argument*apply*add-category-info*root-category
-   (state <s> ^construct-task-argument <arg>
-              ^operator <o>)
-   (<o> ^name add-category-info
-        ^argument <arg>
-        ^object <src-obj>
-        ^root-category.handle <cat>)
--->
-   (<src-obj> ^root-category <cat>)
-}
-
-# Copy the other categories
-sp {task-utils*construct-task-argument*apply*add-category-info*copy*category
-   (state <s> ^construct-task-argument <arg>
-              ^operator <o>)
-   (<o> ^name add-category-info
-        ^argument <arg>
-        ^object.predicates <preds>
-        ^category.handle <cat>)
--->
-   (<preds> ^category <cat>)
-}
-
-# Copy affordances
-sp {task-utils*construct-task-argument*apply*add-category-info*copy*affordance
-   (state <s> ^construct-task-argument <arg>
-              ^operator <o>)
-   (<o> ^name add-category-info
-        ^argument <arg>
-        ^object.predicates <preds>
-        ^category.affordance1.handle <aff>)
--->
-   (<preds> ^affordance1 <aff>)
-}
-
-### If it is an smem-object, convert it into a world object representation
-# using construct-world-object (Implemented in manage-world-state/construct-world-object.soar)
+# If the object is from smem, propose construct-world-object
 sp {task-utils*construct-task-argument*propose*construct-world-object*from*smem
    (state <s> ^construct-task-argument <arg>)
    (<arg> ^arg-type object
@@ -116,6 +37,24 @@ sp {task-utils*construct-task-argument*propose*construct-world-object*from*smem
         ^result-destination <arg>
         ^result-name world-object)
 }
+
+# If the object is imagined (new rep created during comprehension), propose construct-world-object
+sp {task-utils*construct-task-argument*propose*construct-world-object*from*imagination
+   (state <s> ^construct-task-argument <arg>)
+   (<arg> ^arg-type object
+          ^source <src-obj>
+         -^world-object)
+   (<src-obj> ^item-type object
+             -^object-instance true)  # means it is not from smem
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name construct-world-object
+        ^source-type imagined
+        ^source-obj <src-obj>
+        ^result-destination <src-obj>
+        ^result-name world-object)
+}
+
 
 ### construct-task-argument object
 
@@ -142,5 +81,3 @@ sp {task-utils*construct-task-argument*apply*construct-task-argument*object
    (<arg> ^created-arg <carg>)
    (<carg> ^id <obj>)
 }
-
-
