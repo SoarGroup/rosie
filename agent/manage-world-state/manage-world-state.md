@@ -37,6 +37,23 @@ and with the tag object_source=perception
 
 ```
 
+### Simulating the Input Link 
+
+```
+manage-world-state/simulate-perception
+```
+
+If the domain is internal and ```agent-params.simulate-perception true``` then 
+create a simulated input-link on the perception-monitor and populate it 
+with information from an internal-world file. 
+
+```
+manage-world-state/internal-worlds
+```
+
+This directory contains a collection of internal world models which are used to populate the simulated input-link.
+To use one, add the line ```internal-world-file = world_file.soar``` to the agent config file. 
+
 
 ## World Representation
 
@@ -160,28 +177,54 @@ and unifying all that is known about an object from both belief and perception.
 **Object Monitor**
 
 This is just a collection of ^object-info wmes, each corresponding to a known object in the world. 
-Each contains all the unified information about that object, including links to 
+Each object-info contains all the unified information about that object, including links to 
 the input-link, SVS, and world. 
 
 ```
 (top-state.perception-monitor.object-monitor [obj-mon])
   ([obj-mon] ^object-info [obj-info]) # one per object
-    ([obj-info] ^object-handle [obj-handle] # REQUIRED
+    ([obj-info] 
+	  ^object-handle [obj-handle] # REQUIRED
 
-			    # References to the perceptual version of the object
-	            ^perception-id [perc-id] 
-				^perception-obj [perc-obj] # From SVS, if it exists
-				^input-link-obj [il-obj]   # From input-link.objects, if it exists
-				
-				# References to the belief version of the object
-				^belief-id [bel-id]
-				^belief-obj [bel-obj] # From SVS, if it exists
-				^wm-obj [wm-obj] # From world.objects, should usually exist
-				
-				# Properties of the object from the input-link
-				^properties [props]
-				  ^[prop1-handle] [pred1-handle]
-				  ^[prop2-handle] [pred2-handle]
+	  # References to the perceptual version of the object
+	  ^perception-id [perc-id] 
+	  ^perception-obj [perc-obj] # From SVS, if it exists
+	  ^input-link-obj [il-obj]   # From input-link.objects, if it exists
+	  
+	  # References to the belief version of the object
+	  ^belief-id [bel-id]
+	  ^belief-obj [bel-obj] # From SVS, if it exists
+	  ^world-obj [world-obj] # From world.objects, should usually exist
+	  
+	  # Properties of the object from the input-link
+	  ^properties [props]
+	    ^[prop1-handle] [pred1-handle]
+	    ^[prop2-handle] [pred2-handle]
+
+	  # Status of the object (see object-monitor/elaborate-object-status.soar)
+	  ^status [status]
+	    # Whether the agent should be able to see the object (ignoring occlusion)
+	    ^in-view [[ true false ]] 
+
+	    # True if the agent determined the object is fully/partially occluded
+	    ^is-occluded [[ true false ]]
+
+	    # True if this object shares an input-link-obj with another object
+	    #   (They are segmented together)
+	    ^shared-input-link-obj true
+
+	    # How far away the object is from the robot
+	    ^distance [meters]
+
+	    # Whether the object is visible (on the input-link)
+	    ^is-visible1 [[ visible1 not-visible1 ]]
+	    
+	    # Whether the object is reachable (the arm can grab it)
+	    ^is-reachable [[ reachable1 not-reachable1 ]]
+
+	    # Whether the object is being held by the arm
+	    ^is-grabbed [[ grabbed1 not-grabbed1 ]]
+
 	)
 ```
 

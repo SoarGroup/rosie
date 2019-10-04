@@ -11,31 +11,6 @@ sp {top-state*perception-monitor*object-monitor*object-info*elaborate*status
 
 ##################################################################
 #
-# is-in-svs1 << in-svs1 not-in-svs1 >>
-#   whether the object has a belief object in svs
-#
-##################################################################
-
-sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*in-svs1
-   (state <s> ^superstate nil
-              ^perception-monitor.object-monitor.object-info <obj-info>)
-   (<obj-info> ^belief-obj <bel-obj>
-               ^status <status>)
--->
-   (<status> ^is-in-svs1 in-svs1)
-}
-
-sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*not-in-svs1
-   (state <s> ^superstate nil
-              ^perception-monitor.object-monitor.object-info <obj-info>)
-   (<obj-info> ^status <status>)
-   (<status> -^is-in-svs1 in-svs1)
--->
-   (<status> ^is-in-svs1 not-in-svs1)
-}
-
-##################################################################
-#
 # in-view << true false >>
 #   true if the belief object is in the robot's view volume (should be visible)
 #
@@ -108,7 +83,7 @@ sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*vis
    (state <s> ^superstate nil
               ^perception-monitor.object-monitor.object-info <obj-info>
               ^world.robot.current-location <loc>)
-   (<obj-info> ^wm-obj <loc>
+   (<obj-info> ^world-obj <loc>
                ^status <status>)
 -->
    (<status> ^is-visible1 visible1)
@@ -132,7 +107,6 @@ sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*not
 
 sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*distance
    (state <s> ^superstate nil
-              ^agent-params.domain magicbot
               ^perception-monitor <perc-mon>)
    (<perc-mon> ^obj-distance-filter.result.record <rec>
                ^object-monitor.object-info <obj-info>)
@@ -157,7 +131,7 @@ sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*rea
               ^agent-params.domain << fetch tabletop cozmo >>
               ^perception-monitor.object-monitor.object-info <obj-info>)
    (<obj-info> ^input-link-obj <il-obj>
-               ^wm-obj.predicates.category << object person >>
+               ^world-obj.predicates.category << object person >>
                ^status <status>)
    (<status> ^is-visible1 visible1)
 -->
@@ -181,11 +155,13 @@ sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*rea
 sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*reachable1*if*within*distance
    (state <s> ^superstate nil
               ^agent-params.domain magicbot
+              ^agent-params.magicbot-reachable-distance <dist>
               ^perception-monitor.object-monitor.object-info <obj-info>)
    (<obj-info> ^input-link-obj <il-obj>
-               ^wm-obj.predicates.category << object person >>
+               ^world-obj.predicates.category << object person >>
                ^status <status>)
-   (<status> ^distance < 1.5)
+   (<status> ^is-visible1 visible1
+             ^distance < <dist>)
 -->
    (<status> ^is-reachable1 reachable1)
 }
@@ -195,66 +171,40 @@ sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*not
    (state <s> ^superstate nil
               ^perception-monitor.object-monitor.object-info <obj-info>)
    (<obj-info> ^status <status>
-               ^wm-obj.predicates.category << object person >>)
+               ^world-obj.predicates.category << object person >>)
    (<status> -^is-reachable1 reachable1)
 -->
    (<status> ^is-reachable1 not-reachable1)
 }
 
-#########################################################
+##################################################################
 #
-# Discrepancy: different-is-grabbed1
-#   The is-grabbed1 predicate on the object doesn't match the input-link
-# Handling: attend-to-perception/different-is-grabbed1
+# is-grabbed1 << grabbed1 not-grabbed1 >>
+#   whether the object is currently held by the arm
 #
-#########################################################
+##################################################################
 
-sp {perception-monitor*detect-discrepancies*different-is-grabbed1*grabbed
+# Grabbed if the arm is holding the object
+sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*grabbed1
    (state <s> ^superstate nil
-              ^perception-monitor <perc-mon>)
-   (<perc-mon> ^discrepancies <discs>
-               ^input-link.self.arm.holding-object <id>
-               ^object-monitor.object-info <obj-info>)
+              ^perception-monitor.input-link.self.arm.holding-object <id>
+              ^perception-monitor.object-monitor.object-info <obj-info>)
    (<obj-info> ^perception-id <id>
-              -^wm-obj.predicates.is-grabbed1 grabbed1)
+               ^status <status>)
 -->
-   (<discs> ^different-is-grabbed1 <disc>)
-   (<disc> ^object-info <obj-info> 
-           ^is-grabbed1 grabbed1)
+   (<status> ^is-grabbed1 grabbed1)
 }
 
-sp {perception-monitor*detect-discrepancies*different-is-grabbed1*not-grabbed
+# Default: not-grabbed (only for grabbable things)
+sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*not-grabbed1
    (state <s> ^superstate nil
-              ^perception-monitor <perc-mon>)
-   (<perc-mon> ^discrepancies <discs>
-               ^input-link.self.arm <arm>
-               ^object-monitor.object-info <obj-info>)
-   (<arm> -^holding-object <id>)
-   (<obj-info> ^perception-id <id>
-               ^wm-obj.predicates <preds>)
-   (<preds> ^affordance1 grabbable1 
-           -^is-grabbed1 not-grabbed1)
+              ^perception-monitor.object-monitor.object-info <obj-info>)
+   (<obj-info> ^status <status>
+               ^world-obj.predicates.affordance1 grabbable1)
+   (<status> -^is-grabbed1 grabbed1)
 -->
-   (<discs> ^different-is-grabbed1 <disc>)
-   (<disc> ^object-info <obj-info> 
-           ^is-grabbed1 not-grabbed1)
+   (<status> ^is-grabbed1 not-grabbed1)
 }
-
-sp {perception-monitor*detect-discrepancies*different-is-grabbed1*not-grabbed1*no*perception-id
-   (state <s> ^superstate nil
-              ^perception-monitor <perc-mon>)
-   (<perc-mon> ^discrepancies <discs>
-               ^object-monitor.object-info <obj-info>)
-   (<obj-info> -^perception-id <id>
-               ^wm-obj.predicates <preds>)
-   (<preds> ^affordance1 grabbable1 
-           -^is-grabbed1 not-grabbed1)
--->
-   (<discs> ^different-is-grabbed1 <disc>)
-   (<disc> ^object-info <obj-info> 
-           ^is-grabbed1 not-grabbed1)
-}
-
 
 
 ##################################################################
