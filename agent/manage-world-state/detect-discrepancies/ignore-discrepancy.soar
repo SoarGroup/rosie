@@ -1,0 +1,48 @@
+########################### ignore-discrepancy ########################
+#
+# Cases where the agent should ignore a discrepancy and not attend to it
+
+# Ignore grown-object if it is segmented together with another object (shared-input-link-obj)
+sp {anystate*reject*attend-to-perception*grown-object*has*shared-input-link-obj
+   (state <s> ^operator <o> +)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type grown-object
+        ^discrepancy-info.object-info.status.shared-input-link-obj true)
+-->
+   (<s> ^operator <o> -)
+}
+
+# Ignore shrunken-object if it was determined to be occluded
+sp {anystate*reject*attend-to-perception*shrunken-object*is*occluded
+   (state <s> ^operator <o> +)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type shrunken-object
+        ^discrepancy-info.object-info.status.is-occluded true)
+-->
+   (<s> ^operator <o> -)
+}
+
+# Ignore moved-object if it was determined to be occluded
+sp {anystate*reject*attend-to-perception*moved-object*is*occluded
+   (state <s> ^operator <o> +)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type moved-object
+        ^discrepancy-info.object-info.status.is-occluded true)
+-->
+   (<s> ^operator <o> -)
+}
+
+# Ignore new-perception-object if the agent is still waiting to see if it is stable
+sp {anystate*reject*attend-to-perception*new-perception-object*stability*timer*unsatisfied
+   (state <s> ^operator <o> +
+              ^io.input-link.time.seconds <t>
+              ^top-state.perception-monitor.object-monitor.new-object-info <obj-info>)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type new-perception-object
+        ^discrepancy-info.input-link-obj <il-obj>)
+   (<obj-info> ^input-link-obj <il-obj>
+               ^check-stability-time > <t>)
+-->
+   (<s> ^operator <o> -)
+}
+

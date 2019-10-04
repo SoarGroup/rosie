@@ -8,7 +8,6 @@
 #   belief-vol <vol> - filter to extract belief-obj volume
 #   perception-vol <vol> - filter to extract perception-obj volume
 #   vol-diff <diff> - perception-vol/belief-vol
-#   has-shrunk true - true if vol-diff < vol-low-diff-threshold
 #
 ###################################################
 
@@ -45,22 +44,15 @@ sp {detect-discrepancies*shrunken-object*elaborate*object-info*vol-diff
    (<diffs> ^vol-diff (/ (+ <perc-vol> 0.000000001) (+ <bel-vol> 0.000000001)))
 }
 
-sp {detect-discrepancies*shrunken-object*elaborate*object-info*has-shrunk
-   (state <s> ^superstate nil
-              ^perception-monitor.object-monitor.object-info.differences <diffs>
-              ^agent-params.vol-low-diff-threshold <low>)
-   (<diffs> ^vol-diff < <low>)
--->
-   (<diffs> ^has-shrunk true)
-}
-
+# If the vol-diff is below the threshold, report shrunken-object discrepancy
 sp {perception-monitor*detect-discrepancies*shrunken-object
    (state <s> ^superstate nil
+              ^agent-params.vol-low-diff-threshold <low>
               ^perception-monitor <perc-mon>)
-   (<perc-mon> ^discrepancies <discs>
-               ^object-monitor.object-info <obj-info>)
-   (<obj-info> ^differences.has-shrunk true
-               ^status.is-occluded false)
+   (<perc-mon> ^object-monitor.object-info <obj-info>
+               ^discrepancies <discs>)
+   (<obj-info> ^differences <diffs>)
+   (<diffs> ^vol-diff < <low>)
 -->
    (<discs> ^shrunken-object <disc>)
    (<disc> ^object-info <obj-info>)

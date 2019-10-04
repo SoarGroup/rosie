@@ -1,34 +1,53 @@
+TODO: 
+
 - Fix which predicates are extracted, maybe sync with James? 
   Including making sure predicates are good in the magicbot domain
 
 - game-learning/find-solution - change arm.grabbed
 
-- visual/non-visual properties, fix this
+- Make sure tabletop arm and object tracking is ok, and how we hande perception of moving objects and don't delete
 
+# Send the command to svs
+#sp {anystate*apply*change-world-state*update-object-pose*svs*copy_node*grabbed
+#   (state <s> ^operator <o>
+#              ^top-state.svs.command <cmd>)
+#   (<o> ^name change-world-state
+#        ^update-object-pose <obj-info>)
+#   (<obj-info> ^belief-obj.id <bel-id>
+#               ^world-obj.predicates.is-grabbed1 grabbed1)
+#-->
+#   (<cmd> ^copy_transform <copy>)
+#   (<copy> ^source robot
+#           ^destination <bel-id>
+#           ^position yes
+#           ^rotation no
+#           ^scale no)
+#   (<obj-info> ^copy-command <copy>)
+#}
 
+- Handle task-objects better, including how we delete them
 
-### Details
+- Handle current-location and in1(obj, current-location) predicate
 
-# Detect Discrepancies
-
-different-arm-status: grabbed predicate != perception
-different-object-status: predicates reachable, visible != perception
-different-object-predicate: other predicates from perception
-different-robot-status: robot status predicate
-different-waypoint: current-waypoint != input-link
-
-grown-object: vol diff exceeds threshold
-shrunken-object: vol diff exceeds threshold (not occuded)
-moved-object: pos diff exceeds threshold
-
-missing-object: in-view=true, occluded=false, visible=false
-new-belief-object: new-belief-object flag
-new-perception-object: input-link-obj w/o perception-obj
-
-# Construct World Object
-Retrieve root-category from smem and copy all supercategories onto the object
-Include all 'intrinsic' predicates (non-status)
-
-
-# Input Link:
+#
+## Add in predicate for visible object
+#sp {anystate*apply*change-world-state*add-object-to-world*visible*add*in*predicate
+#   (state <s> ^operator <o>
+#              ^top-state.world <world>
+#             -^perception-monitor.input-link.self.arm.holding-object <h>)
+#   (<o> ^name change-world-state
+#        ^add-object-to-world <info>)
+#   (<info> ^object <obj>
+#           ^is-visible1 visible1)
+#   (<obj> ^handle <h>)
+#   (<world> ^robot.current-location <cur-loc>
+#            ^predicates.predicate <in-pred>)
+#   (<in-pred> ^handle in1)
+#   -{(<in-pred> ^instance <curi>)
+#     (<curi> ^1 <obj> ^2 <cur-loc>)}
+#-->
+#    (<in-pred> ^instance <i>)
+#    (<i> ^1 <obj> ^2 <cur-loc>)
+#}
+#
 

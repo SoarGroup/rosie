@@ -1,4 +1,4 @@
-# Constructing the World Representation
+# Constructing and Maintaining the World Representation
 
 ## Input Link Representation
 
@@ -101,6 +101,12 @@ manage-world-state/construct-world-object.soar
 
 This utility operator can be used to construct an object in the proper world reprensentation
 from a variety of sources, including smem, epmem, TCN, and interaction. 
+It assumes that there is some root category information, and it will do an smem 
+query to retrieve category information. In doing so, it will add all 
+super-categories to the object, and affordances. 
+(e.g. if the root category is table, it will also add predicates category=furniture 
+and category=object, plus affordance=surface)
+
 
 ```
 ([s] ^operator [o])
@@ -151,7 +157,38 @@ to the end waypoint's coordinate. If doorway=true, it will drive to (door_sx, do
 ```
 
 
-## Perception Monitor
+# Handling Perceptual Updates
+
+The agent must deliberately handle perceptual updates and 
+change the world representation. This is done in four steps: 
+
+1. **Monitoring Perception**:
+The agent has two representations of the world, there is the
+one coming in from perception on the input-link and SVS, 
+and the other is its belief representation of the world
+on the top-state and SVS. (Note that an object may have two 
+versions of itself in SVS.) 
+
+1. **Detecting Discrepancies**:
+The agent is continually comparing these
+two representations using elaborations and SVS filters.
+If a discrepancy is detected, it will create a structure
+noting it on the perception-monitor. 
+
+1. **Attending to a Discrepancy**:
+Once a discrepancy is detected, the agent can propose the
+attend-to-perception operator to analyze the discrepancy
+and determine its cause. The result can be either
+updating the belief world representation, or 
+attributing it to noise/errors and ignoring it. 
+
+1. **Updating the World**: 
+If a discrepancy was determined be caused by an actual 
+change in the environment, the agent can use the 
+chnage-world-state operator to modify its belief world representation.
+
+
+## 1. Monitoring Perception
 
 ```
 manage-world-state/perception-monitor
@@ -224,7 +261,7 @@ the input-link, SVS, and world.
 
 	    # Whether the object is being held by the arm
 	    ^is-grabbed [[ grabbed1 not-grabbed1 ]]
-
+	  
 	)
 ```
 
@@ -246,3 +283,64 @@ To extract a certain predicate, elaborate the following onto the predicate-monit
     ([pred-info] ^predicate-handle [pred-handle])
 ```
 
+## 2. Detecting Discrepancies 
+
+```
+manage-world-state/detect-discrepancies
+
+These will create a structure on the perception-monitor.discrepancies, such as:
+(top-state ^perception-monitor.discrepancies [discs])
+  ([discs] ^new-perception-object [npo])
+    ([npo] ^input-link-obj [il-obj])
+```
+
+1. **new-perception-object**: There is an object in perception that is not in belief
+1. **new-belief-object**: There is a newly added world object that needs to be checked
+1. **missing-object**: There is an object that is in-view, not-occluded, and not-visible
+
+1. **moved-object**: Theposition of the perception object in SVS is significantly different than the position of the belief object. 
+1. **grown-object**: The perception volume of an object is significantly larger than the belief volume 
+1. **shrunken-object**: The perception volume of an object is significantly smaller than the belief volume
+
+1. **different-object-predicate**: The object has a predicate in perception which is not in belief. 
+1. **different-object-status**: The object has a status predicate which does not match the belief predicate (is-visible1, is-reachable1, is-grabbed1). 
+
+1. **different-robot-status**: The input-link status of the robot/arm does not match the world.robot
+1. **different-waypoint**: The input-link current-waypoint does not match the world.robot
+
+## 3. Attending to a Discrepancy
+
+```
+manage-world-state/attend-to-perception
+```
+
+Once a discrepancy is detected, 
+
+Ignoring Discrepancies:
+grown-object: shared-input-link-obj
+shrunken-object: occluded
+moved-object: occluded
+new-perception-object: still waiting on stability timer
+
+
+## 4. Updating the World
+
+```
+manage-world-state/change-world-state
+```
+
+If at some point the agent determines it needs to modify the world, it should
+use the operator change-world-state to do so (can propose anywhere).
+It can propose a single operator to do multiple things all in one decision cycle
+by adding multiple elaborations onto the operator
+
+1. **add-object-to-world**: Add a new object to the world, SVS, and perception-monitor
+1. **create-belief-object**: Create a new belief object in SVS, either a copy of a perception object
+or a new bounding box with given parameters (pos/rot/scale). 
+1. **update-object-pose**: Change the belief object's pose to match that of perception (pos/rot/scale)
+1. **change-perception-id**: Change the perception-id on an object-info
+1. **merge-belief-objects**: Take two or more belief objects and merge them into one, 
+telling perception to also merge them. 
+1. **delete-object**: Deletes the object from the world, object-monitor, and SVS
+
+   

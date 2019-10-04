@@ -10,6 +10,7 @@
 #
 ###################################################
 
+# Extract a filter computing the distance between the belief and perception object centroids
 sp {detect-discrepancies*shrunken-object*elaborate*object-info*compare-position*svs-filter
    (state <s> ^superstate nil
               ^perception-monitor.object-monitor.object-info <obj-info>
@@ -30,29 +31,6 @@ sp {detect-discrepancies*shrunken-object*elaborate*object-info*compare-position*
    (<diffs> ^compare-position <compare>)
 }
 
-## Note: with magicbot, we compare the object's position to the robot (we don't perceive it when holding it)
-#sp {detect-discrepancies*shrunken-object*elaborate*object-info*compare-position*svs-filter*held*object
-#   (state <s> ^superstate nil
-#              ^agent-params.domain << cozmo magicbot >>
-#              ^perception-monitor.object-monitor.object-info <obj-info>
-#              ^svs.command <cmd>)
-#   (<obj-info> -^perception-obj
-#               ^belief-obj.id <bel-id>
-#               ^world-obj.predicates.is-grabbed1 grabbed
-#               ^differences <diffs>)
-#-->
-#   (<cmd> ^extract <compare>)
-#   (<compare> ^type distance 
-#              ^a <a>
-#              ^b <b>
-#              ^distance_type centroid)
-#   (<a> ^type node
-#        ^id robot)
-#   (<b> ^type node
-#        ^id <bel-id>)
-#   (<diffs> ^compare-position <compare>)
-#}
-
 sp {detect-discrepancies*shrunken-object*elaborate*object-info*pos-diff
    (state <s> ^superstate nil
               ^perception-monitor.object-monitor.object-info.differences <diffs>)
@@ -61,22 +39,15 @@ sp {detect-discrepancies*shrunken-object*elaborate*object-info*pos-diff
    (<diffs> ^pos-diff <val>)
 }
 
-sp {detect-discrepancies*shrunken-object*elaborate*object-info*has-moved
-   (state <s> ^superstate nil
-              ^perception-monitor.object-monitor.object-info.differences <diffs>
-              ^agent-params.pos-diff-threshold <thresh>)
-   (<diffs> ^pos-diff > <thresh>)
--->
-   (<diffs> ^has-moved true)
-}
-
+# If the position difference exceeds a threshold, report it
 sp {perception-monitor*detect-discrepancies*moved-object
    (state <s> ^superstate nil
+              ^agent-params.pos-diff-threshold <thresh>
               ^perception-monitor <perc-mon>)
    (<perc-mon> ^discrepancies <discs>
                ^object-monitor.object-info <obj-info>)
-   (<obj-info> ^differences.has-moved true
-               ^status.is-occluded false)
+   (<obj-info> ^differences <diffs>)
+   (<diffs> ^pos-diff > <thresh>)
 -->
    (<discs> ^moved-object <disc>)
    (<disc> ^object-info <obj-info>)
