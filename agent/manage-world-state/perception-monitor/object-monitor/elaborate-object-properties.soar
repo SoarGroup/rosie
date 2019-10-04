@@ -4,22 +4,11 @@
 # io.input-link.objects.object
 #    ^property
 #      ^property-handle <prop-handle>
-#      ^type << visual state linguistic >>
-#      ^values
-#         ^handle1 conf1 # confidence is a value between 0 and 1
-#         ^handle2 conf2 
-#         ...
-#
+#      ^predicate-handle <pred-handle>
+
 # Creates the following on the object-info
 # object-monitor.object-info.properties
-#   ^property-info
-#      ^property-handle <prop-handle>
-#      ^predicate-handle <pred-handle> # ONLY IF CONFIDENT
-#      ^type << visual state linguistic >>
-#      ^input-link-prop <prop> # link to input-link.objects.object.property
-#      ^hypotheis
-#         ^predicate-handle <pred-handle>
-#         ^confidence <n> # 0-1
+#   ^<prop-handle> <pred-handle>
 
 # Elaborate the properties identifier
 sp {top-state*perception-monitor*object-monitor*object-info*elaborate*properties
@@ -29,65 +18,15 @@ sp {top-state*perception-monitor*object-monitor*object-info*elaborate*properties
    (<obj-info> ^properties <props>)
 }
 
-# Elaborates property-info from the input-link object property
-sp {top-state*perception-monitor*object-monitor*object-info*elaborate*property-info
+# Elaborate predicates from the input link object
+sp {top-state*perception-monitor*object-monitor*object-info*elaborate*properties*predicate
    (state <s> ^superstate nil
               ^perception-monitor.object-monitor.<any-type> <obj-info>)
    (<obj-info> ^input-link-obj.property <prop>
                ^properties <props>)
-   (<prop> ^property-handle { <prop-handle> <> timeleft }
-           ^type <type>)
+   (<prop> ^property-handle <prop-handle>
+           ^predicate-handle <pred-handle>)
 -->
-   (<props> ^property-info <prop-info>)
-   (<prop-info> ^property-handle <prop-handle>
-                ^type <type>
-                ^input-link-prop <prop>)
-}
-
-# Elaborates a hypothesis for each possible value
-sp {top-state*perception-monitor*object-monitor*object-info*property-info*elaborate*hypothesis
-   (state <s> ^superstate nil
-              ^perception-monitor.object-monitor.<any-type>.properties.property-info <prop-info>)
-   (<prop-info> ^input-link-prop.values.<pred-handle> {<conf> > .1})
--->
-   (<prop-info> ^hypothesis <h>)
-   (<h> ^predicate-handle <pred-handle>
-        ^confidence <conf>)
-}
-
-# Finds the best hypothesis
-sp {top-state*perception-monitor*object-monitor*object-info*property-info*elaborate*hypothesis*best
-   (state <s> ^superstate nil
-              ^perception-monitor.object-monitor.<any-type>.properties.property-info <prop-info>)
-   (<prop-info> ^hypothesis <h1>)
-   (<h1> ^confidence <best>)
-   -{(<prop-info> ^hypothesis.confidence > <best>)}
--->
-   (<h1> ^best true)
-}
-
-# Makes sure no other hypothesis is more than 80% of its confidence (otherwise its ambiguous)
-sp {top-state*perception-monitor*object-monitor*object-info*property-info*elaborate*hypothesis*lower-threshold
-   (state <s> ^superstate nil
-              ^perception-monitor.object-monitor.<any-type>.properties.property-info <prop-info>)
-   (<prop-info> ^hypothesis <h>)
-   (<h> ^best true
-        ^confidence <conf>)
--->
-   (<h> ^lower-threshold (* <conf> .8))
-}
-
-# If there is a single good hypothesis, elaborate it up
-sp {top-state*perception-monitor*object-monitor*object-info*property-info*elaborate*predicate-handle
-   (state <s> ^superstate nil
-              ^perception-monitor.object-monitor.<any-type>.properties.property-info <prop-info>)
-   (<prop-info> ^hypothesis <h>)
-   (<h> ^best true
-        ^predicate-handle <pred-handle> 
-        ^lower-threshold <low-thresh>)
-   -{(<prop-info> ^hypothesis {<h2> <> <h>})
-     (<h2> ^confidence > <low-thresh>)}
--->
-   (<prop-info> ^predicate-handle <pred-handle>)
+   (<props> ^<prop-handle> <pred-handle>)
 }
 
