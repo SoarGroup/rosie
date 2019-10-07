@@ -322,13 +322,30 @@ These will create a structure on the perception-monitor.discrepancies, such as:
 manage-world-state/attend-to-perception
 ```
 
-Once a discrepancy is detected, 
+Once a discrepancy is detected, the agent can use the attend-to-perception operator 
+to discern why the discrepancy occurred and what to do about it. 
+To enable these operators on a state, simply add ```([s] ^problem-space.attend-to-perception yes)``` 
+to that state. These operators may change the world on the top-state, but they 
+do not usually GDS to re-enter the substate. 
+The operator proposed will look like the following:
 
-Ignoring Discrepancies:
-grown-object: shared-input-link-obj
-shrunken-object: occluded
-moved-object: occluded
-new-perception-object: still waiting on stability timer
+```
+# Given a discrepancy perception-monitor.discrepancies.[type] [info]
+([s] ^operator [o])
+  ([o] ^name attend-to-perception
+       ^discrepancy-type [type] # e.g. missing-object, different-waypoint
+       ^discrepancy-info [info])
+```
+
+Details about how the agent handles each discrepancy type is in ```attend-to-perception/README.md```. 
+It might change the world representation via the ```change-world-state``` operator
+or it could choose to ignore the discrepancy: 
+
+* **grown-object**: ignored if it detects it is segmented together with another object (shared-input-link-obj)
+* **shrunken-object**: ignored if it determines the object is partially occluded
+* **moved-object**: ignored if it determines the object is partially occluded
+* **different-object-predicate**: ignored if it determines the object is partially occluded
+* **new-perception-object**: ignores it until a set time has passed (e.g. 1 second) and it is still there
 
 
 ## 4. Updating the World

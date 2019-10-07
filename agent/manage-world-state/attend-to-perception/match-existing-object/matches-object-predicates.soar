@@ -1,27 +1,15 @@
 ### matches-object-predicates
 # match an existing object based on the predicates they share
 
-### Case 1: Always try to match any missing-objects specified by superstate
-# (just match on predicates, don't worry about overlapping)
-
-sp {match-existing-object*propose*matches-object-predicates*missing-object
-   (state <s> ^name match-existing-object
-              ^match-missing-object <obj>)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name matches-object-predicates
-        ^object-info <obj>
-        ^matching-counts <mc>)
-}
-
-### Case 2: For a perception object, match any objects that aren't visible
+### Case 1: For a perception object, match any objects that have no belief obj
 
 sp {match-existing-object*propose*matches-object-predicates*source-type*perception
    (state <s> ^name match-existing-object
               ^source-type perception
               ^source-obj <il-obj>
               ^object-monitor.object-info <obj-info>)
-   (<obj-info> ^status.is-visible1 not-visible1)
+   (<obj-info> ^status.is-visible1 not-visible1
+              -^belief-obj)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name matches-object-predicates
@@ -29,7 +17,7 @@ sp {match-existing-object*propose*matches-object-predicates*source-type*percepti
         ^matching-counts <mc>)
 }
 
-### Case 3: For a world-obj, match any perception objects
+### Case 2: For a world-obj, match any perception objects
 
 sp {match-existing-object*propose*matches-object-predicates*source-type*belief
    (state <s> ^name match-existing-object
@@ -42,6 +30,18 @@ sp {match-existing-object*propose*matches-object-predicates*source-type*belief
    (<o> ^name matches-object-predicates
         ^object-info <obj-info>
         ^matching-counts <mc>)
+}
+
+### Note: We reject matches between two objects which both have belief svs objects
+sp {match-existing-object*reject*matches-object-predicates*belief*both*in*svs
+   (state <s> ^name match-existing-object
+              ^source-type belief
+              ^source-obj.belief-obj
+              ^operator <o> +)
+   (<o> ^name matches-object-predicates
+        ^object-info.belief-obj)
+-->
+   (<s> ^operator <o> -)
 }
 
 ### Elaborate matching predicates
@@ -97,6 +97,7 @@ sp {matching-existing-object*elaborate*matching-object-predicates*number-matchin
 
 ### Elaborate conflicting predicates
 
+# These conflict if the other object has a different predicate for the same property
 sp {match-existing-object*elaborate*matches-object-predicates*conflicting-predicate
    (state <s> ^name match-existing-object
               ^operator <o> +
@@ -109,11 +110,12 @@ sp {match-existing-object*elaborate*matches-object-predicates*conflicting-predic
    (<o> ^conflicting-predicate <pred>)
 }
 
-# SHAME
-sp {SHAME*match-existing-object*elaborate*matches-object-predicates*conflicting-predicate*specialcase
+# SPCASE
+#   These are predicates which must be on the other object to match
+sp {match-existing-object*elaborate*matches-object-predicates*conflicting-predicate*required
    (state <s> ^name match-existing-object
               ^operator <o> +
-              ^new-object-predicates.{ <prop> << modifier1 >> } <pred>)
+              ^new-object-predicates.{ <prop> << category modifier1 name >> } <pred>)
    (<o> ^name matches-object-predicates
         ^object-info.world-obj.predicates <preds>)
    (<preds> -^<prop> <pred>)
@@ -153,18 +155,6 @@ sp {match-existing-object*reject*matches-object-predicates*conflicting-predicate
               ^operator <o> +)
    (<o> ^name matches-object-predicates
         ^conflicting-predicate)
--->
-   (<s> ^operator <o> -)
-}
-
-# Reject if belief and candidate both have svs objects
-sp {match-existing-object*reject*matches-object-predicates*belief*both*in*svs
-   (state <s> ^name match-existing-object
-              ^source-type belief
-              ^source-obj.belief-obj
-              ^operator <o> +)
-   (<o> ^name matches-object-predicates
-        ^object-info.belief-obj)
 -->
    (<s> ^operator <o> -)
 }

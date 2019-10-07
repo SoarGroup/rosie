@@ -1,147 +1,178 @@
-# We have to check to make sure that the object is stable (actually exists)
+### For noisy external environments, when the agent sees a new object
+#   it has to check to make sure that the object is stable (actually exists)
 #   by making sure it stays around for some time and doesn't significantly change position/volume
+
+### Step 1: Create a new-object-info structure on the object-monitor to monitor the new object over time
+
+sp {anystate*apply*attend-to-perception*new-perception-object*create*new-object-info
+   (state <s> ^operator <o>
+              ^top-state.perception-monitor.object-monitor <obj-mon>)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type new-perception-object
+        ^discrepancy-info.input-link-obj <il-obj>)
+-->
+   (<obj-mon> ^new-object-info <obj-info>)
+   (<obj-info> ^input-link-obj <il-obj>
+               ^number-checks 0)
+}
+
+# Elaborate the new-object-info onto the operator
+sp {anystate*elaborate*attend-to-perception*new-perception-object*object-info*from*object-monitor
+   (state <s> ^operator <o> +
+              ^top-state.perception-monitor.object-monitor <obj-mon>)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type new-perception-object
+        ^discrepancy-info.input-link-obj <il-obj>)
+   (<obj-mon> ^new-object-info <obj-info>)
+   (<obj-info> ^input-link-obj <il-obj>)
+-->
+   (<o> ^new-object-info <obj-info>)
+}
+
+# If a new-perception-object prematurely disappears from the input-link, remove the new-object-info for it
+sp {top-state*remove*new-object-info*disappeared
+   :o-support
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>)
+   (<perc-mon> ^object-monitor <obj-mon>
+              -^input-link.objects.object <il-obj>)
+   (<obj-mon> ^new-object-info <obj-info>)
+   (<obj-info> ^input-link-obj <il-obj>)
+-->
+   (<obj-mon> ^new-object-info <obj-info> -)
+}
+
+
+
+### Step 2: Create filters which will check to see if the new object is stable over time
+
+# Creates filters to monitor if the object changes position/size
+sp {anystate*apply*attend-to-perception*new-perception-object*create*filters
+   (state <s> ^operator <o>
+              ^top-state.svs.command <cmd>
+              ^io.input-link.time.seconds <t>
+              ^agent-params.stability-check-duration <dur>
+             -^agent-params.domain internal)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type new-perception-object
+        ^new-object-info <obj-info>)
+   (<obj-info> ^input-link-object.object-handle <objh>
+              -^check-stability-time
+               ^number-checks <n>)
+-->
+   (<obj-info> ^check-stability-time (+ <t> <dur>)
+               ^number-checks ( + <n> 1) )
+
+   (<cmd> ^extract <pos>)
+   (<pos> ^type monitor_position
+          ^a <pa>)
+   (<pa> ^type node
+         ^id <objh>)
+   (<obj-info> ^position-monitor <pos>)
+   
+   (<cmd> ^extract <vol>)
+   (<vol> ^type monitor_volume
+          ^a <va>)
+   (<va> ^type node
+         ^id <objh>)
+   (<obj-info> ^volume-monitor <vol>)
+}
+
+# If a new-perception-object prematurely disappears from the input-link, remove the monitoring SVS filters
+sp {top-state*remove*new-object-info*filters*disappeared
+   :o-support
+   (state <s> ^superstate nil
+              ^perception-monitor <perc-mon>
+              ^svs.command <cmd>)
+   (<perc-mon> ^object-monitor <obj-mon>
+              -^input-link.objects.object <il-obj>)
+   (<obj-info> ^input-link-obj <il-obj>
+               ^position-monitor <pos>
+               ^volume-monitor <vol>)
+   (<cmd> ^extract <pos>
+          ^extract <vol>)
+-->
+   (<cmd> ^extract <pos> -
+          ^extract <vol> -)
+}
+
+
+
+### Step 3: Wait for the stability-check-duration to pass (the discrepancy will be ignored in the meanwhile)
+
+
+### Step 4: Determine whether the object is stable
+
 
 # If the object is stable, we continue adding it to the world
 # If the object is not stable, we reset the timers/filters and try again
 
-## For simulated domains, we don't have to do this check
-#sp {attend-to-perception*new-perception-object*elaborate*obj-is-stable*for*simulated*domains
-#   (state <s> ^name attend-to-perception
-#              ^discrepancy-type new-perception-object
-#              ^agent-params.domain << internal ai2thor >>)
-#-->
-#   (<s> ^obj-is-stable true)
-#}
+### Check if the position is stable
 
-# For non-simulated domains, we evaluate its stability
-sp {attend-to-perception*new-perception-object*propose*check-object-stability
-   (state <s> ^name attend-to-perception
-              ^discrepancy-type new-perception-object
-             -^obj-is-stable true
-              ^object-info <obj-info>)
--->
-   (<s> ^operator <o> +)
-   (<o> ^name check-object-stability
-        ^object-info <obj-info>)
-}
-
-#####################
-# Elaborations that determine whether an object is stable or not
-
-sp {attend-to-perception*new-perception-object*check-object-stability*elaborate*thresholds
-   (state <s> ^name attend-to-perception
-              ^discrepancy-type new-perception-object
-              ^operator <o> +
-              ^agent-params <params>)
-   (<o> ^name check-object-stability)
-   (<params> ^pos-diff-threshold <pdt>
-             ^vol-low-diff-threshold <vlt>
-             ^vol-high-diff-threshold <vht>
-             ^max-stability-checks <max>)
--->
-   (<o> ^pos-threshold <pdt>
-        ^vol-low-threshold <vlt>
-        ^vol-high-threshold <vht>
-        ^max-checks <max>)
-}
-
-sp {attend-to-perception*new-perception-object*check-object-stability*elaborate*pos-diff
-   (state <s> ^name attend-to-perception
-              ^discrepancy-type new-perception-object
-              ^operator <o> +)
-   (<o> ^name check-object-stability
-        ^object-info.position-monitor.result.record.value <val>)
+# pos-diff: difference between the original and current positions
+sp {anystate*attend-to-perception*new-perception-object*elaborate*pos-diff
+   (state <s> ^operator <o> +)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type new-perception-object
+        ^new-object-info.position-monitor.result.record.value <val>)
 -->
    (<o> ^pos-diff <val>)
 }
 
-sp {attend-to-perception*new-perception-object*check-object-stability*elaborate*vol-diff
-   (state <s> ^name attend-to-perception
-              ^discrepancy-type new-perception-object
-              ^operator <o> +)
-   (<o> ^name check-object-stability
-        ^object-info.volume-monitor.result.record.value <val>)
--->
-   (<o> ^vol-diff <val>)
-}
-
-# stable position
-
-sp {attend-to-perception*new-perception-object*check-object-stability*elaborate*stable-pos*true
-   (state <s> ^name attend-to-perception
-              ^discrepancy-type new-perception-object
-              ^operator <o> +)
-   (<o> ^name check-object-stability
-        ^pos-threshold <t>
+# If the position difference is below our threshold, mark it stable
+sp {anystate*attend-to-perception*new-perception-object*elaborate*stable-pos*true
+   (state <s> ^operator <o> +
+              ^agent-params.pos-diff-threshold <t>)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type new-perception-object
         ^pos-diff < <t>)
 -->
    (<o> ^stable-pos true)
 }
 
-sp {attend-to-perception*new-perception-object*check-object-stability*elaborate*stable-pos*false
-   (state <s> ^name attend-to-perception
-              ^discrepancy-type new-perception-object
-              ^operator <o> +)
-   (<o> ^name check-object-stability
-        ^pos-threshold <t>
-              ^pos-diff >= <t>)
+
+### Check if the volume is stable
+
+# vol-diff: difference between the original and current volumes (percentage)
+sp {anystate*attend-to-perception*new-perception-object*elaborate*vol-diff
+   (state <s> ^operator <o> +)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type new-perception-object
+        ^new-object-info.volume-monitor.result.record.value <val>)
 -->
-   (<o> ^stable-pos false)
+   (<o> ^vol-diff <val>)
 }
 
-# stable volume
-
-sp {attend-to-perception*new-perception-object*check-object-stability*elaborate*stable-vol*true
-   (state <s> ^name attend-to-perception
-              ^discrepancy-type new-perception-object
-              ^operator <o> +)
-   (<o> ^name check-object-stability
-        ^vol-low-threshold <low>
-        ^vol-high-threshold <high>
+# If the volume difference is between our thresholds, mark it stable
+sp {anystate*attend-to-perception*new-perception-object*elaborate*stable-vol*true
+   (state <s> ^operator <o> +
+              ^agent-params.pos-diff-threshold <t>
+              ^agent-params.vol-low-diff-threshold <low>
+              ^agent-params.vol-high-diff-threshold <high>)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type new-perception-object
         ^vol-diff { < <high> > <low>})
 -->
    (<o> ^stable-vol true)
 }
 
-sp {attend-to-perception*new-perception-object*check-object-stability*elaborate*stable-vol*false*low
-   (state <s> ^name attend-to-perception
-              ^discrepancy-type new-perception-object
-              ^operator <o> +)
-   (<o> ^name check-object-stability
-        ^vol-low-threshold <low>
-        ^vol-diff <= <low>)
--->
-   (<o> ^stable-vol false)
-}
+### Overall stability
 
-sp {attend-to-perception*new-perception-object*check-object-stability*elaborate*stable-vol*false*high
-   (state <s> ^name attend-to-perception
-              ^discrepancy-type new-perception-object
-              ^operator <o> +)
-   (<o> ^name check-object-stability
-        ^vol-high-threshold <high>
-        ^vol-diff >= <high>)
--->
-   (<o> ^stable-vol false)
-}
-
-# Overall stability
-
-sp {attend-to-perception*new-perception-object*check-object-stability*elaborate*obj-is-stable*true*internal
-   (state <s> ^name attend-to-perception
-              ^discrepancy-type new-perception-object
-              ^agent-params.domain << internal magicbot >>
-              ^operator <o> +)
-   (<o> ^name check-object-stability)
+# Object is automatically stable for internal domains
+sp {anystate*attend-to-perception*new-perception-object*elaborate*obj-is-stable*true*internal
+   (state <s> ^operator <o> +
+              ^agent-params.domain << internal magicbot >>)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type new-perception-object)
 -->
    (<o> ^obj-is-stable true)
 }
 
-sp {attend-to-perception*new-perception-object*check-object-stability*elaborate*obj-is-stable*true
-   (state <s> ^name attend-to-perception
-              ^discrepancy-type new-perception-object
-              ^operator <o> +)
-   (<o> ^name check-object-stability
+# If both the position + volume are stable, mark as stable
+sp {anystate*attend-to-perception*new-perception-object*elaborate*obj-is-stable*true
+   (state <s> ^operator <o> +)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type new-perception-object
         ^stable-vol true
         ^stable-pos true)
 -->
@@ -149,126 +180,41 @@ sp {attend-to-perception*new-perception-object*check-object-stability*elaborate*
 }
 
 # After we check N times, we consider it stable
+sp {anystate*attend-to-perception*new-perception-object*elaborate*obj-is-stable*true
+   (state <s> ^operator <o> +)
+   (<o> ^name attend-to-perception
 sp {attend-to-perception*new-perception-object*check-object-stability*elaborate*obj-is-stable*true*timeout
    (state <s> ^name attend-to-perception
               ^discrepancy-type new-perception-object
-              ^operator <o> +)
+              ^operator <o> +
+              ^agent-params.max-stability-checks <max>)
    (<o> ^name check-object-stability
-        ^{ << stable-pos stable-vol >> } false
-        ^max-checks <max>
-        ^object-info.number-checks >= <max>)
+        ^new-object-info.number-checks >= <max>)
 -->
    (<o> ^obj-is-stable true)
 }
 
-sp {attend-to-perception*new-perception-object*check-object-stability*elaborate*obj-is-stable*false*more-checks
-   (state <s> ^name attend-to-perception
-              ^discrepancy-type new-perception-object
-              ^operator <o> +)
-   (<o> ^name check-object-stability
-        ^{ << stable-pos stable-vol >> } false
-        ^max-checks <max>
-        ^object-info.number-checks < <max>)
--->
-   (<o> ^obj-is-stable false)
-}
- 
+### Step 5: If the object is stable, we will enter the substate and add it to the world
+#           If the object is not stable, we will go back to Step 2 and repeat
 
-################## Application ###################
-
-# Mark obj-is-stable
-sp {attend-to-perception*new-perception-object*apply*check-object-stability*mark*obj-is-stable
-   (state <s> ^name attend-to-perception
-              ^discrepancy-type new-perception-object
-              ^operator <o>)
-   (<o> ^name check-object-stability
-        ^obj-is-stable <flag>)
+sp {anystate*apply*attend-to-perception*new-perception-object*not*stable*retry
+   (state <s> ^operator <o>
+              ^io.input-link.time.seconds { <t> >= <check-time> }
+              ^svs.command <cmd>)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type new-perception-object
+        ^new-object-info <obj-info>
+       -^obj-is-stable true)
+   (<obj-info> ^check-stability-time <check-time>
+               ^position-monitor <pos>
+               ^volume-monitor <vol>)
+   (<cmd> ^extract <pos>
+          ^extract <vol>)
 -->
-   (<s> ^obj-is-stable <flag>)
+   (<obj-info> ^check-stability-time <check-time> -
+               ^position-monitor <pos>
+               ^volume-monitor <vol>)
+   (<cmd> ^extract <pos> -
+          ^extract <vol> -)
 }
 
-##### obj-is-stable = true
-# If the object is stable, remove the filters and continue handling the new-perception-object
-
-# Remove svs filters used to monitor the object's change in size/position
-sp {attend-to-perception*new-perception-object*apply*check-object-stability*stable*remove*filters
-   (state <s> ^name attend-to-perception
-              ^discrepancy-type new-perception-object
-              ^operator <o>
-              ^top-state.svs.command <cmd>)
-   (<o> ^name check-object-stability
-        ^object-info <obj-info>)
-   (<obj-info> ^position-monitor <old-pos>
-               ^volume-monitor <old-vol>)
-   (<cmd> ^extract <old-pos>
-          ^extract <old-vol>)
--->
-   (<cmd> ^extract <old-pos> -
-          ^extract <old-vol> -)
-}
-
-##### obj-is-stable = false
-# If the object is not stable, then increment the timers and reset the filters
-
-# Increment the timers to check again later
-sp {attend-to-perception*new-perception-object*apply*check-object-stability*reset*timers
-   (state <s> ^name attend-to-perception
-              ^discrepancy-type new-perception-object
-              ^operator <o>
-              ^io.input-link.time.seconds <cur-t>
-              ^agent-params.stability-check-duration <dur>)
-   (<o> ^name check-object-stability
-        ^obj-is-stable false
-        ^object-info <obj-info>)
-   (<obj-info> ^check-stability-time <old-t>
-               ^number-checks <num>)
--->
-   (<obj-info> ^check-stability-time <old-t> -
-               ^check-stability-time (+ <cur-t> <dur>)
-               ^number-checks <num> -
-               ^number-checks (+ <num> 1))
-}
-
-# Remove the old filters
-sp {attend-to-perception*new-perception-object*apply*check-object-stability*remove*filters
-   (state <s> ^name attend-to-perception
-              ^discrepancy-type new-perception-object
-              ^operator <o>
-              ^top-state.svs.command <cmd>)
-   (<o> ^name check-object-stability
-         ^object-info <obj-info>)
-   (<obj-info> ^perception-obj.id <id>
-               ^position-monitor <old-pos>
-               ^volume-monitor <old-vol>)
--->
-   (<cmd> ^extract <old-pos> -
-          ^extract <old-vol> -)
-   (<obj-info> ^position-monitor <old-pos> -
-               ^volume-monitor <old-vol> -)   
-}
-
-# Create new filters
-sp {attend-to-perception*new-perception-object*apply*check-object-stability*reset*filters
-   (state <s> ^name attend-to-perception
-              ^discrepancy-type new-perception-object
-              ^operator <o>
-              ^top-state.svs.command <cmd>)
-   (<o> ^name check-object-stability
-        ^obj-is-stable false
-        ^object-info <obj-info>)
-   (<obj-info> ^perception-obj.id <id>)
--->
-   (<cmd> ^extract <pos>)
-   (<pos> ^type monitor_position
-          ^a <pa>)
-   (<pa> ^type node
-         ^id <id>)
-   (<obj-info> ^position-monitor <pos>)
-   
-   (<cmd> ^extract <vol>)
-   (<vol> ^type monitor_volume
-          ^a <va>)
-   (<va> ^type node
-         ^id <id>)
-   (<obj-info> ^volume-monitor <vol>)
-}
