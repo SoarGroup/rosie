@@ -1,30 +1,80 @@
+# We add all objects with a belief object from the retrieved episode back into the world
 
-# If there is a new location object from smem for the new waypoint
-#   create a world object and add it to the world
+# First, construct the object
+sp {enter-new-waypoint*elaborate*create-object-info
+   (state <s> ^name enter-new-waypoint
+              ^retrieved-episode.world.objects.object <obj>)
+   (<obj> ^position <pos> ^rotation <rot> ^scale <scl>)
+-->
+   (<s> ^create-object-info <cr>)
+   (<cr> ^object <obj> ^position <pos> ^rotation <rot> ^scale <scl>)
+}
 
 sp {enter-new-waypoint*propose*construct-world-object*epmem*object
    (state <s> ^name enter-new-waypoint
-              ^retrieved-location { <loc> <> failure }
-             -^location-object)
+              ^create-object-info <cr>)
+   (<cr> ^object <obj> 
+        -^world-object)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name construct-world-object
-        ^source-type smem
-        ^source-obj <loc>
-        ^result-destination <s>
-        ^result-name location-object)
+        ^source-type epmem
+        ^source-obj <obj>
+        ^result-destination <cr>
+        ^result-name world-object)
 }
 
-sp {enter-new-waypoint*propose*change-world-state*add-object-to-world*new*location
+# Second, add it to the world
+sp {enter-new-waypoint*elaborate*objects-to-add
    (state <s> ^name enter-new-waypoint
-              ^location-object <loc>
-              ^top-state.world.objects <objs>)
-   (<objs> -^object <loc>)
+              ^create-object-info <any>)
+   (<any> -^added true)
+-->
+   (<s> ^objects-to-add true)
+}
+
+sp {enter-new-waypoint*propose*change-world-state*if*objects-to-add
+   (state <s> ^name enter-new-waypoint
+              ^objects-to-add true)
 -->
    (<s> ^operator <o> + =)
-   (<o> ^name change-world-state
-        ^add-object-to-world <add>)
-   (<add> ^object <loc>)
+   (<o> ^name change-world-state)
 }
 
+sp {enter-new-waypoint*elaborate*change-world-state*add-object-to-world*prev*objs
+   (state <s> ^name enter-new-waypoint
+              ^operator <o> +
+              ^create-object-info <cr>)
+   (<o> ^name change-world-state)
+   (<cr> ^world-object <obj>)
+-->
+   (<o> ^add-object-to-world.object <obj>)
+}
 
+sp {enter-new-waypoint*elaborate*change-world-state*create-belief-object*prev*objs
+   (state <s> ^name enter-new-waypoint
+              ^operator <o> +
+              ^create-object-info <cr>)
+   (<o> ^name change-world-state)
+   (<cr> ^world-object.handle <h>
+         ^position <pos>
+         ^rotation <rot>
+         ^scale <scl>)
+-->
+   (<o> ^create-belief-object <obj-info>)
+   (<obj-info> ^belief-id <h>
+               ^position <pos>
+               ^rotation <rot>
+               ^scale <scl>)
+}
+
+sp {enter-new-waypoint*apply*change-world-state*mark*added
+   (state <s> ^name enter-new-waypoint
+              ^operator <o>
+              ^create-object-info <cr>)
+   (<o> ^name change-world-state
+        ^add-object-to-world.object <obj>)
+   (<cr> ^world-object <obj>)
+-->
+   (<cr> ^added true)
+}
