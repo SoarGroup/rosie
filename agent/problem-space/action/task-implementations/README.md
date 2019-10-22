@@ -54,6 +54,46 @@ Post: +closed2(arg1), -open2(arg1)
 * Magicbot: Close is a primitive action (do-control-law set-state)
 
 
+### Go to location
+
+Have the robot drive to another location in the world, e.g. the kitchen
+
+```
+op_go-to-location1(arg2:partial-predicate=to(loc))
+
+Pre:  location(arg2.object), current-location != arg2.object
+Goal: current-location(arg2.object)
+Post: current-location(arg2.object)
+      if in1(obj, old_loc): -visible1(obj) +not-visible1(obj)
+      if in1(obj, arg2.object): -not-visible1(obj) +visible1(obj)
+```
+
+Subtask: go-to-waypoint1 (all domains)
+
+### Go to waypoint
+
+Have the robot drive to the given waypoint via its waypoint graph. 
+(Note: this is only used internally to the robot)
+It will do an a-star search to find the shortest waypoint path
+using go-to-next-waypoint1 for edge traversal
+
+```
+op_go-to-location1(arg1:waypoint)
+
+Goal: current-waypoint(arg1)
+```
+
+Subtask: go-to-next-waypoint1 (all domains)
+
+
+### Go to next waypoint
+Have the robot drive to an adjacent waypoint in the waypoint graph. 
+(Note: this is only used internally to the robot). 
+How it does this depends on the domain
+
+Internal: just change the waypoint on the simulated input link
+
+
 ### Open
 
 Have the robot open an object, e.g. a microwave or a cupboard
