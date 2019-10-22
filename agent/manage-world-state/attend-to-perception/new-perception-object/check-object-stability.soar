@@ -56,7 +56,7 @@ sp {anystate*apply*attend-to-perception*new-perception-object*create*filters
    (<o> ^name attend-to-perception
         ^discrepancy-type new-perception-object
         ^new-object-info <obj-info>)
-   (<obj-info> ^input-link-object.object-handle <objh>
+   (<obj-info> ^input-link-obj.object-handle <objh>
               -^check-stability-time
                ^number-checks <n>)
 -->
@@ -84,7 +84,7 @@ sp {top-state*remove*new-object-info*filters*disappeared
    (state <s> ^superstate nil
               ^perception-monitor <perc-mon>
               ^svs.command <cmd>)
-   (<perc-mon> ^object-monitor <obj-mon>
+   (<perc-mon> ^object-monitor.new-object-info <obj-info>
               -^input-link.objects.object <il-obj>)
    (<obj-info> ^input-link-obj <il-obj>
                ^position-monitor <pos>
@@ -133,25 +133,25 @@ sp {anystate*attend-to-perception*new-perception-object*elaborate*stable-pos*tru
 
 ### Check if the volume is stable
 
-# vol-diff: difference between the original and current volumes (percentage)
-sp {anystate*attend-to-perception*new-perception-object*elaborate*vol-diff
+# vol-ratio: ratio between the original and current volumes (percentage)
+sp {anystate*attend-to-perception*new-perception-object*elaborate*vol-ratio
    (state <s> ^operator <o> +)
    (<o> ^name attend-to-perception
         ^discrepancy-type new-perception-object
         ^new-object-info.volume-monitor.result.record.value <val>)
 -->
-   (<o> ^vol-diff <val>)
+   (<o> ^vol-ratio <val>)
 }
 
-# If the volume difference is between our thresholds, mark it stable
+# If the volume ratio is between our thresholds, mark it stable
 sp {anystate*attend-to-perception*new-perception-object*elaborate*stable-vol*true
    (state <s> ^operator <o> +
               ^agent-params.pos-diff-threshold <t>
-              ^agent-params.vol-low-diff-threshold <low>
-              ^agent-params.vol-high-diff-threshold <high>)
+              ^agent-params.vol-low-ratio-threshold <low>
+              ^agent-params.vol-high-ratio-threshold <high>)
    (<o> ^name attend-to-perception
         ^discrepancy-type new-perception-object
-        ^vol-diff { < <high> > <low>})
+        ^vol-ratio { < <high> > <low>})
 -->
    (<o> ^stable-vol true)
 }
@@ -181,14 +181,10 @@ sp {anystate*attend-to-perception*new-perception-object*elaborate*obj-is-stable*
 
 # After we check N times, we consider it stable
 sp {anystate*attend-to-perception*new-perception-object*elaborate*obj-is-stable*true
-   (state <s> ^operator <o> +)
-   (<o> ^name attend-to-perception
-sp {attend-to-perception*new-perception-object*check-object-stability*elaborate*obj-is-stable*true*timeout
-   (state <s> ^name attend-to-perception
-              ^discrepancy-type new-perception-object
-              ^operator <o> +
+   (state <s> ^operator <o> +
               ^agent-params.max-stability-checks <max>)
-   (<o> ^name check-object-stability
+   (<o> ^name attend-to-perception
+        ^discrepancy-type new-perception-object
         ^new-object-info.number-checks >= <max>)
 -->
    (<o> ^obj-is-stable true)
