@@ -11,6 +11,7 @@ For example, often with objects they must be within reach before sending the com
 so the agent might do an approach subtask first. 
 * **simulate-TASK-command.soar**: Rules for simulating the output command in the internal domain
 * **propose-subtasks.soar**: If the task is a higher-level, it might be implemented through subtasks
+* **complete-task.soar**: Anything else has to be done when the task finishes
 
 Note that the task goal is usually created from the task concept network in ```init-smem/actions.soar```
 
@@ -71,6 +72,66 @@ Post: +open2(arg1), -closed2(arg1),
 * Ai2Thor: Open is a primitive action
 * Tabletop: Open is a primitive action (set-state)
 * Magicbot: Open is a primitive action (do-control-law set-state)
+
+
+### Pick Up
+
+Have the robot pick up an object that is grabbable, e.g. a cup
+
+```
+op_pick-up1(arg1:object)
+
+Pre:  not-grabbed1(arg1), -grabbed1(any)
+Goal: grabbed1(arg1)
+Post: +grabbed1(arg1), -not-grabbed1(arg1), 
+      remove any relations involving the object (e.g. on or right-of)
+      will change the location of the belief object for the tabletop
+```
+
+**send-pick-up-command**, requires visible1(arg1) and reachable1(arg1), 
+also if the object is inside a receptacle it must be open
+* Internal: Change the holding-object on the simulated input-link and remove all relations
+* Ai2Thor: Pickup is a primitive action
+* Tabletop: Pickup is a primitive action (set-state)
+* Magicbot: Pickup is a primitive action (do-control-law set-state)
+* Cozmo: Pickup is a primitive action 
+
+
+### Put Down
+
+Have the robot put down an object it is holding, at a particular place
+
+```
+1: Put Down
+op_put-down1(arg1:object) 
+
+  Pre:  grabbed1(arg1)
+  Goal: in1(arg1, current-location)
+  Post: -grabbed1(arg1), +not-grabbed1(arg1), in1(arg1, current-location)
+
+2: Put Down on a surface
+op_put-down1(arg1:object, arg2:partial-predicate)
+
+  Pre:  grabbed1(arg1), surface1(arg2.object)
+  Goal: on1(arg1, arg2.object)
+  Post: -grabbed1(arg1), +not-grabbed1(arg1), on1(arg1, arg2.object), in1(arg1, cur-loc)
+
+3: Put Down in a receptacle
+op_put-down1(arg1:object, arg2:partial-predicate)
+
+  Pre:  grabbed1(arg1) and receptacle1(arg2.object) and open2(arg2.object)
+        grabbed1(arg1) and receptacle1(arg2.object) and !open2(arg2.object) and !closed2(arg2.object)
+  Goal: in1(arg1, arg2.object)
+  Post: -grabbed1(arg1), +not-grabbed1(arg1), in1(arg1, arg2.object), in1(arg1, cur-loc)
+```
+
+**send-pick-up-command**, requires visible1(arg1) and reachable1(arg1), 
+also if the object is inside a receptacle it must be open
+* Internal: Change the holding-object on the simulated input-link and remove all relations
+* Ai2Thor: Pickup is a primitive action
+* Tabletop: Pickup is a primitive action (set-state)
+* Magicbot: Pickup is a primitive action (do-control-law set-state)
+* Cozmo: Pickup is a primitive action 
 
 
 ### Remove
