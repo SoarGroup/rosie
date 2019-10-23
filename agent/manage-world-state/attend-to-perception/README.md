@@ -2,7 +2,7 @@
 
 Once a discrepancy is detected, the agent can use the attend-to-perception operator 
 to discern why the discrepancy occurred and what to do about it. 
-To enable these operators on a state, simply add ```([s] ^problem-space.attend-to-perception yes)``` 
+To enable these operators on a state, simply add `([s] ^problem-space.attend-to-perception yes)`
 to that state. These operators may change the world on the top-state, but they 
 do not usually GDS to re-enter the substate. 
 The operator proposed will look like the following:
@@ -27,23 +27,23 @@ There is an object in perception that is not in belief
 ```
 
 * **Misidentified Anchor**: 
-The agent determines the new perception object matches a non-visible object (via ```match-existing-object```), 
+The agent determines the new perception object matches a non-visible object (via `match-existing-object`), 
 concluding that this new object is a new id for an existing object.
-It uses ```change-world-state/change-perception-id``` to update the existing object's perception id to the new one.
+It uses `change-world-state/change-perception-id` to update the existing object's perception id to the new one.
 
 * **Merged Anchor (End)**:
 The agent determines the new perception object matches an object which had been segmented together with another (shared-input-link-obj), 
 concluding that this must be over and perception segmented them separately again. 
-It uses ```change-world-state/change-perception-id``` to change the missing object's perception-id
+It uses `change-world-state/change-perception-id` to change the missing object's perception-id
 to the new one.
 
 * **Fragmented Anchor**:
 The agent determines the new perception object matches an existing object that already has a perception object,
 concluding that the object was segmented into multiple pieces. 
-It uses ```change-world-state/merge-perception-objects``` to tell perception to merge these objects together.
+It uses `change-world-state/merge-perception-objects` to tell perception to merge these objects together.
 
 * If the object doesn't match an existing one, add it to the world 
-(using ```construct-world-object``` and then ```change-world-state/add-object-to-world```).
+(using `construct-world-object` and then `change-world-state/add-object-to-world`).
 
 
 ## new-belief-object
@@ -57,8 +57,8 @@ There is an object in belief that is not in perception
   ([info] ^object-info [obj-info])
 ```
 
-* If the new belief object matches an existing object (via ```match-existing-object```, 
-then merge them using ```change-world-state/merge-belief-objects```. 
+* If the new belief object matches an existing object (via `match-existing-object`, 
+then merge them using `change-world-state/merge-belief-objects`. 
 * Otherwise, just keep the new belief object in the world
 
 
@@ -91,13 +91,13 @@ The volume of the perception object is significantly larger than the belief obje
 ```
 
 * **Merged Anchor**:
-Using ```intersect-command``` and ```overlap-command```, the agent
+Using `intersect-command` and `overlap-command`, the agent
 finds an object without a perception volume whose belief volume is contained inside the 
 grown object's perception volume, concluding that they have been segmented together. 
-It uses ```change-world-state/change-perception-id``` to change the missing object's perception-id
+It uses `change-world-state/change-perception-id` to change the missing object's perception-id
 to the grown one, meaning that multiple belief objects will have a shared-input-link-obj (and thus ignore the discrepancy). 
 
-* Otherwise: use ```change-world-state/update-object-pose``` to update the belief svs object.
+* Otherwise: use `change-world-state/update-object-pose` to update the belief svs object.
 
 
 ## moved-object
@@ -112,8 +112,8 @@ The positions of the belief and perception objs are significantly different
 ```
 
 
-* If occluded (determined via ```occlusion-command```), then ignore the discrepancy.
-* If not occluded, use ```change-world-state/update-object-pose``` to move the belief svs object.
+* If occluded (determined via `occlusion-command`), then ignore the discrepancy.
+* If not occluded, use `change-world-state/update-object-pose` to move the belief svs object.
 
 
 ## shrunken-object
@@ -128,13 +128,13 @@ The volume of the perception object is significantly smaller than the belief obj
 ```
 
 * **Fragmented Anchor**:
-Using ```intersect-command``` and ```overlap-command```, 
+Using `intersect-command` and `overlap-command`, 
 the agent finds a newly appeared perception object whose volume is contained inside the shrunken object's belief volume, 
 concluding that the object was segmented into multiple pieces. 
-It uses ```change-world-state/merge-perception-objects``` to tell perception to merge these objects together.
+It uses `change-world-state/merge-perception-objects` to tell perception to merge these objects together.
 
-* If occluded (determined via ```occlusion-command```), ignore the discrepancy.
-* If not occluded, use ```change-world-state/update-object-pose``` to update the belief svs object's size.
+* If occluded (determined via `occlusion-command`), ignore the discrepancy.
+* If not occluded, use `change-world-state/update-object-pose` to update the belief svs object's size.
 
 
 ## missing-object
@@ -149,20 +149,20 @@ There is a belief object that should be visible but is not
 ```
 
 * **Merged Anchor**:
-Using ```intersect-command``` and ```overlap-command```, the agent
+Using `intersect-command` and `overlap-command`, the agent
 finds an object whose perception volume contains the missing object's belief volume, 
 concluding that they have been segmented together. 
-It uses ```change-world-state/change-perception-id``` to change the missing object's perception-id,
+It uses `change-world-state/change-perception-id` to change the missing object's perception-id,
 meaning that multiple belief objects will have a shared-input-link-obj (and thus ignore the discrepancy). 
 
 * **Misidentified Anchor**: 
-Using ```intersect-command``` and ```overlap-command```, 
+Using `intersect-command` and `overlap-command`, 
 the agent finds a newly appeared perception object whose volume is contained inside the missing object's belief volume, 
 concluding that the same object was given a different id. 
-It uses ```change-world-state/change-perception-id``` to update the perception id to the new one.
+It uses `change-world-state/change-perception-id` to update the perception id to the new one.
 
-* If occluded (determined via ```occlusion-command```), ignore the discrepancy.
-* If not occluded, use ```change-world-state/delete-object``` to delete the object
+* If occluded (determined via `occlusion-command`), ignore the discrepancy.
+* If not occluded, use `change-world-state/delete-object` to delete the object
 
 
 
@@ -179,7 +179,7 @@ The robot/arm status on the input-link is different than the world
   ([info] ^arm-status [arm-status])
 ```
 
-Either update ```world.robot.moving-status``` or ```world.robot.arm.moving-status```
+Either update `world.robot.moving-status` or `world.robot.arm.moving-status`
 
 
 ## different-waypoint

@@ -76,7 +76,7 @@ and with the tag object_source=perception
 manage-world-state/simulate-perception
 ```
 
-If the domain is internal and ```agent-params.simulate-perception true``` then 
+If the domain is internal and `agent-params.simulate-perception true` then 
 create a simulated input-link on the perception-monitor and populate it 
 with information from an internal-world file. 
 
@@ -85,7 +85,7 @@ manage-world-state/internal-worlds
 ```
 
 This directory contains a collection of internal world models which are used to populate the simulated input-link.
-To use one, add the line ```internal-world-file = world_file.soar``` to the agent config file. 
+To use one, add the line `internal-world-file = world_file.soar` to the agent config file. 
 
 
 ## World Representation
@@ -163,7 +163,7 @@ manage-world-state/waypoint-maps
 ```
 
 This directory contains a collection of waypoint maps which are used during navigation to reach other locations. 
-To use one, add the line ```waypoint-map-file = map_file.soar``` to the agent config file. 
+To use one, add the line `waypoint-map-file = map_file.soar` to the agent config file. 
 
 **Waypoint Map Representation**
 
@@ -313,7 +313,7 @@ These will create a structure on the perception-monitor.discrepancies, such as:
 1. **different-robot-status**: The input-link status of the robot/arm does not match the world.robot
 1. **different-waypoint**: The input-link current-waypoint does not match the world.robot
 
-(See ```detect-discrepancies/README.md``` for more information)
+(See `detect-discrepancies/README.md` for more information)
 
 
 ## 3. Attending to a Discrepancy
@@ -324,7 +324,7 @@ manage-world-state/attend-to-perception
 
 Once a discrepancy is detected, the agent can use the attend-to-perception operator 
 to discern why the discrepancy occurred and what to do about it. 
-To enable these operators on a state, simply add ```([s] ^problem-space.attend-to-perception yes)``` 
+To enable these operators on a state, simply add `([s] ^problem-space.attend-to-perception yes)`
 to that state. These operators may change the world on the top-state, but they 
 do not usually GDS to re-enter the substate. 
 The operator proposed will look like the following:
@@ -337,8 +337,8 @@ The operator proposed will look like the following:
        ^discrepancy-info [info])
 ```
 
-Details about how the agent handles each discrepancy type is in ```attend-to-perception/README.md```. 
-It might change the world representation via the ```change-world-state``` operator
+Details about how the agent handles each discrepancy type is in `attend-to-perception/README.md`. 
+It might change the world representation via the `change-world-state` operator
 or it could choose to ignore the discrepancy: 
 
 * **grown-object**: ignored if it detects it is segmented together with another object (shared-input-link-obj)
@@ -355,7 +355,7 @@ manage-world-state/change-world-state
 ```
 
 If at some point the agent determines it needs to modify the world, it should
-use the operator ```change-world-state``` to do so. This can be proposed
+use the operator `change-world-state` to do so. This can be proposed
 anywhere/anytime and should be elaborated with the following structures:
 
 1. **add-object-to-world**: Add a new object to the world, SVS, and perception-monitor
@@ -367,6 +367,6 @@ or a new bounding box with given parameters (pos/rot/scale).
 1. **merge-perception-objects**: Tell perception the list of perception objects are all one (merge together)
 1. **delete-object**: Deletes the object from the world, object-monitor, and SVS
 
-(See ```change-world-state/README.md``` for more information)
+(See `change-world-state/README.md` for more information)
 
    

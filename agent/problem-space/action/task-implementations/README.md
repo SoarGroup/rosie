@@ -23,9 +23,9 @@ Have the robot drive up close to an object in order to interact with it.
 ```
 op_approach1(arg1:object)
 
-Pre:  visible1(arg1), not-reachable1(arg1)
-Goal: reachable1(arg1)
-Post: +reachable1(arg1), -not-reachable1(arg1)
+  Pre:  visible1(arg1), not-reachable1(arg1)
+  Goal: reachable1(arg1)
+  Post: +reachable1(arg1), -not-reachable1(arg1)
 ```
 
 **send-approach-command**
@@ -33,6 +33,24 @@ Post: +reachable1(arg1), -not-reachable1(arg1)
 * Ai2Thor: Approach is a primitive action
 * Cozmo: Approach is a primitive action
 * Magicbot: Do custom calculations to extract-target-position and extract-object-position and first face, then drive to, the target's position
+
+---
+
+### Ask
+
+Has the robot ask a question and then wait for a response from the instructor.
+
+```
+op_ask1(arg1:object)
+
+  Goal: execute-command(ask-command)
+  Model: +new_obj, +entity(new_obj), +answered1(new_obj), -answered1(other)
+```
+
+**send-ask-command**
+
+All domains: Sends an outgoing-message to ask the question and pushes a new interaction segment to wait for the response. 
+When it gets an answer, it adds it to the world if necessary, then marks it with modifier1=answered1 and completes.
 
 
 ### Close
@@ -42,9 +60,9 @@ Have the robot close an object, e.g. a door or a fridge
 ```
 op_close1(arg1:object)
 
-Pre:  open2(arg1)
-Goal: closed2(arg1)
-Post: +closed2(arg1), -open2(arg1)
+  Pre:  open2(arg1)
+  Goal: closed2(arg1)
+  Post: +closed2(arg1), -open2(arg1)
 ```
 
 **send-close-command**, requires visible1(arg1) and reachable1(arg1)
@@ -61,11 +79,11 @@ Have the robot drive to another location in the world, e.g. the kitchen
 ```
 op_go-to-location1(arg2:partial-predicate=to(loc))
 
-Pre:  location(arg2.object), current-location != arg2.object
-Goal: current-location(arg2.object)
-Post: current-location(arg2.object)
-      if in1(obj, old_loc): -visible1(obj) +not-visible1(obj)
-      if in1(obj, arg2.object): -not-visible1(obj) +visible1(obj)
+  Pre:  location(loc), loc != current-location
+  Goal: current-location(loc)
+  Post: +current-location(loc), -current-location(old_loc) (if exists)
+        if in1(obj, old_loc): -visible1(obj) +not-visible1(obj)
+        if in1(obj, loc): -not-visible1(obj) +visible1(obj)
 ```
 
 Subtask: go-to-waypoint1 (all domains)
@@ -101,10 +119,10 @@ Have the robot open an object, e.g. a microwave or a cupboard
 ```
 op_open1(arg1:object)
 
-Pre:  closed2(arg1)
-Goal: open2(arg1)
-Post: +open2(arg1), -closed2(arg1), 
-      if receptacle1(arg1) and in1(obj, arg1) then +visible1(obj)
+  Pre:  closed2(arg1)
+  Goal: open2(arg1)
+  Post: +open2(arg1), -closed2(arg1), 
+        if receptacle1(arg1) and in1(obj, arg1) then +visible1(obj)
 ```
 
 **send-open-command**, requires visible1(arg1) and reachable1(arg1)
@@ -121,11 +139,11 @@ Have the robot pick up an object that is grabbable, e.g. a cup
 ```
 op_pick-up1(arg1:object)
 
-Pre:  not-grabbed1(arg1), -grabbed1(any)
-Goal: grabbed1(arg1)
-Post: +grabbed1(arg1), -not-grabbed1(arg1), 
-      remove any relations involving the object (e.g. on or right-of)
-      will change the location of the belief object for the tabletop
+  Pre:  not-grabbed1(arg1), -grabbed1(any)
+  Goal: grabbed1(arg1)
+  Post: +grabbed1(arg1), -not-grabbed1(arg1), 
+        remove any relations involving the object (e.g. on or right-of)
+        will change the location of the belief object for the tabletop
 ```
 
 **send-pick-up-command**, requires visible1(arg1) and reachable1(arg1), 
@@ -146,23 +164,23 @@ Have the robot put down an object it is holding, at a particular place
 op_put-down1(arg1:object) 
 
   Pre:  grabbed1(arg1)
-  Goal: in1(arg1, current-location)
-  Post: -grabbed1(arg1), +not-grabbed1(arg1), in1(arg1, current-location)
+  Goal: not-grabbed1(arg1)
+  Post: -grabbed1(arg1), +not-grabbed1(arg1), in1(arg1, cur-loc)
 
 2: Put Down on a surface
-op_put-down1(arg1:object, arg2:partial-predicate)
+op_put-down1(arg1:object, arg2:partial-predicate=on1(dest))
 
-  Pre:  grabbed1(arg1), surface1(arg2.object)
-  Goal: on1(arg1, arg2.object)
-  Post: -grabbed1(arg1), +not-grabbed1(arg1), on1(arg1, arg2.object), in1(arg1, cur-loc)
+  Pre:  grabbed1(arg1), surface1(dest)
+  Goal: on1(arg1, dest)
+  Post: -grabbed1(arg1), +not-grabbed1(arg1), on1(arg1, dest), in1(arg1, cur-loc)
 
 3: Put Down in a receptacle
-op_put-down1(arg1:object, arg2:partial-predicate)
+op_put-down1(arg1:object, arg2:partial-predicate=in1(dest))
 
-  Pre:  grabbed1(arg1) and receptacle1(arg2.object) and open2(arg2.object)
-        grabbed1(arg1) and receptacle1(arg2.object) and !open2(arg2.object) and !closed2(arg2.object)
-  Goal: in1(arg1, arg2.object)
-  Post: -grabbed1(arg1), +not-grabbed1(arg1), in1(arg1, arg2.object), in1(arg1, cur-loc)
+  Pre:  grabbed1(arg1) and receptacle1(dest) and open2(dest)
+        grabbed1(arg1) and receptacle1(dest) and !open2(dest) and !closed2(dest)
+  Goal: in1(arg1, dest)
+  Post: -grabbed1(arg1), +not-grabbed1(arg1), in1(arg1, dest), in1(arg1, cur-loc)
 ```
 
 **send-pick-up-command**, requires visible1(arg1) and reachable1(arg1), 
@@ -181,12 +199,39 @@ Removes an object from the world, only used with an internal world
 ```
 op_remove1(arg1:object)
 
-Goal: arg1 is not in the world
-Post: remove arg1
+  Goal: arg1 is not in the world
+  Post: remove arg1
 ```
 
 **send-remove-command**
 * Internal: Removes the object from world.objects and any relations involving arg1
+
+
+### Say
+
+Speak a message, can be directed at a specific person
+
+```
+1: Say message without a target
+op_say1(arg1:object) 
+
+  Not used during planning/search
+  Goal: execute-command(say-command)
+
+2: Say message to a person
+op_say1(arg1:object, arg2:partial-predicate=to1(per))
+
+  Pre:  message(arg1), person(per), !heard(per, arg1)
+  Goal: heard(per, arg1)
+  Post: +heard(per, arg1)
+
+```
+
+**send-say-command**, requires visible1(per)
+
+All domains: Will send an outgoing-message and mark the sentence as being heard by the person. 
+Note that if the arg1 object has a ^sentence it will say that verbatim, otherwise it will describe the arg1 object. 
+
 
 ### Turn Off
 
@@ -195,9 +240,9 @@ Have the robot turn off an appliance, e.g. a microwave
 ```
 op_turn-off1(arg1:object)
 
-Pre:  on2(arg1)
-Goal: on2(arg1)
-Post: +off2(arg1), -on2(arg1)
+  Pre:  on2(arg1)
+  Goal: on2(arg1)
+  Post: +off2(arg1), -on2(arg1)
 ```
 
 **send-turn-off-command**, requires visible1(arg1) and reachable1(arg1)
@@ -214,9 +259,9 @@ Have the robot turn on an appliance, e.g. a light switch
 ```
 op_turn-on1(arg1:object)
 
-Pre:  off2(arg1)
-Goal: on2(arg1)
-Post: +on2(arg1), -off2(arg1)
+  Pre:  off2(arg1)
+  Goal: on2(arg1)
+  Post: +on2(arg1), -off2(arg1)
 ```
 
 **send-turn-on-command**, requires visible1(arg1) and reachable1(arg1), and closed2(arg1) if it has a door
@@ -231,10 +276,10 @@ Post: +on2(arg1), -off2(arg1)
 Write a value onto an object, used for logic puzzles such as sudoku. 
 
 ```
-op_write1(arg1:concept, arg2:partial-predicate)
+op_write1(arg1:concept, arg2:partial-predicate=pred(dest))
 
-Goal: arg1(arg2.obj2) (the object in arg2 has the value arg1)
-Post: +arg1(arg2.obj2)
+Goal: arg1(dest) (the object in arg2 has the value arg1)
+Post: +arg1(dest)
 
 **send-write-command**
 * Internal: Adds the predicate value=arg1 to the arg2 object

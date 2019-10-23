@@ -1,0 +1,75 @@
+### Perform the say command by sending a message ###
+
+sp {op_say1*propose*simulate-say-command
+   (state <s> ^name op_say1
+              ^problem-space.execution-type external
+              ^current-task-segment <seg>)
+   (<seg> ^say-command <cmd>)
+   (<cmd> -^status complete)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name simulate-say-command
+        ^item-type command-operator
+        ^command <cmd>)
+}
+
+sp {op_say1*apply*simulate-say-command*mark*command*complete
+   (state <s> ^name op_say1
+              ^operator <o>)
+   (<o> ^name simulate-say-command
+        ^command <cmd>)
+-->
+   (<cmd> ^status complete)
+}
+
+
+### model simulate-say-command ###
+
+# Add the heard predicate if saying to a person
+sp {op_say1*internal*apply*simulate-say-command*add*heard*predicate
+   (state <s> ^name op_say1
+              ^operator <o>
+              ^world.predicates.predicate <heard>)
+   (<o> ^name simulate-say-command
+        ^command <cmd>)
+   (<cmd> ^object <obj>
+          ^person <person>)
+   (<person> ^predicates.category person)
+   (<heard> ^handle heard2)
+  -{(<heard> ^instance <i>)
+    (<i> ^1 <person> ^2 <obj>)}
+-->
+   (<heard> ^instance <i>)
+   (<i> ^1 <person> ^2 <obj>)
+}
+
+# Send the outgoing message for a sentence object
+sp {op_say*external*apply*say-message*send*message
+   (state <s> ^name op_say1
+              ^operator <o>
+              ^top-state.interaction.changes <changes>
+              ^current-task-segment <seg>)
+   (<o> ^name simulate-say-command
+        ^command.object.predicates.sentence <msg>)
+-->
+   (<changes> ^outgoing-message <send>)
+   (<send> ^type say-sentence
+           ^complete-message true
+           ^fields.sentence <msg>)
+}
+
+# Send the outgoing message for a non-sentence object (describes object)
+sp {op_say*external*apply*say-message*send*message*object
+   (state <s> ^name op_say1
+              ^operator <o>
+              ^top-state.interaction.changes <changes>
+              ^current-task-segment <seg>)
+   (<o> ^name simulate-say-command
+        ^command.object <obj>)
+   (<obj> -^predicates.sentence <msg>)
+-->
+   (<changes> ^outgoing-message <send>)
+   (<send> ^type agent-object-description
+           ^complete-message true
+           ^fields.object <obj>)
+}

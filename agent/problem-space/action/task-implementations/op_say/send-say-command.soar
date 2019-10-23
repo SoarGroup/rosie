@@ -9,7 +9,7 @@ sp {op_say1*propose*send-say-command*no*person
    (<o> ^name send-say-command
         ^item-type command-operator
         ^command-name say-command
-        ^object <obj>)
+        ^arg1.id <obj>)
 }
 
 sp {op_say1*propose*send-say-command*with*person
@@ -22,75 +22,47 @@ sp {op_say1*propose*send-say-command*with*person
    (<o> ^name send-say-command
         ^item-type command-operator
         ^command-name say-command
-        ^object <obj>
-        ^person <person>)
+        ^arg1.id <obj>
+        ^arg2 <arg2>)
+   (<arg2> ^handle to1
+           ^2 <person>)
 }
 
-### model send-say-command ###
-
-# Add the heard predicate if saying to a person
-# Note: we also do this if executing the task externally
-
-sp {op_say1*internal*apply*send-say-command*add*heard*predicate
+### For all domains we simulate this command
+sp {op_say1*external*apply*send-say-command
    (state <s> ^name op_say1
-              ^problem-space.execution-type << internal external >>
+              ^problem-space.execution-type external
               ^operator <o>
-              ^world.predicates.predicate <heard>)
+              ^io.output-link <ol>
+              ^current-task-segment <seg>)
    (<o> ^name send-say-command
-        ^object <obj>
-        ^person <person>)
-   (<person> ^predicates.category person)
-   (<heard> ^handle heard2)
-  -{(<heard> ^instance <i>)
-    (<i> ^1 <person> ^2 <obj>)}
+        ^command-name <cmd-name>
+        ^arg1.id <obj>
+       -^arg2)
 -->
-   (<heard> ^instance <i>)
-   (<i> ^1 <person> ^2 <obj>)
+   (<ol> ^perform-action <pa>)
+   (<pa> ^item-type output-command
+         ^name say
+         ^object <obj>)
+   (<seg> ^<cmd-name> <pa>)
 }
 
-### send-say-command (all domains) ###
-
-# Send the say command for a sentence object
-sp {op_say*external*apply*say-message*send*message
+sp {op_say1*external*apply*send-say-command*with*arg2
    (state <s> ^name op_say1
               ^problem-space.execution-type external
               ^operator <o>
-              ^top-state.interaction.changes <changes>
+              ^io.output-link <ol>
               ^current-task-segment <seg>)
-   (<o> ^name say-message
+   (<o> ^name send-say-command
         ^command-name <cmd-name>
-        ^sentence-obj.predicates.sentence <msg>)
+        ^arg1.id <obj>
+        ^arg2.{2} <person>)
+
 -->
-   (<changes> ^outgoing-message <send>)
-   (<send> ^type say-sentence
-           ^complete-message true
-           ^fields.sentence <msg>)
-
-   (<seg> ^<cmd-name> <send-msg>)
-   (<send-msg> ^item-type output-command
-               ^status success
-               ^outgoing-message <send>)
-}
-
-# Send the say command for a non-sentence object (describes object)
-sp {op_say*external*apply*say-message*send*message*object
-   (state <s> ^name op_say1
-              ^problem-space.execution-type external
-              ^operator <o>
-              ^top-state.interaction.changes <changes>
-              ^current-task-segment <seg>)
-   (<o> ^name say-message
-        ^command-name <cmd-name>
-        ^sentence-obj <obj>)
-   (<obj> -^predicates.sentence <msg>)
--->
-   (<changes> ^outgoing-message <send>)
-   (<send> ^type agent-object-description
-           ^complete-message true
-           ^fields.object <obj>)
-
-   (<seg> ^<cmd-name> <send-msg>)
-   (<send-msg> ^item-type output-command
-               ^status success
-               ^outgoing-message <send>)
+   (<ol> ^perform-action <pa>)
+   (<pa> ^item-type output-command
+         ^name say
+         ^object <obj>
+         ^person <person>)
+   (<seg> ^<cmd-name> <pa>)
 }
