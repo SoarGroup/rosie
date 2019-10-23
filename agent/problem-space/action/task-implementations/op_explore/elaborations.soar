@@ -1,3 +1,10 @@
+sp {op_explore1*elaborate*until-clause*from*task-operator
+   (state <s> ^name op_explore1
+              ^task-operator.until-clause <until>)
+-->
+   (<s> ^until-clause <until>)
+}
+
 #### CUSTOM GOAL HANDLING ####
 
 sp {op_explore1*elaborate*desired
@@ -20,17 +27,30 @@ sp {op_explore1*execute*elaborate*desired*satisfied
    (<des> ^satisfied true)
 }
 
-# If there is no until clause, wait until all locations are visited
+# If there is no until clause, wait until all waypoints are visited
 sp {op_explore1*execute*elaborate*desired*satisfied*no*until
    (state <s> ^name op_explore1
               ^problem-space.execution-type external
               ^desired <des>
              -^until-clause
-              ^unvisited-waypoints false)
+             -^unvisited-waypoint)
    (<des> ^handle explore1goal1)
 -->
    (<des> ^satisfied true)
 }
+
+### Failure ###
+
+sp {op_explore1*elaborate*current-segment*status*failure*unsatisfied*until-clause
+   (state <s> ^name op_explore1
+              ^current-task-segment <seg>
+              ^until-clause <until>
+             -^unvisited-waypoint)
+-->
+   (<seg> ^unrecoverable-failure explore-exhausted)
+}
+
+### Waypoint Distance Map Elaborations
 
 sp {execute-explore*elaborate*distance-map
    (state <s> ^name op_explore1)
@@ -59,19 +79,11 @@ sp {execute-explore*elaborate*distance-map*neighbors
    (<map> ^<next-handle> (+ <d> 1))
 }
 
-sp {execute-explore*elaborate*unvisited-waypoints*true
+sp {execute-explore*elaborate*unvisited-waypoint
    (state <s> ^name op_explore1
-              ^top-state.maps.map.waypoint.handle { <wp-handle> <> bwp01 }
-             -^current-task-segment.visited <wp-handle>
-             -^current-task-segment.explorened <wp-handle>)
+              ^distance-map.<wph> <dist>
+             -^current-task-segment.visited <wph>)
 -->
-   (<s> ^unvisited-waypoints true)
+   (<s> ^unvisited-waypoint <wph>)
 }
 
-sp {execute-explore*elaborate*unvisited-waypoints*false
-   (state <s> ^name op_explore1
-             -^unvisited-waypoints true)
--->
-   (<s> ^unvisited-waypoints false)
-}
-        

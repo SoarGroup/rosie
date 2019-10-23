@@ -1,0 +1,50 @@
+# When the agent has scanned the room, mark it as visited
+sp {op_explore*propose*mark-waypoint-visited
+   (state <s> ^name op_explore1
+              ^problem-space.execution-type external
+              ^world.robot.current-waypoint.handle <wp-handle>
+              ^current-task-segment <seg>)
+   (<seg> ^completed-scan true
+         -^visited <wp-handle>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name mark-waypoint-visited
+        ^waypoint-handle <wp-handle>)
+}
+
+# For the internal domain, we don't scan the room
+sp {op_explore*propose*mark-waypoint-visited*internal
+   (state <s> ^name op_explore1
+              ^agent-params.domain internal
+              ^problem-space.execution-type external
+              ^world.robot.current-waypoint.handle <wp-handle>
+              ^current-task-segment <seg>)
+   (<seg> -^visited <wp-handle>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name mark-waypoint-visited
+        ^waypoint-handle <wp-handle>)
+}
+
+# Mark the current waypoint as visited
+sp {op_explore*apply*mark-waypoint-visited
+   (state <s> ^name op_explore1
+              ^problem-space.execution-type external
+              ^operator <o>
+              ^current-task-segment <seg>)
+   (<o> ^name mark-waypoint-visited
+        ^waypoint-handle <wp-handle>)
+-->
+   (<seg> ^visited <wp-handle>)
+}
+              
+# Remove the completed-scan flag from the current-segment
+sp {op_explore*apply*mark-waypoint-visited*remove*completed-scan
+   (state <s> ^name op_explore1
+              ^problem-space.execution-type external
+              ^operator.name mark-waypoint-visited
+              ^current-task-segment <seg>)
+   (<seg> ^completed-scan true)
+-->
+   (<seg> ^completed-scan true -)
+}

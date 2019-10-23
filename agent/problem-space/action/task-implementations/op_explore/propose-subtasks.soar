@@ -1,0 +1,68 @@
+
+# When we are at a waypoint, scan it before marking it visited 
+sp {op_explore1*propose*op_scan1
+   (state <s> ^name op_explore1
+              ^problem-space.execution-type external
+              ^agent-params.domain magicbot
+              ^world.robot.current-waypoint.handle <wp-handle>
+              ^current-task-segment <seg>
+             -^until-clause)
+   (<seg> -^visited <wp-handle>
+          -^completed-scan true)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name op_scan1
+        ^item-type task-operator
+        ^task-handle scan1)
+}
+
+sp {op_explore1*propose*op_scan1*until
+   (state <s> ^name op_explore1
+              ^problem-space.execution-type external
+              ^agent-params.domain magicbot
+              ^world.robot.current-waypoint.handle <wp-handle>
+              ^current-task-segment <seg>
+              ^until-clause <until>)
+   (<seg> -^visited <wp-handle>
+          -^completed-scan true)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name op_scan1
+        ^item-type task-operator
+        ^task-handle scan1
+        ^until-clause <until>)
+}
+
+sp {op_explore1*apply*pop-task-segment*op_scan1*mark*finished
+   (state <s> ^name op_explore1
+              ^operator <o>
+              ^current-task-segment <seg>)
+   (<o> ^name pop-task-segment
+        ^segment <child-seg>)
+   (<child-seg> ^status success
+                ^task-operator.name op_scan1)
+-->
+   (<seg> ^completed-scan true)
+}
+
+# When we have finished with the current waypoint, go to another unvisited one
+sp {op_explore1*propose*op_go-to-waypoint1
+   (state <s> ^name op_explore1
+              ^problem-space.execution-type external
+              ^world.robot.current-waypoint.handle <wp-handle>
+              ^current-task-segment.visited <wp-handle>
+              ^unvisited-waypoint <next-wph>
+              ^distance-map.<next-wph> { <dist> > 0 }
+              ^top-state.maps.map.waypoint <next-wp>)
+   (<next-wp> ^handle <next-wph>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name op_go-to-waypoint1
+        ^item-type task-operator
+        ^task-handle go-to-waypoint1
+        ^arg1 <arg1>
+        ^distance <dist>)
+   (<arg1> ^arg-type waypoint
+           ^id <next-wp>)
+}
+
