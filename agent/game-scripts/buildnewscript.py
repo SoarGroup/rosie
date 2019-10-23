@@ -5,53 +5,58 @@ import random, re, string
 #all in main comment out due to primitive adjacent failure? on movable/jumpable
 
 gamelist=[
-#"agbfox",
-#"Atower5",
-#"blocksworld",
-#"Blocksworld",
-#"colorken",
-#"Cannibals",
-#"dsokoban", #broke
-#"Dshuffle",
-#"ektour", #b
-#"E8men",
-#"frog",
-#"Fifteenpuzzle",
-#"golf",
-#"husbands",
-#"Holes9",
-#"ijigsawdoku",
-#"I8puzzle",
-#"jmahjong", #b
-#"Jsujiko",
-#"kenken",
-#"Kstackedfrogs", #broke ###### failing asks for 24 or 32 what?
-#"logi5",
-#"Lazystackedfrogs", #broke
-#"mapcolor",
-#"Mens3",
-#"nsudoku",
-#"othello",
-#"Osuko",
-##"pyramid", #broken
+"agbfox",
+"Atower5",
+"blocksworld",
+"Blocksworld",
+"colorken",
+"Cannibals",
+"dsokoban", 
+"Dshuffle",
+"ektour",
+"E8men",
+"frog",
+"Fifteenpuzzle",
+"golf",
+"Gkingtour",
+"husbands",
+"Holes9",
+"ijigsawdoku",
+"I8puzzle",
+"jmahjong",
+"Jsujiko",
+"kenken",
+"Kstackedfrogs", 
+"logi5",
+"Lazystackedfrogs", 
+"mapcolor",
+"Mens3",
+"nsudoku",
+"Nbishops",
+"othello",
+"Osuko",
+"pyramid", 
 "Picaria",
-"queens", #b
-"rtravelsales", #b
+"queens",
+"rtravelsales",
 "Rsurvo",
-#"stackedfrogs", #b
+"stackedfrogs",
 "Swap",
 "tripeaks",
 "Tictactoe",
-"usolitaireR", #b
+"usolitaireR",
 "Ukakuro",
-"vsolitaire", #b
+"vsolitaire",
+"Vconnect4",
 "wives",
+"Wconnect3",
 "xsudoku",
 "Xbreakthrough",
 "ysorting",
 "zmaze",
+"Zmanager",
 "0nknights",
-#"1nrooks",
+"1nrooks",
 "2pushmaze",
 "3tower",
 "4tower",
@@ -65,12 +70,19 @@ gamelist=[
 #shuffled = ["colorken","nsudoku","xsudoku"]
 #shuffled = ["Tictactoe","Holes9","Mens3"]
 #shuffled = ["queens","1nrooks","6nkings"]
-shuffled = ["pyramid"]
-#shuffled = ["Mens3"]
+#shuffled = ["pyramid"]
+#shuffled = ["ektour","othello", "Kstackedfrogs"]
+#shuffled = ["2pushmaze","Kstackedfrogs"]
+#shuffled = ["Kstackedfrogs"]
+#shuffled = ["Lazystackedfrogs"]
 #shuffled = ["Cannibals","husbands","agbfox"]
-#shuffled = ["husbands"]
+#shuffled = ["Gkingtour", "Nbishops"]
+#shuffled = ["Nbishops"]
+#shuffled = ["Zmanager"]
+#shuffled = ["pyramid","Holes9"]
+#shuffled = ["Holes9"]
 #shuffled = ["Mens3","queens","xsudoku"]
-
+#shuffled = ["Wconnect3"]
 #new
 #"nbishops"]
 #"Gkingtour"]
@@ -84,18 +96,18 @@ shuffled = ["pyramid"]
 #"hexapawn"
 
 print len(gamelist)
-#shuffled = random.sample(gamelist, len(gamelist))
+shuffled = random.sample(gamelist, len(gamelist))
 #shuffled = random.sample(xshuffled, len(xshuffled))
 #shuffled = gamelist
 newscript = ""
 scriptname = ""
 for game in shuffled:
     scriptname += game[0];
-    target = open(game + ".test", 'r')
+    target = open(game + ".testd", 'r')
     newscript+= target.read(20000)
     newscript+= "\n";
     target.close()
-
+    
 
 #result = open(scriptname + ".preparse", 'wb+')
 learnedlist = ""
