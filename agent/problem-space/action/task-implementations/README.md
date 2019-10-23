@@ -208,6 +208,19 @@ also if the object is inside a receptacle it must be open
 * Cozmo: Pickup is a primitive action 
 
 
+### Remember
+
+Remember one object as another, copies predicates from the second
+onto the first. E.g. *Remember the current location as the starting location* 
+will copy the starting predicate onto the current location. 
+
+```
+op_remember1(arg1:object, arg2:object)
+
+No preconditions/goal, but does work during search
+```
+
+
 ### Remove
 
 Removes an object from the world, only used with an internal world
