@@ -72,6 +72,22 @@ op_close1(arg1:object)
 * Magicbot: Close is a primitive action (do-control-law set-state)
 
 
+### Give
+
+Have the robot give a grabbed object to a person
+
+```
+op_give1(arg1:object, arg2:partial-predicate=to1(per))
+
+  Pre:  grabbed1(arg1), person(per)
+  Goal: holding1(per, arg1)
+  Post: +holding1(per, arg1), -grabbed1(arg1), +not-grabbed1(arg1)
+```
+
+**send-give-command**, requires visible1(per) and reachable1(per)
+* Internal: Add the holding1(per, arg1) predicate and mark as not grabbed
+
+
 ### Go to location
 
 Have the robot drive to another location in the world, e.g. the kitchen

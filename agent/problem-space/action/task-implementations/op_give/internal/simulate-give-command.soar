@@ -1,0 +1,82 @@
+### For the internal environment, simulate the give command on the top-state world ###
+
+sp {op_give1*propose*simulate-give-command
+   (state <s> ^name op_give1
+              ^problem-space.execution-type external
+              ^agent-params.domain internal
+              ^current-task-segment <seg>)
+   (<seg> ^give-command <cmd>)
+   (<cmd> -^status complete)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name simulate-give-command
+        ^item-type command-operator
+        ^command <cmd>)
+}
+
+sp {op_give1*apply*simulate-give-command*mark*command*complete
+   (state <s> ^name op_give1
+              ^operator <o>)
+   (<o> ^name simulate-give-command
+        ^command <cmd>)
+-->
+   (<cmd> ^status complete)
+}
+
+
+### simulate-perception = false, change on the object directly ###
+
+sp {op_give1*apply*simulate-give-command*add*give*predicate
+   (state <s> ^name op_give1
+              ^operator <o>
+             -^agent-params.simulate-perception true)
+   (<o> ^name simulate-give-command
+        ^command.object.predicates <preds>)
+   (<preds> ^<prop> closed2)
+-->
+   (<preds> ^<prop> closed2 -
+            ^<prop> give2)
+}
+
+# If simulate-perception=false, change the grabbed predicate directly
+sp {execute*op_give1*apply*simulate-give-command*add*is-grabbed1*not-grabbed
+   (state <s> ^name op_give1
+              ^operator <o>
+             -^agent-params.simulate-perception true)
+   (<o> ^name simulate-give-command
+        ^command.object.predicates <preds>)
+   (<preds> ^is-grabbed1 grabbed1)
+-->
+   (<preds> ^is-grabbed1 grabbed1 -
+            ^is-grabbed1 not-grabbed1)
+}
+
+# If simulate-perception=false, change the holding-object on the simulated input-link
+sp {execute*op_give1*apply*simulate-give-command*remove*holding-object*arm
+   (state <s> ^name op_give1
+              ^agent-params.simulate-perception true
+              ^operator <o>
+              ^top-state.perception-monitor.input-link.self.arm <arm>)
+   (<o> ^name simulate-give-command
+        ^command <cmd>)
+   (<cmd> ^object.perception-id <perc-id>)
+   (<arm> ^holding-object <perc-id>)
+-->
+   (<arm> ^holding-object <perc-id> -)
+}
+
+# Add the holding predicate
+sp {execute*op_give1*apply*simulate-give-command*add*predicate
+   (state <s> ^name op_give1
+              ^operator <o>
+              ^world.predicates.predicate <pred>)
+   (<o> ^name simulate-give-command
+        ^command <cmd>)
+   (<cmd> ^object <obj>
+          ^person <person>)
+   (<pred> ^handle holding1)
+-->
+   (<pred> ^instance <i>)
+   (<i> ^1 <person> ^2 <obj>)
+}
+
