@@ -32,6 +32,7 @@ public class RosieAgentConfigurator {
 			writeAgentSourceFile(config, agentSourceFilename);
 			writeSmemSourceFile(config, smemSourceFilename);
 
+
 		} catch (Exception e){
 			e.printStackTrace();
 		}
