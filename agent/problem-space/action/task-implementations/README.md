@@ -60,7 +60,7 @@ Have the robot close an object, e.g. a door or a fridge
 ```
 op_close1(arg1:object)
 
-  Pre:  open2(arg1)
+  Pre:  open2(arg1), holding-object(false)
   Goal: closed2(arg1)
   Post: +closed2(arg1), -open2(arg1)
 ```
@@ -99,7 +99,7 @@ op_give1(arg1:object, arg2:partial-predicate=to1(per))
 
   Pre:  grabbed1(arg1), person(per)
   Goal: holding1(per, arg1)
-  Post: +holding1(per, arg1), -grabbed1(arg1), +not-grabbed1(arg1)
+  Post: +holding1(per, arg1), -grabbed1(arg1), +not-grabbed1(arg1), -holding-object(true), +holding-object(false)
 ```
 
 **send-give-command**, requires visible1(per) and reachable1(per)
@@ -153,7 +153,7 @@ Have the robot open an object, e.g. a microwave or a cupboard
 ```
 op_open1(arg1:object)
 
-  Pre:  closed2(arg1)
+  Pre:  closed2(arg1), holding-object(false)
   Goal: open2(arg1)
   Post: +open2(arg1), -closed2(arg1), 
         if receptacle1(arg1) and in1(obj, arg1) then +visible1(obj)
@@ -173,9 +173,9 @@ Have the robot pick up an object that is grabbable, e.g. a cup
 ```
 op_pick-up1(arg1:object)
 
-  Pre:  not-grabbed1(arg1), -grabbed1(any)
+  Pre:  not-grabbed1(arg1), holding-object(false)
   Goal: grabbed1(arg1)
-  Post: +grabbed1(arg1), -not-grabbed1(arg1), 
+  Post: +grabbed1(arg1), -not-grabbed1(arg1), -holding-object(false), +holding-object(true)
         remove any relations involving the object (e.g. on or right-of)
         will change the location of the belief object for the tabletop
 ```
@@ -199,14 +199,14 @@ op_put-down1(arg1:object)
 
   Pre:  grabbed1(arg1)
   Goal: not-grabbed1(arg1)
-  Post: -grabbed1(arg1), +not-grabbed1(arg1), in1(arg1, cur-loc)
+  Post: -grabbed1(arg1), +not-grabbed1(arg1), in1(arg1, cur-loc), -holding-object(true), +holding-object(false)
 
 2: Put Down on a surface
 op_put-down1(arg1:object, arg2:partial-predicate=on1(dest))
 
   Pre:  grabbed1(arg1), surface1(dest)
   Goal: on1(arg1, dest)
-  Post: -grabbed1(arg1), +not-grabbed1(arg1), on1(arg1, dest), in1(arg1, cur-loc)
+  Post: -grabbed1(arg1), +not-grabbed1(arg1), on1(arg1, dest), in1(arg1, cur-loc), -holding-object(true), +holding-object(false)
 
 3: Put Down in a receptacle
 op_put-down1(arg1:object, arg2:partial-predicate=in1(dest))
@@ -214,7 +214,7 @@ op_put-down1(arg1:object, arg2:partial-predicate=in1(dest))
   Pre:  grabbed1(arg1) and receptacle1(dest) and open2(dest)
         grabbed1(arg1) and receptacle1(dest) and !open2(dest) and !closed2(dest)
   Goal: in1(arg1, dest)
-  Post: -grabbed1(arg1), +not-grabbed1(arg1), in1(arg1, dest), in1(arg1, cur-loc)
+  Post: -grabbed1(arg1), +not-grabbed1(arg1), in1(arg1, dest), in1(arg1, cur-loc), -holding-object(true), +holding-object(false)
 ```
 
 **send-pick-up-command**, requires visible1(arg1) and reachable1(arg1), 
@@ -287,7 +287,7 @@ Have the robot turn off an appliance, e.g. a microwave
 ```
 op_turn-off1(arg1:object)
 
-  Pre:  on2(arg1)
+  Pre:  on2(arg1), holding-object(false)
   Goal: on2(arg1)
   Post: +off2(arg1), -on2(arg1)
 ```
@@ -306,7 +306,7 @@ Have the robot turn on an appliance, e.g. a light switch
 ```
 op_turn-on1(arg1:object)
 
-  Pre:  off2(arg1)
+  Pre:  off2(arg1), holding-object(false)
   Goal: on2(arg1)
   Post: +on2(arg1), -off2(arg1)
 ```
