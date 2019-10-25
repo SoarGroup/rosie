@@ -17,8 +17,39 @@ sp {apply*interpet-message*remove*current-sentence-number
    (<ts> ^current-sentence-number <csn> -)
 }
 
-sp {apply*wait-for-response*stop*max-sentence
+sp {apply*wait-for-response*add*next-sentence-number
    (state <s> ^top-state <ts>
+              ^operator.name wait-for-response)
+   (<ts> ^game-scripting true ^n-sentence-number <csn>)
+-->
+   (<ts> ^n-sentence-number <csn> -)
+   (<ts> ^current-sentence-number <csn>)
+}
+
+sp {apply*wait-for-response*max-sentence*interrupt
+   (state <s> ^top-state <ts>
+              ^operator.name wait-for-response)
+   (<ts> ^max-sentence-number <csn>
+         ^current-sentence-number > <csn>)
+-->
+   (interrupt)
+}
+
+sp {apply*wait-for-response*max-sentence*halt
+   (state <s> ^top-state <ts>
+              ^superstate.operator.name wait-for-response)
+   (<ts> ^max-sentence-number <csn>
+          ^io.output-link <io>
+         ^current-sentence-number > <csn>)
+   (<io> ^stop-java <sj>)
+   (<sj> ^stop-java stop-java)
+-->
+   (halt)
+}
+
+sp {apply*wait-for-response*max-sentence*dump-soar-data
+   (state <s> ^top-state <ts>
+              ^agent-params.dump-soar-data true
               ^operator.name wait-for-response)
    (<ts> ^max-sentence-number <csn>
           ^io.output-link <io>
@@ -35,26 +66,5 @@ sp {apply*wait-for-response*stop*max-sentence
    (write (cmd |ctf statesexp.txt fc game-search*elaborate*other-levels*simulated|))  
    (write (cmd |ctf chunks.txt pfc|))
    (write (cmd |ctf s1.txt print s1 -d 3|)) # to verify all solve, no dialog context on top state
-   (interrupt)
 }
 
-sp {apply*wait-for-response*stop*max-sentence*halt
-   (state <s> ^top-state <ts>
-              ^superstate.operator.name wait-for-response)
-   (<ts> ^max-sentence-number <csn>
-          ^io.output-link <io>
-         ^current-sentence-number > <csn>)
-   (<io> ^stop-java <sj>)
-   (<sj> ^stop-java stop-java)
--->
-   (halt)
-}
-
-sp {apply*wait-for-response*add*next-sentence-number
-   (state <s> ^top-state <ts>
-              ^operator.name wait-for-response)
-   (<ts> ^game-scripting true ^n-sentence-number <csn>)
--->
-   (<ts> ^n-sentence-number <csn> -)
-   (<ts> ^current-sentence-number <csn>)
-}

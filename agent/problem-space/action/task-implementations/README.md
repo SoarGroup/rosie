@@ -72,6 +72,24 @@ op_close1(arg1:object)
 * Magicbot: Close is a primitive action (do-control-law set-state)
 
 
+### Find
+
+Have the robot find an object so that it becomes visible
+
+```
+op_find1(arg1:object)
+
+  Pre: object(arg1) OR person(arg1), not-visible1(arg1)
+  Goal: visible1(arg1)
+  Post: +visible1(arg1), -not-visible(arg1)
+```
+
+**propose-subtasks**
+* If it has a known location in svs, propose op_face1(arg1)
+* If in1(arg1, loc) and loc != cur-loc, propose op_go-to-location1(arg1)
+* Propose op_explore1(until(visible1(arg1)))
+
+
 ### Give
 
 Have the robot give a grabbed object to a person
