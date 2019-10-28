@@ -7,58 +7,21 @@ sp {task-utils*push-task-segment*propose*complete-push-task-segment
    (<o> ^name complete-push-task-segment)
 }
 
-# remove new-task-segment from task-stack
-sp {task-utils*push-task-segment*apply*complete-push-task-segment*remove*new-task-segment*task-stack
-   (state <s> ^name push-task-segment
-              ^operator.name complete-push-task-segment
-              ^segment-to-push <seg>
-              ^task-stack <stack>)
-   (<stack> ^new-task-segment <seg>)
--->
-   (<stack> ^new-task-segment <seg> -)
-}
-
-# remove new-task-segment from superstate
-sp {task-utils*push-task-segment*apply*complete-push-task-segmennt*remove*new-task-segmennt*superstate
-   (state <s> ^name push-task-segment
-              ^operator.name complete-push-task-segment
-              ^segment-to-push <seg>
-              ^superstate <ss>)
-   (<ss> ^problem-space.name action
-         ^new-task-segment <seg>)
--->
-   (<ss> ^new-task-segment <seg> -)
-}
-
-# Mark status complete on superoperator
-sp {task-utils*push-task-segment*apply*complete-push-task-segment*mark*status*complete*on*superoperator
-   (state <s> ^name push-task-segment
-              ^operator.name complete-push-task-segment
-              ^superstate.operator <o>)
--->
-   (<o> ^status complete)
-}
-
 # push the task on to the stack
-
 sp {task-utils*push-task-segment*apply*complete-push-task-segment*push
    (state <s> ^name push-task-segment
               ^operator.name complete-push-task-segment
               ^task-stack <stack>
               ^segment-to-push <seg>)
-   (<stack> ^top <top>)
-   (<top> ^next none)
-   (<seg> ^task-operator <task-op>)
+   (<stack> ^bottom <bot>)
+   (<bot> ^next none)
 -->
-   (<stack> ^top <top> -
-            ^top <seg>)
+   (<stack> ^bottom <bot> -
+            ^bottom <seg>)
    (<seg> ^next none
-          ^prev <top>
-          ^start-of-execution true
-          ^task-objects <objs>)
-   (<top> ^next none -
+          ^prev <bot>)
+   (<bot> ^next none -
           ^next <seg>)
-   (<task-op> ^current-goal first)
 }
 
 # if the stack was empty, update the top and bottom 
@@ -69,16 +32,33 @@ sp {task-utils*push-task-segment*apply*complete-push-task-segment*push*empty
               ^segment-to-push <seg>)
    (<stack> ^top none
             ^bottom none)
-   (<seg> ^task-operator <task-op>)
 -->
    (<stack> ^top none -
             ^top <seg>
             ^bottom none -
             ^bottom <seg>)
    (<seg> ^next none
-          ^prev none
-          ^start-of-execution true
-          ^task-objects <objs>)
+          ^prev none)
+}
+
+# remove push-task-operator from task-stack
+sp {task-utils*push-task-segment*apply*complete-push-task-segment*remove*push-task-operator*task-stack
+   (state <s> ^name push-task-segment
+              ^operator.name complete-push-task-segment
+              ^task-operator <task-op>
+              ^task-stack <stack>)
+   (<stack> ^push-task-operator <task-op>)
+-->
+   (<stack> ^push-task-operator <task-op> -)
+}
+
+# Add ^current-goal first to the task-operator
+sp {task-utils*push-task-segment*apply*complete-push-task-segment*mark*current-goal*first
+   (state <s> ^name push-task-segment
+              ^operator.name complete-push-task-segment
+              ^task-stack <stack>
+              ^task-operator <task-op>)
+-->
    (<task-op> ^current-goal first)
 }
 
@@ -91,28 +71,6 @@ sp {task-utils*push-task-segment*apply*complete-push-task-segment*report-to-outp
               ^top-state.io.output-link <ol>)
 -->
    (<ol> ^started-task.segment <seg>)
-}
-
-# TOREM
-## Add any objects using the task to the task-stack
-#sp {task-utils*push-task-segment*apply*complete-push-task-segment*add*task-objects
-#   (state <s> ^name push-task-segment
-#              ^operator.name complete-push-task-segment
-#              ^task-object-set.task-object <obj>
-#              ^task-stack.task-objects <objs>)
-#-->
-#  (<objs> ^object <obj>)
-#}
-
-sp {task-utils*push-task-segment*apply*complete-push-task-segment*ask*remove*previous*answer
-   (state <s> ^name push-task-segment
-              ^operator.name complete-push-task-segment
-              ^segment-to-push.task-operator.task-handle ask1
-              ^top-state.world.objects.object <obj>)
-   (<obj> ^predicates <preds>)
-   (<preds> ^modifier1 answer1)
--->
-   (<preds> ^modifier1 answer1 -)
 }
 
 sp {task-utils*push-task-segment*apply*complete-push-task-segment*print*task*segment

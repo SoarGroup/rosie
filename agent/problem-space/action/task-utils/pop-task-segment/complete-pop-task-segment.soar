@@ -7,35 +7,47 @@ sp {problem-space*action*pop-task-segment*propose*complete-pop-task-segment
    (<o> ^name complete-pop-task-segment)
 }
 
-# Remove the task from the top of the stack
+# Remove the task from the bottom of the stack
 sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*pop
    (state <s> ^name pop-task-segment
               ^operator.name complete-pop-task-segment
               ^task-stack <stack>
               ^segment-to-pop <segment>)
-   (<stack> ^top <segment>)
+   (<stack> ^bottom <segment>)
    (<segment> ^prev <prev>)
    (<prev> ^next <segment>)
 -->
-   (<stack> ^top <segment> -
-            ^top <prev>)
+   (<stack> ^bottom <segment> -
+            ^bottom <prev>)
    (<prev> ^next <segment> -
            ^next none)
 }
 
-# If the task was the bottom, change it to none
-sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*change*bottom
+# If the task was the top, make it so the stack is empty
+sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*make*empty
   (state <s> ^name pop-task-segment
               ^operator.name complete-pop-task-segment
               ^task-stack <stack>
               ^segment-to-pop <segment>)
-   (<stack> ^bottom <segment>
-            ^top <segment>)
+   (<stack> ^top <segment>
+            ^bottom <segment>)
 -->
-   (<stack> ^bottom <segment> -
-           ^bottom none
-           ^top <segment> -
-           ^top none)
+   (<stack> ^top <segment> -
+            ^top none
+            ^bottom <segment> -
+            ^bottom none)
+}
+
+# If the task was queued, remove it from the task-stack
+sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*from*from*queued-tasks
+  (state <s> ^name pop-task-segment
+             ^operator.name complete-pop-task-segment
+             ^task-stack.queued-tasks <tasks>
+             ^segment-to-pop.task-operator <task-op>)
+   (<tasks> ^task <task>)
+   (<task> ^task-operator <task-op>)
+-->
+   (<tasks> ^task <task> -)
 }
 
 sp {pop-task-segment*elaborate*world-vis
@@ -179,46 +191,6 @@ sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*remove
    (<preds> ^<att> <val> -)
 }
 
-# Remove answers during the action
-sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*remove*answers
-   (state <s> ^name pop-task-segment
-              ^operator.name complete-pop-task-segment
-              ^superstate.world.objects <objs>
-              ^segment-to-pop <bottom>
-              ^task-stack.bottom <bottom>)
-  (<objs> ^object <obj>)
-  (<obj> ^predicates <preds>)
-  (<preds> ^modifier1 answer1)
--->
-  (<preds> ^modifier1 answer1 -)
-}
-
-sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*remove*answer*objects
-   (state <s> ^name pop-task-segment
-              ^operator.name complete-pop-task-segment
-              ^top-state.world.objects.object <obj>
-              ^segment-to-pop <bottom>
-              ^task-stack.bottom <bottom>
-              ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
-   (<obj> ^predicates.category answer)
-   (<obj-info> ^world-obj <obj>)
--->
-   (<obj-info> ^delete-object true)
-}
-   
-# Clear robot-status
-sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*remove*robot-status
-   (state <s> ^name pop-task-segment
-              ^operator.name complete-pop-task-segment
-              ^superstate.world.objects.object.predicates <preds>
-              ^segment-to-pop <bottom>
-              ^task-stack.bottom <bottom>)
-  (<preds> ^robot-status <status>)
--->
-  (<preds> ^robot-status <status> -)
-}
-   
-   
 ## Remove any objects added to the world during the action
 #sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*remove*added*objects
 #   (state <s> ^name pop-task-segment
@@ -253,37 +225,11 @@ sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*mark*p
    (<parent-op> ^performed <sub-handle>)
 }
 
-sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*bottom*clear*task-objects
-  (state <s> ^name pop-task-segment
-             ^operator.name complete-pop-task-segment
-             ^segment-to-pop <segment>
-             ^task-stack.bottom <segment>
-             ^task-stack <stack>)
-  (<stack> ^task-objects <objs>)
--->
-  (<stack> ^task-objects <objs> -
-           ^task-objects <new>)
-}
-
-sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*delete*non-confirmed*task*object
-  (state <s> ^name pop-task-segment
-             ^operator.name complete-pop-task-segment
-             ^segment-to-pop <segment>
-             ^task-stack.bottom <segment>
-             ^task-stack.task-objects.object <obj>
-             ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
-   (<obj> -^predicates.is-confirmed1 confirmed1
-          -^predicates.is-grabbed1 grabbed1)
-   (<obj-info> ^world-obj <obj>)
--->
-   (<obj-info> ^delete-object true)
-}
-
 sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*delete*dialog*info
   (state <s> ^name pop-task-segment
              ^operator.name complete-pop-task-segment
-             ^segment-to-pop <bottom>
-             ^task-stack.bottom <bottom>
+             ^segment-to-pop <top>
+             ^task-stack.top <top>
              ^top-state <top>)
   (<top> ^dialog-object-list <list>
          ^dialog-world <w>)

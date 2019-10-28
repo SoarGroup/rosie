@@ -83,83 +83,40 @@ sp {top-state*reject*satisfy-purpose*if*executing*learned*game
 
 #######################################################
 # 
-# Propose: push task segment
-#
-########################################################
-
-sp {top-state*propose*push-task-segment*new-task-segment
-   (state <s> ^superstate nil
-              ^task-stack <stack>)
-   (<stack> ^top none
-            ^new-task-segment <seg>)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name push-task-segment
-        ^segment <seg>)
-}
-
-sp {top-state*propose*push-task-segment*queued*task
-   (state <s> ^superstate nil
-              ^task-stack <stack>)
-   (<stack> ^top none
-            ^queued-tasks.task <qtask>)
-   (<qtask> ^order <order>
-            ^task-operator <task-op>)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name push-task-segment
-        ^order <order>
-        ^segment <qtask>)
-}
-
-sp {top-state*prefer*push-task-segment*lower*order
-   (state <s> ^superstate nil
-              ^operator <o1> +
-              ^operator <o2> +)
-   (<o1> ^name push-task-segment
-         ^order <ord1>)
-   (<o2> ^name push-task-segment
-         ^order > <ord1>)
--->
-   (<s> ^operator <o1> > <o2>)
-}
-
-#######################################################
-# 
 # Propose: execute-task
 #
 ########################################################
 
 sp {top-state*propose*execute-task
    (state <s> ^superstate nil
-              ^task-stack.bottom { <seg> <> none })
+              ^task-stack.top { <seg> <> none })
 -->
    (<s> ^operator <o> +)
    (<o> ^name execute-task
         ^task-segment <seg>)
 }
 
-sp {top-state*propose*execute-task*finished-game-learning
+sp {top-state*elaborate*task-stack*push-task-segment*lowest*queued*task
    (state <s> ^superstate nil
-              ^interaction.stack.segment.purpose.type finished-game-learning 
-              ^task-stack.bottom { <seg> <> none })
+              ^task-stack <stack>)
+   (<stack> ^top none
+            ^queued-tasks <queue>)
+   (<queue> ^task <task>)
+   (<task> ^order <order>
+           ^task-operator <task-op>)
+   -{(<queue> ^task.order < <order>)}
 -->
-   (<s> ^operator <o> +)
-   (<o> ^name execute-task
-        ^task-segment <seg>)
+   (<stack> ^push-task-operator <task-op>)
 }
 
-
-sp {top-state*apply*execute-task*remove*queued-task
-	(state <s> ^superstate nil
-               ^operator <o>
-               ^task-stack.queued-tasks <queue>)
- (<o> ^name execute-task
-      ^task-segment.task-operator <task-op>)
- (<queue> ^task <qtask>)
- (<qtask> ^task-operator <task-op>)
+sp {top-state*propose*execute-task*unpushed*task
+   (state <s> ^superstate nil
+              ^task-stack <stack>)
+   (<stack> ^top none
+            ^push-task-operator <task-op>)
 -->
-(<queue> ^task <qtask> -)        
+   (<s> ^operator <o> +)
+   (<o> ^name execute-task)
 }
 
 #sp {top-state*propose*lookup-preposition

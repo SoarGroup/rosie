@@ -1,9 +1,11 @@
 sp {subproblem*execute*propose*add-subtask-to-tcn*task-source*instruction
    (state <s> ^problem-space.subproblem execute
-              ^new-task-segment <seg>
+              ^task-stack <stack>
+              ^current-task-segment <seg>
               ^task-operator <task-op>)
-   (<seg> ^task-source instruction
-          ^task-operator <subtask>)
+   (<stack> ^bottom <seg>
+            ^push-task-operator <subtask>)
+   (<subtask> ^task-source instruction)
 -->
    (<s> ^operator <o> + > =)
    (<o> ^name add-subtask-to-tcn
@@ -11,30 +13,24 @@ sp {subproblem*execute*propose*add-subtask-to-tcn*task-source*instruction
         ^task-operator <task-op>)
 }
 
+# Once the created-subtask <sub-handle> has been added to the state, 
+#   Reset the state and get mark that we need to learn-subtask-proposal <sub-handle>
+
 sp {subproblem*execute*apply*add-subtask-to-tcn*finished*remove*task-source
    (state <s> ^problem-space.subproblem execute
-              ^operator.name add-subtask-to-tcn
-              ^new-task-segment <new-seg>
+              ^operator <o>
               ^current-task-segment <seg>
               ^created-subtask <sub-h>
               ^task-concept-network <tcn>)
-   (<new-seg> ^task-source instruction)
+   (<o> ^name add-subtask-to-tcn
+        ^subtask <subtask>)
+   (<subtask> ^task-source instruction)
 -->
-   (<new-seg> ^task-source instruction -)
+   (<subtask> ^subtask-handle <sub-h>
+              ^task-source instruction -)
    (<s> ^created-subtask <sub-h> -)
-   (<seg> ^learn-subtask-proposal <sub-h>)
+   (<seg> ^assigned-subtask-handle true
+          ^learn-subtask-proposal <sub-h>)
    (<s> ^task-concept-network <tcn> -) # We want to re-retrieve this because it changed in the substate
-}
-    
-sp {subproblem*execute*apply*add-subtask-to-tcn*finished*add*subtask-handle
-   (state <s> ^problem-space.subproblem execute
-              ^operator.name add-subtask-to-tcn
-              ^new-task-segment <seg>
-              ^created-subtask <sub-h>)
-   (<seg> ^task-source instruction
-          ^task-operator <task-op>)
--->
-   (<task-op> ^subtask-handle <sub-h>)
-   (<seg> ^assigned-subtask-handle true)
 }
     
