@@ -90,7 +90,7 @@ public class AgentMessageParser
 			return null;
 		}
 
-		System.out.println("Got Message:" + type);
+		//System.out.println("Got Message:" + type);
 		if(simpleMessages.containsKey(type)){
 			return simpleMessages.get(type);
 		}

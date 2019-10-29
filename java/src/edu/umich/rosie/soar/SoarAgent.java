@@ -67,6 +67,8 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         }
     }
 
+	private HashSet<AgentConnector> connectors;
+
     private AgentConnector perceptionConn;
     private AgentConnector actuationConn;
     private AgentConnector languageConn;
@@ -92,6 +94,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         this.config = new AgentConfig(props);
 
         runEventCallbackIds = new ArrayList<Long>();
+		connectors = new HashSet<AgentConnector>();
         
         time = new Time();
         
@@ -130,9 +133,17 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         return isRunning;
     }
 
+	public void addConnector(AgentConnector conn){
+		this.connectors.add(conn);
+	}
+
     // Perception
     public void setPerceptionConnector(AgentConnector conn){
+		if(this.perceptionConn != null){
+			this.connectors.remove(perceptionConn);
+		}
         this.perceptionConn = conn;
+		this.connectors.add(conn);
     }
     public AgentConnector getPerceptionConnector(){
         return perceptionConn;
@@ -140,7 +151,11 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
     
     // Actuation
     public void setActuationConnector(AgentConnector conn){
+		if(this.actuationConn != null){
+			this.connectors.remove(this.actuationConn);
+		}
         this.actuationConn = conn;
+		this.connectors.add(conn);
     }
     public AgentConnector getActuationConnector(){
         return actuationConn;
@@ -148,7 +163,11 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
     
     // Language
     public void setLanguageConnector(AgentConnector conn){
+		if(this.languageConn != null){
+			this.connectors.remove(this.languageConn);
+		}
         this.languageConn = conn;
+		this.connectors.add(conn);
     }
     public AgentConnector getLanguageConnector(){
         return languageConn;
@@ -194,16 +213,10 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         	sourceAgent();
         }
         agent.ExecuteCommandLine(String.format("w %d", config.watchLevel));
-        
-        if(perceptionConn != null){
-            perceptionConn.connect();
-        }
-        if(actuationConn != null){
-            actuationConn.connect();
-        }
-        if(languageConn != null){
-            languageConn.connect();
-        }
+
+		for(AgentConnector conn : this.connectors){
+			conn.connect();
+		}
 
         System.out.print("\n");
 
@@ -256,15 +269,9 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         printCallbackId = -1;
 
         time.removeFromWM();
-        if(perceptionConn != null){
-            perceptionConn.disconnect();
-        }
-        if(actuationConn != null){
-            actuationConn.disconnect();
-        }
-        if(languageConn != null){
-            languageConn.disconnect();
-        }
+		for(AgentConnector conn : this.connectors){
+			conn.disconnect();
+		}
 
         if(debuggerSpawned){
             agent.KillDebugger();

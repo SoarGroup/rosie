@@ -151,6 +151,44 @@ public class SoarUtil
         }
         return wme.GetValueAsString();
     }
+
+	/* Returns the integer value of the wme (<id> ^attribute <val>), if it exists (or null otherwise) */
+	public static Long getChildInt(Identifier id, String attribute){
+		WMElement wme = id.FindByAttribute(attribute, 0);
+		if(wme == null || !wme.GetValueType().equals(INTEGER_VAL)){
+			return null;
+		}
+        IntElement intWME = wme.ConvertToIntElement();
+		return intWME.GetValue();
+	}
+
+	/* Returns the float value of the wme (<id> ^attribute <val>), if it exists (or null otherwise) */
+	public static Double getChildFloat(Identifier id, String attribute){
+		WMElement wme = id.FindByAttribute(attribute, 0);
+		if(wme == null || !wme.GetValueType().equals(FLOAT_VAL)){
+			return null;
+		}
+        FloatElement floatWME = wme.ConvertToFloatElement();
+		return floatWME.GetValue();
+	}
+
+	/* Returns the float value of the wme (<id> ^attribute <val>), if it exists (or null otherwise) */
+	public static String getChildString(Identifier id, String attribute){
+		WMElement wme = id.FindByAttribute(attribute, 0);
+		if(wme == null || wme.GetValueAsString().length() == 0){
+			return null;
+		}
+		return wme.GetValueAsString();
+	}
+
+	/* Returns the id value of the wme (<id> ^attribute <val>), if it exists (or null otherwise) */
+	public static Identifier getChildId(Identifier id, String attribute){
+		WMElement wme = id.FindByAttribute(attribute, 0);
+		if(wme == null || !wme.IsIdentifier()){
+			return null;
+		}
+        return wme.ConvertToIdentifier();
+	}
     
     /**
      * Given id and attribute, returns value for WME (id ^attribute value)
