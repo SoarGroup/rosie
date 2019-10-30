@@ -231,21 +231,26 @@ public class RosieAgentConfigurator {
 			return;
 		}
         
-    	String rosieHome = null;
+    	String rosieHome = System.getenv("ROSIE_HOME");
+		boolean silent = false;
     	if (args.length >= 2){
-    		rosieHome = args[2];
-    	} else {
-    		rosieHome = System.getenv("ROSIE_HOME");
-    		if (rosieHome == null){
-    			System.err.println("$ROSIE_HOME environment variable is not set");
-    			System.exit(1);
-    		}
+			if(args[1].equals("-s")){
+				silent = true;
+			} else {
+				rosieHome = args[1];
+			}
     	}
+		if (rosieHome == null){
+			System.err.println("$ROSIE_HOME environment variable is not set");
+			System.exit(1);
+		}
     	rosieHome = rosieHome.replaceAll("\\\\", "/");
         
         try{
         	RosieConfig config = new RosieConfig(configFile, props, rosieHome);
-        	System.out.println(config.toString());
+			if(!silent){
+				System.out.println(config.toString());
+			}
         	ConfigureAgent(config);
         } catch (RosieConfig.RosieConfigException e){
         	System.err.println("Rosie Configuration Error: " + e.getMessage());

@@ -119,7 +119,6 @@ public class RosieConfig {
 	
 	public RosieConfig(File configFile, Properties props, String rosieHome) throws RosieConfigException {
 		String configDir = configFile.getParent();
-		System.out.println(configDir);
 		
 		// rosieHome
 		this.rosieHome = rosieHome; 
@@ -154,10 +153,7 @@ public class RosieConfig {
 		}
 
 		// simulate-perception
-		System.out.println(this.domain);
 		if (this.domain.equals("internal")){
-			System.out.println("simulate-perception");
-			System.out.println(props.getProperty("simulate-perception"));
 			this.simulate_perception = props.getProperty("simulate-perception", "false").toLowerCase().equals("true");
 		} else {
 			this.simulate_perception = false;

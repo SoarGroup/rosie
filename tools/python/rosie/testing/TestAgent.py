@@ -2,7 +2,7 @@ import sys
 
 from pysoarlib import SoarAgent, LanguageConnector
 
-from ActionStackConnector import ActionStackConnector
+from .ActionStackConnector import ActionStackConnector
 
 class TestAgent(SoarAgent):
 	def __init__(self, config_filename=None, **kwargs):

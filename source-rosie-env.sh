@@ -36,6 +36,10 @@ complete -F _rosie_agents_completion run_rosie
 alias make_rosie_world="$ROSIE_HOME/tools/scripts/make_rosie_world.sh"
 complete -F _map_info_completion make_rosie_world
 
+# run_task_learning_tests: Will run task learning tests under test-agents/task-tests
+#   and print out discrepancies
+alias run_task_learning_tests="$ROSIE_HOME/tools/scripts/run_task_learning_tests.sh"
+
 
 ### Other Useful Scripts
 
