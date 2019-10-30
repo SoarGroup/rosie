@@ -1488,7 +1488,7 @@ public class AgentMessageParser
 //*/
 	
 	private static String translateNextTaskPrompt() {
-        return "I am ready for a new task";
+        return "I'm ready for a new task";
 	}
 	
 	// This function lists out the properties of a given object.

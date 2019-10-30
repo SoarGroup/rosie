@@ -14,21 +14,21 @@ import sml.WMElement;
 
 
 public class ActionStackConnector extends AgentConnector {
-	public interface OutputCallback {
-		void dispatch(String message);
+	public interface OutputListener {
+		void handleOutput(String message);
 	}
 
-	private ArrayList<OutputCallback> callbacks;
+	private ArrayList<OutputListener> listeners;
 	
 	public ActionStackConnector(SoarAgent agent){
 		super(agent);
 		
         this.setOutputHandlerNames(new String[]{ "started-task", "completed-task" });
-		this.callbacks = new ArrayList<OutputCallback>();
+		this.listeners = new ArrayList<OutputListener>();
 	}
 
-	public void register(OutputCallback callback){
-		this.callbacks.add(callback);
+	public void addOutputListener(OutputListener listener){
+		this.listeners.add(listener);
 	}
 	
 	@Override
@@ -40,9 +40,9 @@ public class ActionStackConnector extends AgentConnector {
 	@Override
     protected void onInputPhase(Identifier inputLink){ }
 
-	private void dispatchOutput(String message){
-		for(OutputCallback callback : this.callbacks){
-			callback.dispatch(message);
+	private void notifyListeners(String message){
+		for(OutputListener listener : this.listeners){
+			listener.handleOutput(message);
 		}
 	}
 
@@ -68,7 +68,7 @@ public class ActionStackConnector extends AgentConnector {
 		Identifier segId = SoarUtil.getChildId(rootId, "segment");
 		int depth = SoarUtil.getChildInt(segId, "depth").intValue();
 		Identifier taskId = SoarUtil.getChildId(segId, "task-operator");
-		dispatchOutput(padding(depth-1) + "> " + taskToString(taskId));
+		notifyListeners(padding(depth-1) + "> " + taskToString(taskId));
 		rootId.CreateStringWME("handled", "true");
 	}
 
@@ -76,7 +76,7 @@ public class ActionStackConnector extends AgentConnector {
 		Identifier segId = SoarUtil.getChildId(rootId, "segment");
 		int depth = SoarUtil.getChildInt(segId, "depth").intValue();
 		Identifier taskId = SoarUtil.getChildId(segId, "task-operator");
-		dispatchOutput(padding(depth-1) + "< " + taskToString(taskId));
+		notifyListeners(padding(depth-1) + "< " + taskToString(taskId));
 		rootId.CreateStringWME("handled", "true");
 	}
 
