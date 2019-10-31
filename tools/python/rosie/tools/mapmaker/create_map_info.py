@@ -13,7 +13,7 @@ def create_map_info(world_info, fout):
 ##### REGIONS #####
 
 def writeRegion(region, fout):
-	fout.write("wp" + str(region.soar_id))
+	fout.write(region.handle)
 	fout.write(" " + str(region.x))
 	fout.write(" " + str(region.y))
 	fout.write(" " + str(region.rot))

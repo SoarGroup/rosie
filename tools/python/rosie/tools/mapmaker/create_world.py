@@ -65,7 +65,7 @@ def writeRegion(region, writer):
 	writer.write("\"soargroup.mobilesim.sim.SimRegion\"\n")
 	writer.write("{\n")
 	writer.write("  # Region ID\n")
-	writer.write("  " + str(region.tag_id) + "\n")
+	writer.write("  " + region.handle + "\n")
 	writer.write("  # Tag Position\n")
 	writer.write("  vec 6\n")
 	writer.write("  %(x)s %(y)s %(z)s %(roll)s %(pitch)s %(yaw)s\n" % \

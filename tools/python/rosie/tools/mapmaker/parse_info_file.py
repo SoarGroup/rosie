@@ -67,7 +67,8 @@ class RobotInfo:
 
 class RegionInfo:
 	def __init__(self):
-		self.tag_id = 0
+		self.tag_num = 0
+		self.handle = ""
 		self.x = 0
 		self.y = 0
 		self.rot = 0
@@ -76,24 +77,13 @@ class RegionInfo:
 		self.label = None
 
 	def read_info(self, reader, scale=1.0):
-		self.tag_id = int(reader.nextWord())
-
-		# Note: this assumes all ids are less than 100 (and thus 2 characters)
-		#   Increase this to accomodate more node ids
-		self.soar_id = str(self.tag_id)
-		while len(self.soar_id) < 2:
-			self.soar_id = "0" + self.soar_id
-
+		self.tag_num = int(reader.nextWord())
+		self.handle = "wp" + ("0" if self.tag_num < 10 else "") + str(self.tag_num)
 		self.x = float(reader.nextWord()) * scale
 		self.y = float(reader.nextWord()) * scale
 		self.rot = float(reader.nextWord())
 		self.width = float(reader.nextWord()) * scale
 		self.length = float(reader.nextWord()) * scale
-		label = reader.nextWord()
-		if label == "none":
-			self.label = None
-		else:
-			self.label = label
 		return self
 
 	def contains_point(self, x, y):

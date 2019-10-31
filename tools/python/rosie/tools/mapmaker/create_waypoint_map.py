@@ -12,7 +12,7 @@ def create_waypoint_map(world_info, fout):
 
 	for region in world_info.regions:
 		node = Node(region)
-		nodes[node.id_num] = node
+		nodes[node.wp_id] = node
 	
 	for edge in world_info.edges:
 		edges.append(Edge(edge, True))
@@ -47,7 +47,7 @@ def create_waypoint_map(world_info, fout):
 		node = nodes[node_id]
 		node.write(fout)
 		for edge in edges:
-			if edge.start == node.id_num:
+			if edge.start == node_id:
 				edge.write(nodes, fout)
 		fout.write("\n")
 
@@ -58,16 +58,13 @@ class Node:
 		self.x = str(region.x)
 		self.y = str(region.y)
 
-		self.id_num = region.tag_id
-		self.id_str = region.soar_id
-
-		self.name = "wp" + self.id_str
-		self.var = "<" + self.name + ">"
-		self.classification = region.label
+		self.wp_id = region.tag_num
+		self.handle = region.handle
+		self.var = "<" + region.handle + ">"
 	
 	def write(self, out):
 		out.write('  (%(var)s ^handle %(hand)s ^x %(x)s ^y %(y)s ^map <building>)\n' % \
-				{ "var": self.var, "hand": self.name, "id_num": self.id_num, "x": self.x, "y": self.y })
+				{ "var": self.var, "hand": self.handle, "x": self.x, "y": self.y })
 
 
 class Edge:
@@ -96,7 +93,7 @@ class Edge:
 	def write(self, nodes, fout):
 		start = nodes[self.start]
 		end = nodes[self.end]
-		self.var = "<e" + start.id_str + end.id_str + ">"
+		self.var = "<e_" + str(start.handle) + "_" + str(end.handle) + ">"
 
 		fout.write('   (%(start)s ^edge %(edge)s)\n' % \
 				{ "start": start.var, "edge": self.var })
