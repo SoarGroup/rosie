@@ -1,0 +1,53 @@
+# If we have the target-object but don't have its coordinate, query svs for its transform
+
+sp {op_approach*propose*extract-target-transform
+   (state <s> ^name op_approach1
+              ^agent-params.domain magicbot
+              ^problem-space.execution-type external
+              ^target-object.svs-obj.id <perc-id>
+             -^target-transform
+             -^goal-coord)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name extract-target-transform
+        ^target-id <perc-id>)
+}
+
+sp {op_approach*apply*extract-target-transform*create*target*transform*filter
+   (state <s> ^name op_approach1
+              ^operator <o>
+              ^top-state.svs.command <cmd>)
+   (<o> ^name extract-target-transform
+        ^target-id <tar-id>)
+-->
+   (<cmd> ^extract_once <pos> <rot> <scl>)
+   (<pos> ^type node_position ^a <node>)
+   (<rot> ^type node_rotation ^a <node>)
+   (<scl> ^type node_scale ^a <node>)
+   (<node> ^type node ^id <tar-id>)
+   (<s> ^pos-filter <pos>
+        ^rot-filter <rot>
+        ^scl-filter <scl>)
+}
+
+sp {op_approach*apply*extract-target-transform*copy*filter*result
+   (state <s> ^name op_approach1
+              ^operator.name extract-target-transform
+              ^pos-filter <pos>
+              ^rot-filter <rot>
+              ^scl-filter <scl>
+              ^top-state.svs.command <cmd>)
+   (<cmd> ^extract_once <pos> <rot> <scl>)
+   (<pos> ^result.record.value <tar-pos>)
+   (<rot> ^result.record.value <tar-rot>)
+   (<scl> ^result.record.value <tar-scl>)
+-->
+   (<cmd> ^extract_once <pos> -
+          ^extract_once <rot> -
+          ^extract_once <scl> -)
+   (<s> ^pos-filter <pos> -
+        ^rot-filter <rot> -
+        ^scl-filter <scl> -
+        ^target-transform <xform>)
+   (<xform> ^pos <tar-pos> ^rot <tar-rot> ^scl <tar-scl>)
+}

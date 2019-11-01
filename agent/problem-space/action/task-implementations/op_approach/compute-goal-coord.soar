@@ -1,0 +1,132 @@
+
+sp {op_approach*propose*compute-goal-coord
+   (state <s> ^name op_approach1
+              ^agent-params.domain magicbot
+              ^problem-space.execution-type external
+              ^target-object.svs-obj.id <perc-id>
+              ^robot-coord <rob>
+              ^target-transform <xform>
+             -^goal-coord)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name compute-goal-coord
+        ^robot-coord <rob>
+        ^target-transform <xform>)
+}
+
+sp {op_approach*elaborate*state*has-front*true
+   (state <s> ^name op_approach1
+             -^has-front false)
+-->
+   (<s> ^has-front true)
+}
+
+sp {op_approach*elaborate*state*has-front*false*grabbable
+   (state <s> ^name op_approach1
+              ^target-object.predicates.affordance1 grabbable1)
+-->
+   (<s> ^has-front false)
+}
+
+sp {op_approach*elaborate*state*has-front*false*person
+   (state <s> ^name op_approach1
+              ^target-object.predicates.category person)
+-->
+   (<s> ^has-front false)
+}
+
+# Compute the sin/cos of the target's yaw 
+sp {op_approach*elaborate*compute-goal-coord*trig
+   (state <s> ^name op_approach1
+              ^operator <o> +)
+   (<o> ^name compute-goal-coord
+        ^target-transform.rot.z <yaw>)
+-->
+   (<o> ^sin (sin <yaw>)
+        ^cos (cos <yaw>) )
+}
+
+# Compute the distance from the center along each axis
+#    that the robot should drive to (half the scale + 1 meter)
+sp {op_approach*elaborate*compute-goal-coord*axis_dist
+   (state <s> ^name op_approach1
+              ^operator <o> +)
+   (<o> ^name compute-goal-coord
+        ^target-transform.scl <scl>)
+   (<scl> ^x <sx> ^y <sy>)
+-->
+   (<o> ^axis_x (+ (/ <sx> 2) 1.0)
+        ^axis_y (+ (/ <sy> 2) 1.0) )
+}
+
+# Compute only the 1 coordinate that goes from the target's position 
+#   along the x axis and that represents the goal coordinate
+sp {op_approach*elaborate*compute-goal-coord*1*coord*has-front*true
+   (state <s> ^name op_approach1
+              ^has-front true
+              ^operator <o> +)
+   (<o> ^name compute-goal-coord
+        ^sin <sin> ^cos <cos>
+        ^axis_x <ax> ^axis_y <ay>
+        ^target-transform.pos <pos>)
+   (<pos> ^x <px> ^y <py>)
+-->
+   (<o> ^coord <c1>)
+   (<c1> ^x (+ <px> (* <ax> <cos>))
+         ^y (+ <py> (* <ax> <sin>)))
+}
+
+# Compute 4 coordinates that go from the target's position 
+#   along the 4 x/y axes and that represent 4 places
+#   the agent could drive to to approach the object
+sp {op_approach*elaborate*compute-goal-coord*coords
+   (state <s> ^name op_approach1
+              ^has-front false
+              ^operator <o> +)
+   (<o> ^name compute-goal-coord
+        ^sin <sin> ^cos <cos>
+        ^axis_x <ax> ^axis_y <ay>
+        ^target-transform.pos <pos>)
+   (<pos> ^x <px> ^y <py>)
+-->
+   (<o> ^coord <c1> <c2> <c3> <c4>)
+   (<c1> ^x (+ <px> (* <ax> <cos>))
+         ^y (+ <py> (* <ax> <sin>)))
+   (<c2> ^x (- <px> (* <ay> <sin>))
+         ^y (+ <py> (* <ay> <cos>)))
+   (<c3> ^x (- <px> (* <ax> <cos>))
+         ^y (- <py> (* <ax> <sin>)))
+   (<c4> ^x (+ <px> (* <ay> <sin>))
+         ^y (- <py> (* <ay> <cos>)))
+}
+
+# Compute the squared distance from the robot to each coord
+sp {op_approach*elaborate*compute-goal-coord*coords*dist_sq
+   (state <s> ^name op_approach1
+              ^operator <o> +)
+   (<o> ^name compute-goal-coord
+        ^coord <coord>
+        ^robot-coord <robot>)
+   (<coord> ^x <cx> ^y <cy>)
+   (<robot> ^x <rx> ^y <ry>)
+-->
+   (<coord> ^dist_sq (+ (* (- <rx> <cx>) (- <rx> <cx>) ) 
+                        (* (- <ry> <cy>) (- <ry> <cy>) ) ) )
+}
+
+# Copy the closest coord as the goal coord
+sp {op_approach*apply*compute-goal-coord*copy*closest*coord*as*goal-coord
+   (state <s> ^name op_approach1
+              ^operator <o>
+              ^current-task-segment <seg>)
+   (<o> ^name compute-goal-coord
+        ^coord <coord>
+       -^coord.dist_sq < <dist>)
+   (<coord> ^dist_sq <dist> ^x <x> ^y <y>)
+-->
+   (<seg> ^goal-coord <gc>)
+   (<gc> ^x <x> ^y <y>)
+}
+
+
+
