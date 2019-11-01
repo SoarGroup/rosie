@@ -287,8 +287,8 @@ Have the robot turn off an appliance, e.g. a microwave
 ```
 op_turn-off1(arg1:object)
 
-  Pre:  on2(arg1), holding-object(false)
-  Goal: on2(arg1)
+  Pre:  activatable1(arg1), on2(arg1), holding-object(false)
+  Goal: off2(arg1)
   Post: +off2(arg1), -on2(arg1)
 ```
 
@@ -306,7 +306,7 @@ Have the robot turn on an appliance, e.g. a light switch
 ```
 op_turn-on1(arg1:object)
 
-  Pre:  off2(arg1), holding-object(false)
+  Pre:  activatable1(arg1), off2(arg1), holding-object(false)
   Goal: on2(arg1)
   Post: +on2(arg1), -off2(arg1)
 ```
