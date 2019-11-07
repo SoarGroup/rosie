@@ -138,8 +138,8 @@ public class RosieConfig {
 			this.agentDir = configFile.getParent() + "/" + props.getProperty("agent-dir").replaceAll("\\\\", "/");
 		} else {
 			this.agentDir = configFile.getParent() + "/agent";
-			this.agentDir = this.agentDir.replaceAll("\\\\", "/");
 		}
+		this.agentDir = this.agentDir.replaceAll("\\\\", "/");
 		
 		// domain
 		if (props.containsKey("domain")){
