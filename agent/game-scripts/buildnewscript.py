@@ -71,6 +71,7 @@ gamelist=[
 #shuffled = ["Tictactoe","Holes9","Mens3"]
 #shuffled = ["queens","1nrooks","6nkings"]
 #shuffled = ["pyramid"]
+shuffled = ["tripeaks"]
 #shuffled = ["ektour","othello", "Kstackedfrogs"]
 #shuffled = ["2pushmaze","Kstackedfrogs"]
 #shuffled = ["Kstackedfrogs"]
@@ -96,14 +97,14 @@ gamelist=[
 #"hexapawn"
 
 print len(gamelist)
-shuffled = random.sample(gamelist, len(gamelist))
+#shuffled = random.sample(gamelist, len(gamelist))
 #shuffled = random.sample(xshuffled, len(xshuffled))
 #shuffled = gamelist
 newscript = ""
 scriptname = ""
 for game in shuffled:
     scriptname += game[0];
-    target = open(game + ".testd", 'r')
+    target = open(game + ".test", 'r')
     newscript+= target.read(20000)
     newscript+= "\n";
     target.close()
