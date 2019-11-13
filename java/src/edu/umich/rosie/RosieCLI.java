@@ -10,10 +10,12 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Properties;
 
+import sml.Agent;
+import sml.smlPrintEventId;
+import sml.Agent.PrintEventInterface;
 import edu.umich.rosie.language.InternalMessagePasser;
 import edu.umich.rosie.language.LanguageConnector;
 import edu.umich.rosie.soar.SoarAgent;
-
 import edu.umich.soar.debugger.SWTApplication;
 
 public class RosieCLI
@@ -31,7 +33,19 @@ public class RosieCLI
     	language = new LanguageConnector(soarAgent, props, internalPasser);
     	soarAgent.setLanguageConnector(language);
 
+		ActionStackConnector asConn = new ActionStackConnector(soarAgent, true);
+		soarAgent.addConnector(asConn);
+
     	soarAgent.createAgent();
+
+		// Write each script sentence that the agent processes
+        soarAgent.getAgent().RegisterForPrintEvent(smlPrintEventId.smlEVENT_PRINT, new PrintEventInterface(){
+			public void printEventHandler(int eventID, Object data, Agent agent, String message) {
+				if (message.indexOf("NEW-SENTENCE") == 0) {
+					System.out.print(message);
+				}
+			}
+		}, null);
     }
 
 	public void run(){

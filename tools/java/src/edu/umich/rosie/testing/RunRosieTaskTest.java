@@ -10,11 +10,7 @@ import java.io.*;
 import java.util.Properties;
 
 import sml.*;
-import sml.Agent.OutputEventInterface;
-import sml.Agent.RunEventInterface;
-import sml.Kernel.AgentEventInterface;
 import sml.Agent.PrintEventInterface;
-
 import edu.umich.rosie.language.IMessagePasser;
 import edu.umich.rosie.language.InternalMessagePasser;
 import edu.umich.rosie.language.LanguageConnector;
@@ -47,7 +43,7 @@ public class RunRosieTaskTest
     	LanguageConnector language = new LanguageConnector(soarAgent, props, internalPasser);
     	soarAgent.setLanguageConnector(language);
 
-		ActionStackConnector asConn = new ActionStackConnector(soarAgent);
+		ActionStackConnector asConn = new ActionStackConnector(soarAgent, true);
 		soarAgent.addConnector(asConn);
 
 		soarAgent.createAgent();
@@ -73,6 +69,7 @@ public class RunRosieTaskTest
 						try{
 							writer.write("I: \"" + message.split(":")[1].trim() + "\"\n");
 						} catch (IOException e){ };
+						System.out.print(message);
 					}
 				}
 			}, null);
