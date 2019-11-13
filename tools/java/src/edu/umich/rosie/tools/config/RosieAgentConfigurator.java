@@ -89,6 +89,11 @@ public class RosieAgentConfigurator {
 		agentSourceFile.write("pushd " + config.rosieHome + "/agent\n");
 		agentSourceFile.write("source source-" + config.domain + "-agent.soar\n\n");
 
+		if(!config.domain.equals("internal") || config.simulate_perception){
+			agentSourceFile.write("svs --enable\n");
+			agentSourceFile.write("svs connect_viewer 2000\n");
+		}
+
       // Source the proper language comprehension files
       if(config.parser.equals("laird")){
          agentSourceFile.write("pushd language-comprehension\n");
