@@ -10,9 +10,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Properties;
 
-import sml.Agent;
-import sml.smlPrintEventId;
-import sml.Agent.PrintEventInterface;
 import edu.umich.rosie.language.InternalMessagePasser;
 import edu.umich.rosie.language.LanguageConnector;
 import edu.umich.rosie.soar.SoarAgent;

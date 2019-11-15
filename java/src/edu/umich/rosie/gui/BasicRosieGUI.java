@@ -19,6 +19,7 @@ import edu.umich.rosie.language.InstructorMessagePanel;
 import edu.umich.rosie.language.InternalMessagePasser;
 import edu.umich.rosie.language.LanguageConnector;
 import edu.umich.rosie.soar.SoarAgent;
+import edu.umich.rosie.connectors.ActionStackConnector;
 
 @SuppressWarnings("serial")
 public class BasicRosieGUI extends JFrame

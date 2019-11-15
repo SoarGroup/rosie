@@ -32,7 +32,8 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
 	public LanguageConnector(SoarAgent agent, Properties props, IMessagePasser messagePasser){
 		super(agent);
 		
-		String speechFile = props.getProperty("speech-file", "audio_file/sample");
+		//String speechFile =
+				props.getProperty("speech-file", "audio_file/sample");
 		
         this.tts = new TextToSpeech();
         //this.stt = new SpeechToText(speechFile, agent);
@@ -70,8 +71,8 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
 	}
 	
 	public void sendMessage(String message, MessageType type){
-		//System.out.println("SENDING MESSAGE: " + message);
-		System.out.println(message);
+		System.out.println("SENDING MESSAGE: " + message);
+//		System.out.println(message);
 		messagePasser.sendMessage(message, type);
 	}
 	
@@ -87,6 +88,8 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
     	case AGENT_MESSAGE:
     		tts.speak(message.message);
     		break;
+		default:
+			break;
     	}
 	}
     
@@ -140,7 +143,8 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
             messageId.CreateStringWME("status", "error");
             throw new IllegalStateException("Message has no children");
         }
-        int sentenceNumber = Integer.parseInt(SoarUtil.getValueOfAttribute(messageId, "current-sentence-number", "Error: No ^name attribute"));
+//        int sentenceNumber =
+        		Integer.parseInt(SoarUtil.getValueOfAttribute(messageId, "current-sentence-number", "Error: No ^name attribute"));
         
         if(curMessage != null){
 			messagesToRemove.add(curMessage);
@@ -166,7 +170,8 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
 	
     private void processAgentMessageStructureCommand(Identifier messageId)
     {
-        String type = SoarUtil.getValueOfAttribute(messageId, "type",
+//        String type =
+        	SoarUtil.getValueOfAttribute(messageId, "type",
                 "Message does not have ^type");
         String message = "";
         message = AgentMessageParser.translateAgentMessage(messageId);
