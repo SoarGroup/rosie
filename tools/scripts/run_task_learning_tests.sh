@@ -25,7 +25,7 @@ java edu.umich.rosie.tools.config.RosieAgentConfigurator test1.config -s
 if [ "$TEST_LANG" == "python" ]; then
 	python3 -m rosie.testing test1
 else
-	java edu.umich.rosie.testing.RunRosieTaskTest test1/agent/rosie.test1.config
+	java edu.umich.rosie.RosieCLI test1/agent/rosie.test1.config
 fi
 
 echo "### OUTPUT ERRORS for test1: "

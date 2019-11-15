@@ -50,6 +50,18 @@ public class BasicRosieGUI extends JFrame
     	language = new LanguageConnector(soarAgent, props, internalPasser);
     	soarAgent.addConnector(language);
 
+		// print-action-stack = true
+		// Create an ActionStackConnector and print any task events to the console
+		if(props.getProperty("print-action-stack", "false").equals("true")){
+			ActionStackConnector asConn = new ActionStackConnector(soarAgent);
+			soarAgent.addConnector(asConn);
+			asConn.registerForTaskEvent(new ActionStackConnector.TaskEventListener(){
+				public void taskEventHandler(String taskInfo){
+					System.out.println(taskInfo);
+				}
+			});
+		}
+
     	ChatPanel chat = new ChatPanel(soarAgent, this, internalPasser);
     	this.add(chat);
     	

@@ -1,6 +1,6 @@
 package edu.umich.rosie.connectors;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 
 import edu.umich.rosie.soar.AgentConnector;
 import edu.umich.rosie.soar.SoarAgent;
@@ -9,23 +9,25 @@ import sml.Identifier;
 
 
 public class ActionStackConnector extends AgentConnector {
-	public interface OutputListener {
-		void handleOutput(String message);
+	public interface TaskEventListener {
+		void taskEventHandler(String taskInfo);
 	}
 
-	private ArrayList<OutputListener> listeners;
-	private boolean printActions;
+	private HashSet<TaskEventListener> listeners;
 	
-	public ActionStackConnector(SoarAgent agent, boolean printActions){
+	public ActionStackConnector(SoarAgent agent){
 		super(agent);
 		
         this.setOutputHandlerNames(new String[]{ "started-task", "completed-task" });
-		this.listeners = new ArrayList<OutputListener>();
-		this.printActions = printActions;
+		this.listeners = new HashSet<TaskEventListener>();
 	}
 
-	public void addOutputListener(OutputListener listener){
+	public void registerForTaskEvent(TaskEventListener listener){
 		this.listeners.add(listener);
+	}
+
+	public void unregisterForTaskEvent(TaskEventListener listener){
+		this.listeners.remove(listener);
 	}
 
 	@Override
@@ -34,13 +36,9 @@ public class ActionStackConnector extends AgentConnector {
 	@Override
     protected void onInputPhase(Identifier inputLink){ }
 
-	private void notifyListeners(String message){
-		for(OutputListener listener : this.listeners){
-			listener.handleOutput(message);
-		}
-		
-		if (printActions) {
-			System.out.println(message);
+	private void notifyListeners(String taskInfo){
+		for(TaskEventListener listener : this.listeners){
+			listener.taskEventHandler(taskInfo);
 		}
 	}
 

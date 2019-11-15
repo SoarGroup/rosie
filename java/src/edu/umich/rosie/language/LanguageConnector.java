@@ -56,6 +56,10 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
 		super.disconnect();
 		messagePasser.removeMessageListener(this);
 	}
+
+	public IMessagePasser getMessagePasser(){
+		return this.messagePasser;
+	}
 	
 	public TextToSpeech getTTS(){
 		return tts;

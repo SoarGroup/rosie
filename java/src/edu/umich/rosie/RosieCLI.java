@@ -18,6 +18,7 @@ import edu.umich.rosie.language.LanguageConnector;
 import edu.umich.rosie.soar.SoarAgent;
 import edu.umich.soar.debugger.SWTApplication;
 import edu.umich.rosie.connectors.ActionStackConnector;
+import edu.umich.rosie.connectors.TaskTestWriter;
 
 public class RosieCLI
 {
@@ -34,19 +35,26 @@ public class RosieCLI
     	language = new LanguageConnector(soarAgent, props, internalPasser);
 		soarAgent.addConnector(language);
 
-		ActionStackConnector asConn = new ActionStackConnector(soarAgent, true);
-		soarAgent.addConnector(asConn);
+		// print-action-stack = true
+		// Create an ActionStackConnector and print any task events to the console
+		if(props.getProperty("print-action-stack", "false").equals("true")){
+			ActionStackConnector asConn = new ActionStackConnector(soarAgent);
+			soarAgent.addConnector(asConn);
+			asConn.registerForTaskEvent(new ActionStackConnector.TaskEventListener(){
+				public void taskEventHandler(String taskInfo){
+					System.out.println(taskInfo);
+				}
+			});
+		}
+
+		// task-test-output-filename = <filename>
+		// Will add a TaskTestWriter and create an output file in the task testing format
+		String taskTestFilename = props.getProperty("task-test-output-filename", null);
+		if(taskTestFilename != null){
+			soarAgent.addConnector(new TaskTestWriter(soarAgent, taskTestFilename));
+		}
 
     	soarAgent.createAgent();
-
-		// Write each script sentence that the agent processes
-        soarAgent.getAgent().RegisterForPrintEvent(smlPrintEventId.smlEVENT_PRINT, new PrintEventInterface(){
-			public void printEventHandler(int eventID, Object data, Agent agent, String message) {
-				if (message.indexOf("NEW-SENTENCE") == 0) {
-					System.out.print(message);
-				}
-			}
-		}, null);
     }
 
 	public void run(){
