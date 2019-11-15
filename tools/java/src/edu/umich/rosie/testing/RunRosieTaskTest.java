@@ -69,7 +69,6 @@ public class RunRosieTaskTest
 						try{
 							writer.write("I: \"" + message.split(":")[1].trim() + "\"\n");
 						} catch (IOException e){ };
-						System.out.print(message);
 					}
 				}
 			}, null);
