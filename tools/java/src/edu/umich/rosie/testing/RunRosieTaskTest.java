@@ -15,7 +15,7 @@ import edu.umich.rosie.language.IMessagePasser;
 import edu.umich.rosie.language.InternalMessagePasser;
 import edu.umich.rosie.language.LanguageConnector;
 import edu.umich.rosie.soar.SoarAgent;
-import edu.umich.rosie.ActionStackConnector;
+import edu.umich.rosie.connectors.ActionStackConnector;
 
 
 public class RunRosieTaskTest
@@ -41,7 +41,7 @@ public class RunRosieTaskTest
     	InternalMessagePasser internalPasser = new InternalMessagePasser();
     	
     	LanguageConnector language = new LanguageConnector(soarAgent, props, internalPasser);
-    	soarAgent.setLanguageConnector(language);
+    	soarAgent.addConnector(language);
 
 		ActionStackConnector asConn = new ActionStackConnector(soarAgent, true);
 		soarAgent.addConnector(asConn);

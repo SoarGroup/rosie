@@ -3,8 +3,6 @@ package edu.umich.rosie.language;
 import java.util.HashSet;
 import java.util.Properties;
 
-import javax.swing.JMenuBar;
-
 import edu.umich.rosie.language.IMessagePasser.RosieMessage;
 import edu.umich.rosie.soar.AgentConnector;
 import edu.umich.rosie.soar.SoarAgent;
@@ -18,7 +16,7 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
 	public enum MessageType{
 		AGENT_MESSAGE, INSTRUCTOR_MESSAGE, SOAR_COMMAND, SOAR_OUTPUT, AGENT_COMMAND
 	};
-	
+
 	private int nextMessageId = 1;
 	
     private TextToSpeech tts;  
@@ -227,8 +225,4 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
 			languageId = null;
 		}
 	}
-
-	@Override
-	public void createMenu(JMenuBar menuBar) {}
-
 }

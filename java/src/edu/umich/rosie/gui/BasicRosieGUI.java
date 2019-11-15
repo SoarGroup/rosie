@@ -48,7 +48,7 @@ public class BasicRosieGUI extends JFrame
     	InternalMessagePasser internalPasser = new InternalMessagePasser();
     	
     	language = new LanguageConnector(soarAgent, props, internalPasser);
-    	soarAgent.setLanguageConnector(language);
+    	soarAgent.addConnector(language);
 
     	ChatPanel chat = new ChatPanel(soarAgent, this, internalPasser);
     	this.add(chat);
@@ -83,8 +83,6 @@ public class BasicRosieGUI extends JFrame
 
     	menuBar.add(new AgentMenu(soarAgent));
     	
-    	language.createMenu(menuBar);
-
     	this.setJMenuBar(menuBar);
     }
 

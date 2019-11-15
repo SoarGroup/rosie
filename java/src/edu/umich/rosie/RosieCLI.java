@@ -17,6 +17,7 @@ import edu.umich.rosie.language.InternalMessagePasser;
 import edu.umich.rosie.language.LanguageConnector;
 import edu.umich.rosie.soar.SoarAgent;
 import edu.umich.soar.debugger.SWTApplication;
+import edu.umich.rosie.connectors.ActionStackConnector;
 
 public class RosieCLI
 {
@@ -31,7 +32,7 @@ public class RosieCLI
     	InternalMessagePasser internalPasser = new InternalMessagePasser();
     	
     	language = new LanguageConnector(soarAgent, props, internalPasser);
-    	soarAgent.setLanguageConnector(language);
+		soarAgent.addConnector(language);
 
 		ActionStackConnector asConn = new ActionStackConnector(soarAgent, true);
 		soarAgent.addConnector(asConn);

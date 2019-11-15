@@ -1,8 +1,6 @@
-package edu.umich.rosie;
+package edu.umich.rosie.connectors;
 
 import java.util.ArrayList;
-
-import javax.swing.JMenuBar;
 
 import edu.umich.rosie.soar.AgentConnector;
 import edu.umich.rosie.soar.SoarAgent;
@@ -29,12 +27,9 @@ public class ActionStackConnector extends AgentConnector {
 	public void addOutputListener(OutputListener listener){
 		this.listeners.add(listener);
 	}
-	
-	@Override
-	protected void onInitSoar(){ }
 
 	@Override
-	protected void createMenu(JMenuBar menuBar){ }
+    protected void onInitSoar() { }
 
 	@Override
     protected void onInputPhase(Identifier inputLink){ }

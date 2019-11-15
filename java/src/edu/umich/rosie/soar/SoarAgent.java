@@ -5,11 +5,12 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
 
-import edu.umich.rosie.soarobjects.Time;
-
 import sml.*;
 import sml.Agent.PrintEventInterface;
 import sml.Agent.RunEventInterface;
+
+import edu.umich.rosie.soarobjects.Time;
+import edu.umich.rosie.connectors.LogfileWriter;
 
 public class SoarAgent implements RunEventInterface, PrintEventInterface {
     public static class AgentConfig{
@@ -27,7 +28,6 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         public String speechFile;
 
         public Boolean verbose;
-        public Boolean writeLog;
 		public String logFilename;
         public Boolean writeStandardOut;
         
@@ -62,16 +62,11 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 
             speechFile = props.getProperty("speech-file", "audio_files/sample");
 
-            writeLog = props.getProperty("enable-log", "false").equals("true");
-			logFilename = props.getProperty("log-filename", "rosie-log.txt");
+			logFilename = props.getProperty("log-filename", null);
         }
     }
 
-	private HashSet<AgentConnector> connectors;
-
-    private AgentConnector perceptionConn;
-    private AgentConnector actuationConn;
-    private AgentConnector languageConn;
+	private HashMap<Class<?>, AgentConnector> connectors;
     
     private Time time;
 
@@ -85,7 +80,6 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 
     private boolean queueStop = false;
 
-    private PrintWriter logWriter;
 
     private long printCallbackId = -1;
     private ArrayList<Long> runEventCallbackIds;
@@ -94,7 +88,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         this.config = new AgentConfig(props);
 
         runEventCallbackIds = new ArrayList<Long>();
-		connectors = new HashSet<AgentConnector>();
+		connectors = new HashMap<Class<?>, AgentConnector>();
         
         time = new Time();
         
@@ -134,45 +128,13 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
     }
 
 	public void addConnector(AgentConnector conn){
-		this.connectors.add(conn);
+		this.connectors.put(conn.getClass(), conn);
 	}
 
-    // Perception
-    public void setPerceptionConnector(AgentConnector conn){
-		if(this.perceptionConn != null){
-			this.connectors.remove(perceptionConn);
-		}
-        this.perceptionConn = conn;
-		this.connectors.add(conn);
-    }
-    public AgentConnector getPerceptionConnector(){
-        return perceptionConn;
-    }
-    
-    // Actuation
-    public void setActuationConnector(AgentConnector conn){
-		if(this.actuationConn != null){
-			this.connectors.remove(this.actuationConn);
-		}
-        this.actuationConn = conn;
-		this.connectors.add(conn);
-    }
-    public AgentConnector getActuationConnector(){
-        return actuationConn;
-    }
-    
-    // Language
-    public void setLanguageConnector(AgentConnector conn){
-		if(this.languageConn != null){
-			this.connectors.remove(this.languageConn);
-		}
-        this.languageConn = conn;
-		this.connectors.add(conn);
-    }
-    public AgentConnector getLanguageConnector(){
-        return languageConn;
-    }
-    
+	public <T> T getConnector(Class<T> cls){
+		return (T)this.connectors.get(cls);
+	}
+	
     public void createAgent(){
         //System.out.println("SoarAgent::createAgent()");
         // Initialize Soar Agent
@@ -197,15 +159,11 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         runEventCallbackIds.add(agent.RegisterForRunEvent(smlRunEventId.smlEVENT_AFTER_INPUT_PHASE, this, null));
         runEventCallbackIds.add(agent.RegisterForRunEvent(smlRunEventId.smlEVENT_AFTER_OUTPUT_PHASE, this, null));
 
-        if(config.writeLog){
-            try {
-                logWriter = new PrintWriter(new FileWriter(config.logFilename));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        if(config.logFilename != null){
+			this.addConnector(new LogfileWriter(this, config.logFilename));
         }
 
-        if(config.writeStandardOut || config.writeLog){
+        if(config.writeStandardOut){
             printCallbackId = agent.RegisterForPrintEvent(smlPrintEventId.smlEVENT_PRINT, this, null);
         }
 
@@ -214,7 +172,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         }
         agent.ExecuteCommandLine(String.format("w %d", config.watchLevel));
 
-		for(AgentConnector conn : this.connectors){
+		for(AgentConnector conn : this.connectors.values()){
 			conn.connect();
 		}
 
@@ -269,7 +227,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         printCallbackId = -1;
 
         time.removeFromWM();
-		for(AgentConnector conn : this.connectors){
+		for(AgentConnector conn : this.connectors.values()){
 			conn.disconnect();
 		}
 
@@ -287,11 +245,6 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         // (even when the KillDebugger isn't there)
         // I don't think there's any consequence to simply exiting instead.
         kernel.Shutdown();
-
-		if(logWriter != null){
-			logWriter.flush();
-			logWriter.close();
-		}
     }
 
 
@@ -464,11 +417,6 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
     public void printEventHandler(int eventID, Object data, Agent agent, String message) {
         if(config.writeStandardOut){
             System.out.print(message);
-        }
-        if(config.writeLog){
-            synchronized(logWriter) {
-				logWriter.print(message);
-            }
         }
     }
 }
