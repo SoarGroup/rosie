@@ -373,11 +373,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         	//System.out.println("---------- SOURCING PRODUCTIONS -----------");
             //System.out.println(config.agentSource);
         	String res = agent.ExecuteCommandLine("source " + config.agentSource + " -v");
-            if(config.verbose){
-                parseAgentSourceInfo(res);
-            } else {
-                //System.out.println("Sourced Productions");
-            }
+            parseAgentSourceInfo(res, config.verbose);
         }
     }
 
@@ -396,7 +392,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         //System.out.println("Loaded Semantic Memory");
     }
 
-    private void parseAgentSourceInfo(String info){
+    private void parseAgentSourceInfo(String info, boolean verbose){
     	ArrayList<String> replaced = new ArrayList<String>();
         String[] lines = info.split("\n");
         for(String line : lines){
@@ -416,9 +412,13 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
             	replaced.add(line.substring(21, line.length()));
             	continue;
             }
-            //System.out.println(line);
+			if(verbose){
+				System.out.println(line);
+			}
         }
-        System.out.println("DUPLICATE RULES:");
+		if(replaced.size() > 0){
+			System.out.println("DUPLICATE RULES:");
+		}
         for(String rule : replaced){
         	System.out.println("  " + rule);
         }
