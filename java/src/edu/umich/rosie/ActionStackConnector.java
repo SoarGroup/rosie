@@ -4,13 +4,10 @@ import java.util.ArrayList;
 
 import javax.swing.JMenuBar;
 
-import edu.umich.rosie.language.IMessagePasser.RosieMessage;
 import edu.umich.rosie.soar.AgentConnector;
 import edu.umich.rosie.soar.SoarAgent;
 import edu.umich.rosie.soar.SoarUtil;
-import edu.umich.rosie.soarobjects.Message;
 import sml.Identifier;
-import sml.WMElement;
 
 
 public class ActionStackConnector extends AgentConnector {
@@ -19,12 +16,14 @@ public class ActionStackConnector extends AgentConnector {
 	}
 
 	private ArrayList<OutputListener> listeners;
+	private boolean printActions;
 	
-	public ActionStackConnector(SoarAgent agent){
+	public ActionStackConnector(SoarAgent agent, boolean printActions){
 		super(agent);
 		
         this.setOutputHandlerNames(new String[]{ "started-task", "completed-task" });
 		this.listeners = new ArrayList<OutputListener>();
+		this.printActions = printActions;
 	}
 
 	public void addOutputListener(OutputListener listener){
@@ -43,6 +42,10 @@ public class ActionStackConnector extends AgentConnector {
 	private void notifyListeners(String message){
 		for(OutputListener listener : this.listeners){
 			listener.handleOutput(message);
+		}
+		
+		if (printActions) {
+			System.out.println(message);
 		}
 	}
 
