@@ -13,43 +13,48 @@ gamelist=[
 "Cannibals",
 "dsokoban", 
 "Dshuffle",
-"ektour", #b
+"ektour",
 "E8men",
 "frog",
 "Fifteenpuzzle",
 "golf",
+"Gkingtour",
 "husbands",
 "Holes9",
 "ijigsawdoku",
 "I8puzzle",
-"jmahjong", #b
+"jmahjong",
 "Jsujiko",
 "kenken",
-"Kstackedfrogs", #b
+"Kstackedfrogs", 
 "logi5",
-"Lazystackedfrogs", #b
+"Lazystackedfrogs", 
 "mapcolor",
 "Mens3",
 "nsudoku",
+"Nbishops",
 "othello",
 "Osuko",
-"pyramid", #b
+"pyramid", 
 "Picaria",
-"queens", #b
-"rtravelsales", #b
+"queens",
+"rtravelsales",
 "Rsurvo",
-"stackedfrogs", #b
+"stackedfrogs",
 "Swap",
 "tripeaks",
 "Tictactoe",
-"usolitaireR", #b
+"usolitaireR",
 "Ukakuro",
-"vsolitaire", #b
+"vsolitaire",
+"Vconnect4",
 "wives",
+"Wconnect3",
 "xsudoku",
 "Xbreakthrough",
 "ysorting",
 "zmaze",
+"Zmanager",
 "0nknights",
 "1nrooks",
 "2pushmaze",
@@ -61,20 +66,35 @@ gamelist=[
 "8puzzle",
 "9ksideswap"
 ]
-
-##"ubreakthrough",
 #xshuffled = ["Osuko","Jsujiko","Rsurvo","Dshuffle","8puzzle","xsudoku","Ukakuro"]
-shuffled = ["usolitaireR"]
-#"Ubreakthrough"]
-#"Lazystackedfrogs"]
-#"8men","frog"]
-#"stackedfrogs"]
+#shuffled = ["colorken","nsudoku","xsudoku"]
+#shuffled = ["Tictactoe","Holes9","Mens3"]
+#shuffled = ["queens","1nrooks","6nkings"]
+#shuffled = ["pyramid"]
+shuffled = ["colorken"]
+#shuffled = ["ektour","othello", "Kstackedfrogs"]
+#shuffled = ["2pushmaze","Kstackedfrogs"]
+#shuffled = ["Kstackedfrogs"]
+#shuffled = ["Lazystackedfrogs"]
+#shuffled = ["Cannibals","husbands","agbfox"]
+#shuffled = ["Gkingtour", "Nbishops"]
+#shuffled = ["Nbishops"]
+#shuffled = ["Zmanager"]
+#shuffled = ["pyramid","Holes9"]
+#shuffled = ["Holes9"]
+#shuffled = ["Mens3","queens","xsudoku"]
+#shuffled = ["Wconnect3"]
+#new
+#"nbishops"]
+#"Gkingtour"]
+###########################
+########################
 #gamelist=[
 #"kconnect3",
 #"aconnect3",
 #"econnect4",
 #"risk",
-#hexapawn
+#"hexapawn"
 
 print len(gamelist)
 #shuffled = random.sample(gamelist, len(gamelist))
@@ -88,7 +108,7 @@ for game in shuffled:
     newscript+= target.read(20000)
     newscript+= "\n";
     target.close()
-
+    
 
 #result = open(scriptname + ".preparse", 'wb+')
 learnedlist = ""
@@ -96,7 +116,10 @@ final = ""
 
 for line in newscript.splitlines():
     mylist = line.split(',')
-    for sentence in mylist:
+    for sent in mylist:
+        list1 = list(sent)
+        list1[0] = list1[0].upper()
+        sentence = ''.join(list1)
         if "name of an action" in sentence or "name of the goal" in sentence or "name of the action" in sentence or "name of a failure" in sentence or "name of the failure" in sentence or "name of a goal" in sentence:
             #result.write(sentence + ".\n")
             final += sentence + ".\n";

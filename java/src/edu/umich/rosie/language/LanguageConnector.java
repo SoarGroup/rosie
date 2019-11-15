@@ -44,7 +44,7 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
         
         this.messagePasser = messagePasser;
     	
-        this.setOutputHandlerNames(new String[]{ "send-message", "next-script-sentence", "stop-java" });
+        this.setOutputHandlerNames(new String[]{ "send-message", "next-script-sentence", "scripted-sentence", "stop-java" });
 	}
 	
 	@Override
@@ -68,7 +68,8 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
 	}
 	
 	public void sendMessage(String message, MessageType type){
-		System.out.println("SENDING MESSAGE: " + message);
+		//System.out.println("SENDING MESSAGE: " + message);
+		System.out.println(message);
 		messagePasser.sendMessage(message, type);
 	}
 	
@@ -114,10 +115,20 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
     	if (attName.equals("next-script-sentence")){
     		processOutputLinkScript(id);
     	}
+    	if (attName.equals("scripted-sentence")){
+    		processOutputLinkScripted(id);
+    	}
     	if (attName.equals("stop-java")){
     		//processOutputLinkScript(id);
     		System.exit(0);
     	}
+    }
+    
+    private void processOutputLinkScripted(Identifier messageId)
+    {
+        String sentence = SoarUtil.getValueOfAttribute(messageId, "sentence");
+        System.out.println("TEACHER: " + sentence);
+        messageId.CreateStringWME("status", "complete");
     }
     
     private void processOutputLinkScript(Identifier messageId)

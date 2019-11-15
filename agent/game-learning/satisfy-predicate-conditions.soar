@@ -80,18 +80,6 @@ sp {satisfy-predicate-conditions*propose*predicate-operator*action
     (<o1> ^type <c2> + ^name <c1> + ^parameters <i1> + ^verb-structure <vs>)
 }
 
-sp {satisfy-predicate-conditions*apply*predicate-operator*actionx
-    (state <s1> ^xxgtype { << action >> <c2> } ^list <l1> ^<c2> <a1> -^main-type heuristic
-		   		 -^main-type predicate)
-    (<l1> ^game <g1>)
-    (<a1> ^parameter-set <p1> ^aname <c1> ^verb-structure <vs>)
-    #(<p1> ^set <i1>)
-    (<s1> ^operator <o1>)
-    (<o1> ^type <c2>  ^name <c1>)
--->
-#(write (cmd pref <s1>))
-(interrupt)
-}
 sp {satisfy-predicate-conditions*propose*finished-learning-predicate
     (state <s1> ^main-type predicate 
                 ^gtype predicate 
@@ -104,18 +92,14 @@ sp {satisfy-predicate-conditions*propose*finished-learning-predicate
     (<a1> ^parameter-set <p1> ^handle <c1>)
     (<p1> ^set <i1>)
 -->
+  #  (interrupt)
     (<s1> ^operator <o1> + =)
     (<o1> ^name finished-learning-predicate)
-  #  (<s1> ^operator <o1> + =)
-  #  (<o1> ^name finished-learning
-  #        ^type predicate)
 }
 sp {satisfy-predicate-conditions*elaborate-finished-learning*predicate
     (state <s1> ^top-state.dialog-context.learning true ^superstate <ss>)
     (<s1> ^main-type {<type> << predicate >>} ^operator <o>)# ^<type> <a1>)
     (<o> ^name finished-learning-predicate) 
-   # (<a1> ^parameter-set <p1> ^handle <c1>)
-    #(<p1> ^set <i1>)
 -->
     (<ss> ^finished-learning <type>)
 }
@@ -127,6 +111,119 @@ sp {satisfy-predicate-conditions*elaborate-finished-learning
     (<p1> ^set <i1>)
 -->
     (<ss> ^finished-learning <type>)
+}
+
+sp {resolve-conditions*apply*resolve-ungroundable*learning-vis
+   (state <s> ^name resolve-conditions
+              ^linkstate <ls>
+              ^quiescence t
+              ^operator <o>
+             -^top-state.agent-params.prevent-output-link true
+              ^top-state.io.output-link <ol>)
+   (<o> ^name resolve-ungroundable)
+   (<ls> ^completed-learning true ^<type> <t> ^main-type <type>) #TODO or gtype? should we learn subconcepts?
+   (<t> -^final-version true ^parameter-set <p1> ^handle <c1> ^nlp-set <nps>)
+-->
+    (<ol> ^learning-vis <lv>)
+    (<lv> ^solutions (deep-copy <p1>) 
+          ^structure (deep-copy <nps>))
+}
+
+sp {satisfy-predicate-conditions*elaborate-finished-learning*predicate*learning-vis
+    (state <s1> ^top-state.dialog-context.learning true 
+                ^superstate <ss>
+               -^top-state.agent-params.prevent-output-link true
+                ^top-state.io.output-link <ol>)
+    (<s1> ^main-type {<type> << predicate >>} ^operator <o> ^<type> <a1>)
+    (<o> ^name finished-learning-predicate) 
+    (<a1> ^parameter-set <p1> ^handle <c1> ^final-version true ^nlp-set <nps>)
+-->
+    (<ol> ^learning-vis <lv>)
+    (<lv> ^solutions (deep-copy <p1>) 
+           ^structure (deep-copy <nps>))
+}
+### todo here: 
+sp {satisfy-predicate-conditions*elaborate-finished-learning*learning-vis
+    (state <s1> ^top-state.dialog-context.learning true 
+                ^superstate <ss>
+               -^top-state.agent-params.prevent-output-link true
+               -^top-state.dialog-context.number-answer
+               -^top-state.dialog-context.needs-new-state
+                ^top-state.io.output-link <ol>)
+    (<s1> ^main-type {<type> << action goal failure >>} ^operator <o> ^<type> <a1>)
+    (<o> ^type <type> -^duplicate-of -^name format-conditions)
+    (<a1> ^parameter-set <p1> ^handle <c1> ^nlp-set <nps> ^final-version true)
+-->
+    (<ol> ^learning-vis <lv>)
+    (<lv> ^solutions (deep-copy <p1>) 
+           ^structure (deep-copy <nps>))
+}
+
+sp {satisfy-predicate-conditions*elaborate-finished-learning*learning-vis*new-state
+    (state <s1> ^top-state.dialog-context.learning true 
+                ^superstate <ss>
+               -^top-state.agent-params.prevent-output-link true
+               -^top-state.dialog-context.number-answer
+                ^top-state.dialog-context.needs-new-state
+                ^top-state.io.output-link <ol>)
+    (<s1> ^main-type {<type> << action goal failure >>} ^operator <o> ^<type> <a1>)
+    (<o> ^type <type> -^duplicate-of -^name format-conditions)
+    (<a1> ^parameter-set <p1> ^handle <c1> ^nlp-set <nps>)# ^final-version true)
+-->
+    (<ol> ^learning-vis <lv>)
+    (<lv> ^solutions (deep-copy <p1>) 
+           ^structure (deep-copy <nps>))
+}
+
+sp {satisfy-predicate-conditions*elaborate-finished-learning*transfer-action-goal-name
+    (state <s1> ^top-state.dialog-context.learning true ^superstate <ss>)
+    (<s1> ^main-type {<type> << action >>} ^operator <o> ^<type> <a1>)
+    (<o> ^type <type> -^duplicate-of) 
+    (<a1> ^parameter-set <p1> ^handle <c1>)
+    (<p1> ^set <i1>)
+    (<ss> ^name transfer-action-goal ^superstate.superstate <sss>)
+-->
+    (<sss> ^finished-learning <type>)
+}
+
+sp {satisfy-predicate-conditions*elaborate-finished-learning*goal
+    (state <s1> ^top-state.dialog-context.learning true ^superstate.superstate <sss> ^superstate <ss>)
+    (<s1> ^main-type {<type> << goal failure >>} ^operator <o> ^<type> <a1>)
+    (<o> ^parameters <i1> ^type <type> -^duplicate-of) 
+    (<a1> ^parameter-set <p1> ^handle <c1> ^final-version true)
+    (<p1> ^set <i1>)
+    (<sss> ^superstate <sup>)
+-->
+    (<sup> ^finished-learning <type>)
+    (<sss> ^finished-learning <type>)
+    (<ss> ^finished-learning <type>)
+}
+
+sp {satisfy-predicate-conditions*elaborate-finished-learning*heuristic
+    (state <s1> ^top-state.dialog-context.learning true ^superstate <ss>)
+    (<s1> ^main-type {<type> << heuristic >>} ^operator <o> ^<type> <a1>)
+    (<o> ^type action -^duplicate-of) 
+    (<a1> ^parameter-set <p1> ^handle <c1>)
+    (<p1> ^set <i1>)
+-->
+    (<ss> ^finished-learning <type>)
+}
+
+sp {satisfy-predicate-conditions*apply*final-version*store*finished-predicate
+    (state <s1> ^top-state.dialog-context <dc>)
+    (<dc> ^learning true)
+    (<s1> ^main-type predicate
+          ^operator <o>
+          ^predicate <a1>)
+    #(<o> ^type <type> -^duplicate-of) 
+    (<o> ^name finished-learning-predicate)
+    (<a1> ^parameter-set <p1> ^handle <c1> ^final-version true)
+    #(<a1> ^condition <co>)
+    #(<co> ^name <n1> ^type concept ^attribute predicate)
+    (<dc> ^learning-predicate <lp>)
+    (<lp> ^spelling <spell> ^name <c1>)
+-->
+   (<dc> ^<spell> <c1>)
 }
 
 
@@ -144,7 +241,23 @@ sp {satisfy-predicate-conditions*apply*final-version*store
     (<v> ^handle-spelling <spell> ^item <i>)
     (<i> -^auto ^smem-result.handle <n1>)
 -->
-#(interrupt)
+   (<dc> ^<spell> <n1>)
+}
+#zxc
+sp {satisfy-predicate-conditions*apply*final-version*store*heuristic
+    (state <s1> ^top-state.dialog-context <dc>)
+    (<dc> ^learning true)
+    (<s1> ^main-type {<type> << heuristic >>}
+          ^operator <o>
+          ^version-list.version <v>
+          ^<type> <a1>)
+    (<o> ^type action -^duplicate-of) 
+    (<a1> ^parameter-set <p1> ^handle <c1> ^final-version true)
+    (<a1> ^condition <co>)
+    (<co> ^name <n1> ^type concept ^attribute predicate)
+    (<v> ^handle-spelling <spell> ^item <i>)
+    (<i> -^auto ^smem-result.handle <n1>)
+-->
    (<dc> ^<spell> <n1>)
 }
 sp {satisfy-predicate-conditions*apply*final-version*store*antonym
@@ -161,7 +274,6 @@ sp {satisfy-predicate-conditions*apply*final-version*store*antonym
     (<v> ^handle-spelling <spell> ^item <i>)
     (<i> ^auto antonym ^smem-result.handle <n1>)
 -->
-#(interrupt)
    (<an> ^<spell> <n1>)
 }
 sp {satisfy-predicate-conditions*apply*final-version*store*synonym
@@ -178,9 +290,10 @@ sp {satisfy-predicate-conditions*apply*final-version*store*synonym
     (<v> ^handle-spelling <spell> ^item <i>)
     (<i> ^auto synonym ^smem-result.handle <n1>)
 -->
-#(interrupt)
    (<an> ^<spell> <n1>)
 }
+
+#fix heuristics
 
 #simplest case, only version with results, HACK simple for now
 sp {satisfy-predicate-conditions*elaborate-finished-learning*final-version
@@ -194,6 +307,22 @@ sp {satisfy-predicate-conditions*elaborate-finished-learning*final-version
   (<a2> ^parameter-set <p2>)
     (<p2> ^set <i2>)}
 -->
+   (<a1> ^final-version true)
+}
+
+#zxc
+sp {satisfy-predicate-conditions*elaborate-finished-learning*final-version*heuristic
+    (state <s1> ^top-state.dialog-context.learning true)
+    (<s1> ^main-type {<type> << heuristic >>} ^operator <o> ^<type> <a1>)
+    (<o> ^type action -^duplicate-of) 
+    (<a1> ^parameter-set <p1> ^handle <c1>)# -^final-version)
+-{(state <s1>)
+  (<p1> -^set <i1>)}
+-{(<s1> ^<type> {<a2> <> <a1>}) #doesnt have a second viable version
+  (<a2> ^parameter-set <p2>)
+    (<p2> ^set <i2>)}
+-->
+#(interrupt)
    (<a1> ^final-version true)
 }
 
@@ -226,44 +355,18 @@ sp {satisfy-predicate-conditions*elaborate-finished-learning*final-version*multi
   # (<dc> ^number-answer-predicate <num> -) #or remove later..yeah..
 }
 
-sp {satisfy-predicate-conditions*elaborate-finished-learning*transfer-action-goal-name
-    (state <s1> ^top-state.dialog-context.learning true ^superstate <ss>)
-    (<s1> ^main-type {<type> << action >>} ^operator <o> ^<type> <a1>)
-    (<o> ^type <type> -^duplicate-of) 
-    (<a1> ^parameter-set <p1> ^handle <c1>)
-    (<p1> ^set <i1>)
-    (<ss> ^name transfer-action-goal ^superstate.superstate <sss>)
--->
-    (<sss> ^finished-learning <type>)
-}
-sp {satisfy-predicate-conditions*elaborate-finished-learning*heuristic
-    (state <s1> ^top-state.dialog-context.learning true ^superstate <ss>)
-    (<s1> ^main-type {<type> << heuristic >>} ^operator <o> ^<type> <a1>)
-    (<o> ^type action -^duplicate-of) 
-    (<a1> ^parameter-set <p1> ^handle <c1>)
-    (<p1> ^set <i1>)
--->
-    (<ss> ^finished-learning <type>)
-}
-sp {satisfy-predicate-conditions*elaborate-finished-learning*goal
-    (state <s1> ^top-state.dialog-context.learning true ^superstate.superstate <sss> ^superstate <ss>)
-    (<s1> ^main-type {<type> << goal failure >>} ^operator <o> ^<type> <a1>)
-    (<o> ^parameters <i1> ^type <type> -^duplicate-of) 
-    (<a1> ^parameter-set <p1> ^handle <c1> ^final-version true)
-    (<p1> ^set <i1>)
-    (<sss> ^superstate <sup>)
--->
-	(<sup> ^finished-learning <type>)
-    (<sss> ^finished-learning <type>)
-    (<ss> ^finished-learning <type>)
-}
-# TODO need deep-copy here?
+# TODO need deep-copy here? #...
 sp {satisfy-predicate-conditions*apply*finished-learning*elab-store-link
     (state <s1> ^top-state.dialog-context.learning true
-                ^top-state.dialog-context.learn-link <ll>
+                ^top-state.dialog-context <dc> 
                 ^operator.name finished-learning)
     (<ll> ^predicate-structure)
+    (<dc> ^learn-link <ll>)
+  -{(<dc> ^learn-link {<l2> > <ll>})}#TODO just do test for most recent?
 -->
+#(interrupt)
+#(write (cmd print <ps> -d 10))
+#(write (cmd pref <ll> -w))
     (<s1> ^store-link (deep-copy <ll>))
 }
 sp {satisfy-predicate-conditions*apply*finished-learning*elaborate*source
@@ -274,6 +377,21 @@ sp {satisfy-predicate-conditions*apply*finished-learning*elaborate*source
 -->
     (<ll> ^from <name>)
 }
+
+#sp {satisfy-predicate-conditions*apply*finished-learning*elaborate*ASDF
+#    (state <s1> ^top-state.dialog-context <dc>
+#                ^name finished-learning)
+#   (<dc> ^learning true ^learn-link <ll>)
+#   (<ll> ^predicate-structure <ps>)
+#-->
+#(write (cmd print <ll> -d 6))
+#(write (cmd print <s1>))
+#(write (cmd pref <ll> argnum -w ))
+#(write (cmd pref <ps> conditions -w ))
+#(write (cmd print fc))
+#}
+#qqqqqqqqqqqqqqqq
+
 #HACK TO FIX MIRROR JUSTIFICATTION PROBLEM 
 sp {satisfy-predicate-conditions*apply*finished-learning*remove-instance
     (state <s1> ^top-state.dialog-context.learning true
@@ -416,18 +534,18 @@ sp {finished-learning*propose*complete
 # #  (<dc> ^learn-link <ll>)
 # #  (<dc> ^learn-link <l2> -)
 #}
-
 sp {satisfy-purpose*finished-learning*apply*complete*remove-learn-link
     (state <s1> ^name interaction
                 ^operator <o>
                -^top-state.new-spelling #HACKy
                 ^top-state.dialog-context <dc>)
-    (<dc> ^learn-link <ll>)
+    (<dc> ^learn-link <ll> -^store-learn-link) ###?
     (<ll> ^argnum <a>) #means built
     (<o> ^name performed-event
          -^event.learning-event.type game-name
          -^event.dialog-event.type process-unknown-word
         -^event.dialog-event.type process-sentence)
+  -{(<dc> ^learn-link {<l2> > <ll>})}#TODO just do test for most recent?
 -->
    (<dc> ^learn-link <ll> -)
 }
@@ -437,10 +555,11 @@ sp {satisfy-purpose*finished-learning*apply*complete*remove-learn-link*alreadyle
                 ^operator <o>
                -^top-state.new-spelling #HACKy
                 ^top-state.dialog-context <dc>)
-    (<dc> ^learn-link <ll>)
+    (<dc> ^learn-link <ll> -^store-learn-link) #???
     (<ll> ^argnum <a> ^final-version true) #means built
     (<o> ^name performed-event
          ^event.learning-event.type game-name)
+  -{(<dc> ^learn-link {<l2> > <ll>})}#TODO just do test for most recent?
 -->
    (<dc> ^learn-link <ll> -)
 }
@@ -480,17 +599,6 @@ sp {interaction*apply*performed-event*game-learning*clean*dialog-object-list
    (<new> ^objects <objs> ^predicates <preds>)
 }
 
-#sp {interaction*apply*performed-event*asdfasdf
-#    (state <s1> ^name interaction
-#                ^top-state <top>
-#                ^operator <o>)
-#    (<o> ^name performed-event)
-#-->
-##(write (cmd print <top>))
-##(write (cmd print <o> -d 4))
-#(write (cmd matches ))
-#}
-
 sp {interaction*apply*performed-event*game-learning*clean*dialog-contexct*number-answer
     (state <s1> ^name interaction
                 ^top-state <top>
@@ -501,6 +609,18 @@ sp {interaction*apply*performed-event*game-learning*clean*dialog-contexct*number
     (<dc> ^number-answer <na>)
 -->
     (<dc> ^number-answer <na> -)
+}
+
+sp {interaction*apply*performed-event*game-learning*clean*dialog-contexct*needs-new-state
+    (state <s1> ^name interaction
+                ^top-state <top>
+                ^operator <o>)
+    (<o> ^name performed-event
+         ^event.learning-event.type game)
+    (<top> ^dialog-context <dc>)
+    (<dc> ^needs-new-state <na>)
+-->
+    (<dc> ^needs-new-state <na> -)
 }
 
 sp {interaction*apply*performed-event*game-learning*clean*dialog-contexct*number-answer-predicate
@@ -558,11 +678,14 @@ sp {finished-learning*apply*complete*predicate*create-temp-dummy-action
 sp {finished-learning*apply*complete*send-message*predicate
     (state <s1> ^name finished-learning
                 ^operator.name complete
-                ^store-link <sl>
+                ^store-link <stl>
                 ^top-state.dialog-context <dc>)
     (<dc> ^learning-predicate.name <name>)
-    (<sl> ^handle <name>)
+    (<stl> ^handle <name>)
 -->
+#(interrupt)
+#(write (cmd print <s1> -d 2))
+#(write (cmd print <dc> -d 2))
    (<dc> ^finalize-chunk <name>)
 }
 sp {finished-learning*apply*complete*send-message*heuristic
@@ -829,17 +952,18 @@ sp {satisfy-predicate-conditions*elaborate*condition-instance*single-to-set*para
     (<r1> ^set <s2>)
     (<t1> ^nlp-set <n1> ^link <c4> ^primary-rtype single)#^instance <i1> 
     (<n1> ^aname <c2>)
-    -{(state <s1>)
+   -{(state <s1>)
      (<set> -^<something>)}
-   -{(<set> ^object <obj>)
+   -{(<set> ^<object> <obj>) #(<set> ^object <obj>)
     -{(<t1> ^instance <i1>)
       (<i1> ^1 <obj>)}}
-   -{(<s3> ^instance {<i8> > <i5>})
+   -{(<s3> ^instance {<i8> < <i5>})
     (<i8> ^1 <set>)} #bias only create one per object
 -->
     (<s2> ^instance <i1>)
     (<i1> ^1 <set>)
 }
+
 sp {satisfy-predicate-conditions*elaborate*condition-instance*set-single-set*parameters
     (state <s1> ^gtype <c3> ^list <l1> ^<c3> <a1> ^<c1> <t1>)
     (<l1> ^game <g1>)
@@ -859,10 +983,10 @@ sp {satisfy-predicate-conditions*elaborate*condition-instance*set-single-set*par
     (<n1> ^aname <c2>)
     -{(state <s1>)
      (<set> -^<something>)}
-   -{(<set> ^object <obj>)
+   -{(<set> ^<object> <obj>) #(<set> ^object <obj>)
     -{(<t1> ^instance <i2>)
       (<i2> ^1 <obja> ^2 <obj>)}}
-   -{(<s3> ^instance {<i8> > <i5>})
+   -{(<s3> ^instance {<i8> < <i5>})
     (<i8> ^1 <set>)} #bias only create one per object
 -->
     (<s2> ^instance <i3>)
@@ -879,7 +1003,7 @@ sp {satisfy-predicate-conditions*elaborate*condition-instance*single-to-set*para
     (<t1> ^nlp-set <n1> ^link <c4> ^primary-rtype single ^instance <i1> ^secondary-rtype single)
     (<i1> ^2 <obj>)
     (<n1> ^aname <c2>)
-   -{(<t1> ^instance {<is1> > <i1>}) #bias for no duplicate results
+   -{(<t1> ^instance {<is1> < <i1>}) #bias for no duplicate results
      (<is1> ^2 <obj>)}
 -->
     (<s2> ^instance <ir>)

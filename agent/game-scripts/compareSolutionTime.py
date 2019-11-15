@@ -26,8 +26,8 @@ for line in wm.readlines():
 
 wm.close();
 if (oldtime > newtime):
-    if ((oldtime-newtime)/oldtime*100.0) > 10.0:#only print if more then x%
+    if ((oldtime-newtime)/oldtime*100.0) > 5.0:#only print if more then x%
         print ">>>>>>>>>  " + "{0:.2f}".format((oldtime-newtime)/oldtime*100.0) + " % Faster solution <<<<<<<<<<"
 if (oldtime <= newtime):
-    if ((newtime-oldtime)/oldtime*100.0) > 10.0:#only print if more then x%
+    if ((newtime-oldtime)/oldtime*100.0) > 5.0:#only print if more then x%
         print ">>>>>>>>> " + "{0:.2f}".format((newtime-oldtime)/oldtime*100.0) + " % Slower solution <<<<<<<<<<<"
