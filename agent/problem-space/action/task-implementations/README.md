@@ -280,6 +280,26 @@ All domains: Will send an outgoing-message and mark the sentence as being heard 
 Note that if the arg1 object has a ^sentence it will say that verbatim, otherwise it will describe the arg1 object. 
 
 
+### Scan
+
+Turn in place one full revolution, looking around the room
+
+```
+1: "Scan" - do a full turn
+op_scan1()
+
+  Not used during planning/search
+  Goal: execute-command(scan-command)
+
+2: "Scan until you see the apple" - Will turn until the clause is true
+op_scan1(until(visible1(apple)))
+  
+  Not used during planning/search
+  Goal: visible1(apple)
+
+Currently only used for the magicbot environment
+
+
 ### Turn Off
 
 Have the robot turn off an appliance, e.g. a microwave
