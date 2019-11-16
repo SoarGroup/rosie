@@ -1,6 +1,5 @@
 package edu.umich.rosie.connectors;
 
-import java.io.*;
 import sml.*;
 import sml.Agent.PrintEventInterface;
 import edu.umich.rosie.soar.SoarAgent;
