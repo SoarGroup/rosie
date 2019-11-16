@@ -1,0 +1,199 @@
+################################################################################
+# add-object-to-world
+#
+# utility operator for creating an object in the proper world representation
+# Can essentially be proposed anywhere
+# Note: This operator will take 2 dc's, as it has to do an smem retrieval
+#
+# Structure:
+# (<s> ^operator <o>)
+# (<o> ^name add-object-to-world
+#      ^source-type << perception smem tcn-obj-slot imagined >>
+#      ^source-obj <obj>)
+#
+# Will 
+# (<s> ^add-object-result <cons>)
+# (<cons> ^source <src-obj> ^result <world-obj>)
+#
+#################################################################################
+
+### parameters
+
+# source-type and source-obj
+sp {add-object-to-world*elaborate*info*from*superoperator
+   (state <s> ^name add-object-to-world
+              ^superstate.operator <o>)
+   (<o> ^source-obj <obj>
+        ^source-type <type>)
+-->
+   (<s> ^source-obj <obj>
+        ^source-type <type>)
+}
+
+### problem-space
+
+sp {add-object-to-world*elaborate*problem-space
+   (state <s> ^name add-object-to-world)
+-->
+   (<s> ^problem-space <ps>)
+   (<ps> ^attend-to-perception yes)
+}
+
+### state elaborations
+
+sp {add-object-to-world*elaborate*source-predicates
+   (state <s> ^name add-object-to-world)
+-->
+   (<s> ^source-predicates <preds>)
+}
+
+sp {add-object-to-world*elaborate*new-object-predicates
+   (state <s> ^name add-object-to-world)
+-->
+   (<s> ^new-object-predicates <preds>)
+}
+
+### new-object-predicates
+
+sp {add-object-to-world*elaborate*new-object-predicates*category
+   (state <s> ^name add-object-to-world
+              ^category-info.category-lti.handle <cat>
+              ^new-object-predicates <preds>)
+-->
+   (<preds> ^category <cat>)
+}
+
+sp {add-object-to-world*elaborate*new-object-predicates*affordance
+   (state <s> ^name add-object-to-world
+              ^category-info.category-lti.affordance1.handle <aff>
+              ^new-object-predicates <preds>)
+-->
+   (<preds> ^affordance1 <aff>)
+}
+
+### intrinsic-predicate
+# HARDCODED: need to be better at this
+# predicates which to use when creating the object
+sp {add-object-to-world*elaborate*new-object-predicates*intrinsic*predicates
+   (state <s> ^name add-object-to-world
+              ^source-predicates <src-preds>
+              ^new-object-predicates <preds>)
+   (<src-preds> ^{ <prop> << proper-name name color shape size weight sentence modifier1 >> } <pred>)
+-->
+   (<preds> ^<prop> <pred>)
+}
+
+################ source-type perception ###############
+# source-obj is from input-link.object.object:
+#(<obj> ^object-handle <h>
+#       ^property <p1> <p2> ...)
+#(<p1> ^property-handle <prop1-handle>
+#      ^predicate-handle <pred1-handle>)
+#(<p2> ^property-handle <prop2-handle>
+#      ^predicate-handle <pred2-handle>)
+
+sp {add-object-to-world*perception*elaborate*object-handle
+   (state <s> ^name add-object-to-world
+              ^source-type perception
+              ^source-obj.object-handle <h>)
+-->
+   (<s> ^object-handle <h>)
+}
+
+sp {add-object-to-world*perception*elaborate*source-predicates
+   (state <s> ^name add-object-to-world
+              ^source-type perception
+              ^source-obj.property <prop>
+              ^source-predicates <preds>)
+   (<prop> ^property-handle <prop-h>
+           ^predicate-handle <pred-h>)
+-->
+   (<preds> ^<prop-h> <pred-h>)
+}
+
+################ source-type smem ###############
+# source-obj is an object-instance in semantic memory
+#(<obj> ^handle <obj-h>
+#       ^object-instance true
+#       ^item-type object
+#       ^<pred1> <prop1>
+#       ^<pred2> <prop2> 
+#       ...
+#)
+
+sp {add-object-to-world*smem*elaborate*object-handle
+   (state <s> ^name add-object-to-world
+              ^source-type smem
+              ^source-obj.handle <h>)
+-->
+   (<s> ^object-handle <h>)
+}
+
+sp {add-object-to-world*smem*elaborate*source-predicates
+   (state <s> ^name add-object-to-world
+              ^source-type smem
+              ^source-obj.{ <prop-h> <> handle <> object-instance <> item-type } <pred-h> 
+              ^source-predicates <preds>)
+-->
+   (<preds> ^<prop-h> <pred-h>)
+}
+
+################ source-type tcn-obj-slot ###############
+# source-obj is a default representation on a TCN slot
+#(<obj> ^<prop1> <pred1>
+#       ^<prop2> <pred2>
+#       ...
+#)
+
+sp {add-object-to-world*tcn-obj-slot*elaborate*object-handle
+   (state <s> ^name add-object-to-world
+              ^source-type tcn-obj-slot)
+-->
+   (<s> ^object-handle (make-constant-symbol |obj|))
+}
+
+sp {add-object-to-world*tcn-obj-slot*elaborate*source-predicates
+   (state <s> ^name add-object-to-world
+              ^source-type tcn-obj-slot
+              ^source-obj.default.<prop-h> <pred-h>
+              ^source-predicates <preds>)
+-->
+   (<preds> ^<prop-h> <pred-h>)
+}
+
+
+################ source-type imagined ###############
+# source-obj is information which can be used to construct a new object
+#(<obj> ^object-handle <h> # Optional: if missing it will create a new one
+#       ^predicates <preds>)
+#(<preds> ^category <cat>  # Required: the root category of the object
+#         ^<prop1> <pred1> # Optional: additional predicates
+#          ... )
+
+sp {add-object-to-world*imagined*elaborate*object-handle
+   (state <s> ^name add-object-to-world
+              ^source-type imagined
+              ^source-obj.object-handle <h>)
+-->
+   (<s> ^object-handle <h>)
+}
+
+sp {add-object-to-world*imagined*elaborate*object-handle*new
+   (state <s> ^name add-object-to-world
+              ^source-type imagined
+              ^source-obj <src>)
+   (<src> -^object-handle)
+-->
+   (<s> ^object-handle (make-constant-symbol |obj|))
+}
+
+sp {add-object-to-world*imagined*elaborate*source-predicates
+   (state <s> ^name add-object-to-world
+              ^source-type imagined
+              ^source-obj <src>
+              ^source-predicates <preds>)
+   (<src> ^predicates.<prop-h> <pred-h>)
+-->
+   (<preds> ^<prop-h> <pred-h>)
+}
+

@@ -52,7 +52,6 @@ to remove the flag from the current-task-segment.
 (including the first one), it proposes `advance-current-goal` \
 `advance-current-goal.soar`
 
-
 ## 2. Propose and execute subtasks
 
 1. Subtask proposal rules are either included in the task-implementations, or learned chunks. 
@@ -95,8 +94,12 @@ the state-no-change will go away and the agent may then create a new subtask goa
 
 1. When this learning is complete, the agent will go  back to the normal process of pushing a new task segment and performing the subtask. 
 
+## 4. Execution Failure
 
-## 4. Finishing a task
+If the agent detects an execution failure, it will propose handle-execution-failure, which will go into a substate. 
+(see `handle-execution-failure`)
+
+## 5. Finishing a task
 
 When the task is complete, either due to success or failure, use `complete-task` to exit the substate (puts a status on the task segment).
 

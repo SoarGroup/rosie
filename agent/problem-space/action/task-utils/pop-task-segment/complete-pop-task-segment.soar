@@ -78,6 +78,7 @@ sp {pop-task-segment*elaborate*world-vis*with*on1
    (<ol> ^world-vis <wv>)
    (<wv> ^objects <objs> ^predicate <pp>)
 }  
+
 sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*pop*segment
    (state <s> ^name pop-task-segment
                ^operator.name complete-pop-task-segment
@@ -123,7 +124,7 @@ sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*report
               ^segment-to-pop <segment>
               ^top-state.interaction <interaction>)
    (<segment> ^status success
-             ^task-operator.task-handle <task-handle>)
+              ^task-operator.task-handle <task-handle>)
    (<interaction> ^stack.segment.purpose.satisfaction.task-event <e>
                   ^status <status>)
    (<e> ^type execute
@@ -132,28 +133,37 @@ sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*report
    (<status> ^performed.task-event <e>)
 }
 
-sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*report*find-success
+# Report an task-event as having been failed if the task failed
+sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*report*failed*task-event
    (state <s> ^name pop-task-segment
               ^operator.name complete-pop-task-segment
               ^segment-to-pop <segment>
-              ^top-state.interaction.changes <chgs>)
-   (<segment> ^status success
-             ^task-operator.task-handle find1)
+              ^top-state.interaction <interaction>)
+   (<segment> ^status failure
+              ^failure-info <info>
+              ^task-operator.task-handle <task-handle>)
+   (<interaction> ^stack.segment.purpose.satisfaction.task-event <e>
+                  ^status <status>)
+   (<e> ^type execute
+        ^task-handle <task-handle>)
 -->
-   (<chgs> ^outgoing-message <msg>)
-   (<msg> ^type find-success
-          ^complete-message true)
+   (<status> ^failure <f>)
+   (<f> ^task-event <e>
+        ^failure-info <info>)
 }
 
+# If the task failed, notify the parent task
 sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*failure*mark*subtask-failed
    (state <s> ^name pop-task-segment
               ^operator.name complete-pop-task-segment
               ^segment-to-pop <seg>
-              ^superstate.parent-segment <par>)
+              ^superstate.current-task-segment <par-seg>)
    (<seg> ^status failure
+          ^failure-info <info>
           ^task-operator <task-op>)
 -->
-   (<par> ^subtask-failed <task-op>)
+   (<par-seg> ^subtask-failed <task-op>
+              ^failure-info <info>)
 }
 
 # If there is a policy-learning-needed flag, 
@@ -162,12 +172,12 @@ sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*push*l
    (state <s> ^name pop-task-segment
               ### ABORT - check for status abort
               ^operator.name complete-pop-task-segment
-			 -^agent-params.prevent-retrospective true
+			    -^agent-params.prevent-retrospective true
               ^segment-to-pop <segment>
               ^top-state.interaction.changes <changes>)
    (<segment> ^policy-learning-needed true
              ^status success
-             ^task-operator.task-handle <> find1)
+             ^task-operator.task-handle)
 -->
    (<changes> ^new-segment-info <info>)
    (<info> ^purpose <p>
@@ -178,53 +188,20 @@ sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*push*l
    (<params> ^task-segment <segment>)
 }
 
-# Remove anything remembered during the action
-sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*remove*remembered*things
-   (state <s> ^name pop-task-segment
-              ^operator.name complete-pop-task-segment
-              ^segment-to-pop.remembered <rem>)
-   (<rem> ^object.predicates <preds>
-          ^attribute <att>
-          ^value <val>)
-   (<preds> ^<att> <val>)
--->
-   (<preds> ^<att> <val> -)
-}
-
-## Remove any objects added to the world during the action
-#sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*remove*added*objects
-#   (state <s> ^name pop-task-segment
-#              ^operator.name complete-pop-task-segment
-#              ^segment-to-pop.added <obj>
-#              ^superstate.world.objects <objs>)
-#   (<objs> ^object <obj>)
-#-->
-#   (<objs> ^object <obj> -)
-#}
-#
-## Remove any predicates related to that added object
-#sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*remove*added*predicates
-#   (state <s> ^name pop-task-segment
-#              ^operator.name complete-pop-task-segment
-#              ^segment-to-pop.added <obj>
-#              ^superstate.world.predicates.predicate <pred>)
-#   (<pred> ^instance <i>)
-#   (<i> ^<any> <obj>)
-#-->
-#   (<pred> ^instance <i> -)
-#}
-
 #   mark it performed in the current action
 sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*mark*performed*once*subtask
    (state <s> ^name pop-task-segment
               ^operator.name complete-pop-task-segment
-              ^segment-to-pop.task-operator <op>
-              ^segment-to-pop.prev.task-operator <parent-op>)
+              ^segment-to-pop <seg>)
+   (<seg> ^status success
+          ^task-operator <op>
+          ^prev.task-operator <parent-op>)
    (<op> ^subtask-handle { <sub-handle> <> none })
 -->
    (<parent-op> ^performed <sub-handle>)
 }
 
+# When the top task is finished, clear the dialog-object-list
 sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*delete*dialog*info
   (state <s> ^name pop-task-segment
              ^operator.name complete-pop-task-segment
