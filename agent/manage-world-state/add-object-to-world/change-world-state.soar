@@ -107,9 +107,57 @@ sp {add-object-to-world*elaborate*change-world-state*create-belief-object
           ^belief-id <bel-id>)
 }
 
+# If there is a transform specified, use it to create a belief object
+sp {add-object-to-world*epmem*elaborate*change-world-state*create-belief-object*transform
+   (state <s> ^name add-object-to-world
+              ^source-type epmem
+              ^source-obj.handle <h>
+              ^operator <o> +
+              ^transform <t>)
+   (<o> ^name change-world-state)
+   (<t> ^position <pos>
+        ^rotation <rot>
+        ^scale <scl>)
+-->
+   (<o> ^create-belief-object <obj-info>)
+   (<obj-info> ^belief-id (concat |bel-| <h>)
+               ^position <pos>
+               ^rotation <rot>
+               ^scale <scl>)
+}
+
+
+####### Preferences ######
+
+sp {add-object-to-world*imagined*apply*change-world-state*reject*if*changed-world
+   (state <s> ^name add-object-to-world
+              ^operator <o> +
+              ^changed-world true)
+   (<o> ^name change-world-state)
+-->
+   (<s> ^operator <o> -)
+}
+
 ####### Application #######
 
-# TODO: fix these
+# Mark the state as changed
+sp {add-object-to-world*imagined*apply*change-world-state*mark*changed-world
+   (state <s> ^name add-object-to-world
+              ^operator.name change-world-state)
+-->
+   (<s> ^changed-world true)
+}
+
+### Imagined: copy a world-object link onto the imagined object
+sp {add-object-to-world*imagined*apply*change-world-state*copy*world-object
+   (state <s> ^name add-object-to-world
+              ^operator.name change-world-state
+              ^source-type imagined
+              ^source-obj <obj>
+              ^created-object <wobj>)
+-->
+   (<obj> ^world-object <wobj>)
+}
 
 ### Perception: clean up the new-object-info on the object-monitor
 sp {add-object-to-world*perception*apply*change-world-state*remove*new-object-info
