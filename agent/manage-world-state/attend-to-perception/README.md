@@ -26,8 +26,10 @@ There is an object in perception that is not in belief
   ([info] ^input-link-obj [il-obj])
 ```
 
+(Note: most of this is done inside manage-world-state/add-object-to-world)
+
 * **Misidentified Anchor**: 
-The agent determines the new perception object matches a non-visible object (via `match-existing-object`), 
+The agent determines the new perception object matches a non-visible object
 concluding that this new object is a new id for an existing object.
 It uses `change-world-state/change-perception-id` to update the existing object's perception id to the new one.
 
@@ -45,21 +47,6 @@ It uses `change-world-state/merge-perception-objects` to tell perception to merg
 * If the object doesn't match an existing one, add it to the world 
 (using `construct-world-object` and then `change-world-state/add-object-to-world`).
 
-
-## new-belief-object
-
-There is an object in belief that is not in perception
-
-```
-([o] ^name attend-to-perception
-     ^discrepancy-type new-belief-object
-     ^discrepancy-info [info])
-  ([info] ^object-info [obj-info])
-```
-
-* If the new belief object matches an existing object (via `match-existing-object`, 
-then merge them using `change-world-state/merge-belief-objects`. 
-* Otherwise, just keep the new belief object in the world
 
 
 ## different-object-predicate

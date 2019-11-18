@@ -3,11 +3,12 @@
 
 ### Case 1: For a perception object, match any objects that have no belief obj
 
-sp {match-existing-object*propose*matches-object-predicates*source-type*perception
-   (state <s> ^name match-existing-object
+sp {add-object-to-world*propose*matches-object-predicates*source-type*perception
+   (state <s> ^name add-object-to-world
               ^source-type perception
               ^source-obj <il-obj>
-              ^object-monitor.object-info <obj-info>)
+              ^object-monitor.object-info <obj-info>
+             -^matches-existing-object)
    (<obj-info> ^status.is-visible1 not-visible1
               -^belief-obj)
 -->
@@ -19,12 +20,11 @@ sp {match-existing-object*propose*matches-object-predicates*source-type*percepti
 
 ### Case 2: For a world-obj, match any perception objects
 
-sp {match-existing-object*propose*matches-object-predicates*source-type*belief
-   (state <s> ^name match-existing-object
-              ^source-type belief
-              ^source-obj <src-info>
-              ^object-monitor.object-info { <obj-info> <> <src-info> })
-   (<src-info> ^world-obj <obj>)
+sp {add-object-to-world*propose*matches-object-predicates*source-type*belief
+   (state <s> ^name add-object-to-world
+              ^source-type <> perception
+              ^object-monitor.object-info <obj-info>
+             -^matches-existing-object)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name matches-object-predicates
@@ -32,22 +32,10 @@ sp {match-existing-object*propose*matches-object-predicates*source-type*belief
         ^matching-counts <mc>)
 }
 
-### Note: We reject matches between two objects which both have belief svs objects
-sp {match-existing-object*reject*matches-object-predicates*belief*both*in*svs
-   (state <s> ^name match-existing-object
-              ^source-type belief
-              ^source-obj.belief-obj
-              ^operator <o> +)
-   (<o> ^name matches-object-predicates
-        ^object-info.belief-obj)
--->
-   (<s> ^operator <o> -)
-}
-
 ### Elaborate matching predicates
 
-sp {match-existing-object*elaborate*matches-object-predicates*matching-predicate
-   (state <s> ^name match-existing-object
+sp {add-object-to-world*elaborate*matches-object-predicates*matching-predicate
+   (state <s> ^name add-object-to-world
               ^operator <o> +
               ^new-object-predicates.<prop> <pred>)
    (<o> ^name matches-object-predicates
@@ -58,8 +46,8 @@ sp {match-existing-object*elaborate*matches-object-predicates*matching-predicate
 
 # Count the number of matching predicates
 # start with the lowest predicate as 1
-sp {match-existing-object*elaborate*matches-object-predicates*matching-counts*initial
-   (state <s> ^name match-existing-object
+sp {add-object-to-world*elaborate*matches-object-predicates*matching-counts*initial
+   (state <s> ^name add-object-to-world
               ^operator <o> +)
    (<o> ^name matches-object-predicates
         ^matching-predicate <min-pred>
@@ -71,7 +59,7 @@ sp {match-existing-object*elaborate*matches-object-predicates*matching-counts*in
 
 # add a +1 count for each 'next' predicate (no predicate between it and previous)
 sp {matching-existing-object*elaborate*matching-object-predicates*matching-counts*next
-   (state <s> ^name match-existing-object
+   (state <s> ^name add-object-to-world
               ^operator <o> +)
    (<o> ^name matches-object-predicates
         ^matching-predicate { <next-pred> > <prev-pred> }
@@ -84,7 +72,7 @@ sp {matching-existing-object*elaborate*matching-object-predicates*matching-count
 
 # elaborate the max count as the number of matching predicates
 sp {matching-existing-object*elaborate*matching-object-predicates*number-matching-predicates
-   (state <s> ^name match-existing-object
+   (state <s> ^name add-object-to-world
               ^operator <o> +
               ^new-object-predicates.<prop> <pred>)
    (<o> ^name matches-object-predicates
@@ -98,8 +86,8 @@ sp {matching-existing-object*elaborate*matching-object-predicates*number-matchin
 ### Elaborate conflicting predicates
 
 # These conflict if the other object has a different predicate for the same property
-sp {match-existing-object*elaborate*matches-object-predicates*conflicting-predicate
-   (state <s> ^name match-existing-object
+sp {add-object-to-world*elaborate*matches-object-predicates*conflicting-predicate
+   (state <s> ^name add-object-to-world
               ^operator <o> +
               ^new-object-predicates.<prop> <pred>)
    (<o> ^name matches-object-predicates
@@ -111,8 +99,8 @@ sp {match-existing-object*elaborate*matches-object-predicates*conflicting-predic
 }
 
 #   These are predicates which must be on the other object to match
-sp {match-existing-object*elaborate*matches-object-predicates*conflicting-predicate*required
-   (state <s> ^name match-existing-object
+sp {add-object-to-world*elaborate*matches-object-predicates*conflicting-predicate*required
+   (state <s> ^name add-object-to-world
               ^operator <o> +
               ^new-object-predicates.{ <prop> << category modifier1 name >> } <pred>)
    (<o> ^name matches-object-predicates
@@ -126,8 +114,8 @@ sp {match-existing-object*elaborate*matches-object-predicates*conflicting-predic
 ### Preferences
 
 # Prefer matches with more matching predicates
-sp {match-existing-object*prefer*matches-object-predicates*higher*matching-predicate*count
-   (state <s> ^name match-existing-object
+sp {add-object-to-world*prefer*matches-object-predicates*higher*matching-predicate*count
+   (state <s> ^name add-object-to-world
               ^operator <o1> +
               ^operator <o2> +)
    (<o1> ^name matches-object-predicates
@@ -139,8 +127,8 @@ sp {match-existing-object*prefer*matches-object-predicates*higher*matching-predi
 }
 
 # Reject if no matching predicates
-sp {match-existing-object*reject*matches-object-predicates*no*matching-predicate
-   (state <s> ^name match-existing-object
+sp {add-object-to-world*reject*matches-object-predicates*no*matching-predicate
+   (state <s> ^name add-object-to-world
               ^operator <o> +)
    (<o> ^name matches-object-predicates
         -^matching-predicate)
@@ -149,8 +137,8 @@ sp {match-existing-object*reject*matches-object-predicates*no*matching-predicate
 }
 
 # Reject if any conflicting predicate
-sp {match-existing-object*reject*matches-object-predicates*conflicting-predicate
-   (state <s> ^name match-existing-object
+sp {add-object-to-world*reject*matches-object-predicates*conflicting-predicate
+   (state <s> ^name add-object-to-world
               ^operator <o> +)
    (<o> ^name matches-object-predicates
         ^conflicting-predicate)
@@ -161,25 +149,24 @@ sp {match-existing-object*reject*matches-object-predicates*conflicting-predicate
 ### Application
 
 # copy the match to the superstate
-sp {match-existing-object*apply*matches-object-predicates*report*to*superstate
-   (state <s> ^name match-existing-object
-              ^operator <o>
-              ^superstate <ss>)
+sp {add-object-to-world*apply*matches-object-predicates*report*to*superstate
+   (state <s> ^name add-object-to-world
+              ^operator <o>)
    (<o> ^name matches-object-predicates
         ^object-info <obj-info>)
 -->
-   (<ss> ^matches-existing-object <obj-info>)
+   (<s> ^matches-existing-object <obj-info>)
 }
 
 # If print-perception is on, print a message about the match
-sp {match-existing-object*apply*matches-object-predicates*print-perception
-   (state <s> ^name match-existing-object
+sp {add-object-to-world*apply*matches-object-predicates*print-perception
+   (state <s> ^name add-object-to-world
               ^operator <o>
               ^object-handle <new-obj>
               ^agent-params.print-perception true)
    (<o> ^name matches-object-predicates
         ^object-info.object-handle <matching-obj>)
 -->
-   (write |match-existing-object: Object | <new-obj> | matches | <matching-obj> | via predicates|(crlf))
+   (write |add-object-to-world: Object | <new-obj> | matches | <matching-obj> | via predicates|(crlf))
    (write (cmd print <o>) (crlf))
 }
