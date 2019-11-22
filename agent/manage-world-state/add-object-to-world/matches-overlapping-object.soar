@@ -17,7 +17,6 @@ sp {add-object-to-world*propose*matches-overlapping-object*matches*not-visible*o
         ^overlap <val>)
 }
 
-
 ### Case 2: The new-perception-obj overlaps an object with a shared-input-link-obj
 # (The object shares a input-link-obj with another, meaning they might be segmented together)
 
@@ -36,7 +35,6 @@ sp {add-object-to-world*propose*matches-overlapping-object*shared-input-link-obj
         ^overlap <val>)
 }
 
-
 ### Case 3: The new-perception-obj is contained within an existing belief-obj
 #     which is not a receptacle (receptacles can hold other items inside)
 
@@ -47,7 +45,8 @@ sp {add-object-to-world*propose*matches-overlapping-object*contained*by*other
              -^matches-existing-object)
    (<res> ^overlapper-info <obj-info>
           ^overlap { <val> > <thresh> })
-   (<obj-info> ^world-obj.predicates <preds>)
+   (<obj-info> ^world-obj.predicates <preds>
+               ^status.is-visible1 visible1)
    (<preds> -^affordance1 receptacle1)
 -->
    (<s> ^operator <o> + =)
@@ -82,6 +81,18 @@ sp {match-exisiting-object*reject*matches-overlapping-object*different*color
    (<s> ^operator <o> -)
 }
 
+# Reject match if differs on category
+sp {match-exisiting-object*reject*matches-overlapping-object*different*category
+   (state <s> ^name add-object-to-world
+              ^operator <o> +
+              ^category-info.root-category <cat>)
+   (<o> ^name matches-overlapping-object
+        ^overlapping-object.world-obj.predicates <opreds>)
+   (<opreds> -^category <cat>)
+-->
+   (<s> ^operator <o> -)
+}
+
 ### Application
 
 # Report the match to the superstate
@@ -91,7 +102,8 @@ sp {add-object-to-world*apply*matches-overlapping-object
    (<o> ^name matches-overlapping-object
         ^overlapping-object <obj-info>)
 -->
-   (<s> ^matches-existing-object <obj-info>)
+   (<s> ^matches-existing-object <obj-info>
+        ^overlap-match <obj-info>)
 }
 
 # If print-perception is on, print a message about the match
