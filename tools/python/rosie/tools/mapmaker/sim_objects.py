@@ -4,6 +4,8 @@ pf = lambda n: ("%.2f" % n).rjust(6)
 class SimObject:
 	NEXT_OBJ_ID = 1
 	def __init__(self):
+		self.obj_id = SimObject.NEXT_OBJ_ID
+		SimObject.NEXT_OBJ_ID += 1
 		self.vals = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 		self.cats = []
 		self.labels = []
@@ -12,11 +14,7 @@ class SimObject:
 	def sim_class(self):
 		return "soargroup.mobilesim.sim.RosieSimObject"
 
-	def read_info(self, reader, scale=1.0):
-		self.obj_id = SimObject.NEXT_OBJ_ID
-		SimObject.NEXT_OBJ_ID += 1
-		# 1 string - short object description
-		self.desc = reader.nextWord()
+	def read_transform(self, reader, scale):
 		# 3 floats - xyz coordinate of center
 		for i in range(0, 3):
 			self.vals[i] = float(reader.nextWord()) * scale
@@ -25,6 +23,13 @@ class SimObject:
 		# 3 floats - scale in xyz directions (compared to 1m unit cube)
 		for i in range(6, 9):
 			self.vals[i] = float(reader.nextWord()) * scale
+
+
+	def read_info(self, reader, scale=1.0):
+		# 1 string - short object description
+		self.desc = reader.nextWord()
+		# 7 floats - transform
+		self.read_transform(reader, scale)
 		# 1 int - number of properties
 		num_labels = int(reader.nextWord())
 		# followed by 2N strings, of property_category property_value
@@ -83,3 +88,91 @@ class Surface(BoxObject):
 	def sim_class(self):
 		return "soargroup.mobilesim.sim.SimSurface"
 
+class Receptacle(BoxObject):  
+	def sim_class(self):
+		return "soargroup.mobilesim.sim.SimReceptacle"
+
+class Table(Surface):  
+	def sim_class(self):
+		return "soargroup.mobilesim.sim.SimTable"
+
+	def read_info(self, reader, scale=1.0):
+		self.read_transform(reader, scale)
+		self.desc = "Table"
+		self.cats = [ 'category' ]
+		self.labels = [ 'table1' ]
+		self.rgb = [ 94, 76, 28 ]
+		return self
+
+class Counter(Surface):
+	def read_info(self, reader, scale=1.0):
+		self.read_transform(reader, scale)
+		self.desc = "Counter"
+		self.cats = [ 'category' ]
+		self.labels = [ 'counter1' ]
+		self.rgb = [ 250, 230, 140 ]
+		return self
+
+class Garbage(Receptacle):
+	def read_info(self, reader, scale=1.0):
+		self.read_transform(reader, scale)
+		self.desc = "Garbage"
+		self.cats = [ 'category' ]
+		self.labels = [ 'garbage1' ]
+		self.rgb = [ 100, 100, 100 ]
+		return self
+
+class Sink(Receptacle):
+	def read_info(self, reader, scale=1.0):
+		self.read_transform(reader, scale)
+		self.desc = "Sink"
+		self.cats = [ 'category' ]
+		self.labels = [ 'sink1' ]
+		self.rgb = [ 150, 150, 150 ]
+		return self
+
+class Shelves(Surface):  
+	def __init__(self):
+		super().__init__()
+		self.door = "none"
+
+	def sim_class(self):
+		return "soargroup.mobilesim.sim.SimShelves"
+
+	def read_info(self, reader, scale=1.0):
+		self.read_transform(reader, scale)
+		self.desc = "Shelves"
+		self.cats = [ 'category' ]
+		self.labels = [ 'shelves1' ]
+		self.rgb = [ 94, 76, 28 ]
+		return self
+
+	def write_info(self, writer):
+		super().write_info(writer)
+		writer.write(self.door + "\n")
+
+class Pantry(Shelves):  
+	def __init__(self):
+		super().__init__()
+		self.door = "open"
+
+	def read_info(self, reader, scale=1.0):
+		self.read_transform(reader, scale)
+		self.desc = "Pantry"
+		self.cats = [ 'category' ]
+		self.labels = [ 'pantry1' ]
+		self.rgb = [ 94, 76, 28 ]
+		return self
+
+class Fridge(Shelves):  
+	def __init__(self):
+		super().__init__()
+		self.door = "closed"
+
+	def read_info(self, reader, scale=1.0):
+		self.read_transform(reader, scale)
+		self.desc = "Fridge"
+		self.cats = [ 'category' ]
+		self.labels = [ 'fridge1' ]
+		self.rgb = [ 200, 200, 200 ]
+		return self
