@@ -79,4 +79,7 @@ class BoxObject(SimObject):
 		writer.write("    %(r)d %(g)d %(b)d\n" % \
 				{ "r": self.rgb[0], "g": self.rgb[1], "b": self.rgb[2] })
 
+class Surface(BoxObject):  
+	def sim_class(self):
+		return "soargroup.mobilesim.sim.SimSurface"
 

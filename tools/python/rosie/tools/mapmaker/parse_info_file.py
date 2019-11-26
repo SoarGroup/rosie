@@ -2,7 +2,7 @@
 
 import sys
 from rosie.tools.mapmaker.file_reader import FileReader
-from rosie.tools.mapmaker.sim_objects import BoxObject
+from rosie.tools.mapmaker.sim_objects import *
 
 from math import *
 
@@ -46,6 +46,8 @@ class WorldInfo:
 					self.walls.extend(parseWallChain(reader, self.scale))
 				elif itemtype == "BoxObject":
 					self.objects.append(BoxObject().read_info(reader, self.scale))
+				elif itemtype == "Surface":
+					self.objects.append(Surface().read_info(reader, self.scale))
 				word = reader.nextWord()
 		except Exception as e:
 			raise Exception("Parsing Error on line " + str(reader.lineNum) + ":\n" + str(e))
