@@ -16,7 +16,7 @@ so the agent might do an approach subtask first.
 Note that the task goal is usually created from the task concept network in ```init-smem/actions.soar```
 
 
-### Approach
+## Approach
 
 Have the robot drive up close to an object in order to interact with it. 
 
@@ -36,7 +36,7 @@ op_approach1(arg1:object)
 
 ---
 
-### Ask
+## Ask
 
 Has the robot ask a question and then wait for a response from the instructor.
 
@@ -53,7 +53,7 @@ All domains: Sends an outgoing-message to ask the question and pushes a new inte
 When it gets an answer, it adds it to the world if necessary, then marks it with modifier1=answered1 and completes.
 
 
-### Close
+## Close
 
 Have the robot close an object, e.g. a door or a fridge
 
@@ -72,7 +72,38 @@ op_close1(arg1:object)
 * Magicbot: Close is a primitive action (do-control-law set-state)
 
 
-### Find
+## Explore
+
+Have the robot drive to each room and scan it, usually trying to find an object
+
+```
+op_explore1()
+
+  Goal: all locations are visited
+  Not used during planning/search
+```
+
+**propose-subtasks**
+* If it has not scanned the current location, propose op_scan1()
+* If it has scanned the current location, propose op_go-to-waypoint(wp) for the closest unvisited one
+
+
+## Face
+
+Have the robot turn towards an object. 
+Will get the object's position and calculate an angle to turn towards it. 
+
+```
+op_face1(arg1:object)
+
+  Goal: execute-command(face)
+  Not used during planning/search
+```
+
+**send-face-command**, requires a belief svs object for the object's position
+
+
+## Find
 
 Have the robot find an object so that it becomes visible
 
@@ -90,7 +121,8 @@ op_find1(arg1:object)
 * Propose op_explore1(until(visible1(arg1)))
 
 
-### Give
+
+## Give
 
 Have the robot give a grabbed object to a person
 
@@ -106,7 +138,7 @@ op_give1(arg1:object, arg2:partial-predicate=to1(per))
 * Internal: Add the holding1(per, arg1) predicate and mark as not grabbed
 
 
-### Go to location
+## Go to location
 
 Have the robot drive to another location in the world, e.g. the kitchen
 
@@ -122,7 +154,7 @@ op_go-to-location1(arg2:partial-predicate=to(loc))
 
 Subtask: go-to-waypoint1 (all domains)
 
-### Go to waypoint
+## Go to waypoint
 
 Have the robot drive to the given waypoint via its waypoint graph. 
 (Note: this is only used internally to the robot)
@@ -138,7 +170,7 @@ Goal: current-waypoint(arg1)
 Subtask: go-to-next-waypoint1 (all domains)
 
 
-### Go to next waypoint
+## Go to next waypoint
 Have the robot drive to an adjacent waypoint in the waypoint graph. 
 (Note: this is only used internally to the robot). 
 How it does this depends on the domain
@@ -146,7 +178,12 @@ How it does this depends on the domain
 Internal: just change the waypoint on the simulated input link
 
 
-### Open
+## Go to xy
+Have the robot drive to the given coordinate
+(Note: this is only used internally to the robot). 
+
+
+## Open
 
 Have the robot open an object, e.g. a microwave or a cupboard
 
@@ -165,8 +202,21 @@ op_open1(arg1:object)
 * Tabletop: Open is a primitive action (set-state)
 * Magicbot: Open is a primitive action (do-control-law set-state)
 
+## Orient
 
-### Pick Up
+Have the robot face a cardinal direction (north, south, east, west)
+
+```
+op_orient(arg1:concept)
+
+  Goal: execute-command(orient)
+  Not used during planning/search
+```
+
+**send-orient-command**, requires that the given concept is a cardinal direction
+
+
+## Pick Up
 
 Have the robot pick up an object that is grabbable, e.g. a cup
 
@@ -189,7 +239,7 @@ also if the object is inside a receptacle it must be open
 * Cozmo: Pickup is a primitive action 
 
 
-### Put Down
+## Put Down
 
 Have the robot put down an object it is holding, at a particular place
 
@@ -226,7 +276,7 @@ also if the object is inside a receptacle it must be open
 * Cozmo: Pickup is a primitive action 
 
 
-### Remember
+## Remember
 
 Remember one object as another, copies predicates from the second
 onto the first. E.g. *Remember the current location as the starting location* 
@@ -239,7 +289,7 @@ No preconditions/goal, but does work during search
 ```
 
 
-### Remove
+## Remove
 
 Removes an object from the world, only used with an internal world
 
@@ -254,7 +304,7 @@ op_remove1(arg1:object)
 * Internal: Removes the object from world.objects and any relations involving arg1
 
 
-### Say
+## Say
 
 Speak a message, can be directed at a specific person
 
@@ -280,7 +330,7 @@ All domains: Will send an outgoing-message and mark the sentence as being heard 
 Note that if the arg1 object has a ^sentence it will say that verbatim, otherwise it will describe the arg1 object. 
 
 
-### Scan
+## Scan
 
 Turn in place one full revolution, looking around the room
 
@@ -299,8 +349,21 @@ op_scan1(until(visible1(apple)))
 
 Currently only used for the magicbot environment
 
+## Turn
 
-### Turn Off
+Have the robot turn right/left/around
+
+```
+op_turn1(arg1:concept)
+
+  Goal: execute-command(turn)
+  Not used during planning/search
+```
+
+**send-turn-command**, requires that the given concept is a relative direction
+* Magicbot: Turn the specified amount/direction
+
+## Turn Off
 
 Have the robot turn off an appliance, e.g. a microwave
 
@@ -319,7 +382,7 @@ op_turn-off1(arg1:object)
 * Magicbot: Turn Off is a primitive action (do-control-law set-state)
 
 
-### Turn On
+## Turn On
 
 Have the robot turn on an appliance, e.g. a light switch 
 
@@ -338,7 +401,7 @@ op_turn-on1(arg1:object)
 * Magicbot: Turn On is a primitive action (do-control-law set-state)
 
 
-### Write
+## Write
 
 Write a value onto an object, used for logic puzzles such as sudoku. 
 

@@ -58,6 +58,53 @@ class SimObject:
 		for i in range(len(self.cats)):
 			writer.write("    %s=%s\n" % (self.cats[i], self.labels[i]))
 
+class Person(SimObject):  
+	def __init__(self):
+		super().__init__()
+		self.name = ""
+		self.cat = ""
+		self.rgb = [ 0, 0, 0 ]
+
+	def sim_class(self):
+		return "soargroup.mobilesim.sim.SimPerson"
+
+	def read_info(self, reader, scale=1.0):
+		# 1 string - short object description
+		self.desc = reader.nextWord()
+		# 3 floats - xyz coordinate of center
+		for i in range(0, 3):
+			self.vals[i] = float(reader.nextWord()) * scale
+		# 1 float - yaw (rotation in xy plane)
+		self.vals[5] = float(reader.nextWord())
+		# 1 string - category
+		self.cat = reader.nextWord()
+		# 1 string - name
+		self.name = reader.nextWord()
+		self.cats = [ "category", "name" ]
+		self.labels = [ self.cat, self.name ]
+		# 3 ints - RGB color value
+		self.rgb = []
+		self.rgb.append(int(reader.nextWord()))
+		self.rgb.append(int(reader.nextWord()))
+		self.rgb.append(int(reader.nextWord()))
+		return self
+
+	def write_info(self, writer):
+		writer.write("  # Object Description\n")
+		writer.write("  " + str(self.desc) + "\n")
+		writer.write("  # Object xyz\n")
+		writer.write("  vec 3\n")
+		writer.write("  %(x)s %(y)s %(z)s\n" % \
+				{ "x": pf(self.vals[0]), "y": pf(self.vals[1]), "z": pf(self.vals[2]) })
+		writer.write("  # Rotation (yaw)\n")
+		writer.write("  %(yaw)s\n" % { "yaw": self.vals[5] })
+		writer.write("  # Category, Name\n")
+		writer.write("  %s\n" % self.cat)
+		writer.write("  %s\n" % self.name)
+		writer.write("  # Color rgb (int 0-255)\n")
+		writer.write("  ivec 3\n")
+		writer.write("    %(r)d %(g)d %(b)d\n" % \
+				{ "r": self.rgb[0], "g": self.rgb[1], "b": self.rgb[2] })
 
 
 class BoxObject(SimObject):  
@@ -176,3 +223,26 @@ class Fridge(Shelves):
 		self.labels = [ 'fridge1' ]
 		self.rgb = [ 200, 200, 200 ]
 		return self
+
+class LightSwitch(SimObject):  
+	def __init__(self):
+		super().__init__()
+		self.state = ""
+		self.region = ""
+
+	def sim_class(self):
+		return "soargroup.mobilesim.sim.SimLightSwitch"
+
+	def read_info(self, reader, scale=1.0):
+		self.read_transform(reader, scale)
+		self.state = reader.nextWord()
+		self.region = reader.nextWord()
+		self.desc = "LS"
+		self.cats = [ 'category' ]
+		self.labels = [ 'lightswitch1' ]
+		return self
+
+	def write_info(self, writer):
+		super().write_info(writer)
+		writer.write(self.state + "\n")
+		writer.write(self.region + "\n")
