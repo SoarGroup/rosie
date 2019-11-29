@@ -76,8 +76,8 @@ remove the child task from the stack \
 If the agent has to ask the instructor for what to do next and they replied with a new task command, 
 the agent has to add it to the TCN and learn a new proposal rule. 
 
-1. If the agent cannot determine what to do next, it will propose `initiate-interaction` with type get-next-goal. \
-`initiate-interaction.soar`
+1. If the agent cannot determine what to do next, it will enter a State No Change where where it will propose `initiate-interaction` with type get-next-goal. \
+`Impasse__State-No-Change/initiate-interaction.soar`
 
 1. If the task stack has a `^push-task-operator` with `^task-source instruction`, it will first propose `add-subtask-to-tcn` to 
 add a generalized version to the TCN. When finished, it will add `^learn-subtask-proposal [subtask-handle]` to the current-task-segment. \
