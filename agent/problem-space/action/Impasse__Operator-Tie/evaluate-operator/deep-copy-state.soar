@@ -1,0 +1,96 @@
+########## evaluate-operator state #########
+
+sp {problem-space*action*evaluate-operator*elaborate*problem-space*default-copy*info
+   (state <s> ^name evaluate-operator
+              ^problem-space <ps>)
+   (<ps> ^name action
+        -^subproblem waypoint-search)
+-->
+   (<ps> ^default-state-copy no
+         ^default-operator-copy custom)
+}
+
+# deep copy the world
+sp {problem-space*action*evaluate-operator*elaborate*problem-space*world*copy-type*deep
+   (state <s> ^name evaluate-operator
+              ^problem-space <ps>)
+   (<ps> ^name action
+        -^subproblem waypoint-search
+         ^world <world>)
+-->
+   (<world> ^copy-type deep)
+}
+
+# deep copy the current task-operator (from 2 states up)
+# If we are in evaluate-operator, we have deep copied the world
+#   So we have to create a transformed version of the task operator (from 2 states up)
+#   Using deep copies of the objects involved
+sp {problem-space*action*evaluate-operator*elaborate*copy-task-operator
+   (state <s> ^name evaluate-operator
+              ^problem-space <ps>
+              ^superstate.superstate.task-operator <op>
+              ^deep-copy-world.copy-objects-map <map>)
+   (<ps> ^name action
+        -^subproblem waypoint-search)
+-->
+   (<s> ^copy-task-operator <cto>)
+   (<cto> ^task-operator <op>
+          ^destination <s>
+          ^copy-name task-operator
+          ^object-map <map>)
+}
+
+# deep copy the goal
+sp {problem-space*action*evaluate-operator*elaborate*copy-task-goal
+   (state <s> ^name evaluate-operator
+              ^problem-space <ps>
+              ^superstate.superstate.desired <ss-des>
+              ^look-ahead-operator <copy>)
+   (<ps> ^name action
+        -^subproblem waypoint-search)
+-->
+   (<s> ^copy-task-goal <ss-des>)
+}
+
+# deep copy the look-ahead-operator
+sp {problem-space*action*evaluate-operator*elaborate*copy-task-operator*look-ahead-operator
+   (state <s> ^name evaluate-operator
+              ^problem-space <ps>
+              ^superstate.operator <ssop>
+              ^deep-copy-world.copy-objects-map <map>)
+   (<ps> ^name action
+        -^subproblem waypoint-search)
+   (<ssop> ^name evaluate-operator
+           ^superoperator <o>)
+-->
+   (<s> ^copy-task-operator <cto>)
+   (<cto> ^task-operator <o>
+          ^destination <s>
+          ^copy-name look-ahead-operator
+          ^object-map <map>)
+}
+
+sp {problem-space*action*evaluate-operator*elaborate*untried-tied-operator
+   (state <s> ^problem-space <ps>
+              ^superstate.operator <ssop>
+              ^look-ahead-operator <copy>)
+   (<ps> ^name action
+        -^subproblem waypoint-search)
+   (<ssop> ^name evaluate-operator
+           ^superoperator <o>
+           ^superproblem-space.name <ps-name>)
+-->
+   (<s> ^untried-tied-operator <copy>)
+   (<copy> ^duplicate-of <o>)
+}
+
+# deep copy any subtasks on the problem-space
+sp {problem-space*action*evaluate-operator*elaborate*problem-space*subtasks*copy-type*deep
+   (state <s> ^name evaluate-operator
+              ^problem-space <ps>)
+   (<ps> ^name action
+        -^subproblem waypoint-search
+         ^subtasks <subs>)
+-->
+   (<subs> ^copy-type deep)
+}
