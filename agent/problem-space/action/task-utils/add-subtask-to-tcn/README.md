@@ -1,17 +1,7 @@
+# add-subtask-to-tcn 
 
-######################### add-subtask-to-tcn #############################
-
-Takes the operator representation for a subtask and creates a generalized
-  representation to be stored in semantic memory which will form the basis
-  for a proposal rule to propose this subtask
-
-This happens for certain subtasks where the initial proposal rules aren't
-  enough and we need to learn a new proposal rule
-
-It is proposed while executing a task if the subtask doesn't match
-  and it has a ^learn-proposal flag on it
-
-
+Takes a subtask operator representation and creates a generalized version that
+is stored in the parent task's TCN. 
 
 ##### Operator #####
 
