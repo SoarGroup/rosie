@@ -48,9 +48,11 @@ to remove the flag from the current-task-segment.
 1. `smem-query`: Retrieve the Task Concept Network for the current task \
 `retrieve-tcn.soar`
 
-1. When the agent needs to go to the next goal in the goal graph 
-(including the first one), it proposes `advance-current-goal` \
-`advance-current-goal.soar`
+1. The agent initializes the current-goal to the start-goal node in the TCN goal-graph \
+`init-current-goal.soar`
+
+1. If the goal has any implicit object arguments, add them to the world \
+`add-object-to-world.soar`
 
 ## 2. Propose and execute subtasks
 
@@ -69,6 +71,9 @@ These must propose an operator with a name, task-handle, and item-type task-oper
 1. Once the child task has finished (there is a status on the child-task-segment), propose `pop-task-segment` to 
 remove the child task from the stack \
 `pop-task-segment.soar` and `task-utils/pop-task-segment`
+
+1. If the current goal is satisfied, select the next one via the goal-graph \
+`select-next-goal.soar`
 
 
 ## 3. Handle subtasks from instruction
