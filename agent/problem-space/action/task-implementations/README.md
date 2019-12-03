@@ -29,7 +29,7 @@ op_approach1(arg1:object)
 ```
 
 **send-approach-command**
-* Internal: Change the is-reachable1 predicate on the input link to reachable1
+* Internal: Set `reachable1 is-reachable1` on the input link
 * Ai2Thor: Approach is a primitive action
 * Cozmo: Approach is a primitive action
 * Magicbot: Do custom calculations to extract-target-position and extract-object-position and first face, then drive to, the target's position
@@ -50,7 +50,7 @@ op_ask1(arg1:object)
 **send-ask-command**
 
 All domains: Sends an outgoing-message to ask the question and pushes a new interaction segment to wait for the response. 
-When it gets an answer, it adds it to the world if necessary, then marks it with modifier1=answered1 and completes.
+When it gets an answer, it adds it to the world if necessary, then marks it with `modifier1=answered1` and completes.
 
 
 ## Close
@@ -65,7 +65,7 @@ op_close1(arg1:object)
   Post: +closed2(arg1), -open2(arg1)
 ```
 
-**send-close-command**, requires visible1(arg1) and reachable1(arg1)
+**send-close-command**, requires `visible1(arg1)` and `reachable1(arg1)`
 * Internal: Change the predicate on the input link to closed2
 * Ai2Thor: Close is a primitive action
 * Tabletop: Close is a primitive action (set-state)
@@ -84,8 +84,8 @@ op_explore1()
 ```
 
 **propose-subtasks**
-* If it has not scanned the current location, propose op_scan1()
-* If it has scanned the current location, propose op_go-to-waypoint(wp) for the closest unvisited one
+* If it has not scanned the current location, propose `op_scan1()`
+* If it has scanned the current location, propose `op_go-to-waypoint(wp)` for the closest unvisited one
 
 
 ## Face
@@ -134,8 +134,9 @@ op_give1(arg1:object, arg2:partial-predicate=to1(per))
   Post: +holding1(per, arg1), -grabbed1(arg1), +not-grabbed1(arg1), -holding-object(true), +holding-object(false)
 ```
 
-**send-give-command**, requires visible1(per) and reachable1(per)
+**send-give-command**, requires `visible1(per)` and `reachable1(per)`
 * Internal: Add the holding1(per, arg1) predicate and mark as not grabbed
+* Magicbot: Give is a primitive command
 
 
 ## Go to location
@@ -148,8 +149,6 @@ op_go-to-location1(arg2:partial-predicate=to(loc))
   Pre:  location(loc), loc != current-location
   Goal: current-location(loc)
   Post: +current-location(loc), -current-location(old_loc) (if exists)
-        if in1(obj, old_loc): -visible1(obj) +not-visible1(obj)
-        if in1(obj, loc): -not-visible1(obj) +visible1(obj)
 ```
 
 Subtask: go-to-waypoint1 (all domains)
@@ -265,6 +264,14 @@ op_put-down1(arg1:object, arg2:partial-predicate=in1(dest))
         grabbed1(arg1) and receptacle1(dest) and !open2(dest) and !closed2(dest)
   Goal: in1(arg1, dest)
   Post: -grabbed1(arg1), +not-grabbed1(arg1), in1(arg1, dest), in1(arg1, cur-loc), -holding-object(true), +holding-object(false)
+
+4. Put Down in a location
+op_put-down1(arg1:object, arg2:partial-predicate=in1(loc))
+
+  Pre: grabbed1(arg1) and location(loc) 
+  Goal: in1(arg1, loc)
+  Post: -grabbed1(arg1), +not-grabbed1(arg1), in1(arg1, loc), -holding-object(true), +holding-object(false)
+        If loc != cur-loc, then +current(loc) and -current(cur-loc)
 ```
 
 **send-pick-up-command**, requires visible1(arg1) and reachable1(arg1), 
