@@ -37,6 +37,7 @@ Adds the new subtask onto the parent task's TCN and stores it in semantic memory
 
 create-subtask-structure - Creates the initial subtask-structure and copies basic info
 generalize-task-argument - Generalizes each argument (see action/task-utils/generalize-task-operator)
+add-subtask-goal         - If the current goal is satisfied, add a next goal with the goal of performing this subtask
 store-task-subtask       - Adds the subtask onto the parent task's TCN and stores it in smem
 
 

@@ -43,38 +43,68 @@ sp {simulate-task-execution*prefer*select-next-goal*over*task-operator
    (<s> ^operator <o1> > <o2>)
 }
 
-# When the terminal goal is satisfied, report success
-sp {simulate-task-execution*success*report*operator-successful*true
+
+### return-operator-result - return whether the simulation was successful or a failure
+
+### Case 1: The agent hits a state-no-change while trying to simulate the task
+
+sp {simulate-task-execution*state-no-change*propose*return-operator-result*failure
+   (state <s> ^impasse no-change
+              ^attribute state
+              ^superstate.name simulate-task-execution)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name return-operator-result
+        ^result failure)
+}
+
+sp {simulate-task-execution*state-no-change*apply*return-operator-result
+   (state <s> ^impasse no-change
+              ^attribute state
+              ^superstate <ss>
+              ^quiescence t
+              ^operator <o>)
+   (<ss> ^name simulate-task-execution
+         ^superstate <sss>)
+   (<o> ^name return-operator-result
+        ^result <res>)
+-->
+   (<sss> ^operator-result <res>)
+}
+
+### Case 2: If there is a goal with a non-state-based predicate, return failure (can't simulate)
+sp {simulate-task-execution*propose*return-operator-result*unlearnable*goal*predicate
+   (state <s> ^name simulate-task-execution
+              ^desired.{ << 1 2 3 4 5 >> } <gp>
+              ^superstate <ss>)
+   (<gp> ^type <> state <> relation)
+-->
+   (<s> ^operator <o> + = !)
+   (<o> ^name return-operator-result
+        ^result failure)
+}
+
+### Case 3: When the terminal goal is satisfied, return success
+sp {simulate-task-execution*success*propose*return-operator-result*success
    (state <s> ^name simulate-task-execution
               ^desired <des>
               ^superstate <ss>)
    (<des> ^item-type terminal-goal
           ^satisfied true)
 -->
-   (<ss> ^operator-successful true)
+   (<s> ^operator <o> + = !)
+   (<o> ^name return-operator-result
+        ^result success)
 }
 
-# If the agent hits a SNC, report failure
-sp {simulate-task-execution*state-no-change*return*failure
-   :o-support
-   (state <s> ^impasse no-change
-              ^attribute state
-              ^quiescence t
-              ^superstate <ss>)
-   (<ss> ^name simulate-task-execution
-         ^superstate <sss>)
--->
-   (<sss> ^operator-successful false)
-}
-
-# If a subgoal has a non-state-based predicate, return failure (can't simulate)
-sp {simulate-task-execution*unlearnable*goal*predicate*return*failure
-   :o-support
+# copy result to superstate
+sp {simulate-task-execution*apply*return-operator-result
    (state <s> ^name simulate-task-execution
-              ^desired.{ << 1 2 3 4 5 >> } <gp>
-              ^quiescence t
-              ^superstate <ss>)
-   (<gp> ^type <> state <> relation)
+              ^operator <o>
+              ^superstate <ss>
+              ^quiescence t)
+   (<o> ^name return-operator-result
+        ^result <res>)
 -->
-   (<ss> ^operator-successful false)
+   (<ss> ^operator-result <res>)
 }

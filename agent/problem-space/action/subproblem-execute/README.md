@@ -92,11 +92,6 @@ add a generalized version to the TCN. When finished, it will add `^learn-subtask
 in order to learn the proposal rule. \
 `Impasse__State-No-Change/learn-proposal-rule`
 
-1. Once the proposal rule is learned and an operator appears on the state with the subtask handle `[sub-h]`, 
-the state-no-change will go away and the agent may then create a new subtask goal node in the goal graph via 
-`create-subtask-goal-node` (Only if there is not currently a goal). 
-`create-subtask-goal-node.soar
-
 1. When this learning is complete, the agent will go  back to the normal process of pushing a new task segment and performing the subtask. 
 
 ## 4. Execution Failure
