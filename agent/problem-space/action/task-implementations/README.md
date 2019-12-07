@@ -15,408 +15,705 @@ so the agent might do an approach subtask first.
 
 Note that the task goal is usually created from the task concept network in ```init-smem/actions.soar```
 
+* [ Pick Up ](#pickup)
+* [ Put Down ](#pickup)
 
-## Approach
+<!-- ===================================================================================== -->
+<!-- ================================== PHYSICAL ========================================= -->
+<!-- ===================================================================================== -->
 
-Have the robot drive up close to an object in order to interact with it. 
+# Physical Tasks
+Tasks intended to change something in the external environment
 
-```
-op_approach1(arg1:object)
+<!-- ==================================  PICK UP ========================================= -->
+<a name="pickup"></a>
 
-  Pre:  visible1(arg1), not-reachable1(arg1)
-  Goal: reachable1(arg1)
-  Post: +reachable1(arg1), -not-reachable1(arg1)
-```
-
-**send-approach-command**
-* Internal: Set `reachable1 is-reachable1` on the input link
-* Ai2Thor: Approach is a primitive action
-* Cozmo: Approach is a primitive action
-* Magicbot: Do custom calculations to extract-target-position and extract-object-position and first face, then drive to, the target's position
-
----
-
-## Ask
-
-Has the robot ask a question and then wait for a response from the instructor.
+## Pick Up
+Have the robot pick up an object that is grabbable, e.g. a cup
+> *Pick up the fork.*
 
 ```
-op_ask1(arg1:object)
-
-  Goal: execute-command(ask-command)
-  Model: +new_obj, +entity(new_obj), +answered1(new_obj), -answered1(other)
+([o] ^name op_pick-up1 
+     ^task-handle pick-up1
+     ^arg1 [type:object])  # The object to pick up
 ```
 
-**send-ask-command**
+*Proposal:* \
+`arm.holding-object(false) & grabbable1(arg1) & not-grabbed1(arg1) & confirmed1(arg1)` 
 
-All domains: Sends an outgoing-message to ask the question and pushes a new interaction segment to wait for the response. 
-When it gets an answer, it adds it to the world if necessary, then marks it with `modifier1=answered1` and completes.
+*Goal:* \
+`grabbed1(arg1)`
 
+*Action Model:* \
+`+grabbed1(arg1), -not-grabbed1(arg1), +holding-object(true), -holding-object(false)` \
+`-relation(arg1, any), -in1(arg1, cur-loc)`
+
+*Execute:* \
+requires `visible1(arg1) & reachable1(arg1)`
+* Internal: Change the held object on the input link
+* Ai2Thor: Pickup is a primitive action
+* Tabletop: Pickup is a primitive action 
+* Magicbot: Pickup is a primitive action 
+
+
+<!-- ==================================  PUT DOWN ========================================= -->
+<a name="putdown"></a>
+
+## Put Down
+Have the robot put down an object it is holding, at a particular place
+> *Put down the block. Put the can into the pantry. Put the fork onto the table.*
+
+```
+([o] ^name op_put-down1 
+     ^task-handle op_put-down1
+     ^arg1 [type:object])  # The object to put down
+     ^arg2 [type:partial-predicate]) # Where to put it (optional)
+```
+
+*Proposal:* \
+`grabbed1(arg1) -> no arg2` \
+`grabbed1(arg1) & confirmed1(dest) & surface1(dest) -> arg2=on2(dest)` \
+`grabbed1(arg1) & confirmed1(dest) & receptacle(dest) -> arg2=in2(dest)` \
+`grabbed1(arg1) & confirmed1(dest) & closed-receptacle(dest) & open2(dest) -> arg2=in2(dest)` 
+
+*Goal:* \
+`no arg2 -> not-grabbed1(arg1)` \
+`has arg2 -> arg2.relation(arg1, arg2.obj2)`
+
+*Action Model:* \
+`+arg2.relation(arg1, arg2.obj2), +in1(arg1, cur-loc) `\
+`-grabbed1(arg1), +not-grabbed(arg1), -holding-object(true), +holding-object(false)` 
+
+*Execute:* \
+requires `visible1(dest) and reachable1(dest)`
+* Internal: Remove the holding-object on the simulated input-link and add the arg2 relation
+* Ai2Thor: Put down is a primitive action
+* Tabletop: Put down is a primitive action
+* Magicbot: Put down is a primitive action
+* Cozmo: Put down is a primitive action 
+
+
+<!-- ================================== OPEN ========================================= -->
+<a name="open"></a>
+
+## Open
+
+Have the robot open an object, e.g. a door or a fridge
+> *Open the pantry.*
+
+```
+([o] ^name op_open1 
+     ^task-handle open1
+     ^arg1 [type:object])  # The object to open
+```
+
+*Proposal:* \
+`arm.holding-object(false) & closed2(arg1) & confirmed1(arg1)`
+
+*Goal:* \
+`open2(arg1)`
+
+*Action Model:* \
+`+open2(arg1), -closed2(arg1)`
+
+*Execute:* \
+requires `visible1(arg1) & reachable1(arg1)`
+* Internal: Change the predicate on the input link to open2
+* Ai2Thor: Open is a primitive action
+* Tabletop: Open is a primitive action (set-state)
+* Magicbot: Open is a primitive action (do-control-law set-state)
+
+
+<!-- ================================== CLOSE ========================================= -->
+<a name="close"></a>
 
 ## Close
 
 Have the robot close an object, e.g. a door or a fridge
+> *Close the oven.*
+
 
 ```
-op_close1(arg1:object)
-
-  Pre:  open2(arg1), holding-object(false)
-  Goal: closed2(arg1)
-  Post: +closed2(arg1), -open2(arg1)
+([o] ^name op_close1 
+     ^task-handle close1
+     ^arg1 [type:object])  # The object to close
 ```
 
-**send-close-command**, requires `visible1(arg1)` and `reachable1(arg1)`
+*Proposal:* \
+`arm.holding-object(false) & open2(arg1) & confirmed1(arg1)`
+
+*Goal:* \
+`closed2(arg1)`
+
+*Action Model:* \
+`+closed2(arg1), -open2(arg1)`
+
+*Execute:* \
+requires `visible1(arg1) & reachable1(arg1)`
 * Internal: Change the predicate on the input link to closed2
 * Ai2Thor: Close is a primitive action
 * Tabletop: Close is a primitive action (set-state)
 * Magicbot: Close is a primitive action (do-control-law set-state)
 
 
-## Explore
+<!-- ================================== TURN ON ========================================= -->
+<a name="turnon"></a>
 
-Have the robot drive to each room and scan it, usually trying to find an object
+## Turn On
 
-```
-op_explore1()
-
-  Goal: all locations are visited
-  Not used during planning/search
-```
-
-**propose-subtasks**
-* If it has not scanned the current location, propose `op_scan1()`
-* If it has scanned the current location, propose `op_go-to-waypoint(wp)` for the closest unvisited one
-
-
-## Face
-
-Have the robot turn towards an object. 
-Will get the object's position and calculate an angle to turn towards it. 
+Have the robot turn off an object
+> *Turn off the lamp.*
 
 ```
-op_face1(arg1:object)
-
-  Goal: execute-command(face)
-  Not used during planning/search
+([o] ^name op_turn-on1 
+     ^task-handle turn-on1
+     ^arg1 [type:object])  # The object to turn on
 ```
 
-**send-face-command**, requires a belief svs object for the object's position
+*Proposal:* \
+`arm.holding-object(false) & off2(arg1) & confirmed1(arg1)`
+
+*Goal:* \
+`on2(arg1)`
+
+*Action Model:* \
+`+on2(arg1), -off2(arg1)`
+
+*Execute:* \
+requires `visible1(arg1) & reachable1(arg1)`
+* Internal: Change the predicate on the input link to on2
+* Ai2Thor: Turn-on is a primitive action
+* Tabletop: Turn-on is a primitive action (set-state)
+* Magicbot: Turn-on is a primitive action (do-control-law set-state)
 
 
-## Find
+<!-- ================================== TURN OFF ========================================= -->
+<a name="turnoff"></a>
 
-Have the robot find an object so that it becomes visible
+## Turn Off
+
+Have the robot turn off an object, e.g. a light
+> *Turn off the stove.*
 
 ```
-op_find1(arg1:object)
-
-  Pre: object(arg1) OR person(arg1), not-visible1(arg1)
-  Goal: visible1(arg1)
-  Post: +visible1(arg1), -not-visible(arg1)
+([o] ^name op_turn-off1 
+     ^task-handle turn-off1
+     ^arg1 [type:object])  # The object to turn off
 ```
 
-**propose-subtasks**
-* If it has a known location in svs, propose op_face1(arg1)
-* If in1(arg1, loc) and loc != cur-loc, propose op_go-to-location1(arg1)
-* Propose op_explore1(until(visible1(arg1)))
+*Proposal:* \
+`arm.holding-object(false) & on2(arg1) & confirmed1(arg1)`
+
+*Goal:* \
+`off2(arg1)`
+
+*Action Model:* \
+`+off2(arg1), -on2(arg1)`
+
+*Execute:* \
+requires `visible1(arg1) & reachable1(arg1)`
+* Internal: Change the predicate on the input link to off2
+* Ai2Thor: Turn-off is a primitive action
+* Tabletop: Turn-off is a primitive action (set-state)
+* Magicbot: Turn-off is a primitive action (do-control-law set-state)
 
 
+<!-- ================================== GIVE ========================================= -->
+<a name="give"></a>
 
 ## Give
 
-Have the robot give a grabbed object to a person
+Have the robot give a held object to a person
+> *Give the soda to Greg.*
 
 ```
-op_give1(arg1:object, arg2:partial-predicate=to1(per))
-
-  Pre:  grabbed1(arg1), person(per)
-  Goal: holding1(per, arg1)
-  Post: +holding1(per, arg1), -grabbed1(arg1), +not-grabbed1(arg1), -holding-object(true), +holding-object(false)
+([o] ^name op_give1 
+     ^task-handle give1
+     ^arg1 [type:object])  # The object to give
+     ^arg2 [type:partial-predicate]) # to a person; arg2 = to1(per)
 ```
 
-**send-give-command**, requires `visible1(per)` and `reachable1(per)`
+*Proposal:* \
+`grabbed1(arg1) & person(per) & confirmed1(per)`
+
+*Goal:* \
+`holding1(per, arg1)`
+
+*Action Model:* \
+`+holding1(per, arg1), -grabbed1(arg1), +not-grabbed1(arg1),` \
+`-holding-object(true), +holding-object(false)`
+
+*Execute:* \
+requires `visible1(per) & reachable1(per)`
 * Internal: Add the holding1(per, arg1) predicate and mark as not grabbed
 * Magicbot: Give is a primitive command
 
 
-## Go to location
-
-Have the robot drive to another location in the world, e.g. the kitchen
-
-```
-op_go-to-location1(arg2:partial-predicate=to(loc))
-
-  Pre:  location(loc), loc != current-location
-  Goal: current-location(loc)
-  Post: +current-location(loc), -current-location(old_loc) (if exists)
-```
-
-Subtask: go-to-waypoint1 (all domains)
-
-## Go to waypoint
-
-Have the robot drive to the given waypoint via its waypoint graph. 
-(Note: this is only used internally to the robot)
-It will do an a-star search to find the shortest waypoint path
-using go-to-next-waypoint1 for edge traversal
-
-```
-op_go-to-location1(arg1:waypoint)
-
-Goal: current-waypoint(arg1)
-```
-
-Subtask: go-to-next-waypoint1 (all domains)
-
-
-## Go to next waypoint
-Have the robot drive to an adjacent waypoint in the waypoint graph. 
-(Note: this is only used internally to the robot). 
-How it does this depends on the domain
-
-Internal: just change the waypoint on the simulated input link
-
-
-## Go to xy
-Have the robot drive to the given coordinate
-(Note: this is only used internally to the robot). 
-
-
-## Open
-
-Have the robot open an object, e.g. a microwave or a cupboard
-
-```
-op_open1(arg1:object)
-
-  Pre:  closed2(arg1), holding-object(false)
-  Goal: open2(arg1)
-  Post: +open2(arg1), -closed2(arg1), 
-        if receptacle1(arg1) and in1(obj, arg1) then +visible1(obj)
-```
-
-**send-open-command**, requires visible1(arg1) and reachable1(arg1)
-* Internal: Change the predicate on the input link to open2
-* Ai2Thor: Open is a primitive action
-* Tabletop: Open is a primitive action (set-state)
-* Magicbot: Open is a primitive action (do-control-law set-state)
-
-## Orient
-
-Have the robot face a cardinal direction (north, south, east, west)
-
-```
-op_orient(arg1:concept)
-
-  Goal: execute-command(orient)
-  Not used during planning/search
-```
-
-**send-orient-command**, requires that the given concept is a cardinal direction
-
-
-## Pick Up
-
-Have the robot pick up an object that is grabbable, e.g. a cup
-
-```
-op_pick-up1(arg1:object)
-
-  Pre:  not-grabbed1(arg1), holding-object(false)
-  Goal: grabbed1(arg1)
-  Post: +grabbed1(arg1), -not-grabbed1(arg1), -holding-object(false), +holding-object(true)
-        remove any relations involving the object (e.g. on or right-of)
-        will change the location of the belief object for the tabletop
-```
-
-**send-pick-up-command**, requires visible1(arg1) and reachable1(arg1), 
-also if the object is inside a receptacle it must be open
-* Internal: Change the holding-object on the simulated input-link and remove all relations
-* Ai2Thor: Pickup is a primitive action
-* Tabletop: Pickup is a primitive action (set-state)
-* Magicbot: Pickup is a primitive action (do-control-law set-state)
-* Cozmo: Pickup is a primitive action 
-
-
-## Put Down
-
-Have the robot put down an object it is holding, at a particular place
-
-```
-1: Put Down
-op_put-down1(arg1:object) 
-
-  Pre:  grabbed1(arg1)
-  Goal: not-grabbed1(arg1)
-  Post: -grabbed1(arg1), +not-grabbed1(arg1), in1(arg1, cur-loc), -holding-object(true), +holding-object(false)
-
-2: Put Down on a surface
-op_put-down1(arg1:object, arg2:partial-predicate=on1(dest))
-
-  Pre:  grabbed1(arg1), surface1(dest)
-  Goal: on1(arg1, dest)
-  Post: -grabbed1(arg1), +not-grabbed1(arg1), on1(arg1, dest), in1(arg1, cur-loc), -holding-object(true), +holding-object(false)
-
-3: Put Down in a receptacle
-op_put-down1(arg1:object, arg2:partial-predicate=in1(dest))
-
-  Pre:  grabbed1(arg1) and receptacle1(dest) and open2(dest)
-        grabbed1(arg1) and receptacle1(dest) and !open2(dest) and !closed2(dest)
-  Goal: in1(arg1, dest)
-  Post: -grabbed1(arg1), +not-grabbed1(arg1), in1(arg1, dest), in1(arg1, cur-loc), -holding-object(true), +holding-object(false)
-
-4. Put Down in a location
-op_put-down1(arg1:object, arg2:partial-predicate=in1(loc))
-
-  Pre: grabbed1(arg1) and location(loc) 
-  Goal: in1(arg1, loc)
-  Post: -grabbed1(arg1), +not-grabbed1(arg1), in1(arg1, loc), -holding-object(true), +holding-object(false)
-        If loc != cur-loc, then +current(loc) and -current(cur-loc)
-```
-
-**send-pick-up-command**, requires visible1(arg1) and reachable1(arg1), 
-also if the object is inside a receptacle it must be open
-* Internal: Change the holding-object on the simulated input-link and remove all relations
-* Ai2Thor: Pickup is a primitive action
-* Tabletop: Pickup is a primitive action (set-state)
-* Magicbot: Pickup is a primitive action (do-control-law set-state)
-* Cozmo: Pickup is a primitive action 
-
-
-## Remember
-
-Remember one object as another, copies predicates from the second
-onto the first. E.g. *Remember the current location as the starting location* 
-will copy the starting predicate onto the current location. 
-
-```
-op_remember1(arg1:object, arg2:object)
-
-No preconditions/goal, but does work during search
-```
-
+<!-- ================================== REMOVE ========================================= -->
+<a name="remove"></a>
 
 ## Remove
 
-Removes an object from the world, only used with an internal world
+Removes an object from the world, only used with an internal world and game learning. 
 
 ```
-op_remove1(arg1:object)
-
-  Goal: arg1 is not in the world
-  Post: remove arg1
+([o] ^name op_remove1
+     ^task-handle remove1
+     ^arg1 [type:object])  # The object to remove
 ```
 
-**send-remove-command**
+*Goal:* `execute-command(remove)`
 * Internal: Removes the object from world.objects and any relations involving arg1
 
 
-## Say
-
-Speak a message, can be directed at a specific person
-
-```
-1: Say message without a target
-op_say1(arg1:object) 
-
-  Not used during planning/search
-  Goal: execute-command(say-command)
-
-2: Say message to a person
-op_say1(arg1:object, arg2:partial-predicate=to1(per))
-
-  Pre:  message(arg1), person(per), !heard(per, arg1)
-  Goal: heard(per, arg1)
-  Post: +heard(per, arg1)
-
-```
-
-**send-say-command**, requires visible1(per)
-
-All domains: Will send an outgoing-message and mark the sentence as being heard by the person. 
-Note that if the arg1 object has a ^sentence it will say that verbatim, otherwise it will describe the arg1 object. 
-
-
-## Scan
-
-Turn in place one full revolution, looking around the room
-
-```
-1: "Scan" - do a full turn
-op_scan1()
-
-  Not used during planning/search
-  Goal: execute-command(scan-command)
-
-2: "Scan until you see the apple" - Will turn until the clause is true
-op_scan1(until(visible1(apple)))
-  
-  Not used during planning/search
-  Goal: visible1(apple)
-
-Currently only used for the magicbot environment
-
-## Turn
-
-Have the robot turn right/left/around
-
-```
-op_turn1(arg1:concept)
-
-  Goal: execute-command(turn)
-  Not used during planning/search
-```
-
-**send-turn-command**, requires that the given concept is a relative direction
-* Magicbot: Turn the specified amount/direction
-
-## Turn Off
-
-Have the robot turn off an appliance, e.g. a microwave
-
-```
-op_turn-off1(arg1:object)
-
-  Pre:  activatable1(arg1), on2(arg1), holding-object(false)
-  Goal: off2(arg1)
-  Post: +off2(arg1), -on2(arg1)
-```
-
-**send-turn-off-command**, requires visible1(arg1) and reachable1(arg1)
-* Internal: Change the predicate on the input link to off2
-* Ai2Thor: Turn Off is a primitive action
-* Tabletop: Turn Off is a primitive action (set-state)
-* Magicbot: Turn Off is a primitive action (do-control-law set-state)
-
-
-## Turn On
-
-Have the robot turn on an appliance, e.g. a light switch 
-
-```
-op_turn-on1(arg1:object)
-
-  Pre:  activatable1(arg1), off2(arg1), holding-object(false)
-  Goal: on2(arg1)
-  Post: +on2(arg1), -off2(arg1)
-```
-
-**send-turn-on-command**, requires visible1(arg1) and reachable1(arg1), and closed2(arg1) if it has a door
-* Internal: Change the predicate on the input link to on2
-* Ai2Thor: Turn On is a primitive action
-* Tabletop: Turn On is a primitive action (set-state)
-* Magicbot: Turn On is a primitive action (do-control-law set-state)
-
+<!-- ================================== WRITE ========================================= -->
+<a name="write"></a>
 
 ## Write
 
 Write a value onto an object, used for logic puzzles such as sudoku. 
 
 ```
-op_write1(arg1:concept, arg2:partial-predicate=pred(dest))
+([o] ^name op_write1 
+     ^task-handle write1
+     ^arg1 [type:concept])  # The thing to write (e.g. number)
+     ^arg2 [type:partial-predicate]) # where to write (on2(dest))
+```
 
-Goal: arg1(dest) (the object in arg2 has the value arg1)
-Post: +arg1(dest)
-
-**send-write-command**
+*Goal:* `execute-command(write)`
 * Internal: Adds the predicate value=arg1 to the arg2 object
+
+
+<!-- ===================================================================================== -->
+<!-- ================================== MOVEMENT ========================================= -->
+<!-- ===================================================================================== -->
+
+# Movement
+
+Primary purpose is to move the robot in some way. 
+
+
+<!-- ================================== APPROACH ========================================= -->
+<a name="approach"></a>
+
+## Approach
+
+Have the robot drive up close to an object in order to interact with it. 
+> *Approach the table.*
+
+```
+([o] ^name op_approach1 
+     ^task-handle approach1
+     ^arg1 [type:object])  # The object to approach
+```
+
+*Proposal:* \
+`visible1(arg1) & not-reachable1(arg1)`
+
+*Goal:* \
+`reachable(arg1)`
+
+*Action Model:* \
+`+reachable1(arg1), -not-reachable1(arg1)`
+
+*Execute:*
+* Internal: Set `reachable1 is-reachable1` on the input link, make all others `not-reachable1`
+* Ai2Thor: Approach is a primitive action
+* Cozmo: Approach is a primitive action
+* Magicbot: Calculuate a target point to drive to (in front of the object), then use subtasks `drive-xy(target-pt) and face(arg1)`
+
+
+<!-- ================================== DRIVE ========================================= -->
+<a name="drive"></a>
+
+## Drive
+
+Have the robot drive forward, different environments use this in different ways. 
+> *Drive forward. Drive through the door. Drive until you see the kitchen.*
+
+No innate proposal rules, action models, or goals
+
+* Internal: can say 'Drive through the door', only real valid use
+* Ai2thor: go forward 1 step
+* Magicbot: start driving forward, should specify until or through clause
+* Cozmo: Go forward 300 mm
+
+
+
+<!-- ================================== TURN ========================================= -->
+<a name="turn"></a>
+
+## Turn
+
+Have the robot turn a given direction
+> *Turn right. Turn around.*
+
+```
+([o] ^name op_turn1 
+     ^task-handle turn1
+     ^arg1 [type:concept])     # Must be a relative direction (left/right/around)
+```
+
+*Goal:* `execute-command(turn)`
+* Magicbot: Turn the specified amount/direction
+
+
+<!-- ================================== FACE ========================================= -->
+<a name="face"></a>
+
+## Face
+
+Have the robot turn towards an object or coordinate
+> *Face the apple.*
+
+```
+([o] ^name op_face1 
+     ^task-handle face1
+     # One of the following:
+     ^arg1 [type:object]      # Face an object
+     ^arg1 [type:coordinate]) # Face a xy coordinate
+```
+No proposal rule or action model
+
+*Goal:* `execute-command(face)`
+* Magicbot, Cozmo: Calculate amount to turn (yaw), then propose `send-face-command(yaw)`
+
+
+<!-- ================================ GO TO LOC ======================================== -->
+<a name="gotoloc"></a>
+
+## Go to Location
+
+Have the robot drive to another location in the world
+> *Go to the kitchen*
+
+```
+([o] ^name op_go-to-location1 
+     ^task-handle go-to-location1
+     ^arg2 [type:partial-predicate]) # to a location; arg2 = to1(loc)
+```
+
+*Proposal:* \
+`location(loc) & confirmed1(loc) & !current-location(loc)`
+
+*Goal:* \
+`current-location(loc)`
+
+*Action Model:* \
+`+current-location(loc), -current-location(old)`
+
+*Execute:* (Internal, Cozmo, Magicbot)
+* `go-to-waypoint1(wp)` for the waypoint associated with the location
+
+
+<!-- ================================== GO TO WP ========================================= -->
+<a name="gotowp"></a>
+
+## Go to Waypoint
+Have the robot drive to the given waypoint via its waypoint graph. \
+(Internal use only, cannot speak a command)
+
+```
+([o] ^name op_go-to-waypoint1 
+     ^task-handle go-to-waypoint1
+     ^arg1 [type:waypoint]) # the goal waypoint
+```
+
+*Goal:* \
+`current-waypoint(arg1)`
+
+*Execute:* (Internal, Cozmo, Magicbot) \
+It will do an a-star search to find the shortest waypoint path
+using `go-to-next-waypoint1` for edge traversal
+
+
+<!-- =============================== GO TO NEXT WP ======================================= -->
+<a name="gotonextwp"></a>
+
+## Go to next waypoint
+Have the robot drive to an adjacent waypoint in the waypoint graph. \
+(Note: this is only used internally to the robot). 
+
+```
+([o] ^name op_go-to-next-waypoint1 
+     ^task-handle go-to-next-waypoint1
+     ^arg1 [type:waypoint]) # the goal waypoint
+```
+
+*Execute:*
+* Internal: just change the waypoint on the simulated input link
+* Magicbot: issue a series of `go-to-xy` subtasks to follow the waypoint edge
+* Cozmo: issue a series of `go-to-xy` subtasks to follow the waypoint edge
+
+
+<!-- ================================== GO TO XY ========================================= -->
+<a name="gotoxy"></a>
+
+## Go to xy
+Have the robot drive to the given coordinate (Magicbot, Cozmo). \
+(Note: this is only used internally to the robot). 
+
+```
+([o] ^name op_go-to-xy1 
+     ^task-handle go-to-xy1
+     ^arg1 [type:coordinate]) # the goal xy coordinate
+```
+
+Will issue a `face-command`, then do a `go-to-xy-command`
+
+
+<!-- ================================== LIFT ========================================= -->
+<a name="lift"></a>
+
+## Lift
+Have the cozmo robot raise/lower the forklift
+> *Lift up. Lift down.*
+
+```
+([o] ^name op_lift1 
+     ^task-handle lift1
+     ^arg1 [type:concept])     # should be up or down
+```
+
+No proposal rule or action model
+
+*Goal:* `execute-command(lift)`
+* Cozmo: Primitive action to move-lift either up or down
+
+
+<!-- ================================== ORIENT ========================================= -->
+<a name="orient"></a>
+
+## Orient
+Have the robot face a cardinal direction (north, south, east, west)
+> *Orient north.*
+
+```
+([o] ^name op_orient1 
+     ^task-handle orient1
+     ^arg1 [type:concept])  # direction to face (NSEW)
+```
+
+No proposal rule or action model
+
+*Goal:* `execute-command(orient)`
+* Magicbot: send an orient command to the robot
+
+
+<!-- ===================================================================================== -->
+<!-- ================================== PERCEPTION ======================================= -->
+<!-- ===================================================================================== -->
+
+# Perception
+
+Primary purpose is to change the sensory info or changing the perceptual status of an object.
+
+
+<!-- ================================== LOOK ========================================= -->
+<a name="look"></a>
+
+## Look
+Have the robot look up/down
+> *Look up. Look down.*
+
+```
+([o] ^name op_look1 
+     ^task-handle look1
+     ^arg1 [type:concept])     # should be up or down
+```
+No proposal rule or action model
+
+*Goal:* `execute-command(look)`
+* Ai2Thor: Primitive action to Look-Up or Look-Down
+* Cozmo: Primitive action to move-head either up or down
+
+
+<!-- ================================== VIEW ========================================= -->
+<a name="view"></a>
+
+## View
+
+Tries to move so that the given object is in view (has to be confirmed)
+> *View the book.*
+
+```
+([o] ^name op_view1 
+     ^task-handle view1
+     ^arg1 [type:object])  # The object to view
+```
+
+*Proposal:* \
+`object(arg1) or person(arg1) & confirmed1(arg1) & not-visible1(arg1)`
+
+*Goal:* \
+`visible1(arg1)`
+
+*Action Model:* \
+`+visible1(arg1), -not-visible1(arg1)`
+
+*Execute:* (Magicbot, Cozmo)
+* `op_face1(arg1)` try facing the object
+* `op_open1(rec)` if inside a closed receptacle
+
+
+<!-- ================================== FIND ========================================= -->
+<a name="find"></a>
+
+## Find
+
+Tries to find an unconfirmed object (in the world, but no belief object)
+> *Find a stapler. Find the garbage*
+
+```
+([o] ^name op_find1 
+     ^task-handle find1
+     ^arg1 [type:object])  # The object to find
+```
+
+*Proposal:* \
+`object(arg1) or person(arg1) & not-confirmed1(arg1)`
+
+*Goal:* \
+`confirmed1(arg1)`
+
+*Action Model:* \
+`+confirmed1(arg1), -not-confirmed(arg1), +visible1(arg1), -not-visible1(arg1)`
+
+*Execute:* (Internal, Magicbot, Cozmo)
+* `op_go-to-location(loc)` if the object is in a known location
+* `op_scan1(until(visible1(arg1)))` if we haven't tried that yet (not internal)
+* `get-find-help` Ask the instructor for help
+* `op_explore1(until(visible1(arg1)))` search the entire environment
+
+
+<!-- ================================== SCAN ========================================= -->
+<a name="scan"></a>
+
+## Scan
+Turn in place one full revolution, looking around the room
+> *Scan the room. Scan until you see the book.*
+
+```
+([o] ^name op_scan1
+     ^task-handle scan1
+     ^until-clause [type:until-clause]) # Optionally specify end of scan
+```
+
+*Goal:* `execute-command(scan)`
+* Magicbot: Do a full turn, stop if until clause is satisfied
+* Cozmo: Do a full turn, stop if until clause is satisfied
+
+
+<!-- ================================== EXPLORE ========================================= -->
+<a name="explore"></a>
+
+## Explore
+
+Have the robot drive to each room and scan it, usually trying to find an object
+> *Explore until you see the garbage.*
+
+```
+([o] ^name op_explore1 
+     ^task-handle explore1
+     ^until-clause [type:until]) # usually present
+```
+
+No proposal rule or action model
+
+*Goal:* until clause is met, or all waypoints were scanned
+
+*Execute:* (Internal, Magicbot, Cozmo)
+* If it has not scanned the current wp, propose `op_scan1()`
+* If it has scanned the current wp, propose `op_go-to-waypoint(wp)` for the closest unvisited wp
+
+
+
+<!-- ===================================================================================== -->
+<!-- ================================ COMMUNICATION ====================================== -->
+<!-- ===================================================================================== -->
+
+# Communication
+
+<!-- ================================== SAY ========================================= -->
+<a name="say"></a>
+
+## Say
+Speak a message, can be directed at a specific person
+> *Say "Hello". Say the message to Bob.*
+
+```
+([o] ^name op_say1
+     ^task-handle say1
+     ^arg1 [type:object])  # The message/object to say
+     ^arg2 [type:partial-predicate]) # to a person (optional); arg2 = to1(per)
+```
+
+*Proposal:* \
+`message(arg1), person(per), confirmed1(per), !heard2(per, arg1)`
+
+*Goal:* \
+`if arg2 -> heard2(per, arg1)` \
+`no arg2 -> execute-command(say)`
+
+*Action Model:* \
+`+heard2(per, arg1)`
+
+*Execute:* (All domains) \
+requires `visible1(per)`
+* Send an outgoing-message and mark the sentence as being heard by the person
+* If arg1 has a sentence, will say verbatim, otherwise, will describe the object
+
+
+<!-- ================================== ASK ========================================= -->
+<a name="ask"></a>
+
+## Ask
+Has the robot ask a question and then wait for a response from the instructor.
+> *Ask "What time is the meeting?"*
+
+
+```
+([o] ^name op_ask1
+     ^task-handle ask1
+     ^arg1 [type:object]) # a message object with a sentence to ask
+```
+No proposal rule
+
+*Goal:* \
+`execute-command(ask)`
+
+*Action Model:* \
+`+new_obj, +entity(new_obj), +answered1(new_obj), -answered1(other)`
+
+*Execute:*
+* All Domains: 
+Sends an outgoing-message to ask the question and pushes a new interaction segment to wait for the response. 
+When it gets an answer, it adds the answered object to the world if necessary, then marks it with `modifier1=answered1` and completes.
+
+
+<!-- ===================================================================================== -->
+<!-- ==================================== MENTAL ========================================= -->
+<!-- ===================================================================================== -->
+
+# Mental
+
+<!-- ================================== REMEMBER ========================================= -->
+<a name="remember"></a>
+
+## Remember
+Remember one object as another, copies predicates from the second
+onto the first. E.g. *Remember the current location as the starting location* 
+will copy the starting predicate onto the current location. 
+
+```
+([o] ^name op_xxx 
+     ^task-handle give1
+     ^arg1 [type:object])  # The object to give
+     ^arg2 [type:partial-predicate]) # to a person; arg2 = to1(per)
+```
+```
+op_remember1(arg1:object, arg2:object)
+
+No preconditions/goal, but does work during search
+```
+
