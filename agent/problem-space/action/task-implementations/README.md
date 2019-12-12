@@ -74,7 +74,7 @@ Have the robot put down an object it is holding, at a particular place
 `grabbed1(arg1) -> no arg2` \
 `grabbed1(arg1) & confirmed1(dest) & surface1(dest) -> arg2=on2(dest)` \
 `grabbed1(arg1) & confirmed1(dest) & receptacle(dest) -> arg2=in2(dest)` \
-`grabbed1(arg1) & confirmed1(dest) & closed-receptacle(dest) & open2(dest) -> arg2=in2(dest)` 
+`grabbed1(arg1) & confirmed1(dest) & closeable-receptacle(dest) & open2(dest) -> arg2=in2(dest)` 
 
 *Goal:* \
 `no arg2 -> not-grabbed1(arg1)` \
