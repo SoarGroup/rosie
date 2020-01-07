@@ -1,0 +1,60 @@
+sp {retrospective-learning*propose*calculate-start-episode-id
+   (state <s> ^name retrospective-learning
+             -^start-episode-id)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name calculate-start-episode-id)
+}
+
+sp {retrospective-learning*apply*calculate-start-episode-id
+   (state <s> ^name retrospective-learning
+              ^operator.name calculate-start-episode-id
+              ^task-handle <task-handle>
+              ^epmem.command <cmd>)
+-->
+   (<cmd> ^query <q>)
+   (<q> ^task-stack.bottom <bot>)
+   (<bot> ^start-of-execution true
+          ^task-operator.task-handle <task-handle>)
+}
+
+sp {retrospective-learning*apply*calculate-start-episode-id*success
+   (state <s> ^name retrospective-learning
+              ^operator.name calculate-start-episode-id
+              ^epmem <epmem>)
+   (<epmem> ^result <res>
+            ^result.retrieved <episode>
+            ^command <cmd>)
+   (<res> ^success <q>
+          ^retrieved <episode>
+          ^memory-id <ep-id>
+          ^normalized-match-score 1.0)
+   (<cmd> ^query <q>)
+-->
+   (<s> ^start-episode-id (+ <ep-id> 5)) ## Add 5 just so we don't get it again
+   (<cmd> ^query <q> -)
+}
+
+sp {retrospective-learning*apply*calculate-start-episode-id*failure*no*exact*match
+   (state <s> ^name retrospective-learning
+              ^operator.name calculate-start-episode-id
+              ^epmem <epmem>)
+   (<epmem> ^result.normalized-match-score < 1.0
+            ^command <cmd>)
+   (<cmd> ^query <q>)
+-->
+   (<s> ^start-episode-id none)
+   (<cmd> ^query <q> -)
+}
+        
+sp {retrospective-learning*apply*calculate-start-episode-id*failure*no*match
+   (state <s> ^name retrospective-learning
+              ^operator.name calculate-start-episode-id
+              ^epmem <epmem>)
+   (<epmem> ^result.failure
+            ^command <cmd>)
+   (<cmd> ^query <q>)
+-->
+   (<s> ^start-episode-id none)
+   (<cmd> ^query <q> -)
+}

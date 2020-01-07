@@ -48,10 +48,11 @@ to remove the flag from the current-task-segment.
 1. `smem-query`: Retrieve the Task Concept Network for the current task \
 `retrieve-tcn.soar`
 
-1. When the agent needs to go to the next goal in the goal graph 
-(including the first one), it proposes `advance-current-goal` \
-`advance-current-goal.soar`
+1. The agent initializes the current-goal to the start-goal node in the TCN goal-graph \
+`init-current-goal.soar`
 
+1. If the goal has any implicit object arguments, add them to the world \
+`add-object-to-world.soar`
 
 ## 2. Propose and execute subtasks
 
@@ -71,14 +72,17 @@ These must propose an operator with a name, task-handle, and item-type task-oper
 remove the child task from the stack \
 `pop-task-segment.soar` and `task-utils/pop-task-segment`
 
+1. If the current goal is satisfied, select the next one via the goal-graph \
+`select-next-goal.soar`
+
 
 ## 3. Handle subtasks from instruction
 
 If the agent has to ask the instructor for what to do next and they replied with a new task command, 
 the agent has to add it to the TCN and learn a new proposal rule. 
 
-1. If the agent cannot determine what to do next, it will propose `initiate-interaction` with type get-next-goal. \
-`initiate-interaction.soar`
+1. If the agent cannot determine what to do next, it will enter a State No Change where where it will propose `initiate-interaction` with type get-next-goal. \
+`Impasse__State-No-Change/initiate-interaction.soar`
 
 1. If the task stack has a `^push-task-operator` with `^task-source instruction`, it will first propose `add-subtask-to-tcn` to 
 add a generalized version to the TCN. When finished, it will add `^learn-subtask-proposal [subtask-handle]` to the current-task-segment. \
@@ -88,15 +92,14 @@ add a generalized version to the TCN. When finished, it will add `^learn-subtask
 in order to learn the proposal rule. \
 `Impasse__State-No-Change/learn-proposal-rule`
 
-1. Once the proposal rule is learned and an operator appears on the state with the subtask handle `[sub-h]`, 
-the state-no-change will go away and the agent may then create a new subtask goal node in the goal graph via 
-`create-subtask-goal-node` (Only if there is not currently a goal). 
-`create-subtask-goal-node.soar
-
 1. When this learning is complete, the agent will go  back to the normal process of pushing a new task segment and performing the subtask. 
 
+## 4. Execution Failure
 
-## 4. Finishing a task
+If the agent detects an execution failure, it will propose handle-execution-failure, which will go into a substate. 
+(see `handle-execution-failure`)
+
+## 5. Finishing a task
 
 When the task is complete, either due to success or failure, use `complete-task` to exit the substate (puts a status on the task segment).
 

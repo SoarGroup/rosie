@@ -1,5 +1,13 @@
 ### Internally modeling the go-to1 task ###
 
+sp {problem-space*action*internal*elaborate*op_go-to-location1*known-action-model
+   (state <s> ^problem-space.execution-type internal
+              ^operator <o> +)
+   (<o> ^name op_go-to-location1)
+-->
+   (<o> ^known-action-model true)
+}
+
 # add the new current-location and mark it as visible
 sp {problem-space*action*internal*apply*op_go-to-location1*add*new*location
    (state <s> ^problem-space.name action
@@ -17,7 +25,7 @@ sp {problem-space*action*internal*apply*op_go-to-location1*add*new*location
    (<preds> ^modifier1 current1)
 }
 
-# if old current-location is none, remove it
+# remove the previous current location
 sp {problem-space*action*internal*apply*op_go-to-location1*remove*old*location
    (state <s> ^problem-space.name action
               ^problem-space.execution-type internal
@@ -45,8 +53,8 @@ sp {problem-space*action*internal*apply*op_go-to-location1*remove*old*location*m
    (<preds> ^modifier1 current1 -)
 }
 
-# Any objects that are in the new location are marked as visible
-sp {problem-space*action*internal*apply*op_go-to-location1*mark*new*objs*visible
+# Any objects that are in the new location are marked as confirmed
+sp {problem-space*action*internal*apply*op_go-to-location1*mark*new*objs*confirmed
    (state <s> ^problem-space.name action
               ^problem-space.execution-type internal
               ^operator <o>
@@ -59,13 +67,14 @@ sp {problem-space*action*internal*apply*op_go-to-location1*mark*new*objs*visible
               ^instance <i>)
    (<i> ^1 <obj> ^2 <new-loc>)
    (<obj> ^predicates <preds>)
+   (<preds> ^is-confirmed1 not-confirmed1)
 -->
-   (<preds> ^is-visible1 not-visible1 -
-            ^is-visible1 visible1)
+   (<preds> ^is-confirmed1 not-confirmed1 -
+            ^is-confirmed1 confirmed1)
 }
 
-# Any objects that are in the old location are marked as not visible
-sp {problem-space*action*internal*apply*op_go-to-location1*mark*old*objs*not-visible
+# Any objects that are in the old location are marked as not confirmed
+sp {problem-space*action*internal*apply*op_go-to-location1*mark*old*objs*not-confirmed
    (state <s> ^problem-space.name action
               ^problem-space.execution-type internal
               ^operator <o>
@@ -79,9 +88,33 @@ sp {problem-space*action*internal*apply*op_go-to-location1*mark*old*objs*not-vis
               ^instance <i>)
    (<i> ^1 <obj> ^2 <old-loc>)
    (<obj> ^predicates <preds>)
+   (<preds> ^is-confirmed1 confirmed1
+           -^affordance1 grabbable1)
    (<robot> ^current-location { <old-loc> <> <new-loc> })
 -->
-   (<preds> ^is-visible1 visible1 -
-            ^is-visible1 not-visible1)
+   (<preds> ^is-confirmed1 confirmed1 -
+            ^is-confirmed1 not-confirmed1)
 }
 
+sp {problem-space*action*internal*apply*op_go-to-location1*mark*old*objs*not-confirmed*not*grabbed
+   (state <s> ^problem-space.name action
+              ^problem-space.execution-type internal
+              ^operator <o>
+              ^world <world>)
+   (<o> ^name op_go-to-location1
+        ^arg2.{2} <new-loc>)
+   (<world> ^predicates.predicate <in-pred>
+            ^objects.object <obj>
+            ^robot <robot>)
+   (<in-pred> ^handle in1
+              ^instance <i>)
+   (<i> ^1 <obj> ^2 <old-loc>)
+   (<obj> ^predicates <preds>)
+   (<preds> ^is-confirmed1 confirmed1
+            ^affordance1 grabbable1
+            ^is-grabbed1 not-grabbed1)
+   (<robot> ^current-location { <old-loc> <> <new-loc> })
+-->
+   (<preds> ^is-confirmed1 confirmed1 -
+            ^is-confirmed1 not-confirmed1)
+}

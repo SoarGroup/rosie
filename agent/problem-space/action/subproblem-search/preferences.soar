@@ -10,94 +10,18 @@ sp {subproblem*search*best*preference*command*operators
    (<s> ^operator <o> >)
 }
 
-
-sp {subproblem*search*elaborate*subtask-obj-info
-   (state <s> ^problem-space <ps>
-              ^operator <o> +)
-   (<ps> ^name action
-         ^subproblem search
-         ^propose-subtasks true)
-   (<o> ^item-type task-operator)
--->
-   (<s> ^subtask-obj-info <info>)
-   (<info> ^subtask-op <o>)
-}
-
-sp {subproblem*search*elaborate*subtask-obj-info*object-arg*object*arg
+# Even if the depth is exceeded, allow command-operators to fire
+sp {subproblem*search*prefer*command-operator*over*exceed-depth
    (state <s> ^problem-space.subproblem search
-              ^subtask-obj-info <info>)
-   (<info> ^subtask-op.<arg-name> <arg>)
-   (<arg> ^arg-type object
-          ^id <obj>)
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^item-type command-operator)
+   (<o2> ^name exceed-depth)
 -->
-   (<info> ^object-arg <obj>)
+   (<s> ^operator <o1> > <o2>)
 }
 
-sp {subproblem*search*elaborate*subtask-obj-info*task-object*predicate*arg
-   (state <s> ^problem-space.subproblem search
-              ^subtask-obj-info <info>)
-   (<info> ^subtask-op.<arg-name> <arg>)
-   (<arg> ^arg-type partial-predicate
-          ^2 <obj>)
--->
-   (<info> ^object-arg <obj>)
-}
-
-sp {subproblem*search*elaborate*subtask-obj-info*task-object
-   (state <s> ^problem-space.subproblem search
-              ^subtask-obj-info <info>
-              ^task-objects <objs>)
-   (<info> ^object-arg <obj>)
-   (<objs> ^object <obj>)
--->
-   (<info> ^task-object <obj>)
-}
-
-sp {subproblem*search*elaborate*subtask-obj-info*non-task-object
-   (state <s> ^problem-space.subproblem search
-              ^subtask-obj-info <info>
-              ^task-objects <objs>)
-   (<info> ^object-arg <obj>)
-   (<objs> -^object <obj>)
--->
-   (<info> ^non-task-object <obj>)
-}
-
-#### SEARCH PHASE 1
-# Only use operators where ALL objects are related to the current task
-
-sp {subproblem*search*search-phase*1*reject*subtask*operator*has*non-task-object
-   (state <s> ^problem-space <ps>
-              ^operator <o> +
-             -^look-ahead-operator <o>
-              ^subtask-obj-info <info>)
-   (<ps> ^subproblem search
-         ^search-phase 1)
-   (<info> ^subtask-op <o>
-           ^non-task-object <any>)
--->
-   (<s> ^operator <o> -)
-}
-
-#### SEARCH PHASE 2
-# On the top-level search, propose everything
-# Under that, propose tasks where at least 1 object is task related
-
-sp {subproblem*search*search-phase*2*reject*subtask*operator*has*no*task-object
-   (state <s> ^problem-space <ps>
-              ^operator <o> +
-             -^look-ahead-operator <o>
-              ^current-evaluation-depth < 3
-              ^subtask-obj-info <info>)
-   (<ps> ^subproblem search
-         ^search-phase 2)
-   (<info> ^subtask-op <o>
-           ^object-arg <obj>
-          -^task-object <any>)
--->
-   (<s> ^operator <o> -)
-}
-
+# Reject an operator with the same name as the parent task
 sp {subproblem*search*reject*same*task*as*supertask
    (state <s> ^problem-space.subproblem search
               ^task-operator <task-op>
@@ -108,12 +32,3 @@ sp {subproblem*search*reject*same*task*as*supertask
    (<s> ^operator <o> -)
 }
 
-sp {subproblem*search*prefer*command-operator*over*exceed-depth
-   (state <s> ^problem-space.subproblem search
-              ^operator <o1> +
-              ^operator <o2> +)
-   (<o1> ^item-type command-operator)
-   (<o2> ^name exceed-depth)
--->
-   (<s> ^operator <o1> > <o2>)
-}

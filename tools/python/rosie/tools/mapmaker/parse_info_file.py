@@ -2,7 +2,7 @@
 
 import sys
 from rosie.tools.mapmaker.file_reader import FileReader
-from rosie.tools.mapmaker.sim_objects import BoxObject
+import rosie.tools.mapmaker.sim_objects as sim_objects
 
 from math import *
 
@@ -32,7 +32,11 @@ class WorldInfo:
 			word = reader.nextWord()
 			while word != None:
 				itemtype = word
-				if itemtype == "scale":
+				if hasattr(sim_objects, itemtype):
+					# If itemtype is a class in sim_objects, instantiate it 
+					cls = getattr(sim_objects, itemtype)
+					self.objects.append(cls().read_info(reader, self.scale))
+				elif itemtype == "scale":
 					self.scale = float(reader.nextWord())
 				elif itemtype == "robot":
 					self.robot = RobotInfo().read_info(reader, self.scale)
@@ -44,8 +48,6 @@ class WorldInfo:
 					self.walls.append(WallInfo().read_info(reader, self.scale))
 				elif itemtype == "wallchain":
 					self.walls.extend(parseWallChain(reader, self.scale))
-				elif itemtype == "BoxObject":
-					self.objects.append(BoxObject().read_info(reader, self.scale))
 				word = reader.nextWord()
 		except Exception as e:
 			raise Exception("Parsing Error on line " + str(reader.lineNum) + ":\n" + str(e))

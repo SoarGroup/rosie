@@ -11,11 +11,8 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.*;
 
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.AudioFileFormat;
@@ -23,18 +20,8 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
 import javax.sound.sampled.TargetDataLine;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JTextField;
-import javax.swing.JTextPane;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.DefaultCaret;
-import javax.swing.text.Style;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
-import javax.swing.JPanel;
+import javax.swing.*;
+import javax.swing.text.*;
 
 import edu.umich.rosie.language.LanguageConnector.MessageType;
 import edu.umich.rosie.language.IMessagePasser.*;
@@ -71,12 +58,16 @@ public class ChatPanel extends JPanel implements IMessagePasser.IMessageListener
     
     private IMessagePasser messageLogger;
 
+	private BlockingQueue<RosieMessage> queuedMessages = new LinkedBlockingQueue<RosieMessage>();
+
     public ChatPanel(SoarAgent agent, JFrame parentFrame, IMessagePasser messageLogger) {
         this.soarAgent = agent;
         
         setupGUI(parentFrame);
 		setupStyles();
-        
+
+		new ChatDocUpdater().execute();
+
 		this.messageLogger = messageLogger;
         this.messageLogger.addMessageListener(this);
     }
@@ -96,51 +87,11 @@ public class ChatPanel extends JPanel implements IMessagePasser.IMessageListener
     
     @Override
     public void receiveMessage(RosieMessage message){
-    	synchronized(outputLock){
-	    	Style msgStyle = chatDoc.getStyle(message.type.toString());
-			DateFormat dateFormat = new SimpleDateFormat("mm:ss:SSS");
-			//int dc = soarAgent.getAgent().GetDecisionCycleCounter();
-			Date d = new Date();
-			
-			//String fullMessage = dc + " " + dateFormat.format(d) + " ";
-			//String fullMessage = dateFormat.format(d) + " ";
-			String fullMessage = "";
-			switch(message.type){
-			case INSTRUCTOR_MESSAGE:
-				fullMessage += "Mentor: ";
-				break;
-			case AGENT_MESSAGE:
-				fullMessage += "Agent: " ;
-				break;
-            default:
-                // Don't handle other types
-                return;
-			}
-			
-			fullMessage += message.message + "\n";
-			System.out.println(fullMessage);
-
-			//try{
-			//	int origLength = chatDoc.getLength();
-			//	chatDoc.insertString(origLength, fullMessage, msgStyle);
-			//} catch (BadLocationException e){
-			//	// Should never encounter this
-			//	System.err.println("Failed to add message to chat window");
-			//}
-	
-			// AM: Will make it auto scroll to bottom
-			int end = chatDoc.getLength();
-			tPane.select(end, end);
-
-    		switch(message.type){
-	    	case INSTRUCTOR_MESSAGE:
-	            chatField.setText("");
-	            chatField.requestFocus();
-	    		break;
-	    	case AGENT_MESSAGE:
-	    		break;
-	    	}
-    	}
+		try{
+			queuedMessages.put(message);
+		} catch (Exception e){ 
+			System.err.println("Error adding message " + message.message + " to queuedMessages");
+		}
     }
     
     
@@ -224,6 +175,68 @@ public class ChatPanel extends JPanel implements IMessagePasser.IMessageListener
         Style instructorStyle = chatDoc.addStyle(MessageType.INSTRUCTOR_MESSAGE.toString(), defaultStyle);
         StyleConstants.setForeground(instructorStyle, Color.BLACK);
     }    
+
+	/*********************************
+	 * Setup Chat Document Updater
+	 ********************************/
+
+	private class ChatDocUpdater extends SwingWorker<Void, RosieMessage >{
+		@Override
+		public Void doInBackground(){
+			List<RosieMessage> messages = new LinkedList<RosieMessage>();
+			while(!Thread.interrupted()){
+				RosieMessage nextMessage = queuedMessages.poll();
+				if(nextMessage == null){
+					// Got all messages
+					publish(messages.toArray(new RosieMessage[messages.size()]));
+					messages.clear();
+				} else {
+					messages.add(nextMessage);
+				}
+			}
+			publish(messages.toArray(new RosieMessage[messages.size()]));
+			return null;
+		}
+
+		@Override
+		protected void process(List<RosieMessage> messages){
+			for(RosieMessage message : messages){
+				Style msgStyle = chatDoc.getStyle(message.type.toString());
+				DateFormat dateFormat = new SimpleDateFormat("mm:ss:SSS");
+				//int dc = soarAgent.getAgent().GetDecisionCycleCounter();
+				Date d = new Date();
+				
+				//String fullMessage = dc + " " + dateFormat.format(d) + " ";
+				//String fullMessage = dateFormat.format(d) + " ";
+				String fullMessage = "";
+				switch(message.type){
+				case INSTRUCTOR_MESSAGE:
+					fullMessage += "Mentor: ";
+					break;
+				case AGENT_MESSAGE:
+					fullMessage += "Agent: " ;
+					break;
+				default:
+					// Don't handle other types
+					return;
+				}
+				
+				fullMessage += message.message + "\n";
+
+				try{
+					int origLength = chatDoc.getLength();
+					chatDoc.insertString(origLength, fullMessage, msgStyle);
+				} catch (BadLocationException e){
+					// Should never encounter this
+					System.err.println("Failed to add message to chat window");
+				}
+			}
+
+			// AM: Will make it auto scroll to bottom
+			int end = chatDoc.getLength();
+			tPane.select(end, end);
+		}
+	}
     
     
     /*******************************************************
@@ -293,5 +306,7 @@ public class ChatPanel extends JPanel implements IMessagePasser.IMessageListener
     	history.add(msg);
     	historyIndex = history.size();
     	messageLogger.sendMessage(msg, MessageType.INSTRUCTOR_MESSAGE);
+		chatField.setText("");
+		chatField.requestFocus();
     }
 }

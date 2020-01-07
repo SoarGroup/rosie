@@ -1,0 +1,137 @@
+### PROPOSAL
+
+sp {learn-goal-definition*propose*add-goal-node-to-tcn
+   (state <s> ^name learn-goal-definition
+              ^generalized-goal <gpreds>
+             -^goal-node)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name add-goal-node-to-tcn
+        ^goal-node <goal>
+        ^goal-predicates <gpreds>)
+}
+
+### ELABORATIONS
+
+sp {learn-goal-definition*elaborate*add-goal-node-to-tcn*goal-conditions
+   (state <s> ^name learn-goal-definition
+              ^operator <o> +
+              ^generalize-task-argument <arg>)
+   (<o> ^name add-goal-node-to-tcn)
+   (<arg> ^arg-type predicate-set
+          ^type goal-conditions
+          ^general-arg-rep <conds>)
+-->
+   (<o> ^goal-conditions <conds>)
+}
+
+### APPLICATION
+
+# Create the base node structure
+sp {learn-goal-definition*apply*add-goal-node-to-tcn*create*goal-node
+   (state <s> ^name learn-goal-definition
+              ^operator <o>
+              ^task-concept-network.handle <task-h>)
+   (<o> ^name add-goal-node-to-tcn
+        ^goal-node <goal>
+        ^goal-predicates.pred-count <pc>)
+-->
+   (<s> ^goal-node <goal>)
+   (<goal> ^item-type task-goal
+           ^handle (make-constant-symbol (concat <task-h> |goal|))
+           ^pred-count <pc>)
+
+   (<s> ^to-store <goal>)
+}
+
+# Copy the predicates onto the new goal
+sp {learn-goal-definition*apply*add-goal-node-to-tcn*copy*goal*predicates
+   (state <s> ^name learn-goal-definition
+              ^operator <o>)
+   (<o> ^name add-goal-node-to-tcn
+        ^goal-node <goal>
+        ^goal-predicates.{ <n> << 1 2 3 4 5 >> } <p>)
+-->
+   (<goal> ^<n> <p>)
+
+   (<s> ^to-store <p>)
+}
+
+# Add a next link from the current goal to the new one, without conditions
+sp {learn-goal-definition*apply*add-goal-node-to-tcn*create*next
+   (state <s> ^name learn-goal-definition
+              ^operator <o>
+              ^current-goal-id <cur-goal>)
+   (<o> ^name add-goal-node-to-tcn
+        ^goal-node <goal>
+       -^goal-conditions)
+-->
+   (<cur-goal> ^next <next>)
+   (<next> ^goal <goal>)
+   
+   (<s> ^to-store <cur-goal> <next>)
+}
+
+# Add a next link from the current goal to the new one, with conditions
+sp {learn-goal-definition*apply*add-goal-node-to-tcn*create*next*conditions
+   (state <s> ^name learn-goal-definition
+              ^operator <o>
+              ^current-goal-id <cur-goal>)
+   (<o> ^name add-goal-node-to-tcn
+        ^goal-node <goal>
+        ^goal-conditions <conds>)
+-->
+   (<cur-goal> ^next <next>)
+   (<next> ^goal <goal>
+           ^conditions <conds>)
+   
+   (<s> ^to-store <cur-goal> <next> <conds>)
+}
+
+# If this goal is the final goal, add a terminal goal afterwards
+sp {learn-goal-definition*apply*add-goal-node-to-tcn*final-goal*create*terminal-goal
+   (state <s> ^name learn-goal-definition
+              ^operator <o>
+              ^final-goal true
+              ^task-concept-network.handle <task-h>)
+   (<o> ^name add-goal-node-to-tcn
+        ^goal-node <goal>)
+-->
+   (<goal> ^next <next>)
+   (<next> ^goal <term-goal>)
+   (<term-goal> ^handle (make-constant-symbol (concat <task-h> |term|))
+                ^item-type terminal-goal)
+
+   (<s> ^to-store <next> <term-goal>)
+}
+
+# Make sure to store the goal predicates/conditions to a depth of 3
+
+sp {learn-goal-definition*apply*add-goal-node-to-tcn*store*predicate*level1
+   (state <s> ^name learn-goal-definition
+              ^operator <o>)
+   (<o> ^name add-goal-node-to-tcn
+        ^{ << goal-predicates goal-conditions >> }.{ << 1 2 3 4 5 >> } <val>)
+-->
+   (<s> ^to-store <val>)
+}
+
+sp {learn-goal-definition*apply*add-goal-node-to-tcn*store*predicate*level2
+   (state <s> ^name learn-goal-definition
+              ^operator <o>)
+   (<o> ^name add-goal-node-to-tcn
+        ^{ << goal-predicates goal-conditions >> }.<pnum>.{ << id 1 2 3 4 5 >> } <val>)
+-->
+   (<s> ^to-store <val>)
+}
+
+sp {learn-goal-definition*apply*add-goal-node-to-tcn*store*predicate*level3
+   (state <s> ^name learn-goal-definition
+              ^operator <o>)
+   (<o> ^name add-goal-node-to-tcn
+        ^{ << goal-predicates goal-conditions >> }.<pnum>.<anum>.{ << default imagined >> } <val>)
+-->
+   (<s> ^to-store <val>)
+}
+
+

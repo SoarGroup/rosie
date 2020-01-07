@@ -1,0 +1,55 @@
+# We know that the agent has the proposal rule learned when
+#   it proposes a subtask operator that matches the reference-operator
+
+### Propose all tasks the agent knows how to do in the current state
+
+sp {learn-proposal-rule*elaborate*problem-space*propose-subtasks
+   (state <s> ^name learn-proposal-rule
+              ^reference-operator <op>
+              ^problem-space <ps>)
+-->
+   (<ps> ^propose-subtasks true)
+}
+
+### Match the proposed tasks against the reference-operator
+
+sp {learn-proposal-rule*elaborate*match-task-operator
+   (state <s> ^name learn-proposal-rule
+              ^reference-operator <op>)
+-->
+   (<s> ^match-task-operator <mto>)
+   (<mto> ^task-operator <op>
+          ^candidate-tasks <cands>)
+}
+
+sp {learn-proposal-rule*elaborate*match-task-operator*candidate-task-operator
+   (state <s> ^name learn-proposal-rule
+              ^operator <o> +
+              ^match-task-operator.candidate-tasks <cands>)
+-->
+   (<cands> ^candidate-task-operator <o>)
+}
+
+
+### Reject any operator that does not match
+
+sp {learn-proposal-rule*reject*operator*doesnt*match*reference-operator
+   (state <s> ^name learn-proposal-rule
+              ^operator <o> +
+              ^match-task-operator <mto>)
+   (<mto> -^successful-match <o>)
+-->
+   (<s> ^operator <o> -)
+}
+
+
+### If there was a match (and that operator was selected), return success
+
+sp {learn-proposal-rule*apply*operator*report-success
+   (state <s> ^name learn-proposal-rule
+              ^operator <o>
+              ^match-task-operator.successful-match <o>
+              ^superstate <ss>)
+-->
+   (<ss> ^proposal-learning-result success)
+}

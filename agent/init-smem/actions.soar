@@ -1,24 +1,32 @@
-#!##########################################################################
+###########################################################################
 #! Manipulation Actions
 #! 001-099
+
 
 ### +@pick-up1 [001]
 smem --add {
    # 1 Argument: Pick up the <obj>
    #             Pick up the yellow block
 
-   (@pick-up1 ^handle pick-up1 ^procedural <proc001> ^item-type action ^goal-graph <graph001>)
+   (@pick-up1 ^handle pick-up1 ^procedural <proc001> ^item-type action ^goal-graph <sgoal001>)
    (<proc001> ^op_name op_pick-up1 
               ^arg1 <parg0011>
               ^subtasks <subtasks001>)
    (<parg0011> ^arg-type object ^required true ^id <obj-slot0011>)
-   (<graph001> ^first <goal001> ^goal <goal001>)
-   (<goal001> ^handle pick-up1goal1 ^item-type task-goal ^predicates <gpreds0011> ^next complete)
-      (<gpreds0011> ^pred-count 1 ^1 <gpred001g1p1>)
-      (<gpred001g1p1> ^type unary ^id <pred-slot0012> ^1 <obj-slot0011>)
-         (<pred-slot0012> ^default <gpdef0012>)
-            (<gpdef0012> ^predicate-handle grabbed1 ^property-handle is-grabbed1)
+
+   # Start Goal
+   (<sgoal001> ^handle pick-up1start1 ^item-type start-goal ^next.goal <goal0011>)
+
+   # Goal 1: the object is grabbed
+   (<goal0011> ^handle pick-up1goal1 ^item-type task-goal ^pred-count 1 ^1 <g0011p1> ^next.goal <tgoal001>)
+      (<g0011p1> ^type unary ^id <pred-slot0012> ^1 <obj-slot0011>)
+         (<pred-slot0012> ^default <ps0012def>)
+            (<ps0012def> ^predicate-handle grabbed1 ^property-handle is-grabbed1)
+
+   # Terminal Goal
+   (<tgoal001> ^handle pick-up1term1 ^item-type terminal-goal)
 }
+
 
 
 ### +@put-down1 [002]
@@ -26,30 +34,37 @@ smem --add {
    # 1 Argument Version: Put down the <obj>
    # 2 Argument Version: Put the <obj> <rel> <obj2>
 
-   (@put-down1 ^handle put-down1 ^procedural <proc002> ^item-type action ^goal-graph <graph002>)
+   (@put-down1 ^handle put-down1 ^procedural <proc002> ^item-type action ^goal-graph <sgoal002>)
    (<proc002> ^op_name op_put-down1 
               ^arg1 <parg0021>
               ^arg2 <parg0022>
               ^subtasks <subtasks002>)
    (<parg0021> ^arg-type object ^required true ^id <obj-slot0021>)
    (<parg0022> ^arg-type partial-predicate ^id <pred-slot0022> ^2 <obj-slot0022>)
-   (<graph002> ^first <goal0021> ^goal <goal0021> ^goal <goal0022>)
 
-      # If there is no arg2, then the goal is for the object to not be grabbed
-      (<goal0021> ^handle put-down1goal1 ^item-type task-goal ^conditions <gconds0021> ^predicates <gpreds0021> ^next <goal0022>)
-         (<gconds0021> ^pred-count 1 ^1 <gcond002g1p1>)
-            (<gcond002g1p1> ^type missing-argument ^argument-name arg2)
-         (<gpreds0021> ^pred-count 1 ^1 <gpred002g1p1>)
-               (<gpred002g1p1> ^type unary ^id <pred-slot0023> ^1 <obj-slot0021>)
-               (<pred-slot0023> ^default <ps0023def>)
-                  (<ps0023def> ^predicate-handle not-grabbed1 ^property-handle is-grabbed1)
+   # Start Goal (2 options)
+   (<sgoal002> ^handle put-down1start1 ^item-type start-goal ^next <nextg0021> ^next <nextg0022>)
 
-      # If there is an arg2, then the goal is to satisfy the partial predicate 
-      (<goal0022> ^handle put-down1goal2 ^item-type task-goal ^conditions <gconds0022> ^predicates <gpreds0022> ^next complete)
-         (<gconds0022> ^pred-count 1 ^1 <gcond002g2p1>)
-            (<gcond002g2p1> ^type has-argument ^argument-name arg2)
-         (<gpreds0022> ^pred-count 1 ^1 <gpred002g2p1>)
-            (<gpred002g2p1> ^type relation ^id <pred-slot0022> ^1 <obj-slot0021> ^2 <obj-slot0022>)
+   # Conditional Goal 1
+   # If there is no arg2, then the goal is for the object to not be grabbed
+   (<nextg0021> ^conditions <g0021conds> ^goal <goal0021>)
+      (<g0021conds> ^pred-count 1 ^1 <g0021c1>)
+         (<g0021c1> ^type missing-argument ^argument-name arg2)
+   (<goal0021> ^handle put-down1goal1 ^item-type task-goal ^pred-count 1 ^1 <g0021p1> ^next.goal <tgoal002>)
+      (<g0021p1> ^type unary ^id <pred-slot0023> ^1 <obj-slot0021>)
+         (<pred-slot0023> ^default <ps0023def>)
+            (<ps0023def> ^predicate-handle not-grabbed1 ^property-handle is-grabbed1)
+
+   # Conditional Goal 2
+   # If there is an arg2, then the goal is to satisfy the partial predicate 
+   (<nextg0022> ^conditions <g0022conds> ^goal <goal0022>)
+      (<g0022conds> ^pred-count 1 ^1 <g0022c1>)
+         (<g0022c1> ^type has-argument ^argument-name arg2)
+   (<goal0022> ^handle put-down1goal2 ^item-type task-goal ^pred-count 1 ^1 <g0022p1> ^next.goal <tgoal002>)
+      (<g0022p1> ^type relation ^id <pred-slot0022> ^1 <obj-slot0021> ^2 <obj-slot0022>)
+
+   # Terminal Goal
+   (<tgoal002> ^handle put-down1term1 ^item-type terminal-goal)
 }
 
 
@@ -58,17 +73,23 @@ smem --add {
    # Open the <obj>
    # Open the pantry
 
-   (@open1 ^handle open1 ^procedural <proc003> ^item-type action ^goal-graph <graph003>)
+   (@open1 ^handle open1 ^procedural <proc003> ^item-type action ^goal-graph <sgoal003>)
    (<proc003> ^op_name op_open1 
               ^arg1 <parg0031>
               ^subtasks <subtasks003>)
    (<parg0031> ^arg-type object ^required true ^id <obj-slot0031>)
-   (<graph003> ^first <goal003> ^goal <goal003>)
-   (<goal003> ^handle open1goal1 ^item-type task-goal ^predicates <gpreds0031> ^next complete)
-      (<gpreds0031> ^pred-count 1 ^1 <gpred003g1p1>)
-      (<gpred003g1p1> ^type unary ^id <pred-slot0032> ^1 <obj-slot0031>)
-         (<pred-slot0032> ^default <gpdef0032>)
-            (<gpdef0032> ^predicate-handle open2 ^property-handle door2)
+
+   # Start Goal
+   (<sgoal003> ^handle open1start1 ^item-type start-goal ^next.goal <goal0031>)
+
+   # Goal 1: The object is open
+   (<goal0031> ^handle open1goal1 ^item-type task-goal ^pred-count 1 ^1 <g0031p1> ^next.goal <tgoal003>)
+      (<g0031p1> ^type unary ^id <pred-slot0032> ^1 <obj-slot0031>)
+         (<pred-slot0032> ^default <ps0032def>)
+            (<ps0032def> ^predicate-handle open2 ^property-handle door2)
+
+   # Terminal Goal
+   (<tgoal003> ^handle open1term1 ^item-type terminal-goal)
 }
 
 
@@ -77,17 +98,23 @@ smem --add {
    # Close the <obj>
    # Close the stove
 
-   (@close1 ^handle close1 ^procedural <proc004> ^item-type action ^goal-graph <graph004>)
+   (@close1 ^handle close1 ^procedural <proc004> ^item-type action ^goal-graph <sgoal004>)
    (<proc004> ^op_name op_close1
               ^arg1 <parg0041>
               ^subtasks <subtasks004>)
    (<parg0041> ^arg-type object ^required true ^id <obj-slot0041>)
-   (<graph004> ^first <goal004> ^goal <goal004>)
-   (<goal004> ^handle close1goal1 ^item-type task-goal ^predicates <gpreds0041> ^next complete)
-      (<gpreds0041> ^pred-count 1 ^1 <gpred004g1p1>)
-         (<gpred004g1p1> ^type unary ^id <pred-slot0042> ^1 <obj-slot0041>)
-            (<pred-slot0042> ^default <gpdef0042>)
-               (<gpdef0042> ^predicate-handle closed2 ^property-handle door2)
+
+   # Start Goal
+   (<sgoal004> ^handle close1start1 ^item-type start-goal ^next.goal <goal0041>)
+
+   # Goal 1: The object is closed
+   (<goal0041> ^handle close1goal1 ^item-type task-goal ^pred-count 1 ^1 <g0041p1> ^next.goal <tgoal004>)
+      (<g0041p1> ^type unary ^id <pred-slot0042> ^1 <obj-slot0041>)
+         (<pred-slot0042> ^default <ps0042def>)
+            (<ps0042def> ^predicate-handle closed2 ^property-handle door2)
+
+   # Terminal Goal
+   (<tgoal004> ^handle close1term1 ^item-type terminal-goal)
 }
 
 ### +@turn-on1 [005]
@@ -95,17 +122,23 @@ smem --add {
    # Turn on the <obj>
    # Turn on the lights
 
-   (@turn-on1 ^handle turn-on1 ^procedural <proc005> ^item-type action ^goal-graph <graph005>)
+   (@turn-on1 ^handle turn-on1 ^procedural <proc005> ^item-type action ^goal-graph <sgoal005>)
    (<proc005> ^op_name op_turn-on1 
               ^arg1 <parg0051>
               ^subtasks <subtasks005>)
    (<parg0051> ^arg-type object ^required true ^id <obj-slot0051>)
-   (<graph005> ^first <goal005> ^goal <goal005>)
-   (<goal005> ^handle turn-on1goal1 ^item-type task-goal ^predicates <gpreds0051> ^next complete)
-      (<gpreds0051> ^pred-count 1 ^1 <gpred005g1p1>)
-         (<gpred005g1p1> ^type unary ^id <pred-slot0052> ^1 <obj-slot0051>)
-            (<pred-slot0052> ^default <gpdef0052>)
-               (<gpdef0052> ^predicate-handle on2 ^property-handle activation1)
+
+   # Start Goal
+   (<sgoal005> ^handle turn-on1start1 ^item-type start-goal ^next.goal <goal0051>)
+
+   # Goal 1: The object is on
+   (<goal0051> ^handle turn-on1goal1 ^item-type task-goal ^pred-count 1 ^1 <g0051p1> ^next.goal <tgoal005>)
+         (<g0051p1> ^type unary ^id <pred-slot0052> ^1 <obj-slot0051>)
+            (<pred-slot0052> ^default <ps0052def>)
+               (<ps0052def> ^predicate-handle on2 ^property-handle activation1)
+
+   # Terminal Goal
+   (<tgoal005> ^handle turn-on1term1 ^item-type terminal-goal)
 }
 
 ### +@turn-off1 [006]
@@ -113,17 +146,23 @@ smem --add {
    # Turn off the <obj>
    # Turn off the stove
 
-   (@turn-off1 ^handle turn-off1 ^procedural <proc006> ^item-type action ^goal-graph <graph006>)
+   (@turn-off1 ^handle turn-off1 ^procedural <proc006> ^item-type action ^goal-graph <sgoal006>)
    (<proc006> ^op_name op_turn-off1 
               ^arg1 <parg0061>
               ^subtasks <subtasks006>)
    (<parg0061> ^arg-type object ^required true ^id <obj-slot0061>)
-   (<graph006> ^first <goal006> ^goal <goal006>)
-   (<goal006> ^handle turn-off1goal1 ^item-type task-goal ^predicates <gpreds0061> ^next complete)
-      (<gpreds0061> ^pred-count 1 ^1 <gpred006g1p1>)
-         (<gpred006g1p1> ^type unary ^id <pred-slot0062> ^1 <obj-slot0061>)
-            (<pred-slot0062> ^default <gpdef0062>)
-               (<gpdef0062> ^predicate-handle off2 ^property-handle activation1)
+
+   # Start Goal
+   (<sgoal006> ^handle turn-off1start1 ^item-type start-goal ^next.goal <goal0061>)
+
+   # Goal 1: The object is off
+   (<goal0061> ^handle turn-off1goal1 ^item-type task-goal ^pred-count 1 ^1 <g0061p1> ^next.goal <tgoal006>)
+      (<g0061p1> ^type unary ^id <pred-slot0062> ^1 <obj-slot0061>)
+         (<pred-slot0062> ^default <ps0062def>)
+            (<ps0062def> ^predicate-handle off2 ^property-handle activation1)
+
+   # Terminal Goal
+   (<tgoal006> ^handle turn-off1term1 ^item-type terminal-goal)
 }
 
 ### +@write1 [007]
@@ -131,62 +170,86 @@ smem --add {
    # 2 Argument Version: write a <num> onto <obj2>
    #                     Write a five onto the green location
 
-   (@write1 ^handle write1 ^procedural <proc007> ^item-type action ^goal-graph <graph007>)
+   (@write1 ^handle write1 ^procedural <proc007> ^item-type action ^goal-graph <sgoal007>)
    (<proc007> ^op_name op_write1
               ^arg1 <parg0071> ^arg2 <parg0072>)
    (<parg0071> ^arg-type concept ^required true ^id <conc-slot0071>)
    (<parg0072> ^arg-type partial-predicate ^required true ^id <pred-slot0072> ^2 <obj-slot0072>) 
-   (<graph007> ^first <goal0071> ^goal <goal0071>)
-      (<goal0071> ^handle write1goal1 ^item-type task-goal ^custom-goal true ^next complete)
+
+   # Start Goal
+   (<sgoal007> ^handle write1start1 ^item-type start-goal ^next.goal <goal0071>)
+
+   # Goal 1: custom
+   (<goal0071> ^handle write1goal1 ^item-type task-goal ^custom-goal true ^next.goal <tgoal007>)
+
+   # Terminal goal
+   (<tgoal007> ^handle write1term1 ^item-type terminal-goal)
 }
 
 ### +@give1 [008]
 smem --add {
    # Give the <obj> to <person>.
 
-   (@give1 ^handle give1 ^procedural <proc008> ^item-type action ^goal-graph <graph008>)
+   (@give1 ^handle give1 ^procedural <proc008> ^item-type action ^goal-graph <sgoal008>)
    (<proc008> ^op_name op_give1
              ^arg1 <parg0081> ^arg2 <parg0082>)
    (<parg0081> ^arg-type object ^required true ^id <obj-slot0081>)
    (<parg0082> ^arg-type partial-predicate ^required true ^id <pred-slot0082> ^2 <obj-slot0082>) 
-   # Goal is holding(person, obj)
-   (<graph008> ^first <goal0081> ^goal <goal0081>)
-      (<goal0081> ^handle give1goal1 ^item-type task-goal ^predicates <gpreds0081> ^next complete)
-         (<gpreds0081> ^pred-count 1 ^1 <gpred008g1p1>)
-            (<gpred008g1p1> ^type relation ^id <pred-slot0083> ^1 <obj-slot0082> ^2 <obj-slot0081>)
-               (<pred-slot0083> ^default <def0083>)
-                  (<def0083> ^predicate-handle holding1)
+
+   # Start Goal
+   (<sgoal008> ^handle give1start1 ^item-type start-goal ^next.goal <goal0081>)
+
+   # Goal 1: holding1(person, object)
+   (<goal0081> ^handle give1goal1 ^item-type task-goal ^pred-count 1 ^1 <g0081p1> ^next.goal <tgoal008>)
+      (<g0081p1> ^type relation ^id <pred-slot0083> ^1 <obj-slot0082> ^2 <obj-slot0081>)
+         (<pred-slot0083> ^default <ps0083def>)
+            (<ps0083def> ^predicate-handle holding1)
+
+   # Terminal goal
+   (<tgoal008> ^handle give1term1 ^item-type terminal-goal)
 }
 
 ### +@point1 [009]
 smem --add {
    # Point at the <obj>
 
-   (@point1 ^handle point1 ^procedural <proc009> ^item-type action ^goal-graph <graph009>)
+   (@point1 ^handle point1 ^procedural <proc009> ^item-type action ^goal-graph <sgoal009>)
    (<proc009> ^op_name op_point1
               ^arg1 <parg0091>)
    (<parg0091> ^arg-type partial-predicate ^required true ^id <pred-slot0091> ^2 <obj-slot0091>)
    # Goal is to do a point command
-   (<graph009> ^first <goal0091> ^goal <goal0091>)
-      (<goal0091> ^handle point1goal1 ^item-type task-goal ^predicates <gpreds0091> ^next complete)
-         (<gpreds0091> ^pred-count 1 ^1 <gpred009g1p1>)
-         (<gpred009g1p1> ^type execute-command ^command-name point-command)
+
+   # Start Goal
+   (<sgoal009> ^handle point1start1 ^item-type start-goal ^next.goal <goal0091>)
+
+   # Goal 1: execute-command(point)
+   (<goal0091> ^handle point1goal1 ^item-type task-goal ^pred-count 1 ^1 <g0091p1> ^next.goal <tgoal009>)
+      (<g0091p1> ^type execute-command ^command-name point-command)
+
+   # Terminal goal
+   (<tgoal009> ^handle point1term1 ^item-type terminal-goal)
 }
 
 ### +@use1 [011]
 smem --add {
    # Use the cup with the faucet. 
 
-   (@use1 ^handle use1 ^procedural <proc011> ^item-type action ^goal-graph <graph011>)
+   (@use1 ^handle use1 ^procedural <proc011> ^item-type action ^goal-graph <sgoal011>)
    (<proc011> ^op_name op_use1
               ^arg1 <parg0111>
               ^arg2 <parg0112>)
    (<parg0111> ^arg-type object ^required true ^id <obj-slot0111>)
    (<parg0112> ^arg-type partial-predicate ^required true ^id <pred-slot0112> ^2 <obj-slot0112>)
-   (<graph011> ^first <goal011> ^goal <goal011>)
-   (<goal011> ^handle use1goal1 ^item-type task-goal ^predicates <gpreds0111> ^next complete)
-      (<gpreds0111> ^pred-count 1 ^1 <gpred011g1p1>)
-      (<gpred011g1p1> ^type execute-command ^command-name use-command)
+
+   # Start Goal
+   (<sgoal011> ^handle use1start1 ^item-type start-goal ^next.goal <goal0111>)
+
+   # Goal 1: execute-command(use)
+   (<goal0111> ^handle use1goal1 ^item-type task-goal ^pred-count 1 ^1 <g0111p1> ^next.goal <tgoal011>)
+      (<g0111p1> ^type execute-command ^command-name use-command)
+
+   # Terminal goal
+   (<tgoal011> ^handle use1term1 ^item-type terminal-goal)
 }
 
 ### +@remove1 [012]
@@ -194,66 +257,98 @@ smem --add {
    # 2 Argument Version: remove a <obj2>
    #                     Remove the green block
 
-   (@remove1 ^handle remove1 ^procedural <proc012> ^item-type action ^goal-graph <graph012>)
+   (@remove1 ^handle remove1 ^procedural <proc012> ^item-type action ^goal-graph <sgoal012>)
    (<proc012> ^op_name op_remove1
               ^arg1 <parg0121>)
    (<parg0121> ^arg-type object ^importance required ^id <obj-slot0121>)
-   (<graph012> ^first <goal0121> ^goal <goal0121>)
-      (<goal0121> ^handle remove1goal1 ^item-type task-goal ^custom-goal true ^next complete)
+
+   # Start Goal
+   (<sgoal012> ^handle remove1start1 ^item-type start-goal ^next.goal <goal0121>)
+
+   # Goal 1: custom
+   (<goal0121> ^handle remove1goal1 ^item-type task-goal ^custom-goal true ^next.goal <tgoal012>)
+
+   # Terminal goal
+   (<tgoal012> ^handle remove1term1 ^item-type terminal-goal)
 }
 
 ### +@reset-arm1 [013]
 smem --add {
    # Reset
 
-   (@reset-arm1 ^handle reset-arm1 ^procedural <proc013> ^item-type action ^goal-graph <graph013>)
+   (@reset-arm1 ^handle reset-arm1 ^procedural <proc013> ^item-type action ^goal-graph <sgoal013>)
    (<proc013> ^op_name op_reset-arm1 )
-   (<graph013> ^first <goal013> ^goal <goal013>)
-   (<goal013> ^handle reset-arm1goal1 ^item-type task-goal ^predicates <gpreds0131> ^next complete)
-      (<gpreds0131> ^pred-count 1 ^1 <gpred013g1p1>)
-      (<gpred013g1p1> ^type execute-command ^command-name reset-command)
+
+   # Start Goal
+   (<sgoal013> ^handle reset-arm1start1 ^item-type start-goal ^next.goal <goal0131>)
+
+   # Goal 1: execute-command(reset)
+   (<goal0131> ^handle reset-arm1goal1 ^item-type task-goal ^pred-count 1 ^1 <g0131p1> ^next.goal <tgoal013>)
+      (<g0131p1> ^type execute-command ^command-name reset-command)
+
+   # Terminal goal
+   (<tgoal013> ^handle reset-arm1term1 ^item-type terminal-goal)
 }
 
 ### +@roll1 [014]
 smem --add {
    # Roll the blue cube (cozmo)
 
-   (@roll1 ^handle roll1 ^procedural <proc014> ^item-type action ^goal-graph <graph014>)
+   (@roll1 ^handle roll1 ^procedural <proc014> ^item-type action ^goal-graph <sgoal014>)
    (<proc014> ^op_name op_roll1 
               ^arg1 <parg0141>)
    (<parg0141> ^arg-type object ^importance required ^id <obj-slot0141>)
-   (<graph014> ^first <goal014> ^goal <goal014>)
-   (<goal014> ^handle roll1goal1 ^item-type task-goal ^predicates <gpreds0141> ^next complete)
-      (<gpreds0141> ^pred-count 1 ^1 <gpred014g1p1>)
-      (<gpred014g1p1> ^type execute-command ^command-name roll-command)
+
+   # Start Goal
+   (<sgoal014> ^handle roll1start1 ^item-type start-goal ^next.goal <goal0141>)
+
+   # Goal 1: execute-command(roll)
+   (<goal0141> ^handle roll1goal1 ^item-type task-goal ^pred-count 1 ^1 <g0141p1> ^next.goal <tgoal014>)
+      (<g0141p1> ^type execute-command ^command-name roll-command)
+
+   # Terminal goal
+   (<tgoal014> ^handle roll1term1 ^item-type terminal-goal)
 }
 
 ### +@wheelie1 [015]
 smem --add {
    # Wheelie on the green cube (cozmo)
 
-   (@wheelie1 ^handle wheelie1 ^procedural <proc015> ^item-type action ^goal-graph <graph015>)
+   (@wheelie1 ^handle wheelie1 ^procedural <proc015> ^item-type action ^goal-graph <sgoal015>)
    (<proc015> ^op_name op_wheelie1 
               ^arg2 <parg0152>)
    (<parg0152> ^arg-type partial-predicate ^required true ^id <pred-slot0152> ^2 <obj-slot0152>)
-   (<graph015> ^first <goal015> ^goal <goal015>)
-   (<goal015> ^handle wheelie1goal1 ^item-type task-goal ^predicates <gpreds0151> ^next complete)
-      (<gpreds0151> ^pred-count 1 ^1 <gpred015g1p1>)
-      (<gpred015g1p1> ^type execute-command ^command-name wheelie-command)
+
+   # Start Goal
+   (<sgoal015> ^handle wheelie1start1 ^item-type start-goal ^next.goal <goal0151>)
+
+   # Goal 1: execute-command(wheelie)
+   (<goal0151> ^handle wheelie1goal1 ^item-type task-goal ^pred-count 1 ^1 <g0151p1> ^next.goal <tgoal015>)
+      (<g0151p1> ^type execute-command ^command-name wheelie-command)
+
+   # Terminal goal
+   (<tgoal015> ^handle wheelie1term1 ^item-type terminal-goal)
 }
 
 ### +@change-color1 [016]
 smem --add {
    # Change the white cube to a red cube
 
-   (@change-color1 ^handle change-color1 ^procedural <proc016> ^item-type action ^goal-graph <graph016>)
+   (@change-color1 ^handle change-color1 ^procedural <proc016> ^item-type action ^goal-graph <sgoal016>)
    (<proc016> ^op_name op_change-color1 
               ^arg1 <parg0161>
               ^arg2 <parg0162>)
    (<parg0161> ^arg-type object ^required true ^id <obj-slot0161>)
    (<parg0162> ^arg-type partial-predicate ^required true ^id <pred-slot0162> ^2 <obj-slot0162>)
-   (<graph016> ^first <goal0161> ^goal <goal0161>)
-      (<goal0161> ^handle change-color1goal1 ^item-type task-goal ^custom-goal true ^next complete)
+
+   # Start Goal
+   (<sgoal016> ^handle change-color1start1 ^item-type start-goal ^next.goal <goal0161>)
+
+   # Goal 1: custom
+   (<goal0161> ^handle change-color1goal1 ^item-type task-goal ^custom-goal true ^next.goal <tgoal016>)
+
+   # Terminal goal
+   (<tgoal016> ^handle change-color1term1 ^item-type terminal-goal)
 }
 
 
@@ -267,16 +362,20 @@ smem --add {
    # 2 Argument Version: Move the <obj> <rel> <obj2>
    #                     Move the red block onto the green block
 
-   (@move1 ^handle move1 ^procedural <proc101> ^item-type action)# ^goal-graph <graph101>)
+   (@move1 ^handle move1 ^procedural <proc101> ^item-type action)# ^goal-graph <sgoal101>)
    (<proc101> ^op_name op_move1
               ^arg1 <parg1011> ^arg2 <parg1012>
               ^subtasks <subs101>)
    (<parg1011> ^arg-type object ^required true ^id <obj-slot1011>)
    (<parg1012> ^arg-type partial-predicate ^required true ^id <pred-slot1012> ^2 <obj-slot1012>)
-   #(<graph101> ^first <goal101> ^goal <goal101>)
-   #(<goal101> ^handle move1goal1 ^item-type task-goal ^predicates <gpreds1011> ^next complete)
-   #   (<gpreds1011> ^pred-count 1 ^1 <gpred101g1p1>)
-   #      (<gpred101g1p1> ^type relation ^id <pred-slot1012> ^1 <obj-slot1011> ^2 <obj-slot1012>)
+
+   # # Start Goal
+   # (<sgoal101> ^handle move1start1 ^item-type start-goal ^next.goal <goal1011>)
+   # (<goal1011> ^handle move1goal1 ^item-type task-goal ^pred-count 1 ^1 <g1011p1> ^next.goal <tgoal101>)
+   #   (<g1011p1> ^type relation ^id <pred-slot1012> ^1 <obj-slot1011> ^2 <obj-slot1012>)
+
+   # # Terminal goal
+   # (<tgoal101> ^handle move1term1 ^item-type terminal-goal)
 }
 
 ### +@store1 [102]
@@ -297,17 +396,7 @@ smem --add {
 smem --add {
    # Deliver the <obj> to the <loc>
 
-(@deliver1 ^handle deliver1 ^procedural <proc104> ^item-type action ^implicit-objects <objs104>)
-   (<proc104> ^op_name op_deliver1 ^arg1 <parg1041> ^arg2 <parg1042> ^subtasks <subs>)
-   (<parg1041> ^arg-type object ^required true ^id <obj-slot1041>)
-   (<parg1042> ^arg-type partial-predicate ^required true ^id <pred-slot1042> ^2 <obj-slot1042>)
-   #   (@deliver1 ^goal <goal104>)
-   #   (<goal104> ^handle deliver1goal1 ^item-type task-goal ^subgoal-count 1 ^1 <subgoal1041> ^next complete)
-   #      (<subgoal1041> ^handle deliver1sg1 ^predicates <gpreds1041>)
-   #         (<gpreds1041> ^pred-count 1 ^1 <gpred104g1p1>)
-   #      (<gpred104g1p1> ^type relation ^id <gpred-slot1041> ^1 <obj-slot1041> ^2 <obj-slot1042>)
-   #          (<gpred-slot1041> ^default <gdef1041>)
-   #          (<gdef1041> ^predicate-handle in1)
+   (@deliver1 ^handle deliver1 ^item-type action)
 }
 
 ### +@fetch1 [105]
@@ -467,16 +556,22 @@ smem --add {
 smem --add {
    # 2 Argument Version: Move the <obj> <rel> <obj2>
 
-   (@testmove1 ^handle testmove1 ^procedural <proc126> ^item-type action ^goal-graph <graph126>)
+   (@testmove1 ^handle testmove1 ^procedural <proc126> ^item-type action ^goal-graph <sgoal126>)
    (<proc126> ^op_name op_testmove1
               ^arg1 <parg1261> ^arg2 <parg1262>
               ^subtasks <subs126>)
    (<parg1261> ^arg-type object ^required true ^id <obj-slot1261>)
    (<parg1262> ^arg-type partial-predicate ^required true ^id <pred-slot1262> ^2 <obj-slot1262>)
-   (<graph126> ^first <goal126> ^goal <goal126>)
-   (<goal126> ^handle testmove1goal1 ^item-type task-goal ^predicates <gpreds1261> ^next complete)
-      (<gpreds1261> ^pred-count 1 ^1 <gpred126g1p1>)
-         (<gpred126g1p1> ^type relation ^id <pred-slot1262> ^1 <obj-slot1261> ^2 <obj-slot1262>)
+
+   # Start Goal
+   (<sgoal126> ^handle testmove1start1 ^item-type start-goal ^next.goal <goal1261>)
+
+   # Goal 1: pred(arg1, arg2)
+   (<goal1261> ^handle testmove1goal1 ^item-type task-goal ^pred-count 1 ^1 <g1261p1> ^next.goal <tgoal126>)
+         (<g1261p1> ^type relation ^id <pred-slot1262> ^1 <obj-slot1261> ^2 <obj-slot1262>)
+
+   # Terminal goal
+   (<tgoal126> ^handle testmove1term1 ^item-type terminal-goal)
 }
 
 #!#############################################################################################
@@ -488,40 +583,59 @@ smem --add {
 smem --add {
    # Change direction, Turn [right|left|around]
 
-   (@turn1 ^handle turn1 ^procedural <proc201> ^item-type action ^goal-graph <graph201>)
+   (@turn1 ^handle turn1 ^procedural <proc201> ^item-type action ^goal-graph <sgoal201>)
    (<proc201> ^op_name op_turn1 
               ^arg1 <parg2011>)
    (<parg2011> ^arg-type concept ^required true ^id <conc-slot2011>)
-   (<graph201> ^first <goal201> ^goal <goal201>)
-   (<goal201> ^handle turn1goal1 ^item-type task-goal ^predicates <gpreds2011> ^next complete)
-      (<gpreds2011> ^pred-count 1 ^1 <gpred201g1p1>)
-      (<gpred201g1p1> ^type execute-command ^command-name turn-command)
+
+   # Start Goal
+   (<sgoal201> ^handle turn1start1 ^item-type start-goal ^next.goal <goal2011>)
+
+   # Goal 1: execute-command(turn)
+   (<goal2011> ^handle turn1goal1 ^item-type task-goal ^pred-count 1 ^1 <g2011p1> ^next.goal <tgoal201>)
+      (<g2011p1> ^type execute-command ^command-name turn-command)
+
+   # Terminal goal
+   (<tgoal201> ^handle turn1term1 ^item-type terminal-goal)
 }
 
 ### +@follow-wall1 [202]
 smem --add {
    # Follow the [right|left] wall
 
-   (@follow-wall1 ^handle follow-wall1 ^procedural <proc202> ^item-type action ^goal-graph <graph202>)
+   (@follow-wall1 ^handle follow-wall1 ^procedural <proc202> ^item-type action ^goal-graph <sgoal202>)
    (<proc202> ^op_name op_follow-wall1 
               ^arg1 <parg2021>)
    (<parg2021> ^arg-type object ^required true ^id <conc-slot2021>)
-   (<graph202> ^first <goal2021> ^goal <goal2021>)
-      (<goal2021> ^handle follow-wall1goal1 ^item-type task-goal ^custom-goal true ^next complete)
+
+   # Start Goal
+   (<sgoal202> ^handle follow-wall1start1 ^item-type start-goal ^next.goal <goal2021>)
+   
+   # Goal 1: custom
+   (<goal2021> ^handle follow-wall1goal1 ^item-type task-goal ^custom-goal true ^next.goal <tgoal202>)
+
+   # Terminal goal
+   (<tgoal202> ^handle follow-wall1term1 ^item-type terminal-goal)
 }
 
 ### +@orient1 [203]
 smem --add {
    # Orient [north|south|east|west]
 
-   (@orient1 ^handle orient1 ^procedural <proc203> ^item-type action ^goal-graph <graph203>)
+   (@orient1 ^handle orient1 ^procedural <proc203> ^item-type action ^goal-graph <sgoal203>)
    (<proc203> ^op_name op_orient1 
               ^arg1 <parg2031>)
    (<parg2031> ^arg-type concept ^required true ^id <conc-slot2031>)
-   (<graph203> ^first <goal203> ^goal <goal203>)
-   (<goal203> ^handle orient1goal1 ^item-type task-goal ^predicates <gpreds2031> ^next complete)
-      (<gpreds2031> ^pred-count 1 ^1 <gpred203g1p1>)
-      (<gpred203g1p1> ^type execute-command ^command-name orient-command)
+
+   # Start Goal
+   (<sgoal203> ^handle orient1start1 ^item-type start-goal ^next.goal <goal2031>)
+
+   # Goal 1: execute-command(orient)
+   (<goal2031> ^handle orient1goal1 ^item-type task-goal ^pred-count 1 ^1 <g2031p1> ^next.goal <tgoal203>)
+      (<g2031p1> ^type execute-command ^command-name orient-command)
+
+   # Terminal goal
+   (<tgoal203> ^handle orient1term1 ^item-type terminal-goal)
 }
 
 ### +@face1 [204]
@@ -529,14 +643,20 @@ smem --add {
    # Face the <obj>
    # Face the door
 
-   (@face1 ^handle face1 ^procedural <proc204> ^item-type action ^goal-graph <graph204>)
+   (@face1 ^handle face1 ^procedural <proc204> ^item-type action ^goal-graph <sgoal204>)
    (<proc204> ^op_name op_face1
               ^arg1 <parg2041>)
    (<parg2041> ^arg-type object ^required true ^id <obj-slot2041>)
-   (<graph204> ^first <goal204> ^goal <goal204>)
-   (<goal204> ^handle face1goal1 ^item-type task-goal ^predicates <gpreds2041> ^next complete)
-      (<gpreds2041> ^pred-count 1 ^1 <gpred204g1p1>)
-      (<gpred204g1p1> ^type execute-command ^command-name face-command)
+
+   # Start Goal
+   (<sgoal204> ^handle face1start1 ^item-type start-goal ^next.goal <goal2041>)
+
+   # Goal 1: execute-command(face)
+   (<goal2041> ^handle face1goal1 ^item-type task-goal ^pred-count 1 ^1 <g2041p1> ^next.goal <tgoal204>)
+      (<g2041p1> ^type execute-command ^command-name face-command)
+
+   # Terminal goal
+   (<tgoal204> ^handle face1term1 ^item-type terminal-goal)
 }
 
 ### +@drive1 [205]
@@ -544,60 +664,93 @@ smem --add {
    # Drive forward.
    # Drive.
    # Drive down the hall.
-   (@drive1 ^handle drive1 ^procedural <proc205> ^item-type action ^goal-graph <graph205>)
+   (@drive1 ^handle drive1 ^procedural <proc205> ^item-type action ^goal-graph <sgoal205>)
    (<proc205> ^op_name op_drive1
               ^arg1 <parg2051>)
    (<parg2051> ^arg-type concept ^id <conc-slot2051>)
-   (<graph205> ^first <goal2051> ^goal <goal2051>)
-      (<goal2051> ^handle drive1goal1 ^item-type task-goal ^custom-goal true ^next complete)
+
+   # Start Goal
+   (<sgoal205> ^handle drive1start1 ^item-type start-goal ^next.goal <goal2051>)
+
+   # Goal 1: custom
+   (<goal2051> ^handle drive1goal1 ^item-type task-goal ^custom-goal true ^next.goal <tgoal205>)
+
+   # Terminal goal
+   (<tgoal205> ^handle drive1term1 ^item-type terminal-goal)
 }
 
 ### +@go-to-location1 [206]
 smem --add {
    # Go to the <loc>
-   (@go-to-location1 ^handle go-to-location1 ^procedural <proc206> ^item-type action ^goal-graph <graph206>)
+   (@go-to-location1 ^handle go-to-location1 ^procedural <proc206> ^item-type action ^goal-graph <sgoal206>)
    (<proc206> ^op_name op_go-to-location1 
               ^arg2 <parg2062>)
    (<parg2062> ^arg-type partial-predicate ^id <pred-slot2062> ^2 <obj-slot2062>)
-   (<graph206> ^first <goal2061> ^goal <goal2061>)
-   (<goal2061> ^handle gotoloc1goal1 ^item-type task-goal ^predicates <gpreds2061> ^next complete)
-      (<gpreds2061> ^pred-count 1 ^1 <gp206g1p1>)
-         (<gp206g1p1> ^type status ^name current-location ^1 <obj-slot2062>)
+
+   # Start Goal
+   (<sgoal206> ^handle gotoloc1start1 ^item-type start-goal ^next.goal <goal2061>)
+   
+   # Goal 1: current-location(arg1)
+   (<goal2061> ^handle gotoloc1goal1 ^item-type task-goal ^pred-count 1 ^1 <g2061p1> ^next.goal <tgoal206>)
+      (<g2061p1> ^type status ^name current-location ^1 <obj-slot2062>)
+
+   # Terminal goal
+   (<tgoal206> ^handle gotoloc1term1 ^item-type terminal-goal)
 }
 
 ### +@go-to-waypoint1 [207]
 smem --add {
    # Used internally, used to navigate between any 2 waypoints
 
-   (@go-to-waypoint1 ^handle go-to-waypoint1 ^procedural <proc207> ^item-type action ^goal-graph <graph207>)
+   (@go-to-waypoint1 ^handle go-to-waypoint1 ^procedural <proc207> ^item-type action ^goal-graph <sgoal207>)
    (<proc207> ^op_name op_go-to-waypoint1 ^arg1 <parg2071>)
    (<parg2071> ^arg-type waypoint ^id <wp-slot2071>)
-   (<graph207> ^first <goal2071> ^goal <goal2071>)
-      (<goal2071> ^handle go-to-waypoint1goal1 ^item-type task-goal ^custom-goal true ^next complete)
 
+   # Start Goal
+   (<sgoal207> ^handle go-to-waypoint1start1 ^item-type start-goal ^next.goal <goal2071>)
+
+   # Goal 1: current-waypoint(arg1)
+   (<goal2071> ^handle go-to-waypoint1goal1 ^item-type task-goal ^custom-goal true ^next.goal <tgoal207>)
+
+   # Terminal goal
+   (<tgoal207> ^handle go-to-waypoint1term1 ^item-type terminal-goal)
 }
 
 ### +@go-to-next-waypoint1 [208]
 smem --add {
    # Used internally, navigate to an adjacent waypoint (edge traversal)
 
-   (@go-to-next-waypoint1 ^handle go-to-next-waypoint1 ^procedural <proc208> ^item-type action ^goal-graph <graph208>)
-   (<proc208> ^op_name op_go-to-next-waypoint1 ^arg2 <parg2081>)
-   (<parg2081> ^arg-type concept ^id <conc-slot2081>)
-   (<graph208> ^first <goal2081> ^goal <goal2081>)
-      (<goal2081> ^handle go-to-next-waypoint1goal1 ^item-type task-goal ^custom-goal true ^next complete)
+   (@go-to-next-waypoint1 ^handle go-to-next-waypoint1 ^procedural <proc208> ^item-type action ^goal-graph <sgoal208>)
+   (<proc208> ^op_name op_go-to-next-waypoint1 ^arg1 <parg2081>)
+   (<parg2081> ^arg-type waypoint ^id <wp-slot2081>)
+
+   # Start Goal
+   (<sgoal208> ^handle go-to-next-waypoint1start1 ^item-type start-goal ^next.goal <goal2081>)
+
+   # Goal 1: current-waypoint(arg1)
+   (<goal2081> ^handle go-to-next-waypoint1goal1 ^item-type task-goal ^pred-count 1 ^1 <g2081p1> ^next.goal <tgoal208>)
+      (<g2081p1> ^type status ^name current-waypoint ^1 <wp-slot2081>)
+
+   # Terminal goal
+   (<tgoal208> ^handle go-to-next-waypoint1term1 ^item-type terminal-goal)
 }
 
 ### +@stop1 [209]
 smem --add {
    # Stop.
 
-   (@stop1 ^handle stop1 ^procedural <proc209> ^item-type action ^goal-graph <graph209>)
+   (@stop1 ^handle stop1 ^procedural <proc209> ^item-type action ^goal-graph <sgoal209>)
    (<proc209> ^op_name op_stop1)
-   (<graph209> ^first <goal209> ^goal <goal209>)
-   (<goal209> ^handle stop1goal1 ^item-type task-goal ^predicates <gpreds2091> ^next complete)
-      (<gpreds2091> ^pred-count 1 ^1 <gpred209g1p1>)
-      (<gpred209g1p1> ^type execute-command ^command-name stop-command)
+
+   # Start Goal
+   (<sgoal209> ^handle stop1start1 ^item-type start-goal ^next.goal <goal2091>)
+
+   # Goal 1: execute-command(stop)
+   (<goal2091> ^handle stop1goal1 ^item-type task-goal ^pred-count 1 ^1 <g2091p1> ^next.goal <tgoal209>)
+      (<g2091p1> ^type execute-command ^command-name stop-command)
+
+   # Terminal goal
+   (<tgoal209> ^handle stop1term1 ^item-type terminal-goal)
 }
 
 ### +@scan1 [210]
@@ -606,10 +759,17 @@ smem --add {
    # Scan.
    # Scan until you see the <obj>.
 
-   (@scan1 ^handle scan1 ^procedural <proc210> ^item-type action ^learn-proposal true ^goal-graph <graph210>)
+   (@scan1 ^handle scan1 ^procedural <proc210> ^item-type action ^learn-proposal true ^goal-graph <sgoal210>)
    (<proc210> ^op_name op_scan1)
-   (<graph210> ^first <goal2101> ^goal <goal2101>)
-      (<goal2101> ^handle scan1goal1 ^item-type task-goal ^custom-goal true ^next complete)
+
+   # Start Goal
+   (<sgoal210> ^handle scan1start1 ^item-type start-goal ^next.goal <goal2101>)
+   
+   # Goal 1: custom
+   (<goal2101> ^handle scan1goal1 ^item-type task-goal ^custom-goal true ^next.goal <tgoal210>)
+
+   # Terminal goal
+   (<tgoal210> ^handle scan1term1 ^item-type terminal-goal)
 }
 
 ### +@explore1 [211]
@@ -617,26 +777,39 @@ smem --add {
    # Explore.
    # Explore until you see the <obj>.
 
-   (@explore1 ^handle explore1 ^procedural <proc211> ^item-type action ^learn-proposal true ^goal-graph <graph211>)
+   (@explore1 ^handle explore1 ^procedural <proc211> ^item-type action ^learn-proposal true ^goal-graph <sgoal211>)
    (<proc211> ^op_name op_explore1)
-   (<graph211> ^first <goal2111> ^goal <goal2111>)
-      (<goal2111> ^handle explore1goal1 ^item-type task-goal ^custom-goal true ^next complete)
+
+   # Start Goal
+   (<sgoal211> ^handle explore1start1 ^item-type start-goal ^next.goal <goal2111>)
+
+   # Goal 1: custom
+   (<goal2111> ^handle explore1goal1 ^item-type task-goal ^custom-goal true ^next.goal <tgoal211>)
+
+   # Terminal goal
+   (<tgoal211> ^handle explore1term1 ^item-type terminal-goal)
 }
 
 ### +@find1 [212]
 smem --add {
    # Find the <obj>
 
-   (@find1 ^handle find1 ^procedural <proc212> ^item-type action ^goal-graph <graph212>)
+   (@find1 ^handle find1 ^procedural <proc212> ^item-type action ^goal-graph <sgoal212>)
    (<proc212> ^op_name op_find1 
               ^arg1 <parg2121>)
       (<parg2121> ^arg-type object ^required true ^id <obj-slot2121>)
-   (<graph212> ^first <goal2121> ^goal <goal2121>)
-   (<goal2121> ^handle find1goal1 ^item-type task-goal ^predicates <gpreds2121> ^next complete)
-      (<gpreds2121> ^pred-count 1 ^1 <gp212g1p1>)
-         (<gp212g1p1> ^type unary ^id <pred-slot2121> ^1 <obj-slot2121>)
-            (<pred-slot2121> ^default <def2121>)
-               (<def2121> ^predicate-handle visible1 ^property-handle is-visible1)
+
+   # Start Goal
+   (<sgoal212> ^handle find1start1 ^item-type start-goal ^next.goal <goal2121>)
+
+   # Goal 1: confirmed(arg1)
+   (<goal2121> ^handle find1goal1 ^item-type task-goal ^pred-count 1 ^1 <g2121p1> ^next.goal <tgoal212>)
+      (<g2121p1> ^type unary ^id <pred-slot2121> ^1 <obj-slot2121>)
+         (<pred-slot2121> ^default <ps2121def>)
+            (<ps2121def> ^predicate-handle confirmed1 ^property-handle is-confirmed1)
+
+   # Terminal goal
+   (<tgoal212> ^handle find1term1 ^item-type terminal-goal)
 }
 
 
@@ -644,16 +817,22 @@ smem --add {
 smem --add {
    # Approach the <obj>
 
-   (@approach1 ^handle approach1 ^procedural <proc217> ^item-type action ^goal-graph <graph217>)
+   (@approach1 ^handle approach1 ^procedural <proc217> ^item-type action ^goal-graph <sgoal217>)
    (<proc217> ^op_name op_approach1 
               ^arg1 <parg2171>)
       (<parg2171> ^arg-type object ^required true ^id <obj-slot2171>)
-   (<graph217> ^first <goal217> ^goal <goal217>)
-   (<goal217> ^handle approach1goal1 ^item-type task-goal ^predicates <gpreds2171> ^next complete)
-      (<gpreds2171> ^pred-count 1 ^1 <gpred217g1p1>)
-      (<gpred217g1p1> ^type unary ^id <pred-slot2171> ^1 <obj-slot2171>)
-         (<pred-slot2171> ^default <gpdef2171>)
-            (<gpdef2171> ^predicate-handle reachable1 ^property-handle is-reachable1)
+
+   # Start Goal
+   (<sgoal217> ^handle approach1start1 ^item-type start-goal ^next.goal <goal2171>)
+
+   # Goal 1: reachable(arg1)
+   (<goal2171> ^handle approach1goal1 ^item-type task-goal ^pred-count 1 ^1 <g2171p1> ^next.goal <tgoal217>)
+      (<g2171p1> ^type unary ^id <pred-slot2171> ^1 <obj-slot2171>)
+         (<pred-slot2171> ^default <ps2171def>)
+            (<ps2171def> ^predicate-handle reachable1 ^property-handle is-reachable1)
+
+   # Terminal goal
+   (<tgoal217> ^handle approach1term1 ^item-type terminal-goal)
 }
 
 ### +@advance1 [218]
@@ -668,41 +847,81 @@ smem --add {
 smem --add {
    # Look up, Look down
 
-   (@look1 ^handle look1 ^procedural <proc219> ^item-type action ^goal-graph <graph219>)
+   (@look1 ^handle look1 ^procedural <proc219> ^item-type action ^goal-graph <sgoal219>)
    (<proc219> ^op_name op_look1
               ^arg1 <parg2191>)
       (<parg2191> ^arg-type concept ^id <conc-slot2191>)
-   (<graph219> ^first <goal219> ^goal <goal219>)
-   (<goal219> ^handle look1goal1 ^item-type task-goal ^predicates <gpreds2191> ^next complete)
-      (<gpreds2191> ^pred-count 1 ^1 <gpred219g1p1>)
-      (<gpred219g1p1> ^type execute-command ^command-name look-command)
+
+   # Start Goal
+   (<sgoal219> ^handle look1start1 ^item-type start-goal ^next.goal <goal2191>)
+   
+   # Goal 1: execute-command(look)
+   (<goal2191> ^handle look1goal1 ^item-type task-goal ^pred-count 1 ^1 <g2191p1> ^next.goal <tgoal219>)
+      (<g2191p1> ^type execute-command ^command-name look-command)
+
+   # Terminal goal
+   (<tgoal219> ^handle look1term1 ^item-type terminal-goal)
 }
 
 ### +@lift1 [220]
 smem --add {
    # Lift up, Lift down
 
-   (@lift1 ^handle lift1 ^procedural <proc220> ^item-type action ^goal-graph <graph220>)
+   (@lift1 ^handle lift1 ^procedural <proc220> ^item-type action ^goal-graph <sgoal220>)
    (<proc220> ^op_name op_lift1
               ^arg1 <parg2201>)
       (<parg2201> ^arg-type concept ^id <conc-slot2201>)
-   (<graph220> ^first <goal220> ^goal <goal220>)
-   (<goal220> ^handle lift1goal1 ^item-type task-goal ^predicates <gpreds2201> ^next complete)
-      (<gpreds2201> ^pred-count 1 ^1 <gpred220g1p1>)
-      (<gpred220g1p1> ^type execute-command ^command-name lift-command)
+
+   # Start Goal
+   (<sgoal220> ^handle lift1start1 ^item-type start-goal ^next.goal <goal2201>)
+
+   # Goal 1: execute-command(lift)
+   (<goal2201> ^handle lift1goal1 ^item-type task-goal ^pred-count 1 ^1 <g2201p1> ^next.goal <tgoal220>)
+      (<g2201p1> ^type execute-command ^command-name lift-command)
+
+   # Terminal goal
+   (<tgoal220> ^handle lift1term1 ^item-type terminal-goal)
 }
 
 ### +@go-to-xy1 [221]
 smem --add {
    # Used internally, navigate to a position
 
-   (@go-to-xy1 ^handle go-to-xy1 ^procedural <proc221> ^item-type action ^goal-graph <graph221>)
+   (@go-to-xy1 ^handle go-to-xy1 ^procedural <proc221> ^item-type action ^goal-graph <sgoal221>)
    (<proc221> ^op_name op_go-to-xy1 ^arg1 <parg2211>)
    (<parg2211> ^arg-type coordinate ^id <coord-slot2211>)
-   (<graph221> ^first <goal221> ^goal <goal221>)
-   (<goal221> ^handle goto-xy1goal1 ^item-type task-goal ^predicates <gpreds2211> ^next complete)
-      (<gpreds2211> ^pred-count 1 ^1 <gpred221g1p1>)
-      (<gpred221g1p1> ^type execute-command ^command-name go-to-command)
+
+   # Start Goal
+   (<sgoal221> ^handle goto-xy1start1 ^item-type start-goal ^next.goal <goal2211>)
+
+   # Goal 1: execute-command(go-to)
+   (<goal2211> ^handle goto-xy1goal1 ^item-type task-goal ^pred-count 1 ^1 <g2211p1> ^next.goal <tgoal221>)
+      (<g2211p1> ^type execute-command ^command-name go-to-command)
+
+   # Terminal goal
+   (<tgoal221> ^handle goto-xy1term1 ^item-type terminal-goal)
+}
+
+### +@view1 [223]
+smem --add {
+   # View the <obj>
+
+   (@view1 ^handle view1 ^procedural <proc223> ^item-type action ^goal-graph <sgoal223>)
+   (<proc223> ^op_name op_view1 
+              ^arg1 <parg2231>)
+      (<parg2231> ^arg-type object ^required true ^id <obj-slot2231>)
+
+   # Start Goal
+   (<sgoal223> ^handle view1start1 ^item-type start-goal ^next.goal <goal2231>)
+
+   # Goal 1: visible(arg1)
+   (<goal2231> ^handle view1goal1 ^item-type task-goal ^pred-count 1 ^1 <g2231p1> ^next.goal <tgoal223>)
+      (<g2231p1> ^type unary ^id <pred-slot2231> ^1 <obj-slot2231>)
+         (<pred-slot2231> ^default <ps2231def>)
+            (<ps2231def> ^predicate-handle visible1 ^property-handle is-visible1)
+
+   # Terminal goal
+   (<tgoal223> ^handle view1term1 ^item-type terminal-goal)
 }
 
 #!#############################################################################################
@@ -714,42 +933,52 @@ smem --add {
 smem --add {
    # Ask 'QUOTED MESSAGE'
 
-   (@ask1 ^handle ask1 ^procedural <proc301> ^item-type action ^learn-proposal true ^perform once ^goal-graph <graph301>)
+   (@ask1 ^handle ask1 ^procedural <proc301> ^item-type action ^learn-proposal true ^perform once ^goal-graph <sgoal301>)
    (<proc301> ^op_name op_ask1
               ^arg1 <parg3011>)
    (<parg3011> ^arg-type object ^required true ^id <obj-slot3011>)
-   (<graph301> ^first <goal3011> ^goal <goal3011>)
-      (<goal3011> ^handle ask1goal1 ^item-type task-goal ^predicates <gpreds3011> ^next complete)
-         (<gpreds3011> ^pred-count 1 ^1 <gpred301g1p1>)
-            (<gpred301g1p1> ^type execute-command ^command-name ask-command)
+
+   # Start Goal
+   (<sgoal301> ^handle ask1start1 ^item-type start-goal ^next.goal <goal3011>)
+
+   # Goal 1: execute-command(ask)
+   (<goal3011> ^handle ask1goal1 ^item-type task-goal ^pred-count 1 ^1 <g3011p1> ^next.goal <tgoal301>)
+      (<g3011p1> ^type execute-command ^command-name ask-command)
+
+   # Terminal goal
+   (<tgoal301> ^handle ask1term1 ^item-type terminal-goal)
 }
 
 ### +@say1 [302]
 smem --add {
    # Say 'hello' to bob
 
-   (@say1 ^handle say1 ^procedural <proc302> ^type action ^goal-graph <graph302>)
+   (@say1 ^handle say1 ^procedural <proc302> ^type action ^goal-graph <sgoal302>)
    (<proc302> ^op_name op_say1
               ^arg1 <parg3021>
               ^arg2 <parg3022>)
    (<parg3021> ^arg-type object ^required true ^id <obj-slot3021>)
    (<parg3022> ^arg-type object ^id <obj-slot3022>)
-   (<graph302> ^first <goal3021> ^goal <goal3021> ^goal <goal3022>)
 
-      # If there is no arg2, then the goal is to perform the say-command
-      (<goal3021> ^handle say1goal1 ^item-type task-goal ^conditions <gconds3021> ^predicates <gpreds3021> ^next <goal3022>)
-         (<gconds3021> ^pred-count 1 ^1 <gcond302g1p1>)
-            (<gcond302g1p1> ^type missing-argument ^argument-name arg2)
-         (<gpreds3021> ^pred-count 1 ^1 <gpred302g1p1>)
-            (<gpred302g1p1> ^type execute-command ^command-name say-command)
+   # Start Goal
+   (<sgoal302> ^handle say1start1 ^item-type start-goal ^next <nextg3021> ^next <nextg3022>)
 
-      # If there is an arg2, then the goal is that the person heard the message
-      (<goal3022> ^handle say1goal2 ^item-type task-goal ^conditions <gconds3022> ^predicates <gpreds3022> ^next complete)
-         (<gconds3022> ^pred-count 1 ^1 <gcond302g2p1>)
-            (<gcond302g2p1> ^type has-argument ^argument-name arg2)
-         (<gpreds3022> ^pred-count 1 ^1 <gpred302g2p1>)
-            (<gpred302g2p1> ^type relation ^id <pred-slot3021> ^1 <obj-slot3021> ^2 <obj-slot3022>)
+   # Conditional Goal 1: If there is no arg2 -> execute-command(say)
+   (<nextg3021> ^conditions <g3021conds> ^goal <goal3021>)
+      (<g3021conds> ^pred-count 1 ^1 <g3021c1>)
+         (<g3021c1> ^type missing-argument ^argument-name arg2)
+   (<goal3021> ^handle say1goal1 ^item-type task-goal ^pred-count 1 ^1 <g3021p1> ^next.goal <tgoal302>)
+      (<g3021p1> ^type execute-command ^command-name say-command)
 
+   # Conditional Goal 2: If there is an arg2 -> heard(person, message)
+   (<nextg3022> ^conditions <g3022conds> ^goal <goal3022>)
+      (<g3022conds> ^pred-count 1 ^1 <g3022c1>)
+         (<g3022c1> ^type has-argument ^argument-name arg2)
+   (<goal3022> ^handle say1goal2 ^item-type task-goal ^pred-count 1 ^1 <g3022p1> ^next.goal <tgoal302>)
+      (<g3022p1> ^type relation ^id <pred-slot3021> ^1 <obj-slot3021> ^2 <obj-slot3022>)
+
+   # Terminal Goal
+   (<tgoal302> ^handle say1term1 ^item-type terminal-goal)
 }
 
 ### +@announce1 [303]
@@ -776,26 +1005,40 @@ smem --add {
 smem --add {
    # Remember the current location as the starting location
 
-   (@remember1 ^handle remember1 ^procedural <proc402> ^item-type action ^learn-proposal true ^perform once ^goal-graph <graph402>)
+   (@remember1 ^handle remember1 ^procedural <proc402> ^item-type action ^learn-proposal true ^perform once ^goal-graph <sgoal402>)
    (<proc402> ^op_name op_remember1
               ^arg1 <parg4021> ^arg2 <parg4022>)
    (<parg4021> ^arg-type object ^required true ^id <obj-slot4021>)
    (<parg4022> ^arg-type object ^required true ^id <obj-slot4022>)
-   (<graph402> ^first <goal4021> ^goal <goal4021>)
-      (<goal4021> ^handle remember1goal1 ^item-type task-goal ^custom-goal true ^next complete)
+
+   # Start Goal
+   (<sgoal402> ^handle remember1start1 ^item-type start-goal ^next.goal <goal4021>)
+
+   # Goal 1: custom
+   (<goal4021> ^handle remember1goal1 ^item-type task-goal ^custom-goal true ^next.goal <tgoal402>)
+
+   # Terminal goal
+   (<tgoal402> ^handle remember1term1 ^item-type terminal-goal)
 }
 
 ### +@recall1 [403]
 smem --add {
    # Recall the soda in a location
 
-   (@recall1 ^handle recall1 ^procedural <proc403> ^item-type action ^learn-proposal true ^perform once ^goal-graph <graph403>)
+   (@recall1 ^handle recall1 ^procedural <proc403> ^item-type action ^learn-proposal true ^perform once ^goal-graph <sgoal403>)
     (<proc403> ^op_name op_recall1
                 ^arg1 <parg4031> ^arg2 <parg4032>)
     (<parg4031> ^arg-type object ^required true ^id <obj-slot4031>)
     (<parg4032> ^arg-type partial-predicate ^required true ^id <pred-slot4032> ^2 <obj-slot4032>)
-   (<graph403> ^first <goal4031> ^goal <goal4031>)
-      (<goal4031> ^handle recall1goal1 ^item-type task-goal ^custom-goal true ^next complete)
+
+   # Start Goal
+   (<sgoal403> ^handle recall1start1 ^item-type start-goal ^next.goal <goal4031>)
+
+   # Goal 1: custom
+   (<goal4031> ^handle recall1goal1 ^item-type task-goal ^custom-goal true ^next.goal <tgoal403>)
+
+   # Terminal goal
+   (<tgoal403> ^handle recall1term1 ^item-type terminal-goal)
 }
 
 ### +@think1 [404]
@@ -804,13 +1047,20 @@ smem --add {
    # 'Think of a storage location of the soda'
    # The soda argument is put under the first as a sub-relation
 
-   (@think1 ^handle think1 ^procedural <proc404> ^item-type action ^learn-proposal true ^perform once ^goal-graph <graph403>)
+   (@think1 ^handle think1 ^procedural <proc404> ^item-type action ^learn-proposal true ^perform once ^goal-graph <sgoal403>)
    (<proc404> ^op_name op_think1
               ^arg1 <parg4041> ^arg2 <parg4042>)
    (<parg4041> ^arg-type partial-predicate ^required true ^id <pred-slot4041> ^2 <obj-slot4041>)
    (<parg4042> ^arg-type partial-predicate ^required true ^id <pred-slot4042> ^2 <obj-slot4042>)
-   (<graph404> ^first <goal4041> ^goal <goal4041>)
-      (<goal4041> ^handle think1goal1 ^item-type task-goal ^custom-goal true ^next complete)
+
+   # Start Goal
+   (<sgoal404> ^handle think1start1 ^item-type start-goal ^next.goal <goal4041>)
+
+   # Goal 1: custom
+   (<goal4041> ^handle think1goal1 ^item-type task-goal ^custom-goal true ^next.goal <tgoal404>)
+
+   # Terminal goal
+   (<tgoal404> ^handle think1term1 ^item-type terminal-goal)
 }
 
 ### +@heard1 [405]
@@ -821,10 +1071,17 @@ smem --add {
 
 ### +@wait1 [406]
 smem --add {
-   (@wait1 ^handle wait1 ^procedural <proc406> ^item-type action ^goal-graph <graph406>)
+   (@wait1 ^handle wait1 ^procedural <proc406> ^item-type action ^goal-graph <sgoal406>)
    (<proc406> ^op_name op_wait1)
-   (<graph406> ^first <goal4061> ^goal <goal4061>)
-      (<goal4061> ^handle wait1goal1 ^item-type task-goal ^custom-goal true ^next complete)
+
+   # Start Goal
+   (<sgoal406> ^handle wait1start1 ^item-type start-goal ^next.goal <goal4061>)
+
+   # Goal 1: custom
+   (<goal4061> ^handle wait1goal1 ^item-type task-goal ^custom-goal true ^next.goal <tgoal406>)
+
+   # Terminal goal
+   (<tgoal406> ^handle wait1term1 ^item-type terminal-goal)
 }
 
 ### +@check1 [407]
@@ -837,10 +1094,17 @@ smem --add {
 smem --add {
    # repeat until <x>
 
-   (@repeat1 ^handle repeat1 ^procedural <proc407> ^item-type action ^goal-graph <graph407>)
+   (@repeat1 ^handle repeat1 ^procedural <proc407> ^item-type action ^goal-graph <sgoal407>)
    (<proc407> ^op_name op_repeat1)
-   (<graph407> ^first <goal4071> ^goal <goal4071>)
-      (<goal4071> ^handle repeat1goal1 ^item-type task-goal ^custom-goal true ^next complete)
+
+   # Start Goal
+   (<sgoal407> ^handle repeat1start1 ^item-type start-goal ^next.goal <goal4071>)
+
+   # Goal 1: custom
+   (<goal4071> ^handle repeat1goal1 ^item-type task-goal ^custom-goal true ^next.goal <tgoal407>)
+
+   # Terminal goal
+   (<tgoal407> ^handle repeat1term1 ^item-type terminal-goal)
 }
 
 

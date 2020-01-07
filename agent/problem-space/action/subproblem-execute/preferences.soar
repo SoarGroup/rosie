@@ -29,47 +29,47 @@ sp {subproblem*execute*elaborate*remove-start-of-execution-flag*priority*9
    (<o> ^priority 9)
 }
 
-# Priority=8: smem-query
+# Priority=8: smem-query, init-current-goal
 sp {subproblem*execute*elaborate*smem-query*priority*8
    (state <s> ^problem-space.subproblem execute
               ^operator <o> +)
-   (<o> ^name smem-query)
+   (<o> ^name << smem-query init-current-goal >>)
 -->
    (<o> ^priority 8)
 }
 
-# Priority=7, add-subtask-to-tcn, learn-subtask-proposal, create-subtask-goal-node
+# Priority=7, add-subtask-to-tcn, learn-subtask-proposal, push-task-segment
 sp {subproblem*execute*elaborate*learning*subtask*operators*priority*7
    (state <s> ^problem-space.subproblem execute
               ^operator <o> +)
-   (<o> ^name << add-subtask-to-tcn create-subtask-goal-node >>)
--->
-   (<o> ^priority 7)
-}
-
-# Priority=6, attend-to-perception
-sp {subproblem*execute*elaborate*attend-to-perception*priority*6
-   (state <s> ^problem-space.subproblem execute
-              ^operator <o> +)
-   (<o> ^name attend-to-perception)
--->
-   (<o> ^priority 6)
-}
-
-# Priority=5, advance-current-goal, complete-task
-sp {subproblem*execute*elaborate*goal*operators*priority*5
-   (state <s> ^problem-space.subproblem execute
-              ^operator <o> +)
-   (<o> ^name << advance-current-goal complete-task >>)
+   (<o> ^name << add-subtask-to-tcn push-task-segment >>)
 -->
    (<o> ^priority 5)
 }
 
-# Priority=4, push-task-segment, pop-task-segment
+# Priority=6, attend-to-perception, add-object-to-world
+sp {subproblem*execute*elaborate*attend-to-perception*priority*6
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o> +)
+   (<o> ^name << attend-to-perception add-object-to-world >>)
+-->
+   (<o> ^priority 7)
+}
+
+# Priority=5, select-next-goal, complete-task 
+sp {subproblem*execute*elaborate*goal*operators*priority*5
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o> +)
+   (<o> ^name << select-next-goal complete-task >>)
+-->
+   (<o> ^priority 6)
+}
+
+# Priority=4, pop-task-segment, handle-execution-failure
 sp {subproblem*execute*elaborate*task-stack*operators*priority*4
    (state <s> ^problem-space.subproblem execute
               ^operator <o> +)
-   (<o> ^name << push-task-segment pop-task-segment >>)
+   (<o> ^name << pop-task-segment handle-execution-failure >>)
 -->
    (<o> ^priority 4)
 }
@@ -93,11 +93,11 @@ sp {subproblem*execute*elaborate*task-stack*operators*priority*2
    (<o> ^priority 2)
 }
 
-# Priority=1: wait, initiate-interaction
+# Priority=1: wait 
 sp {subproblem*execute*elaborate*task-stack*operators*priority*1
    (state <s> ^problem-space.subproblem execute
               ^operator <o> +)
-   (<o> ^name << wait initiate-interaction >>)
+   (<o> ^name << wait >>)
 -->
    (<o> ^priority 1)
 }
@@ -154,8 +154,9 @@ sp {problem-space*action*elaborate*force-state-no-change*if*unlearned*desired
   (state <s> ^problem-space.subproblem execute
              ^task-operator <task-op>
              ^superstate.operator <task-op>
-            -^desired)
-   (<task-op> ^current-goal { <sg> <> first <> complete })
+            -^desired
+            -^implicit-object)
+   (<task-op> ^current-goal <goal-h>)
 -->
    (<s> ^force-state-no-change true)
 }
@@ -167,8 +168,10 @@ sp {subproblem*execute*reject*subtask*proposals*if*desired*satisfied
    (state <s> ^problem-space.subproblem execute
               ^operator <o> +
              -^child-task-segment
+             -^require-subtask <op-name>
               ^desired.satisfied true)
-   (<o> ^item-type task-operator)
+   (<o> ^item-type << task-operator command-operator >>
+        ^name <op-name>)
 -->
    (<s> ^operator <o> -)
 }
@@ -216,9 +219,9 @@ sp {subproblem*execute*reject*complete-task*if*unfinished*command
    (state <s> ^problem-space.subproblem execute
               ^operator <o> +
               ^current-task-segment.<cmd-name> <cmd>)
-   (<o> ^name << advance-current-goal complete-task >>)
+   (<o> ^name << select-next-goal complete-task >>)
    (<cmd> ^item-type output-command
-          ^status << sent received executing >>)
+          ^status << sent received executing running >>)
 -->
    (<s> ^operator <o> -)
 }

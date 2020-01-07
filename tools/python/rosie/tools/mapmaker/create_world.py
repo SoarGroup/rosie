@@ -9,7 +9,7 @@ def create_world(world_info, writer):
 	writeRobot(world_info.robot, writer)
 
 	for obj in world_info.objects:
-		writer.write("\"" + obj.sim_class() + "\"\n")
+		writer.write("\"" + obj.sim_class + "\"\n")
 		writer.write("{\n")
 		obj.write_info(writer)
 		writer.write("}\n")

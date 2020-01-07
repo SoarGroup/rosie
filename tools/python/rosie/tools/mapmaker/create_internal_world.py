@@ -29,10 +29,7 @@ def create_internal_world(world_info, fout):
 		preds_id = "<obj" + str(i) + "-preds>"
 
 		# Create a unique handle for the object
-		handle = "obj"
-		for c in range(len(obj.cats)):
-			if obj.cats[c] in [ "name", "shape", "category" ]:
-				handle = obj.labels[c]
+		handle = obj.preds['category']
 		
 		if handle not in name_counts:
 			name_counts[handle] = 0
@@ -41,14 +38,14 @@ def create_internal_world(world_info, fout):
 
 		# Determine the object's location
 		obj_loc = next( (region for region in world_info.regions 
-			if region.contains_point(obj.vals[0], obj.vals[1])), None)
+			if region.contains_point(obj.pos[0], obj.pos[1])), None)
 
 		if obj_loc == None:
 			print("ERROR: " + handle)
 
 		fout.write("   (<objs> ^object {:s})\n".format(obj_id))
 		fout.write("   ({:s} ^handle {:s} ^waypoint {:s} ^predicates {:s})\n".format(obj_id, handle, obj_loc.handle, preds_id))
-		fout.write("   ({:s} {:s})\n".format(preds_id, " ".join([ "^{:s} {:s}".format(obj.cats[c], obj.labels[c]) for c in range(len(obj.cats))])))
+		fout.write("   ({:s} {:s})\n".format(preds_id, " ".join( "^{:s} {:s}".format(cat, pred) for cat, pred in obj.preds.items() )))
 		
 		fout.write("\n")
 	# End of writing objects

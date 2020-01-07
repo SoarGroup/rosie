@@ -1,0 +1,81 @@
+# For a perception object, find out if it is overlapped by any known world objects
+#    If so, this could be a sign that this new perceptual object is part of an existing object
+
+# Will create the following for each intersecting object:
+#(<s> ^overlap-results <results>)
+#(<results> ^result <res1> <res2> ...)
+#(<res1> ^overlapper-info <obj-info>
+#        ^overlap <num>)
+
+# WME used to hold results from overlap tests
+sp {add-object-to-world*elaborate*overlap-results
+   (state <s> ^name add-object-to-world)
+-->
+   (<s> ^overlap-results <cmd>)
+}
+
+# Step 1: Find all belief objects that intersect the new perceptual object
+sp {add-object-to-world*propose*intersect-command
+   (state <s> ^name add-object-to-world
+             -^agent-params.domain internal
+              ^source-type perception
+              ^source-obj.object-handle <perc-id>
+             -^intersect-command.result)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name intersect-command
+        ^object-id <perc-id>
+        ^candidate-set <cand>)
+   (<cand> ^type tag_select 
+           ^a.type all_nodes
+           ^tag_name object-source
+           ^tag_value belief)
+}
+
+# Step 2: For each intersecting object, find out how much it overlaps the new perceptual object
+sp {add-object-to-world*propose*overlap-command
+   (state <s> ^name add-object-to-world
+              ^source-type perception
+              ^source-obj.object-handle <new-id>
+              ^intersect-command.result { <int-id> <> none }
+             -^overlap-results.result.object-b <int-id>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name overlap-command
+        ^object-a <new-id>
+        ^object-b <int-id>)
+}
+
+# Copy the result of the overlap filter
+sp {add-object-to-world*apply*overlap-command*copy-result
+   (state <s> ^name add-object-to-world
+              ^operator.name overlap-command
+              ^overlap-command <cmd>
+              ^overlap-results <results>)
+   (<cmd> ^result <res>)
+   (<res> ^overlap <val>)
+-->
+   (<s> ^overlap-command <cmd> -)
+   (<results> ^result <res>)
+}
+
+# Elaborates information from the object-monitor for an overlapping object
+sp {add-object-to-world*elaborate*overlap-result*overlapper-info
+   (state <s> ^name add-object-to-world
+              ^overlap-results.result <res>
+              ^object-monitor.object-info <known-obj-info>)
+   (<res> ^object-b <known-bel-id>)
+   (<known-obj-info> ^belief-obj.id <known-bel-id>)
+-->
+   (<res> ^overlapper-info <known-obj-info>)
+}
+
+sp {add-object-to-world*apply*overlap-command*print-perception*report*overlap
+   (state <s> ^name add-object-to-world
+              ^operator.name overlap-command
+              ^overlap-command.result <res>
+              ^agent-params.print-perception true)
+   (<res> ^object-a <a> ^object-b <b> ^overlap <val>)
+-->
+   (write |Overlap: | <val> | of | <a> | is contained by | <b> (crlf))
+} 

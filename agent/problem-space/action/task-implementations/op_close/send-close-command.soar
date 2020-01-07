@@ -6,13 +6,14 @@ sp {op_close1*propose*send-close-command
    (<obj> ^predicates <preds>)
    (<preds> ^is-visible1 visible1
             ^is-reachable1 reachable1
-            ^door2 open2)
+            ^<prop> open2)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name send-close-command
         ^command-name close-command
         ^item-type command-operator
-        ^arg1.id <obj>)
+        ^arg1.id <obj>
+        ^property-name <prop>)
 }
 
 ### internal ###
@@ -67,11 +68,41 @@ sp {op_close1*external*apply*send-close-command*tabletop
               ^current-task-segment <seg>)
    (<o> ^name send-close-command
         ^command-name <cmd-name>
-        ^arg1.id.handle <h>)
+        ^arg1.id.handle <h>
+        ^property-name <prop>)
 -->
    (<ol> ^set-state <set>)
    (<set> ^object-handle <h>
-          ^name door2
+          ^name <prop>
           ^value closed2)
    (<seg> ^<cmd-name> <set>)
+}
+
+### magicbot ###
+
+sp {op_close1*external*apply*send-close-command*magicbot
+   (state <s> ^name op_close1
+              ^problem-space.execution-type external
+              ^agent-params.domain magicbot
+              ^operator <o>
+              ^io.output-link <ol>
+              ^current-task-segment <seg>)
+   (<o> ^name send-close-command
+        ^command-name <cmd-name>
+        ^arg1.id <obj>)
+   (<obj> ^perception-id <perc-id>
+          ^predicates.<prop> open2)
+-->
+   (<ol> ^do-control-law <cmd>)
+   (<cmd> ^name change-state
+          ^item-type output-command
+          ^parameters <params>
+          ^termination-condition <term>)
+   (<term> ^name object-state
+           ^parameters <params>)
+   (<params> ^object-id (int <perc-id>)
+             ^property <prop>
+             ^value closed2)
+
+   (<seg> ^<cmd-name> <cmd>)
 }

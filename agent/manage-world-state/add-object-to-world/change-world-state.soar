@@ -1,0 +1,231 @@
+
+### Case 1: A perception object matches a non-visible object - change the perception-id
+sp {add-object-to-world*propose*change-world-state*change-perception-id*no*input-link-obj
+   (state <s> ^name add-object-to-world
+              ^source-type perception
+              ^source-obj.object-handle <perc-id>
+              ^matches-existing-object { <existing-obj> <> none }
+             -^matches-existing-object <> <existing-obj>)
+   (<existing-obj> ^status.is-visible1 not-visible1)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name change-world-state
+        ^change-perception-id <chg>)
+   (<chg> ^object-info <existing-obj>
+          ^perception-id <perc-id>)
+}
+
+# Case if there are multiple matches (only for perception objects)
+sp {add-object-to-world*propose*change-world-state*change-perception-id*no*input-link-obj*multiple
+   (state <s> ^name add-object-to-world
+              ^source-type perception
+              ^source-obj.object-handle <perc-id>
+              ^predicate-match <obj1>
+              ^overlap-match <obj2>)
+   (<obj1> ^status.is-visible1 not-visible1)
+   (<obj2> ^status.is-visible1 not-visible1)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name change-world-state
+        ^change-perception-id <chg>
+        ^merge-belief-objects <merge>)
+   (<chg> ^object-info <obj1>
+          ^perception-id <perc-id>)
+   (<merge> ^core-object-info <obj1>
+            ^merging-object-info <obj2>)
+}
+
+### Case 2: A perception object matches an object with a shared-input-link-obj - change its perception-id
+sp {add-object-to-world*propose*change-world-state*change-perception-id*shared-input-link-obj
+   (state <s> ^name add-object-to-world
+              ^source-type perception
+              ^source-obj.object-handle <perc-id>
+              ^matches-existing-object { <existing-obj> <> none })
+   (<existing-obj> ^status.shared-input-link-obj true)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name change-world-state
+        ^change-perception-id <chg>)
+   (<chg> ^object-info <existing-obj>
+          ^perception-id <perc-id>)
+}
+
+### Case 3: A perception object matches a non-shared object with an existing perception-id: merge the perception-ids
+sp {add-object-to-world*propose*change-world-state*merge-perception-objects
+   (state <s> ^name add-object-to-world
+              ^source-type perception
+              ^source-obj.object-handle <perc-id>
+              ^matches-existing-object { <existing-obj> <> none })
+   (<existing-obj> -^status.shared-input-link-obj true
+                    ^input-link-obj.object-handle <other-id>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name change-world-state
+        ^merge-perception-objects <merge>)
+   (<merge> ^core-perception-id <other-id>
+            ^merging-perception-id <perc-id>)
+}
+
+### Case 4: A non-perception object matches an existing object - merge them
+
+sp {add-object-to-world*new-belief-object*propose*change-world-state*merge-belief-objects
+   (state <s> ^name add-object-to-world
+              ^source-type <> perception
+              ^matches-existing-object { <core-obj> <> none }
+              ^object-info <obj-info>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name change-world-state
+        ^merge-belief-objects <merge>)
+   (<merge> ^core-object-info <core-obj>
+            ^merging-object-info <obj-info>)
+}
+
+### Case 4: If the object doesn't match anything, create one and add it to the world
+sp {add-object-to-world*propose*change-world-state*add-object-to-world*perception
+   (state <s> ^name add-object-to-world
+              ^source-type perception
+              ^source-obj.object-handle <perc-id>
+              ^created-object <obj>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name change-world-state
+        ^add-object-to-world <add>)
+   (<add> ^object <obj>
+          ^perception-id <perc-id>)
+}
+
+sp {add-object-to-world*propose*change-world-state*add-object-to-world*non*perception
+   (state <s> ^name add-object-to-world
+              ^source-type <> perception
+              ^created-object <obj>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name change-world-state
+        ^add-object-to-world <add>)
+   (<add> ^object <obj>)
+}
+
+
+####### Other Changes #########
+
+### create-belief-object
+# If a perception object matches an object without a belief object, create one
+
+sp {add-object-to-world*elaborate*change-world-state*create-belief-object
+   (state <s> ^name add-object-to-world
+              ^source-type perception
+              ^source-obj.object-handle <perc-id>
+              ^matches-existing-object { <existing-obj> <> none }
+              ^operator <o> +)
+   (<o> ^name change-world-state)
+   (<existing-obj> ^object-handle <obj-handle>
+                   ^belief-id <bel-id>
+                  -^belief-obj)
+-->
+   (<o> ^create-belief-object <bel>)
+   (<bel> ^perception-id <perc-id>
+          ^belief-id <bel-id>)
+}
+
+# If there is a transform specified, use it to create a belief object
+sp {add-object-to-world*epmem*elaborate*change-world-state*create-belief-object*transform
+   (state <s> ^name add-object-to-world
+              ^source-type epmem
+              ^source-obj.handle <h>
+              ^operator <o> +
+              ^transform <t>)
+   (<o> ^name change-world-state)
+   (<t> ^position <pos>
+        ^rotation <rot>
+        ^scale <scl>)
+-->
+   (<o> ^create-belief-object <obj-info>)
+   (<obj-info> ^belief-id (concat |bel-| <h>)
+               ^position <pos>
+               ^rotation <rot>
+               ^scale <scl>)
+}
+
+
+####### Preferences ######
+
+sp {add-object-to-world*imagined*apply*change-world-state*reject*if*changed-world
+   (state <s> ^name add-object-to-world
+              ^operator <o> +
+              ^changed-world true)
+   (<o> ^name change-world-state)
+-->
+   (<s> ^operator <o> -)
+}
+
+####### Application #######
+
+sp {add-object-to-world*apply*change-world-state*report*result*matched
+   (state <s> ^name add-object-to-world
+              ^operator.name change-world-state
+              ^source-obj <src>
+              ^source-type <type>
+              ^matches-existing-object.world-obj <obj>
+              ^superstate <ss>)
+-->
+   (<ss> ^add-object-result <res>)
+   (<res> ^source-obj <src>
+          ^source-type <type>
+          ^world-obj <obj>)
+}
+
+sp {add-object-to-world*apply*change-world-state*report*result*created
+   (state <s> ^name add-object-to-world
+              ^operator.name change-world-state
+              ^source-obj <src>
+              ^source-type <type>
+              ^created-object <obj>
+              ^superstate <ss>)
+-->
+   (<ss> ^add-object-result <res>)
+   (<res> ^source-obj <src>
+          ^source-type <type>
+          ^world-obj <obj>)
+}
+
+### Imagined: copy a world-object link onto the imagined object
+sp {add-object-to-world*imagined*apply*change-world-state*copy*world-object
+   (state <s> ^name add-object-to-world
+              ^operator.name change-world-state
+              ^source-type imagined
+              ^superstate.operator.source-obj <obj>
+              ^created-object <wobj>)
+-->
+   (<obj> ^world-object <wobj>)
+}
+
+### Perception: clean up the new-object-info on the object-monitor
+sp {add-object-to-world*perception*apply*change-world-state*remove*new-object-info
+   (state <s> ^name add-object-to-world
+              ^operator.name change-world-state
+              ^source-type perception
+              ^source-obj <obj>
+              ^top-state.perception-monitor.object-monitor <obj-mon>)
+   (<obj-mon> ^new-object-info <obj-info>)
+   (<obj-info> ^input-link-obj <obj>)
+-->
+   (<obj-mon> ^new-object-info <obj-info> -)
+}
+
+# also remove the svs filters
+sp {add-object-to-world*perception*apply*change-world-state*remove*monitoring*filters
+   (state <s> ^name add-object-to-world
+              ^operator.name change-world-state
+              ^source-type perception
+              ^source-obj <obj>
+              ^top-state.perception-monitor.object-monitor <obj-mon>)
+   (<obj-mon> ^new-object-info <obj-info>)
+   (<obj-info> ^position-monitor <pos>
+               ^volume-monitor <vol>)
+   (<cmd> ^extract <pos>
+          ^extract <vol>)
+-->
+   (<cmd> ^extract <pos> -
+          ^extract <vol> -)
+}

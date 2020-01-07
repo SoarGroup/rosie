@@ -1,43 +1,11 @@
-### For the magicbot, we break approach into face and drive subtasks
+### For the magicbot, we break approach into drive and face subtasks
 
-### First face the goal coord
-sp {op_approach1*propose*op_face1*goal-coord
-   (state <s> ^name op_approach1
-              ^problem-space.execution-type external
-              ^agent-params.domain magicbot
-              ^goal-coord <coord>
-             -^current-task-segment.faced-goal.status success)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name op_face1
-        ^item-type task-operator
-        ^task-handle face1
-        ^arg1 <arg1>)
-   (<arg1> ^arg-type coordinate
-           ^coord <coord>)
-}
-
-sp {op_approach1*apply*pop-task-segment*op_face1*mark*faced-goal
-   (state <s> ^name op_approach1
-              ^operator <o>
-              ^current-task-segment <seg>)
-   (<o> ^name pop-task-segment
-        ^segment <child-seg>)
-   (<child-seg> ^status success
-                ^task-operator <face-op>)
-   (<face-op> ^name op_face1
-              ^arg1.arg-type coordinate)
--->
-   (<seg> ^faced-goal.status success)
-}
-
-# Second, go to the goal coordinate
+# First, go to the goal coordinate
 sp {op_approach1*propose*op_go-to-xy1
    (state <s> ^name op_approach1
               ^problem-space.execution-type external
               ^agent-params.domain magicbot
               ^goal-coord <coord>
-              ^current-task-segment.faced-goal.status success
              -^current-task-segment.drive-command.status success)
 -->
    (<s> ^operator <o> + =)
@@ -49,7 +17,7 @@ sp {op_approach1*propose*op_go-to-xy1
            ^coord <coord>)
 }
 
-sp {op_approach1*apply*pop-task-segment*op_go-to-xy1*mark*finished
+sp {op_approach1*apply*pop-task-segment*op_go-to-xy1*mark*drive-command*success
    (state <s> ^name op_approach1
               ^operator <o>
               ^current-task-segment <seg>)
@@ -61,14 +29,14 @@ sp {op_approach1*apply*pop-task-segment*op_go-to-xy1*mark*finished
    (<seg> ^drive-command.status success)
 }
 
-### Third, face the object
+### Second, face the object
 sp {op_approach1*propose*op_face1*target-object
    (state <s> ^name op_approach1
               ^problem-space.execution-type external
               ^agent-params.domain magicbot
               ^target-object <obj>
               ^current-task-segment.drive-command.status success
-             -^current-task-segment.faced-object.status success)
+             -^current-task-segment.face-command.status success)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name op_face1
@@ -77,9 +45,11 @@ sp {op_approach1*propose*op_face1*target-object
         ^arg1 <arg1>)
    (<arg1> ^arg-type object
            ^id <obj>)
+
+   (<s> ^require-subtask op_face1)
 }
 
-sp {op_approach1*apply*pop-task-segment*op_face1*mark*finished*faced-object
+sp {op_approach1*apply*pop-task-segment*op_face1*mark*face-command*success
    (state <s> ^name op_approach1
               ^operator <o>
               ^current-task-segment <seg>)
@@ -90,5 +60,5 @@ sp {op_approach1*apply*pop-task-segment*op_face1*mark*finished*faced-object
    (<task-op> ^name op_face1
               ^arg1.arg-type object)
 -->
-   (<seg> ^faced-object.status success)
+   (<seg> ^face-command.status success)
 }

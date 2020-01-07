@@ -1,20 +1,4 @@
 
-# Known location in svs, turn to face it
-sp {op_find1*propose*op_face
-   (state <s> ^name op_find1
-              ^problem-space.execution-type external
-              ^target-object <obj>)
-   (<obj> ^svs-obj)
--->
-   (<s> ^operator <face-op> + =)
-   (<face-op> ^name op_face1
-              ^item-type task-operator
-              ^task-handle face1
-              ^arg1 <obj-arg>)
-   (<obj-arg> ^arg-type object
-              ^id <obj>)
-}
-
 # Known location in the world, propose go-to that location
 sp {op_find1*propose*op_go-to1*location
    (state <s> ^name op_find1
@@ -37,40 +21,42 @@ sp {op_find1*propose*op_go-to1*location
            ^2 <loc>)
 }
 
-## Ask the instructor if they know where the object is 
-#sp {op_find1*propose*initiate-interaction*get-find-help
-#   (state <s> ^name op_find1
-#              ^problem-space.execution-type external
-#              ^target-object <obj>
-#             -^current-task-segment.stop-asking true)
-#-->
-#   (<s> ^operator <o> + =)
-#   (<o> ^name initiate-interaction
-#        ^type get-find-help
-#        ^object <obj>)
-#}
+# Scan the room to see if you can see it
+sp {op_find1*propose*op_scan
+   (state <s> ^name op_find1
+              ^problem-space.execution-type external
+              ^agent-params.domain << magicbot cozmo >>
+              ^target-object <obj>
+             -^current-task-segment.tried-scan true)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name op_scan1
+        ^item-type task-operator
+        ^task-handle scan1
+        ^until-clause <until>)
+   (<until> ^arg-type until-clause
+            ^pred-count 1
+            ^1 <pred>)
+   (<pred> ^type unary
+           ^handle visible1
+           ^property-handle is-visible1
+           ^1 <obj>)
+}
 
+# Ask the instructor if they know where the object is 
+sp {op_find1*propose*initiate-interaction*get-find-help
+   (state <s> ^name op_find1
+              ^problem-space.execution-type external
+              ^target-object <obj>
+             -^current-task-segment.stop-asking true)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name initiate-interaction
+        ^item-type command-operator
+        ^type get-find-help
+        ^object <obj>)
+}
 
-## Scan the room to see if you can see it
-#sp {op_find1*propose*op_scan
-#   (state <s> ^name op_find1
-#              ^problem-space.execution-type external
-#              ^agent-params.domain << magicbot cozmo >>
-#              ^target-object <obj>)
-#-->
-#   (<s> ^operator <o> +)
-#   (<o> ^name op_scan1
-#        ^item-type task-operator
-#        ^task-handle scan1
-#        ^until-clause <until>)
-#   (<until> ^arg-type until-clause
-#            ^pred-count 1
-#            ^1 <pred>)
-#   (<pred> ^type unary
-#           ^handle visible1
-#           ^property-handle is-visible1
-#           ^1 <obj>)
-#}
 
 # Explore the building to try and find it
 sp {op_find1*propose*op_explore
@@ -91,3 +77,16 @@ sp {op_find1*propose*op_explore
            ^property-handle is-visible1
            ^1 <obj>)
 }
+
+sp {op_find1*apply*complete-push-task-segment*op_explore*mark*completed-scan
+   (state <s> ^name op_find1
+              ^operator.name op_explore1
+              ^child-task-segment <child>
+              ^current-task-segment <seg>)
+   (<seg> ^tried-scan true
+         -^marked-explored-scan true)
+-->
+   (<child> ^completed-scan true)
+   (<seg> ^marked-explore-scan true)
+}
+              

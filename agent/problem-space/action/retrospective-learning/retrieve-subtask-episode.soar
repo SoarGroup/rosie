@@ -1,0 +1,115 @@
+
+# Retrieve a subtask that occurred during the task execution
+sp {retrospective-learning*propose*retrieve-subtask-episode
+   (state <s> ^name retrospective-learning
+              ^start-episode-id { <start-id> <> none }
+             -^subtask-episode
+             -^retrieved-all-subtasks true)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name retrieve-subtask-episode
+        ^after-episode-id <start-id>)
+}
+
+# If we learned a previous subtask, only search before it
+sp {retrospective-learning*elaborate*retrieve-subtask-episode*before-episode-id
+   (state <s> ^name retrospective-learning
+              ^operator <o> +
+              ^earliest-retrieved-subtask-id <end-id>)
+   (<o> ^name retrieve-subtask-episode)
+-->
+   (<o> ^before-episode-id <end-id>)
+}
+
+# Search for a subtask after the start-episode-id
+sp {retrospective-learning*apply*retrieve-subtask-episode*create*cue
+   (state <s> ^name retrospective-learning
+              ^operator <o>
+              ^epmem.command <cmd>
+              ^task-handle <handle>)
+   (<o> ^name retrieve-subtask-episode
+        ^after-episode-id <min-id>
+       -^before-episode-id)
+   (<cmd> -^query)
+-->
+   (<cmd> ^query <q>
+          ^after <min-id>)
+   (<q> ^task-stack.bottom <bot>)
+   (<bot> ^start-of-execution true
+          ^prev.task-operator.task-handle <handle>)
+}
+
+# Search for a subtask between the start-episode-id and the earliest-retrieved-subtask-id
+sp {retrospective-learning*apply*retrieve-subtask-episode*create*cue*before
+   (state <s> ^name retrospective-learning
+              ^operator <o>
+              ^epmem.command <cmd>
+              ^task-handle <handle>)
+   (<o> ^name retrieve-subtask-episode
+        ^after-episode-id <min-id>
+        ^before-episode-id <max-id>)
+   (<cmd> -^query)
+-->
+   (<cmd> ^query <q>
+          ^after <min-id>
+          ^before <max-id>)
+   (<q> ^task-stack.bottom <bot>)
+   (<bot> ^start-of-execution true
+          ^prev.task-operator.task-handle <handle>)
+}
+
+# Remove the old earliest-retrieved-subtask-id
+sp {retrospective-learning*apply*retrieve-subtask-episode*remove*former*earliest-subtask
+   (state <s> ^name retrospective-learning
+              ^operator <o>
+              ^earliest-retrieved-subtask-id <max-id>)
+   (<o> ^name retrieve-subtask-episode
+        ^before-episode-id <max-id>)
+-->
+   (<s> ^earliest-retrieved-subtask-id <max-id> -)
+}
+
+
+# Success :) Copy the subtask episode to the state
+sp {retrospective-learning*apply*retrieve-subtask-episode*success
+   (state <s> ^name retrospective-learning
+              ^operator.name retrieve-subtask-episode
+              ^epmem <epmem>)
+   (<epmem> ^result <res>
+            ^result.retrieved <episode>
+            ^command <cmd>)
+   (<res> ^success <q>
+          ^retrieved <episode>
+          ^memory-id <ep-id>
+          ^normalized-match-score 1.0)
+   (<cmd> ^query <q>)
+-->
+   (<s> ^subtask-episode <episode>
+        ^earliest-retrieved-subtask-id (- <ep-id> 5)) # Subtract 5 to make sure we go back enough
+   (<cmd> ^query <q> -)
+}
+
+# Failure :( The agent has retrieved all subtasks
+sp {retrospective-learning*apply*retrieve-subtask-episode*failure*no*perfect*match
+   (state <s> ^name retrospective-learning
+              ^operator.name retrieve-subtask-episode
+              ^epmem <epmem>)
+   (<epmem> ^result.normalized-match-score < 1.0
+            ^command <cmd>)
+   (<cmd> ^query <q>)
+-->
+   (<s> ^retrieved-all-subtasks true)
+   (<cmd> ^query <q> -)
+}
+
+sp {retrospective-learning*apply*retrieve-subtask-episode*failure*no*match
+   (state <s> ^name retrospective-learning
+              ^operator.name retrieve-subtask-episode
+              ^epmem <epmem>)
+   (<epmem> ^result.failure
+            ^command <cmd>)
+   (<cmd> ^query <q>)
+-->
+   (<s> ^retrieved-all-subtasks true)
+   (<cmd> ^query <q> -)
+}

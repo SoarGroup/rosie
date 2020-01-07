@@ -1,0 +1,86 @@
+###################### select-next-goal ##################
+# When the current goal is satisfied, select the next one in the graph
+
+# Elaborate superstate info
+sp {subproblem*execute*select-next-goal*elaborate*next-goal-handle
+   (state <s> ^name select-next-goal
+              ^superstate.operator.next-goal-handle <goal-h>)
+-->
+   (<s> ^next-goal-handle <goal-h>)
+}
+
+sp {subproblem*execute*select-next-goal*elaborate*task-concept-network*superstate
+   (state <s> ^name select-next-goal
+              ^superstate <ss>)
+   (<ss> ^task-concept-network <tcn>)
+-->
+   (<s> ^task-concept-network <tcn>)
+}
+
+# Retrieve the goal node from smem
+sp {subproblem*execute*select-next-goal*retrieve*next-goal-id
+   (state <s> ^name select-next-goal
+              ^next-goal-handle <goal-h>)
+-->
+  (<s> ^smem-query <query>)
+  (<query> ^cue.handle <goal-h>
+           ^depth 5
+           ^destination <s>
+           ^result-name next-goal-id)
+}
+
+# If there are any objects in the goal that are not part of the task-operator, 
+#   they are implicit object arguments and should be added to the world
+sp {subproblem*execute*select-next-goal*elaborate*implicit-object
+   (state <s> ^name select-next-goal
+              ^next-goal-id.{ << 1 2 3 4 5 >> } <gp>
+              ^task-concept-network.procedural <proc>)
+   (<gp> ^type << unary relation >>
+         ^{ << 1 2 >> } <obj-slot>)
+   (<proc> -^<arg-name>.<slot-name> { @ <obj-slot> })
+-->
+   (<s> ^implicit-object <obj-slot>)
+}
+
+### Operator change-current-goal
+
+sp {subproblem*execute*select-next-goal*propose*change-current-goal
+   (state <s> ^name select-next-goal
+              ^next-goal-handle <goal-h>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name change-current-goal)
+}
+
+# Change the ^current-goal on the task-operator
+sp {subproblem*execute*select-next-goal*apply*change-current-goal
+   (state <s> ^name select-next-goal
+              ^operator.name change-current-goal
+              ^next-goal-handle <goal-h>
+              ^superstate.task-operator <task-op>)
+   (<task-op> ^current-goal { <cur-goal-h> <> <goal-h> })
+-->
+   (<task-op> ^current-goal <cur-goal-h> -
+              ^current-goal <goal-h>)
+}
+
+# Copy any implicit-objects to the superstate
+sp {subproblem*execute*select-next-goal*apply*change-current-goal*copy*implicit-object
+   (state <s> ^name select-next-goal
+              ^operator.name change-current-goal
+              ^implicit-object <obj>
+              ^superstate <ss>)
+-->
+   (<ss> ^implicit-object <obj>)
+}
+
+# Remove any performed subtask flags
+sp {subproblem*execute*select-next-goal*apply*change-current-goal*remove*performed-subtask
+   (state <s> ^name select-next-goal
+              ^operator.name change-current-goal
+              ^superstate.task-operator <task-op>)
+   (<task-op> ^performed <sub-h>)
+-->
+   (<task-op> ^performed <sub-h> -)
+}
+

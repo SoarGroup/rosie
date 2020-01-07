@@ -1,0 +1,70 @@
+sp {op_go-to-xy1*propose*send-face-command
+   (state <s> ^name op_go-to-xy1
+              ^problem-space.execution-type external
+              ^target-coord <coord>
+             -^current-task-segment.face-command)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name send-face-command
+        ^command-name face-command
+        ^coord <coord>)
+}
+
+sp {op_go-to-xy1*elaborate*send-face-command*yaw
+   (state <s> ^name op_go-to-xy1
+              ^operator <o> +
+              ^top-state.perception-monitor.input-link.self.pose <pose>)
+   (<o> ^name send-face-command
+        ^command-name <cmd-name>
+        ^coord <coord>)
+   (<pose> ^x <rx> ^y <ry>)
+   (<coord> ^x <cx> ^y <cy>)
+-->
+   (<o> ^yaw (atan2 (- <cy> <ry>) (- <cx> <rx>) ))
+}
+
+### MAGICBOT
+
+sp {op_go-to-xy1*apply*send-face-command*magicbot
+   (state <s> ^name op_go-to-xy1
+              ^agent-params.domain magicbot
+              ^operator <o>
+              ^top-state.perception-monitor.input-link.self.pose <pose>
+              ^top-state.io.output-link <out>
+              ^current-task-segment <seg>)
+   (<o> ^name send-face-command
+        ^command-name <cmd-name>
+        ^yaw <yaw>)
+-->
+   (<out> ^do-control-law <law>)
+   (<law> ^name orient
+          ^item-type output-command
+          ^parameters.yaw <yaw>
+          ^termination-condition.name stabilized)
+
+   (<seg> ^<cmd-name> <law>)
+}
+
+
+### COZMO
+
+sp {op_go-to-xy1*apply*send-face-command*cozmo
+   (state <s> ^name op_go-to-xy1
+              ^agent-params.domain cozmo
+              ^operator <o>
+              ^io.input-link.self.pose <pose>
+              ^top-state.io.output-link <out>
+              ^current-task-segment <seg>)
+   (<o> ^name send-face-command
+        ^command-name <cmd-name>
+        ^yaw <yaw>)
+-->
+   (<out> ^turn-in-place <tip>)
+   (<tip> ^item-type output-command
+          ^absolute true
+          ^angle (* <yaw> 57.3)
+          ^speed 45)
+
+   (<seg> ^<cmd-name> <tip>)
+}
+

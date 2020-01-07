@@ -56,6 +56,7 @@ public class TaskTestWriter extends FileWriterConnector
 			String sentence = SoarUtil.getValueOfAttribute(id, "sentence");
 			writer.print("I: \"" + sentence + "\"\n");
     	}
+		id.CreateStringWME("handled", "true");
 	}
 
 	@Override
