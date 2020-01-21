@@ -57,12 +57,14 @@ class WorldInfo:
 
 class RobotInfo:
 	def __init__(self):
-		self.x = 0
-		self.y = 0
+		self.x = 0.0
+		self.y = 0.0
+		self.yaw = 0.0
 
 	def read_info(self, reader, scale=1.0):
 		self.x = float(reader.nextWord()) * scale
 		self.y = float(reader.nextWord()) * scale
+		self.yaw = float(reader.nextWord()) * scale
 		return self
 
 ###### REGION ######

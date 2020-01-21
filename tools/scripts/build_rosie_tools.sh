@@ -1,4 +1,8 @@
 #!/bin/bash
 
 cd $ROSIE_HOME/tools/java
-ant
+if [ "$1" == "--clean" ]; then
+	ant clean
+else 
+	ant
+fi
