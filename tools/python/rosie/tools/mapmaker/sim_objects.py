@@ -206,6 +206,18 @@ class Drawer(Receptacle):
 		super().write_info(writer)
 		writer.write(self.door + "\n")
 
+class Desk(Surface):  
+	sim_class = "soargroup.mobilesim.sim.SimDesk"
+	def __init__(self):
+		super().__init__()
+		self.cat = "desk1"
+		self.door = "closed"
+		self.rgb = [ 94, 76, 28 ]
+
+	def write_info(self, writer):
+		super().write_info(writer)
+		writer.write(self.door + "\n")
+
 class LightSwitch(SimObject):  
 	sim_class = "soargroup.mobilesim.sim.SimLightSwitch"
 	def __init__(self):
