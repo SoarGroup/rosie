@@ -118,6 +118,9 @@ class BoxObject(SimObject):
 		self.write_predicates(writer)
 		self.write_color(writer)
 
+class Chair(BoxObject):
+	sim_class = "soargroup.mobilesim.sim.SimChair"
+	cat = "chair1"
 
 class Receptacle(BoxObject):  
 	sim_class = "soargroup.mobilesim.sim.SimReceptacle"
@@ -127,28 +130,20 @@ class Surface(BoxObject):
 
 class Table(Surface):  
 	sim_class = "soargroup.mobilesim.sim.SimTable"
-	def __init__(self):
-		super().__init__()
-		self.cat = "table1"
-		self.rgb = [ 94, 76, 28 ]
+	cat = "table1"
+	rgb = [ 94, 76, 28 ]
 
 class Counter(Surface):
-	def __init__(self):
-		super().__init__()
-		self.cat = "counter1"
-		self.rgb = [ 250, 230, 140 ]
+	cat = "counter1"
+	rgb = [ 250, 230, 140 ]
 
 class Garbage(Receptacle):
-	def __init__(self):
-		super().__init__()
-		self.cat = "garbage1"
-		self.rgb = [ 100, 100, 100 ]
+	cat = "garbage1"
+	rgb = [ 100, 100, 100 ]
 
 class Sink(Receptacle):
-	def __init__(self):
-		super().__init__()
-		self.cat = "sink1"
-		self.rgb = [ 150, 150, 150 ]
+	cat = "sink1"
+	rgb = [ 150, 150, 150 ]
 
 class Shelves(Surface):  
 	sim_class = "soargroup.mobilesim.sim.SimShelves"
@@ -163,44 +158,32 @@ class Shelves(Surface):
 		writer.write(self.door + "\n")
 
 class Pantry(Shelves):  
-	def __init__(self):
-		super().__init__()
-		self.door = "open"
-		self.cat = "pantry1"
+	door = "open"
+	cat = "pantry1"
 
 class Cupboard(Shelves):  
-	def __init__(self):
-		super().__init__()
-		self.door = "closed"
-		self.cat = "cupboard1"
+	door = "closed"
+	cat = "cupboard1"
 
 class Drawer(Shelves):  
-	def __init__(self):
-		super().__init__()
-		self.door = "closed"
-		self.cat = "drawer1"
+	door = "closed"
+	cat = "drawer1"
 
 class Fridge(Shelves):  
-	def __init__(self):
-		super().__init__()
-		self.door = "closed"
-		self.cat = "fridge1"
-		self.rgb = [ 200, 200, 200 ]
+	door = "closed"
+	cat = "fridge1"
+	rgb = [ 200, 200, 200 ]
 
 class Microwave(Shelves):  
-	def __init__(self):
-		super().__init__()
-		self.door = "closed"
-		self.cat = "microwave1"
-		self.rgb = [ 50, 50, 50 ]
+	door = "closed"
+	cat = "microwave1"
+	rgb = [ 50, 50, 50 ]
 
 class Drawer(Receptacle):  
 	sim_class = "soargroup.mobilesim.sim.SimDrawer"
-	def __init__(self):
-		super().__init__()
-		self.cat = "drawer1"
-		self.door = "closed"
-		self.rgb = [ 94, 76, 28 ]
+	cat = "drawer1"
+	door = "closed"
+	rgb = [ 94, 76, 28 ]
 
 	def write_info(self, writer):
 		super().write_info(writer)
@@ -208,22 +191,13 @@ class Drawer(Receptacle):
 
 class Desk(Surface):  
 	sim_class = "soargroup.mobilesim.sim.SimDesk"
-	def __init__(self):
-		super().__init__()
-		self.cat = "desk1"
-		self.door = "closed"
-		self.rgb = [ 94, 76, 28 ]
-
-	def write_info(self, writer):
-		super().write_info(writer)
-		writer.write(self.door + "\n")
+	cat = "desk1"
+	rgb = [ 94, 76, 28 ]
 
 class LightSwitch(SimObject):  
 	sim_class = "soargroup.mobilesim.sim.SimLightSwitch"
-	def __init__(self):
-		super().__init__()
-		self.desc = "LS"
-		self.cat = "lightswitch1"
+	desc = "LS"
+	cat = "lightswitch1"
 
 	def read_info(self, reader, scale=1.0):
 		self.read_transform(reader, scale)
