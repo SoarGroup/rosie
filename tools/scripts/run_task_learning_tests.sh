@@ -18,6 +18,21 @@ do
 	shift
 done
 
+# Testing Primitive Actions:
+echo "################### RUNNING prim-actions ####################"
+java edu.umich.rosie.tools.config.RosieAgentConfigurator prim-actions.config -s
+
+if [ "$TEST_LANG" == "python" ]; then
+	python3 -m rosie.testing prim-actions
+else
+	java edu.umich.rosie.RosieCLI prim-actions/agent/rosie.prim-actions.config
+fi
+
+echo "### OUTPUT ERRORS for prim-actions: "
+diff output_prim-actions.txt prim-actions/correct-output.txt
+echo "### END TEST ###"
+
+
 # Test 1:
 echo "################### RUNNING test1 ####################"
 java edu.umich.rosie.tools.config.RosieAgentConfigurator test1.config -s
@@ -29,6 +44,6 @@ else
 fi
 
 echo "### OUTPUT ERRORS for test1: "
-diff test-output.txt test1/correct-output.txt
+diff output_test1.txt test1/correct-output.txt
 echo "### END TEST ###"
 

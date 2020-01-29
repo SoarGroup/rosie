@@ -186,7 +186,7 @@ public class TranslateSentence extends RegressBaseListener {
         	wordData.append(wordWme);
         }
         //	Fill out the sentence variables
-        sentenceName = name.toString();
+        sentenceName = name.toString().replaceAll("'", "").replaceAll("\"", ""); // AM: ' or " can't be in production names
         completeSentence = complete.toString();
         wordWmes = wordData.toString();
     }

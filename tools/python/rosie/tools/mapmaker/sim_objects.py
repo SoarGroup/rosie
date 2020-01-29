@@ -51,7 +51,9 @@ class SimObject:
 		# followed by 2N strings, of predicate_category predicate_name
 		self.preds = { }
 		for i in range(num_labels):
-			self.preds[reader.nextWord()] = reader.nextWord()
+			cat = reader.nextWord()
+			pred = reader.nextWord()
+			self.preds[cat] = pred
 
 	def write_predicates(self, writer):
 		writer.write("  # Properties\n")
@@ -147,15 +149,15 @@ class Sink(Receptacle):
 
 class Shelves(Surface):  
 	sim_class = "soargroup.mobilesim.sim.SimShelves"
-	def __init__(self):
-		super().__init__()
-		self.cat = "shelves1"
-		self.door = "none"
-		self.rgb = [ 94, 76, 28 ]
+	cat = "shelves1"
+	door = "none"
+	rgb = [ 94, 76, 28 ]
 
-	def write_info(self, writer):
-		super().write_info(writer)
-		writer.write(self.door + "\n")
+	def read_info(self, reader, scale=1.0):
+		super().read_info(reader, scale)
+		if self.door != "none":
+			self.preds["door2"] = "open2" if self.door == "open" else "closed2"
+		return self
 
 class Pantry(Shelves):  
 	door = "open"
@@ -164,10 +166,6 @@ class Pantry(Shelves):
 class Cupboard(Shelves):  
 	door = "closed"
 	cat = "cupboard1"
-
-class Drawer(Shelves):  
-	door = "closed"
-	cat = "drawer1"
 
 class Fridge(Shelves):  
 	door = "closed"
@@ -185,9 +183,11 @@ class Drawer(Receptacle):
 	door = "closed"
 	rgb = [ 94, 76, 28 ]
 
-	def write_info(self, writer):
-		super().write_info(writer)
-		writer.write(self.door + "\n")
+	def read_info(self, reader, scale=1.0):
+		super().read_info(reader, scale)
+		if self.door != "none":
+			self.preds["door2"] = "open2" if self.door == "open" else "closed2"
+		return self
 
 class Desk(Surface):  
 	sim_class = "soargroup.mobilesim.sim.SimDesk"
