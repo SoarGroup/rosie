@@ -60,6 +60,11 @@ public class TranslateSentence extends RegressBaseListener {
 	static final String WORD_WME =
 			"   (<w%d> ^spelling |%s|\n"
 			+ "         ^next %s)\n";
+	static final String QUOTED_WORD_WME = 
+			"   (<w%d> ^spelling |%s|\n"
+			"          ^quoted true\n"
+			+ "         ^next %s)\n";
+			
 	
 //	static final String EXPECTATION_WME =
 //			"   (<%s> %s\n";
