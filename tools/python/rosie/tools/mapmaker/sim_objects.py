@@ -6,22 +6,19 @@ strip_digits = lambda s: ''.join(filter(lambda x: x.isalpha(), s))
 class SimObject:
 	sim_class = "soargroup.mobilesim.sim.RosieSimObject"
 	NEXT_OBJ_ID = 1
-	has_color = False
 	def __init__(self):
 		self.obj_id = SimObject.NEXT_OBJ_ID
 		SimObject.NEXT_OBJ_ID += 1
 
 	# Instantiate the object by reading parameters from the reader
-	# cat px py pz row sx sy sz r g b num_preds p1 v1 p2 v2 ...
+	# cat px py pz row sx sy sz r g b num_preds p1=v1 p2=v2 ...
 	# (note that cat, pos, rot, scl can all be overriden by child class)
-	# (note that r g b are only read if self.has_color=True)
 	# Should return self
 	def read_info(self, reader, scale=1.0):
 		if not hasattr(self, 'cat'):
 			self.cat = reader.nextWord()
 		self.read_transform(reader, scale)
-		if self.has_color:
-			self.read_color(reader)
+		self.read_color(reader)
 		self.read_predicates(reader)
 		return self
 
@@ -32,9 +29,8 @@ class SimObject:
 		writer.write("  # Object Description\n")
 		writer.write("  " + self.desc + "\n")
 		self.write_transform(writer)
+		self.write_color(writer)
 		self.write_predicates(writer)
-		if self.has_color:
-			self.write_color(writer)
 
 	### READ/WRITE the transform (pos/rot/scale)
 
@@ -48,6 +44,7 @@ class SimObject:
 		if not hasattr(self, 'scl'):
 			# 3 floats - scale in xyz directions (compared to 1m unit cube)
 			self.scl = [ float(reader.nextWord()) * scale for i in range(3) ]
+		self.pos[2] += self.scl[2]/2 # Raise z by height/2 (assume z coord is bottom, not center)
 
 	def write_transform(self, writer):
 		writer.write("  # Object xyz\n")
@@ -66,12 +63,15 @@ class SimObject:
 	def read_predicates(self, reader):
 		# 1 int - number of predicates
 		num_labels = int(reader.nextWord())
-		# followed by 2N strings, of predicate_category predicate_name
+		# followed by N strings
 		self.preds = { }
 		for i in range(num_labels):
-			cat = reader.nextWord()
 			pred = reader.nextWord()
-			self.preds[cat] = pred
+			if '=' in pred:
+				splitPred = pred.split('=')
+				self.preds[splitPred[0]] = splitPred[1]
+			else:
+				self.preds[pred] = None
 		if hasattr(self, 'cat') and 'category' not in self.preds:
 			self.preds['category'] = self.cat
 		if hasattr(self, 'name') and 'name' not in self.preds:
@@ -80,8 +80,11 @@ class SimObject:
 	def write_predicates(self, writer):
 		writer.write("  # Properties\n")
 		writer.write("  %d\n" % (len(self.preds), ))
-		for cat, pred in self.preds.items():
-			writer.write("    %s=%s\n" % (cat, pred) )
+		for prop, val in self.preds.items():
+			if val is None:
+				writer.write("    %s\n" % prop )
+			else:
+				writer.write("    %s=%s\n" % (prop, val) )
 
 	### READ/WRITE color
 	
@@ -99,53 +102,35 @@ class SimObject:
 
 class Person(SimObject):  
 	sim_class = "soargroup.mobilesim.sim.SimPerson"
-	has_color = True
-	cat = "person"
 
 	def read_info(self, reader, scale=1.0):
 		self.scl = [ 1.0, 1.0, 1.0 ]
-		# 1 string - name
-		self.name = reader.nextWord()
-		self.desc = strip_digits(self.name)
 		super().read_info(reader, scale)
+		self.desc = strip_digits(self.preds.get('name'))
 		return self
 
-class BoxObject(SimObject):  
-	sim_class = "soargroup.mobilesim.sim.SimBoxObject"
-	has_color = True
-	def read_info(self, reader, scale=1.0):
-		super().read_info(reader, scale)
-		self.pos[2] += self.scl[2]/2 # Raise z by height/2 to center it
-		return self
-
-class Chair(BoxObject):
+class Chair(SimObject):
 	sim_class = "soargroup.mobilesim.sim.SimChair"
 	cat = "chair1"
 
-class Receptacle(BoxObject):  
-	sim_class = "soargroup.mobilesim.sim.SimReceptacle"
-
-class Surface(BoxObject):  
-	sim_class = "soargroup.mobilesim.sim.SimSurface"
-
-class Table(Surface):  
+class Table(SimObject):  
 	sim_class = "soargroup.mobilesim.sim.SimTable"
 	cat = "table1"
 	rgb = [ 94, 76, 28 ]
 
-class Counter(Surface):
+class Counter(SimObject):
 	cat = "counter1"
 	rgb = [ 250, 230, 140 ]
 
-class Garbage(Receptacle):
+class Garbage(SimObject):
 	cat = "garbage1"
 	rgb = [ 100, 100, 100 ]
 
-class Sink(Receptacle):
+class Sink(SimObject):
 	cat = "sink1"
 	rgb = [ 150, 150, 150 ]
 
-class Shelves(Surface):  
+class Shelves(SimObject):  
 	sim_class = "soargroup.mobilesim.sim.SimShelves"
 	cat = "shelves1"
 	rgb = [ 94, 76, 28 ]
@@ -165,6 +150,7 @@ class Cupboard(Shelves):
 	cat = "cupboard1"
 
 class Fridge(Shelves):  
+	sim_class = "soargroup.mobilesim.sim.SimFridge"
 	door = "closed"
 	cat = "fridge1"
 	rgb = [ 200, 200, 200 ]
@@ -174,7 +160,7 @@ class Microwave(Shelves):
 	cat = "microwave1"
 	rgb = [ 50, 50, 50 ]
 
-class Drawer(Receptacle):  
+class Drawer(SimObject):  
 	sim_class = "soargroup.mobilesim.sim.SimDrawer"
 	cat = "drawer1"
 	rgb = [ 94, 76, 28 ]
@@ -184,7 +170,7 @@ class Drawer(Receptacle):
 		self.preds["door2"] = "closed2"
 		return self
 
-class Desk(Surface):  
+class Desk(SimObject):  
 	sim_class = "soargroup.mobilesim.sim.SimDesk"
 	cat = "desk1"
 	rgb = [ 94, 76, 28 ]
@@ -193,6 +179,7 @@ class LightSwitch(SimObject):
 	sim_class = "soargroup.mobilesim.sim.SimLightSwitch"
 	desc = "LS"
 	cat = "lightswitch1"
+	rgb = [ 255, 255, 255 ]
 
 	def read_info(self, reader, scale=1.0):
 		# 1 word << on off >> - state of switch
@@ -204,5 +191,5 @@ class LightSwitch(SimObject):
 		return self
 
 	def write_info(self, writer):
-		writer.write(self.region + "\n")
 		super().write_info(writer)
+		writer.write(self.region + "\n")
