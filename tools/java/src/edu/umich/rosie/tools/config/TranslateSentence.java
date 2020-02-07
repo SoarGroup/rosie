@@ -1,4 +1,5 @@
 package edu.umich.rosie.tools.config;
+
 /*
  * Convert a sentence with expected output structures
  * to a Soar production in the form John's parser needs.
@@ -12,6 +13,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import edu.umich.rosie.tools.config.RegressParser.SentenceWordContext;
 
 import org.antlr.v4.runtime.tree.*;
 
@@ -62,7 +64,7 @@ public class TranslateSentence extends RegressBaseListener {
 			+ "         ^next %s)\n";
 	static final String QUOTED_WORD_WME = 
 			"   (<w%d> ^spelling |%s|\n"
-			"          ^quoted true\n"
+			+ "         ^quoted true\n"
 			+ "         ^next %s)\n";
 			
 	
@@ -144,56 +146,58 @@ public class TranslateSentence extends RegressBaseListener {
 	 *
 	 * <p>Gather all the data for a sentence.</p>
 	 */
-	@Override public void enterSentence(RegressParser.SentenceContext ctx) {
+	@Override 
+	public void enterSentence(RegressParser.SentenceContext ctx) {
+    	StringBuilder wordWmesBuilder = new StringBuilder();
+		StringBuilder sentenceBuilder = new StringBuilder();
+
         //  Get the words and process them
-        List<TerminalNode> words = ctx.WORD();
-        int nWords = words.size();
-        StringBuilder name = new StringBuilder();
-        StringBuilder complete = new StringBuilder();
-        for (TerminalNode w: words) {
-        	if (name.length() > 0) {
-        		name.append('-');
-        		complete.append(' ');
-        	}
-            name.append(w.getText().toLowerCase());
-            complete.append(w.getText());
-        }
-        //	Look for a terminator, which could be TERMINATOR or '.'
-        String term = null;
-        if (ctx.TERMINATOR() != null) {
-        	term = ctx.TERMINATOR().getText();
-        	nWords++;	//	Add one more for the terminator
-        } else {
-        	//	Look for a '.'
-            for (ParseTree node: ctx.children) {
-            	if (node.getText().equals(".")) {
-            		term = ".";
-                	nWords++;	//	Add one more for the terminator
-            		break;
-            	}
-            }
-        }
-        //	Add the word WMEs
+		List<SentenceWordContext> words = ctx.sentenceWord();
         int wordNumber = 0;
-    	StringBuilder wordData = new StringBuilder();
-        for (TerminalNode w: words) {
-        	String nextId = ((wordNumber + 1) < nWords)?
-        							String.format("<w%d>", wordNumber + 1)
-        							: "nil";
-        	String wordWme = String.format(WORD_WME, wordNumber++,
-        							w.getText().toLowerCase(),  nextId);
-        	wordData.append(wordWme);
-        }
-        //	Add a terminator WME
-        if (term != null) {
-        	complete.append(term);
-        	String wordWme = String.format(WORD_WME, wordNumber++, term,  "nil");
-        	wordData.append(wordWme);
-        }
+		for(SentenceWordContext sWord : words){
+			// Each sentence word can either be a WORD or QUOTE
+			TerminalNode word = sWord.getToken(RegressParser.WORD, 0);
+			TerminalNode quote = sWord.getToken(RegressParser.QUOTE, 0);
+        	String nextId = String.format("<w%d>", wordNumber + 1);
+
+			if(word != null){
+				// The word is a single word
+				sentenceBuilder.append(" " + word.getText());
+
+				String wordWme = String.format(WORD_WME, wordNumber,
+										word.getText().toLowerCase(),  nextId);
+				wordWmesBuilder.append(wordWme);
+			
+			} else if(quote != null){
+				// The word is a quoted message
+				sentenceBuilder.append(" " + quote.getText());
+
+				String quoteWme = String.format(QUOTED_WORD_WME, wordNumber,
+										quote.getText().replaceAll("\"", ""), nextId);
+				wordWmesBuilder.append(quoteWme);
+			} else {
+				System.err.println("SentenceWord was not a WORD or QUOTE");
+				return;
+			}
+			wordNumber += 1;
+		}
+
+        //	Look for a terminator, which could be TERMINATOR or '.'
+		String term = ".";
+		if(ctx.TERMINATOR() != null){
+			term = ctx.TERMINATOR().getText();
+		}
+		sentenceBuilder.append(term);
+		wordWmesBuilder.append(String.format(WORD_WME, wordNumber, term, "nil"));
+
         //	Fill out the sentence variables
-        sentenceName = name.toString().replaceAll("'", "").replaceAll("\"", ""); // AM: ' or " can't be in production names
-        completeSentence = complete.toString();
-        wordWmes = wordData.toString();
+        completeSentence = sentenceBuilder.toString().trim();
+		sentenceName = completeSentence.replaceAll(" ", "-").replaceAll("[^a-zA-Z0-9-]", ""); // only alphanumeric and dashes
+        wordWmes = wordWmesBuilder.toString();
+
+		//System.out.println(completeSentence);
+		//System.out.println(sentenceName);
+		//System.out.println(wordWmes);
     }
     
 	/**
