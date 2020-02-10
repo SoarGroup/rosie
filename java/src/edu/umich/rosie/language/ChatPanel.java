@@ -238,13 +238,13 @@ public class ChatPanel extends JPanel implements IMessagePasser.IMessageListener
 			} else if(arg0.getKeyCode() == KeyEvent.VK_DOWN){
 				downPressed();
 			} else if(arg0.getKeyCode() == KeyEvent.VK_CONTROL && soarAgent != null){
-				LanguageConnector lang = (LanguageConnector)soarAgent.getLanguageConnector();
+				LanguageConnector lang = soarAgent.getConnector(LanguageConnector.class);
 				//lang.getSTT().startListening();
 			}
 		}
 		public void keyReleased(KeyEvent arg0) {
 			if(arg0.getKeyCode() == KeyEvent.VK_CONTROL && soarAgent != null){
-				LanguageConnector lang = (LanguageConnector)soarAgent.getLanguageConnector();
+				LanguageConnector lang = soarAgent.getConnector(LanguageConnector.class);
 				//lang.getSTT().stopListening();
 			}
 			if(arg0.getKeyCode() == KeyEvent.VK_F1 && soarAgent != null){

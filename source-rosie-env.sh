@@ -41,10 +41,12 @@ complete -F _map_info_completion make_rosie_world
 #   Add -j to use the java testing tool instead of the python default
 alias run_task_learning_tests="$ROSIE_HOME/tools/scripts/run_task_learning_tests.sh"
 
-
 ### Other Useful Scripts
 
 # soar-find-replace <word1> <word2>: Will replace word1 with word2 in all subfiles, 
 #   but consider entire soar words only 
 #   (will not match parts of rules/attributes/variables)
 alias soar-find-replace="$ROSIE_HOME/tools/scripts/find_replace_soar.sh"
+
+# grep-agent <pattern>: Will grep the agent folder for the given pattern, ignoring language-comprehension, game-learning, and testing files
+alias grep-agent="$ROSIE_HOME/tools/scripts/grep_agent.sh"

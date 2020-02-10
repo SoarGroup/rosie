@@ -2,10 +2,6 @@ package edu.umich.rosie.soar;
 
 import java.util.HashSet;
 
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-
-
 import sml.*;
 import sml.Agent.OutputEventInterface;
 import sml.Agent.RunEventInterface;
@@ -30,7 +26,24 @@ public abstract class AgentConnector implements OutputEventInterface, RunEventIn
 
         this.connected = false;
 	}
+
+	/**********************************
+	 * Methods to override
+	 *********************************/
+    
+	// This method is called each input phase
+    protected abstract void onInputPhase(Identifier inputLink);
+    
+	// This method is called when an output event happens, 
+	// With (<output-link> ^attName <id>) given as input
+	// (Need to use setOutputHandlerNames method to register for these events)
+    protected abstract void onOutputEvent(String attName, Identifier id);
 	
+	// This method is called when init-soar is called, 
+	// The agent MUST release any SML objects (Identifiers, Elements, etc.)
+	protected abstract void onInitSoar();
+	
+	// This method registers for output events for each command name given in the array
 	protected void setOutputHandlerNames(String[] outputHandlerNames){
 		this.outputHandlerNames = outputHandlerNames;
 	}
@@ -68,9 +81,6 @@ public abstract class AgentConnector implements OutputEventInterface, RunEventIn
 		soarAgent.getAgent().GetKernel().UnregisterForAgentEvent(initAgentCallbackId);
 		initAgentCallbackId = 0;
 
-    // Release all soar pointers
-    onInitSoar();
-		
 		connected = false;
 	}
 	
@@ -80,8 +90,6 @@ public abstract class AgentConnector implements OutputEventInterface, RunEventIn
     		onInputPhase(agent.GetInputLink());
     	}
     }
-    
-    protected abstract void onInputPhase(Identifier inputLink);
 
     // Handling Output Events
     @Override
@@ -94,16 +102,9 @@ public abstract class AgentConnector implements OutputEventInterface, RunEventIn
     	Identifier id = wme.ConvertToIdentifier();
     	onOutputEvent(attributeName, id);
     }
-    
-    protected abstract void onOutputEvent(String attName, Identifier id);
 
     // Handling an init-soar
 	public void agentEventHandler(int agentEventId, Object data, String info) {
 		onInitSoar();
 	}
-	
-	protected abstract void onInitSoar();
-	
-	// Adding a Java Menu
-	protected abstract void createMenu(JMenuBar menuBar);
 }

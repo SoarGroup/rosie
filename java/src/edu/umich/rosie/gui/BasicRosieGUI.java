@@ -19,6 +19,7 @@ import edu.umich.rosie.language.InstructorMessagePanel;
 import edu.umich.rosie.language.InternalMessagePasser;
 import edu.umich.rosie.language.LanguageConnector;
 import edu.umich.rosie.soar.SoarAgent;
+import edu.umich.rosie.connectors.ActionStackConnector;
 
 @SuppressWarnings("serial")
 public class BasicRosieGUI extends JFrame
@@ -48,7 +49,19 @@ public class BasicRosieGUI extends JFrame
     	InternalMessagePasser internalPasser = new InternalMessagePasser();
     	
     	language = new LanguageConnector(soarAgent, props, internalPasser);
-    	soarAgent.setLanguageConnector(language);
+    	soarAgent.addConnector(language);
+
+		// print-action-stack = true
+		// Create an ActionStackConnector and print any task events to the console
+		if(props.getProperty("print-action-stack", "false").equals("true")){
+			ActionStackConnector asConn = new ActionStackConnector(soarAgent);
+			soarAgent.addConnector(asConn);
+			asConn.registerForTaskEvent(new ActionStackConnector.TaskEventListener(){
+				public void taskEventHandler(String taskInfo){
+					System.out.println(taskInfo);
+				}
+			});
+		}
 
     	ChatPanel chat = new ChatPanel(soarAgent, this, internalPasser);
     	this.add(chat);
@@ -83,8 +96,6 @@ public class BasicRosieGUI extends JFrame
 
     	menuBar.add(new AgentMenu(soarAgent));
     	
-    	language.createMenu(menuBar);
-
     	this.setJMenuBar(menuBar);
     }
 

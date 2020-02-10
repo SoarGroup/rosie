@@ -3,8 +3,6 @@ package edu.umich.rosie.language;
 import java.util.HashSet;
 import java.util.Properties;
 
-import javax.swing.JMenuBar;
-
 import edu.umich.rosie.language.IMessagePasser.RosieMessage;
 import edu.umich.rosie.soar.AgentConnector;
 import edu.umich.rosie.soar.SoarAgent;
@@ -18,7 +16,7 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
 	public enum MessageType{
 		AGENT_MESSAGE, INSTRUCTOR_MESSAGE, SOAR_COMMAND, SOAR_OUTPUT, AGENT_COMMAND
 	};
-	
+
 	private int nextMessageId = 1;
 	
     private TextToSpeech tts;  
@@ -34,7 +32,8 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
 	public LanguageConnector(SoarAgent agent, Properties props, IMessagePasser messagePasser){
 		super(agent);
 		
-		String speechFile = props.getProperty("speech-file", "audio_file/sample");
+		//String speechFile =
+				props.getProperty("speech-file", "audio_file/sample");
 		
         this.tts = new TextToSpeech();
         //this.stt = new SpeechToText(speechFile, agent);
@@ -58,6 +57,10 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
 		super.disconnect();
 		messagePasser.removeMessageListener(this);
 	}
+
+	public IMessagePasser getMessagePasser(){
+		return this.messagePasser;
+	}
 	
 	public TextToSpeech getTTS(){
 		return tts;
@@ -68,8 +71,8 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
 	}
 	
 	public void sendMessage(String message, MessageType type){
-		//System.out.println("SENDING MESSAGE: " + message);
-		System.out.println(message);
+		System.out.println("SENDING MESSAGE: " + message);
+//		System.out.println(message);
 		messagePasser.sendMessage(message, type);
 	}
 	
@@ -85,6 +88,8 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
     	case AGENT_MESSAGE:
     		tts.speak(message.message);
     		break;
+		default:
+			break;
     	}
 	}
     
@@ -138,7 +143,8 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
             messageId.CreateStringWME("status", "error");
             throw new IllegalStateException("Message has no children");
         }
-        int sentenceNumber = Integer.parseInt(SoarUtil.getValueOfAttribute(messageId, "current-sentence-number", "Error: No ^name attribute"));
+//        int sentenceNumber =
+        		Integer.parseInt(SoarUtil.getValueOfAttribute(messageId, "current-sentence-number", "Error: No ^name attribute"));
         
         if(curMessage != null){
 			messagesToRemove.add(curMessage);
@@ -164,7 +170,8 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
 	
     private void processAgentMessageStructureCommand(Identifier messageId)
     {
-        String type = SoarUtil.getValueOfAttribute(messageId, "type",
+//        String type =
+        	SoarUtil.getValueOfAttribute(messageId, "type",
                 "Message does not have ^type");
         String message = "";
         message = AgentMessageParser.translateAgentMessage(messageId);
@@ -227,8 +234,4 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
 			languageId = null;
 		}
 	}
-
-	@Override
-	public void createMenu(JMenuBar menuBar) {}
-
 }
