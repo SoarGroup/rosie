@@ -14,3 +14,12 @@ _rosie_agents_completion()
 	COMPREPLY=( $(compgen -W "$(ls $ROSIE_HOME/test-agents)" -- $cur) )
 }
 
+# Autocomplete task-tests in $ROSIE_HOME/test-agents/task-tests
+_task_tests_completion()
+{
+	local cur=${COMP_WORDS[COMP_CWORD]}
+	# Find all directories in task-tests 
+	COMPREPLY=( $(compgen -W "$(find $ROSIE_HOME/test-agents/task-tests/* -maxdepth 0 -type d -printf '%f ')" -- $cur) )
+}
+
+

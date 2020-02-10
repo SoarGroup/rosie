@@ -44,6 +44,7 @@ complete -F _map_info_completion make_rosie_world
 #   You can specify individual tests instead of running them all, e.g.
 #      run_task_learning_tests test1 - will only run test1
 alias run_task_learning_tests="$ROSIE_HOME/tools/scripts/run_task_learning_tests.sh"
+complete -F _task_tests_completion run_task_learning_tests
 
 ### Other Useful Scripts
 
