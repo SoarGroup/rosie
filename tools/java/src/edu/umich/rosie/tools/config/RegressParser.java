@@ -18,23 +18,25 @@ public class RegressParser extends Parser {
 	protected static final PredictionContextCache _sharedContextCache =
 		new PredictionContextCache();
 	public static final int
-		T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, T__5=6, T__6=7, SYMBOL=8, WORD=9, 
-		NUMBER=10, PAREN=11, TERMINATOR=12, FAILED=13, COMMENT=14, BRACKETS=15, 
-		WS=16;
+		T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, T__5=6, T__6=7, T__7=8, QUOTE=9, 
+		SYMBOL=10, WORD=11, NUMBER=12, PAREN=13, TERMINATOR=14, FAILED=15, COMMENT=16, 
+		BRACKETS=17, WS=18;
 	public static final int
-		RULE_corpus = 0, RULE_block = 1, RULE_sentence = 2, RULE_expected = 3, 
-		RULE_rhs = 4, RULE_attr = 5, RULE_value = 6, RULE_variable = 7;
+		RULE_corpus = 0, RULE_block = 1, RULE_sentence = 2, RULE_sentenceWord = 3, 
+		RULE_expected = 4, RULE_rhs = 5, RULE_attr = 6, RULE_value = 7, RULE_variable = 8;
 	public static final String[] ruleNames = {
-		"corpus", "block", "sentence", "expected", "rhs", "attr", "value", "variable"
+		"corpus", "block", "sentence", "sentenceWord", "expected", "rhs", "attr", 
+		"value", "variable"
 	};
 
 	private static final String[] _LITERAL_NAMES = {
-		null, "','", "'.'", "'('", "')'", "'^'", "'<'", "'>'", null, null, null, 
-		null, null, "'#   FAILED!'"
+		null, "','", "'.'", "'('", "'@'", "')'", "'^'", "'<'", "'>'", null, null, 
+		null, null, null, null, "'#   FAILED!'"
 	};
 	private static final String[] _SYMBOLIC_NAMES = {
-		null, null, null, null, null, null, null, null, "SYMBOL", "WORD", "NUMBER", 
-		"PAREN", "TERMINATOR", "FAILED", "COMMENT", "BRACKETS", "WS"
+		null, null, null, null, null, null, null, null, null, "QUOTE", "SYMBOL", 
+		"WORD", "NUMBER", "PAREN", "TERMINATOR", "FAILED", "COMMENT", "BRACKETS", 
+		"WS"
 	};
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
@@ -118,7 +120,7 @@ public class RegressParser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(17); 
+			setState(19); 
 			_errHandler.sync(this);
 			_alt = 1;
 			do {
@@ -126,7 +128,7 @@ public class RegressParser extends Parser {
 				case 1:
 					{
 					{
-					setState(16);
+					setState(18);
 					block();
 					}
 					}
@@ -134,21 +136,21 @@ public class RegressParser extends Parser {
 				default:
 					throw new NoViableAltException(this);
 				}
-				setState(19); 
+				setState(21); 
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,0,_ctx);
 			} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
-			setState(24);
+			setState(26);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while (_la==COMMENT) {
 				{
 				{
-				setState(21);
+				setState(23);
 				match(COMMENT);
 				}
 				}
-				setState(26);
+				setState(28);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
@@ -198,36 +200,36 @@ public class RegressParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(30);
+			setState(32);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while (_la==COMMENT) {
 				{
 				{
-				setState(27);
+				setState(29);
 				match(COMMENT);
 				}
 				}
-				setState(32);
+				setState(34);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
-			setState(33);
-			sentence();
 			setState(35);
+			sentence();
+			setState(37);
 			_la = _input.LA(1);
 			if (_la==FAILED) {
 				{
-				setState(34);
+				setState(36);
 				match(FAILED);
 				}
 			}
 
-			setState(38);
+			setState(40);
 			switch ( getInterpreter().adaptivePredict(_input,4,_ctx) ) {
 			case 1:
 				{
-				setState(37);
+				setState(39);
 				expected();
 				}
 				break;
@@ -246,9 +248,11 @@ public class RegressParser extends Parser {
 	}
 
 	public static class SentenceContext extends ParserRuleContext {
-		public List<TerminalNode> WORD() { return getTokens(RegressParser.WORD); }
-		public TerminalNode WORD(int i) {
-			return getToken(RegressParser.WORD, i);
+		public List<SentenceWordContext> sentenceWord() {
+			return getRuleContexts(SentenceWordContext.class);
+		}
+		public SentenceWordContext sentenceWord(int i) {
+			return getRuleContext(SentenceWordContext.class,i);
 		}
 		public TerminalNode TERMINATOR() { return getToken(RegressParser.TERMINATOR, 0); }
 		public SentenceContext(ParserRuleContext parent, int invokingState) {
@@ -273,34 +277,43 @@ public class RegressParser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(40);
-			match(WORD);
-			setState(44);
+			setState(42);
+			sentenceWord();
+			setState(47);
 			_errHandler.sync(this);
-			_alt = getInterpreter().adaptivePredict(_input,5,_ctx);
+			_alt = getInterpreter().adaptivePredict(_input,6,_ctx);
 			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
-					{
-					setState(41);
-					_la = _input.LA(1);
-					if ( !(_la==T__0 || _la==WORD) ) {
-					_errHandler.recoverInline(this);
-					} else {
-						consume();
-					}
+					setState(45);
+					switch (_input.LA(1)) {
+					case QUOTE:
+					case WORD:
+						{
+						setState(43);
+						sentenceWord();
+						}
+						break;
+					case T__0:
+						{
+						setState(44);
+						match(T__0);
+						}
+						break;
+					default:
+						throw new NoViableAltException(this);
 					}
 					} 
 				}
-				setState(46);
+				setState(49);
 				_errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(_input,5,_ctx);
+				_alt = getInterpreter().adaptivePredict(_input,6,_ctx);
 			}
-			setState(48);
+			setState(51);
 			_la = _input.LA(1);
 			if (_la==T__1 || _la==TERMINATOR) {
 				{
-				setState(47);
+				setState(50);
 				_la = _input.LA(1);
 				if ( !(_la==T__1 || _la==TERMINATOR) ) {
 				_errHandler.recoverInline(this);
@@ -310,6 +323,50 @@ public class RegressParser extends Parser {
 				}
 			}
 
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
+		}
+		finally {
+			exitRule();
+		}
+		return _localctx;
+	}
+
+	public static class SentenceWordContext extends ParserRuleContext {
+		public TerminalNode QUOTE() { return getToken(RegressParser.QUOTE, 0); }
+		public TerminalNode WORD() { return getToken(RegressParser.WORD, 0); }
+		public SentenceWordContext(ParserRuleContext parent, int invokingState) {
+			super(parent, invokingState);
+		}
+		@Override public int getRuleIndex() { return RULE_sentenceWord; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof RegressListener ) ((RegressListener)listener).enterSentenceWord(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof RegressListener ) ((RegressListener)listener).exitSentenceWord(this);
+		}
+	}
+
+	public final SentenceWordContext sentenceWord() throws RecognitionException {
+		SentenceWordContext _localctx = new SentenceWordContext(_ctx, getState());
+		enterRule(_localctx, 6, RULE_sentenceWord);
+		int _la;
+		try {
+			enterOuterAlt(_localctx, 1);
+			{
+			setState(53);
+			_la = _input.LA(1);
+			if ( !(_la==QUOTE || _la==WORD) ) {
+			_errHandler.recoverInline(this);
+			} else {
+				consume();
+			}
 			}
 		}
 		catch (RecognitionException re) {
@@ -350,13 +407,13 @@ public class RegressParser extends Parser {
 
 	public final ExpectedContext expected() throws RecognitionException {
 		ExpectedContext _localctx = new ExpectedContext(_ctx, getState());
-		enterRule(_localctx, 6, RULE_expected);
+		enterRule(_localctx, 8, RULE_expected);
 		int _la;
 		try {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(57); 
+			setState(62); 
 			_errHandler.sync(this);
 			_alt = 1;
 			do {
@@ -364,21 +421,21 @@ public class RegressParser extends Parser {
 				case 1:
 					{
 					{
-					setState(53);
+					setState(58);
 					_errHandler.sync(this);
 					_la = _input.LA(1);
 					while (_la==COMMENT) {
 						{
 						{
-						setState(50);
+						setState(55);
 						match(COMMENT);
 						}
 						}
-						setState(55);
+						setState(60);
 						_errHandler.sync(this);
 						_la = _input.LA(1);
 					}
-					setState(56);
+					setState(61);
 					rhs();
 					}
 					}
@@ -386,9 +443,9 @@ public class RegressParser extends Parser {
 				default:
 					throw new NoViableAltException(this);
 				}
-				setState(59); 
+				setState(64); 
 				_errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(_input,8,_ctx);
+				_alt = getInterpreter().adaptivePredict(_input,9,_ctx);
 			} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
 			}
 		}
@@ -437,42 +494,51 @@ public class RegressParser extends Parser {
 
 	public final RhsContext rhs() throws RecognitionException {
 		RhsContext _localctx = new RhsContext(_ctx, getState());
-		enterRule(_localctx, 8, RULE_rhs);
+		enterRule(_localctx, 10, RULE_rhs);
 		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(61);
+			setState(66);
 			match(T__2);
-			setState(62);
+			setState(68);
+			_la = _input.LA(1);
+			if (_la==T__3) {
+				{
+				setState(67);
+				match(T__3);
+				}
+			}
+
+			setState(70);
 			match(SYMBOL);
-			setState(68); 
+			setState(76); 
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			do {
 				{
 				{
-				setState(63);
+				setState(71);
 				attr();
-				setState(64);
+				setState(72);
 				value();
-				setState(66);
+				setState(74);
 				_la = _input.LA(1);
 				if (_la==COMMENT) {
 					{
-					setState(65);
+					setState(73);
 					match(COMMENT);
 					}
 				}
 
 				}
 				}
-				setState(70); 
+				setState(78); 
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-			} while ( _la==T__4 );
-			setState(72);
-			match(T__3);
+			} while ( _la==T__5 );
+			setState(80);
+			match(T__4);
 			}
 		}
 		catch (RecognitionException re) {
@@ -508,39 +574,39 @@ public class RegressParser extends Parser {
 
 	public final AttrContext attr() throws RecognitionException {
 		AttrContext _localctx = new AttrContext(_ctx, getState());
-		enterRule(_localctx, 10, RULE_attr);
+		enterRule(_localctx, 12, RULE_attr);
 		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(74);
-			match(T__4);
-			setState(84);
+			setState(82);
+			match(T__5);
+			setState(92);
 			switch (_input.LA(1)) {
 			case NUMBER:
 				{
-				setState(75);
+				setState(83);
 				match(NUMBER);
 				}
 				break;
 			case WORD:
 				{
 				{
-				setState(76);
+				setState(84);
 				match(WORD);
-				setState(81);
+				setState(89);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 				while (_la==T__1) {
 					{
 					{
-					setState(77);
+					setState(85);
 					match(T__1);
-					setState(78);
+					setState(86);
 					match(WORD);
 					}
 					}
-					setState(83);
+					setState(91);
 					_errHandler.sync(this);
 					_la = _input.LA(1);
 				}
@@ -586,33 +652,44 @@ public class RegressParser extends Parser {
 
 	public final ValueContext value() throws RecognitionException {
 		ValueContext _localctx = new ValueContext(_ctx, getState());
-		enterRule(_localctx, 12, RULE_value);
+		enterRule(_localctx, 14, RULE_value);
+		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(90);
+			setState(101);
 			switch (_input.LA(1)) {
-			case T__5:
+			case T__6:
 				{
-				setState(86);
+				setState(94);
 				variable();
 				}
 				break;
+			case T__3:
 			case SYMBOL:
 				{
-				setState(87);
+				setState(96);
+				_la = _input.LA(1);
+				if (_la==T__3) {
+					{
+					setState(95);
+					match(T__3);
+					}
+				}
+
+				setState(98);
 				match(SYMBOL);
 				}
 				break;
 			case WORD:
 				{
-				setState(88);
+				setState(99);
 				match(WORD);
 				}
 				break;
 			case NUMBER:
 				{
-				setState(89);
+				setState(100);
 				match(NUMBER);
 				}
 				break;
@@ -650,16 +727,16 @@ public class RegressParser extends Parser {
 
 	public final VariableContext variable() throws RecognitionException {
 		VariableContext _localctx = new VariableContext(_ctx, getState());
-		enterRule(_localctx, 14, RULE_variable);
+		enterRule(_localctx, 16, RULE_variable);
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(92);
-			match(T__5);
-			setState(93);
-			match(WORD);
-			setState(94);
+			setState(103);
 			match(T__6);
+			setState(104);
+			match(WORD);
+			setState(105);
+			match(T__7);
 			}
 		}
 		catch (RecognitionException re) {
@@ -674,32 +751,34 @@ public class RegressParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3\22c\4\2\t\2\4\3\t"+
-		"\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\3\2\6\2\24\n\2\r\2"+
-		"\16\2\25\3\2\7\2\31\n\2\f\2\16\2\34\13\2\3\3\7\3\37\n\3\f\3\16\3\"\13"+
-		"\3\3\3\3\3\5\3&\n\3\3\3\5\3)\n\3\3\4\3\4\7\4-\n\4\f\4\16\4\60\13\4\3\4"+
-		"\5\4\63\n\4\3\5\7\5\66\n\5\f\5\16\59\13\5\3\5\6\5<\n\5\r\5\16\5=\3\6\3"+
-		"\6\3\6\3\6\3\6\5\6E\n\6\6\6G\n\6\r\6\16\6H\3\6\3\6\3\7\3\7\3\7\3\7\3\7"+
-		"\7\7R\n\7\f\7\16\7U\13\7\5\7W\n\7\3\b\3\b\3\b\3\b\5\b]\n\b\3\t\3\t\3\t"+
-		"\3\t\3\t\2\2\n\2\4\6\b\n\f\16\20\2\4\4\2\3\3\13\13\4\2\4\4\16\16j\2\23"+
-		"\3\2\2\2\4 \3\2\2\2\6*\3\2\2\2\b;\3\2\2\2\n?\3\2\2\2\fL\3\2\2\2\16\\\3"+
-		"\2\2\2\20^\3\2\2\2\22\24\5\4\3\2\23\22\3\2\2\2\24\25\3\2\2\2\25\23\3\2"+
-		"\2\2\25\26\3\2\2\2\26\32\3\2\2\2\27\31\7\20\2\2\30\27\3\2\2\2\31\34\3"+
-		"\2\2\2\32\30\3\2\2\2\32\33\3\2\2\2\33\3\3\2\2\2\34\32\3\2\2\2\35\37\7"+
-		"\20\2\2\36\35\3\2\2\2\37\"\3\2\2\2 \36\3\2\2\2 !\3\2\2\2!#\3\2\2\2\" "+
-		"\3\2\2\2#%\5\6\4\2$&\7\17\2\2%$\3\2\2\2%&\3\2\2\2&(\3\2\2\2\')\5\b\5\2"+
-		"(\'\3\2\2\2()\3\2\2\2)\5\3\2\2\2*.\7\13\2\2+-\t\2\2\2,+\3\2\2\2-\60\3"+
-		"\2\2\2.,\3\2\2\2./\3\2\2\2/\62\3\2\2\2\60.\3\2\2\2\61\63\t\3\2\2\62\61"+
-		"\3\2\2\2\62\63\3\2\2\2\63\7\3\2\2\2\64\66\7\20\2\2\65\64\3\2\2\2\669\3"+
-		"\2\2\2\67\65\3\2\2\2\678\3\2\2\28:\3\2\2\29\67\3\2\2\2:<\5\n\6\2;\67\3"+
-		"\2\2\2<=\3\2\2\2=;\3\2\2\2=>\3\2\2\2>\t\3\2\2\2?@\7\5\2\2@F\7\n\2\2AB"+
-		"\5\f\7\2BD\5\16\b\2CE\7\20\2\2DC\3\2\2\2DE\3\2\2\2EG\3\2\2\2FA\3\2\2\2"+
-		"GH\3\2\2\2HF\3\2\2\2HI\3\2\2\2IJ\3\2\2\2JK\7\6\2\2K\13\3\2\2\2LV\7\7\2"+
-		"\2MW\7\f\2\2NS\7\13\2\2OP\7\4\2\2PR\7\13\2\2QO\3\2\2\2RU\3\2\2\2SQ\3\2"+
-		"\2\2ST\3\2\2\2TW\3\2\2\2US\3\2\2\2VM\3\2\2\2VN\3\2\2\2W\r\3\2\2\2X]\5"+
-		"\20\t\2Y]\7\n\2\2Z]\7\13\2\2[]\7\f\2\2\\X\3\2\2\2\\Y\3\2\2\2\\Z\3\2\2"+
-		"\2\\[\3\2\2\2]\17\3\2\2\2^_\7\b\2\2_`\7\13\2\2`a\7\t\2\2a\21\3\2\2\2\20"+
-		"\25\32 %(.\62\67=DHSV\\";
+		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3\24n\4\2\t\2\4\3\t"+
+		"\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\3\2\6\2\26"+
+		"\n\2\r\2\16\2\27\3\2\7\2\33\n\2\f\2\16\2\36\13\2\3\3\7\3!\n\3\f\3\16\3"+
+		"$\13\3\3\3\3\3\5\3(\n\3\3\3\5\3+\n\3\3\4\3\4\3\4\7\4\60\n\4\f\4\16\4\63"+
+		"\13\4\3\4\5\4\66\n\4\3\5\3\5\3\6\7\6;\n\6\f\6\16\6>\13\6\3\6\6\6A\n\6"+
+		"\r\6\16\6B\3\7\3\7\5\7G\n\7\3\7\3\7\3\7\3\7\5\7M\n\7\6\7O\n\7\r\7\16\7"+
+		"P\3\7\3\7\3\b\3\b\3\b\3\b\3\b\7\bZ\n\b\f\b\16\b]\13\b\5\b_\n\b\3\t\3\t"+
+		"\5\tc\n\t\3\t\3\t\3\t\5\th\n\t\3\n\3\n\3\n\3\n\3\n\2\2\13\2\4\6\b\n\f"+
+		"\16\20\22\2\4\4\2\4\4\20\20\4\2\13\13\r\rw\2\25\3\2\2\2\4\"\3\2\2\2\6"+
+		",\3\2\2\2\b\67\3\2\2\2\n@\3\2\2\2\fD\3\2\2\2\16T\3\2\2\2\20g\3\2\2\2\22"+
+		"i\3\2\2\2\24\26\5\4\3\2\25\24\3\2\2\2\26\27\3\2\2\2\27\25\3\2\2\2\27\30"+
+		"\3\2\2\2\30\34\3\2\2\2\31\33\7\22\2\2\32\31\3\2\2\2\33\36\3\2\2\2\34\32"+
+		"\3\2\2\2\34\35\3\2\2\2\35\3\3\2\2\2\36\34\3\2\2\2\37!\7\22\2\2 \37\3\2"+
+		"\2\2!$\3\2\2\2\" \3\2\2\2\"#\3\2\2\2#%\3\2\2\2$\"\3\2\2\2%\'\5\6\4\2&"+
+		"(\7\21\2\2\'&\3\2\2\2\'(\3\2\2\2(*\3\2\2\2)+\5\n\6\2*)\3\2\2\2*+\3\2\2"+
+		"\2+\5\3\2\2\2,\61\5\b\5\2-\60\5\b\5\2.\60\7\3\2\2/-\3\2\2\2/.\3\2\2\2"+
+		"\60\63\3\2\2\2\61/\3\2\2\2\61\62\3\2\2\2\62\65\3\2\2\2\63\61\3\2\2\2\64"+
+		"\66\t\2\2\2\65\64\3\2\2\2\65\66\3\2\2\2\66\7\3\2\2\2\678\t\3\2\28\t\3"+
+		"\2\2\29;\7\22\2\2:9\3\2\2\2;>\3\2\2\2<:\3\2\2\2<=\3\2\2\2=?\3\2\2\2><"+
+		"\3\2\2\2?A\5\f\7\2@<\3\2\2\2AB\3\2\2\2B@\3\2\2\2BC\3\2\2\2C\13\3\2\2\2"+
+		"DF\7\5\2\2EG\7\6\2\2FE\3\2\2\2FG\3\2\2\2GH\3\2\2\2HN\7\f\2\2IJ\5\16\b"+
+		"\2JL\5\20\t\2KM\7\22\2\2LK\3\2\2\2LM\3\2\2\2MO\3\2\2\2NI\3\2\2\2OP\3\2"+
+		"\2\2PN\3\2\2\2PQ\3\2\2\2QR\3\2\2\2RS\7\7\2\2S\r\3\2\2\2T^\7\b\2\2U_\7"+
+		"\16\2\2V[\7\r\2\2WX\7\4\2\2XZ\7\r\2\2YW\3\2\2\2Z]\3\2\2\2[Y\3\2\2\2[\\"+
+		"\3\2\2\2\\_\3\2\2\2][\3\2\2\2^U\3\2\2\2^V\3\2\2\2_\17\3\2\2\2`h\5\22\n"+
+		"\2ac\7\6\2\2ba\3\2\2\2bc\3\2\2\2cd\3\2\2\2dh\7\f\2\2eh\7\r\2\2fh\7\16"+
+		"\2\2g`\3\2\2\2gb\3\2\2\2ge\3\2\2\2gf\3\2\2\2h\21\3\2\2\2ij\7\t\2\2jk\7"+
+		"\r\2\2kl\7\n\2\2l\23\3\2\2\2\23\27\34\"\'*/\61\65<BFLP[^bg";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

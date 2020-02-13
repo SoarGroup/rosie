@@ -35,7 +35,7 @@ def writeRobot(robot_info, writer):
 	writer.write("  vec 6\n")
 	writer.write("  %(x)s %(y)s %(z)s %(r)s %(p)s %(yaw)s\n" % \
 			{ "x": pNum(robot_info.x), "y": pNum(robot_info.y), "z": pNum(0.1), \
-			  "r": pNum(0.0), "p": pNum(0.0), "yaw": pNum(0.0) })
+			  "r": pNum(0.0), "p": pNum(0.0), "yaw": pNum(robot_info.yaw) })
 	writer.write("  # XYZRPY Odometry\n")
 	writer.write("  vec 6\n")
 	writer.write("  %(x)s %(y)s %(z)s %(r)s %(p)s %(yaw)s\n" % \

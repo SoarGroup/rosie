@@ -1,3 +1,4 @@
+import math
 
 pf = lambda n: ("%.2f" % n).rjust(6)
 strip_digits = lambda s: ''.join(filter(lambda x: x.isalpha(), s))
@@ -10,13 +11,26 @@ class SimObject:
 		SimObject.NEXT_OBJ_ID += 1
 
 	# Instantiate the object by reading parameters from the reader
+	# cat px py pz row sx sy sz r g b num_preds p1=v1 p2=v2 ...
+	# (note that cat, pos, rot, scl can all be overriden by child class)
 	# Should return self
 	def read_info(self, reader, scale=1.0):
+		if not hasattr(self, 'cat'):
+			self.cat = reader.nextWord()
+		self.read_transform(reader, scale)
+		self.read_color(reader)
+		self.read_predicates(reader)
 		return self
 
 	# Write the object information in a way that the java class will understand
 	def write_info(self, writer):
-		pass
+		if not hasattr(self, 'desc'):
+			self.desc = strip_digits(self.cat)
+		writer.write("  # Object Description\n")
+		writer.write("  " + self.desc + "\n")
+		self.write_transform(writer)
+		self.write_color(writer)
+		self.write_predicates(writer)
 
 	### READ/WRITE the transform (pos/rot/scale)
 
@@ -25,11 +39,12 @@ class SimObject:
 			# 3 floats - xyz coordinate of center
 			self.pos = [ float(reader.nextWord()) * scale for i in range(3) ]
 		if not hasattr(self, 'rot'):
-			# 1 float - yaw (rotation in xy plane)
-			self.rot = float(reader.nextWord())
+			# 1 float - yaw (rotation in xy plane in degrees)
+			self.rot = float(reader.nextWord()) * math.pi / 180.0
 		if not hasattr(self, 'scl'):
 			# 3 floats - scale in xyz directions (compared to 1m unit cube)
 			self.scl = [ float(reader.nextWord()) * scale for i in range(3) ]
+		self.pos[2] += self.scl[2]/2 # Raise z by height/2 (assume z coord is bottom, not center)
 
 	def write_transform(self, writer):
 		writer.write("  # Object xyz\n")
@@ -48,22 +63,35 @@ class SimObject:
 	def read_predicates(self, reader):
 		# 1 int - number of predicates
 		num_labels = int(reader.nextWord())
-		# followed by 2N strings, of predicate_category predicate_name
+		# followed by N strings
 		self.preds = { }
 		for i in range(num_labels):
-			self.preds[reader.nextWord()] = reader.nextWord()
+			pred = reader.nextWord()
+			if '=' in pred:
+				splitPred = pred.split('=')
+				self.preds[splitPred[0]] = splitPred[1]
+			else:
+				self.preds[pred] = None
+		if hasattr(self, 'cat') and 'category' not in self.preds:
+			self.preds['category'] = self.cat
+		if hasattr(self, 'name') and 'name' not in self.preds:
+			self.preds['name'] = self.name
 
 	def write_predicates(self, writer):
 		writer.write("  # Properties\n")
 		writer.write("  %d\n" % (len(self.preds), ))
-		for cat, pred in self.preds.items():
-			writer.write("    %s=%s\n" % (cat, pred) )
+		for prop, val in self.preds.items():
+			if val is None:
+				writer.write("    %s\n" % prop )
+			else:
+				writer.write("    %s=%s\n" % (prop, val) )
 
 	### READ/WRITE color
 	
 	def read_color(self, reader):
-		# 3 ints - RGB color value
-		self.rgb = [ int(reader.nextWord()) for i in range(3) ]
+		if not hasattr(self, 'rgb'):
+			# 3 ints - RGB color value
+			self.rgb = [ int(reader.nextWord()) for i in range(3) ]
 
 	def write_color(self, writer):
 		writer.write("  # Color rgb (int 0-255)\n")
@@ -74,140 +102,94 @@ class SimObject:
 
 class Person(SimObject):  
 	sim_class = "soargroup.mobilesim.sim.SimPerson"
+
 	def read_info(self, reader, scale=1.0):
 		self.scl = [ 1.0, 1.0, 1.0 ]
-		self.read_transform(reader, scale)
-		self.read_color(reader)
-		# 1 string - category
-		self.cat = reader.nextWord()
-		# 1 string - name
-		self.name = reader.nextWord()
-		self.preds = { 'category': self.cat, 'name': self.name }
+		super().read_info(reader, scale)
+		self.desc = strip_digits(self.preds.get('name'))
 		return self
 
-	def write_info(self, writer):
-		writer.write("  # Object Description\n")
-		writer.write("  " + strip_digits(self.name) + "\n")
-		self.write_transform(writer)
-		self.write_predicates(writer)
-		self.write_color(writer)
+class Chair(SimObject):
+	sim_class = "soargroup.mobilesim.sim.SimChair"
+	cat = "chair1"
 
-
-class BoxObject(SimObject):  
-	sim_class = "soargroup.mobilesim.sim.SimBoxObject"
-	def read_info(self, reader, scale=1.0):
-		if not hasattr(self, 'cat'):
-			self.cat = reader.nextWord()
-		if not hasattr(self, 'desc'):
-			self.desc = strip_digits(self.cat)
-
-		self.read_transform(reader, scale)
-		self.pos[2] += self.scl[2]/2 # Raise z by height/2 to center it
-
-		if not hasattr(self, 'rgb'):
-			self.read_color(reader)
-
-		self.read_predicates(reader)
-		self.preds['category'] = self.cat
-		return self
-
-	def write_info(self, writer):
-		writer.write("  # Object Description\n")
-		writer.write("  " + self.desc + "\n")
-		self.write_transform(writer)
-		self.write_predicates(writer)
-		self.write_color(writer)
-
-
-class Receptacle(BoxObject):  
-	sim_class = "soargroup.mobilesim.sim.SimReceptacle"
-
-class Surface(BoxObject):  
-	sim_class = "soargroup.mobilesim.sim.SimSurface"
-
-class Table(Surface):  
+class Table(SimObject):  
 	sim_class = "soargroup.mobilesim.sim.SimTable"
-	def __init__(self):
-		super().__init__()
-		self.cat = "table1"
-		self.rgb = [ 94, 76, 28 ]
+	cat = "table1"
+	rgb = [ 94, 76, 28 ]
 
-class Counter(Surface):
-	def __init__(self):
-		super().__init__()
-		self.cat = "counter1"
-		self.rgb = [ 250, 230, 140 ]
+class Counter(SimObject):
+	cat = "counter1"
+	rgb = [ 250, 230, 140 ]
 
-class Garbage(Receptacle):
-	def __init__(self):
-		super().__init__()
-		self.cat = "garbage1"
-		self.rgb = [ 100, 100, 100 ]
+class Garbage(SimObject):
+	cat = "garbage1"
+	rgb = [ 100, 100, 100 ]
 
-class Sink(Receptacle):
-	def __init__(self):
-		super().__init__()
-		self.cat = "sink1"
-		self.rgb = [ 150, 150, 150 ]
+class Sink(SimObject):
+	cat = "sink1"
+	rgb = [ 150, 150, 150 ]
 
-class Shelves(Surface):  
+class Shelves(SimObject):  
 	sim_class = "soargroup.mobilesim.sim.SimShelves"
-	def __init__(self):
-		super().__init__()
-		self.cat = "shelves1"
-		self.door = "none"
-		self.rgb = [ 94, 76, 28 ]
+	cat = "shelves1"
+	rgb = [ 94, 76, 28 ]
 
-	def write_info(self, writer):
-		super().write_info(writer)
-		writer.write(self.door + "\n")
+	def read_info(self, reader, scale=1.0):
+		super().read_info(reader, scale)
+		if hasattr(self, "door"):
+			self.preds["door2"] = "open2" if self.door == "open" else "closed2"
+		return self
 
 class Pantry(Shelves):  
-	def __init__(self):
-		super().__init__()
-		self.door = "open"
-		self.cat = "pantry1"
+	door = "open"
+	cat = "pantry1"
 
 class Cupboard(Shelves):  
-	def __init__(self):
-		super().__init__()
-		self.door = "closed"
-		self.cat = "cupboard1"
-
-class Drawer(Shelves):  
-	def __init__(self):
-		super().__init__()
-		self.door = "closed"
-		self.cat = "drawer1"
+	door = "closed"
+	cat = "cupboard1"
 
 class Fridge(Shelves):  
-	def __init__(self):
-		super().__init__()
-		self.door = "closed"
-		self.cat = "fridge1"
-		self.rgb = [ 200, 200, 200 ]
+	sim_class = "soargroup.mobilesim.sim.SimFridge"
+	door = "closed"
+	cat = "fridge1"
+	rgb = [ 200, 200, 200 ]
 
 class Microwave(Shelves):  
-	def __init__(self):
-		super().__init__()
-		self.door = "closed"
-		self.cat = "microwave1"
-		self.rgb = [ 50, 50, 50 ]
+	door = "closed"
+	cat = "microwave1"
+	rgb = [ 50, 50, 50 ]
+
+class Drawer(SimObject):  
+	sim_class = "soargroup.mobilesim.sim.SimDrawer"
+	cat = "drawer1"
+	rgb = [ 94, 76, 28 ]
+
+	def read_info(self, reader, scale=1.0):
+		super().read_info(reader, scale)
+		self.preds["door2"] = "closed2"
+		return self
+
+class Desk(SimObject):  
+	sim_class = "soargroup.mobilesim.sim.SimDesk"
+	cat = "desk1"
+	rgb = [ 94, 76, 28 ]
 
 class LightSwitch(SimObject):  
 	sim_class = "soargroup.mobilesim.sim.SimLightSwitch"
-	def __init__(self):
-		super().__init__()
-		self.desc = "LS"
-		self.cat = "lightswitch1"
+	desc = "LS"
+	cat = "lightswitch1"
+	rgb = [ 255, 255, 255 ]
 
 	def read_info(self, reader, scale=1.0):
-		self.read_transform(reader, scale)
+		# 1 word << on off >> - state of switch
 		self.state = reader.nextWord()
+		# 1 word wp02 - region to control
 		self.region = reader.nextWord()
+		super().read_info(reader, scale)
+		self.preds["activation1"] = self.state + "2"
 		return self
 
 	def write_info(self, writer):
 		super().write_info(writer)
-		writer.write(self.state + "\n")
 		writer.write(self.region + "\n")

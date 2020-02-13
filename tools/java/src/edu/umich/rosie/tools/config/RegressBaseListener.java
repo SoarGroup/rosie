@@ -54,6 +54,18 @@ public class RegressBaseListener implements RegressListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterSentenceWord(RegressParser.SentenceWordContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitSentenceWord(RegressParser.SentenceWordContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterExpected(RegressParser.ExpectedContext ctx) { }
 	/**
 	 * {@inheritDoc}

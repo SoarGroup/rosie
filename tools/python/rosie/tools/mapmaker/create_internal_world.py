@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import sys
+
 def create_internal_world(world_info, fout):
 	# Find the first region that contains the robot's point
 	start_loc = next( (region.handle for region in world_info.regions 
@@ -28,8 +30,10 @@ def create_internal_world(world_info, fout):
 		obj_id = "<obj" + str(i) + ">"
 		preds_id = "<obj" + str(i) + "-preds>"
 
+		preds = dict( i for i in obj.preds.items() if i[1] is not None)
+
 		# Create a unique handle for the object
-		handle = obj.preds['category']
+		handle = preds['category']
 		
 		if handle not in name_counts:
 			name_counts[handle] = 0
@@ -40,12 +44,13 @@ def create_internal_world(world_info, fout):
 		obj_loc = next( (region for region in world_info.regions 
 			if region.contains_point(obj.pos[0], obj.pos[1])), None)
 
-		if obj_loc == None:
-			print("ERROR: " + handle)
+		if obj_loc is None:
+			print("ERROR No location for: " + handle)
+			continue
 
 		fout.write("   (<objs> ^object {:s})\n".format(obj_id))
 		fout.write("   ({:s} ^handle {:s} ^waypoint {:s} ^predicates {:s})\n".format(obj_id, handle, obj_loc.handle, preds_id))
-		fout.write("   ({:s} {:s})\n".format(preds_id, " ".join( "^{:s} {:s}".format(cat, pred) for cat, pred in obj.preds.items() )))
+		fout.write("   ({:s} {:s})\n".format(preds_id, " ".join( "^{:s} {:s}".format(cat, pred) for cat, pred in preds.items() )))
 		
 		fout.write("\n")
 	# End of writing objects

@@ -38,8 +38,13 @@ complete -F _map_info_completion make_rosie_world
 
 # run_task_learning_tests: Will run task learning tests under test-agents/task-tests
 #   and print out discrepancies
+#   Add -h for help info
+#   Add -l to list all possible tasks
 #   Add -j to use the java testing tool instead of the python default
+#   You can specify individual tests instead of running them all, e.g.
+#      run_task_learning_tests test1 - will only run test1
 alias run_task_learning_tests="$ROSIE_HOME/tools/scripts/run_task_learning_tests.sh"
+complete -F _task_tests_completion run_task_learning_tests
 
 ### Other Useful Scripts
 

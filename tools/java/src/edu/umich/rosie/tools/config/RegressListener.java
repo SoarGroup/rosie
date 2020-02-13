@@ -40,6 +40,16 @@ public interface RegressListener extends ParseTreeListener {
 	 */
 	void exitSentence(RegressParser.SentenceContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link RegressParser#sentenceWord}.
+	 * @param ctx the parse tree
+	 */
+	void enterSentenceWord(RegressParser.SentenceWordContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link RegressParser#sentenceWord}.
+	 * @param ctx the parse tree
+	 */
+	void exitSentenceWord(RegressParser.SentenceWordContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link RegressParser#expected}.
 	 * @param ctx the parse tree
 	 */
