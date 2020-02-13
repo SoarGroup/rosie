@@ -1,8 +1,41 @@
-sp {subproblem*execute*propose*add-subtask-to-tcn*task-source
+# Check if the subtask being pushed matches one we've already learned
+sp {subproblem*execute*elaborate*match-task-operator*pushed-task-operator
    (state <s> ^problem-space.subproblem execute
               ^task-stack <stack>
               ^current-task-segment <seg>
               ^task-operator <task-op>)
+   (<stack> ^bottom <seg>
+            ^push-task-operator <subtask>)
+   (<subtask> ^task-source << instruction search >>)
+-->
+   (<s> ^match-task-operator <mto>)
+   (<mto> ^type pushed-subtask
+          ^task-operator <subtask>
+          ^candidate-tasks <cands>)
+}
+
+sp {subproblem*execute*elaborate*match-task-operator*candidate-task-operators
+   (state <s> ^problem-space.subproblem execute
+              ^match-task-operator <mto>
+              ^operator <o> +)
+   (<mto> ^type pushed-subtask
+          ^candidate-tasks <cands>)
+   (<o> ^item-type task-operator)
+-->
+   (<cands> ^candidate-task-operator <o>)
+}
+
+# If the subtask doesn't match an existing task-operator, 
+#   add it to the TCN
+sp {subproblem*execute*propose*add-subtask-to-tcn*task-source
+   (state <s> ^problem-space.subproblem execute
+              ^task-stack <stack>
+              ^current-task-segment <seg>
+              ^task-operator <task-op>
+              ^match-task-operator <mto>)
+   (<mto> ^type pushed-subtask
+          ^task-operator <subtask>
+          -^successful-match)
    (<stack> ^bottom <seg>
             ^push-task-operator <subtask>)
    (<subtask> ^task-source << instruction search >>)

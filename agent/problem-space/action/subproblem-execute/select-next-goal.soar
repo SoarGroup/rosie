@@ -1,13 +1,14 @@
 
-# Remove any performed subtask flags
-sp {subproblem*execute*apply*select-next-goal*remove*performed-subtask
+# Remove any goal objects from the task-objects set
+sp {subproblem*execute*apply*select-next-goal*remove*goal-objects*from*current-task-segment
    (state <s> ^problem-space.subproblem execute
               ^operator.name select-next-goal
-              ^task-operator <task-op>)
-   (<task-op> ^performed <sub-h>)
+              ^current-task-segment.task-objects <objs>)
+   (<objs> ^goal-object <obj>)
 -->
-   (<task-op> ^performed <sub-h> -)
+   (<objs> ^goal-object <obj> -)
 }
+
 
 ###################### select-next-goal ##################
 # When the current goal is satisfied, select the next one in the graph
@@ -46,6 +47,8 @@ sp {subproblem*execute*select-next-goal*elaborate*task-handle
    (<s> ^task-handle <task-h>)
 }
 
+#### SMEM RETRIEVALS
+
 # Retrieve the goal node from smem
 sp {subproblem*execute*select-next-goal*retrieve*next-goal-id
    (state <s> ^name select-next-goal
@@ -71,28 +74,34 @@ sp {subproblem*execute*select-next-goal*retrieve*TCN
    (<cue> ^handle <task-h>)
 }
 
-# If there are any objects in the goal that are not part of the task-operator, 
-#   they are implicit object arguments and should be added to the world
+#### ELABORATE OBJECT SLOTS
+
+# Find all objects that are involved with the goal
 sp {subproblem*execute*select-next-goal*elaborate*object-slot
    (state <s> ^name select-next-goal
               ^next-goal-id.{ << 1 2 3 4 5 >> } <gp>
               ^task-concept-network.procedural <proc>)
    (<gp> ^type << unary relation >>
          ^{ << 1 2 >> } <obj-slot>)
-#   (<proc> -^<arg-name>.<slot-name> { @ <obj-slot> })
 -->
    (<s> ^object-slot <obj-slot>)
 }
 
+# Object slots that also appear on the task-operator are explicit
 sp {subproblem*execute*select-next-goal*elaborate*explicit-object-slot
    (state <s> ^name select-next-goal
               ^object-slot <obj-slot>
-              ^task-concept-network.procedural <proc>)
+              ^task-concept-network.procedural <proc>
+              ^task-operator.<arg-name>)
    (<proc> ^<arg-name>.<slot-name> { @ <obj-slot> })
 -->
    (<s> ^explicit-object-slot <obj-slot>)
 }
 
+# Object slots that do not appear on the task-operator are implicit
+# Note: We are doing a -^explicit-object-slot test intead 
+#       directly testing that the slot doesn't appear on the task-operator
+#       because soar crashes if we do that :(
 sp {subproblem*execute*select-next-goal*elaborate*implicit-object*1*pred
    (state <s> ^name select-next-goal
               ^object-slot <obj-slot>
@@ -106,6 +115,9 @@ sp {subproblem*execute*select-next-goal*elaborate*implicit-object*1*pred
    (<def-copy> ^<prop1> <pred1>)
 }
 
+
+#### Learn the select-next-goal apply rule
+
 ### Operator learn-apply-rule
 sp {subproblem*execute*select-next-goal*propose*learn-apply-rule
    (state <s> ^name select-next-goal
@@ -118,7 +130,7 @@ sp {subproblem*execute*select-next-goal*propose*learn-apply-rule
    (<o> ^name learn-apply-rule)
 }
 
-# ENUMERATE: implicit objects on a goal (0-3)
+# ENUMERATE: 0-3 implicit objects on a goal
 
 sp {subproblem*execute*apply*select-next-goal*change*current-goal*0*implicit
    (state <s> ^name select-next-goal
