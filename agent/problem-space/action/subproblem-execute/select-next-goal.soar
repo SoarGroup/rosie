@@ -1,12 +1,49 @@
+### Only fire these application once a chunk has been learned
+# (Will create ^apply-select-next-goal true flag on the state)
+
+# Change the goal handle on the task-operator
+sp {subproblem*execute*apply*select-next-goal*change*current-goal*on*task-operator
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o>
+              ^apply-select-next-goal true
+              ^task-operator <task-op>)
+   (<o> ^name select-next-goal
+        ^next-goal-handle <goal-h>)
+   (<task-op> ^current-goal { <cur-goal-h> <> <goal-h> })
+-->
+   (<task-op> ^current-goal <cur-goal-h> -
+              ^current-goal <goal-h>)
+}
+
+# Remove the apply-select-next-goal flag (means we learned the application rule)
+sp {subproblem*execute*apply*select-next-goal*remove*apply-select-next-goal
+   (state <s> ^problem-space.subproblem execute
+              ^operator.name select-next-goal
+              ^apply-select-next-goal true)
+-->
+   (<s> ^apply-select-next-goal true -)
+}
 
 # Remove any goal objects from the task-objects set
 sp {subproblem*execute*apply*select-next-goal*remove*goal-objects*from*current-task-segment
    (state <s> ^problem-space.subproblem execute
               ^operator.name select-next-goal
+              ^apply-select-next-goal true
               ^current-task-segment.task-objects <objs>)
    (<objs> ^goal-object <obj>)
 -->
    (<objs> ^goal-object <obj> -)
+}
+
+# Remove any ^performed-subtask flags from the task-operator
+sp {subproblem*execute*apply*select-next-goal*remove*performed-subtasks*from*task-operator
+   (state <s> ^problem-space.subproblem execute
+              ^operator.name select-next-goal
+              ^apply-select-next-goal true
+              ^task-operator <task-op>)
+   (<task-op> ^performed-subtask <sub-h>)
+-->
+   (<task-op> ^performed-subtask <sub-h> -)
 }
 
 
@@ -130,18 +167,17 @@ sp {subproblem*execute*select-next-goal*propose*learn-apply-rule
    (<o> ^name learn-apply-rule)
 }
 
+
 # ENUMERATE: 0-3 implicit objects on a goal
 
 sp {subproblem*execute*apply*select-next-goal*change*current-goal*0*implicit
    (state <s> ^name select-next-goal
               ^operator.name learn-apply-rule
+              ^superstate <ss>
               ^next-goal-handle <goal-h>
-              ^task-operator <task-op>
              -^implicit-object)
-   (<task-op> ^current-goal { <cur-goal-h> <> <goal-h> })
 -->
-   (<task-op> ^current-goal <cur-goal-h> -
-              ^current-goal <goal-h>)
+   (<ss> ^apply-select-next-goal true)
 }
 
 sp {subproblem*execute*apply*select-next-goal*change*current-goal*1*implicit
@@ -154,9 +190,8 @@ sp {subproblem*execute*apply*select-next-goal*change*current-goal*1*implicit
              -^implicit-object { <obj2> <> <obj1> })
    (<task-op> ^current-goal { <cur-goal-h> <> <goal-h> })
 -->
-   (<task-op> ^current-goal <cur-goal-h> -
-              ^current-goal <goal-h>)
-   (<ss> ^implicit-object <obj1>)
+   (<ss> ^apply-select-next-goal true
+         ^implicit-object <obj1>)
 }
 
 sp {subproblem*execute*apply*select-next-goal*change*current-goal*2*implicit
@@ -170,9 +205,8 @@ sp {subproblem*execute*apply*select-next-goal*change*current-goal*2*implicit
              -^implicit-object { <obj3> <> <obj2> <> <obj1> })
    (<task-op> ^current-goal { <cur-goal-h> <> <goal-h> })
 -->
-   (<task-op> ^current-goal <cur-goal-h> -
-              ^current-goal <goal-h>)
-   (<ss> ^implicit-object <obj1> <obj2>)
+   (<ss> ^apply-select-next-goal true
+         ^implicit-object <obj1> <obj2>)
 }
 
 sp {subproblem*execute*apply*select-next-goal*change*current-goal*3*implicit
@@ -187,7 +221,7 @@ sp {subproblem*execute*apply*select-next-goal*change*current-goal*3*implicit
              -^implicit-object { <obj4> <> <obj3> <> <obj2> <> <obj1> })
    (<task-op> ^current-goal { <cur-goal-h> <> <goal-h> })
 -->
-   (<task-op> ^current-goal <cur-goal-h> -
-              ^current-goal <goal-h>)
-   (<ss> ^implicit-object <obj1> <obj2> <obj3>)
+   (<ss> ^apply-select-next-goal true
+         ^implicit-object <obj1> <obj2> <obj3>)
 }
+
