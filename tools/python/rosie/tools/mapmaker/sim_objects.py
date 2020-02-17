@@ -106,7 +106,10 @@ class Person(SimObject):
 	def read_info(self, reader, scale=1.0):
 		self.scl = [ 1.0, 1.0, 1.0 ]
 		super().read_info(reader, scale)
-		self.desc = strip_digits(self.preds.get('name'))
+		if 'name' in self.preds:
+			self.desc = strip_digits(self.preds.get('name'))
+		else:
+			self.desc = strip_digits(self.preds.get('category'))
 		return self
 
 class Chair(SimObject):
