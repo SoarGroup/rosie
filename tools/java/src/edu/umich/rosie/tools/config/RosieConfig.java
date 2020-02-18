@@ -20,8 +20,8 @@ public class RosieConfig {
 	// A set of property names used in the config file
 	public static final HashSet<String> PROP_NAMES = new HashSet<String>(
 			Arrays.asList("agent-name", "agent-dir", "domain",
-					"parser", "parser-test", "hypothetical",
-					"simulate-perception",
+					"parser", "parser-test",
+					"hypothetical", "simulate-perception",
 					"sentence-source", "sentences-file", "world-file", "smem-config-file", 
 					"custom-soar-file", "custom-smem-file", 
 					"map-info-file", "object-info-file", "internal-world-file", "waypoint-map-file"));

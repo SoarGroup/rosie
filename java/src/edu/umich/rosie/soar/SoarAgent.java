@@ -1,14 +1,11 @@
 package edu.umich.rosie.soar;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.*;
 
 import sml.*;
 import sml.Agent.PrintEventInterface;
 import sml.Agent.RunEventInterface;
-
+import edu.umich.rosie.language.LanguageTestWriter;
 import edu.umich.rosie.soarobjects.Time;
 import edu.umich.rosie.connectors.LogfileWriter;
 
@@ -30,6 +27,8 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         public Boolean verbose;
 		public String logFilename;
         public Boolean writeStandardOut;
+        
+		public String languageTestFilename;
         
         public Boolean parserTest;
         public String parser;
@@ -63,6 +62,8 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
             speechFile = props.getProperty("speech-file", "audio_files/sample");
 
 			logFilename = props.getProperty("log-filename", null);
+
+			languageTestFilename = props.getProperty("language-test-filename", null);
         }
     }
 
@@ -131,6 +132,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 		this.connectors.put(conn.getClass(), conn);
 	}
 
+	@SuppressWarnings("unchecked")
 	public <T> T getConnector(Class<T> cls){
 		return (T)this.connectors.get(cls);
 	}
@@ -165,6 +167,10 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 
         if(config.writeStandardOut){
             printCallbackId = agent.RegisterForPrintEvent(smlPrintEventId.smlEVENT_PRINT, this, null);
+        }
+
+        if(config.languageTestFilename != null){
+			this.addConnector(new LanguageTestWriter(this, config.languageTestFilename));
         }
 
         if(!config.remoteConnection){
