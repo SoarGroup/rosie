@@ -26,6 +26,8 @@ def create_internal_world(world_info, fout):
 
 	# Write the list of objects
 	for obj in world_info.objects:
+		if not hasattr(obj, 'preds'):
+			continue
 		i += 1
 		obj_id = "<obj" + str(i) + ">"
 		preds_id = "<obj" + str(i) + "-preds>"

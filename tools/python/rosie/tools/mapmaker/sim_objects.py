@@ -76,6 +76,9 @@ class SimObject:
 			self.preds['category'] = self.cat
 		if hasattr(self, 'name') and 'name' not in self.preds:
 			self.preds['name'] = self.name
+		if hasattr(self, 'def_props'):
+			for prop in self.def_props:
+				self.preds[prop] = None
 
 	def write_predicates(self, writer):
 		writer.write("  # Properties\n")
@@ -99,6 +102,16 @@ class SimObject:
 		writer.write("    %(r)d %(g)d %(b)d\n" % \
 				{ "r": self.rgb[0], "g": self.rgb[1], "b": self.rgb[2] })
 
+# This is not a Rosie Object, will not be perceived
+class BoxObject(SimObject):
+	sim_class = "soargroup.mobilesim.sim.BoxObject"
+	def read_info(self, reader, scale=1.0):
+		self.read_transform(reader, scale)
+		self.read_color(reader)
+		return self
+	def write_info(self, writer):
+		self.write_transform(writer)
+		self.write_color(writer)
 
 class Person(SimObject):  
 	sim_class = "soargroup.mobilesim.sim.SimPerson"
@@ -113,21 +126,35 @@ class Person(SimObject):
 		return self
 
 class Chair(SimObject):
-	sim_class = "soargroup.mobilesim.sim.SimChair"
 	cat = "chair1"
+	def_props = ('custom-model')
 
 class Table(SimObject):  
-	sim_class = "soargroup.mobilesim.sim.SimTable"
 	cat = "table1"
 	rgb = [ 94, 76, 28 ]
+	def_props = ('custom-model', 'surface')
 
 class Counter(SimObject):
 	cat = "counter1"
 	rgb = [ 250, 230, 140 ]
+	def_props = ('box', 'surface')
 
 class Sink(SimObject):
 	cat = "sink1"
 	rgb = [ 150, 150, 150 ]
+	def_props = ('openbox', 'receptacle')
+
+class Garbage(SimObject):
+	cat = "garbage1"
+	def_props = ('openbox', 'receptacle')
+
+class Stove(SimObject):
+	sim_class = "soargroup.mobilesim.sim.SimStove"
+	cat = "stove1"
+	def read_info(self, reader, scale=1.0):
+		super().read_info(reader, scale)
+		self.preds["activation1"] = "off2"
+		return self
 
 class Shelves(SimObject):  
 	sim_class = "soargroup.mobilesim.sim.SimShelves"
@@ -152,7 +179,7 @@ class Fridge(Shelves):
 	sim_class = "soargroup.mobilesim.sim.SimFridge"
 	door = "closed"
 	cat = "fridge1"
-	rgb = [ 200, 200, 200 ]
+	rgb = [ 240, 240, 240 ]
 
 class Microwave(Shelves):  
 	door = "closed"
@@ -170,9 +197,9 @@ class Drawer(SimObject):
 		return self
 
 class Desk(SimObject):  
-	sim_class = "soargroup.mobilesim.sim.SimDesk"
 	cat = "desk1"
 	rgb = [ 94, 76, 28 ]
+	def_props = ('custom-model', 'surface')
 
 class LightSwitch(SimObject):  
 	sim_class = "soargroup.mobilesim.sim.SimLightSwitch"

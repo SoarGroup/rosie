@@ -1,0 +1,67 @@
+### Send the low-level lock command when the target is visible and reachable ###
+
+sp {op_unlock1*propose*send-unlock-command
+   (state <s> ^name op_unlock1
+              ^target-object <obj>)
+   (<obj> ^predicates <preds>)
+   (<preds> ^is-visible1 visible1
+            ^is-reachable1 reachable1
+            ^<prop> locked1)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name send-unlock-command
+        ^item-type command-operator
+        ^command-name lock-command
+        ^arg1.id <obj>
+        ^property <prop>)
+}
+
+### internal ###
+
+sp {op_unlock1*external*apply*send-unlock-command*internal
+   (state <s> ^name op_unlock1
+              ^problem-space.execution-type external
+              ^agent-params.domain internal
+              ^operator <o>
+              ^io.output-link <ol>
+              ^current-task-segment <seg>)
+   (<o> ^name send-unlock-command
+        ^command-name <cmd-name>
+        ^arg1.id <obj>)
+-->
+   (<ol> ^perform-action <pa>)
+   (<pa> ^item-type output-command
+         ^name lock
+         ^object <obj>)
+   (<seg> ^<cmd-name> <pa>)
+}
+
+
+### magicbot ###
+
+sp {op_unlock1*external*apply*send-unlock-command*magicbot
+   (state <s> ^name op_unlock1
+              ^problem-space.execution-type external
+              ^agent-params.domain magicbot
+              ^operator <o>
+              ^io.output-link <ol>
+              ^current-task-segment <seg>)
+   (<o> ^name send-unlock-command
+        ^command-name <cmd-name>
+        ^arg1.id <obj>)
+   (<obj> ^perception-id <perc-id>
+          ^predicates.<prop> locked1)
+-->
+   (<ol> ^do-control-law <cmd>)
+   (<cmd> ^name change-state
+          ^item-type output-command
+          ^parameters <params>
+          ^termination-condition <term>)
+   (<term> ^name object-state
+           ^parameters <params>)
+   (<params> ^object-id (int <perc-id>)
+             ^property <prop>
+             ^value not-locked1)
+
+   (<seg> ^<cmd-name> <cmd>)
+}
