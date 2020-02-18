@@ -125,10 +125,6 @@ class Counter(SimObject):
 	cat = "counter1"
 	rgb = [ 250, 230, 140 ]
 
-class Garbage(SimObject):
-	cat = "garbage1"
-	rgb = [ 100, 100, 100 ]
-
 class Sink(SimObject):
 	cat = "sink1"
 	rgb = [ 150, 150, 150 ]
@@ -196,3 +192,10 @@ class LightSwitch(SimObject):
 	def write_info(self, writer):
 		super().write_info(writer)
 		writer.write(self.region + "\n")
+
+class Alarm(SimObject):
+	sim_class = "soargroup.mobilesim.sim.SimAlarm"
+	desc = "Alarm"
+	cat = "alarm1"
+	rgb = [ 255, 0, 0 ]
+
