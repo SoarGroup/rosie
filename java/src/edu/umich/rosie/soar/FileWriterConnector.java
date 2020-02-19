@@ -1,11 +1,12 @@
 package edu.umich.rosie.soar;
 
 import java.io.*;
+
 import sml.*;
 
 public abstract class FileWriterConnector extends AgentConnector {
 	protected String filename;
-    protected PrintWriter writer = null;
+    protected PrintStream writer = null;
 
 	public FileWriterConnector(SoarAgent agent, String filename){
 		super(agent);
@@ -17,11 +18,9 @@ public abstract class FileWriterConnector extends AgentConnector {
 	public void connect(){
 		super.connect();
 		try{
-            writer = new PrintWriter(new FileWriter(filename));
+            writer = new PrintStream(filename);
 		} catch (FileNotFoundException e){
 			System.err.println("File not found: " + filename);
-		} catch (IOException e){
-			System.err.println("IOException opening file " + filename);
 		}
 	}
 	
