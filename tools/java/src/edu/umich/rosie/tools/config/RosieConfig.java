@@ -116,12 +116,18 @@ public class RosieConfig {
 	
 	// rosieHome - the directory containing rosie
 	public String rosieHome;
+
+	// sourceFile - the full path of the file this config was created from
+	public String sourceFile;
 	
 	public RosieConfig(File configFile, Properties props, String rosieHome) throws RosieConfigException {
 		String configDir = configFile.getParent();
 		
 		// rosieHome
 		this.rosieHome = rosieHome; 
+
+		// sourceFile
+		this.sourceFile = configFile.getAbsolutePath().replaceAll("\\\\", "/");
 
 		// agent-name
 		if (props.containsKey("agent-name")){
