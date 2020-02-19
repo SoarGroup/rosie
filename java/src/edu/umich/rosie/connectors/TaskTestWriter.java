@@ -1,9 +1,6 @@
 package edu.umich.rosie.connectors;
 
-import java.io.*;
 import sml.*;
-import sml.Agent.PrintEventInterface;
-
 import edu.umich.rosie.soar.SoarAgent;
 import edu.umich.rosie.soar.SoarUtil;
 import edu.umich.rosie.soar.FileWriterConnector;
@@ -71,6 +68,6 @@ public class TaskTestWriter extends FileWriterConnector
 	@Override
 	public void receiveMessage(IMessagePasser.RosieMessage message){
 		// Write each sentence that the agent says as output
-		writer.write("R: \"" + message.message + "\"\n");
+		writer.print("R: \"" + message.message + "\"\n");
 	}
 }

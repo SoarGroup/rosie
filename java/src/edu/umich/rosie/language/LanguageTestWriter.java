@@ -1,14 +1,14 @@
-package edu.umich.rosie.connectors;
+package edu.umich.rosie.language;
 
 import sml.*;
 import sml.Agent.PrintEventInterface;
 import edu.umich.rosie.soar.SoarAgent;
 import edu.umich.rosie.soar.FileWriterConnector;
 
-public class LogfileWriter extends FileWriterConnector implements PrintEventInterface {
+public class LanguageTestWriter extends FileWriterConnector implements PrintEventInterface {
 	private long printCallbackId = -1;
 
-	public LogfileWriter(SoarAgent agent, String filename){
+	public LanguageTestWriter(SoarAgent agent, String filename){
 		super(agent, filename);
 	}
 
@@ -29,6 +29,10 @@ public class LogfileWriter extends FileWriterConnector implements PrintEventInte
 
     @Override
     public void printEventHandler(int eventID, Object data, Agent agent, String message) {
-		writer.print(message);
+    	final String preamble = "Interpreting Instructor Message:";
+    	if (message.startsWith(preamble)) {
+    		writer.print(message.substring(preamble.length() + 2));
+    		writer.println();
+    	}
     }
 }
