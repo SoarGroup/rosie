@@ -1,0 +1,67 @@
+#!/bin/bash
+
+DOMAIN="tabletop"
+
+# Run in background
+BG="FALSE"
+
+# If set to 2 (-k), then simulates kinect point cloud
+SIM_LEVEL=0
+
+# Iterate over each argument given
+while [[ $# -gt 0 ]]
+do
+	arg="$1"
+	case $arg in
+		-t|--tabletop)
+			DOMAIN="tabletop"
+			;;
+		-f|--fetch)
+			DOMAIN="fetch"
+			;;
+		-m|--magicbot)
+			DOMAIN="magicbot"
+			;;
+		-b|--background)
+			BG="TRUE"
+			;;
+		-k|--kinect)
+			SIM_LEVEL=2
+			;;
+		*)
+			WORLD_FILE=$1
+			;;
+	esac
+	shift
+done
+
+if [ "$WORLD_FILE" == "" ]; then 
+	echo "Missing world file"
+	exit 1
+fi
+
+WORLD_FILE=$PROBCOG_HOME/worlds/$WORLD_FILE
+
+export CLASSPATH=$CLASSPATH:$PROBCOG_HOME/java/probcog.jar
+
+cd $PROBCOG_HOME
+if [ "$DOMAIN" == "tabletop" ]; then
+	if [ "$BG" == "TRUE" ]; then
+		java probcog.gui.PerceptionGUI -w $WORLD_FILE -c $PROBCOG_HOME/config/probcog.config -s $SIM_LEVEL &
+	else
+		java probcog.gui.PerceptionGUI -w $WORLD_FILE -c $PROBCOG_HOME/config/probcog.config -s $SIM_LEVEL
+	fi
+elif [ "$DOMAIN" == "fetch" ]; then
+	if [ "$BG" == "TRUE" ]; then
+		java probcog.gui.PerceptionGUI -w $WORLD_FILE -c $PROBCOG_HOME/config/probcog.config -k &
+	else
+		java probcog.gui.PerceptionGUI -w $WORLD_FILE -c $PROBCOG_HOME/config/probcog.config -k
+	fi
+elif [ "$DOMAIN" == "magicbot" ]; then
+	export PROBCOG_CONFIG=$PROBCOG_HOME/config/robot.config.local
+	if [ "$BG" == "TRUE" ]; then
+		java probcog.gui.MobileGUI -w $WORLD_FILE &
+	else
+		java probcog.gui.MobileGUI -w $WORLD_FILE
+	fi
+fi
