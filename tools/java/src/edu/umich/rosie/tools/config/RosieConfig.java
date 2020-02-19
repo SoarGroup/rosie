@@ -118,7 +118,7 @@ public class RosieConfig {
 	public String rosieHome;
 	
 	public RosieConfig(File configFile, Properties props, String rosieHome) throws RosieConfigException {
-		String configDir = configFile.getParent();
+		String configDir = configFile.getParent().replaceAll("\\\\", "/");
 		
 		// rosieHome
 		this.rosieHome = rosieHome; 
@@ -273,6 +273,8 @@ public class RosieConfig {
 			String name = (String)e.getKey();
 			String val = (String)e.getValue();
 			if(!PROP_NAMES.contains(name)){
+				val = val.replace("${agent-dir}", agentDir);
+				val = val.replace("${config-dir}", configDir);
 				this.otherSettings.put(name, val);
 			}
 		}
