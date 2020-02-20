@@ -1,0 +1,106 @@
+
+# goal-message: the parsed goal representation from language comprehension
+sp {task-utils*construct-task-goal*elaborate*message*from*superoperator
+   (state <s> ^name construct-task-goal
+              ^superstate.operator.goal-message <msg>)
+-->
+   (<s> ^goal-message <msg>)
+}
+
+# conditions: an if-clause from the language comprehension message
+sp {task-utils*construct-task-goal*elaborate*conditions*from*superoperator
+   (state <s> ^name construct-task-goal
+              ^superstate.operator.conditions <conds>)
+-->
+   (<s> ^conditions <conds>)
+}
+
+
+#### Goal Clauses
+
+# goal-clause: a description of a goal predicate
+sp {task-utils*construct-task-goal*elaborate*goal-clause*from*goal-message
+   (state <s> ^name construct-task-goal
+              ^goal-message.subclause <subc>)
+-->
+   (<s> ^goal-clause.source <subc>)
+}
+
+# recurively enumerate goal-clause
+sp {task-utils*construct-task-goal*elaborate*goal-clause*recursively
+   (state <s> ^name construct-task-goal
+              ^goal-clause.source.subclause <subc>)
+-->
+   (<s> ^goal-clause.source <subc>)
+}
+
+# Elaborate predicate-handle from a goal clause
+sp {task-utils*construct-task-goal*elaborate*goal-clause*predicate-handle
+   (state <s> ^name construct-task-goal
+              ^goal-clause <gcl>)
+   (<gcl> ^source.{ << predicate arg2 >> }.handle <pred-h>)
+-->
+   (<gcl> ^predicate-handle <pred-h>)
+}
+
+# Elaborate object1 from a goal clause 
+sp {task-utils*construct-task-goal*elaborate*goal-clause*object1*from*arg1
+   (state <s> ^name construct-task-goal
+              ^goal-clause <gcl>)
+   (<gcl> ^source.arg1 <obj1>)
+-->
+   (<gcl> ^object1 <obj1>
+          ^obj1-ref-info <ref1>)
+}
+
+# Elaborate object2 from a goal clause 
+sp {task-utils*construct-task-goal*elaborate*goal-clause*object2*from*arg2
+   (state <s> ^name construct-task-goal
+              ^goal-clause <gcl>)
+   (<gcl> ^source.{ << arg2 predicate >> } <pred>)
+   (<pred> ^2 <obj2>)
+-->
+   (<gcl> ^object2 <obj2>
+          ^obj2-ref-info <ref2>)
+}
+
+# Elaborate object1 reference-info
+sp {task-utils*construct-task-goal*elaborate*goal-clause*obj1-ref-info
+   (state <s> ^name construct-task-goal
+              ^{ << goal-clause goal-condition >> } <gcl>)
+   (<gcl> ^source.reference-info <ref-info>
+          ^obj1-ref-info <ref1>)
+   (<ref-info> ^arg-name arg1
+               ^constraint.<prop-h> <pred-h>)
+-->
+   (<ref1> ^<prop-h> <pred-h>)
+}
+
+# Elaborate object2 reference-info
+sp {task-utils*construct-task-goal*elaborate*goal-clause*obj2-ref-info
+   (state <s> ^name construct-task-goal
+              ^{ << goal-clause goal-condition >> } <gcl>)
+   (<gcl> ^source.reference-info <ref-info>
+          ^obj2-ref-info <ref2>)
+   (<ref-info> ^arg-name << relation arg2 >>
+               ^constraint.<prop-h> <pred-h>)
+-->
+   (<ref2> ^<prop-h> <pred-h>)
+}
+
+#### Goal Conditions
+
+sp {task-utils*construct-task-goal*elaborate*goal-condition*is*unary*condition
+   (state <s> ^name construct-task-goal
+              ^conditions <conds>)
+   (<conds> ^action.handle is1
+             ^arg1 <obj1>
+            -^arg2
+             ^predicate.handle <pred-h>)
+-->
+   (<s> ^goal-condition <gcd>)
+   (<gcd> ^source <conds>
+          ^predicate-handle <pred-h>
+          ^object1 <obj1>
+          ^obj1-ref-info <ref1>)
+}
