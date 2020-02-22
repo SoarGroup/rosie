@@ -45,11 +45,8 @@ to remove the flag from the current-task-segment.
 `mark-start-time` to add a start-time to the current-task-segment. \
 `mark-start-time.soar`
 
-1. `smem-query`: Retrieve the Task Concept Network for the current task \
-`retrieve-tcn.soar`
-
-1. The agent initializes the current-goal to the start-goal node in the TCN goal-graph \
-`init-current-goal.soar`
+1. The agent retrieves the start goal from the TCN goal-graph and adds it to the task-operator as ^current-goal \
+`retrieve-start-goal.soar`
 
 1. If the goal has any implicit object arguments, add them to the world \
 `add-object-to-world.soar`
