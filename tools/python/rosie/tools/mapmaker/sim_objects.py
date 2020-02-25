@@ -179,7 +179,7 @@ class Fridge(Shelves):
 	sim_class = "soargroup.mobilesim.sim.SimFridge"
 	door = "closed"
 	cat = "fridge1"
-	rgb = [ 240, 240, 240 ]
+	rgb = [ 200, 200, 200 ]
 
 class Microwave(Shelves):  
 	door = "closed"
