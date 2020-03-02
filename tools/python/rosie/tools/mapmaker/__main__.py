@@ -4,9 +4,9 @@ import os
 import tempfile
 # write the given TemporaryFile to disk using the given filename
 def save_temp_file(temp_file, filename):
-	with open(filename, 'w') as f:
-		temp_file.seek(0)
-		f.write(temp_file.read())
+    with open(filename, 'w') as f:
+        temp_file.seek(0)
+        f.write(temp_file.read())
 
 from rosie.tools.mapmaker.parse_info_file import parse_info_file
 
@@ -18,18 +18,18 @@ from rosie.tools.mapmaker.create_internal_world import create_internal_world
 #################### CHECK ARGUMENTS ##############################
 
 if len(sys.argv) <= 1:
-	print("python3 -m rosie.tools.mapmaker [map_info_file]")
-	print("  map_file_file is a specification of the world to create in $ROSIE_HOME/tools/map_info")
-	print("Will generate a set of world/map files for a rosie environment")
-	print("")
-	print("Example: python3 -m rosie.tools.mapmaker simple_office.info")
-	print("  Input File : $ROSIE_HOME/tools/map_info/simple_office.info")
-	print("")
-	print("  Output File: $MOBILE_SIM_HOME/worlds/simple_office.world")
-	print("  Output File: $MOBILE_SIM_HOME/worlds/maps/simple_office.map")
-	print("  Output File: $ROSIE_HOME/agent/manage-world-state/waypoint-maps/simple_office.soar")
-	print("  Output File: $ROSIE_HOME/agent/manage-world-state/internal-worlds/simple_office.soar")
-	sys.exit(0)
+    print("python3 -m rosie.tools.mapmaker [map_info_file]")
+    print("  map_file_file is a specification of the world to create in $ROSIE_HOME/tools/map_info")
+    print("Will generate a set of world/map files for a rosie environment")
+    print("")
+    print("Example: python3 -m rosie.tools.mapmaker simple_office.info")
+    print("  Input File : $ROSIE_HOME/tools/map_info/simple_office.info")
+    print("")
+    print("  Output File: $MOBILE_SIM_HOME/worlds/simple_office.world")
+    print("  Output File: $MOBILE_SIM_HOME/worlds/maps/simple_office.map")
+    print("  Output File: $ROSIE_HOME/agent/manage-world-state/waypoint-maps/simple_office.soar")
+    print("  Output File: $ROSIE_HOME/agent/manage-world-state/internal-worlds/simple_office.soar")
+    sys.exit(0)
 
 
 # Arg 1: The file containing the world and map specifications [REQUIRED]
@@ -43,15 +43,15 @@ world_stem = map_info.split("/")[-1].split(".")[0]
 # Lookup $MOBILE_SIM_HOME environment variable [OPTIONAL]
 mobile_sim_home = None
 if "MOBILE_SIM_HOME" in os.environ:
-	mobile_sim_home = os.environ["MOBILE_SIM_HOME"]
+    mobile_sim_home = os.environ["MOBILE_SIM_HOME"]
 
 # Lookup $ROSIE_HOME environment variable [REQUIRED]
 rosie_home = ""
 if "ROSIE_HOME" in os.environ:
-	rosie_home = os.environ["ROSIE_HOME"]
+    rosie_home = os.environ["ROSIE_HOME"]
 else:
-	print("ERROR: Requires ROSIE_HOME environment variable set")
-	sys.exit(0)
+    print("ERROR: Requires ROSIE_HOME environment variable set")
+    sys.exit(0)
 
 
 #################### PARSE THE MAP_INFO FILE #######################
@@ -61,10 +61,10 @@ info_filename = rosie_home + "/tools/map_info/" + map_info
 
 print("Parsing info file: " + info_filename)
 try:
-	world_info = parse_info_file(world_stem, info_filename)
+    world_info = parse_info_file(world_stem, info_filename)
 except Exception as e:
-	print(e)
-	sys.exit(0)
+    print(e)
+    sys.exit(0)
 print("Success!\n")
 
 
@@ -73,13 +73,13 @@ print("Success!\n")
 # Writing the world file defining the simulated world 
 #   $MOBILE_SIM_HOME/worlds/map_name.world
 if mobile_sim_home is not None:
-	world_filename = mobile_sim_home + "/worlds/" + world_stem + ".world"
+    world_filename = mobile_sim_home + "/worlds/" + world_stem + ".world"
 
-	print("Writing world file: " + world_filename)
-	with tempfile.TemporaryFile(mode='w+t') as tf:
-		create_world(world_info, tf)
-		save_temp_file(tf, world_filename)
-	print("Success!\n")
+    print("Writing world file: " + world_filename)
+    with tempfile.TemporaryFile(mode='w+t') as tf:
+        create_world(world_info, tf)
+        save_temp_file(tf, world_filename)
+    print("Success!\n")
 
 
 ########################### MAP INFO FILE ###########################
@@ -88,13 +88,13 @@ if mobile_sim_home is not None:
 #   given its position
 #   $MOBILE_SIM_HOME/worlds/maps/map_name.map
 if mobile_sim_home is not None:
-	map_filename = mobile_sim_home + "/worlds/maps/" + world_stem + ".map"
+    map_filename = mobile_sim_home + "/worlds/maps/" + world_stem + ".map"
 
-	print("Writing map info file: " + map_filename)
-	with tempfile.TemporaryFile(mode='w+t') as tf:
-		create_map_info(world_info, tf)
-		save_temp_file(tf, map_filename)
-	print("Success!\n")
+    print("Writing map info file: " + map_filename)
+    with tempfile.TemporaryFile(mode='w+t') as tf:
+        create_map_info(world_info, tf)
+        save_temp_file(tf, map_filename)
+    print("Success!\n")
 
 
 ##################### ROSIE WAYPOINT MAP ########################
@@ -104,8 +104,8 @@ wpmap_filename = rosie_home + "/agent/manage-world-state/waypoint-maps/" + world
 
 print("Writing waypoint-map file: " + wpmap_filename)
 with tempfile.TemporaryFile(mode='w+t') as tf:
-	create_waypoint_map(world_info, tf)
-	save_temp_file(tf, wpmap_filename)
+    create_waypoint_map(world_info, tf)
+    save_temp_file(tf, wpmap_filename)
 print("Success!\n")
 
 
@@ -117,8 +117,8 @@ internal_filename = rosie_home + "/agent/manage-world-state/internal-worlds/" + 
 
 print("Writing internal world soar file: " + internal_filename)
 with tempfile.TemporaryFile(mode='w+t') as tf:
-	create_internal_world(world_info, tf)
-	save_temp_file(tf, internal_filename)
+    create_internal_world(world_info, tf)
+    save_temp_file(tf, internal_filename)
 print("Success!\n")
 
 

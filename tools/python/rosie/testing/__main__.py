@@ -6,16 +6,16 @@ from rosie.testing.TestAgent import TestAgent
 # Lookup $ROSIE_HOME environment variable [REQUIRED]
 rosie_home = ""
 if "ROSIE_HOME" in os.environ:
-	rosie_home = os.environ["ROSIE_HOME"]
+    rosie_home = os.environ["ROSIE_HOME"]
 else:
-	print("ERROR: Requires ROSIE_HOME environment variable set")
-	sys.exit(0)
+    print("ERROR: Requires ROSIE_HOME environment variable set")
+    sys.exit(0)
 
 # Argument 1: The test name (from test-agents/task-tests)
 if len(sys.argv) <= 1:
-	print("python -m rosie.testing [test_name]")
-	print("  test_name is a test under test-agents/task-tests")
-	sys.exit(0)
+    print("python -m rosie.testing [test_name]")
+    print("  test_name is a test under test-agents/task-tests")
+    sys.exit(0)
 
 test_name = sys.argv[1]
 
