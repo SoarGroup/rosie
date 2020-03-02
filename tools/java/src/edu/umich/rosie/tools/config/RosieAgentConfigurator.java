@@ -90,8 +90,9 @@ public class RosieAgentConfigurator {
 		agentSourceFile.write("source _agent_source.soar\n\n");
 
 		if(!config.domain.equals("internal") || config.simulate_perception){
+			agentSourceFile.write("# Tries to connect to the svs_viewer if it is running\n");
 			agentSourceFile.write("svs --enable\n");
-			agentSourceFile.write("svs connect_viewer 2000\n");
+			agentSourceFile.write("svs connect_viewer 2000\n\n");
 		}
 
       // Source the proper language comprehension files
@@ -111,6 +112,14 @@ public class RosieAgentConfigurator {
          agentSourceFile.write("source test-parser.soar\n");
          agentSourceFile.write("popd\n");
       }
+
+	  // Source each extra rosie file
+	  agentSourceFile.write("\n");
+	  agentSourceFile.write("# Sourcing any extra files listed in the config file:\n");
+	  for(String rosieFile : config.extraRosieFiles){
+		  agentSourceFile.write("source " + rosieFile + "\n");
+	  }
+	  agentSourceFile.write("\n");
 
 		agentSourceFile.write("popd\n\n");
 

@@ -1,11 +1,7 @@
 package edu.umich.rosie.tools.config;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 public class RosieConfig {
 
@@ -110,6 +106,11 @@ public class RosieConfig {
 	// waypoint-map-file = <filename> [OPTIONAL]
 	//     A file inside agent/manage-world-state/waypoint-maps which defines a waypoint map used for navigation
 	public File waypointMapFile;
+
+	// extra-rosie-files = <file1>;<file2>;... [OPTIONAL]
+	//     A file relative to the rosie agent directory that should be sourced by soar
+	//     Can specify more than 1 if separated by semicolons
+	public List<String> extraRosieFiles;
 
 	// Any other properties in the file will be put into the created rosie.config file
 	public HashMap<String, String> otherSettings;
@@ -271,6 +272,14 @@ public class RosieConfig {
 		} else {
 			this.waypointMapFile = null;
 		}
+
+		// extra-rosie-files
+		if (props.containsKey("extra-rosie-files")){
+			String files = props.getProperty("extra-rosie-files");
+			extraRosieFiles = new ArrayList<String>(Arrays.asList(files.split(";")));
+		} else {
+			extraRosieFiles = new ArrayList<String>();
+		}
 		
 		// otherSettings
 		// Anything else in the config file will be 
@@ -375,6 +384,12 @@ public class RosieConfig {
 			}
 		} else {
 			sb.append("waypoint-map-file = None\n");
+		}
+
+		Integer numFiles = this.extraRosieFiles.size();
+		sb.append("Number of extra-rosie-files: " + numFiles.toString() + "\n");
+		for(String f : this.extraRosieFiles){
+			sb.append("   > " + f + "\n");
 		}
 		
 		
