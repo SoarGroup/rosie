@@ -67,7 +67,8 @@ If anything from smem was added/changed, the agent will store the changes to sme
 
 **6. complete-learn-new-subtask**
 
-Once everything else is finished, the agent will remove the `new-subtask` operator from the current task segement. 
+Once everything else is finished, the agent will remove the `new-subtask` operator from the current task segment
+and add a flag `prefer-subtask` on the current task segment. 
 
 
 
