@@ -32,6 +32,8 @@ Rosie is a project at the University of Michigan Soar Lab, led by Professor John
 
 **[Soar Lab at Michigan](https://soar.eecs.umich.edu)**
 
+**[Powerpoint of the history of ITL](https://drive.google.com/file/d/1hGqHJlOee9lisx6okNE2rJ-Y-odnvD1g/view?usp=sharing)**
+
 **[Article in IEEE Magazine about ITL](https://web.eecs.umich.edu/~soar/sitemaker/docs/pubs/Laird_et_al_InteractiveTaskLearning_IEEE_IntelligentSystems_2017.pdf)**
 
 **[Recent book describing ITL](https://books.google.com/books?hl=en&id=UU6qDwAAQBAJ)**
@@ -160,7 +162,7 @@ a model of the world that is robust to certain anchoring errors and perceptual n
 
 Describes work done to extend Rosie to a mobile environment and how it handles references to objects that are not visible. Rosie learns different strategies for finding objects through instruction.
 
-## Other
+## Other Rosie Work
 
 **[Expanding Task Diversity in Explanation-Based Interactive Task Learning](papers/Mininger.Proposal.2019.pdf)** <br>
 2019 | *Aaron Mininger - Thesis Proposal*
@@ -175,6 +177,16 @@ in Rosie and some of the new capabilities that have been added.
 Gives a very detailed account of Rosie, with a focus on interaction management and learning tasks. 
 Although it is a bit outdated, the parts about how Rosie does dialog management and the theories
 behind learning from SII are still very relavent. 
+
+## Interactive Task Learning
+
+**[Interactive Task Learning (article)](https://web.eecs.umich.edu/~soar/sitemaker/docs/pubs/Laird_et_al_InteractiveTaskLearning_IEEE_IntelligentSystems_2017.pdf)** <br>
+2017 | *Laird, Gluck, Anderson, Forbus, Jenkins, Lebiere, Salvucci, Scheutz, Thomaz, Trafton, Wray*
+
+**[Interactive Task Learning: Humans, Robots, and Agents Acquiring New Tasks Through Natural Interactions](https://books.google.com/books?hl=en&id=UU6qDwAAQBAJ)** <br>
+2019 | *John E. Laird, Kevin Gluck*
+
+
 
 
 
