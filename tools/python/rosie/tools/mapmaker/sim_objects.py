@@ -127,7 +127,7 @@ class Person(SimObject):
 
 class Chair(SimObject):
     cat = "chair1"
-    def_props = ('custom-model')
+    def_props = ('custom-model', )
 
 class Table(SimObject):  
     cat = "table1"

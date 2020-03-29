@@ -16,7 +16,9 @@ so the agent might do an approach subtask first.
 Note that the task goal is usually created from the task concept network in ```init-smem/actions.soar```
 
 * [ Pick Up ](#pickup)
-* [ Put Down ](#pickup)
+* [ Put Down ](#putdown)
+* [ Open ](#open)
+* [ Close ](#close)
 
 <!-- ===================================================================================== -->
 <!-- ================================== PHYSICAL ========================================= -->
@@ -46,10 +48,10 @@ Have the robot pick up an object that is grabbable, e.g. a cup
 
 *Action Model:* \
 `+grabbed1(arg1), -not-grabbed1(arg1), +holding-object(true), -holding-object(false)` \
-`-relation(arg1, any), -in1(arg1, cur-loc)`
+`-relation(arg1, any)`
 
 *Execute:* \
-requires `visible1(arg1) & reachable1(arg1)`
+requires `visible1(arg1) & reachable1(arg1) & not-grabbed1(arg1)`
 * Internal: Change the held object on the input link
 * Ai2Thor: Pickup is a primitive action
 * Tabletop: Pickup is a primitive action 
@@ -74,7 +76,7 @@ Have the robot put down an object it is holding, at a particular place
 `grabbed1(arg1) -> no arg2` \
 `grabbed1(arg1) & confirmed1(dest) & surface1(dest) -> arg2=on2(dest)` \
 `grabbed1(arg1) & confirmed1(dest) & receptacle(dest) -> arg2=in2(dest)` \
-`grabbed1(arg1) & confirmed1(dest) & closeable-receptacle(dest) & open2(dest) -> arg2=in2(dest)` 
+`grabbed1(arg1) & confirmed1(dest) & receptacle(dest) & openable(dest) & open2(dest) -> arg2=in2(dest)` 
 
 *Goal:* \
 `no arg2 -> not-grabbed1(arg1)` \
@@ -697,13 +699,12 @@ When it gets an answer, it adds the answered object to the world if necessary, t
 
 # Mental
 
-<!-- ================================== REMEMBER ========================================= -->
-<a name="remember"></a>
+<!-- ================================== LABEL ========================================= -->
+<a name="label"></a>
 
-## Remember
-Remember one object as another, copies predicates from the second
-onto the first. E.g. *Remember the current location as the starting location* 
-will copy the starting predicate onto the current location. 
+## Label
+Label one object as another, merges the two referred objects together
+E.g. *Label the current location as the starting location* 
 
 ```
 ([o] ^name op_xxx 

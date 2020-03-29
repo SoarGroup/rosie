@@ -59,12 +59,20 @@ else:
 # Read the file
 info_filename = rosie_home + "/tools/map_info/" + map_info
 
-print("Parsing info file: " + info_filename)
+# First try locally
+print("Parsing info file: " + map_info)
 try:
-    world_info = parse_info_file(world_stem, info_filename)
+    world_info = parse_info_file(world_stem, map_info)
 except Exception as e:
-    print(e)
-    sys.exit(0)
+    world_info = None
+
+if world_info is None:
+    print("Parsing info file: " + info_filename)
+    try:
+        world_info = parse_info_file(world_stem, info_filename)
+    except Exception as e:
+        print(e)
+        sys.exit(0)
 print("Success!\n")
 
 

@@ -223,17 +223,13 @@ public class RosieAgentConfigurator {
     	
     	//	Figure out the path to the config file
     	String configFilename = args[0];
-    	String currentDirectory = System.getProperty("user.dir");
-    	if (configFilename.startsWith(currentDirectory))
-    		configFilename = configFilename.substring(currentDirectory.length());
-   		configFilename = System.getProperty("user.dir") + "/" + configFilename;
-    	
     	File configFile = new File(configFilename);
     	if(!configFile.exists()){
     		System.err.println("\nThe file " + configFilename + " does not exist");
     		System.exit(0);
     	}
-
+		// AM: Do this a 2nd time, because the code assumes the given file has the full absolute path 
+		configFile = new File(configFile.getAbsolutePath());
     	
         // Load the properties file
         Properties props = new Properties();
