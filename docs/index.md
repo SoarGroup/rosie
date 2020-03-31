@@ -109,6 +109,13 @@ the actions, goal, and concepts such as 'placed'.
 
 ## Task Learning
 
+**[Learning Hierarchical Symbolic Representations to Support Interactive Task Learning and Knowledge Transfer](papers/Kirk.Learning_Hierarchical_Symbolic_Reps.2019.pdf)** <br>
+2019 | *James Kirk, John E. Laird*
+
+This paper explains Rosie's approach to learning hierarchical task concepts used especially
+in learning game and puzzle tasks, and demonstrates the ability of the agent to transfer
+these concepts to new tasks and resolve ambiguities that arise.
+
 **[Interactively Learning a Blend of Goal and Procedural Tasks](papers/Mininger.Learning_Blended_Tasks.2018.pdf)** <br>
 2018 | *Aaron Mininger, John E. Laird*
 
