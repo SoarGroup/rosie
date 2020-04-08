@@ -12,21 +12,23 @@ from rosie.tools.mapmaker.parse_info_file import parse_info_file
 
 from rosie.tools.mapmaker.create_world import create_world
 from rosie.tools.mapmaker.create_waypoint_map import create_waypoint_map
-from rosie.tools.mapmaker.create_map_info import create_map_info
 from rosie.tools.mapmaker.create_internal_world import create_internal_world
 
 #################### CHECK ARGUMENTS ##############################
 
 if len(sys.argv) <= 1:
-    print("python3 -m rosie.tools.mapmaker [map_info_file]")
+    print("python3 -m rosie.tools.mapmaker [map_info_file] [opts..]")
     print("  map_file_file is a specification of the world to create in $ROSIE_HOME/tools/map_info")
     print("Will generate a set of world/map files for a rosie environment")
+    print("  -w|--world    Will generate the mobilesim world files")
+    print("  -m|--map      Will generate waypoint maps")
+    print("  -i|--internal Will generate an internal world for rosie")
+    print("  By default it will create all 3, unless 1+ are specified")
     print("")
     print("Example: python3 -m rosie.tools.mapmaker simple_office.info")
     print("  Input File : $ROSIE_HOME/tools/map_info/simple_office.info")
     print("")
     print("  Output File: $MOBILE_SIM_HOME/worlds/simple_office.world")
-    print("  Output File: $MOBILE_SIM_HOME/worlds/maps/simple_office.map")
     print("  Output File: $ROSIE_HOME/agent/manage-world-state/waypoint-maps/simple_office.soar")
     print("  Output File: $ROSIE_HOME/agent/manage-world-state/internal-worlds/simple_office.soar")
     sys.exit(0)
@@ -37,6 +39,11 @@ if len(sys.argv) <= 1:
 map_info = sys.argv[1]
 world_stem = map_info.split("/")[-1].split(".")[0]
 
+# Options:
+make_all      = len(sys.argv) == 2
+make_world    = make_all or "-w" in sys.argv or "--world" in sys.argv
+make_map      = make_all or "-m" in sys.argv or "--map" in sys.argv
+make_internal = make_all or "-i" in sys.argv or "--internal" in sys.argv
 
 #################### CHECK ENVIRONMENT VARIABLES #######################
 
@@ -80,7 +87,7 @@ print("Success!\n")
 ##################### SIMULATOR WORLD ########################
 # Writing the world file defining the simulated world 
 #   $MOBILE_SIM_HOME/worlds/map_name.world
-if mobile_sim_home is not None:
+if make_world and mobile_sim_home is not None:
     world_filename = mobile_sim_home + "/worlds/" + world_stem + ".world"
 
     print("Writing world file: " + world_filename)
@@ -90,32 +97,17 @@ if mobile_sim_home is not None:
     print("Success!\n")
 
 
-########################### MAP INFO FILE ###########################
-# Writing a file containing info about the map and its regions
-#   to be used when determining the current waypoint of the agent 
-#   given its position
-#   $MOBILE_SIM_HOME/worlds/maps/map_name.map
-if mobile_sim_home is not None:
-    map_filename = mobile_sim_home + "/worlds/maps/" + world_stem + ".map"
-
-    print("Writing map info file: " + map_filename)
-    with tempfile.TemporaryFile(mode='w+t') as tf:
-        create_map_info(world_info, tf)
-        save_temp_file(tf, map_filename)
-    print("Success!\n")
-
-
 ##################### ROSIE WAYPOINT MAP ########################
 # Writing the waypoint map used by rosie to navigate
 #   $ROSIE_HOME/agent/manage-world-state/waypoint-maps/map_name.soar
 wpmap_filename = rosie_home + "/agent/manage-world-state/waypoint-maps/" + world_stem + ".soar"
 
-print("Writing waypoint-map file: " + wpmap_filename)
-with tempfile.TemporaryFile(mode='w+t') as tf:
-    create_waypoint_map(world_info, tf)
-    save_temp_file(tf, wpmap_filename)
-print("Success!\n")
-
+if make_map:
+    print("Writing waypoint-map file: " + wpmap_filename)
+    with tempfile.TemporaryFile(mode='w+t') as tf:
+        create_waypoint_map(world_info, tf)
+        save_temp_file(tf, wpmap_filename)
+    print("Success!\n")
 
 
 ##################### ROSIE INTERNAL WORLD ########################
@@ -123,10 +115,11 @@ print("Success!\n")
 #   $ROSIE_HOME/agent/manage-world-state/internal-worlds/map_name.soar
 internal_filename = rosie_home + "/agent/manage-world-state/internal-worlds/" + world_stem + ".soar"
 
-print("Writing internal world soar file: " + internal_filename)
-with tempfile.TemporaryFile(mode='w+t') as tf:
-    create_internal_world(world_info, tf)
-    save_temp_file(tf, internal_filename)
-print("Success!\n")
+if make_internal:
+    print("Writing internal world soar file: " + internal_filename)
+    with tempfile.TemporaryFile(mode='w+t') as tf:
+        create_internal_world(world_info, tf)
+        save_temp_file(tf, internal_filename)
+    print("Success!\n")
 
 

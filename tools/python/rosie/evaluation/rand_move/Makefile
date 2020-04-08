@@ -10,7 +10,7 @@ agent/rosie.eval-rand-move.config: agent.config smem-config.txt extra-smem-adds.
 
 # rand-move.world: Creates the world file that the mobile simulator will use
 rand-move.world: world.info
-	python3 -m rosie.tools.mapmaker world.info
+	python3 -m rosie.tools.mapmaker world.info --world
 	mv $(MOBILE_SIM_HOME)/worlds/world.world rand-move.world
 
 # rand-move.script: Makes the script to be used during the evaluation 
