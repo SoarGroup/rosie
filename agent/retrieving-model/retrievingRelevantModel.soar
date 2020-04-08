@@ -1,0 +1,204 @@
+sp {elaborate*retrievingModel
+(state <s1> ^type state
+	^superstate <s>
+		^impasse no-change
+		^desired.1 <des>
+		^name task-state-no-change
+		-^not-finished-yet true)
+(<s> -^satisfied <x>)
+-->
+(<s1> ^flag retrieve-model)
+}
+
+sp {elaborate*createModel
+(state <s1> ^type state
+	        ^flag retrieve-model)
+-->
+(<s1> ^model <md>)
+(<md> ^preconditions false
+	  ^cause false)
+}
+
+sp {propose*querySmemForModel
+(state <s> ^type state
+		-^model.retrieved <x>
+		^model <md>
+		^flag retrieve-model
+		-^smem.command.query <qe>
+		^desired <des>
+		-^retrieved-model <r>)
+(<des> -^type <type>)
+# (<s> ^goal.task <task>)
+# (<task> ^finished false)
+-->
+(<s> ^operator <o> + = >)
+(<o> ^name query-smem-for-model
+	^type original
+	^desired <des>)
+}
+
+sp {propose*querySmemForModelPrecondition
+(state <s> ^type state
+		-^model.retrieved <x>
+		^model <md>
+		-^smem.command.query <smemCmd>
+		^flag retrieve-model
+		^desired <des>)
+(<des> ^type precondition)
+-->
+(<s> ^operator <o> + = >)
+(<o> ^name query-smem-for-model
+	^type precondition
+	^desired <des>)
+}
+
+sp {elaborate*selectPreconditionSmem
+(state <s> ^type state
+		^operator <o1> +
+		^operator <o2> +)
+(<o1> ^name query-smem-for-model
+	 ^type precondition)
+(<o2> ^name query-smem-for-model
+	^type original)
+-->
+(<s> ^operator <o1> > <o2>)
+
+}
+
+sp {elaborate*selectQuerySmem
+(state <s> ^type state
+		^operator <o1> +
+		^operator <o2> +)
+(<o1> ^name query-smem-for-model)
+(<o2> -^name query-smem-for-model)
+-->
+(<s> ^operator <o1> > <o2>)
+
+}
+
+#queries for the effect (one object with a predicate)
+sp {apply*querySmemForModelAttribute
+(state <s> ^type state
+		^operator <o>
+		^smem.command <smemCmd>
+		^flag retrieve-model
+		^desired <des>
+		^model <md>)
+(<des> ^1 <goal>)
+(<goal> ^1.root-category <cat>
+		^property-handle <predName>
+		^handle <predValue>)
+(<o> ^name query-smem-for-model
+	^type <type>
+	^desired <des>)
+-->
+(<md> ^type <type>)
+(<smemCmd> ^query <effect>
+			^depth 10)
+(<effect> ^pred-name <predName>
+	      ^pred-value <predValue>
+	      ^participant-category <cat>)	
+}
+
+#queries for the effect (two objects with a relation)
+sp {apply*querySmemForModelRelation
+(state <s> ^type state
+		^operator <o>
+		^smem.command <smemCmd>
+		^flag retrieve-model
+		^desired <des>
+		^model <md>)
+(<des> ^type <type>
+	   ^1 <ob1>
+	   ^2 <ob2>
+	   ^handle <predName>
+	   ^type relation)
+(<ob1> ^category <rootcat1>)
+(<ob2> ^category <rootcat2>)
+(<o> ^name query-smem-for-model
+	^type <type>
+	^desired <des>)
+-->
+(<md> ^type <type>)
+(<smemCmd> ^query <effect>
+			^depth 10)
+(<effect> ^participant <par1>
+		  ^participant <par2>
+		   ^pred-name <predName>
+		   ^pred-value <par1>
+		   ^pred-value <par2>
+		   ^participant-category <rootcat1>
+		   ^participant-category <rootcat2>)
+}
+
+#propose move result
+sp {propose*operator*move_results
+(state <s> ^type state
+			^smem.result.success <succ>
+			^smem.result.retrieved.model-reference <model>
+			^flag retrieve-model)
+-->
+(<s> ^operator <o> + > =)
+(<o> ^name move_results
+	^model <model>)
+}
+
+sp {preference*move_results
+( state <s> ^type state
+	^operator <o1> +
+	^operator <o2> +)
+(<o1> ^name move_results)
+(<o2> ^name smem-query)
+-->
+(<s> ^operator <o1> > <o2>)
+}
+
+#propose failure
+sp {propose*operator*model_failure
+(state <s> ^type state
+			^smem.result.failure <succ>
+			^flag retrieve-model
+			-^retrieved-model failure)
+-->
+(<s> ^operator <o> + >)
+(<o> ^name model_failure)}
+
+sp {preference*model_failure
+( state <s> ^type state
+	^operator <o1> +
+	^operator <o2> +)
+(<o1> ^name model_failure)
+(<o2> -^name model_failure)
+-->
+(<s> ^operator <o1> > <o2>)
+}
+
+sp {apply*operator*model_failure
+(state <s> ^type state
+			^operator <o>
+			^smem.command <cmd>
+			^model <md>)
+(<cmd> ^query <elem>)
+(<o> ^name model_failure)
+-->
+(<s> ^retrieved-model failure
+	^model <md> -)
+(<cmd> ^query <elem> -)
+}
+
+sp {apply*operator*move_results
+(state <s> ^type state
+			^operator <o>
+			^smem.command <cmd>
+			^smem.result.retrieved.model-reference <model>
+			^flag retrieve-model
+			^model <md>)
+(<o> ^name move_results)
+(<cmd> ^query <elem>)
+(<model> ^model-name <name>)
+-->
+(write | Retrieved the model named | <name> |. |)
+(<md> ^retrieved <model>)
+(<cmd> ^query <elem> -)
+(<s> ^retrieved-model success)
+}
