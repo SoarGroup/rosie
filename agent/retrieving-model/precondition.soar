@@ -1,0 +1,141 @@
+# #match pre-condition of an object some pred another object
+sp {propose*match*precondition
+(state <s1> ^type state
+		^model <md>
+		^world <world>
+		^flag retrieve-model)
+(<md> ^preconditions false)
+(<world> ^objects <objects>)
+(<objects> ^object.grounded <partic1>
+		   ^object.grounded <partic2>)
+#matching the precondition in the model
+(<md> ^retrieved.preconditions.precondition <prcon>)
+(<prcon> ^type relation
+	     ^predicates.predicate <pred1>)
+(<pred1> ^handle <name>
+		^instance <inst1>)
+(<inst1> ^1.grounded <partic1>
+		^2.grounded <partic2>)
+#matching values in the world
+(<world> ^predicates.predicate <pred2>)
+(<pred2> ^handle <name>
+		^instance <inst2>)
+(<inst2> ^1.grounded <partic1>
+		^2.grounded <partic2>)
+-->
+(<s1> ^operator <o> + = >)
+(<o> ^name match_precondition
+	  ^1 <partic1>
+	  ^2 <partic2>)
+}
+
+sp {apply*match*precondition 
+(state <s1> ^type state
+		^model <md>
+		^operator <o>
+		^flag retrieve-model)
+(<o> ^name match_precondition
+	  ^1 <partic1>
+	  ^2 <partic2>)
+-->
+(<md> ^preconditions true)
+(<md> ^preconditions false -)
+}
+
+# #when precondition is matched remove goal of matching precondition
+# sp {apply*match*precondition*remove*goal 
+# (state <s1> ^type state
+# 		^model <md>
+# 		^operator <o>
+# 		^goal <gl>
+# 		^flag retrieve-model)
+# (<gl> ^type precondition)
+# (<o> ^name match_precondition
+# 	  ^1 <partic1>
+# 	  ^2 <partic2>)
+# -->
+# (<s1> ^goal <gl> -)
+# }
+
+#if there are no preconditions
+sp {propose*match*no-precondition 
+(state <s1> ^type state
+		^model <md>
+		^world <world>
+		^flag retrieve-model)
+(<md> ^retrieved.preconditions.none none
+      ^preconditions false)
+-->
+(<s1> ^operator <o> + = >)
+(<o> ^name match_precondition
+	^none <n>)
+}
+
+sp {apply*match*no-precondition 
+(state <s1> ^type state
+		^model <md>
+		^world <world>
+		^operator <o>
+		^flag retrieve-model)
+(<md> ^retrieved.preconditions.none none)
+(<o> ^name match_precondition
+	^none <n>)
+-->
+(<md> ^preconditions true)
+(<md> ^preconditions false -)
+}
+
+#precondition is not met
+sp {propose*precondition*not*met*createGoal
+(state <s1> ^type state
+	      ^superstate <s2>
+ 		-^desired.type precondition
+ 		^flag retrieve-model
+ 		-^model.retrieved <ret>)
+(<s2> ^superstate <s>)
+(<s> ^model <md>)
+(<md> -^precondition flag
+	^preconditions false)
+-->
+(<s1> ^operator <o> + = >)
+(<o> ^name create_precondition_goal)
+}
+
+sp {apply*precondition*not*met*fillinGoal
+(state <s1> ^type state
+	        ^operator <o>
+	        ^flag retrieve-model
+	        ^superstate <s2>)
+(<s2> ^superstate <s>)
+(<o> ^name create_precondition_goal)
+(<s> ^model <md>
+	^world <w>)
+(<md> ^retrieved.preconditions.precondition <preCon>)
+(<preCon> ^object1 <ob1>
+	      ^object2 <ob2>
+	      ^predicates.predicate.handle <predname>
+	      ^type <typeName>)
+-->
+(<s1> ^desired <gl>
+	  ^world <w>)
+(<gl> ^type precondition
+	  ^1 <ob1>
+	  ^2 <ob2>
+	  ^handle <predname>
+	  ^type <typeName>)
+(<md> ^precondition flag)
+}
+
+
+sp {preference*match*over*goal
+(state <s1> ^type state
+	        ^operator <o1> +
+	        ^operator <o2> +
+	        ^flag retrieve-model)
+(<o1> ^name create_precondition_goal)
+(<o2> ^name match_precondition)
+-->
+(<s1> ^operator <o2> > <o1>)
+}
+
+
