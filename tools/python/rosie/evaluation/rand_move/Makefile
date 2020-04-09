@@ -2,7 +2,7 @@ all: agent/rosie.eval-rand-move.config
 
 run_evaluation: agent/rosie.eval-rand-move.config
 	java soargroup.mobilesim.MobileGUI -w rand-move.world &
-	python -m rosie.evaluation.rand_move
+	python3 -m rosie.evaluation.rand_move
 
 # agent/rosie.eval-rand-move.config: Configures the rosie soar agent that will be sourced to run
 agent/rosie.eval-rand-move.config: agent.config smem-config.txt extra-smem-adds.soar extra-soar-rules.soar rand-move.world rand-move.script
