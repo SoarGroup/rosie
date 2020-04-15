@@ -1,0 +1,143 @@
+### Internally modeling the ask task ###
+
+#sp {problem-space*action*internal*elaborate*op_ask1*dont-learn-action-model
+#   (state <s> ^problem-space.execution-type internal
+#              ^operator <o> +)
+#   (<o> ^name op_ask1)
+#-->
+#   (<o> ^dont-learn-action-model true)
+#}
+
+
+#### learn-action-model
+# For ask, instead of having a pre-built model, we learn one
+# where we take the answer that was given when teacing, 
+# and create an action model that creates that answer on the world
+# This is learned once per subtask, so different asks will result in different models
+
+sp {op_ask1*learn-action-model*reject*init-current-goal
+   (state <s> ^name op_ask1
+              ^name learn-task-action-model
+              ^operator <o> +)
+   (<o> ^name init-current-goal)
+-->
+   (<s> ^operator <o> -)
+}
+
+#### retrieve-previous-answer
+# Retrieve from epmem an episode when the agent recieved an answer
+#   to this ask question
+
+sp {op_ask1*learn-action-model*propose*retrieve-previous-answer
+   (state <s> ^name op_ask1
+              ^name learn-task-action-model
+             -^retrieved-episode)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name retrieve-previous-answer)
+}
+
+sp {op_ask1*learn-action-model*apply*retrieve-previous-answer
+   (state <s> ^name op_ask1
+              ^name learn-task-action-model
+              ^operator.name retrieve-previous-answer
+              ^epmem.command <cmd>
+              ^superstate.task-operator.task-handle <par-h>
+              ^superstate.operator.subtask-handle <sub-h>)
+-->
+   (<cmd> ^query <q>)
+   (<q> ^task-stack.bottom <bot>
+        ^world.objects.object <obj>)
+   (<bot> ^task-operator <ask-op>
+          ^prev.task-operator.task-handle <par-h>)
+   (<ask-op> ^task-handle ask1
+             ^subtask-handle <sub-h>)
+   (<obj> ^predicates.modifier1 answered1)
+}
+
+# Success :) Copy the episode to the state
+sp {op_ask1*learn-action-model*apply*retrieve-previous-answer*success
+   (state <s> ^name op_ask1
+              ^name learn-task-action-model
+              ^operator.name retrieve-previous-answer
+              ^epmem <epmem>)
+   (<epmem> ^result <res>
+            ^result.retrieved <episode>
+            ^command <cmd>)
+   (<res> ^success <q>
+          ^retrieved <episode>
+          ^memory-id <ep-id>
+          ^normalized-match-score 1.0)
+   (<cmd> ^query <q>)
+-->
+   (<s> ^retrieved-episode <episode>)
+   (<cmd> ^query <q> -)
+}
+
+# Failure :(  There is no matching episode (which shouldn't happen?)
+sp {op_ask1*learn-action-model*apply*retrieve-previous-answer*failure
+   (state <s> ^name op_ask1
+              ^name learn-task-action-model
+              ^operator.name retrieve-previous-answer
+              ^epmem <epmem>)
+   (<epmem> ^result.normalized-match-score < 1.0
+            ^command <cmd>)
+   (<cmd> ^query <q>)
+-->
+   (<s> ^retrieved-episode none)
+   (<cmd> ^query <q> -)
+}
+
+# The answered object that was retrieved
+sp {op_ask1*learn-action-model*elaborate*retrieved-object*from*retrieved-episode
+   (state <s> ^name op_ask1
+              ^name learn-task-action-model
+              ^retrieved-episode.world.objects.object <obj>)
+   (<obj> ^predicates.modifier1 answered1)
+-->
+   (<s> ^retrieved-object <obj>)
+}
+
+# Copy the retrieved object to the superstate as the action model
+sp {op_ask1*learn-action-model*propose*learn-action-model-rule
+   (state <s> ^name op_ask1
+              ^name learn-task-action-model
+              ^retrieved-object <obj>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name learn-action-model-rule
+        ^object <obj>)
+}
+
+sp {__TASK_MODEL__problem-space*action*internal*apply*op_ask1*add*answered*object
+   (state <s> ^name op_ask1
+              ^name learn-task-action-model
+              ^operator <o>
+              ^superstate.world.objects <objs>)
+   (<o> ^name learn-action-model-rule
+        ^object <obj>)
+-->
+   (<objs> ^object <obj>)
+}
+
+## Create an 'answer' object with a sentence on it
+#sp {problem-space*action*internal*apply*op_ask1*create*answer
+#   (state <s> ^problem-space.name action
+#              ^problem-space.execution-type internal
+#              ^operator <o>
+#              ^world.objects <objs>)
+#   (<o> ^name op_ask1
+#        ^task-handle ask1)
+#-->
+#   (<objs> ^object <ans>)
+#   (<ans> ^handle (make-constant-symbol |obj_|)
+#          ^item-type object
+#          ^root-category soda1
+#          ^predicates <preds>)
+#   (<preds> ^category soda1 drink1 entity1
+#            ^modifier1 answered1
+#            ^affordance1 grabbable1
+#            ^is-visible1 visible1 ^is-reachable1 reachable1 
+#            ^is-confirmed1 confirmed1 ^is-grabbed1 grabbed1)
+#}
+#
