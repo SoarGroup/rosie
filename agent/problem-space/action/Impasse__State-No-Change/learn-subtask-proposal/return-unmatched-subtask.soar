@@ -1,5 +1,47 @@
+### passes-first-check
+# If the task has the 'first' modifier, require that no other subtasks have been performed
+sp {learn-subtask-proposal*elaborate*passes-first-check
+   (state <s> ^name learn-subtask-proposal
+              ^subtask-operator.modifier.handle first1
+              ^task-operator <task-op>)
+   (<task-op> -^performed-subtask <any>)
+-->
+   (<s> ^passes-first-check true)
+}
+
+sp {learn-subtask-proposal*elaborate*passes-first-check*not*first
+   (state <s> ^name learn-subtask-proposal
+             -^subtask-operator.modifier.handle first1)
+-->
+   (<s> ^passes-first-check true)
+}
+
+### passes-once-check
+# If the task has the 'perform once' modifier, require that it hasn't been performed before
+
+sp {learn-subtask-proposal*elaborate*passes-once-check
+   (state <s> ^name learn-subtask-proposal
+              ^subtask-info.procedural.perform once
+              ^subtask-handle <sub-h>
+              ^task-operator <task-op>)
+   (<task-op> -^performed-subtask <sub-h>)
+-->
+   (<s> ^passes-once-check true)
+}
+
+sp {learn-subtask-proposal*elaborate*passes-once-check*not*once
+   (state <s> ^name learn-subtask-proposal
+             -^subtask-info.procedural.perform once)
+-->
+   (<s> ^passes-once-check true)
+}
+
+### propose return-unmatched-subtask if both checks pass
+
 sp {learn-subtask-proposal*propose*return-unmatched-subtask
    (state <s> ^name learn-subtask-proposal
+              ^passes-first-check true
+              ^passes-once-check true
               ^subtask-operator <op>)
 -->
    (<s> ^operator <o> + >)
@@ -17,15 +59,6 @@ sp {learn-subtask-proposal*reject*return-unmatched-subtask*if*not*unmatched
    (<s> ^operator <o> -)
 }
 
-sp {learn-subtask-proposal*reject*return-unmatched-subtask*require-first
-   (state <s> ^name learn-subtask-proposal
-              ^operator <o> +
-              ^subtask-operator.modifier.handle first1)
-   (<o> ^name return-unmatched-subtask)
--->
-   (<o> ^require-first true)
-}
-
 # CREATE RESULT
 sp {__PROP__SUBT__*problem-space*action*propose*subtask*2
    (state <s> ^name learn-subtask-proposal
@@ -33,21 +66,6 @@ sp {__PROP__SUBT__*problem-space*action*propose*subtask*2
               ^superstate.superstate <ss>)
    (<o> ^name return-unmatched-subtask
         ^subtask-operator <op>)
-   (<op> -^modifier.handle first1)
--->
-   (<ss> ^operator <op> +)
-}
-
-# If the subtask has a 'first' modifier, make sure there are no performed-subtask flags
-sp {__PROP__SUBT__*problem-space*action*propose*subtask*2*first
-   (state <s> ^name learn-subtask-proposal
-              ^operator <o>
-              ^superstate.superstate <ss>)
-   (<o> ^name return-unmatched-subtask
-        ^subtask-operator <op>)
-   (<op> ^modifier.handle first1)
-   (<ss> ^task-operator <task-op>)
-   (<task-op> -^performed-subtask)
 -->
    (<ss> ^operator <op> +)
 }
