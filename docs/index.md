@@ -16,6 +16,7 @@ Rosie is a project at the University of Michigan Soar Lab, led by Professor John
 
 ### Contributors
 
+* Mazin Assanie
 * James Kirk
 * [John E. Laird](https://laird.engin.umich.edu/)
 * Peter Lindes
