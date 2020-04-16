@@ -2,13 +2,29 @@
 
 sp {op_turn1*propose*send-turn-command
    (state <s> ^name op_turn1
-              ^direction-id <dir>)
+              ^direction-id <dir>
+             -^degrees)
+   (<dir> ^yaw <rad> ^side <side>)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name send-turn-command
         ^item-type command-operator
         ^command-name turn-command
-        ^direction <dir>)
+        ^radians <rad>
+        ^direction <side>)
+}
+
+sp {op_turn1*propose*send-turn-command*specified*degrees
+   (state <s> ^name op_turn1
+              ^direction-id.side <side>
+              ^degrees <deg>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name send-turn-command
+        ^item-type command-operator
+        ^command-name turn-command
+        ^radians (* (/ <deg> 180.0) 3.14159 <side>)
+        ^direction <side>)
 }
 
 ### internal ###
@@ -43,17 +59,16 @@ sp {op_turn1*external*apply*send-turn-command*magicbot
               ^top-state.io.output-link <out>)
    (<o> ^name send-turn-command
         ^command-name <cmd-name>
+        ^radians <rad>
         ^direction <dir>)
-   (<dir> ^side <side>
-          ^yaw <yaw>)
 -->
    (<out> ^do-control-law <law>)
    (<law> ^item-type output-command
           ^name turn
           ^parameters <params>
           ^termination-condition.name stabilized)
-   (<params> ^direction <side>
-             ^yaw <yaw>)
+   (<params> ^direction <dir>
+             ^yaw <rad>)
    (<seg> ^<cmd-name> <law>)
 }
 
@@ -90,11 +105,11 @@ sp {op_turn1*external*apply*send-turn-command*cozmo
               ^top-state.io.output-link <out>)
    (<o> ^name send-turn-command
         ^command-name <cmd-name>
-        ^direction.yaw <yaw>)
+        ^radians <rad>)
 -->
    (<out> ^turn-in-place <tip>)
    (<tip> ^item-type output-command
-          ^angle (* <yaw> 57.3)
+          ^angle (* <rad> 57.3)
           ^speed 45)
    (<seg> ^<cmd-name> <tip>)
 }

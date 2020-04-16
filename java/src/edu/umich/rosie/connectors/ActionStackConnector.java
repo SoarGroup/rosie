@@ -109,6 +109,9 @@ public class ActionStackConnector extends AgentConnector {
 			return SoarUtil.getChildString(wp_id, "handle");
 		} else if (argType.equals("concept")) {
 			return SoarUtil.getChildString(argId, "handle");
+		} else if (argType.equals("measure")){
+			return SoarUtil.getChildString(argId, "number") + " " + 
+					SoarUtil.getChildString(argId, "unit");
 		}
 		return "?";
 	}

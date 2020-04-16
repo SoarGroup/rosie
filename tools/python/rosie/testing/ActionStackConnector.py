@@ -35,6 +35,8 @@ def task_arg_to_string(arg_id):
         return wp_id.GetChildString("handle")
     elif arg_type == "concept":
         return arg_id.GetChildString("handle")
+    elif arg_type == "measure":
+        return arg_id.GetChildString("number") + " " + arg_id.GetChildString("unit")
     return "?"
 
 def obj_arg_to_string(obj_id):
