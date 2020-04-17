@@ -32,7 +32,7 @@ for i in range(NUM_MOVES):
 
     sentences.append("Move the {} {} the {}.".format(obj, prep, loc))
     if i == 0:
-        sentences.append("The goal is that the {} is {} the {}.".format(obj, prep[0:2], loc))
+        sentences.append("The only goal is that the {} is {} the {}.".format(obj, prep[0:2], loc))
     obj_positions[obj] = loc
 
     if loc in with_doors:

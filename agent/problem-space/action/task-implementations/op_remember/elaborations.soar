@@ -2,7 +2,7 @@
 sp {op_remember1*elaborate*memory-type*ltm
    (state <s> ^name op_remember1
               ^task-operator <ssop>)
-   (<ssop> ^modifier1.handle permanent1)
+   (<ssop> ^modifier.handle permanent1)
 -->
    (<s> ^memory-type ltm)
 }
@@ -10,8 +10,44 @@ sp {op_remember1*elaborate*memory-type*ltm
 sp {op_remember1*elaborate*memory-type*wm
    (state <s> ^name op_remember1
               ^task-operator <ssop>)
-   (<ssop> -^modifier1.handle permanent1)
+   (<ssop> -^modifier.handle permanent1)
 -->
    (<s> ^memory-type wm)
 }
 
+# Turn "Remember the current location as the office of Mary"
+# Into an edge in the smem graph, where
+# (arg3) ----(arg2)---> (arg1), e.g., 
+# (Mary) ---(office)--> (cur-loc)
+sp {op_remember1*memory-type*ltm*elaborate*objects
+   (state <s> ^name op_remember1
+              ^memory-type ltm
+              ^task-operator <task-op>)
+   (<task-op> ^arg1.id <tail>
+              ^arg2.id <edge>
+              ^arg3.id <head>)
+-->
+   (<s> ^head-object <head>
+        ^edge-object <edge>
+        ^tail-object <tail>)
+}
+
+sp {op_remember1*elaborate*query-object-workspace
+   (state <s> ^name op_remember1
+              ^memory-type ltm
+              ^problem-space.execution-type external
+              ^desired.handle remember1goal1
+              ^{ <type> << head-object tail-object >> } <obj>)
+-->
+   (<s> ^query-object-workspace <ws>)
+   (<ws> ^type <type>
+         ^source <obj>)
+}
+
+sp {op_remember1*elaborate*query-object-workspace*ltm-object
+   (state <s> ^name op_remember1
+              ^query-object-workspace <ws>)
+   (<ws> ^{ << match-handle-result match-predicates-result retrieved-category >> } { <obj> <> failure })
+-->
+   (<ws> ^ltm-object <obj>)
+}

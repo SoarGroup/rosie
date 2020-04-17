@@ -10,6 +10,7 @@ def task_to_string(task_id):
     task_handle = task_id.GetChildString("task-handle")
     arg1_id = task_id.GetChildId("arg1")
     arg2_id = task_id.GetChildId("arg2")
+    arg3_id = task_id.GetChildId("arg3")
 
     task = task_handle + "("
     if arg1_id != None:
@@ -18,6 +19,8 @@ def task_to_string(task_id):
         if arg1_id != None:
             task += ", "
         task += task_arg_to_string(arg2_id)
+    if arg3_id != None:
+        task += ", " + task_arg_to_string(arg3_id)
     task += ")"
 
     return task
@@ -44,9 +47,11 @@ def obj_arg_to_string(obj_id):
     words = []
     words.append(preds_id.GetChildString('size'))
     words.append(preds_id.GetChildString('color'))
-    words.append(obj_id.GetChildString('root-category'))
+    words.append(preds_id.GetChildString('modifier1'))
+    words.append(preds_id.GetChildString('shape'))
     words.append(preds_id.GetChildString('name'))
-    obj_desc = ' '.join(w for w in words if w is not None)
+    words.append(obj_id.GetChildString('root-category'))
+    obj_desc = ' '.join(w for w in words if w is not None and len(w) > 1)
 
     return obj_desc.translate(str.maketrans('', '', digits))
 

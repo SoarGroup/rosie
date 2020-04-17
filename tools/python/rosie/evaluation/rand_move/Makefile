@@ -1,5 +1,9 @@
 all: agent/rosie.eval-rand-move.config
 
+script: rand-move.script
+
+world: rand-move.world
+
 run_evaluation: agent/rosie.eval-rand-move.config
 	java soargroup.mobilesim.MobileGUI -w rand-move.world &
 	python3 -m rosie.evaluation.rand_move
@@ -14,7 +18,7 @@ rand-move.world: world.info
 	mv $(MOBILE_SIM_HOME)/worlds/world.world rand-move.world
 
 # rand-move.script: Makes the script to be used during the evaluation 
-rand-move.script: 
+rand-move.script: generate_script.py
 	python3 generate_script.py
 
 clean:

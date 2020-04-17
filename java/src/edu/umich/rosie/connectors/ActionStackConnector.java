@@ -80,6 +80,7 @@ public class ActionStackConnector extends AgentConnector {
 		String taskHandle = SoarUtil.getChildString(taskId, "task-handle");
 		Identifier arg1id = SoarUtil.getChildId(taskId, "arg1");
 		Identifier arg2id = SoarUtil.getChildId(taskId, "arg2");
+		Identifier arg3id = SoarUtil.getChildId(taskId, "arg3");
 
 		String task = taskHandle + "(";
 		if (arg1id != null){
@@ -90,6 +91,9 @@ public class ActionStackConnector extends AgentConnector {
 				task += ", ";
 			}
 			task += taskArgToString(arg2id);
+		}
+		if (arg3id != null){
+			task += ", " + taskArgToString(arg3id);
 		}
 		task += ")";
 
@@ -120,11 +124,13 @@ public class ActionStackConnector extends AgentConnector {
 		Identifier preds_id = SoarUtil.getChildId(objId, "predicates");
 
 
-		String[] words = new String[4];
+		String[] words = new String[6];
 		words[0] = SoarUtil.getChildString(preds_id, "size");
 		words[1] = SoarUtil.getChildString(preds_id, "color");
-		words[2] = SoarUtil.getChildString(objId, "root-category");
-		words[3] = SoarUtil.getChildString(preds_id, "name");
+		words[2] = SoarUtil.getChildString(preds_id, "modifier1");
+		words[3] = SoarUtil.getChildString(preds_id, "shape");
+		words[4] = SoarUtil.getChildString(preds_id, "name");
+		words[5] = SoarUtil.getChildString(objId, "root-category");
 
 		String s = "";
 		for(String w : words){
