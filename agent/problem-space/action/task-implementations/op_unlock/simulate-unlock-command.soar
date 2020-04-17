@@ -1,0 +1,58 @@
+### For the internal environment, simulate the unlock command on the top-state world ###
+
+sp {op_unlock1*propose*simulate-unlock-command
+   (state <s> ^name op_unlock1
+              ^problem-space.execution-type external
+              ^agent-params.domain internal
+              ^current-task-segment <seg>)
+   (<seg> ^lock-command <cmd>)
+   (<cmd> -^status complete)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name simulate-unlock-command
+        ^item-type command-operator
+        ^command <cmd>)
+}
+
+sp {op_unlock1*apply*simulate-unlock-command*mark*command*complete
+   (state <s> ^name op_unlock1
+              ^operator <o>)
+   (<o> ^name simulate-unlock-command
+        ^command <cmd>)
+-->
+   (<cmd> ^status complete)
+}
+
+
+### simulate-perception = false, change on the object directly ###
+
+sp {op_unlock1*apply*simulate-unlock-command*change*to*not-locked1
+   (state <s> ^name op_unlock1
+              ^operator <o>
+             -^agent-params.simulate-perception true)
+   (<o> ^name simulate-unlock-command
+        ^command.object.predicates <preds>)
+   (<preds> ^<prop> locked1)
+-->
+   (<preds> ^<prop> locked1 -
+            ^<prop> not-locked1)
+}
+
+
+### simulate-perception = true, change on the perception-monitor ###
+
+sp {op_unlock1*apply*simulate-unlock-command*simulate-perception*change*to*not-locked1
+   (state <s> ^name op_unlock1
+              ^operator <o>
+              ^agent-params.simulate-perception true
+              ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
+   (<o> ^name simulate-unlock-command
+        ^command.object <obj>)
+   (<obj-info> ^input-link-obj.property <il-prop>
+               ^world-obj <obj>)
+   (<il-prop> ^predicate-handle locked1)
+-->
+   (<il-prop> ^predicate-handle locked1 -
+              ^predicate-handle not-locked1)
+}
+

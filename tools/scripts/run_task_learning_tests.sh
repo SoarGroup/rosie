@@ -1,7 +1,7 @@
 #!/bin/bash
 
 TEST_LANG="python"
-FULL_TEST_LIST=(prim-actions kitchen mobile)
+FULL_TEST_LIST=(prim-actions kitchen mobile procedural)
 
 TESTS_TO_RUN=()
 

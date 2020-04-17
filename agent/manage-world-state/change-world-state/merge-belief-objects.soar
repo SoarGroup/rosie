@@ -2,25 +2,92 @@
 # Tell percetion to merge the given world objects 
 # Tell belief to merge the given objects via a modify-scene command on the output-link
 
-sp {anystate*change-world-state*merge-belief-objects*elaborate*delete-object*merging-object
-   (state <s> ^operator <o> +)
+sp {anystate*apply*change-world-state*merge-belief-objects*mark*merged-into
+   (state <s> ^operator <o>)
    (<o> ^name change-world-state
         ^merge-belief-objects <merge>)
-   (<merge> ^merging-object-info <obj-info>)
+   (<merge> ^merging-object-info.world-obj <obj>
+            ^core-object-info.world-obj <core>)
 -->
-   (<o> ^delete-object <obj-info>)
+   (<obj> ^merged-into <core>)
 }
 
+
+####### Merge objects in the perception-monitor and their object-info's
+
+# copy perception-id if it doesn't exist on the core
+sp {anystate*apply*change-world-state*merge-belief-objects*copy*perception-id
+   (state <s> ^operator <o>)
+   (<o> ^name change-world-state
+        ^merge-belief-objects <merge>)
+   (<merge> ^merging-object-info.perception-id <perc-id>
+            ^core-object-info <core-info>)
+   (<core-info> -^perception-id)
+-->
+   (<core-info> ^perception-id <perc-id>)
+}
+
+# copy belief-id if it doesn't exist on the core
+sp {anystate*apply*change-world-state*merge-belief-objects*copy*belief-id
+   (state <s> ^operator <o>)
+   (<o> ^name change-world-state
+        ^merge-belief-objects <merge>)
+   (<merge> ^merging-object-info.belief-id <bel-id>
+            ^core-object-info <core-info>)
+   (<core-info> -^belief-id)
+-->
+   (<core-info> ^belief-id <bel-id>)
+}
+
+# remove the object-info of the merging object from the perception-monitor
+sp {anystate*apply*change-world-state*merge-belief-objects*remove*object-info
+   (state <s> ^operator <o>
+              ^top-state.perception-monitor.object-monitor <obj-mon>)
+   (<o> ^name change-world-state
+        ^merge-belief-objects.merging-object-info <obj-info>)
+   (<obj-mon> ^object-info <obj-info>)
+-->
+   (<obj-mon> ^object-info <obj-info> -)
+}
+
+
+####### Merge objects references in the world
+
+# Remove the merged object from the world.objects
+sp {anystate*apply*change-world-state*merge-belief-objects*remove*object*world
+   (state <s> ^operator <o>
+              ^top-state.perception-monitor.object-monitor <obj-mon>
+              ^top-state.world.objects <objs>)
+   (<o> ^name change-world-state
+        ^merge-belief-objects.merging-object-info.world-obj <obj>)
+   (<objs> ^object <obj>)
+-->
+   (<objs> ^object <obj> -)
+}
+
+# Copy any important level 1 attributes from the merged object to the core
+sp {anystate*apply*change-world-state*merge-belief-objects*copy*obj*attributes
+   (state <s> ^operator <o>)
+   (<o> ^name change-world-state
+        ^merge-belief-objects <merge>)
+   (<merge> ^merging-object-info.world-obj.{ <att> << waypoint >> } <val>
+            ^core-object-info.world-obj <core-obj>)
+-->
+   (<core-obj> ^<att> <val>)
+}
+
+# Copy any predicates from the merged object to the core object
 sp {anystate*apply*change-world-state*merge-belief-objects*copy*obj*predicates
    (state <s> ^operator <o>)
    (<o> ^name change-world-state
         ^merge-belief-objects <merge>)
-   (<merge> ^merging-object-info.world-obj.predicates.<prop> <pred>
+   (<merge> ^merging-object-info.world-obj.predicates.{ <prop> <> is-visible1 <> is-confirmed1 <> is-reachable1 <> is-grabbed1 } <pred>
             ^core-object-info.world-obj.predicates <core-preds>)
 -->
    (<core-preds> ^<prop> <pred>)
 }
 
+# Replace merged object references with the core object references in the world predicates
 sp {anystate*apply*change-world-state*merge-belief-objects*replace*predicate*info
    (state <s> ^operator <o>
               ^world.predicates.predicate <pred>)
@@ -31,18 +98,84 @@ sp {anystate*apply*change-world-state*merge-belief-objects*replace*predicate*inf
    (<pred> ^instance <i>)
    (<i> ^<num> <obj>)
 -->
-   (<pred> ^instance <i>)
    (<i> ^<num> <obj> -
         ^<num> <core>)
 }
 
-sp {anystate*apply*change-world-state*merge-belief-objects*mark*merged-into
-   (state <s> ^operator <o>)
+# Replace merged object references with the core object references in the robot's current-location
+sp {anystate*apply*change-world-state*merge-belief-objects*replace*robot*current-location
+   (state <s> ^operator <o>
+              ^world.robot <robot>)
    (<o> ^name change-world-state
         ^merge-belief-objects <merge>)
    (<merge> ^merging-object-info.world-obj <obj>
             ^core-object-info.world-obj <core>)
+   (<robot> ^current-location <obj>)
 -->
-   (<obj> ^merged-into <core>)
+   (<robot> ^current-location <obj> -
+            ^current-location <core>)
+}
+
+
+####### Merge object references in the task-stack
+
+# change references in the task-object sets
+sp {anystate*apply*change-world-state*merge-belief-objects*change*task-objects
+   (state <s> ^operator <o>
+              ^top-state.task-stack.segments.segment.task-objects <task-objs>)
+   (<o> ^name change-world-state
+        ^merge-belief-objects <merge>)
+   (<merge> ^merging-object-info.world-obj <obj>
+            ^core-object-info.world-obj <core>)
+   (<task-objs> ^{ <att> <> object } <obj>)
+-->
+   (<task-objs> ^<att> <obj> -
+                ^<att> <core>)
+}
+
+# Change references on task-operators
+sp {anystate*apply*change-world-state*merge-belief-objects*change*task-operator*object*level1
+   (state <s> ^operator <o>
+              ^top-state.task-stack.segments.segment.task-operator <task-op>)
+   (<o> ^name change-world-state
+        ^merge-belief-objects <merge>)
+   (<merge> ^merging-object-info.world-obj <obj>
+            ^core-object-info.world-obj <core>)
+   (<task-op> -^name op_remember1
+               ^<arg-name> <arg>)
+   (<arg> ^<att> <obj>)
+-->
+   (<arg> ^<att> <obj> -
+          ^<att> <core>)
+}
+
+sp {anystate*apply*change-world-state*merge-belief-objects*change*task-operator*object*level2
+   (state <s> ^operator <o>
+              ^top-state.task-stack.segments.segment.task-operator <task-op>)
+   (<o> ^name change-world-state
+        ^merge-belief-objects <merge>)
+   (<merge> ^merging-object-info.world-obj <obj>
+            ^core-object-info.world-obj <core>)
+   (<task-op> -^name op_remember1
+               ^<arg-name>.<att1> <id>)
+   (<id> ^<att2> <obj>)
+-->
+   (<id> ^<att2> <obj> -
+         ^<att2> <core>)
+}
+
+sp {anystate*apply*change-world-state*merge-belief-objects*change*task-operator*object*level3
+   (state <s> ^operator <o>
+              ^top-state.task-stack.segments.segment.task-operator <task-op>)
+   (<o> ^name change-world-state
+        ^merge-belief-objects <merge>)
+   (<merge> ^merging-object-info.world-obj <obj>
+            ^core-object-info.world-obj <core>)
+   (<task-op> -^name op_remember1
+               ^<arg-name>.<att1>.<att2> <id>)
+   (<id> ^<att3> <obj>)
+-->
+   (<id> ^<att3> <obj> -
+         ^<att3> <core>)
 }
 

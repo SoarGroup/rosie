@@ -1,11 +1,7 @@
 package edu.umich.rosie.tools.config;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 public class RosieConfig {
 
@@ -20,8 +16,8 @@ public class RosieConfig {
 	// A set of property names used in the config file
 	public static final HashSet<String> PROP_NAMES = new HashSet<String>(
 			Arrays.asList("agent-name", "agent-dir", "domain",
-					"parser", "parser-test", "hypothetical",
-					"simulate-perception",
+					"parser", "parser-test",
+					"hypothetical", "simulate-perception",
 					"sentence-source", "sentences-file", "world-file", "smem-config-file", 
 					"custom-soar-file", "custom-smem-file", 
 					"map-info-file", "object-info-file", "internal-world-file", "waypoint-map-file"));
@@ -111,17 +107,28 @@ public class RosieConfig {
 	//     A file inside agent/manage-world-state/waypoint-maps which defines a waypoint map used for navigation
 	public File waypointMapFile;
 
+	// extra-rosie-files = <file1>;<file2>;... [OPTIONAL]
+	//     A file relative to the rosie agent directory that should be sourced by soar
+	//     Can specify more than 1 if separated by semicolons
+	public List<String> extraRosieFiles;
+
 	// Any other properties in the file will be put into the created rosie.config file
 	public HashMap<String, String> otherSettings;
 	
 	// rosieHome - the directory containing rosie
 	public String rosieHome;
+
+	// sourceFile - the full path of the file this config was created from
+	public String sourceFile;
 	
 	public RosieConfig(File configFile, Properties props, String rosieHome) throws RosieConfigException {
-		String configDir = configFile.getParent();
+		String configDir = configFile.getParent().replaceAll("\\\\", "/");
 		
 		// rosieHome
 		this.rosieHome = rosieHome; 
+
+		// sourceFile
+		this.sourceFile = configFile.getAbsolutePath().replaceAll("\\\\", "/");
 
 		// agent-name
 		if (props.containsKey("agent-name")){
@@ -265,6 +272,14 @@ public class RosieConfig {
 		} else {
 			this.waypointMapFile = null;
 		}
+
+		// extra-rosie-files
+		if (props.containsKey("extra-rosie-files")){
+			String files = props.getProperty("extra-rosie-files");
+			extraRosieFiles = new ArrayList<String>(Arrays.asList(files.split(";")));
+		} else {
+			extraRosieFiles = new ArrayList<String>();
+		}
 		
 		// otherSettings
 		// Anything else in the config file will be 
@@ -273,6 +288,8 @@ public class RosieConfig {
 			String name = (String)e.getKey();
 			String val = (String)e.getValue();
 			if(!PROP_NAMES.contains(name)){
+				val = val.replace("${agent-dir}", agentDir);
+				val = val.replace("${config-dir}", configDir);
 				this.otherSettings.put(name, val);
 			}
 		}
@@ -369,6 +386,12 @@ public class RosieConfig {
 			}
 		} else {
 			sb.append("waypoint-map-file = None\n");
+		}
+
+		Integer numFiles = this.extraRosieFiles.size();
+		sb.append("Number of extra-rosie-files: " + numFiles.toString() + "\n");
+		for(String f : this.extraRosieFiles){
+			sb.append("   > " + f + "\n");
 		}
 		
 		

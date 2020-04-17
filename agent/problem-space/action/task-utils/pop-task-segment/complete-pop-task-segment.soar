@@ -188,8 +188,21 @@ sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*push*l
    (<params> ^task-segment <segment>)
 }
 
+# Remove any prefer-subtask flags
+sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*remove*prefer-subtask*flags
+   (state <s> ^name pop-task-segment
+              ^operator.name complete-pop-task-segment
+              ^segment-to-pop <seg>)
+   (<seg> ^status success
+          ^task-operator.subtask-handle <sub-h>
+          ^prev <prev-seg>)
+   (<prev-seg> ^prefer-subtask <sub-h>)
+-->
+   (<prev-seg> ^prefer-subtask <sub-h> -)
+}
+
 #   mark it performed in the current action
-sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*mark*performed*once*subtask
+sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*mark*performed-subtask*once*subtask
    (state <s> ^name pop-task-segment
               ^operator.name complete-pop-task-segment
               ^segment-to-pop <seg>)
@@ -198,7 +211,19 @@ sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*mark*p
           ^prev.task-operator <parent-op>)
    (<op> ^subtask-handle { <sub-handle> <> none })
 -->
-   (<parent-op> ^performed <sub-handle>)
+   (<parent-op> ^performed-subtask <sub-handle>)
+}
+
+# Remove any special modifiers from world objects if this is the top task
+sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*remove*modifiers
+   (state <s> ^name pop-task-segment
+              ^operator.name complete-pop-task-segment
+              ^segment-to-pop <seg>
+              ^task-stack.top <seg>
+              ^top-state.world.objects.object.predicates <preds>)
+   (<preds> ^modifier1 { <mod> << starting1 desired1 answered1 >> })
+-->
+   (<preds> ^modifier1 <mod> -)
 }
 
 # When the top task is finished, clear the dialog-object-list

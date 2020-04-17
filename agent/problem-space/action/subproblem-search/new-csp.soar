@@ -1,0 +1,166 @@
+######################## control-search ########################
+# 
+# If search-phase-info is specified, use it to control the search
+#   and restrict certain operators depending on the phase info
+#
+
+#### task-objects ####
+# Create a list of all objects involved in the task 
+# (from task-operator or desired)
+
+sp {subproblem*search*elaborate*task-objects
+   (state <s> ^name selection
+              ^problem-space.subproblem search)
+-->
+   (<s> ^task-objects <objs>)
+}
+
+# Objects from arg-type=object
+sp {subproblem*search*elaborate*task-object*object*arg
+   (state <s> ^name selection
+              ^problem-space.subproblem search
+              ^task-objects <objs>
+              ^superstate.task-operator.<arg-name> <arg>)
+   (<arg> ^arg-type object
+          ^id <obj>)
+-->
+   (<objs> ^object <obj>)
+}
+
+# Objects from arg-type=partial-predicate
+sp {subproblem*search*elaborate*task-object*predicate*arg
+   (state <s> ^name selection
+              ^problem-space.subproblem search
+              ^task-objects <objs>
+              ^superstate.task-operator.<arg-name> <arg>)
+   (<arg> ^arg-type partial-predicate
+          ^2 <obj>)
+-->
+   (<objs> ^object <obj>)
+}
+
+# Objects from desired predicate
+sp {subproblem*search*elaborate*task-objects*goal*predicate
+   (state <s> ^name selection
+              ^problem-space.subproblem search
+              ^task-objects <objs>
+              ^superstate.desired.{ << 1 2 3 4 5 >> }.{ << 1 2 3 4 5 >> } <obj>)
+-->
+   (<objs> ^object <obj>)
+}
+
+#### subtask-obj-info ####
+# List all the objects for each subtask and which are also 
+# objects involved in the current task
+
+# Elaborate for each proposed operator
+sp {subproblem*search*elaborate*subtask-obj-info
+   (state <s> ^name selection
+              ^problem-space.subproblem search
+              ^item <o>)
+   (<o> ^item-type task-operator)
+-->
+   (<s> ^subtask-obj-info <info>)
+   (<info> ^subtask-op <o>)
+}
+
+# object-arg from arg-type=object
+sp {subproblem*search*elaborate*subtask-obj-info*object-arg*object*arg
+   (state <s> ^name selection
+              ^problem-space.subproblem search
+              ^subtask-obj-info <info>)
+   (<info> ^subtask-op.<arg-name> <arg>)
+   (<arg> ^arg-type object
+          ^id <obj>)
+-->
+   (<info> ^object-arg <obj>)
+}
+
+# object-arg from arg-type=partial-predicate
+sp {subproblem*search*elaborate*subtask-obj-info*task-object*predicate*arg
+   (state <s> ^name selection
+              ^problem-space.subproblem search
+              ^subtask-obj-info <info>)
+   (<info> ^subtask-op.<arg-name> <arg>)
+   (<arg> ^arg-type partial-predicate
+          ^2 <obj>)
+-->
+   (<info> ^object-arg <obj>)
+}
+
+# mark task-object if an object-arg is also on the current task
+sp {subproblem*search*elaborate*subtask-obj-info*task-object
+   (state <s> ^name selection
+              ^problem-space.subproblem search
+              ^subtask-obj-info <info>
+              ^task-objects <objs>)
+   (<info> ^object-arg <obj>)
+   (<objs> ^object <obj>)
+-->
+   (<info> ^task-object <obj>)
+}
+
+# mark non-task-object if an object-arg is not on the current task
+sp {subproblem*search*elaborate*subtask-obj-info*non-task-object
+   (state <s> ^name selection
+              ^problem-space.subproblem search
+              ^subtask-obj-info <info>
+              ^task-objects <objs>)
+   (<info> ^object-arg <obj>)
+   (<objs> -^object <obj>)
+-->
+   (<info> ^non-task-object <obj>)
+}
+
+#### SEARCH CONTROLS ####
+
+# require-all-objects-match <d>
+# <d> Is the depth above the bottom to require that all objects on a subtask 
+# also appear on the current task or goal
+# (e.g., if max-depth is 5, and require-all-objects-match 2, then this won't apply on depths 1-3, but will on 4-5)
+sp {subproblem*search*require-all-objects-match*reject*subtask*operator*has*non-task-object
+   (state <s> ^name selection
+              ^problem-space <ps>
+              ^operator <o>
+              ^quiescence t
+              ^evaluation <e>
+              ^current-evaluation-depth < <d>
+              ^subtask-obj-info <info>)
+   (<ps> ^subproblem search
+         ^search-phase-info.require-all-objects-match <d>)
+   (<o> ^name evaluate-operator
+        ^evaluation <e>
+        ^superoperator <subtask>)
+   (<info> ^subtask-op <subtask>
+           ^non-task-object <any>)
+-->
+   (<e> ^symbolic-value depth-exceeded)
+}
+
+
+# require-matching-object <d>
+# <d> Is the depth above the bottom to require that at least one object on a subtask
+#     also appears on the current task or goal
+# (e.g., if max-depth is 5, and require-matching-object 2, then this won't apply on depths 1-3, but will on 4-5)
+
+sp {subproblem*search*require-matching-object*reject*subtask*operator*has*no*task-object
+   (state <s> ^name selection
+              ^problem-space <ps>
+              ^operator <o>
+              ^evaluation <e>
+             -^look-ahead-operator <o>
+              ^quiescence t
+              ^current-evaluation-depth < <d>
+              ^subtask-obj-info <info>)
+   (<ps> ^subproblem search
+         ^search-phase-info.require-matching-object <d>)
+   (<o> ^name evaluate-operator
+        ^evaluation <e>
+        ^superoperator <subtask>)
+   (<info> ^subtask-op <subtask>
+           ^non-task-object <obj>
+          -^task-object <any>)
+-->
+   (<e> ^symbolic-value depth-exceeded)
+}
+

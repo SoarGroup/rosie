@@ -1,49 +1,5 @@
 #### AM: These are rules which I add ad-hoc but need to be changed into a more principled form
 
-### AM: Have a general rule where you can't propose a task within itself? 
-sp {SPCASE*op_put-down1*reject*op_put-down1
-   (state <s> ^name op_put-down1
-              ^operator <o> +)
-   (<o> ^name op_put-down1)
--->
-   (<s> ^operator <o> -)
-}
-
-### AM: Need to change how two objects can match each other without literally being the same world object
-sp {SPCASE*learn-matches-task-op-elaboration-rule*elaborate*candidate*matches-arg*object*2*preds
-   (state <s> ^name learn-matches-task-op-elaboration-rule
-              ^task-info <info>
-              ^candidate <cand>)
-   (<info> ^arg2 <arg>)
-   (<cand> ^task-operator <task-op>)
-   (<arg> ^arg-type object
-          ^id.predicates <preds1>)
-   (<task-op> ^task-handle remember1
-              ^arg2 <carg>)
-   (<carg> ^arg-type object
-           ^id.predicates <preds2>)
-   (<preds1> ^modifier1 <mod>
-             ^category <cat>)
-   (<preds2> ^modifier1 <mod>
-             ^category <cat>)
--->
-   (<cand> ^matches-arg arg2)
-}
-
-### AM: push-task-segment, for remember don't add the second object to the world
-sp {SPCASE*SHAME*task-utils*push-taks-segment*reject*change-world-state*add-object*remember
-   (state <s> ^name push-task-segment
-              ^operator <o> +
-              ^task-operator <task-op>)
-   (<o> ^name change-world-state
-        ^add-object-to-world.object <obj>)
-   (<task-op> ^task-handle remember1
-              ^arg2.id <obj>)
--->
-   (<s> ^operator <o> -)
-}
-
-
 # AM: Don't pick up something if its already satisfying a relation goal predicate
 #    Not sure if there is a better way to handle this 
 #    (Otherwise it will try to pick up something that is already in a goal location)
@@ -62,6 +18,19 @@ sp {SPCASE*action*reject*op_pick-up1*in*goal
 -->
    (<s> ^operator <o> -)
 }
+
+sp {SPCASE*SHAME*reject*op_find1*drink
+   (state <s> ^problem-space.subproblem search
+              ^operator <o> +)
+   (<o> ^name op_find1
+        ^arg1.id <obj>)
+   (<obj> ^root-category drink1)
+-->
+   (<s> ^operator <o> -)
+}
+
+
+
 
 #### I think this is a chunk that helps with leanring concepts during task learnig? 
 #sp {chunkx4*with-attribute*apply*complete*instance*OpNoChange*t589-1
@@ -83,40 +52,3 @@ sp {SPCASE*action*reject*op_pick-up1*in*goal
 #}
 
 
-#### TODO - Remove things from the world that the agent remembered/added
-
-## Remove anything remembered during the action
-#sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*remove*remembered*things
-#   (state <s> ^name pop-task-segment
-#              ^operator.name complete-pop-task-segment
-#              ^segment-to-pop.remembered <rem>)
-#   (<rem> ^object.predicates <preds>
-#          ^attribute <att>
-#          ^value <val>)
-#   (<preds> ^<att> <val>)
-#-->
-#   (<preds> ^<att> <val> -)
-#}
-#
-## Remove any objects added to the world during the action
-#sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*remove*added*objects
-#   (state <s> ^name pop-task-segment
-#              ^operator.name complete-pop-task-segment
-#              ^segment-to-pop.added <obj>
-#              ^superstate.world.objects <objs>)
-#   (<objs> ^object <obj>)
-#-->
-#   (<objs> ^object <obj> -)
-#}
-#
-## Remove any predicates related to that added object
-#sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*remove*added*predicates
-#   (state <s> ^name pop-task-segment
-#              ^operator.name complete-pop-task-segment
-#              ^segment-to-pop.added <obj>
-#              ^superstate.world.predicates.predicate <pred>)
-#   (<pred> ^instance <i>)
-#   (<i> ^<any> <obj>)
-#-->
-#   (<pred> ^instance <i> -)
-#}

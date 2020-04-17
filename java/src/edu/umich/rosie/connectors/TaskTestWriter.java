@@ -68,6 +68,6 @@ public class TaskTestWriter extends FileWriterConnector
 	@Override
 	public void receiveMessage(IMessagePasser.RosieMessage message){
 		// Write each sentence that the agent says as output
-		writer.write("R: \"" + message.message + "\"\n");
+		writer.print("R: \"" + message.message + "\"\n");
 	}
 }

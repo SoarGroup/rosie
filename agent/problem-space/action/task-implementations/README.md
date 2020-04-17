@@ -16,7 +16,11 @@ so the agent might do an approach subtask first.
 Note that the task goal is usually created from the task concept network in ```init-smem/actions.soar```
 
 * [ Pick Up ](#pickup)
-* [ Put Down ](#pickup)
+* [ Put Down ](#putdown)
+* [ Open ](#open)
+* [ Close ](#close)
+* [ Turn On ](#turnon)
+* [ Turn Off ](#turnoff)
 
 <!-- ===================================================================================== -->
 <!-- ================================== PHYSICAL ========================================= -->
@@ -38,18 +42,19 @@ Have the robot pick up an object that is grabbable, e.g. a cup
      ^arg1 [type:object])  # The object to pick up
 ```
 
-*Proposal:* \
-`arm.holding-object(false) & grabbable1(arg1) & not-grabbed1(arg1) & confirmed1(arg1)` 
+*Proposal:* <br>
+`arm.holding-object(false) & grabbable1(arg1) & not-grabbed1(arg1) & confirmed1(arg1)` <br>
 
-*Goal:* \
+*Goal:* <br>
 `grabbed1(arg1)`
 
-*Action Model:* \
-`+grabbed1(arg1), -not-grabbed1(arg1), +holding-object(true), -holding-object(false)` \
-`-relation(arg1, any), -in1(arg1, cur-loc)`
+*Action Model:* <br>
+`+grabbed1(arg1), -not-grabbed1(arg1), +holding-object(true), -holding-object(false)` <br>
+`-relation(arg1, any), -relation(any, arg1)` <br>
+if `in(arg1, rec) & receptacle(rec) & openable(rec)` then `open(rec)` must also exist <br>
 
-*Execute:* \
-requires `visible1(arg1) & reachable1(arg1)`
+*Execute:* <br>
+requires `visible1(arg1) & reachable1(arg1) & not-grabbed1(arg1)`
 * Internal: Change the held object on the input link
 * Ai2Thor: Pickup is a primitive action
 * Tabletop: Pickup is a primitive action 
@@ -70,21 +75,21 @@ Have the robot put down an object it is holding, at a particular place
      ^arg2 [type:partial-predicate]) # Where to put it (optional)
 ```
 
-*Proposal:* \
-`grabbed1(arg1) -> no arg2` \
-`grabbed1(arg1) & confirmed1(dest) & surface1(dest) -> arg2=on2(dest)` \
-`grabbed1(arg1) & confirmed1(dest) & receptacle(dest) -> arg2=in2(dest)` \
-`grabbed1(arg1) & confirmed1(dest) & closeable-receptacle(dest) & open2(dest) -> arg2=in2(dest)` 
+*Proposal:* <br>
+`grabbed1(arg1) -> no arg2` <br>
+`grabbed1(arg1) & confirmed1(dest) & surface1(dest) -> arg2=on2(dest)` <br>
+`grabbed1(arg1) & confirmed1(dest) & receptacle(dest) -> arg2=in2(dest)` <br>
+`grabbed1(arg1) & confirmed1(dest) & receptacle(dest) & openable(dest) & open2(dest) -> arg2=in2(dest)` 
 
-*Goal:* \
-`no arg2 -> not-grabbed1(arg1)` \
+*Goal:* <br>
+`no arg2 -> not-grabbed1(arg1)` <br>
 `has arg2 -> arg2.relation(arg1, arg2.obj2)`
 
-*Action Model:* \
-`+arg2.relation(arg1, arg2.obj2), +in1(arg1, cur-loc) `\
+*Action Model:* <br>
+`+arg2.relation(arg1, arg2.obj2), +in1(arg1, cur-loc) `<br>
 `-grabbed1(arg1), +not-grabbed(arg1), -holding-object(true), +holding-object(false)` 
 
-*Execute:* \
+*Execute:* <br>
 requires `visible1(dest) and reachable1(dest)`
 * Internal: Remove the holding-object on the simulated input-link and add the arg2 relation
 * Ai2Thor: Put down is a primitive action
@@ -107,16 +112,16 @@ Have the robot open an object, e.g. a door or a fridge
      ^arg1 [type:object])  # The object to open
 ```
 
-*Proposal:* \
+*Proposal:* <br>
 `arm.holding-object(false) & closed2(arg1) & confirmed1(arg1)`
 
-*Goal:* \
+*Goal:* <br>
 `open2(arg1)`
 
-*Action Model:* \
+*Action Model:* <br>
 `+open2(arg1), -closed2(arg1)`
 
-*Execute:* \
+*Execute:* <br>
 requires `visible1(arg1) & reachable1(arg1)`
 * Internal: Change the predicate on the input link to open2
 * Ai2Thor: Open is a primitive action
@@ -139,16 +144,16 @@ Have the robot close an object, e.g. a door or a fridge
      ^arg1 [type:object])  # The object to close
 ```
 
-*Proposal:* \
+*Proposal:* <br>
 `arm.holding-object(false) & open2(arg1) & confirmed1(arg1)`
 
-*Goal:* \
+*Goal:* <br>
 `closed2(arg1)`
 
-*Action Model:* \
+*Action Model:* <br>
 `+closed2(arg1), -open2(arg1)`
 
-*Execute:* \
+*Execute:* <br>
 requires `visible1(arg1) & reachable1(arg1)`
 * Internal: Change the predicate on the input link to closed2
 * Ai2Thor: Close is a primitive action
@@ -170,16 +175,16 @@ Have the robot turn off an object
      ^arg1 [type:object])  # The object to turn on
 ```
 
-*Proposal:* \
+*Proposal:* <br>
 `arm.holding-object(false) & off2(arg1) & confirmed1(arg1)`
 
-*Goal:* \
+*Goal:* <br>
 `on2(arg1)`
 
-*Action Model:* \
+*Action Model:* <br>
 `+on2(arg1), -off2(arg1)`
 
-*Execute:* \
+*Execute:* <br>
 requires `visible1(arg1) & reachable1(arg1)`
 * Internal: Change the predicate on the input link to on2
 * Ai2Thor: Turn-on is a primitive action
@@ -201,16 +206,16 @@ Have the robot turn off an object, e.g. a light
      ^arg1 [type:object])  # The object to turn off
 ```
 
-*Proposal:* \
+*Proposal:* <br>
 `arm.holding-object(false) & on2(arg1) & confirmed1(arg1)`
 
-*Goal:* \
+*Goal:* <br>
 `off2(arg1)`
 
-*Action Model:* \
+*Action Model:* <br>
 `+off2(arg1), -on2(arg1)`
 
-*Execute:* \
+*Execute:* <br>
 requires `visible1(arg1) & reachable1(arg1)`
 * Internal: Change the predicate on the input link to off2
 * Ai2Thor: Turn-off is a primitive action
@@ -233,17 +238,17 @@ Have the robot give a held object to a person
      ^arg2 [type:partial-predicate]) # to a person; arg2 = to1(per)
 ```
 
-*Proposal:* \
+*Proposal:* <br>
 `grabbed1(arg1) & person(per) & confirmed1(per)`
 
-*Goal:* \
+*Goal:* <br>
 `holding1(per, arg1)`
 
-*Action Model:* \
-`+holding1(per, arg1), -grabbed1(arg1), +not-grabbed1(arg1),` \
+*Action Model:* <br>
+`+holding1(per, arg1), -grabbed1(arg1), +not-grabbed1(arg1),` <br>
 `-holding-object(true), +holding-object(false)`
 
-*Execute:* \
+*Execute:* <br>
 requires `visible1(per) & reachable1(per)`
 * Internal: Add the holding1(per, arg1) predicate and mark as not grabbed
 * Magicbot: Give is a primitive command
@@ -307,13 +312,13 @@ Have the robot drive up close to an object in order to interact with it.
      ^arg1 [type:object])  # The object to approach
 ```
 
-*Proposal:* \
+*Proposal:* <br>
 `visible1(arg1) & not-reachable1(arg1)`
 
-*Goal:* \
+*Goal:* <br>
 `reachable(arg1)`
 
-*Action Model:* \
+*Action Model:* <br>
 `+reachable1(arg1), -not-reachable1(arg1)`
 
 *Execute:*
@@ -393,13 +398,13 @@ Have the robot drive to another location in the world
      ^arg2 [type:partial-predicate]) # to a location; arg2 = to1(loc)
 ```
 
-*Proposal:* \
+*Proposal:* <br>
 `location(loc) & confirmed1(loc) & !current-location(loc)`
 
-*Goal:* \
+*Goal:* <br>
 `current-location(loc)`
 
-*Action Model:* \
+*Action Model:* <br>
 `+current-location(loc), -current-location(old)`
 
 *Execute:* (Internal, Cozmo, Magicbot)
@@ -410,7 +415,7 @@ Have the robot drive to another location in the world
 <a name="gotowp"></a>
 
 ## Go to Waypoint
-Have the robot drive to the given waypoint via its waypoint graph. \
+Have the robot drive to the given waypoint via its waypoint graph. <br>
 (Internal use only, cannot speak a command)
 
 ```
@@ -419,10 +424,10 @@ Have the robot drive to the given waypoint via its waypoint graph. \
      ^arg1 [type:waypoint]) # the goal waypoint
 ```
 
-*Goal:* \
+*Goal:* <br>
 `current-waypoint(arg1)`
 
-*Execute:* (Internal, Cozmo, Magicbot) \
+*Execute:* (Internal, Cozmo, Magicbot) <br>
 It will do an a-star search to find the shortest waypoint path
 using `go-to-next-waypoint1` for edge traversal
 
@@ -431,7 +436,7 @@ using `go-to-next-waypoint1` for edge traversal
 <a name="gotonextwp"></a>
 
 ## Go to next waypoint
-Have the robot drive to an adjacent waypoint in the waypoint graph. \
+Have the robot drive to an adjacent waypoint in the waypoint graph. <br>
 (Note: this is only used internally to the robot). 
 
 ```
@@ -450,7 +455,7 @@ Have the robot drive to an adjacent waypoint in the waypoint graph. \
 <a name="gotoxy"></a>
 
 ## Go to xy
-Have the robot drive to the given coordinate (Magicbot, Cozmo). \
+Have the robot drive to the given coordinate (Magicbot, Cozmo). <br>
 (Note: this is only used internally to the robot). 
 
 ```
@@ -542,13 +547,13 @@ Tries to move so that the given object is in view (has to be confirmed)
      ^arg1 [type:object])  # The object to view
 ```
 
-*Proposal:* \
+*Proposal:* <br>
 `object(arg1) or person(arg1) & confirmed1(arg1) & not-visible1(arg1)`
 
-*Goal:* \
+*Goal:* <br>
 `visible1(arg1)`
 
-*Action Model:* \
+*Action Model:* <br>
 `+visible1(arg1), -not-visible1(arg1)`
 
 *Execute:* (Magicbot, Cozmo)
@@ -570,13 +575,13 @@ Tries to find an unconfirmed object (in the world, but no belief object)
      ^arg1 [type:object])  # The object to find
 ```
 
-*Proposal:* \
+*Proposal:* <br>
 `object(arg1) or person(arg1) & not-confirmed1(arg1)`
 
-*Goal:* \
+*Goal:* <br>
 `confirmed1(arg1)`
 
-*Action Model:* \
+*Action Model:* <br>
 `+confirmed1(arg1), -not-confirmed(arg1), +visible1(arg1), -not-visible1(arg1)`
 
 *Execute:* (Internal, Magicbot, Cozmo)
@@ -648,17 +653,17 @@ Speak a message, can be directed at a specific person
      ^arg2 [type:partial-predicate]) # to a person (optional); arg2 = to1(per)
 ```
 
-*Proposal:* \
+*Proposal:* <br>
 `message(arg1), person(per), confirmed1(per), !heard2(per, arg1)`
 
-*Goal:* \
-`if arg2 -> heard2(per, arg1)` \
+*Goal:* <br>
+`if arg2 -> heard2(per, arg1)` <br>
 `no arg2 -> execute-command(say)`
 
-*Action Model:* \
+*Action Model:* <br>
 `+heard2(per, arg1)`
 
-*Execute:* (All domains) \
+*Execute:* (All domains) <br>
 requires `visible1(per)`
 * Send an outgoing-message and mark the sentence as being heard by the person
 * If arg1 has a sentence, will say verbatim, otherwise, will describe the object
@@ -679,10 +684,10 @@ Has the robot ask a question and then wait for a response from the instructor.
 ```
 No proposal rule
 
-*Goal:* \
+*Goal:* <br>
 `execute-command(ask)`
 
-*Action Model:* \
+*Action Model:* <br>
 `+new_obj, +entity(new_obj), +answered1(new_obj), -answered1(other)`
 
 *Execute:*
@@ -697,13 +702,12 @@ When it gets an answer, it adds the answered object to the world if necessary, t
 
 # Mental
 
-<!-- ================================== REMEMBER ========================================= -->
-<a name="remember"></a>
+<!-- ================================== LABEL ========================================= -->
+<a name="label"></a>
 
-## Remember
-Remember one object as another, copies predicates from the second
-onto the first. E.g. *Remember the current location as the starting location* 
-will copy the starting predicate onto the current location. 
+## Label
+Label one object as another, merges the two referred objects together
+E.g. *Label the current location as the starting location* 
 
 ```
 ([o] ^name op_xxx 

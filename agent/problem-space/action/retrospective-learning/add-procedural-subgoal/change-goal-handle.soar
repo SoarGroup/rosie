@@ -1,0 +1,76 @@
+# We need to change the handles of all previous goals so that their chunks will no longer fire
+#   for select-next-goal (want to learn new ones to select the pushed subgoal instead)
+
+sp {add-procedural-subgoal*propose*change-goal-handle
+   (state <s> ^name add-procedural-subgoal
+              ^change-goal-handle <goal-id>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name change-goal-handle
+        ^goal-id <goal-id>)
+}
+
+sp {add-procedural-subgoal*apply*change-goal-handle*start
+   (state <s> ^name add-procedural-subgoal
+              ^operator <o>
+              ^task-operator.task-handle <task-h>)
+   (<o> ^name change-goal-handle
+        ^goal-id <goal-id>)
+   (<goal-id> ^handle <old-h>
+              ^item-type start-goal)
+-->
+   (<goal-id> ^handle <old-h> -
+              ^handle (make-constant-symbol <task-h> |start|))
+   (<s> ^to-store <goal-id>)
+}
+
+sp {add-procedural-subgoal*apply*change-goal-handle*non*start
+   (state <s> ^name add-procedural-subgoal
+              ^operator <o>
+              ^task-operator.task-handle <task-h>)
+   (<o> ^name change-goal-handle
+        ^goal-id <goal-id>)
+   (<goal-id> ^handle <old-h>
+              ^item-type task-goal)
+-->
+   (<goal-id> ^handle <old-h> -
+              ^handle (make-constant-symbol <task-h> |goal|))
+   (<s> ^to-store <goal-id>)
+}
+
+sp {add-procedural-subgoal*apply*change-goal-handle*remove*learned*flag
+   (state <s> ^name add-procedural-subgoal
+              ^operator <o>
+              ^task-operator.task-handle <task-h>)
+   (<o> ^name change-goal-handle
+        ^goal-id <goal-id>)
+   (<goal-id> ^handle <old-h>
+              ^next <next>)
+   (<next> ^learned true)
+-->
+   (<next> ^learned true -)
+   (<s> ^to-store <next>)
+}
+
+sp {add-procedural-subgoal*apply*change-goal-handle*remove*change*flag
+   (state <s> ^name add-procedural-subgoal
+              ^operator <o>
+              ^change-goal-handle <goal-id>)
+   (<o> ^name change-goal-handle
+        ^goal-id <goal-id>)
+-->
+   (<s> ^change-goal-handle <goal-id> -)
+}
+
+sp {add-procedural-subgoal*apply*change-goal-handle*add*change-goal-handle*parent
+   (state <s> ^name add-procedural-subgoal
+              ^operator <o>
+              ^goal-graph-nodes <par-goal>)
+   (<o> ^name change-goal-handle
+        ^goal-id <goal-id>)
+   (<par-goal> ^next.goal {@ <goal-id>})
+-->
+   (<s> ^change-goal-handle <par-goal>)
+}
+
+

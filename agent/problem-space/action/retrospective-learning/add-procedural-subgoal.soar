@@ -1,0 +1,51 @@
+# If the policy learning failed, create a new procedural subgoal to perform the given subtask
+sp {retrospective-learning*propose*add-procedural-subgoal*learning*failure
+   (state <s> ^name retrospective-learning
+              ^policy-learning-result failure
+              ^subtask-episode <ep>)
+   (<ep> ^task-stack.bottom.prev.task-operator.current-goal <goal-h>)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name add-procedural-subgoal
+        ^subtask-episode <ep>
+        ^current-goal-handle <goal-h>)
+}
+
+###
+# Operator No-Change Substate: will create the procedural subgoal, add it to the goal-graph, 
+#                              and return its handle as added-procedural-subgoal <sub-h>
+###
+
+# when we added the procedural subgoal, try to learn the policy again by removing the failure flag
+sp {retrospective-learning*apply*add-procedural-subgoal*remove*failure
+   (state <s> ^name retrospective-learning
+              ^operator.name add-procedural-subgoal
+              ^policy-learning-result failure
+              ^added-procedural-subgoal <sub-h>)
+-->
+   (<s> ^policy-learning-result failure -
+        ^added-procedural-subgoal <sub-h> -)
+}
+
+sp {retrospective-learning*apply*add-procedural-subgoal*mark*current-goal*substitution
+   (state <s> ^name retrospective-learning
+              ^operator <o>
+              ^added-procedural-subgoal <sub-h>
+              ^goal-handle-subs <subs>)
+   (<o> ^name add-procedural-subgoal
+        ^current-goal-handle <cur-h>)
+-->
+   (<subs> ^<cur-h> <sub-h>)
+}
+
+sp {retrospective-learning*apply*add-procedural-subgoal*remove*current-goal*substitution*prev
+   (state <s> ^name retrospective-learning
+              ^operator <o>
+              ^added-procedural-subgoal <sub-h>
+              ^goal-handle-subs <subs>)
+   (<o> ^name add-procedural-subgoal
+        ^current-goal-handle <cur-h>)
+   (<subs> ^<cur-h> { <old-h> <> <sub-h> })
+-->
+   (<subs> ^<cur-h> <old-h> -)
+}

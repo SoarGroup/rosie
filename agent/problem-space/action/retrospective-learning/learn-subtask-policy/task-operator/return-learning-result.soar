@@ -1,10 +1,40 @@
+sp {learn-subtask-policy*task-operator*apply*subtask-operator*return*learning-result*success
+   (state <s> ^top-retrospective-state true
+              ^operator.subtask-handle <sub-h>
+              ^subtask-operator.subtask-handle <sub-h>
+              ^superstate <ss>)
+-->
+   (<ss> ^retrospective-learning-result success)
+}
+
+sp {learn-subtask-policy*task-operator*apply*achieved-max-depth*return*learning-result*failure
+   (state <s> ^name selection
+              ^operator.name achieved-max-depth
+              ^superstate <ss>)
+   (<ss> ^top-retrospective-state true)
+-->
+   (<ss> ^retrospective-learning-result failure)
+}
+
+sp {learn-subtask-policy*task-operator*elaborate*failure*subtask*goal*not*selected
+   (state <s> ^top-retrospective-state true
+              ^desired.<pnum> <gp>
+              ^subtask-operator.subtask-handle { <sub-h> <> <goal-subt> }
+              ^operator <o> +)
+   (<gp> ^type subtask
+         ^subtask-handle <goal-subt>)
+   (<o> ^subtask-handle <goal-subt>)
+-->
+   (<s> ^retrospective-learning-result failure)
+}
+
 sp {learn-subtask-policy*task-operator*propose*return-learning-result
    (state <s> ^top-retrospective-state true
-              ^desired.satisfied true)
+              ^retrospective-learning-result <res>)
 -->
    (<s> ^operator <o> + !)
    (<o> ^name return-learning-result
-        ^result success)
+        ^result <res>)
 }
 
 sp {learn-subtask-policy*task-operator*apply*return-learning-result*copy*to*superstate
@@ -16,3 +46,54 @@ sp {learn-subtask-policy*task-operator*apply*return-learning-result*copy*to*supe
 -->
    (<ss> ^retrospective-learning-result <res>)
 }
+
+## If the agent hits a state no-change after applying an action, return failure
+#sp {learn-subtask-policy*task-operator*state*no-change*return*return-learning-result*failure
+#   (state <s> ^attribute state
+#              ^impasse no-change
+#              ^quiescence t
+#              ^superstate <ss>)
+#   (<ss> ^name evaluate-operator
+#         ^problem-space.subproblem retrospective
+#        -^learning-chunking-rule true
+#         ^superstate <sel>)
+#   (<sel> ^name selection
+#          ^superstate <top-ret>)
+#   (<top-ret> ^top-retrospective-state true)
+#-->
+#   (<top-ret> ^retrospective-learning-failed true)
+#}
+#
+## If the agent hit an unexpected op-no-change when applying an action, return failure
+#
+sp {learn-subtask-policy*task-operator*operator*no-change*propose*return-learning-result*failure
+   (state <s> ^attribute operator
+              ^impasse no-change
+              ^superstate <ss>)
+   (<ss> ^name evaluate-operator
+         ^operator.name { <op-name> <> op_ask1 }
+         ^problem-space.subproblem retrospective
+         ^superstate <sel>)
+   (<sel> ^name selection
+          ^superstate <top-ret>)
+   (<top-ret> ^top-retrospective-state true)
+-->
+   (<s> ^operator <o> + !)
+   (<o> ^name return-learning-result
+        ^result failure
+        ^destination <top-ret>)
+   (interrupt)
+   (write |ERROR: hit an unexpected Operator No-Change during retrospective task learning for | <op-name> (crlf))
+}
+
+#sp {learn-subtask-policy*task-operator*operator*no-change*apply*return-learning-result*failure
+#   (state <s> ^problem-space.subproblem retrospective
+#             -^top-retrospective-state true
+#              ^quiescence t
+#              ^operator <o>)
+#   (<o> ^name return-learning-result
+#        ^result failure
+#        ^destination <top-ret>)
+#-->
+#   (<top-ret> ^retrospective-learning-failed true)
+#}

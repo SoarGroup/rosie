@@ -11,6 +11,8 @@ sp {subproblem*execute*prefer*higher*operator*priority
 }
 
 # Priority=10: copy-task-operator
+# If a subtask operator was successfully selected and applied,
+#   First create a deep copy of it to push onto the task-stack
 sp {subproblem*execute*elaborate*copy-task-operator*priority*10
    (state <s> ^problem-space.subproblem execute
               ^operator <o> +)
@@ -20,35 +22,31 @@ sp {subproblem*execute*elaborate*copy-task-operator*priority*10
 }
 
 # Priority=9: remove-start-of-execution-flag, mark-start-time
-# The first time an execute-task substate is reached, remove the ^start-of-execution flag
-sp {subproblem*execute*elaborate*remove-start-of-execution-flag*priority*9
+# Set up the subproblem execute state the first time it is reached
+#   Remove the ^start-of-execution flag
+#   Mark the start time
+#   Retrieve the start goal
+sp {subproblem*execute*elaborate*operator*priority*9
    (state <s> ^problem-space.subproblem execute
               ^operator <o> +)
-   (<o> ^name << remove-start-of-execution-flag mark-start-time >>)
+   (<o> ^name << remove-start-of-execution-flag mark-start-time retrieve-start-goal >>)
 -->
    (<o> ^priority 9)
 }
 
-# Priority=8: smem-query, init-current-goal
-sp {subproblem*execute*elaborate*smem-query*priority*8
+# Priority=8: learn-task-goal, learn-new-subtask
+# Handle new knowledge (goal or task) given by the instructor
+sp {subproblem*execute*elaborate*operator*priority*8
    (state <s> ^problem-space.subproblem execute
               ^operator <o> +)
-   (<o> ^name << smem-query init-current-goal >>)
+   (<o> ^name << learn-task-goal learn-new-subtask >>)
 -->
    (<o> ^priority 8)
 }
 
-# Priority=7, add-subtask-to-tcn, learn-subtask-proposal, push-task-segment
-sp {subproblem*execute*elaborate*learning*subtask*operators*priority*7
-   (state <s> ^problem-space.subproblem execute
-              ^operator <o> +)
-   (<o> ^name << add-subtask-to-tcn push-task-segment >>)
--->
-   (<o> ^priority 5)
-}
-
-# Priority=6, attend-to-perception, add-object-to-world
-sp {subproblem*execute*elaborate*attend-to-perception*priority*6
+# Priority=7, attend-to-perception, add-object-to-world
+# Handle perception
+sp {subproblem*execute*elaborate*operator*priority*7
    (state <s> ^problem-space.subproblem execute
               ^operator <o> +)
    (<o> ^name << attend-to-perception add-object-to-world >>)
@@ -56,7 +54,7 @@ sp {subproblem*execute*elaborate*attend-to-perception*priority*6
    (<o> ^priority 7)
 }
 
-# Priority=5, select-next-goal, complete-task 
+# Priority=6, select-next-goal, complete-task 
 sp {subproblem*execute*elaborate*goal*operators*priority*5
    (state <s> ^problem-space.subproblem execute
               ^operator <o> +)
@@ -69,7 +67,7 @@ sp {subproblem*execute*elaborate*goal*operators*priority*5
 sp {subproblem*execute*elaborate*task-stack*operators*priority*4
    (state <s> ^problem-space.subproblem execute
               ^operator <o> +)
-   (<o> ^name << pop-task-segment handle-execution-failure >>)
+   (<o> ^name << push-task-segment pop-task-segment handle-execution-failure >>)
 -->
    (<o> ^priority 4)
 }
@@ -138,16 +136,16 @@ sp {subproblem*execute*learn-task-action-model*force-state-no-change
    (<s> ^force-state-no-change true)
 }
 
-# If there is an unproposed subtask, force a SNC to learn it
-sp {subproblem*execute*unlearned-subtask-proposal*force-state-no-change
-   (state <s> ^problem-space.subproblem execute
-              ^current-task-segment.learn-subtask-proposal <sub-h>
-              ^task-stack.push-task-operator <task-op>)
-   -{(<s> ^operator { <sub-op> <> <task-op> } +)
-     (<sub-op> ^subtask-handle <sub-h>)}
--->
-   (<s> ^force-state-no-change true)
-}
+## If there is an unproposed subtask, force a SNC to learn it
+#sp {subproblem*execute*unlearned-subtask-proposal*force-state-no-change
+#   (state <s> ^problem-space.subproblem execute
+#              ^current-task-segment.learn-subtask-proposal <sub-h>
+#              ^current-task-segment.push-task-operator <task-op>)
+#   -{(<s> ^operator { <sub-op> <> <task-op> } +)
+#     (<sub-op> ^subtask-handle <sub-h>)}
+#-->
+#   (<s> ^force-state-no-change true)
+#}
 
 # If the agent has not yet learned an elaboration rule for a goal, force a SNC
 sp {problem-space*action*elaborate*force-state-no-change*if*unlearned*desired
@@ -155,7 +153,7 @@ sp {problem-space*action*elaborate*force-state-no-change*if*unlearned*desired
              ^task-operator <task-op>
              ^superstate.operator <task-op>
             -^desired
-            -^implicit-object)
+            -^current-task-segment.implicit-object)
    (<task-op> ^current-goal <goal-h>)
 -->
    (<s> ^force-state-no-change true)
@@ -185,6 +183,18 @@ sp {subproblem*execute*elaborate*pest-prev-eval*subtask*operator*matches*desired
          ^subtask-handle <sh>)
    (<o> ^item-type task-operator
         ^subtask-handle <sh>)
+-->
+   (<s> ^operator <o> >
+        ^best-pref-eval <o>)
+}
+
+# If there is a ^prefer-subtask flag on the current-task-segment, give it a best preference
+sp {subproblem*execute*elaborate*pest-prev-eval*subtask*operator*prefer-subtask
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o> +
+              ^current-task-segment.prefer-subtask <sub-h>)
+   (<o> ^item-type task-operator
+        ^subtask-handle <sub-h>)
 -->
    (<s> ^operator <o> >
         ^best-pref-eval <o>)

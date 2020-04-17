@@ -34,7 +34,7 @@ fi
 
 cd $ROSIE_HOME/test-agents/$AGENT_NAME/agent
 if [ "$BG" == "TRUE" ]; then
-	java $JAVA_CLASS rosie.$AGENT_NAME.config &
+	java $ROSIE_JAVA_FLAGS $JAVA_CLASS rosie.$AGENT_NAME.config &
 else
-	java $JAVA_CLASS rosie.$AGENT_NAME.config
+	java $ROSIE_JAVA_FLAGS $JAVA_CLASS rosie.$AGENT_NAME.config
 fi
