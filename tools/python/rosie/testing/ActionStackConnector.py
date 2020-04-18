@@ -3,7 +3,7 @@ import sys
 import traceback
 
 from string import digits
-from pysoarlib import AgentConnector
+from pysoarlib import AgentConnector, RosieMessageParser
 
 
 def task_to_string(task_id):
@@ -28,10 +28,10 @@ def task_to_string(task_id):
 def task_arg_to_string(arg_id):
     arg_type = arg_id.GetChildString("arg-type")
     if arg_type == "object":
-        return obj_arg_to_string(arg_id.GetChildId("id"))
+        return RosieMessageParser.parse_obj(arg_id.GetChildId("id"))
     elif arg_type == "partial-predicate":
         handle_str = arg_id.GetChildString("handle")
-        obj2_str = obj_arg_to_string(arg_id.GetChildId("2"))
+        obj2_str = RosieMessageParser.parse_obj(arg_id.GetChildId("2"))
         return "%s(%s)" % ( handle_str, obj2_str )
     elif arg_type == "waypoint":
         wp_id = arg_id.GetChildId("id")
@@ -41,19 +41,6 @@ def task_arg_to_string(arg_id):
     elif arg_type == "measure":
         return arg_id.GetChildString("number") + " " + arg_id.GetChildString("unit")
     return "?"
-
-def obj_arg_to_string(obj_id):
-    preds_id = obj_id.GetChildId("predicates")
-    words = []
-    words.append(preds_id.GetChildString('size'))
-    words.append(preds_id.GetChildString('color'))
-    words.append(preds_id.GetChildString('modifier1'))
-    words.append(preds_id.GetChildString('shape'))
-    words.append(preds_id.GetChildString('name'))
-    words.append(obj_id.GetChildString('root-category'))
-    obj_desc = ' '.join(w for w in words if w is not None and len(w) > 1)
-
-    return obj_desc.translate(str.maketrans('', '', digits))
 
 class ActionStackConnector(AgentConnector):
     def __init__(self, agent):

@@ -5,6 +5,7 @@ import java.util.HashSet;
 import edu.umich.rosie.soar.AgentConnector;
 import edu.umich.rosie.soar.SoarAgent;
 import edu.umich.rosie.soar.SoarUtil;
+import edu.umich.rosie.language.AgentMessageParser;
 import sml.Identifier;
 
 
@@ -103,10 +104,10 @@ public class ActionStackConnector extends AgentConnector {
 	private String taskArgToString(Identifier argId) {
 		String argType = SoarUtil.getChildString(argId, "arg-type");
 		if (argType.equals("object")) {
-			return objArgToString(SoarUtil.getChildId(argId, "id"));
+			return AgentMessageParser.parseObject(SoarUtil.getChildId(argId, "id"));
 		} else if (argType.equals("partial-predicate")) {
 			String handle_str = SoarUtil.getChildString(argId, "handle");
-			String obj2_str = objArgToString(SoarUtil.getChildId(argId, "2"));
+			String obj2_str = AgentMessageParser.parseObject(SoarUtil.getChildId(argId, "2"));
 			return handle_str + "(" + obj2_str + ")";
 		} else if (argType.equals("waypoint")) {
 			Identifier wp_id = SoarUtil.getChildId(argId, "id");
@@ -118,30 +119,5 @@ public class ActionStackConnector extends AgentConnector {
 					SoarUtil.getChildString(argId, "unit");
 		}
 		return "?";
-	}
-
-	private String objArgToString(Identifier objId) {
-		Identifier preds_id = SoarUtil.getChildId(objId, "predicates");
-
-
-		String[] words = new String[6];
-		words[0] = SoarUtil.getChildString(preds_id, "size");
-		words[1] = SoarUtil.getChildString(preds_id, "color");
-		words[2] = SoarUtil.getChildString(preds_id, "modifier1");
-		words[3] = SoarUtil.getChildString(preds_id, "shape");
-		words[4] = SoarUtil.getChildString(preds_id, "name");
-		words[5] = SoarUtil.getChildString(objId, "root-category");
-
-		String s = "";
-		for(String w : words){
-			if(w != null){
-				if(s.length() > 0){
-					s += " ";
-				}
-				s += w;
-			}
-		}
-
-		return s.replaceAll("\\d", "");
 	}
 }

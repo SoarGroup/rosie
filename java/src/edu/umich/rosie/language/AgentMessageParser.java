@@ -1277,9 +1277,9 @@ public class AgentMessageParser
 	public static String translateCantFindObject(Identifier fieldsId){
 		Identifier obj = SoarUtil.getIdentifierOfAttribute(fieldsId, "object");
 		if(obj == null){
-			return "I can't find the object. Can you help?";
+			return "I can't find the object, can you help?";
 		}
-		return "I can't find " + worldObjectToString(obj) + ". Can you help?";
+		return "I can't find " + parseObject(obj) + ", can you help?";
 	}
 	
 	public static String translateMultipleArguments(Identifier fieldsId){
@@ -1588,7 +1588,41 @@ public class AgentMessageParser
 		desc = desc + root;
 		return desc;
 	}
-	
+
+	public static String join(List<String> strings, String sep){
+		StringBuilder sb = new StringBuilder();
+		boolean first = true;
+		for(String s : strings){
+			if(s == null){ continue; }
+			if(!first){
+				sb.append(sep);
+			}
+			sb.append(s);
+			first = false;
+		}
+		return sb.toString();
+	}
+
+	public static String parseObject(Identifier objId){
+		ArrayList<String> words = new ArrayList<String>();
+		Identifier predsId = SoarUtil.getIdentifierOfAttribute(objId, "predicates");
+
+		words.add(SoarUtil.getValueOfAttribute(predsId, "size"));
+		words.add(SoarUtil.getValueOfAttribute(predsId, "color"));
+		words.add(SoarUtil.getValueOfAttribute(predsId, "modifier1"));
+		words.add(SoarUtil.getValueOfAttribute(predsId, "shape"));
+
+		String name = SoarUtil.getValueOfAttribute(predsId, "name");
+		if(name != null){
+			words.add(name);
+		} else {
+			words.add(SoarUtil.getValueOfAttribute(objId, "root-category"));
+		}
+
+		String objDesc = join(words, " ");
+		return objDesc.replaceAll("\\d", "");
+	}
+
 	public static String worldObjectToString(Identifier objId){
 		ArrayList<String> predicates = new ArrayList<String>();
 		
