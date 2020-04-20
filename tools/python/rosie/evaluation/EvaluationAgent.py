@@ -41,10 +41,10 @@ class EvaluationAgent(SoarAgent):
             self.handle_find_request(msg)
 
     def handle_find_request(self, msg):
-        obj_cat = msg.split()[4]
-        if obj_cat[-1] == ',':
-            obj_cat = obj_cat[:-1]
+        obj_cat = next(w for w in msg.split() if w[-1] == ',')
+        obj_cat = obj_cat.replace(',', '')
         obj = self.perception.objects.get_object_by_cat(obj_cat)
+        print(obj_cat)
         if obj is None:
             return
         container = self.perception.objects.get_object_container(obj)
@@ -56,6 +56,8 @@ class EvaluationAgent(SoarAgent):
 
     def advance_script(self):
         message = self.eval_gui.get_next_script_message()
+        if message is None:
+            return
         if message[0] == '!':
             self.eval_gui.append_message(message)
             self.handle_script_command(message[1:])

@@ -1,6 +1,6 @@
 all: agent/rosie.eval-rand-move.config
 
-script: rand-move.script
+script: rand-move.script 
 
 world: rand-move.world
 
