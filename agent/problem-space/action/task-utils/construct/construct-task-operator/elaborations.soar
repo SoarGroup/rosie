@@ -1,5 +1,6 @@
 
-# command-message: the parsed command representation from language comprehension
+# [PARAM] command-message <msg>
+#   The parsed command representation from language comprehension
 sp {task-utils*construct-task-operator*elaborate*message*from*superoperator
    (state <s> ^name construct-task-operator
               ^superstate.operator.command-message <msg>)
@@ -7,18 +8,76 @@ sp {task-utils*construct-task-operator*elaborate*message*from*superoperator
    (<s> ^command-message <msg>)
 }
 
-# Flag: update-task-concept-network << true false >>
-#       If true, will update the TCN with procedural information from the task-operator
-sp {task-utils*construct-task-operator*elaborate*update-task-concept-network*from*superoperator
+# [PARAM] result-name <str>
+#   The name to use when returning the result to the superstate
+sp {task-utils*construct-task-operator*elaborate*result-name*from*superoperator
    (state <s> ^name construct-task-operator
-              ^superstate.operator.update-task-concept-network <flag>)
+              ^superstate.operator.result-name <res-name>)
 -->
-   (<s> ^update-task-concept-network <flag>)
+   (<s> ^result-name <res-name>)
+}
+
+# [PARAM] update-tcn <bool>
+#       If true, will update the TCN with procedural information from the task-operator
+sp {task-utils*construct-task-operator*elaborate*update-tcn*from*superoperator
+   (state <s> ^name construct-task-operator
+              ^superstate.operator.update-tcn <flag>)
+-->
+   (<s> ^update-tcn <flag>)
+}
+
+### construct-task-argument elaborations
+
+# [FLAG] construct-task-argument.needs-created true
+#   present if it hasn't been constructed yet
+sp {task-utils*construct-task-operator*elaborate*cta*needs-created
+   (state <s> ^name construct-task-operator
+              ^construct-task-argument <arg>)
+   (<arg> -^created-arg)
+-->
+   (<arg> ^needs-created true)
+}
+
+# [FLAG] uncreated-args true
+#   present if there is an argument that still needs to be created
+sp {task-utils*construct-task-operator*elaborate*uncreated-args
+   (state <s> ^name construct-task-operator
+              ^construct-task-argument.needs-created true)
+-->
+   (<s> ^uncreated-args true)
+}
+
+# [FLAG] construct-task-argument.needs-copied true
+#   present if an argument hasn't been copied onto the task operator
+sp {task-utils*construct-task-operator*elaborate*cta*needs-copied
+   (state <s> ^name construct-task-operator
+              ^construct-task-argument <cta>
+              ^task-operator <task-op>)
+   (<cta> ^arg-name <arg-name>
+          ^created-arg <arg>)
+   (<task-op> -^<arg-name> <arg>)
+-->
+   (<cta> ^needs-copied true)
+}
+
+# [FLAG] uncopied-args true
+#   present if there is an argument that still needs to be copied
+sp {task-utils*construct-task-operator*elaborate*uncopied-args
+   (state <s> ^name construct-task-operator
+              ^construct-task-argument.needs-copied true)
+-->
+   (<s> ^uncopied-args true)
 }
 
 
-sp {task-utils*construct-task-argument*elaborate*abstract*true
-   (state <s> ^construct-task-argument <arg>
+# [FLAG] construct-task-argument.abstrat true
+# abstract arguments will have an object representation that is not a world object
+#   and should not be grounded or added to the world
+
+# Elaborate abstract flag from the TCN
+sp {task-utils*construct-task-operator*elaborate*cta*abstract*true
+   (state <s> ^name construct-task-operator
+              ^construct-task-argument <arg>
               ^task-concept-network <tcn>)
    (<arg> ^arg-name <arg-name>)
    (<tcn> ^procedural.<arg-name>.abstract true)
@@ -26,8 +85,10 @@ sp {task-utils*construct-task-argument*elaborate*abstract*true
    (<arg> ^abstract true)
 }
 
-sp {task-utils*construct-task-argument*elaborate*abstract*children
-   (state <s> ^construct-task-argument <arg>
+# Elaborate abstract flag to children structures
+sp {task-utils*construct-task-operator*elaborate*cta*abstract*children
+   (state <s> ^name construct-task-operator
+              ^construct-task-argument <arg>
               ^construct-task-argument <child>)
    (<arg> ^abstract true
           ^<child-arg> <child>)
