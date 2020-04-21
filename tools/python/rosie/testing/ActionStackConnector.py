@@ -8,22 +8,13 @@ from pysoarlib import AgentConnector, RosieMessageParser
 
 def task_to_string(task_id):
     task_handle = task_id.GetChildString("task-handle")
-    arg1_id = task_id.GetChildId("arg1")
-    arg2_id = task_id.GetChildId("arg2")
-    arg3_id = task_id.GetChildId("arg3")
 
-    task = task_handle + "("
-    if arg1_id != None:
-        task += task_arg_to_string(arg1_id)
-    if arg2_id != None:
-        if arg1_id != None:
-            task += ", "
-        task += task_arg_to_string(arg2_id)
-    if arg3_id != None:
-        task += ", " + task_arg_to_string(arg3_id)
-    task += ")"
+    # Get the root identifier of each argument
+    arg_ids = ( task_id.GetChildId(arg_name) for arg_name in ("arg1", "arg2", "arg3") )
+    # Convert each non-null argument to a string
+    parsed_args = ( task_arg_to_string(arg_id) for arg_id in arg_ids if arg_id is not None)
 
-    return task
+    return task_handle + "(" + ", ".join(parsed_args) + ")"
 
 def task_arg_to_string(arg_id):
     arg_type = arg_id.GetChildString("arg-type")

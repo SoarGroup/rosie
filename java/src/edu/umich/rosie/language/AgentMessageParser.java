@@ -51,10 +51,8 @@ public class AgentMessageParser
 			simpleMessages.put("no-proposed-action", "I couldn't do that.");
 			simpleMessages.put("missing-argument", "I need more information to do that action.");
 			simpleMessages.put("learn-location-failure", "I don't know where I am.");
-			simpleMessages.put("get-next-goal", "What is the next goal or subtask?");
 			simpleMessages.put("get-goal-info", "What is the goal?");
 			simpleMessages.put("no-action-context-for-goal", "I don't know what action that goal is for.");
-			simpleMessages.put("get-next-subaction", "What do I do next?");
 			simpleMessages.put("confirm-pick-up", "I have picked up the object.");
 			simpleMessages.put("confirm-put-down", "I have put down the object.");
 			simpleMessages.put("find-success", null);//"SUCCESS");
@@ -99,6 +97,10 @@ public class AgentMessageParser
 		Identifier fieldsId = SoarUtil.getIdentifierOfAttribute(id, "fields");
 		if(type.equals("get-next-task")){
 			return translateNextTaskPrompt();
+		} else if(type.equals("get-next-subaction")){
+			return "What do I do next for " + taskHandle(fieldsId) + "?";
+		} else if(type.equals("get-next-goal")){
+			return "What is the next goal or subtask of " + taskHandle(fieldsId) + "?";
 		} else if(type.equals("get-predicate-info")){
 			return translateGetPredicateInfo(fieldsId);
 		} else if(type.equals("report-successful-training")){
@@ -143,6 +145,8 @@ public class AgentMessageParser
 			return translateFinalGoalState(fieldsId);
 	    	} else if(type.equals("say-sentence")){
 	    		return translateSaySentence(fieldsId);
+		} else if(type.equals("task-execution-failure")){
+			return "The " + taskHandle(fieldsId) + "task failed.";
          	// AM: produced by problem-space/action/failure-handling
 	    	} else if(type.equals("execution-failure")){
 	    		return translateExecutionFailure(fieldsId);
@@ -2026,6 +2030,11 @@ public class AgentMessageParser
 		
 		return descriptionList;
 	}
+
+	public static String taskHandle(Identifier fieldsId){
+		return SoarUtil.getValueOfAttribute(fieldsId, "task-handle").replaceAll("\\d", "");
+	}
+
 
 /*
 //
