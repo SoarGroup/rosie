@@ -2,7 +2,7 @@
 
 sp {op_ask1*propose*send-ask-command
    (state <s> ^name op_ask1
-              ^sentence <sent>
+              ^message-object <obj>
              -^person
              -^current-task-segment.answer)
 -->
@@ -10,12 +10,12 @@ sp {op_ask1*propose*send-ask-command
    (<o> ^name send-ask-command
         ^item-type command-operator
         ^command-name ask-command
-        ^sentence <sent>)
+        ^objet <obj>)
 }
 
 sp {op_ask1*propose*send-ask-command*to*person
    (state <s> ^name op_ask1
-              ^sentence <sent>
+              ^message-object <obj>
               ^person <per>
              -^current-task-segment.answer)
    (<per> ^predicates <preds>)
@@ -26,26 +26,48 @@ sp {op_ask1*propose*send-ask-command*to*person
    (<o> ^name send-ask-command
         ^item-type command-operator
         ^command-name ask-command
-        ^sentence <sent>)
+        ^object <obj>)
 }
 
 ### send-ask-command (all domains) ###
 
 # Send the asked sentence to the interaction stack
-sp {op_ask*apply*send-ask-command*send*message
+sp {op_ask*apply*send-ask-command*send*message*sentence
    (state <s> ^name op_ask1
               ^problem-space.execution-type external
               ^operator <o>
               ^top-state.interaction.changes <changes>
               ^current-task-segment <seg>)
    (<o> ^name send-ask-command
-        ^sentence <msg>
+        ^object.predicates.sentence <sent>
         ^command-name <cmd-name>)
 -->
    (<changes> ^outgoing-message <send>)
    (<send> ^type say-sentence
            ^complete-message true
-           ^fields.sentence <msg>)
+           ^fields.sentence <sent>)
+
+   (<seg> ^<cmd-name> <ask-cmd>)
+   (<ask-cmd> ^item-type output-command
+              ^outgoing-message <send>)
+}
+
+# Send the asked objet to the interaction stack
+sp {op_ask*apply*send-ask-command*send*message*object
+   (state <s> ^name op_ask1
+              ^problem-space.execution-type external
+              ^operator <o>
+              ^top-state.interaction.changes <changes>
+              ^current-task-segment <seg>)
+   (<o> ^name send-ask-command
+        ^object <obj>
+        ^command-name <cmd-name>)
+   (<obj> -^predicates.sentence)
+-->
+   (<changes> ^outgoing-message <send>)
+   (<send> ^type agent-object-description
+           ^complete-message true
+           ^fields.object <obj>)
 
    (<seg> ^<cmd-name> <ask-cmd>)
    (<ask-cmd> ^item-type output-command
@@ -60,7 +82,7 @@ sp {op_ask*apply*send-ask-command*push*segment*wait-for-answer
               ^top-state.interaction.changes <changes>
               ^current-task-segment <seg>)
    (<o> ^name send-ask-command
-        ^sentence <msg>)
+        ^object <obj>)
 -->
    (<changes> ^new-segment-info <info>)
    (<info> ^purpose <p>
