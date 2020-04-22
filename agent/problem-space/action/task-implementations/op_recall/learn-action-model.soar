@@ -1,9 +1,10 @@
+
 ### Internally modeling the ask task ###
 
-#sp {problem-space*action*internal*elaborate*op_ask1*dont-learn-action-model
+#sp {problem-space*action*internal*elaborate*op_recall1*dont-learn-action-model
 #   (state <s> ^problem-space.execution-type internal
 #              ^operator <o> +)
-#   (<o> ^name op_ask1)
+#   (<o> ^name op_recall1)
 #-->
 #   (<o> ^dont-learn-action-model true)
 #}
@@ -15,32 +16,32 @@
 # and create an action model that creates that answer on the world
 # This is learned once per subtask, so different asks will result in different models
 
-sp {op_ask1*learn-action-model*reject*init-current-goal
-   (state <s> ^name op_ask1
+sp {op_recall1*learn-action-model*reject*performance*operators
+   (state <s> ^name op_recall1
               ^name learn-task-action-model
               ^operator <o> +)
-   (<o> ^name << init-current-goal send-ask-command >>)
+   (<o> ^name << init-current-goal smem-query retrieve-epmem-episode >>)
 -->
    (<s> ^operator <o> -)
 }
 
-#### retrieve-previous-answer
-# Retrieve from epmem an episode when the agent recieved an answer
-#   to this ask question
+#### retrieve-previous-result
+# Retrieve from epmem an episode when the agent recalled something from smem
 
-sp {op_ask1*learn-action-model*propose*retrieve-previous-answer
-   (state <s> ^name op_ask1
+sp {op_recall1*learn-action-model*propose*retrieve-previous-result
+   (state <s> ^name op_recall1
               ^name learn-task-action-model
+              ^memory-type smem
              -^retrieved-episode)
 -->
    (<s> ^operator <o> +)
-   (<o> ^name retrieve-previous-answer)
+   (<o> ^name retrieve-previous-result)
 }
 
-sp {op_ask1*learn-action-model*apply*retrieve-previous-answer
-   (state <s> ^name op_ask1
+sp {op_recall1*learn-action-model*apply*retrieve-previous-result
+   (state <s> ^name op_recall1
               ^name learn-task-action-model
-              ^operator.name retrieve-previous-answer
+              ^operator.name retrieve-previous-result
               ^epmem.command <cmd>
               ^superstate.task-operator.task-handle <par-h>
               ^superstate.operator.subtask-handle <sub-h>)
@@ -48,18 +49,18 @@ sp {op_ask1*learn-action-model*apply*retrieve-previous-answer
    (<cmd> ^query <q>)
    (<q> ^task-stack.bottom <bot>
         ^world.objects.object <obj>)
-   (<bot> ^task-operator <ask-op>
+   (<bot> ^task-operator <recall-op>
           ^prev.task-operator.task-handle <par-h>)
-   (<ask-op> ^task-handle ask1
-             ^subtask-handle <sub-h>)
-   (<obj> ^predicates.modifier1 answered1)
+   (<recall-op> ^task-handle recall1
+                ^subtask-handle <sub-h>)
+   (<obj> ^predicates.modifier1 recalled1)
 }
 
 # Success :) Copy the episode to the state
-sp {op_ask1*learn-action-model*apply*retrieve-previous-answer*success
-   (state <s> ^name op_ask1
+sp {op_recall1*learn-action-model*apply*retrieve-previous-result*success
+   (state <s> ^name op_recall1
               ^name learn-task-action-model
-              ^operator.name retrieve-previous-answer
+              ^operator.name retrieve-previous-result
               ^epmem <epmem>)
    (<epmem> ^result <res>
             ^result.retrieved <episode>
@@ -74,11 +75,11 @@ sp {op_ask1*learn-action-model*apply*retrieve-previous-answer*success
    (<cmd> ^query <q> -)
 }
 
-# Failure :(  There is no matching episode (which shouldn't happen?)
-sp {op_ask1*learn-action-model*apply*retrieve-previous-answer*failure
-   (state <s> ^name op_ask1
+# Failure :(  There is no matching episode 
+sp {op_recall1*learn-action-model*apply*retrieve-previous-result*failure
+   (state <s> ^name op_recall1
               ^name learn-task-action-model
-              ^operator.name retrieve-previous-answer
+              ^operator.name retrieve-previous-result
               ^epmem <epmem>)
    (<epmem> ^result.normalized-match-score < 1.0
             ^command <cmd>)
@@ -88,19 +89,19 @@ sp {op_ask1*learn-action-model*apply*retrieve-previous-answer*failure
    (<cmd> ^query <q> -)
 }
 
-# The answered object that was retrieved
-sp {op_ask1*learn-action-model*elaborate*retrieved-object*from*retrieved-episode
-   (state <s> ^name op_ask1
+# The recalled object that was retrieved
+sp {op_recall1*learn-action-model*elaborate*retrieved-object*from*retrieved-episode
+   (state <s> ^name op_recall1
               ^name learn-task-action-model
               ^retrieved-episode.world.objects.object <obj>)
-   (<obj> ^predicates.modifier1 answered1)
+   (<obj> ^predicates.modifier1 recalled1)
 -->
    (<s> ^retrieved-object <obj>)
 }
 
 # Copy the retrieved object to the superstate as the action model
-sp {op_ask1*learn-action-model*propose*learn-action-model-rule
-   (state <s> ^name op_ask1
+sp {op_recall1*learn-action-model*propose*learn-action-model-rule
+   (state <s> ^name op_recall1
               ^name learn-task-action-model
               ^retrieved-object <obj>)
 -->
@@ -109,8 +110,8 @@ sp {op_ask1*learn-action-model*propose*learn-action-model-rule
         ^object <obj>)
 }
 
-sp {__TASK_MODEL__problem-space*action*internal*apply*op_ask1*add*answered*object
-   (state <s> ^name op_ask1
+sp {__TASK_MODEL__problem-space*action*internal*apply*op_recall1*add*recalled*object
+   (state <s> ^name op_recall1
               ^name learn-task-action-model
               ^operator <o>
               ^superstate.world.objects <objs>)
@@ -121,12 +122,12 @@ sp {__TASK_MODEL__problem-space*action*internal*apply*op_ask1*add*answered*objec
 }
 
 ## Create an 'answer' object with a sentence on it
-#sp {problem-space*action*internal*apply*op_ask1*create*answer
+#sp {problem-space*action*internal*apply*op_recall1*create*answer
 #   (state <s> ^problem-space.name action
 #              ^problem-space.execution-type internal
 #              ^operator <o>
 #              ^world.objects <objs>)
-#   (<o> ^name op_ask1
+#   (<o> ^name op_recall1
 #        ^task-handle ask1)
 #-->
 #   (<objs> ^object <ans>)
