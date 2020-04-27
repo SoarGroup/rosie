@@ -32,6 +32,29 @@ sp {comprehend-word*preference*match-construction-higher-span
    (write (crlf) (concat |Prefer >span: | <cname1> |(| <span1> |) > | <cname2> |(| <span2> |).|))
 }
 
+#    For multiple match-construction operators
+#    where the ^spans are equal, pick the
+#    one with the largest value for ^lexicals.
+sp {comprehend-word*preference*match-construction-more-lexicals
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name match-construction
+         ^span <span1>
+         ^lexicals <lex1>)
+   (<o2> ^name match-construction
+         ^span <span1>
+         ^lexicals < <lex1>)
+   #    Get data for report
+   (<o1> ^cxn-name <cname1>)
+   (<o2> ^cxn-name <cname2>
+         ^lexicals <lex2>)
+-->
+   (<s> ^operator <o1> > <o2>)
+   #    Report using this preference
+   (write (crlf) (concat |Prefer >lexicals: | <cname1> |(| <lex1> |) > | <cname2> |(| <lex2> |).|))
+}
+
 #    Make a match-construction operator higher than a snip
 #    for one special case.
 #    This avoids multiple snips in a row.
@@ -113,6 +136,18 @@ sp {comprehend-word*preference*isthat-before-resolution
    (<s> ^operator <o1> < <o2>)
 }
 
+#    Make a resolve-it-in-condition operator higher preference
+#    than a resolve-pronoun operator.
+sp {comprehend-word*preference*it-in-condition-before-pronoun
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name resolve-it-in-condition)
+   (<o2> ^name resolve-pronoun)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
 #    Make a fill-slot operator higher preference
 #    than a match-construction operator.
 sp {comprehend-word*preference*fill-slot-before-match-construction
@@ -150,12 +185,41 @@ sp {comprehend-word*preference*resolve-this-n-that-before-resolve-reference
 }
 
 #    Make an operator of type resolution higher preference
-#	 than create-new-object.
+#    than create-new-object, unless hypothetical.
 sp {comprehend-word*preference*resolution-before-create-new-object
    (state <s> ^problem-space comprehend-word
+             -^superstate.comprehension.hypothetical true
               ^operator <o1> +
               ^operator <o2> +)
    (<o1> ^type resolution)
+   (<o2> ^name create-new-object)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+#    Make create-new-object higher preference than
+#    ground-reference if in hypothetical mode.
+sp {comprehend-word*preference*create-new-object-before-ground-reference
+   (state <s> ^problem-space comprehend-word
+             -^reference resolved
+              ^superstate.comprehension.hypothetical true
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name create-new-object)
+   (<o2> ^name ground-reference)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+#    Make lookup-concept and retrieve-item higher preference than
+#    create-new-object if in hypothetical mode.
+sp {comprehend-word*preference*lookup-concept-before-create-new-object
+   (state <s> ^problem-space comprehend-word
+             -^reference resolved
+              ^superstate.comprehension.hypothetical true
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name << lookup-concept retrieve-item >>)
    (<o2> ^name create-new-object)
 -->
    (<s> ^operator <o1> > <o2>)

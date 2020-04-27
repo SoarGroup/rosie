@@ -1,5 +1,5 @@
 #   Soar code produced automatically 
-#   from file 'C:\Users\plindes\OneDrive\GitHub\PLCode\Lucia\Grammars\Games\dev-set\ecg\001.ecg'.
+#   from file 'C:\Users\plind\OneDrive\GitHub\PLCode\Lucia\Grammars\Games\dev-set\ecg\001.ecg'.
 
 #   NAME construction
 sp {comprehend-word*apply*lexical-access*NAME-name
@@ -7,15 +7,18 @@ sp {comprehend-word*apply*lexical-access*NAME-name
               ^operator <o>
               ^input.word <word>)
    (<o> ^name lexical-access)
-   (<word> ^orth |name|)
+   (<word> ^orth |name|
+           ^content <content1>)
 -->
    (<s> ^cxn <cxn>)
    (<cxn> ^cxn-name NAME
           ^is <a>
           ^orth |name|
+          ^text <content1>
           ^f <form>
           ^m <meaning>
           ^subcase-of CommonNoun
+          ^first-lex nil
           ^evokes <e-meaning>)
    (<a> ^a NAME)
    (<e-meaning> ^schema Name
@@ -28,15 +31,18 @@ sp {comprehend-word*apply*lexical-access*PUZZLE-puzzle
               ^operator <o>
               ^input.word <word>)
    (<o> ^name lexical-access)
-   (<word> ^orth |puzzle|)
+   (<word> ^orth |puzzle|
+           ^content <content1>)
 -->
    (<s> ^cxn <cxn>)
    (<cxn> ^cxn-name PUZZLE
           ^is <a>
           ^orth |puzzle|
+          ^text <content1>
           ^f <form>
           ^m <meaning>
           ^subcase-of CommonNoun
+          ^first-lex nil
           ^evokes <e-meaning>)
    (<a> ^a PUZZLE)
    (<e-meaning> ^schema Puzzle
@@ -49,15 +55,18 @@ sp {comprehend-word*apply*lexical-access*OF-of
               ^operator <o>
               ^input.word <word>)
    (<o> ^name lexical-access)
-   (<word> ^orth |of|)
+   (<word> ^orth |of|
+           ^content <content1>)
 -->
    (<s> ^cxn <cxn>)
    (<cxn> ^cxn-name OF
           ^is <a>
           ^orth |of|
+          ^text <content1>
           ^f <form>
           ^m <meaning>
-          ^subcase-of Preposition)
+          ^subcase-of Preposition
+          ^first-lex nil)
    (<a> ^a OF)
 }
 
@@ -76,8 +85,60 @@ sp {comprehend-word*OF-constraint*self-m-name*ASSIGN*of1
               ^name |of1|)
 }
 
-#   Propose an operator for the WordDefinitionSentence construction
-sp {comprehend-word*propose*match-construction*WordDefinitionSentence
+#   Propose an operator for the TheName construction
+sp {comprehend-word*propose*match-construction*TheName
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done)
+   #   Look for the constituents
+   (<s> ^cxn <name-lex>)
+   (<name-lex> ^is.a NAME
+               ^previous <spec>)
+   (<spec> ^is.a THE
+           ^previous <previous>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name match-construction
+        ^type construction
+        ^cxn-name TheName
+        ^span 2
+        ^lexicals 2
+        ^name-lex <name-lex>
+        ^spec <spec>
+        ^previous <previous>
+        ^debug-info (concat |Match a TheName construction, combination 0.|))
+}
+
+#   Apply the operator for the TheName construction
+sp {comprehend-word*apply*match-construction*TheName
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name match-construction
+        ^cxn-name TheName
+        ^spec <spec>
+        ^name-lex <name-lex>
+        ^previous <previous>)
+-->
+   (<s> ^cxn-new <cxn-new>)
+   (<cxn-new> ^cxn-name TheName
+              ^is <a>
+              ^f <form>
+              ^m <meaning>
+              ^constituents <constituents>
+              ^spec <spec>
+              ^name-lex <name-lex>
+              ^evokes <e-meaning>
+              ^previous <previous>)
+   (<a> ^a TheName)
+   (<constituents> ^spec <spec>
+                   ^name-lex <name-lex>)
+   (<e-meaning> ^schema Name
+                ^target <meaning>)
+   #   Write a message for the construction that matched.
+   (write (crlf) (concat |Matched a TheName construction.|))
+}
+
+#   Propose an operator for the NameDefinitionSentence construction
+sp {comprehend-word*propose*match-construction*NameDefinitionSentence
    (state <s> ^problem-space comprehend-word
               ^lexical-access done)
    #   Look for the constituents
@@ -85,77 +146,100 @@ sp {comprehend-word*propose*match-construction*WordDefinitionSentence
    (<word> ^is.a UNKNOWN-WORD
            ^previous <tobe>)
    (<tobe> ^is.a FiniteToBe
-           ^previous <object>)
-   (<object> ^is.a RefExpr
-             ^previous <previous>)
+           ^previous <prep-phrase>)
+   (<prep-phrase> ^is.a SimplePrepPhrase
+                  ^previous <name-np>)
+   (<name-np> ^is.a TheName
+              ^previous <previous>)
 -->
    (<s> ^operator <o> +)
    (<o> ^name match-construction
         ^type construction
-        ^cxn-name WordDefinitionSentence
-        ^span 3
+        ^cxn-name NameDefinitionSentence
+        ^span 4
+        ^lexicals 1
         ^word <word>
         ^tobe <tobe>
-        ^object <object>
+        ^prep-phrase <prep-phrase>
+        ^name-np <name-np>
         ^previous <previous>
-        ^debug-info (concat |Match a WordDefinitionSentence construction, combination 0.|))
+        ^debug-info (concat |Match a NameDefinitionSentence construction, combination 0.|))
 }
 
-#   Apply the operator for the WordDefinitionSentence construction
-sp {comprehend-word*apply*match-construction*WordDefinitionSentence
+#   Apply the operator for the NameDefinitionSentence construction
+sp {comprehend-word*apply*match-construction*NameDefinitionSentence
    (state <s> ^problem-space comprehend-word
               ^operator <o>)
    (<o> ^name match-construction
-        ^cxn-name WordDefinitionSentence
-        ^object <object>
+        ^cxn-name NameDefinitionSentence
+        ^name-np <name-np>
+        ^prep-phrase <prep-phrase>
         ^tobe <tobe>
         ^word <word>
         ^previous <previous>)
 -->
    (<s> ^cxn-new <cxn-new>)
-   (<cxn-new> ^cxn-name WordDefinitionSentence
+   (<cxn-new> ^cxn-name NameDefinitionSentence
               ^is <a>
               ^f <form>
               ^m <meaning>
               ^constituents <constituents>
-              ^object <object>
+              ^name-np <name-np>
+              ^prep-phrase <prep-phrase>
               ^tobe <tobe>
               ^word <word>
               ^evokes <e-meaning>
               ^previous <previous>)
-   (<a> ^a WordDefinitionSentence)
-   (<constituents> ^object <object>
+   (<a> ^a NameDefinitionSentence)
+   (<constituents> ^name-np <name-np>
+                   ^prep-phrase <prep-phrase>
                    ^tobe <tobe>
                    ^word <word>)
-   (<e-meaning> ^schema WordDefinition
+   (<e-meaning> ^schema NameDefinition
                 ^target <meaning>)
    #   Write a message for the construction that matched.
-   (write (crlf) (concat |Matched a WordDefinitionSentence construction.|))
+   (write (crlf) (concat |Matched a NameDefinitionSentence construction.|))
 }
 
-#   WordDefinitionSentence self.m.object <--> object.m constraint
-sp {comprehend-word*WordDefinitionSentence-constraint*self-m-object*UNIFY*object-m
+#   NameDefinitionSentence self.m.name <--> name-np.m constraint
+sp {comprehend-word*NameDefinitionSentence-constraint*self-m-name*UNIFY*name-np-m
    (state <s> ^problem-space comprehend-word
               ^operator <o>
               ^cxn-new <cxn>)
    (<o> ^type construction)
-   (<cxn> ^is.a WordDefinitionSentence
+   (<cxn> ^is.a NameDefinitionSentence
           ^m <l-slot1>
-          ^object <r-slot1>)
-   (<l-slot1> ^object { <target> <> <value> })
+          ^name-np <r-slot1>)
+   (<l-slot1> ^name { <target> <> <value> })
    (<r-slot1> ^m <value>)
 -->
-   (<l-slot1> ^object <target> -
-              ^object <value>)
+   (<l-slot1> ^name <target> -
+              ^name <value>)
 }
 
-#   WordDefinitionSentence self.m.word <--> word.word.orth constraint
-sp {comprehend-word*WordDefinitionSentence-constraint*self-m-word*UNIFY*word-word-orth
+#   NameDefinitionSentence self.m.relation <--> prep-phrase.m constraint
+sp {comprehend-word*NameDefinitionSentence-constraint*self-m-relation*UNIFY*prep-phrase-m
    (state <s> ^problem-space comprehend-word
               ^operator <o>
               ^cxn-new <cxn>)
    (<o> ^type construction)
-   (<cxn> ^is.a WordDefinitionSentence
+   (<cxn> ^is.a NameDefinitionSentence
+          ^m <l-slot1>
+          ^prep-phrase <r-slot1>)
+   (<l-slot1> ^relation { <target> <> <value> })
+   (<r-slot1> ^m <value>)
+-->
+   (<l-slot1> ^relation <target> -
+              ^relation <value>)
+}
+
+#   NameDefinitionSentence self.m.word <--> word.word.orth constraint
+sp {comprehend-word*NameDefinitionSentence-constraint*self-m-word*UNIFY*word-word-orth
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn-new <cxn>)
+   (<o> ^type construction)
+   (<cxn> ^is.a NameDefinitionSentence
           ^m <l-slot1>
           ^word <r-slot1>)
    (<l-slot1> ^word { <target> <> <value> })
@@ -266,39 +350,41 @@ sp {comprehend-word*evoked-schema*Puzzle*exists
          ^value puzzle1)
 }
 
-#   WordDefinition schema
-sp {comprehend-word*evoked-schema*WordDefinition*create
+#   NameDefinition schema
+sp {comprehend-word*evoked-schema*NameDefinition*create
    (state <s> ^problem-space comprehend-word
               ^operator <o>
               ^<< cxn cxn-new >> <cxn>)
    (<o> ^type construction)
    (<cxn> ^evokes <evoked>)
-   (<evoked> ^schema WordDefinition
+   (<evoked> ^schema NameDefinition
              ^target <e-target>)
    (<e-target> -^is <a>)
 -->
    (<cxn> ^evokes <evoked> -)
-   (<e-target> ^schema-name WordDefinition
+   (<e-target> ^schema-name NameDefinition
                ^is <a>
                ^word nil
-               ^object nil)
-   (<a> ^a WordDefinition)
+               ^relation nil
+               ^name nil)
+   (<a> ^a NameDefinition)
 }
 
-#   WordDefinition schema
-sp {comprehend-word*evoked-schema*WordDefinition*exists
+#   NameDefinition schema
+sp {comprehend-word*evoked-schema*NameDefinition*exists
    (state <s> ^problem-space comprehend-word
               ^operator <o>
               ^<< cxn cxn-new >> <cxn>)
    (<o> ^type construction)
    (<cxn> ^evokes <evoked>)
-   (<evoked> ^schema WordDefinition
+   (<evoked> ^schema NameDefinition
              ^target <e-target>)
    (<e-target> ^is <a>)
 -->
    (<cxn> ^evokes <evoked> -)
    (<e-target> ^word nil
-               ^object nil)
-   (<a> ^a WordDefinition)
+               ^relation nil
+               ^name nil)
+   (<a> ^a NameDefinition)
 }
 

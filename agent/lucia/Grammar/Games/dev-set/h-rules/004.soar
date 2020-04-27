@@ -1,0 +1,202 @@
+##!
+# @file
+#
+# @created plindes 20200312
+# File: 002.soar
+# Author: Peter Lindes
+# Created: 7 April 2020
+#
+# Desc: This file contains all the processing rules
+#       needed to add to be able to process sentence #004
+#       of the Games development set.
+#
+
+#   A snip is needed to parse a sentence of this form:
+#       You can move a clear block onto a clear object.
+
+#######  Snip a EnabledCommandSentence if a SimplePrepPhrase follows   #####################
+
+#    Propose an operator to snip a EnabledCommandSentence
+#    to attach a PrepPhrase to the command
+sp {comprehend-word*propose*snip*enabled-command-before-prep-phrase
+   (state <s> ^problem-space comprehend-word
+              ^cxn <prep-phrase>
+              ^lexical-access done)
+   #    Find the PrepPhrase
+   (<prep-phrase> ^is.a PrepPhrase
+                  ^previous <enabled-command>)
+   #    See whether what came before is a EnabledCommandSentence
+   (<enabled-command> ^is.a EnabledCommandSentence)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name snip
+        ^type snip
+        ^goal enabled-command-before-prep-phrase
+        ^debug-info
+        |Snip a EnabledCommandSentence to attach a PrepPhrase.|)
+}
+
+#    Snip away the EnabledCommandSentence to get to its Imperative
+sp {comprehend-word*apply*snip*enabled-command-before-prep-phrase
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <prep-phrase>)
+   (<o> ^name snip
+        ^type snip
+        ^goal enabled-command-before-prep-phrase)
+   #    Get info for the snip
+   (<prep-phrase> ^previous <command>)    #   The thing to be cut
+   (<command> ^command <imperative>)          #   What to cut to
+-->
+   #    THIS IS THE SNIP!!!
+   #    Change the previous pointer
+   #    This will orphan the SimpleAction and
+   #    leave it to be garbage collected.
+   #    Instead we'll point to its constituent,
+   #    allowing that to be matched
+   (<prep-phrase> ^previous <command> -
+                  ^previous <imperative>)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <command> | to get to | <imperative> |.|))
+}
+
+
+#   Propose an operator to interpret a EnabledCommand
+#   This operator uses the newer strategy of building
+#   a message directly in interpret without going on
+#   to the act operator.
+sp {interpret*propose*do-enabled-command
+   (state <s> ^problem-space interpret
+              ^comprehension <c>
+              ^discourse <d>
+              ^message nil)
+   (<c> ^cxn-stack <cxn>)
+   (<cxn> ^m <m>   #   Sometimes we need to see the syntax
+          ^previous nil)    #   Otherwise there was a syntax error
+   (<m> ^is.a EnabledCommand)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name do-enabled-command
+        ^type msg-interpretation
+        ^cxn <cxn>
+        ^meaning <m>
+        ^discourse <d>
+        ^debug-info (concat |Interpret an EnabledCommand.|))
+}
+
+#   Build a message for an EnabledCommand like this one:
+#       You can move a clear block onto a clear object.
+# TAKE THIS MEANING:
+#(M19 ^command M18 ^enabler M3 ^is A52 ^schema-name EnabledCommand ^source I27
+#       ^text |You can move a clear block onto a clear object.|)
+#  (M18 ^action M10 ^direction nil ^is A50 ^location M17 ^schema-name Action
+#         ^source I26 ^text |move a clear block onto a clear object.|)
+#    (M10 ^action M5 ^direction nil ^is A26 ^location nil ^object M9
+#           ^schema-name ActOnIt ^source I18 ^text |move a clear block|)
+#      (M5 ^action L19 (@101101) ^class action ^is A11 ^modifier nil
+#             ^name move1 ^schema-name ActionDescriptor ^source I13 ^text move)
+#      (A26 ^a ActOnIt ^a Action)
+#      (M9 ^category M8 ^givenness indefinite ^is A24 ^modifiers M7 ^name Block
+#             ^referent O57 ^relation nil ^schema-name RefDesc ^source I17
+#             ^text |a clear block|)
+#      (I18 ^left 2 ^right 5)
+#    (A50 ^a Action)
+#    (M17 ^is A46 ^object M16 ^prep on1 ^schema-name PrepRelation ^source I25
+#           ^text |onto a clear object.|)
+#      (A46 ^a PrepRelation)
+#      (M16 ^category M15 ^givenness indefinite ^is A44 ^modifiers M14
+#             ^name Object ^referent O83 ^relation nil ^schema-name RefDesc
+#             ^source I24 ^text |a clear object.|)
+#      (I25 ^left 6 ^right 9)
+#    (I26 ^left 2 ^right 9)
+#  (M3 ^ability nil ^agent M1 ^is A8 ^schema-name Enabler ^source I11
+#         ^text |You can|)
+#    (M1 ^category animate ^givenness pronoun ^is A3 ^modifiers nil ^name nil
+#           ^referent R4 ^relation nil ^schema-name RefDesc ^source I9
+#           ^text You)
+#      (A3 ^a RefDesc)
+#      (R4 ^arm A1 ^handle rosie ^item-type object ^predicates P2)
+#      (I9 ^left 0 ^right 0)
+#    (A8 ^a Enabler)
+#    (I11 ^left 0 ^right 1)
+#  (A52 ^a EnabledCommand)
+#  (I27 ^left 0 ^right 9)
+#
+#   The object referents
+#(O57 ^handle new-object-id1 ^item-type object ^predicates P26
+#       ^predicates-copied true)
+#  (P26 ^category block ^dialog-object true ^state clear ^visible false)
+#(O83 ^handle new-object-id2 ^item-type object ^predicates P27
+#       ^predicates-copied true)
+#  (P27 ^category block ^dialog-object true ^state clear ^visible false)
+#
+#   The action - old version + changes: ^subactions -> subtasks
+#(L19 ^goal L20 (@999018) ^handle move1 ^item-type action
+#       ^procedural L21 (@999019))
+#  (L20 ^predicate L22 (@999026))
+#    (L22 ^1 L23 (@999023) ^2 L25 (@999025) ^id L24 (@999024) ^type relation)
+#  (L21 ^arg1 L27 (@999021) ^arg2 L26 (@999020) ^op_name op_move1
+#         ^subtasks L28 (@999022))
+#    (L27 ^arg-status real ^arg-type object ^id L23 (@999023)
+#           ^importance required)
+#    (L26 ^2 L25 (@999025) ^arg-status desired ^arg-type predicate
+#           ^id L24 (@999024) ^importance required)
+#
+# AND BUILD A MESSAGE LIKE THIS:
+#(I121 ^action N67 ^action-modifier N65 ^agent R287 ^arg1 P104 ^arg2 I146
+#       ^message-type command)
+#  (N67 ^goal-graph L232 (@665) ^handle move1 ^item-type action
+#         ^procedural L233 (@664))
+#    (L232 . . .
+#    (L233 ^arg1 L240 (@666) ^arg2 L241 (@667) ^op_name op_move1
+#           ^subtasks L242 (@668))
+#      (L240 ^arg-type object ^id L237 (@669) ^required true)
+#      (L241 ^2 L238 (@671) ^arg-type partial-predicate ^id L239 (@670)
+#             ^required true)
+#  (N65 ^handle can)
+#  (R287 ^arm A4 ^debug-id rob ^handle rosie ^item-type object ^predicate P49)
+#    (A4 ^action wait ^holding-object false)
+#    (P49 ^handle rosie)
+#  (P104 ^handle new-object-id4 ^item-type object ^predicates P105
+#         ^predicates-copied true)
+#    (P105 ^category block ^dialog-object true ^is-visible1 not-visible1
+#           ^property clear)
+#  (I146 ^2 P114 ^handle on1 ^item-type predicate)
+#    (P114 ^handle new-object-id5 ^item-type object ^predicates P115
+#           ^predicates-copied true)
+#      (P115 ^category object ^dialog-object true ^is-visible1 not-visible1
+#             ^property clear)
+sp {interpret*apply*do-enabled-command
+   (state <s> ^problem-space interpret
+              ^operator <o>
+              ^message nil)
+   (<o> ^name do-enabled-command
+        ^meaning <m>)
+   (<m> ^is.a EnabledCommand
+        ^enabler <enabler>
+        ^command <command>)
+   #    Get the various attributes of the message
+   (<enabler> ^agent.referent <agent>
+              ^ability <ability>)
+   (<command> ^action.action.action <action>
+              ^action.object.referent <arg1>
+              ^location <location>)
+   (<location> ^prep <prep>
+               ^object.referent <object>)
+-->
+   #    Build the message
+   (<s> ^message nil -
+        ^message <message>)
+   (<message> ^message-type command
+              ^agent <agent>
+              ^action <action>
+              ^action-modifier <modifier>
+              ^arg1 <arg1>
+              ^arg2 <arg2>)
+   (<modifier> ^handle <ability>)
+   (<arg2> ^item-type predicate
+           ^handle <prep>
+           ^2 <object>)
+}
+
+

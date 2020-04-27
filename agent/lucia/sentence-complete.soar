@@ -14,6 +14,9 @@
 #    from the top state and put the message that was built
 #    on the interaction stack.
 #
+#    If we are in hypothetical mode, delete from the world
+#    all objects that have ^dialog-object true.
+#
 
 
 ##############  SENTENCE-COMPLETE FOR LUCIA MODE    #########################
@@ -54,6 +57,28 @@ sp {top-state*apply*sentence-complete
          ^action-results <results> -
          ^comprehension <comprehension> -)
    (<status> ^new-message <message>)
+}
+
+#   In hypothetical mode, delete from the world
+#   all objects that have ^dialog-object true.
+sp {top-state*apply*sentence-complete*delete-hypothetical-objects
+   (state <s> ^top-state <ts> 
+              ^problem-space comprehender
+              ^operator <o>
+              ^comprehension <c>
+              ^world.objects <objects>)
+   (<o> ^name sentence-complete)
+   (<ts> ^agent-params <params>
+         ^comprehension <c>)
+   (<params> ^parser lucia)
+   #    Only do this for a hypothetical sentence
+   (<c> ^hypothetical true)
+   #    Look for something to delete
+   (<objects> ^object <object>)
+   (<object> ^ predicates.dialog-object true)
+-->
+   #    Delete the object
+   (<objects> ^object <object> -)
 }
 
 
@@ -99,4 +124,25 @@ sp {dialog-event*apply*sentence-complete
    (<performed> ^dialog-event <d>)
    (<d> ^originator agent
         ^type process-sentence)
+}
+
+#   In hypothetical mode, delete from the world
+#   all objects that have ^dialog-object true.
+sp {dialog-event*apply*sentence-complete*delete-hypothetical-objects
+   (state <s> ^top-state <ts> 
+              ^problem-space comprehender
+              ^operator <o>)
+   (<o> ^name sentence-complete)
+   (<ts> ^agent-params <params>
+         ^comprehension <c>
+         ^world.objects <objects>)
+   (<params> ^parser lucia)
+   #    Only do this for a hypothetical sentence
+   (<c> ^hypothetical true)
+   #    Look for something to delete
+   (<objects> ^object <object>)
+   (<object> ^ predicates.dialog-object true)
+-->
+   #    Delete the object
+   (<objects> ^object <object> -)
 }
