@@ -654,7 +654,7 @@ Speak a message, can be directed at a specific person
 ```
 
 *Proposal:* <br>
-`message(arg1), person(per), confirmed1(per), !heard2(per, arg1)`
+`message(arg1), sentence(arg1, s), person(per), visible1(per), !heard2(per, arg1)`
 
 *Goal:* <br>
 `if arg2 -> heard2(per, arg1)` <br>
@@ -665,8 +665,38 @@ Speak a message, can be directed at a specific person
 
 *Execute:* (All domains) <br>
 requires `visible1(per)`
-* Send an outgoing-message and mark the sentence as being heard by the person
-* If arg1 has a sentence, will say verbatim, otherwise, will describe the object
+* Send an outgoing-message saying the sentence
+* Mark the sentence as being heard by the person
+
+
+<!-- ================================== DESCRIBE ========================================= -->
+<a name="describe"></a>
+
+## Describe
+Describe an object in the world, can be directed at a specific person. 
+> *Say the grabbed object. Say the emergency location to Bob.*
+
+```
+([o] ^name op_describe1
+     ^task-handle describe1
+     ^arg1 [type:object])  # The object to describe
+     ^arg2 [type:partial-predicate]) # to a person (optional); arg2 = to1(per)
+```
+
+*Proposal:* <br>
+`object(arg1), person(per), visible1(per), !heard2(per, arg1)`
+
+*Goal:* <br>
+`if arg2 -> heard2(per, arg1)` <br>
+`no arg2 -> execute-command(describe)`
+
+*Action Model:* <br>
+`+heard2(per, arg1)`
+
+*Execute:* (All domains) <br>
+requires `visible1(per)`
+* Send an outgoing-message describing the object
+* Mark the object as being heard by the person
 
 
 <!-- ================================== ASK ========================================= -->
