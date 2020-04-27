@@ -1,0 +1,178 @@
+##!
+# @file
+#
+# @created plindes 20200420
+# File: 002.soar
+# Author: Peter Lindes
+# Created: 20 April 2020
+#
+# Desc: This file contains all the processing rules
+#       needed to add to be able to process sentence #005
+#       of the Games development set, which is:
+#   If a location is not below an object then it is clear.
+#
+
+
+#   Propose an operator to interpret an IfThenStatement
+#   This operator uses the newer strategy of building
+#   a message directly in interpret without going on
+#   to the act operator.
+sp {interpret*propose*do-if-then-statement
+   (state <s> ^problem-space interpret
+              ^comprehension <c>
+              ^discourse <d>
+              ^message nil)
+   (<c> ^cxn-stack <cxn>)
+   (<cxn> ^m <m>   #   Sometimes we need to see the syntax
+          ^previous nil)    #   Otherwise there was a syntax error
+   (<m> ^is.a IfThenStatement)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name do-if-then-statement
+        ^type msg-interpretation
+        ^cxn <cxn>
+        ^meaning <m>
+        ^discourse <d>
+        ^debug-info (concat |Interpret an IfThenStatement.|))
+}
+
+#   Build a message for an IfThenStatement like this one:
+#       If a location is not below an object then it is clear.
+# TAKE THIS MEANING:
+#(M23 ^condition M15 ^is A67 ^schema-name IfThenStatement ^source I30
+#       ^statement M22
+#       ^text |If a location is not below an object then it is clear.|)
+#  (M15 ^is A42 ^modifier M8 ^preprel M14 ^schema-name PrepPhraseAssertion
+#         ^source I22 ^target M6 ^text |a location is not below an object|)
+#    (A42 ^a PrepPhraseAssertion ^a Assertion)
+#    (M8 ^id negation ^is A22 ^modifier L23 (@999138) ^schema-name VerbModifier
+#           ^source I15 ^text not)
+#      (A22 ^a VerbModifier)
+#      (L23 ^handle negation)
+#      (I15 ^left 4 ^right 4)
+#    (M14 ^is A38 ^object M13 ^prep below1 ^schema-name PrepRelation
+#           ^source I21 ^text |below an object|)
+#      (A38 ^a PrepRelation)
+#      (M13 ^category M12 ^givenness indefinite ^is A36 ^modifiers nil
+#             ^name Object ^referent O67 ^relation nil ^schema-name RefDesc
+#             ^source I20 ^text |an object|)
+#        (M12 ^color nil ^is A32 ^movable nil ^rosie-category block
+#               ^schema-name Object ^shape nil ^size nil ^source I19 ^state nil
+#               ^text object)
+#          (A32 ^a RosieObject ^a Object ^a Entity)
+#          (I19 ^left 7 ^right 7)
+#        (A36 ^a RefDesc)
+#        (O67 ^handle new-object-id2 ^item-type object ^predicates P28
+#               ^predicates-copied true)
+#          (P28 ^category block ^dialog-object true ^is-visible1 not-visible1)
+#        (I20 ^left 6 ^right 7)
+#      (I21 ^left 5 ^right 7)
+#    (I22 ^left 1 ^right 7)
+#    (M6 ^givenness indefinite ^is A17 ^predicate L19 (@407005) ^property nil
+#           ^referent O38 ^schema-name PropertySetDescriptor ^source I13
+#           ^text |a location|)
+#      (A17 ^a PropertySetDescriptor)
+#      (L19 ^handle location ^multiple true ^property L20 (@407000))
+#        (L20 ^handle category ^item-type property ^type visual)
+#      (O38 ^handle new-object-id1 ^item-type object ^predicates P27
+#             ^predicates-copied true)
+#        (P27 ^category object ^dialog-object true ^is-visible1 not-visible1)
+#      (I13 ^left 1 ^right 2)
+#  (A67 ^a IfThenStatement)
+#  (I30 ^left 0 ^right 11)
+#  (M22 ^is A63 ^property M21 ^schema-name PropertyApplication ^source I29
+#         ^target M19 ^text |it is clear.|)
+#    (A63 ^a PropertyApplication ^a Assertion)
+#    (M21 ^class property ^is A60 ^name clear ^next nil
+#           ^predicate L31 (@4014304) ^schema-name PropertyDescriptor
+#           ^source I28 ^text |clear.|)
+#      (A60 ^a PropertyDescriptor)
+#      (L31 ^handle clear ^property L32 (@4014000))
+#        (L32 ^handle property ^item-type property ^type visual)
+#      (I28 ^left 11 ^right 11)
+#    (I29 ^left 9 ^right 11)
+#    (M19 ^category inanimate ^givenness pronoun ^is A53 ^modifiers nil
+#           ^name nil ^referent nil ^relation nil ^schema-name RefDesc
+#           ^source I26 ^text it)
+#      (A53 ^a RefDesc)
+#      (I26 ^left 9 ^right 9)
+#
+# AND BUILD A MESSAGE LIKE THIS:
+#(I198 ^if-subclause I209 ^message-type conditional ^then-subclause I227)
+#  (I209 ^action N175 ^arg1 P190 ^modifier N187 ^predicate I221)
+#    (N175 ^handle is1 ^item-type action)
+#    (P190 ^handle new-object-id8 ^item-type object ^predicates P191
+#           ^predicates-copied true)
+#      (P191 ^category location ^dialog-object true ^is-visible1 not-visible1)
+#    (N187 ^handle negation ^modifier true)
+#    (I221 ^2 P210 ^handle below1 ^item-type predicate)
+#      (P210 ^handle new-object-id9 ^item-type object ^predicates P211
+#             ^predicates-copied true)
+#        (P211 ^category object ^dialog-object true ^is-visible1 not-visible1)
+#  (I227 ^action N211 ^arg1 P190 ^predicate N224)
+#    (N211 ^handle is1 ^item-type action)
+#    (N224 ^handle clear ^item-type predicate ^property L859 (@100161))
+#      (L859 ^handle property ^type visual)
+
+#   There are likely to be many variations of IfThenStatement.
+#   The following rule will handle the Games/005 sentence:
+#     If a location is not below an object then it is clear.
+#   Other variations may need different rules, since
+#   these rules need to deal with a lot of details.
+sp {interpret*apply*do-if-then-statement*games-005
+   (state <s> ^problem-space interpret
+              ^operator <o>
+              ^message nil)
+   (<o> ^name do-if-then-statement
+        ^meaning <m>)
+   (<m> ^is.a IfThenStatement
+        ^condition { <condition> <> nil }
+        ^statement { <statement> <> nil })
+   (<condition> ^is.a PrepPhraseAssertion
+                ^preprel <prep-rel>
+                ^target <if-target>
+                ^modifier.id negation)
+   (<if-target> ^is.a PropertySetDescriptor
+             ^referent <pp-target>)
+   (<prep-rel> ^prep <prep>
+               ^object.referent <pp-object>)
+   #    The subject of the PropertyApplication
+   #    is the target referent we want.
+   #    This should work for any RefExpr as the subject,
+   #    including "it."
+   (<statement> ^is.a PropertyApplication
+                ^property <property>
+                ^target.referent <target-referent>)
+   (<property> ^is.a PropertyDescriptor
+               ^class property
+               ^name <prop-name>
+               ^predicate.property <prop-predicate>)
+-->
+   #    Build the message
+   (<s> ^message nil -
+        ^message <message>)
+   (<message> ^message-type conditional
+              ^if-subclause <if-clause>
+              ^then-subclause <then-clause>)
+   #    Build the condition
+   (<if-clause> ^predicate <if-predicate>
+                ^modifier <negation>
+                ^arg1 <pp-target>
+                ^action <if-action>)
+   (<if-action> ^item-type action
+                ^handle is1)
+   (<negation> ^modifier true
+               ^handle negation)
+   (<if-predicate> ^2 <pp-object>
+                   ^handle <prep>
+                   ^item-type predicate)
+   #    Build the statement
+   (<then-clause> ^predicate <then-predicate>
+                  ^arg1 <target-referent>
+                  ^action <then-action>)
+   (<then-action> ^item-type action
+                  ^handle is1)
+   (<then-predicate> ^property <prop-predicate>
+                     ^handle <prop-name>
+                     ^item-type predicate)
+}

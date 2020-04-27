@@ -409,6 +409,40 @@ sp {comprehend-word*apply*ground-reference*post-color-filter
              ^value <color>)
 }
 
+sp {comprehend-word*apply*ground-reference*post-state-filter
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   (<ref-desc> ^category <rosie-ref-desc>)
+   #    Get the state
+   (<rosie-ref-desc> ^state { <state> <> nil })
+-->
+   #    Post a state filter
+   (<s> ^filter <filter>)
+   (<filter> ^class state
+             ^value <state>)
+}
+
+#   If we are in hypothetical mode, we want to filter
+#   out all concrete objects for a definite RefDesc.
+#   This means filter out all with ^dialog-object true.
+sp {comprehend-word*apply*ground-reference*post-hypothetical-filter
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              #    Look for the hypothetical flag
+              ^superstate.comprehension.hypothetical true)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   #    Only if the RefDesc is definite
+   (<ref-desc> ^givenness definite)
+-->
+   #    Post a state filter
+   (<s> ^filter <filter>)
+   (<filter> ^class dialog-object
+             ^value true)
+}
+
 #	Apply any filter that has been posted
 sp {comprehend-word*apply*ground-reference*apply-filter
    (state <s> ^problem-space comprehend-word
@@ -559,8 +593,9 @@ sp {comprehend-word*apply*ground-reference*done-none
    #	Post the referent on the RefDesc
    (<ref-desc> ^referent nil -
                ^referent NONE)
-   #	Set done flag
-   (<s> ^reference resolved)
+   #    Set done flag and clear the modifiers
+   (<s> ^reference resolved
+        ^modifiers nil -)
 }
 
 #   Finish resolution - found none, special case for "one"
@@ -590,8 +625,9 @@ sp {comprehend-word*apply*ground-reference*done-none*one
    #    Post the referent on the RefDesc
    (<ref-desc> ^referent nil -
                ^referent NONE)
-   #    Set done flag
-   (<s> ^reference resolved)
+   #    Set done flag and clear the modifiers
+   (<s> ^reference resolved
+        ^modifiers nil -)
 }
 
 #	Finish resolution - some were already there
@@ -606,6 +642,7 @@ sp {comprehend-word*apply*ground-reference*done-already-there
    #	Ignoring givenness for now
    (<ref-desc> ^referent { <referent> <> nil })	#	Some referents on the RefDesc
 -->
-   #	Set done flag, leave referents there
-   (<s> ^reference resolved)
+   #    Set done flag and clear the modifiers
+   (<s> ^reference resolved
+        ^modifiers nil -)
 }
