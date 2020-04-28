@@ -4,6 +4,9 @@ script: rand-move.script
 
 world: rand-move.world
 
+run_mobile_sim: rand-move.world
+	java soargroup.mobilesim.MobileGUI -w rand-move.world
+
 run_evaluation: agent/rosie.eval-rand-move.config
 	java soargroup.mobilesim.MobileGUI -w rand-move.world &
 	python3 -m rosie.evaluation.rand_move
