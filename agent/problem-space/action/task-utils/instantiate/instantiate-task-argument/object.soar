@@ -1,6 +1,10 @@
 ### INSTANTIATE OBJECT
 
 
+### MATCH-TYPE PROCEDURAL: 
+# The object-slot matches a slot on the reference TCN, 
+#    Use that link to instantiate the object (connect to same world object)
+
 ## object procedural match depth 1
 sp {task-utils*instantiate-task-operator*propose*instantiate-task-argument*object*matches*procedural*depth*1
    (state <s> ^instantiate-task-argument <arg>
@@ -43,29 +47,37 @@ sp {task-utils*instantiate-task-operator*propose*instantiate-task-argument*objec
        ^id <obj>)
 }
 
-sp {task-utils*instantiate-task-operator*reject*instantiate-task-argument*object*if*always-implicit
-   (state <s> ^instantiate-task-argument <arg>
-              ^operator <o> +
-              ^general-task-rep.<arg-name>.always-implicit true)
-  (<o> ^name instantiate-task-argument
-       ^argument <arg>
-       ^match-type << procedural default >>)
-   (<arg> ^arg-name <arg-name>)
--->
-  (<s> ^operator <o> -)
-}
-
-# SPCASE
-sp {task-utils*instantiate-task-operator*reject*instantiate-task-argument*object*if*has*sentence
+## If the argument is marked as abstract, reject procedural match
+sp {task-utils*instantiate-task-operator*reject*instantiate-task-argument*object*procedural*if*abstract
    (state <s> ^instantiate-task-argument <arg>
               ^operator <o> +)
   (<o> ^name instantiate-task-argument
        ^argument <arg>
-       ^match-type << procedural default >>)
-   (<arg> ^general-arg-rep.id.default.sentence <sent>)
+       ^match-type procedural)
+   (<arg> ^general-arg-rep.id.abstract true)
 -->
   (<s> ^operator <o> -)
 }
+
+## Apply - just use the object given by the procedural link
+sp {task-utils*instantiate-task-operator*apply*instantiate-task-argument*object*procedural*create*instantiation
+  (state <s> ^operator <o>)
+  (<o> ^name instantiate-task-argument
+       ^argument <arg>
+       ^arg-type object
+       ^match-type procedural
+       ^id <obj>)
+-->
+  (<arg> ^instantiation <i>)
+  (<i> ^id <obj>)
+}
+
+
+
+
+### MATCH-TYPE DEFAULT: 
+# The default representation on the object slot matches a world object
+
 
 # ENUMERATE: 1-8 OBJECT PREDICATES
 
@@ -285,6 +297,39 @@ sp {task-utils*instantiate-task-operator*propose*instantiate-task-argument*objec
        ^id <obj>)
 }
 
+## If the argument is marked as abstract, reject default match
+sp {task-utils*instantiate-task-operator*reject*instantiate-task-argument*object*default*if*abstract
+   (state <s> ^instantiate-task-argument <arg>
+              ^operator <o> +)
+  (<o> ^name instantiate-task-argument
+       ^argument <arg>
+       ^match-type default)
+   (<arg> ^general-arg-rep.id.abstract true)
+-->
+  (<s> ^operator <o> -)
+}
+
+## Apply - use the matched world object
+sp {task-utils*instantiate-task-operator*apply*instantiate-task-argument*object*default*create*instantiation
+  (state <s> ^operator <o>)
+  (<o> ^name instantiate-task-argument
+       ^argument <arg>
+       ^arg-type object
+       ^match-type default
+       ^id <obj>)
+-->
+  (<arg> ^instantiation <i>)
+  (<i> ^id <obj>)
+}
+
+
+
+
+
+### MATCH-TYPE ABSTRACT: 
+# Don't even try to match the world/task, just create a new object representation using the default predicates
+
+
 ## object abstract match
 sp {task-utils*instantiate-task-operator*propose*instantiate-task-argument*object*matches*abstract
   (state <s> ^instantiate-task-argument <arg>)
@@ -300,18 +345,15 @@ sp {task-utils*instantiate-task-operator*propose*instantiate-task-argument*objec
        ^object-rep <def>)
 }
 
-### APPLICATION ###
-
-sp {task-utils*instantiate-task-operator*apply*instantiate-task-argument*object*procedural*default*create*instantiation
+sp {task-utils*instantiate-task-operator*apply*instantiate-task-argument*object*abstract*TESTING
   (state <s> ^operator <o>)
   (<o> ^name instantiate-task-argument
-       ^argument <arg>
        ^arg-type object
-       ^match-type << procedural default >>
-       ^id <obj>)
+       ^match-type abstract
+      -^argument.general-arg-rep.id.abstract true)
 -->
-  (<arg> ^instantiation <i>)
-  (<i> ^id <obj>)
+   (interrupt)
+   (write (crlf) |instantiate task object - abstract match for non-abstract object| (crlf))
 }
 
 ## ENUMERATE: 1-8 OBJECT PREDICATES (in smem default rep)
@@ -328,8 +370,9 @@ sp {task-utils*instantiate-task-operator*apply*instantiate-task-argument*object*
    -{(<rep> ^<prop2> { <pred2> <> <pred1> })}
 -->
   (<arg> ^instantiation <i>)
-  (<i> ^id <obj> ^abstract true)
-  (<obj> ^predicates <preds>)
+  (<i> ^id <obj>)
+  (<obj> ^abstract true
+         ^predicates <preds>)
   (<preds> ^<prop1> <pred1>)
 }
 
@@ -346,8 +389,9 @@ sp {task-utils*instantiate-task-operator*apply*instantiate-task-argument*object*
    -{(<rep> ^<prop3> { <pred3> <> <pred1> <> <pred2> })}
 -->
   (<arg> ^instantiation <i>)
-  (<i> ^id <obj> ^abstract true)
-   (<obj> ^predicates <preds>)
+  (<i> ^id <obj>)
+  (<obj> ^abstract true
+         ^predicates <preds>)
    (<preds> ^<prop1> <pred1>
             ^<prop2> <pred2>)
 }
@@ -366,8 +410,9 @@ sp {task-utils*instantiate-task-operator*apply*instantiate-task-argument*object*
    -{(<rep> ^<prop4> { <pred4> <> <pred1> <> <pred2> <> <pred3> })}
 -->
   (<arg> ^instantiation <i>)
-  (<i> ^id <obj> ^abstract true)
-   (<obj> ^predicates <preds>)
+  (<i> ^id <obj>)
+  (<obj> ^abstract true
+         ^predicates <preds>)
    (<preds> ^<prop1> <pred1>
             ^<prop2> <pred2>
             ^<prop3> <pred3>)
@@ -388,8 +433,9 @@ sp {task-utils*instantiate-task-operator*apply*instantiate-task-argument*object*
    -{(<rep> ^<prop5> { <pred5> <> <pred1> <> <pred2> <> <pred3> <> <pred4> })}
 -->
   (<arg> ^instantiation <i>)
-  (<i> ^id <obj> ^abstract true)
-   (<obj> ^predicates <preds>)
+  (<i> ^id <obj>)
+  (<obj> ^abstract true
+         ^predicates <preds>)
    (<preds> ^<prop1> <pred1>
             ^<prop2> <pred2>
             ^<prop3> <pred3>
@@ -412,8 +458,9 @@ sp {task-utils*instantiate-task-operator*apply*instantiate-task-argument*object*
    -{(<rep> ^<prop6> { <pred6> <> <pred1> <> <pred2> <> <pred3> <> <pred4> <> <pred5> })}
 -->
   (<arg> ^instantiation <i>)
-  (<i> ^id <obj> ^abstract true)
-   (<obj> ^predicates <preds>)
+  (<i> ^id <obj>)
+  (<obj> ^abstract true
+         ^predicates <preds>)
    (<preds> ^<prop1> <pred1>
             ^<prop2> <pred2>
             ^<prop3> <pred3>
@@ -438,8 +485,9 @@ sp {task-utils*instantiate-task-operator*apply*instantiate-task-argument*object*
    -{(<rep> ^<prop7> { <pred7> <> <pred1> <> <pred2> <> <pred3> <> <pred4> <> <pred5> <> <pred6> })}
 -->
   (<arg> ^instantiation <i>)
-  (<i> ^id <obj> ^abstract true)
-   (<obj> ^predicates <preds>)
+  (<i> ^id <obj>)
+  (<obj> ^abstract true
+         ^predicates <preds>)
    (<preds> ^<prop1> <pred1>
             ^<prop2> <pred2>
             ^<prop3> <pred3>
@@ -466,8 +514,9 @@ sp {task-utils*instantiate-task-operator*apply*instantiate-task-argument*object*
    -{(<rep> ^<prop8> { <pred8> <> <pred1> <> <pred2> <> <pred3> <> <pred4> <> <pred5> <> <pred6> <> <pred7> })}
 -->
   (<arg> ^instantiation <i>)
-  (<i> ^id <obj> ^abstract true)
-   (<obj> ^predicates <preds>)
+  (<i> ^id <obj>)
+  (<obj> ^abstract true
+         ^predicates <preds>)
    (<preds> ^<prop1> <pred1>
             ^<prop2> <pred2>
             ^<prop3> <pred3>
@@ -496,8 +545,9 @@ sp {task-utils*instantiate-task-operator*apply*instantiate-task-argument*object*
    -{(<rep> ^<prop9> { <pred9> <> <pred1> <> <pred2> <> <pred3> <> <pred4> <> <pred5> <> <pred6> <> <pred7> <> <pred8> })}
 -->
   (<arg> ^instantiation <i>)
-  (<i> ^id <obj> ^abstract true)
-   (<obj> ^predicates <preds>)
+  (<i> ^id <obj>)
+  (<obj> ^abstract true
+         ^predicates <preds>)
    (<preds> ^<prop1> <pred1>
             ^<prop2> <pred2>
             ^<prop3> <pred3>
