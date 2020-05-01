@@ -1,4 +1,4 @@
-all: agent/rosie.eval-rand-move.config
+all: agent/rosie.rand-move.config
 
 script: rand-move.script 
 
@@ -7,12 +7,12 @@ world: rand-move.world
 run_mobile_sim: rand-move.world
 	java soargroup.mobilesim.MobileGUI -w rand-move.world
 
-run_evaluation: agent/rosie.eval-rand-move.config
+run_evaluation: agent/rosie.rand-move.config
 	java soargroup.mobilesim.MobileGUI -w rand-move.world &
-	python3 -m rosie.evaluation.rand_move
+	python3 -m rosie.evaluation.rand-move
 
-# agent/rosie.eval-rand-move.config: Configures the rosie soar agent that will be sourced to run
-agent/rosie.eval-rand-move.config: agent.config smem-config.txt extra-smem-adds.soar extra-soar-rules.soar rand-move.world rand-move.script
+# agent/rosie.rand-move.config: Configures the rosie soar agent that will be sourced to run
+agent/rosie.rand-move.config: agent.config smem-config.txt extra-smem-adds.soar extra-soar-rules.soar rand-move.world rand-move.script
 	java edu.umich.rosie.tools.config.RosieAgentConfigurator agent.config
 
 # rand-move.world: Creates the world file that the mobile simulator will use
@@ -25,8 +25,9 @@ rand-move.script: generate_script.py
 	python3 generate_script.py
 
 clean:
-	rm rand-move.script
-	rm rand-move.world
+	rm -f rand-move.script
+	rm -f rand-move.world
 	rm -rf agent
+	rm -rf __pycache__
 
 
