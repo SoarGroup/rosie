@@ -82,6 +82,11 @@ public class RosieConfig {
 	//     A file with info about what concepts to include from smem
 	//    (File used by SmemConfigurator)
 	public File smemConfigFile;
+
+	// use-default-smem-config = <bool> [OPTIONAL, default=True]
+	//    If true (default) will use agent/init-smem/default-smem-config.txt to setup smem
+	public Boolean useDefaultSmemConfig;
+	public static final Boolean DEFAULT_USE_DEFAULT_SMEM_CONFIG = true;
 	
 	// custom-soar-file = <filename> [OPTIONAL]
 	//     A file containing soar code that will be sourced by the agent
@@ -231,6 +236,13 @@ public class RosieConfig {
 			this.smemConfigFile = null;
 		}
 		
+		// use-default-smem-config
+		if (props.containsKey("use-default-smem-config")){
+			this.useDefaultSmemConfig = new Boolean(props.getProperty("use-default-smem-config"));
+		} else {
+			this.useDefaultSmemConfig = DEFAULT_USE_DEFAULT_SMEM_CONFIG;
+		}
+		
 		// custom-soar-file
 		if (props.containsKey("custom-soar-file")){
 			this.customSoarFile = new File(configDir + "/" + props.getProperty("custom-soar-file"));
@@ -333,6 +345,8 @@ public class RosieConfig {
 		} else {
 			sb.append("smem-config-file = None\n");
 		}
+
+		sb.append("use-default-smem-config = " + this.useDefaultSmemConfig.toString() + "\n");
 
 		if(this.customSoarFile != null){
 			sb.append("custom-soar-file = " + this.customSoarFile.getName() + "\n");

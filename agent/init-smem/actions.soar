@@ -624,13 +624,6 @@ smem --add {
    (@heat1 ^handle heat1 ^item-type action)
 }
 
-### +@describe [123]
-smem --add {
-   # Describe the <obj>
-
-   (@describe1 ^handle describe1 ^item-type action)
-}
-
 ### +@guard [124]
 smem --add {
    # Guard
@@ -685,8 +678,10 @@ smem --add {
 
    (@turn1 ^handle turn1 ^procedural <proc201> ^item-type action ^goal-graph <sgoal201>)
    (<proc201> ^op_name op_turn1 
-              ^arg1 <parg2011>)
-   (<parg2011> ^arg-type concept ^required true ^id <conc-slot2011>)
+              ^arg1 <parg2011>
+              ^arg1 <parg2012>)
+   (<parg2011> ^arg-type concept ^optional true ^id <conc-slot2011>)
+   (<parg2012> ^arg-type coordinate ^optional true ^id <coord-slot2212>)
 
    # Start Goal
    (<sgoal201> ^handle turn1start1 ^item-type start-goal ^next.goal <goal2011>)
@@ -1014,11 +1009,15 @@ smem --add {
    # Start Goal
    (<sgoal223> ^handle view1start1 ^item-type start-goal ^next.goal <goal2231>)
 
-   # Goal 1: visible(arg1)
-   (<goal2231> ^handle view1goal1 ^item-type task-goal ^pred-count 1 ^1 <g2231p1> ^next.goal <tgoal223>)
-      (<g2231p1> ^type unary ^id <pred-slot2231> ^1 <obj-slot2231>)
-         (<pred-slot2231> ^default <ps2231def>)
-            (<ps2231def> ^predicate-handle visible1 ^property-handle is-visible1)
+   # Goal 1: subtask face(arg1)
+   (<goal2231> ^handle view1goal1 ^item-type task-goal ^pred-count 1 ^1 <g2231p1> ^next.goal <goal2232>)
+      (<g2231p1> ^type subtask ^subtask-handle view1subtask1)
+
+   # Goal 2: visible(arg1)
+   (<goal2232> ^handle view1goal2 ^item-type task-goal ^pred-count 1 ^1 <g2232p1> ^next.goal <tgoal223>)
+      (<g2232p1> ^type unary ^id <pred-slot2232> ^1 <obj-slot2231>)
+         (<pred-slot2232> ^default <ps2232def>)
+            (<ps2232def> ^predicate-handle visible1 ^property-handle is-visible1)
 
    # Terminal goal
    (<tgoal223> ^handle view1term1 ^item-type terminal-goal)
@@ -1040,7 +1039,7 @@ smem --add {
               ^perform once
               ^arg1 <parg3011>
               ^arg2 <parg3012>)
-   (<parg3011> ^arg-type object ^required true ^always-implicit true ^id <obj-slot3011>)
+   (<parg3011> ^arg-type object ^required true ^id <obj-slot3011>)
    (<parg3012> ^arg-type object ^id <obj-slot3012>) # The person we are asking (optional)
 
    # Start Goal
@@ -1095,6 +1094,40 @@ smem --add {
    (@announce1 ^handle announce1 ^item-type action)
 }
 
+### +@describe1 [304]
+smem --add {
+   # Describe the current location. 
+
+   (@describe1 ^handle describe1 ^procedural <proc304> ^item-type action ^goal-graph <sgoal304>)
+   (<proc304> ^op_name op_describe1
+              ^arg1 <parg3041>
+              ^arg2 <parg3042>)
+   (<parg3041> ^arg-type object ^required true ^id <obj-slot3041>)
+   (<parg3042> ^arg-type partial-predicate ^id <pred-slot3042> ^2 <obj-slot3042>)
+
+   # Start Goal
+   (<sgoal304> ^handle describe1start1 ^item-type start-goal ^next <nextg3041> ^next <nextg3042>)
+
+   # Conditional Goal 1: If there is no arg2 -> execute-command(describe)
+   (<nextg3041> ^conditions <g3041conds> ^goal <goal3041>)
+      (<g3041conds> ^pred-count 1 ^1 <g3041c1>)
+         (<g3041c1> ^type missing-argument ^argument-name arg2)
+   (<goal3041> ^handle describe1goal1 ^item-type task-goal ^pred-count 1 ^1 <g3041p1> ^next.goal <tgoal304>)
+      (<g3041p1> ^type execute-command ^command-name describe-command)
+
+   # Conditional Goal 2: If there is an arg2 -> heard2(person, obj)
+   (<nextg3042> ^conditions <g3042conds> ^goal <goal3042>)
+      (<g3042conds> ^pred-count 1 ^1 <g3042c1>)
+         (<g3042c1> ^type has-argument ^argument-name arg2)
+   (<goal3042> ^handle describe1goal2 ^item-type task-goal ^pred-count 1 ^1 <g3042p1> ^next.goal <tgoal304>)
+      (<g3042p1> ^type relation ^id <pred-slot3041> ^1 <obj-slot3042> ^2 <obj-slot3041>)
+         (<pred-slot3041> ^default <ps3041def>)
+            (<ps3041def> ^predicate-handle heard2)
+
+   # Terminal Goal
+   (<tgoal304> ^handle describe1term1 ^item-type terminal-goal)
+}
+
 
 #!#############################################################################################
 #!#############################################################################################
@@ -1118,7 +1151,7 @@ smem --add {
               ^perform once
               ^arg1 <parg4031> ^arg2 <parg4032> ^arg3 <parg4033>)
    (<parg4031> ^arg-type object ^required true ^id <obj-slot4031>)
-   (<parg4032> ^arg-type object ^required true ^abstract true ^id <obj-slot4032>)
+   (<parg4032> ^arg-type object ^required true ^id <obj-slot4032>)
    (<parg4033> ^arg-type object ^id <obj-slot4033>)
 
    # Start Goal
@@ -1137,16 +1170,20 @@ smem --add {
    # Recall the soda in a location
 
    (@recall1 ^handle recall1 ^procedural <proc404> ^item-type action ^goal-graph <sgoal404>)
-    (<proc404> ^op_name op_recall1
-                ^arg1 <parg4041> ^arg2 <parg4042>)
-    (<parg4041> ^arg-type object ^required true ^id <obj-slot4041>)
-    (<parg4042> ^arg-type partial-predicate ^required true ^id <pred-slot4042> ^2 <obj-slot4042>)
-
+   (<proc404> ^op_name op_recall1
+              ^perform once
+              ^arg1 <parg4041> ^arg2 <parg4042> ^when-clause <parg4043>)
+   (<parg4041> ^arg-type object ^required true ^id <obj-slot4041>)
+       (<obj-slot4041> ^abstract true)
+   (<parg4042> ^arg-type object ^optional true ^id <obj-slot4042>)
+   (<parg4043> ^arg-type when-clause ^optional true ^id <obj-slot4043> ^predicate <pred-slot4043>)
+   
    # Start Goal
    (<sgoal404> ^handle recall1start1 ^item-type start-goal ^next.goal <goal4041>)
 
    # Goal 1: custom
-   (<goal4041> ^handle recall1goal1 ^item-type task-goal ^custom-goal true ^next.goal <tgoal404>)
+   (<goal4041> ^handle recall1goal1 ^item-type task-goal ^pred-count 1 ^1 <g4041p1> ^next.goal <tgoal404>)
+      (<g4041p1> ^type execute-command ^command-name recall-command)
 
    # Terminal goal
    (<tgoal404> ^handle recall1term1 ^item-type terminal-goal)

@@ -16,6 +16,8 @@ class TestAgent(SoarAgent):
         self.connectors["action_stack"] = ActionStackConnector(self)
         self.connectors["action_stack"].register_output_callback(lambda s: self.write_output(s))
 
+        self.add_print_event_handler(lambda msg: self.print_callback(msg))
+
 
     def write_output(self, message):
         if self.outfile is not None:
@@ -29,8 +31,14 @@ class TestAgent(SoarAgent):
         self.outfile.close()
         self.outfile = None
         self.kill()
+
+    def print_callback(self, message):
+        if message.startswith("@TEST: "):
+            self.write_output(message[7:])
     
     def _output_event_handler(self, agent_name, att_name, wme):
         sentence = wme.ConvertToIdentifier().GetChildString("sentence")
         print(sentence)
         self.write_output("I: \"" + sentence + "\"")
+
+

@@ -1,0 +1,82 @@
+### Perform the describe command by sending a message ###
+
+sp {op_describe1*propose*simulate-describe-command
+   (state <s> ^name op_describe1
+              ^problem-space.execution-type external
+              ^current-task-segment <seg>)
+   (<seg> ^describe-command <cmd>)
+   (<cmd> -^status complete)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name simulate-describe-command
+        ^item-type command-operator
+        ^command <cmd>)
+}
+
+sp {op_describe1*apply*simulate-describe-command*mark*command*complete
+   (state <s> ^name op_describe1
+              ^operator <o>)
+   (<o> ^name simulate-describe-command
+        ^command <cmd>)
+-->
+   (<cmd> ^status complete)
+}
+
+
+### model simulate-describe-command ###
+
+# Send the outgoing message of type agent-object-description
+sp {op_describe*external*apply*describe-message*send*message*object
+   (state <s> ^name op_describe1
+              ^operator <o>
+              ^top-state.interaction.changes <changes>
+              ^current-task-segment <seg>)
+   (<o> ^name simulate-describe-command
+        ^command.object <obj>)
+-->
+   (<changes> ^outgoing-message <send>)
+   (<send> ^type agent-object-description
+           ^complete-message true
+           ^fields.object <obj>)
+}
+
+# Add the heard predicate if describeing to a person
+sp {op_describe1*internal*apply*simulate-describe-command*add*heard*predicate
+   (state <s> ^name op_describe1
+              ^operator <o>
+              ^world.predicates.predicate <heard>)
+   (<o> ^name simulate-describe-command
+        ^command <cmd>)
+   (<cmd> ^object <obj>
+          ^person <person>)
+   (<person> ^predicates.category person)
+   (<heard> ^handle heard2)
+  -{(<heard> ^instance <i>)
+    (<i> ^1 <person> ^2 <obj>)}
+-->
+   (<heard> ^instance <i>)
+   (<i> ^1 <person> ^2 <obj>)
+}
+
+# Add the heard predicate for any visible person if no arg2
+sp {op_describe1*internal*apply*simulate-describe-command*add*heard*predicate*anyone
+   (state <s> ^name op_describe1
+              ^operator <o>
+              ^world <w>)
+   (<o> ^name simulate-describe-command
+        ^command <cmd>)
+   (<cmd> ^object <obj>
+         -^person)
+   (<w> ^objects.object <person>
+        ^predicates.predicate <heard>)
+   (<person> ^predicates <ppreds>)
+   (<ppreds> ^category person
+             ^is-visible1 visible1)
+   (<heard> ^handle heard2)
+  -{(<heard> ^instance <i>)
+    (<i> ^1 <person> ^2 <obj>)}
+-->
+   (<heard> ^instance <i>)
+   (<i> ^1 <person> ^2 <obj>)
+}
+

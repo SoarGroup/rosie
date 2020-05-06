@@ -25,6 +25,21 @@ sp {op_say1*apply*simulate-say-command*mark*command*complete
 
 ### model simulate-say-command ###
 
+# Send the outgoing message for a sentence object
+sp {op_say*external*apply*say-message*send*message
+   (state <s> ^name op_say1
+              ^operator <o>
+              ^top-state.interaction.changes <changes>
+              ^current-task-segment <seg>)
+   (<o> ^name simulate-say-command
+        ^command.object.predicates.sentence <msg>)
+-->
+   (<changes> ^outgoing-message <send>)
+   (<send> ^type say-sentence
+           ^complete-message true
+           ^fields.sentence <msg>)
+}
+
 # Add the heard predicate if saying to a person
 sp {op_say1*internal*apply*simulate-say-command*add*heard*predicate
    (state <s> ^name op_say1
@@ -43,33 +58,25 @@ sp {op_say1*internal*apply*simulate-say-command*add*heard*predicate
    (<i> ^1 <person> ^2 <obj>)
 }
 
-# Send the outgoing message for a sentence object
-sp {op_say*external*apply*say-message*send*message
+# Add the heard predicate for any visible person if no arg2
+sp {op_say1*internal*apply*simulate-say-command*add*heard*predicate*anyone
    (state <s> ^name op_say1
               ^operator <o>
-              ^top-state.interaction.changes <changes>
-              ^current-task-segment <seg>)
+              ^world <w>)
    (<o> ^name simulate-say-command
-        ^command.object.predicates.sentence <msg>)
+        ^command <cmd>)
+   (<cmd> ^object <obj>
+         -^person)
+   (<w> ^objects.object <person>
+        ^predicates.predicate <heard>)
+   (<person> ^predicates <ppreds>)
+   (<ppreds> ^category person
+             ^is-visible1 visible1)
+   (<heard> ^handle heard2)
+  -{(<heard> ^instance <i>)
+    (<i> ^1 <person> ^2 <obj>)}
 -->
-   (<changes> ^outgoing-message <send>)
-   (<send> ^type say-sentence
-           ^complete-message true
-           ^fields.sentence <msg>)
+   (<heard> ^instance <i>)
+   (<i> ^1 <person> ^2 <obj>)
 }
 
-# Send the outgoing message for a non-sentence object (describes object)
-sp {op_say*external*apply*say-message*send*message*object
-   (state <s> ^name op_say1
-              ^operator <o>
-              ^top-state.interaction.changes <changes>
-              ^current-task-segment <seg>)
-   (<o> ^name simulate-say-command
-        ^command.object <obj>)
-   (<obj> -^predicates.sentence <msg>)
--->
-   (<changes> ^outgoing-message <send>)
-   (<send> ^type agent-object-description
-           ^complete-message true
-           ^fields.object <obj>)
-}

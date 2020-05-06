@@ -1,132 +1,92 @@
-sp {op_recall1*elaborate*query-object*object*arg
-  (state <s> ^name op_recall1
-             ^task-operator.<arg-name> <arg>)
-  (<arg> ^arg-type object
-         ^id <obj>)
+
+sp {op_recall1*elaborate*memory-type*smem
+   (state <s> ^name op_recall1
+              ^task-operator <task-op>)
+   (<task-op> ^arg1.id <obj1>
+              ^arg2 <arg2>
+             -^when-clause)
+   (<arg2> ^id <obj2>)
 -->
-  (<s> ^query-object <qo>)
-  (<qo> ^source <obj>)
+   (<s> ^memory-type smem
+        ^head-object <obj2>
+        ^head-object-arg <arg2>
+        ^edge-object <obj1>)
 }
 
-sp {op_recall1*elaborate*query-object*world*same
-    (state <s> ^name op_recall1
-               ^query-object <qo>
-               ^world.objects.object <obj>)
-    (<qo> ^source <obj>)
+sp {op_recall1*elaborate*memory-type*epmem
+   (state <s> ^name op_recall1
+              ^task-operator <task-op>
+              ^desired.handle recall1goal1)
+   (<task-op> ^arg1.id <obj1>
+              ^when-clause <when>)
+   (<when> ^1 <p1>)
 -->
-    (<qo> ^world <obj>)
+   (interrupt)
+   (<s> ^memory-type epmem
+        ^object-to-retrieve <obj1>
+        ^query-info <p1>)
 }
 
-sp {op_recall1*elaborate*query-object*world*handle
-    (state <s> ^name op_recall1
-               ^query-object <qo>
-               ^world.objects.object <obj>)
-    (<qo> ^epmem.handle <h>)
-    (<obj> ^handle <h>)
+### Setup smem queries
+sp {op_recall1*elaborate*query-object-workspace
+   (state <s> ^name op_recall1
+              ^memory-type smem
+              ^problem-space.execution-type external
+              ^desired.handle recall1goal1
+              ^head-object <obj>
+              ^head-object-arg <arg>)
 -->
-    (<qo> ^world <obj>)
+   (<s> ^query-object-workspace <ws>)
+   (<ws> ^type head-object
+         ^source <obj>
+         ^source-arg <arg>)
+}
+
+sp {op_recall1*elaborate*query-object-workspace*smem-object
+   (state <s> ^name op_recall1
+              ^query-object-workspace <ws>)
+   (<ws> ^{ << match-handle-result match-predicates-result retrieved-category >> } { <obj> <> failure })
+-->
+   (<ws> ^smem-object <obj>)
+}
+
+sp {op_recall1*smem*elaborate*matching-smem-edge
+   (state <s> ^name op_recall1
+              ^memory-type smem
+              ^query-object-workspace <ws>
+              ^edge-object.predicates <preds>)
+   (<ws> ^type head-object
+         ^smem-object.semantic-edge <se>)
+   # There are no predicates on the edge-object that are not on the semantic-edge
+  -{(<preds> ^<prop1> <pred1>)
+    (<se> -^<prop1> <pred1>)}
+   # There are no predicates on the semantic-edge that are not on the edge-object
+  -{(<se> ^{ <prop2> <> tail } <pred2>)
+    (<preds> -^<prop2> <pred2>)}
+   (<se> ^tail <tail>)
+-->
+   (<s> ^matching-smem-edge <se>)
+}
+
+sp {op_recall1*smem*elaborate*smem-tail-object*from*matching-smem-edge
+   (state <s> ^name op_recall1
+              ^memory-type smem
+              ^matching-smem-edge <se>)
+   (<se> ^tail <tail>)
+   (<tail> ^<anything>)
+-->
+   (<s> ^smem-tail-object <tail>)
+}
+
+### WRITE RESULT
+
+sp {op_recall*write*smem-tail-object
+   (state <s> ^name op_recall1
+              ^memory-type smem
+              ^agent-params.print-test-output true
+              ^smem-tail-object.handle <h>)
+-->
+   (write (crlf) |@TEST: ### Task op_recall1 retrieved | <h> (crlf))
 }
 
 
-sp {op_recall1*elaborate*query-object*predicate*arg
-  (state <s> ^name op_recall1
-             ^task-operator.<arg-name> <arg>)
-  (<arg> ^arg-type partial-predicate
-         ^2 <obj>)
--->
-  (<s> ^query-object <qo>)
-  (<qo> ^source <obj>)
-}
-
-sp {op_recall1*elaborate*query-relation*predicate*arg
-  (state <s> ^name op_recall1
-             ^task-operator <task-op>
-             ^query-object <qo1>
-             ^query-object <qo2>)
-  (<task-op> ^<arg-name1> <arg1>
-         ^<arg-name2> <arg2>)
-  (<arg1> ^arg-type object
-          ^id <obj1>)
-  (<arg2> ^arg-type partial-predicate
-          ^handle <pred>
-          ^2 <obj2>)
-  (<qo1> ^source <obj1>)
-  (<qo2> ^source <obj2>)
--->
-  (<s> ^query-relation <qr>)
-  (<qr> ^source <sr>)
-  (<sr> ^handle <pred>
-        ^1 <qo1>
-        ^2 <qo2>)
-}
-
-
-#sp {op_recall*interrupt
-#   (state <s> ^problem-space.name execute-primitive-action
-#              ^task-handle recall1)
-#-->
-#   (interrupt)
-#}
-
-#sp {op_recall*elaborate*epmem-query
-#   (state <s> ^name op_recall1)
-#-->
-#   (<s> ^epmem-query <q>)
-#   (<q> ^world <w>)
-#   (<w> ^objects <objs>
-#        ^predicates <preds>)
-#}
-#
-#sp {op_recall*elaborate*epmem-query*object*arg
-#   (state <s> ^name op_recall1
-#              ^task-operator.arg1 <arg>
-#              ^epmem-query.world.objects <objs>)
-#   (<arg> ^arg-type object
-#          ^id <obj>)
-#-->
-#   (<s> ^deep-copy-object <dco>)
-#   (<dco> ^source <obj>
-#          ^copy <new-obj>)
-#   (<new-obj> ^predicates <preds>)
-#   (<preds> ^is-visible1 visible1)
-#   (<objs> ^object <new-obj>)
-#}
-#
-#sp {op_recall*elaborate*epmem-query*deep-copy-object*predicates
-#   (state <s> ^name op_recall1
-#              ^deep-copy-object <dco>)
-#   (<dco> ^source.predicates <src-preds>
-#          ^copy.predicates <copy-preds>)
-#   (<src-preds> ^{ <prop-name> << modifier1 category name shape property color >> } <pred-name>)
-#-->
-#   (<copy-preds> ^<prop-name> <pred-name>)
-#}
-#   
-#sp {op_recall*elaborate*epmem-query*predicate*arg
-#   (state <s> ^name op_recall1
-#              ^task-operator.<arg1-name> <arg1>
-#              ^task-operator.<arg2-name> <arg2>
-#              ^epmem-query.world.objects <objs>
-#              ^epmem-query.world.predicates <preds>
-#              ^deep-copy-object <dco1>)
-#   (<arg1> ^arg-type object
-#           ^id <obj1>)
-#   (<arg2> ^arg-type partial-predicate
-#           ^handle <pred-handle>
-#           ^2 <obj2>)
-#   (<dco1> ^source <obj1>
-#           ^copy <new-obj1>)
-#-->
-#   (<s> ^deep-copy-object <dco2>)
-#   (<dco2> ^source <obj2>
-#           ^copy <new-obj2>)
-#   (<new-obj2> ^predicates <preds2>)
-#   (<objs> ^object <new-obj2>)
-#   (<preds> ^predicate <new-pred>)
-#   (<new-pred> ^handle <pred-handle>
-#               ^instance <i>)
-#   (<i> ^1 <new-obj1> ^2 <new-obj2>)
-#}
-#   
-
-   

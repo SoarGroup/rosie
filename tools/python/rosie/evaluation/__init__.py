@@ -1,4 +1,4 @@
-__all__ = [ "EvaluatinAgent", "EvaluationGUI" ]
+__all__ = [ "EvaluationAgent", "EvaluationGUI" ]
 
 from .EvaluationAgent import EvaluationAgent
 from .EvaluationGUI import EvaluationGUI

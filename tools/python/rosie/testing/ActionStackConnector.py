@@ -3,32 +3,26 @@ import sys
 import traceback
 
 from string import digits
-from pysoarlib import AgentConnector
+from pysoarlib import AgentConnector, RosieMessageParser
 
 
 def task_to_string(task_id):
     task_handle = task_id.GetChildString("task-handle")
-    arg1_id = task_id.GetChildId("arg1")
-    arg2_id = task_id.GetChildId("arg2")
 
-    task = task_handle + "("
-    if arg1_id != None:
-        task += task_arg_to_string(arg1_id)
-    if arg2_id != None:
-        if arg1_id != None:
-            task += ", "
-        task += task_arg_to_string(arg2_id)
-    task += ")"
+    # Get the root identifier of each argument
+    arg_ids = ( task_id.GetChildId(arg_name) for arg_name in ("arg1", "arg2", "arg3") )
+    # Convert each non-null argument to a string
+    parsed_args = ( task_arg_to_string(arg_id) for arg_id in arg_ids if arg_id is not None)
 
-    return task
+    return task_handle + "(" + ", ".join(parsed_args) + ")"
 
 def task_arg_to_string(arg_id):
     arg_type = arg_id.GetChildString("arg-type")
     if arg_type == "object":
-        return obj_arg_to_string(arg_id.GetChildId("id"))
+        return RosieMessageParser.parse_obj(arg_id.GetChildId("id"))
     elif arg_type == "partial-predicate":
         handle_str = arg_id.GetChildString("handle")
-        obj2_str = obj_arg_to_string(arg_id.GetChildId("2"))
+        obj2_str = RosieMessageParser.parse_obj(arg_id.GetChildId("2"))
         return "%s(%s)" % ( handle_str, obj2_str )
     elif arg_type == "waypoint":
         wp_id = arg_id.GetChildId("id")
@@ -38,17 +32,6 @@ def task_arg_to_string(arg_id):
     elif arg_type == "measure":
         return arg_id.GetChildString("number") + " " + arg_id.GetChildString("unit")
     return "?"
-
-def obj_arg_to_string(obj_id):
-    preds_id = obj_id.GetChildId("predicates")
-    words = []
-    words.append(preds_id.GetChildString('size'))
-    words.append(preds_id.GetChildString('color'))
-    words.append(obj_id.GetChildString('root-category'))
-    words.append(preds_id.GetChildString('name'))
-    obj_desc = ' '.join(w for w in words if w is not None)
-
-    return obj_desc.translate(str.maketrans('', '', digits))
 
 class ActionStackConnector(AgentConnector):
     def __init__(self, agent):

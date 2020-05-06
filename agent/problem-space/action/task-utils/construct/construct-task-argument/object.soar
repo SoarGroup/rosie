@@ -1,6 +1,7 @@
 #### constructing object arguments
 
-### Select an object (if there are multiple possible groundings, choose one)
+###### Operator: select-object-argument
+# If there are multiple possible groundings - select only one
 
 sp {task-utils*construct-task-argument*object*propose*select-object-argument
    (state <s> ^construct-task-argument <arg>)
@@ -16,7 +17,7 @@ sp {task-utils*construct-task-argument*object*propose*select-object-argument
 
 # If there are multiple object arguments of the same name, prefer task-objects over non task-objects
 sp {task-utils*construct-task-argument*object*prefer*select-object-argument*task-object
-   (state <s> ^name construct-task-operator
+   (state <s> ^name << construct-task-operator construct-task-goal >>
               ^operator <o1> +
               ^operator <o2> +
               ^top-state.task-stack.segments <segs>)
@@ -35,7 +36,7 @@ sp {task-utils*construct-task-argument*object*prefer*select-object-argument*task
 # If there are multiple object arguments of the same name, and both are task-objects, 
 # Prefer one on the bottom segment task-operator over one if not
 sp {task-utils*construct-task-argument*object*prefer*select-object-argument*bottom*task-object
-   (state <s> ^name construct-task-operator
+   (state <s> ^name << construct-task-operator construct-task-goal >>
               ^operator <o1> +
               ^operator <o2> +
               ^top-state.task-stack.bottom.task-objects <bot-objs>)
@@ -61,34 +62,19 @@ sp {task-utils*construct-task-argument*object*apply*select-object-argument
    (<arg> ^selected <obj>)
 }
 
-
-### Handling abstract objects (shouldn't be grounded)
-
-### Then we make sure the object is in the world (using add-object-to-world)
+###### Operator: add-object-to-world
+# For non-abstract objects, make sure the object is in the world (using add-object-to-world)
 
 sp {task-utils*construct-task-argument*object*propose*add-object-to-world
    (state <s> ^construct-task-argument <arg>)
    (<arg> ^arg-type object
           ^selected <obj>
-         -^world-object)
+         -^world-object
+         -^abstract true)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name add-object-to-world
         ^source-obj <obj>)
-}
-
-sp {task-utils*construct-task-argument*elaborate*add-object-to-world*abstract
-   (state <s> ^construct-task-argument <arg>
-              ^operator <o> +
-              ^task-concept-network <tcn>)
-   (<arg> ^arg-type object
-          ^arg-name <arg-name>
-          ^selected <obj>)
-   (<o> ^name add-object-to-world
-        ^source-obj <obj>)
-   (<tcn> ^procedural.<arg-name>.abstract true)
--->
-   (<o> ^abstract true)
 }
 
 sp {task-utils*construct-task-argument*elaborate*object*argument*world-object*from*add-object-result
@@ -102,7 +88,79 @@ sp {task-utils*construct-task-argument*elaborate*object*argument*world-object*fr
    (<arg> ^world-object <wobj>)
 }
 
-### construct-task-argument object
+###### Operator: create-abstract-object
+# For abstract objects, just create a new world object representation
+
+sp {task-utils*construct-task-argument*object*propose*create-abstract-object
+   (state <s> ^construct-task-argument <arg>)
+   (<arg> ^arg-type object
+          ^selected <obj>
+         -^world-object
+          ^abstract true)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name create-abstract-object
+        ^argument <arg>
+        ^source-obj <obj>
+        ^predicates <preds>)
+}
+
+sp {task-utils*construct-task-argument*object*elaborate*create-abstract-object*category*ref
+   (state <s> ^operator <o> +)
+   (<o> ^name create-abstract-object
+        ^argument.reference-info.constraint.category <cat>)
+-->
+   (<o> ^category <cat>)
+}
+
+sp {task-utils*construct-task-argument*object*elaborate*create-abstract-object*root-category
+   (state <s> ^operator <o> +)
+   (<o> ^name create-abstract-object
+       -^argument.reference-info.constraint.category
+        ^source-obj.root-category <cat>)
+-->
+   (<o> ^category <cat>)
+}
+
+sp {task-utils*construct-task-argument*object*elaborate*create-abstract-object*category
+   (state <s> ^operator <o> +)
+   (<o> ^name create-abstract-object
+       -^argument.reference-info.constraint.category
+       -^source-obj.root-category
+        ^source-obj.predicates.category <cat>)
+-->
+   (<o> ^category <cat>)
+}
+
+sp {task-utils*construct-task-argument*object*apply*create-abstract-object
+   (state <s> ^operator <o>)
+   (<o> ^name create-abstract-object
+        ^source-obj <obj>
+        ^category <cat>
+        ^predicates <preds>
+        ^argument <arg>)
+-->
+   (<arg> ^world-object <new-obj>)
+   (<new-obj> ^handle (make-constant-symbol |obj-|)
+              ^item-type object
+              ^abstract true
+              ^root-category <cat>
+              ^predicates <preds>)
+   (<preds> ^category <cat>)
+}
+
+sp {task-utils*construct-task-argument*object*apply*create-abstract-object*copy*predicate
+   (state <s> ^operator <o>)
+   (<o> ^name create-abstract-object
+        ^category <cat>
+        ^argument.reference-info <ref-info>
+        ^predicates <preds>)
+   (<ref-info> ^constraint.<prop> { <pred> <> <cat> })
+-->
+   (<preds> ^<prop> <pred>)
+}
+
+####### Operator: construct-task-argument
 
 sp {task-utils*construct-task-argument*propose*construct-task-argument*object
    (state <s> ^construct-task-argument <arg>)
@@ -132,14 +190,11 @@ sp {task-utils*construct-task-argument*apply*construct-task-argument*object
 }
 
 sp {task-utils*construct-task-argument*apply*construct-task-argument*object*add*reference-info
-   (state <s> ^operator <o>
-              ^command-message.reference-info <src-ref>)
+   (state <s> ^operator <o>)
    (<o> ^name construct-task-argument
         ^arg-type object
-        ^argument.{ << parent-arg-name arg-name >> } <arg-name>
+        ^argument.reference-info.constraint.<prop-h> <pred-h>
         ^reference-info <ref-info>)
-   (<src-ref> ^arg-name <arg-name>
-              ^constraint.<prop-h> <pred-h>)
 -->
    (<ref-info> ^<prop-h> <pred-h>)
 }

@@ -51,10 +51,8 @@ public class AgentMessageParser
 			simpleMessages.put("no-proposed-action", "I couldn't do that.");
 			simpleMessages.put("missing-argument", "I need more information to do that action.");
 			simpleMessages.put("learn-location-failure", "I don't know where I am.");
-			simpleMessages.put("get-next-goal", "What is the next goal or subtask?");
 			simpleMessages.put("get-goal-info", "What is the goal?");
 			simpleMessages.put("no-action-context-for-goal", "I don't know what action that goal is for.");
-			simpleMessages.put("get-next-subaction", "What do I do next?");
 			simpleMessages.put("confirm-pick-up", "I have picked up the object.");
 			simpleMessages.put("confirm-put-down", "I have put down the object.");
 			simpleMessages.put("find-success", null);//"SUCCESS");
@@ -99,6 +97,10 @@ public class AgentMessageParser
 		Identifier fieldsId = SoarUtil.getIdentifierOfAttribute(id, "fields");
 		if(type.equals("get-next-task")){
 			return translateNextTaskPrompt();
+		} else if(type.equals("get-next-subaction")){
+			return "What do I do next for " + taskHandle(fieldsId) + "?";
+		} else if(type.equals("get-next-goal")){
+			return "What is the next goal or subtask of " + taskHandle(fieldsId) + "?";
 		} else if(type.equals("get-predicate-info")){
 			return translateGetPredicateInfo(fieldsId);
 		} else if(type.equals("report-successful-training")){
@@ -143,6 +145,8 @@ public class AgentMessageParser
 			return translateFinalGoalState(fieldsId);
 	    	} else if(type.equals("say-sentence")){
 	    		return translateSaySentence(fieldsId);
+		} else if(type.equals("task-execution-failure")){
+			return "The " + taskHandle(fieldsId) + "task failed.";
          	// AM: produced by problem-space/action/failure-handling
 	    	} else if(type.equals("execution-failure")){
 	    		return translateExecutionFailure(fieldsId);
@@ -1277,9 +1281,9 @@ public class AgentMessageParser
 	public static String translateCantFindObject(Identifier fieldsId){
 		Identifier obj = SoarUtil.getIdentifierOfAttribute(fieldsId, "object");
 		if(obj == null){
-			return "I can't find the object. Can you help?";
+			return "I can't find the object, can you help?";
 		}
-		return "I can't find " + worldObjectToString(obj) + ". Can you help?";
+		return "I can't find " + parseObject(obj) + ", can you help?";
 	}
 	
 	public static String translateMultipleArguments(Identifier fieldsId){
@@ -1588,7 +1592,41 @@ public class AgentMessageParser
 		desc = desc + root;
 		return desc;
 	}
-	
+
+	public static String join(List<String> strings, String sep){
+		StringBuilder sb = new StringBuilder();
+		boolean first = true;
+		for(String s : strings){
+			if(s == null){ continue; }
+			if(!first){
+				sb.append(sep);
+			}
+			sb.append(s);
+			first = false;
+		}
+		return sb.toString();
+	}
+
+	public static String parseObject(Identifier objId){
+		ArrayList<String> words = new ArrayList<String>();
+		Identifier predsId = SoarUtil.getIdentifierOfAttribute(objId, "predicates");
+
+		words.add(SoarUtil.getValueOfAttribute(predsId, "size"));
+		words.add(SoarUtil.getValueOfAttribute(predsId, "color"));
+		words.add(SoarUtil.getValueOfAttribute(predsId, "modifier1"));
+		words.add(SoarUtil.getValueOfAttribute(predsId, "shape"));
+
+		String name = SoarUtil.getValueOfAttribute(predsId, "name");
+		if(name != null){
+			words.add(name);
+		} else {
+			words.add(SoarUtil.getValueOfAttribute(objId, "root-category"));
+		}
+
+		String objDesc = join(words, " ");
+		return objDesc.replaceAll("\\d", "");
+	}
+
 	public static String worldObjectToString(Identifier objId){
 		ArrayList<String> predicates = new ArrayList<String>();
 		
@@ -1992,6 +2030,11 @@ public class AgentMessageParser
 		
 		return descriptionList;
 	}
+
+	public static String taskHandle(Identifier fieldsId){
+		return SoarUtil.getValueOfAttribute(fieldsId, "task-handle").replaceAll("\\d", "");
+	}
+
 
 /*
 //

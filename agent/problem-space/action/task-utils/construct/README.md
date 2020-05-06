@@ -1,128 +1,151 @@
 # `construct-task-operator`
 
-State elaborations:
+This operator is responsible for taking a command message produced by the parser and 
+turning it into the proper task-operator representation used in the rest of Rosie. 
+It can also initialize and update the task-concept-network for that task 
+using the arguments in the command, if the update-tcn flag is true. 
+
+**Operator Representation**
 ```
-([s] ^command-message [msg]              # from superstate.operator
-     ^update-task-concept-network [bool] # from superstate.operator
-     ^task-concept-network [tcn]         # Retrieved from smem
+([o] ^name construct-task-operator
+     ^command-message [msg] # A command message produced by the parser
+     ^result-name [str]     # The name to use when creating the result on the state
+     ^update-tcn [bool])    # If true, will create/update the TCN with the arguments
 ```
+
+**State Elaborations**
+```
+([s] ^command-message [msg]       # from superstate.operator
+     ^result-name [str]           # from superstate.operator
+     ^update-tcn [bool]           # from superstate.operator
+     ^task-concept-network [tcn]  # Retrieved from smem
+    
+     ^uncreated-args true         # Present if 1+ arguments still need to be created
+     ^uncopied-args true          # Present if 1+ arguments have not been copied 
+                                  #  onto the task operator
+```
+
+**Result** <br>
+Will construct the task operator and copy it to the state as `([s] ^[result-name] [task-op])`
+
+### Substate Operators
 
 **1. smem-query** `(retrieve-tcn.soar)`
 
 Retrieve the task-concept-network for the handle of the given action on the message
 
-**2. initialize-tcn**
+**2. create-operator-base** `(create-operator-base.soar)`
 
-For a new task, initialize the TCN by adding item-type, procedural id, and op_name
+Will create the root structure of a task-operator, with the handle and name but no arguments.  
 
-**3. create-operator-base**
+**3. construct-task-argument** `(construct-task-argument.soar)`
 
-Create the base task-operator structure w/o arguments 
+For each argument on the command message, it will elaborate 
+a construct-task-argument structure onto the state which will 
+cause operators to be proposed to construct the argument (see below). 
 
+Note that this file has a lot of special case rules to handle peculiarities of the parser 
+and translating from the parser structures to ones that the construct-task-argument operators can understand.
+
+**4. add-arguments-to-task-operator** `(add-arguments-to-task-operator.soar)`
+
+Once all the arguments have been constructed, this operator copies them onto the task-operator
+
+**5. update-tcn** `(update-tcn directory)`
+
+If the flag update-tcn is true, this will propose an operator which will 
+use the argument structure in the created task-operator to initialize or update the TCN for that task. 
+This is especially important to learn the argument structure for a new task, and will create the procedural and initial goal
+representations and store them. 
+
+**6. complete-construct-task-operator** `(complete-construct-task-operator.soar)
+
+Once everything is finished, this will copy the constructed task-operator to the superstate, 
+using the ^result-name parameter as the attribute.  
+
+
+
+
+
+# `construct-task-goal`
+
+This operator is responsible for taking a goal description message produced by the parser and 
+turning it into the proper task goal representation used in the rest of Rosie. 
+
+**Operator Representation**
+```
+([o] ^name construct-task-goal
+     ^goal-message [msg]    # A goal message produced by the parser
+     ^result-name [str]     # The name to use when creating the result on the state
+     ^conditions [conds])   # Any conditions mentioned by the instructor (optional)
 ```
 
-   ^task-operator
-      ^item-type task-operator
-      ^task-handle <h>
-      ^name <op-name>
+**State Elaborations**
+```
+([s] ^goal-message [msg]   # from superstate.operator
+     ^conditions [conds]   # from superstate.operator
+     ^result-name [str]    # from superstate.operator
+
+     ^goal-clause [cl]     # Elaborate individual goal clauses from the goal-message
+    
+     ^uncreated-args true         # Present if 1+ arguments still need to be created
+     ^uncopied-args true          # Present if 1+ arguments have not been copied 
+                                  #  onto the task operator
 ```
 
-### 4. [propose-construct-task-argument.soar + substate]
-#      Construct each argument 
-#       Take the argument from the command message 
-#       and create the appropriate structure on the task-operator
-   operator construct-task-argument
-     ^arg-name <arg-name> # The name to use when adding to the task-operator
-     ^arg-type <arg-type> # Type of the argument << concept object predicate until-clause >>
-     ^message-arg <marg>  # The corresponding argument on the command-message
+**Result** <br>
+Will construct the task operator and copy it to the state as `([s] ^[result-name] [task-op])`
 
-### 5. [mark-argument-missing.soar] 
-#      If a required argument is missing on the command-message  
-#      (The argument is marked ^required true on the task-concept-network)
-#      Then mark it missing on the task-operator (Add ^missing-argument <arg-name>)
-   operator mark-argument-missing
-      ^arg-name <arg-name>
+### Substate Operators
 
-### 6. [store-smem-concepts.soar]
-#      Store any changes to smem structures 
-#      (If there exist any ^to-store identifiers on the state)
-   operator store-smem-concepts
+**1. create-goal-base** `(create-goal-base.soar)`
 
-### 7. [create-new-task-segment.soar]
-#      Once the task-operator is constructed, create a new-task-segment
-   operator create-new-task-segment
+Creates the initial empty goal with 0 predicates
 
-### 8. [push-task-segment.soar]
-#      Once the new-task-segment is created, push it onto the task-stack
-#      (See problem-space/action/task-utils/push-task-segment)
-#      Will add ^pushed <seg> to the state when finished
-   operator push-task-segment
+**2. construct-task-argument** `(construct-task-argument.soar)`
 
-### 9. [complete-construct-task-operator.soar]
-#      Once the new-task-segment is pushed, 
-#        mark the message as pushed to exit the substate
-   operator complete-construct-task-operator
+For each goal clause or condition, this will use the operators in construct-task-argument
+to create the proper representation of each one, especially making sure that
+any object arguments match those in the world. 
 
-      
-#################################################################
-####################### construct-task-argument #################
+**3. add-goal-predicate** `(add-goal-predicatecondition.soar)`
 
-Takes an argument from a command-message from the parser, 
-  and constructs an argument representation that 
-  will be copied onto the superstate.task-operator 
+Once a goal predicatecondition is constructured, add it to the task goal 
+and increment the pred-count. 
 
-(<s> ^operator <o> +)
-(<o> ^name construct-task-argument
-     ^arg-name <arg-name> # The name to use when adding to the task-operator
-     ^arg-type <arg-type> # Type of the argument << concept object predicate until-clause >>
-     ^message-arg <marg>) # The corresponding argument on the command-message
+**4. add-goal-condition** `(add-goal-condition.soar)`
 
-# arg-type concept
-(<o> ^handle <concept-handle>)
+Once a goal condition is constructured, add it to the task goal
 
-# arg-type object
-(<o> ^object <obj>)
+**5. complete-construct-task-goal** `(complete-construct-task-goal.soar)`
 
-# arg-type partial-predicate
-(<o> ^handle <pred-handle>
-     ^2 <obj2>)
-
-# arg-type after-clause/until-clause
-(<o> ^predicate <pred>)
-(<pred> ^type << state relation >>
-        ^handle <pred-handle>
-        ^1 <obj1>
-        ^2 <obj2>) # only used for relations
-(<pred> ^type duration # after 3 minutes
-        ^number <n>
-        ^unit << minutes seconds >>)
-(<pred> ^type clocktime # after 9:00
-        ^hour <hour>
-        ^minute <min>)
+Once everything has been added to the task goal, copy it to the superstate using result-name as the attribute. 
 
 
-0. Elaborations
-   ^task-concept-network (from superstate)
-   ^command-message (from superstate)
 
-1. add-object-to-world
-   Make sure any objects are represented on the top-state world (adding if not present)
-   (Implemented in manage-world-state/add-object-to-world)
 
-2. create-task-argument
-   Create the actual task-argument representation
 
-3. add-object-reference-info
-   If the command-message has information about how the object was referred to 
-     copy that info onto the argument
+# `construct-task-argument`
+An operator is proposed for each `construct-task-argument` structure elaborated onto the state. 
+They will construct the proper argument representation for each different type of argument, 
+e.g. object, concept, clause. 
 
-4. add-argument-to-tcn
-   If this is the first time seeing an argument, and it is not in the task-concept-nework,
-     add it to the task-concept-network.procedural link
+These operators refer to the following structures on the state: 
+```
+([s] ^construct-task-argument [cta])
+([cta] ^arg-type [arg-type] # e.g. object, concept, clause
+       ^arg-name [arg-name] # what to name the argument when its added to the task-operator
+       ^source [src]        # The argument on the command-message to refer to 
+       ^abstract true       # Flag copied from the TCN if present
+                            # It means object shouldn't be grounded
 
-5. store-smem-concepts
-   If we did add-argument-to-tcn, we have to store the changes
+       ^created-arg [arg])  # The result created by construct-task-argument
+```
 
-6. complete-construct-task-argument
-   Finish by copying the argument onto the superstate.task-operator
+**objects**
+
+* `select-object-argument` - If there are multiple objects matching a given argument, select one
+* `add-object-to-world` - If the object is not abstract, make sure it is in the world
+* `create-abstract-object` - If the object is abstract, create an ungrounded representation for it
+* `construct-task-argument` - Finally, create the object argument + copy any reference-info
 
