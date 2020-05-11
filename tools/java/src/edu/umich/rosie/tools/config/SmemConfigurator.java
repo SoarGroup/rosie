@@ -17,17 +17,23 @@ import java.util.*;
  *
  * It defines an smem config file format, which is a text file with the following options:
  *
- * source-file <agent-file>
- *    This tells the agent to source the given file without modifications or copying
- *    It assumes a relative path from $ROSIE_HOME/agent
- * 
- * include-file <agent-file>
- *    This tells the agent to copy the given file to the /smem dir while re-mapping id's
- *    It assumes a relative path from $ROSIE_HOME/agent
+ * pushd <dir>
+ * popd
+ *    These work like soar's usage of pushd/popd, 
+ *      where it maintains a directory stack relative to $ROSIE_HOME/agent
+ *    directories can be pushed and popped to source files relative to them
  *
- * config-file <config-file>
+ * source <agent-file>
+ *    This tells the agent to source the given file without modifications or copying
+ *    It assumes a relative path using the directory stack starting from $ROSIE_HOME/agent
+ * 
+ * process-file <smem-file>
+ *    This tells the agent to copy the given file to the /smem dir while re-mapping id's
+ *    It assumes a relative path using the directory stack starting from $ROSIE_HOME/agent
+ *
+ * include-config <config-file>
  *    This will recursively run the configurator using the given file
- *    It assumes a relative path from $ROSIE_HOME/agent
+ *    It assumes a relative path using the directory stack starting from $ROSIE_HOME/agent
  *
  * template <template_name> _PARAM-1_ _PARAM-2_ ... _PARAM-N_ _PARAM-LIST_*{
  *    value1 value2 ... valueN listVal1 listVal2 ...
@@ -93,38 +99,41 @@ public class SmemConfigurator {
 	// Will read any config files and create new files inside the agent/smem directory, 
 	// It will map any string LTI's to numbers (@red -> @100010)
 	//    and instantiate specified templates
-	// It also creates a root smem source file and returns its name
-	public static String configureSmem(RosieConfig config) throws IOException {
+	// It also creates a root smem source file and returns it
+	public static File configureSmem(RosieConfig config) throws IOException {
 		// Create the smem directory
-		File smemDir = new File(config.agentDir, "/smem");
+		File outputDir = new File(config.agentDir);
+		File smemDir = new File(outputDir, "/smem");
 		if(!smemDir.exists()){
 			smemDir.mkdir();
 		}
 
 		File rosieAgentDir = new File(config.rosieHome, "agent");
-		List<String> rosieFiles = new ArrayList<String>();
+		File templateDir = new File(rosieAgentDir, "/init-smem/templates");
+		Stack<File> dirStack = new Stack<File>();
+		dirStack.push(rosieAgentDir);
+		List<File> rosieFiles = new ArrayList<File>();
 		Map<String, File> createdFiles = new HashMap<String, File>();
 
 		// Parse the default smem config file
 		if(config.useDefaultSmemConfig){
-			File defaultSmemConfig = new File(config.rosieHome + "/agent/init-smem/default-smem-config.txt");
-			parseSmemConfigurationFile(defaultSmemConfig, smemDir, rosieAgentDir, createdFiles, rosieFiles);
+			File defaultSmemConfig = new File(config.rosieHome + "/agent/_smem_config.txt");
+			parseSmemConfigurationFile(defaultSmemConfig, smemDir, templateDir, dirStack, createdFiles, rosieFiles);
 		}
 
 		// Parse the custom smem config file
 		if(config.smemConfigFile != null){
-			parseSmemConfigurationFile(config.smemConfigFile, smemDir, rosieAgentDir, createdFiles, rosieFiles);
+			assert(dirStack.size() == 1);
+			parseSmemConfigurationFile(config.smemConfigFile, smemDir, templateDir, dirStack, createdFiles, rosieFiles);
 		}
 
 		// Copy the custom smem file
-		File customSmemFile = new File(config.agentDir + "/" + config.customSmemFile.getName());
+		File customSmemFile = new File(outputDir, config.customSmemFile.getName());
 		copySmemFile(config.customSmemFile, customSmemFile);
 		
-		// Create a file that sources any created files in the /smem directory
-		writeSmemSubdirFile(smemDir, createdFiles);
-		
-		String smemSourceFilename = writeSmemSourceFile(config.agentDir, config.rosieHome, rosieFiles, customSmemFile);
-		return smemSourceFilename;
+		// Create a file that sources all smem files needed by the agent
+		File sourceFile = writeSmemSourceFile(outputDir, rosieAgentDir, rosieFiles, createdFiles, customSmemFile);
+		return sourceFile;
 	}
 
 	// Given a source file and an output file, 
@@ -145,14 +154,18 @@ public class SmemConfigurator {
 
 	//------------------------------------------- PRIVATE -----------------------------------------------//
 	
+	// Will get the full absoulte path the given file, with windows \ replaced by unix /
+	private static String getFullPath(File f){
+		return f.getAbsolutePath().replaceAll("\\\\", "/");
+	}
 
 	// Writes the root soar file that will source all smem knowledge needed by the agent
 	//   Returns the name of the created file
-	private static String writeSmemSourceFile(String agentDir, String rosieHome, 
-				List<String> rosieFiles, File customSmemFile) throws IOException {
+	private static File writeSmemSourceFile(File outputDir, File rosieAgentDir, 
+				List<File> rosieFiles, Map<String, File> createdFiles, File customSmemFile) throws IOException {
 
-		String smemSourceFilename = agentDir + "/" + SMEM_SOURCE_FILE;
-		Writer sourceWriter = new BufferedWriter(new FileWriter(smemSourceFilename));
+		File sourceFile = new File(outputDir, SMEM_SOURCE_FILE);
+		Writer sourceWriter = new BufferedWriter(new FileWriter(sourceFile));
 
 		// Preamble
 		sourceWriter.write("# This file was autogenerated by the SmemConfiguration\n");
@@ -160,50 +173,47 @@ public class SmemConfigurator {
 
 		// Source any rosie files 
 		sourceWriter.write("# Sourcing smem files in Rosie agent directory\n");
-		sourceWriter.write("pushd " + rosieHome + "/agent\n");
-		for(String filename : rosieFiles){
-			sourceWriter.write("   source " + filename + "\n");
+		sourceWriter.write("pushd " + getFullPath(rosieAgentDir) + "\n");
+		for(File file : rosieFiles){
+			if(!file.exists()){
+				System.err.println("WARNING! SmemConfigurator was told to source the following file but it doesn't exist:");
+				System.err.println(file.getAbsolutePath());
+			} else {
+				String relPath = file.getAbsolutePath().replace(rosieAgentDir.getAbsolutePath(), "");
+				relPath = relPath.replaceAll("\\\\", "/");
+				if(relPath.charAt(0) == '/'){
+					relPath = relPath.substring(1);
+				}
+				sourceWriter.write("   source " + relPath + "\n");
+			}
 		}
 		sourceWriter.append("popd\n\n");
 
+		sourceWriter.write("pushd " + getFullPath(outputDir) + "\n");
 		// Source the customSmemFile, if it exists
 		if (customSmemFile != null && customSmemFile.exists()){
-			sourceWriter.write("# Sourcing custom smem information specific to this agent\n");
-			sourceWriter.write("source " + customSmemFile.getAbsolutePath().replaceAll("\\\\", "/") + "\n\n");
+			sourceWriter.write("   # Sourcing custom smem information specific to this agent\n");
+			sourceWriter.write("   source " + customSmemFile.getName() + "\n\n");
 		}
 
 		// Source the smem directory and all created files inside
-		sourceWriter.write("# This file will source the smem files that were created by the SmemConfiguator tool\n");
-		sourceWriter.write("pushd " + agentDir + "/smem\n");
-		sourceWriter.write("source " + SMEM_SOURCE_FILE + "\n");
+		sourceWriter.write("   # Source the smem files that were created by the SmemConfiguator tool\n");
+		for(File f : createdFiles.values()){
+			sourceWriter.write("   source smem/" + f.getName() + "\n");
+		}
+
 		sourceWriter.write("popd\n\n");
 
 		sourceWriter.close();
 
-		return smemSourceFilename;
-	}
-
-	// Writes a soar file that sources all the smem files created in the agent/smem directory
-	private static void writeSmemSubdirFile(File smemDir, Map<String, File> createdFiles) throws IOException {
-		File sourceFile = new File(smemDir, SMEM_SOURCE_FILE);
-		Writer sourceWriter = new BufferedWriter(new FileWriter(sourceFile));
-
-		// Preamble
-		sourceWriter.write("# This file was autogenerated by the SmemConfiguration tool\n");
-		sourceWriter.write("# This file will source any files created in the agent/smem directory\n\n");
-
-		// Source each created file
-		for(File f : createdFiles.values()){
-			sourceWriter.write("source " + f.getName() + "\n");
-		}
-
-		sourceWriter.close();
+		return sourceFile;
 	}
 
 	// Parses an smem configuration file, 
 	// createdFiles is a map to files created in the smem directory, it will add more as needed
 	// rosieFiles is a list of rosie agent files to source (relative to rosie/agent dir)
-	private static void parseSmemConfigurationFile(File configFile, File smemDir, File rosieAgentDir, Map<String, File> createdFiles, List<String> rosieFiles) {
+	private static void parseSmemConfigurationFile(File configFile, File smemDir, File templateDir, Stack<File> dirStack, 
+			Map<String, File> createdFiles, List<File> rosieFiles) {
 		if(configFile == null || !configFile.exists()){
 			return;
 		}
@@ -212,7 +222,6 @@ public class SmemConfigurator {
 		try{
 		// Smem config file reader
 		reader = new BufferedReader(new FileReader(configFile));
-		File templateDir = new File(rosieAgentDir, "/init-smem/templates");
 
 		// Loop through each line in the file
 		String line;
@@ -235,23 +244,34 @@ public class SmemConfigurator {
 					SmemTemplate template = new SmemTemplate(args, templateFile);
 					writeTemplateFile(template, reader, outputFile, createdFiles);
 				}
+				// Push a directory onto the current directory stack, relative to the agent home directory
+				// pushd <relative-dir>
+				else if(line.startsWith("pushd") && args.length > 1){
+					dirStack.push(new File(dirStack.peek(), args[1]));
+				}
+				// Pops a directory from the current directory stack
+				// popd
+				else if(line.startsWith("popd")){
+					if(dirStack.size() > 1){
+						dirStack.pop();
+					}
+				}
 				// Source the given file (without configuring)
-				// source-file <path-from-agent-dir>
-				else if (line.startsWith("source-file") && args.length > 1){
-					rosieFiles.add(args[1]);
+				// source <path-from-agent-dir>
+				else if (line.startsWith("source") && args.length > 1){
+					rosieFiles.add(new File(dirStack.peek(), args[1]));
 				}
 				// Specifies another configuration file to parse (relative to agent directory)
 				//   Hooray recursion!
-				// config-file <filename>
-				else if (line.startsWith("config-file") && args.length > 1){
-					File subConfigFile = new File(rosieAgentDir, args[1]);
-					parseSmemConfigurationFile(subConfigFile, smemDir, rosieAgentDir, createdFiles, rosieFiles);
+				// include-config <filename>
+				else if (line.startsWith("include-config") && args.length > 1){
+					File subConfigFile = new File(dirStack.peek(), args[1]);
+					parseSmemConfigurationFile(subConfigFile, smemDir, templateDir, dirStack, createdFiles, rosieFiles);
 				}
 				// Include a semantic memory file to source, while replacing handle lti's (@handle1)
-				// include-file <path-from-agent-dir>
-				else if (line.startsWith("include-file") && args.length > 1){
-					String filename = args[1];
-					File sourceFile = new File(rosieAgentDir, filename);
+				// process-file <path-from-agent-dir>
+				else if (line.startsWith("process-file") && args.length > 1){
+					File sourceFile = new File(dirStack.peek(), args[1]);
 					File outputFile = new File(smemDir, "/" + sourceFile.getName());
 					if(sourceFile.exists()){
 						copySmemFile(sourceFile, outputFile);

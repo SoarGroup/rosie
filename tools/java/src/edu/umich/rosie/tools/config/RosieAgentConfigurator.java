@@ -25,10 +25,10 @@ public class RosieAgentConfigurator {
 			// Different filenames used by the agent
 			String agentConfigFilename = config.agentDir + "/rosie." + config.agentName + ".config";
 			String agentSourceFilename = config.agentDir + "/" + config.agentName + "_source.soar";
-			String smemSourceFilename = SmemConfigurator.configureSmem(config);
+			File smemSourceFile = SmemConfigurator.configureSmem(config);
 			
 			// Write the 3 files
-			writeAgentConfigFile(config, agentConfigFilename, agentSourceFilename, smemSourceFilename);
+			writeAgentConfigFile(config, agentConfigFilename, agentSourceFilename, smemSourceFile);
 			writeAgentSourceFile(config, agentSourceFilename);
 
 		} catch (Exception e){
@@ -37,7 +37,7 @@ public class RosieAgentConfigurator {
 	}
 	
 	private static void writeAgentConfigFile(RosieConfig config, String agentConfigFilename, 
-			String agentSourceFilename, String smemSourceFilename) throws IOException {
+			String agentSourceFilename, File smemSourceFile) throws IOException {
 		// Create the agent config file (Sourced by the java Rosie agent)
 		Writer agentConfigFile = new BufferedWriter(new OutputStreamWriter(
 				new FileOutputStream(agentConfigFilename), "utf-8"));
@@ -49,7 +49,7 @@ public class RosieAgentConfigurator {
 		
 		// Agent Source Information
 		agentConfigFile.write("agent-source = " + agentSourceFilename + "\n");
-		agentConfigFile.write("smem-source = " + smemSourceFilename + "\n\n");
+		agentConfigFile.write("smem-source = " + smemSourceFile.getAbsolutePath().replaceAll("\\\\", "/") + "\n\n");
 		
 		//	Parser testing info
 		agentConfigFile.write("parser = " + config.parser + "\n");
