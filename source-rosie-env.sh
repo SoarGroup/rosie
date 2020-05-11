@@ -75,6 +75,11 @@ complete -F _rosie_evaluations_completion run_rosie_eval
 #   (will not match parts of rules/attributes/variables)
 alias soar-find-replace="$ROSIE_HOME/tools/scripts/find_replace_soar.sh"
 
+### grep-soar-word <word>
+# Will grep the current directory recursively for the given word
+#   but will only match entire soar words
+#   (will not match parts of rules/attributes/variables)
+alias grep-soar-word="$ROSIE_HOME/tools/scripts/grep_soar_word.sh"
 
 ### grep-agent <pattern>
 # Will grep the agent folder for the given pattern, ignoring language-comprehension, game-learning, and testing files
