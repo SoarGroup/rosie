@@ -1,0 +1,150 @@
+
+#match pre-condition of an object some pred another object
+sp {retrieve-model*propose*match-precondition
+(state <s1> ^model <md>
+		^world <world>
+		^name retrieve-model
+		^name task-state-no-change)
+(<md> ^preconditions false)
+#matching the precondition in the model
+(<md> ^retrieved.preconditions.precondition <prcon>)
+(<prcon> ^type relation
+	     ^predicates.predicate <pred1>)
+(<pred1> ^handle <name>
+		^instance <inst1>)
+(<inst1> ^1.grounded <obj1>
+		^2.grounded <obj2>)
+#matching values in the world
+(<world> ^objects <objects>
+         ^predicates.predicate <pred2>)
+(<objects> ^object <obj1>
+		   ^object <obj2>)
+(<world> ^predicates.predicate <pred2>)
+(<pred2> ^handle <name>
+		^instance <inst2>)
+(<inst2> ^1 <obj1>
+		^2 <obj2>)
+-->
+(<s1> ^operator <o> + = >)
+(<o> ^name match-precondition)
+}
+
+#if there are no preconditions
+sp {retrieve-model*propose*match-precondition*none 
+(state <s1> ^model <md>
+		^world <world>
+		^name retrieve-model
+		^name task-state-no-change)
+(<md> ^retrieved.preconditions.none none
+      ^preconditions false)
+-->
+(<s1> ^operator <o> + = >)
+(<o> ^name match-precondition
+	^none <n>)
+}
+
+sp {retrieve-model*apply*match-precondition 
+(state <s1> ^model <md>
+		^operator <o>
+		^name retrieve-model
+		^name task-state-no-change)
+(<o> ^name match-precondition)
+-->
+(<md> ^preconditions true)
+(<md> ^preconditions false -)
+}
+
+#precondition is not met
+sp {retrieve-model*propose*create-precondition-goal
+(state <s1> ^name retrieve-model
+ 		^name task-state-no-change
+ 		^model <md>)
+(<md> ^preconditions false
+	  ^retrieved <ret>)
+-->
+(<s1> ^operator <o> + =)
+(<o> ^name cant-match-precondition)
+}
+
+#create new desired, remove old desired, remove retrieved model
+sp {retrieve-model*apply*create-precondition-goal
+(state <s1> ^name retrieve-model
+ 		^name task-state-no-change
+ 		^operator <o>
+ 		^model <md>
+ 		^desired <old-desired>
+ 		^smem-model <smem>
+ 		^world <w>)
+#For chunking
+(<w> ^predicates.predicate <pred>
+	^objects <objs>)
+(<objs> ^object <wobj1>
+		^object <wobj2>)
+(<wobj1> ^predicates.category <cat1>)
+(<wobj2> ^predicates.category <cat2>)
+(<pred> ^handle <predicate-name>
+	    -^instance.1 <wobj1>
+	    -^instance.2 <wobj2>)
+#-------------------------------------
+(<md> ^retrieved <mdret>)
+(<mdret> ^preconditions.precondition <pre>)
+(<pre> ^object1 <obj1>
+	   ^object2 <obj2>
+	   ^type relation
+	   ^predicates.predicate <preds>)
+(<obj1> ^category <cat1>)
+(<obj2> ^category <cat2>)
+(<preds> ^handle <predicate-name>)
+(<o> ^name cant-match-precondition)
+-->
+(<s1> ^desired <des>
+	  ^desired <old-desired> -
+	  ^smem-model <smem> -)
+(<md> ^retrieved <mdret> -)
+(<des> ^1 <one>
+	^handle precondition-goal
+	^pred-count 1)
+(<one> ^1 <obj1>
+	^2 <obj2>
+	^handle <predicate-name>
+	^type relation)
+}
+
+# sp {retrieve-model*apply*create-precondition-goal
+# (state <s1> ^operator <o>
+# 	        ^name retrieve-model
+# 	        ^name task-state-no-change
+# 	        ^superstate <s2>)
+# (<s2> ^superstate <s>)
+# (<o> ^name create-precondition-goal)
+# (<s> ^model <md>
+# 	^world <w>)
+# (<md> ^retrieved.preconditions.precondition <preCon>)
+# (<preCon> ^object1 <ob1>
+# 	      ^object2 <ob2>
+# 	      ^predicates.predicate.handle <predname>
+# 	      ^type <typeName>)
+# -->
+# (<s1> ^desired <gl>
+# 	  ^world <w>)
+# (<gl> ^type precondition
+# 	  ^1 <ob1>
+# 	  ^2 <ob2>
+# 	  ^handle <predname>
+# 	  ^type <typeName>)
+# (<md> ^precondition flag)
+# }
+
+
+# sp {retrieve-model*prefer*match*over*goal
+# (state <s1> ^operator <o1> +
+# 	        ^operator <o2> +
+# 	        ^name retrieve-model
+# 	        ^name task-state-no-change)
+# (<o1> ^name create-precondition-goal)
+# (<o2> ^name match-precondition)
+# -->
+# (<s1> ^operator <o2> > <o1>)
+# }
+
+
