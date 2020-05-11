@@ -194,7 +194,7 @@ public class SmemConfigurator {
 
 		// Source each created file
 		for(File f : createdFiles.values()){
-			sourceWriter.write("   source " + f.getName() + "\n");
+			sourceWriter.write("source " + f.getName() + "\n");
 		}
 
 		sourceWriter.close();

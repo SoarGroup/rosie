@@ -7,6 +7,10 @@ run-test: agent/rosie.eval-find-test.config
 	java soargroup.mobilesim.MobileGUI -w find-test.world &
 	python3 -m rosie.evaluation.find-test
 
+# Launches the simuator
+run-sim: find-test.world
+	java soargroup.mobilesim.MobileGUI -w find-test.world &
+
 # agent/rosie.eval-find-test.config: Configures the rosie soar agent that will be sourced to run
 agent/rosie.eval-find-test.config: agent.config smem-config.txt extra-smem-adds.soar extra-soar-rules.soar find-test.world find-test.script
 	java edu.umich.rosie.tools.config.RosieAgentConfigurator agent.config
