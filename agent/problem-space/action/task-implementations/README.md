@@ -113,13 +113,13 @@ Have the robot open an object, e.g. a door or a fridge
 ```
 
 *Proposal:* <br>
-`arm.holding-object(false) & closed2(arg1) & confirmed1(arg1)`
+`arm.holding-object(false) & not-open1(arg1) & confirmed1(arg1)`
 
 *Goal:* <br>
 `open2(arg1)`
 
 *Action Model:* <br>
-`+open2(arg1), -closed2(arg1)`
+`+open2(arg1), -not-open1(arg1)`
 
 *Execute:* <br>
 requires `visible1(arg1) & reachable1(arg1)`
@@ -148,14 +148,14 @@ Have the robot close an object, e.g. a door or a fridge
 `arm.holding-object(false) & open2(arg1) & confirmed1(arg1)`
 
 *Goal:* <br>
-`closed2(arg1)`
+`not-open1(arg1)`
 
 *Action Model:* <br>
-`+closed2(arg1), -open2(arg1)`
+`+not-open1(arg1), -open2(arg1)`
 
 *Execute:* <br>
 requires `visible1(arg1) & reachable1(arg1)`
-* Internal: Change the predicate on the input link to closed2
+* Internal: Change the predicate on the input link to not-open1
 * Ai2Thor: Close is a primitive action
 * Tabletop: Close is a primitive action (set-state)
 * Magicbot: Close is a primitive action (do-control-law set-state)

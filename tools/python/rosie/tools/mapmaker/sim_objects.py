@@ -164,7 +164,7 @@ class Shelves(SimObject):
     def read_info(self, reader, scale=1.0):
         super().read_info(reader, scale)
         if hasattr(self, "door"):
-            self.preds["door2"] = "open2" if self.door == "open" else "closed2"
+            self.preds["is-open1"] = "open2" if self.door == "open" else "not-open1"
         return self
 
 class Pantry(Shelves):  
@@ -172,17 +172,17 @@ class Pantry(Shelves):
     cat = "pantry1"
 
 class Cupboard(Shelves):  
-    door = "closed"
+    door = "not-open1"
     cat = "cupboard1"
 
 class Fridge(Shelves):  
     sim_class = "soargroup.mobilesim.sim.SimFridge"
-    door = "closed"
+    door = "not-open1"
     cat = "fridge1"
     rgb = [ 200, 200, 200 ]
 
 class Microwave(Shelves):  
-    door = "closed"
+    door = "not-open1"
     cat = "microwave1"
     rgb = [ 50, 50, 50 ]
 
@@ -193,7 +193,7 @@ class Drawer(SimObject):
 
     def read_info(self, reader, scale=1.0):
         super().read_info(reader, scale)
-        self.preds["door2"] = "closed2"
+        self.preds["is-open1"] = "not-open1"
         return self
 
 class Desk(SimObject):  
