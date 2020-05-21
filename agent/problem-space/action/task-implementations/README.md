@@ -77,9 +77,9 @@ Have the robot put down an object it is holding, at a particular place
 
 *Proposal:* <br>
 `grabbed1(arg1) -> no arg2` <br>
-`grabbed1(arg1) & confirmed1(dest) & surface1(dest) -> arg2=on2(dest)` <br>
-`grabbed1(arg1) & confirmed1(dest) & receptacle(dest) -> arg2=in2(dest)` <br>
-`grabbed1(arg1) & confirmed1(dest) & receptacle(dest) & openable(dest) & open2(dest) -> arg2=in2(dest)` 
+`grabbed1(arg1) & confirmed1(dest) & surface1(dest) -> arg2=on1(dest)` <br>
+`grabbed1(arg1) & confirmed1(dest) & receptacle(dest) -> arg2=in1(dest)` <br>
+`grabbed1(arg1) & confirmed1(dest) & receptacle(dest) & openable(dest) & open2(dest) -> arg2=in1(dest)` 
 
 *Goal:* <br>
 `no arg2 -> not-grabbed1(arg1)` <br>
@@ -176,17 +176,17 @@ Have the robot turn off an object
 ```
 
 *Proposal:* <br>
-`arm.holding-object(false) & off2(arg1) & confirmed1(arg1)`
+`arm.holding-object(false) & not-activated1(arg1) & confirmed1(arg1)`
 
 *Goal:* <br>
-`on2(arg1)`
+`activated1(arg1)`
 
 *Action Model:* <br>
-`+on2(arg1), -off2(arg1)`
+`+activated1(arg1), -not-activated1(arg1)`
 
 *Execute:* <br>
 requires `visible1(arg1) & reachable1(arg1)`
-* Internal: Change the predicate on the input link to on2
+* Internal: Change the predicate on the input link to activated1
 * Ai2Thor: Turn-on is a primitive action
 * Tabletop: Turn-on is a primitive action (set-state)
 * Magicbot: Turn-on is a primitive action (do-control-law set-state)
@@ -207,17 +207,17 @@ Have the robot turn off an object, e.g. a light
 ```
 
 *Proposal:* <br>
-`arm.holding-object(false) & on2(arg1) & confirmed1(arg1)`
+`arm.holding-object(false) & activated1(arg1) & confirmed1(arg1)`
 
 *Goal:* <br>
-`off2(arg1)`
+`not-activated1(arg1)`
 
 *Action Model:* <br>
-`+off2(arg1), -on2(arg1)`
+`+not-activated1(arg1), -activated1(arg1)`
 
 *Execute:* <br>
 requires `visible1(arg1) & reachable1(arg1)`
-* Internal: Change the predicate on the input link to off2
+* Internal: Change the predicate on the input link to not-activated1
 * Ai2Thor: Turn-off is a primitive action
 * Tabletop: Turn-off is a primitive action (set-state)
 * Magicbot: Turn-off is a primitive action (do-control-law set-state)
@@ -282,7 +282,7 @@ Write a value onto an object, used for logic puzzles such as sudoku.
 ([o] ^name op_write1 
      ^task-handle write1
      ^arg1 [type:concept])  # The thing to write (e.g. number)
-     ^arg2 [type:partial-predicate]) # where to write (on2(dest))
+     ^arg2 [type:partial-predicate]) # where to write (on1(dest))
 ```
 
 *Goal:* `execute-command(write)`

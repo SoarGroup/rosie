@@ -153,7 +153,7 @@ class Stove(SimObject):
     cat = "stove1"
     def read_info(self, reader, scale=1.0):
         super().read_info(reader, scale)
-        self.preds["activation1"] = "off2"
+        self.preds["is-activated1"] = "not-activated1"
         return self
 
 class Shelves(SimObject):  
@@ -209,11 +209,11 @@ class LightSwitch(SimObject):
 
     def read_info(self, reader, scale=1.0):
         # 1 word << on off >> - state of switch
-        self.state = reader.nextWord()
+        self.state = reader.nextWord().lower()
         # 1 word wp02 - region to control
         self.region = reader.nextWord()
         super().read_info(reader, scale)
-        self.preds["activation1"] = self.state + "2"
+        self.preds["is-activated1"] = ("activated1" if self.state == "on" else "not-activated1")
         return self
 
     def write_info(self, writer):
