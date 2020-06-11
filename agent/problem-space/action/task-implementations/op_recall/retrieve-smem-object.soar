@@ -1,0 +1,122 @@
+################################################################
+# recall from smem 
+
+# If the task-operator has two object arguments and no when-clause, 
+#    we will try to retrieve a matching edge from semantic memory and 
+#    add the tail to working memory as the recalled object
+
+# Example: Recall the storage location of a soda
+# arg1 = storage location
+# arg2 = soda
+
+# We are looking for a semantic-edge in smem where
+#   the head node is an object matching soda
+#   and the semantic-edge has the properties 'storage' and 'location'
+# If the edge does exist, find the tail of the edge and add it to the world
+#   (e.g. add the fridge to the world with the modifier 'recalled')
+
+
+### memory-type smem : recall knowledge from smem (no when-clause)
+
+sp {op_recall1*elaborate*memory-type*smem
+   (state <s> ^name op_recall1
+              ^task-operator <task-op>)
+   (<task-op> ^arg1.id <obj1>
+              ^arg2.id <obj2>
+             -^when-clause)
+-->
+   (<s> ^memory-type smem
+        ^head-object <obj2>
+        ^edge-object <obj1>)
+}
+
+### Recall the object from smem using retrieve-smem-object
+# (In problem-space/action/task-utils/retrieve-smem-object.soar)
+sp {op_recall1*elaborate*retrieve-smem-object*head
+   (state <s> ^name op_recall1
+              ^desired.handle recall1goal1
+              ^head-object <head>)
+-->
+   (<s> ^retrieve-smem-object <rso>)
+   (<rso> ^type head-object
+          ^object <head>)
+}
+
+sp {op_recall1*smem*elaborate*retrieve-smem-object*reference-info
+   (state <s> ^name op_recall1
+              ^memory-type smem
+              ^retrieve-smem-object <rso>
+              ^task-operator <task-op>)
+   (<task-op> ^arg2 <arg2>)
+   (<arg2> ^reference-info <ref-info>
+           ^id <obj>)
+   (<rso> ^object <obj>)
+-->
+   (<rso> ^reference-info <ref-info>)
+}
+
+
+# See if there is a matching edge on the retrieved head object
+sp {op_recall1*smem*elaborate*matching-smem-edge
+   (state <s> ^name op_recall1
+              ^memory-type smem
+              ^retrieve-smem-object <rso>
+              ^edge-object.predicates <preds>)
+   (<rso> ^type head-object
+          ^result.semantic-edge <se>)
+   # There are no predicates on the edge-object that are not on the semantic-edge
+  -{(<preds> ^<prop1> <pred1>)
+    (<se> -^<prop1> <pred1>)}
+#   # There are no predicates on the semantic-edge that are not on the edge-object
+#  -{(<se> ^{ <prop2> <> tail } <pred2>)
+#    (<preds> -^<prop2> <pred2>)}
+#   (<se> ^tail <tail>)
+-->
+   (<s> ^matching-smem-edge <se>)
+}
+
+sp {op_recall1*smem*elaborate*smem-tail-object*from*matching-smem-edge
+   (state <s> ^name op_recall1
+              ^memory-type smem
+              ^matching-smem-edge <se>)
+   (<se> ^tail <tail>)
+   (<tail> ^<anything>)
+-->
+   (<s> ^smem-tail-object <tail>)
+}
+
+
+# If agent-params.print-test-output = true, then print out what was retrieved
+sp {op_recall*write*smem-tail-object
+   (state <s> ^name op_recall1
+              ^memory-type smem
+              ^agent-params.print-test-output true
+              ^smem-tail-object.handle <h>)
+-->
+   (write (crlf) |@TEST: ### Task op_recall1 retrieved | <h> (crlf))
+}
+
+
+### NOTE: Due to how retrievals work and how the category ontology is structured,
+# It is possible the tail object wasn't depth retrieved, so we account for that here
+
+sp {op_recall1*elaborate*smem-query*tail-object
+   (state <s> ^name op_recall1
+              ^matching-smem-edge <se>
+             -^smem-tail-object)
+   (<se> ^tail <tail>)
+-->
+   (<s> ^smem-retrieve <ret>)
+   (<ret> ^identifier <tail>
+          ^depth 2)
+}
+
+sp {op_recall1*apply*smem-retrieve-lti*copy*result
+   (state <s> ^name op_recall1
+              ^operator.name smem-retrieve-lti
+              ^matching-smem-edge.tail <tail>
+              ^smem.result <res>)
+   (<res> ^success <tail> ^retrieved <smem-tail>)
+-->
+   (<s> ^smem-tail-object <smem-tail>)
+}

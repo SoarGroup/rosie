@@ -1,0 +1,171 @@
+###########################################################
+################# retrieve-smem-object ####################
+
+# Take a world object and try to retrieve a matching object from smem
+# To use, create the following structure on any state:
+#
+# (state <s> ^retrieve-smem-object <rso>)
+# (<rso> ^object <world-obj>
+#        ^reference-info <ref-info> [OPTIONAL])
+#
+
+# It will try to retrieve up to 3 times: 
+# 1. matches the object handle directly
+# 2. matches the object predicates
+# 3. retrieves the root category LTI
+
+# Once one of the above was retrieved, it will copy it as (<rso> ^result <lti>)
+
+
+### PROPOSAL
+
+sp {anystate*propose*retrieve-smem-object
+   (state <s> ^retrieve-smem-object <rso>)
+   (<rso> ^object <obj>
+         -^result)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name retrieve-smem-object
+        ^workspace <rso>)
+}
+
+
+### ELABORATIONS
+
+sp {retrieve-smem-object*elaborate*reference-object*superoperator
+   (state <s> ^name retrieve-smem-object
+              ^superstate.operator.workspace.object <obj>)
+-->
+   (<s> ^reference-object <obj>)
+}
+
+sp {retrieve-smem-object*elaborate*reference-info*superoperator
+   (state <s> ^name retrieve-smem-object
+              ^superstate.operator.workspace.reference-info <ref-info>)
+-->
+   (<s> ^reference-info <ref-info>)
+}
+
+
+### MATCH TYPE 1: Handle
+# First, try to see if we have a representation for the object in semantic memory 
+# using the handle
+sp {retrieve-smem-object*elaborate*smem-query*match-handle
+   (state <s> ^name retrieve-smem-object
+              ^reference-object.handle <obj-h>
+             -^match-handle-result)
+-->
+   (<s> ^smem-query <q>)
+   (<q> ^cue <cue>
+        ^depth 4
+        ^destination <s>
+        ^result-name match-handle-result)
+   (<cue> ^item-type object
+          ^object-instance true
+          ^handle <obj-h>)
+}
+
+
+### MATCH TYPE 2: Predicates
+# Second, try to see if an object matches based on the predicates
+
+# Create the cue to do the retrieval
+sp {retrieve-smem-object*elaborate*predicate-match-cue
+   (state <s> ^name retrieve-smem-object
+              ^reference-object.root-category <root>)
+-->
+   (<s> ^predicate-match-cue <cue>)
+   (<cue> ^item-type object
+          ^object-instance true
+          ^root-category <root>)
+}
+
+sp {retrieve-smem-object*elaborate*predicate-match-cue*other*predicates
+   (state <s> ^name retrieve-smem-object
+              ^predicate-match-cue <cue>
+              ^reference-object.predicates <preds>)
+   (<preds> ^{ <prop> << name >> } <pred>)
+-->
+   (<cue> ^<prop> <pred>)
+}
+
+sp {retrieve-smem-object*elaborate*smem-query*match-predicates
+   (state <s> ^name retrieve-smem-object
+              ^match-handle-result failure
+             -^match-predicate-result
+              ^predicate-match-cue <cue>)
+-->
+   (<s> ^smem-query <q>)
+   (<q> ^cue <cue>
+        ^depth 4
+        ^destination <s>
+        ^result-name match-predicates-result)
+}
+
+
+### MATCH TYPE 3: Category LTI
+# Third, try to retrieve the lti for the root category
+
+sp {retrieve-smem-object*elaborate*retrieve-category-handle*reference-info
+   (state <s> ^name retrieve-smem-object
+              ^reference-info.category <cat>)
+-->
+   (<s> ^retrieve-category-handle <cat>)
+}
+
+sp {retrieve-smem-object*elaborate*retrieve-category-handle*reference-object*root-category
+   (state <s> ^name retrieve-smem-object
+             -^reference-info.category
+              ^reference-object.root-category <cat>)
+-->
+   (<s> ^retrieve-category-handle <cat>)
+}
+
+sp {retrieve-smem-object*elaborate*smem-query*category*lti*root-category
+   (state <s> ^name retrieve-smem-object
+              ^match-predicates-result failure
+              ^retrieve-category-handle <cat>
+             -^retrieved-category)
+-->
+   (<s> ^smem-query <q>)
+   (<q> ^cue <cue>
+        ^depth 2
+        ^destination <s>
+        ^result-name retrieved-category)
+   (<cue> ^handle <cat>)
+}
+
+### ASSERTION! There was no retrieved category
+# This shouldn't happen, as all valid categories should be in smem
+sp {ASSERT*retrieve-smem-object*retrieved-category*succeeded
+   (state <s> ^name retrieve-smem-object
+              ^retrieve-category-handle <cat>
+              ^retrieved-category failure)
+-->
+   (halt)
+   (write (crlf) |!!! ASSERTION VIOLATED !!! in retrieve-smem-object | (crlf))
+   (write |Tried to retrieve category | <cat> | from smem but it failed| (crlf))
+}
+
+
+### complete-retrieve-smem-object
+# If one of the retrievals worked, return it
+
+sp {retrieve-smem-object*propose*complete-retrieve-smem-object
+   (state <s> ^name retrieve-smem-object
+              ^{ << match-handle-result match-predicates-result retrieved-category >> } { <res> <> failure })
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name complete-retrieve-smem-object
+        ^result <res>)
+}
+
+sp {retrieve-smem-object*apply*complete-retrieve-smem-object*copy*result*superstate
+   (state <s> ^name retrieve-smem-object
+              ^operator <o>
+              ^superstate.operator.workspace <ws>)
+   (<o> ^name complete-retrieve-smem-object
+        ^result <res>)
+-->
+   (<ws> ^result <res>)
+}
