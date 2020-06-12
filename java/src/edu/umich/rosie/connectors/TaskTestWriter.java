@@ -1,6 +1,7 @@
 package edu.umich.rosie.connectors;
 
 import sml.*;
+import sml.Agent.PrintEventInterface;
 import edu.umich.rosie.soar.SoarAgent;
 import edu.umich.rosie.soar.SoarUtil;
 import edu.umich.rosie.soar.FileWriterConnector;
@@ -11,7 +12,8 @@ import edu.umich.rosie.language.IMessagePasser.IMessageListener;
 import edu.umich.rosie.language.LanguageConnector;
 
 public class TaskTestWriter extends FileWriterConnector
-							implements TaskEventListener, IMessageListener {
+							implements TaskEventListener, IMessageListener, PrintEventInterface {
+	private long printCallbackId = -1;
 
 	public TaskTestWriter(SoarAgent agent, String filename){
 		super(agent, filename);
@@ -34,6 +36,8 @@ public class TaskTestWriter extends FileWriterConnector
 			.getMessagePasser()
 			.addMessageListener(this);
 
+        printCallbackId = soarAgent.getAgent().RegisterForPrintEvent(smlPrintEventId.smlEVENT_PRINT, this, null);
+
 		super.connect();
 	}
 	
@@ -46,6 +50,11 @@ public class TaskTestWriter extends FileWriterConnector
 		soarAgent.getConnector(LanguageConnector.class)
 			.getMessagePasser()
 			.removeMessageListener(this);
+
+        if(printCallbackId != -1){
+            soarAgent.getAgent().UnregisterForPrintEvent(printCallbackId);
+			printCallbackId = -1;
+        }
 
 		super.disconnect();
 	}
@@ -70,4 +79,12 @@ public class TaskTestWriter extends FileWriterConnector
 		// Write each sentence that the agent says as output
 		writer.print("R: \"" + message.message + "\"\n");
 	}
+
+    @Override
+    public void printEventHandler(int eventID, Object data, Agent agent, String message) {
+		message = message.trim();
+		if(message.indexOf("@TEST:") == 0){
+			writer.print(message.substring(7) + "\n");
+		}
+    }
 }

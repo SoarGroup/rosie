@@ -1,6 +1,8 @@
 package edu.umich.rosie.connectors;
 
 import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 
 import edu.umich.rosie.soar.AgentConnector;
 import edu.umich.rosie.soar.SoarAgent;
@@ -61,6 +63,22 @@ public class ActionStackConnector extends AgentConnector {
 		return sb.toString();
 	}
 
+	private String join(List<String> strings, String sep){
+		StringBuilder sb = new StringBuilder();
+		boolean first = true;
+		for(String s : strings){
+			if(s == null){
+				continue;
+			}
+			sb.append(s);
+			if(!first){
+				sb.append(sep);
+			}
+			first = false;
+		}
+		return sb.toString();
+	}
+
 	private void processStartedTask(Identifier rootId) {
 		Identifier segId = SoarUtil.getChildId(rootId, "segment");
 		int depth = SoarUtil.getChildInt(segId, "depth").intValue();
@@ -82,6 +100,7 @@ public class ActionStackConnector extends AgentConnector {
 		Identifier arg1id = SoarUtil.getChildId(taskId, "arg1");
 		Identifier arg2id = SoarUtil.getChildId(taskId, "arg2");
 		Identifier arg3id = SoarUtil.getChildId(taskId, "arg3");
+		Identifier whenId = SoarUtil.getChildId(taskId, "when-clause");
 
 		String task = taskHandle + "(";
 		if (arg1id != null){
@@ -95,6 +114,9 @@ public class ActionStackConnector extends AgentConnector {
 		}
 		if (arg3id != null){
 			task += ", " + taskArgToString(arg3id);
+		}
+		if (whenId != null){
+			task += ", " + taskArgToString(whenId);
 		}
 		task += ")";
 
@@ -117,7 +139,35 @@ public class ActionStackConnector extends AgentConnector {
 		} else if (argType.equals("measure")){
 			return SoarUtil.getChildString(argId, "number") + " " + 
 					SoarUtil.getChildString(argId, "unit");
+		} else if (argType.equals("when-clause")){
+			return "when" + predSetToString(argId);
 		}
 		return "?";
 	}
+
+	private String predSetToString(Identifier argId){
+		Long numPreds = SoarUtil.getChildInt(argId, "pred-count");
+		ArrayList<String> parsedPreds = new ArrayList<String>();
+		for(Integer i = 1; i <= numPreds; i += 1){
+			Identifier predId = SoarUtil.getChildId(argId, i.toString());
+			parsedPreds.add(predicateToString(predId));
+		}
+		return "{ " + join(parsedPreds, ", ") + " }";
+	}
+
+	private String predicateToString(Identifier predId){
+		String predType = SoarUtil.getChildString(predId, "type");
+		String predHandle = SoarUtil.getChildString(predId, "handle");
+		if(predType.equals("unary")){
+			String obj1_str = AgentMessageParser.parseObject(SoarUtil.getChildId(predId, "1"));
+			return predHandle + "(" + obj1_str + ")";
+		} else if(predType.equals("relation")){
+			String obj1_str = AgentMessageParser.parseObject(SoarUtil.getChildId(predId, "1"));
+			String obj2_str = AgentMessageParser.parseObject(SoarUtil.getChildId(predId, "2"));
+			return predHandle + "(" + obj1_str + ", " + obj2_str + ")";
+		} else {
+			return "?";
+		}
+	}
+
 }

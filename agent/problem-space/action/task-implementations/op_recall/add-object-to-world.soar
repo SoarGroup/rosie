@@ -1,11 +1,11 @@
 ### Once the retrieval is finished, there are three possiblities: 
 
-# 1. The tail object is an actual smem object-instance, add it to the world
+# 1. The retrieved object from smem is an actual object-instance, add it to the world
 sp {op_recall1*propose*add-object-to-world*smem*object-instance
    (state <s> ^name op_recall1
               ^memory-type smem
               ^smem-tail-object <tail>
-             -^tail-object)
+             -^added-object)
    (<tail> ^object-instance true)
 -->
    (<s> ^operator <o> + >)
@@ -13,12 +13,24 @@ sp {op_recall1*propose*add-object-to-world*smem*object-instance
         ^source-obj <tail>)
 }
 
+# 1. The retrieved object from epmem is an actual object, add it to the world
+sp {op_recall1*propose*add-object-to-world*epmem*matching-epmem-object
+   (state <s> ^name op_recall1
+              ^memory-type epmem
+              ^matching-epmem-object <obj>
+             -^added-object)
+-->
+   (<s> ^operator <o> + > =)
+   (<o> ^name add-object-to-world
+        ^source-obj <obj>)
+}
+
 # 2. The tail object is a category, add a new object with that category as the root
 sp {op_recall1*propose*add-object-to-world*smem*category
    (state <s> ^name op_recall1
               ^memory-type smem
               ^smem-tail-object <tail>
-             -^tail-object)
+             -^added-object)
    (<tail> ^handle <cat>
            ^property.handle category)
 -->
@@ -28,11 +40,23 @@ sp {op_recall1*propose*add-object-to-world*smem*category
 }
 
 # 3. The retrieval failed, add a nothing object
-sp {op_recall1*propose*add-object-to-world*smem*failure*nothing
+sp {op_recall1*propose*add-object-to-world*smem*failure*add*nothing*object
    (state <s> ^name op_recall1
               ^memory-type smem
               ^retrieval-failed true
-             -^tail-object)
+             -^added-object)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name add-object-to-world
+        ^source-obj.predicates <preds>)
+   (<preds> ^category nothing1)
+}
+
+sp {op_recall1*propose*add-object-to-world*epmem*failure*add*nothing*object
+   (state <s> ^name op_recall1
+              ^memory-type epmem
+              ^retrieved-episode none
+             -^added-object)
 -->
    (<s> ^operator <o> + >)
    (<o> ^name add-object-to-world
@@ -42,7 +66,6 @@ sp {op_recall1*propose*add-object-to-world*smem*failure*nothing
 
 sp {op_recall1*apply*add-object-to-world*nothing*write*message
    (state <s> ^name op_recall1
-              ^memory-type smem
               ^agent-params.print-test-output true
               ^operator <o>)
    (<o> ^name add-object-to-world
@@ -51,10 +74,9 @@ sp {op_recall1*apply*add-object-to-world*nothing*write*message
    (write (crlf) |@TEST: ### Task op_recall1 retrieved nothing!| (crlf))
 }
 
-# Copy the result onto the state as ^tail-object
-sp {op_recall1*apply*add-object-to-world*copy*tail-object
+# Copy the result onto the state as ^added-object
+sp {op_recall1*apply*add-object-to-world*copy*added-object
    (state <s> ^name op_recall1
-              ^memory-type smem
               ^operator <o>
               ^add-object-result <res>)
    (<o> ^name add-object-to-world
@@ -62,6 +84,6 @@ sp {op_recall1*apply*add-object-to-world*copy*tail-object
    (<res> ^source-obj <src>
           ^world-obj <obj>)
 -->
-   (<s> ^tail-object <obj>)
+   (<s> ^added-object <obj>)
 }
 

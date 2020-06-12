@@ -1611,17 +1611,24 @@ public class AgentMessageParser
 		ArrayList<String> words = new ArrayList<String>();
 		Identifier predsId = SoarUtil.getIdentifierOfAttribute(objId, "predicates");
 
+		String sentence = SoarUtil.getValueOfAttribute(predsId, "sentence");
+		if(sentence != null){
+			return sentence;
+		}
+
 		words.add(SoarUtil.getValueOfAttribute(predsId, "size"));
 		words.add(SoarUtil.getValueOfAttribute(predsId, "color"));
 		words.add(SoarUtil.getValueOfAttribute(predsId, "modifier1"));
 		words.add(SoarUtil.getValueOfAttribute(predsId, "shape"));
 
 		String name = SoarUtil.getValueOfAttribute(predsId, "name");
-		if(name != null){
-			words.add(name);
-		} else {
-			words.add(SoarUtil.getValueOfAttribute(objId, "root-category"));
-		}
+		if(name == null){
+			name = SoarUtil.getValueOfAttribute(objId, "root-category");
+		} 
+		if(name == null){
+			name = SoarUtil.getValueOfAttribute(predsId, "category");
+		} 
+		words.add(name);
 
 		String objDesc = join(words, " ");
 		return objDesc.replaceAll("\\d", "");
