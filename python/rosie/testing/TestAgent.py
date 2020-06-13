@@ -1,20 +1,18 @@
 import sys
 
-from pysoarlib import SoarAgent, LanguageConnector, AgentConnector
+from rosie import RosieAgent, ActionStackConnector
+from pysoarlib import AgentConnector
 
-from .ActionStackConnector import ActionStackConnector
-
-class TestAgent(SoarAgent):
+class TestAgent(RosieAgent):
     def __init__(self, config_filename=None, **kwargs):
-        SoarAgent.__init__(self, config_filename=config_filename, write_to_stdout=True)
+        RosieAgent.__init__(self, config_filename=config_filename, write_to_stdout=True)
         self.outfile = None
         self.filename = self.settings["task_test_output_filename"]
 
-        self.connectors["language"] = LanguageConnector(self)
         self.connectors["language"].register_message_callback(lambda s: self.write_output("R: \"" + s + "\""))
 
         self.connectors["action_stack"] = ActionStackConnector(self)
-        self.connectors["action_stack"].register_output_callback(lambda s: self.write_output(s))
+        self.connectors["action_stack"].register_task_change_callback(lambda s: self.write_output(s))
 
         self.add_print_event_handler(lambda msg: self.print_callback(msg))
 

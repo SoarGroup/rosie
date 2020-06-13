@@ -3,7 +3,8 @@ import sys
 import traceback
 
 from string import digits
-from pysoarlib import AgentConnector, RosieMessageParser
+from rosie import RosieMessageParser
+from pysoarlib import AgentConnector
 
 
 def task_to_string(task_id):
@@ -57,20 +58,20 @@ def predicate_to_string(pred_id):
         return "?"
 
 class ActionStackConnector(AgentConnector):
-    def __init__(self, agent):
-        AgentConnector.__init__(self, agent)
+    def __init__(self, agent, print_handler=None):
+        AgentConnector.__init__(self, agent, print_handler)
 
         self.add_output_command("started-task")
         self.add_output_command("completed-task")
 
         self.callbacks = []
 
-    def register_output_callback(self, callback):
+    def register_task_change_callback(self, callback):
         self.callbacks.append(callback)
 
-    def dispatch_output(self, message):
+    def dispatch_task_change(self, change_info):
         for callback in self.callbacks:
-            callback(message)
+            callback(change_info)
 
     def on_init_soar(self):
         pass
@@ -89,7 +90,7 @@ class ActionStackConnector(AgentConnector):
             seg_id = root_id.GetChildId("segment")
             padding = "  " * (seg_id.GetChildInt("depth") - 1)
             task_id = seg_id.GetChildId("task-operator")
-            self.dispatch_output(padding + "> " + task_to_string(task_id))
+            self.dispatch_task_change(padding + "> " + task_to_string(task_id))
         except:
             self.print_handler("Error Parsing Started Task")
             self.print_handler(traceback.format_exc())
@@ -100,7 +101,7 @@ class ActionStackConnector(AgentConnector):
             seg_id = root_id.GetChildId("segment")
             padding = "  " * (seg_id.GetChildInt("depth") - 1)
             task_id = seg_id.GetChildId("task-operator")
-            self.dispatch_output(padding + "< " + task_to_string(task_id))
+            self.dispatch_task_change(padding + "< " + task_to_string(task_id))
         except:
             self.print_handler("Error Parsing Completed Task")
             self.print_handler(traceback.format_exc())

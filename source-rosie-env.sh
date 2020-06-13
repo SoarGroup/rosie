@@ -6,9 +6,9 @@ export CLASSPATH=$CLASSPATH:$ROSIE_HOME/java/rosie.jar
 export CLASSPATH=$CLASSPATH:$ROSIE_HOME/tools/java/rosie-tools.jar
 export CLASSPATH=$CLASSPATH:$ROSIE_HOME/tools/antlr-4.5-complete.jar
 
-export PYTHONPATH=$PYTHONPATH:$ROSIE_HOME/tools/python
+export PYTHONPATH=$PYTHONPATH:$ROSIE_HOME/python
 
-export ROSIE_EVAL=$ROSIE_HOME/tools/python/rosie/evaluation
+export ROSIE_EVAL=$ROSIE_HOME/python/rosie/evaluation
 
 
 ### Rosie Scripts
@@ -61,7 +61,7 @@ complete -F _task_tests_completion run_task_learning_tests
 
 
 ### run_rosie_eval <eval-name>
-# Runs one of the evaluations in tools/python/rosie/evaluation
+# Runs one of the evaluations in python/rosie/evaluation
 alias run_rosie_eval="$ROSIE_HOME/tools/scripts/run_rosie_eval.sh"
 complete -F _rosie_evaluations_completion run_rosie_eval
 

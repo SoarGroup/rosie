@@ -4,23 +4,19 @@ import string
 
 import Python_sml_ClientInterface as sml
 
-from pysoarlib import SoarAgent, LanguageConnector
+from rosie import RosieAgent, LanguageConnector
 from mobilesim.rosie import *
 
 strip_digits = lambda s: s.translate(str.maketrans('', '', string.digits))
 
-class EvaluationAgent(SoarAgent):
-    def __init__(self, eval_gui, config_filename=None, **kwargs):
-        SoarAgent.__init__(self, config_filename=config_filename, verbose=False, **kwargs)
+class EvaluationAgent(RosieAgent):
+    def __init__(self, eval_gui, config_filename=None, verbose=True, **kwargs):
+        RosieAgent.__init__(self, config_filename=config_filename, **kwargs)
 
         self.eval_gui = eval_gui
 
         self.lcm_conn = LCMConnector(self)
         self.connectors["lcm"] = self.lcm_conn
-
-        self.language = LanguageConnector(self)
-        self.language.register_message_callback(lambda msg: self.handle_message(msg))
-        self.connectors["language"] = self.language
 
         self.actuation = MobileSimActuationConnector(self, self.lcm_conn.lcm)
         self.connectors["actuation"] = self.actuation
@@ -30,6 +26,8 @@ class EvaluationAgent(SoarAgent):
 
         self.command_handler = AgentCommandConnector(self, self.lcm_conn.lcm)
         self.connectors["agent_cmd"] = self.command_handler
+
+        self.connectors["language"].register_message_callback(lambda msg: self.handle_message(msg))
 
     def handle_message(self, msg):
         self.eval_gui.append_message(msg)
