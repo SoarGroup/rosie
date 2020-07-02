@@ -1,4 +1,4 @@
-from DebuggerUtil import parse_wm_printout
+from pysoarlib.util import parse_wm_printout
 
 get_value = lambda wmes, id, attr: next((wme[2] for wme in wmes.get(id, []) if wme[1] == attr), None)
 

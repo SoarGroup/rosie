@@ -6,7 +6,7 @@ Handles send-message commands on the output link
 import sys
 
 from string import digits
-from pysoarlib import WMInterface, AgentConnector, SoarUtils
+from pysoarlib import WMInterface, AgentConnector
 from .RosieMessageParser import RosieMessageParser
 
 class Message(WMInterface):
@@ -70,6 +70,7 @@ class LanguageConnector(AgentConnector):
     def __init__(self, agent, print_handler=None):
         AgentConnector.__init__(self, agent, print_handler)
         self.agent_message_callbacks = []
+        self.script_message_callbacks = []
         self.add_output_command("send-message")
         self.add_output_command("scripted-sentence")
 
@@ -81,6 +82,9 @@ class LanguageConnector(AgentConnector):
 
     def register_message_callback(self, agent_message_callback):
         self.agent_message_callbacks.append(agent_message_callback)
+
+    def register_script_callback(self, script_message_callback):
+        self.script_message_callbacks.append(script_message_callback)
 
     def on_init_soar(self):
         if self.current_message != None:
@@ -129,7 +133,7 @@ class LanguageConnector(AgentConnector):
 
     def process_scripted_sentence(self, root_id):
         sentence = root_id.GetChildString("sentence")
-        for callback in self.agent_message_callbacks:
+        for callback in self.script_message_callbacks:
             callback(sentence)
         root_id.CreateStringWME("handled", "true")
 

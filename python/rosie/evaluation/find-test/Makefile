@@ -3,12 +3,12 @@ all: agent/rosie.eval-find-test.config
 world: find-test.world
 
 # Launches both the simulator and the test chat panel
-run-test: agent/rosie.eval-find-test.config
+run_evaluation: agent/rosie.eval-find-test.config
 	java soargroup.mobilesim.MobileGUI -w find-test.world &
 	python3 -m rosie.evaluation.find-test
 
 # Launches the simuator
-run-sim: find-test.world
+run_sim: find-test.world
 	java soargroup.mobilesim.MobileGUI -w find-test.world
 
 # agent/rosie.eval-find-test.config: Configures the rosie soar agent that will be sourced to run

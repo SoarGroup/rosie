@@ -16,18 +16,18 @@ class EvaluationAgent(RosieAgent):
         self.eval_gui = eval_gui
 
         self.lcm_conn = LCMConnector(self)
-        self.connectors["lcm"] = self.lcm_conn
+        self.add_connector("lcm", self.lcm_conn)
 
         self.actuation = MobileSimActuationConnector(self, self.lcm_conn.lcm)
-        self.connectors["actuation"] = self.actuation
+        self.add_connector("actuation", self.actuation)
 
         self.perception = MobileSimPerceptionConnector(self, self.lcm_conn.lcm)
-        self.connectors["perception"] = self.perception
+        self.add_connector("perception", self.perception)
 
         self.command_handler = AgentCommandConnector(self, self.lcm_conn.lcm)
-        self.connectors["agent_cmd"] = self.command_handler
+        self.add_connector("agent_cmd", self.command_handler)
 
-        self.connectors["language"].register_message_callback(lambda msg: self.handle_message(msg))
+        self.get_connector("language").register_message_callback(lambda msg: self.handle_message(msg))
 
     def handle_message(self, msg):
         self.eval_gui.append_message(msg)
@@ -42,14 +42,11 @@ class EvaluationAgent(RosieAgent):
         obj_cat = next(w for w in msg.split() if w[-1] == ',')
         obj_cat = obj_cat.replace(',', '')
         obj = self.perception.objects.get_object_by_cat(obj_cat)
-        print(obj_cat)
-        if obj is None:
-            return
         container = self.perception.objects.get_object_container(obj)
-        if container is None:
-            return
-        response = "The {} is in the {}.".format(obj.get_property("category"), container.get_property("category"))
-        response = strip_digits(response)
+        response = "Unknown."
+        if container is not None:
+            response = "The {} is in the {}.".format(obj.get_property("category"), container.get_property("category"))
+            response = strip_digits(response)
         self.eval_gui.send_message_to_agent(response)
 
     def advance_script(self):
@@ -65,13 +62,23 @@ class EvaluationAgent(RosieAgent):
 
     def handle_script_command(self, message):
         args = message.split()
+        # TELEPORT <obj-h> <x> <y> <z>
         if args[0] == 'TELEPORT':
             self.handle_teleport_command(args)
+        # PLACE <obj-h> <rel> <dest-h>
+        elif args[0] == 'PLACE':
+            self.handle_place_command(args)
 
     def handle_teleport_command(self, args):
-        cl_params = { 'object-id': int(args[1]), 'destination': int(args[2]) }
+        cl_params = { 'object-id': int(args[1]), 'x': float(args[2]), 'y': float(args[3]), 'z': float(args[4]) }
         cond_test = ControlLawUtil.create_empty_condition_test("stabilized")
-        control_law = ControlLawUtil.create_control_law("teleport-object", cl_params, cond_test)
-        self.actuation.send_command(control_law)
+        control_law = ControlLawUtil.create_control_law("put-at-xyz", cl_params, cond_test)
+        self.actuation.queue_command(control_law)
+
+    def handle_place_command(self, args):
+        cl_params = { 'object-id': int(args[1]), 'relation': args[2], 'destination-id': int(args[3]) }
+        cond_test = ControlLawUtil.create_empty_condition_test("stabilized")
+        control_law = ControlLawUtil.create_control_law("put-on-object", cl_params, cond_test)
+        self.actuation.queue_command(control_law)
 
 

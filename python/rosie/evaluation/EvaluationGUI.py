@@ -44,7 +44,6 @@ class EvaluationGUI(Frame):
 
     def init_soar_agent(self, config_file):
         self.agent = EvaluationAgent(self, config_filename=config_file)
-        self.agent.connect()
 
     def read_script(self):
         self.script_index = 0
@@ -69,6 +68,7 @@ class EvaluationGUI(Frame):
 
     def append_message(self, message):
         self.messages_list.insert(END, message)
+        self.messages_list.see(END)
 
     def send_message_to_agent(self, message):
         self.messages_list.insert(END, message)
@@ -111,5 +111,6 @@ class EvaluationGUI(Frame):
 
         self.create_widgets()
         self.init_soar_agent(rosie_config)
+        self.agent.connect()
         self.read_script()
 

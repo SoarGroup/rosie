@@ -39,8 +39,9 @@ for i in range(NUM_MOVES):
         if random.randint(0, 1) == 0:
             sentences.append("Close the {}.".format(loc))
 
-    obj, _, loc = get_rand_move()
-    sentences.append("!TELEPORT {} {}".format(object_ids[obj], object_ids[loc]))
+    obj, rel, loc = get_rand_move()
+    rel = rel[0:2] + "1"
+    sentences.append("!PLACE {} {} {}".format(object_ids[obj], rel, object_ids[loc]))
 
 
 with open("rand-move.script", 'w') as f:

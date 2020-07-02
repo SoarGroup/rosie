@@ -32,6 +32,9 @@ def task_arg_to_string(arg_id):
         return arg_id.GetChildString("handle")
     elif arg_type == "measure":
         return arg_id.GetChildString("number") + " " + arg_id.GetChildString("unit")
+    elif arg_type == "coordinate":
+        coord_id = arg_id.GetChildId("coord")
+        return "{%.2f, %.2f}" % ( coord_id.GetChildFloat("x"), coord_id.GetChildFloat("y") )
     elif arg_type == "when-clause":
         return "when" + pred_set_to_string(arg_id)
     return "?"

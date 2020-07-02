@@ -73,6 +73,7 @@ complete -F _rosie_evaluations_completion run_rosie_eval
 # Will replace word1 with word2 in all subfiles, 
 #   but consider entire soar words only 
 #   (will not match parts of rules/attributes/variables)
+# USE WITH CAUTION! 
 alias soar-find-replace="$ROSIE_HOME/tools/scripts/find_replace_soar.sh"
 
 ### grep-soar-word <word>
@@ -81,6 +82,6 @@ alias soar-find-replace="$ROSIE_HOME/tools/scripts/find_replace_soar.sh"
 #   (will not match parts of rules/attributes/variables)
 alias grep-soar-word="$ROSIE_HOME/tools/scripts/grep_soar_word.sh"
 
-### grep-agent <pattern>
+### grep-rosie <pattern>
 # Will grep the agent folder for the given pattern, ignoring language-comprehension, game-learning, and testing files
-alias grep-agent="$ROSIE_HOME/tools/scripts/grep_agent.sh"
+alias grep-rosie="$ROSIE_HOME/tools/scripts/grep_agent.sh"

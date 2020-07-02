@@ -5,17 +5,17 @@
 import sys
 
 from string import digits
-from pysoarlib import SoarUtils
+from pysoarlib.util import extract_wm_graph
 
 strip_digits = lambda s: s.translate(str.maketrans('', '', digits))
 
 task_handle = lambda fields: strip_digits(fields['task-handle'])
-world_obj = lambda fields: RosieMessageParser.parse_obj(fields['object']['__id__'])
+world_obj = lambda fields: RosieMessageParser.parse_obj(fields['object'].id)
 
 class RosieMessageParser:
     def parse_message(root_id, message_type):
-        msg_graph = SoarUtils.extract_wm_graph(root_id)
-        fields = msg_graph.get('fields', None)
+        msg_graph = extract_wm_graph(root_id, 4)
+        fields = msg_graph['fields']
         message_parser = RosieMessageParser.message_parser_map.get(message_type)
         if message_parser is not None and callable(message_parser):
             return message_parser(fields)
@@ -35,7 +35,10 @@ class RosieMessageParser:
         words.append(preds_id.GetChildString("shape"))
 
         name = preds_id.GetChildString("name")
-        words.append(name if name is not None else obj_id.GetChildString("root-category"))
+        if name is None: name = obj_id.GetChildString("root-category")
+        if name is None: name = preds_id.GetChildString("category")
+        words.append(name)
+
         obj_desc = " ".join(word for word in words if word is not None)
         return strip_digits(obj_desc)
 
