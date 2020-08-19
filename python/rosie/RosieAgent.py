@@ -1,6 +1,6 @@
 import subprocess
 
-from pysoarlib import SoarAgent
+from pysoarlib import SoarAgent, TimeConnector
 from .LanguageConnector import LanguageConnector
 
 class RosieAgent(SoarAgent):
@@ -20,8 +20,12 @@ class RosieAgent(SoarAgent):
     def __init__(self, print_handler=None, config_filename=None, **kwargs):
         SoarAgent.__init__(self, print_handler, config_filename, **kwargs)
 
+        # Create a time connector to put timing information on the top state
+        self.add_connector("time", TimeConnector(self, include_ms=True, sim_clock=True, clock_step_ms=5000))
+
         # Create a language connector to handle messages to/from Rosie
-        self.connectors["language"] = LanguageConnector(self)
+        self.add_connector("language", LanguageConnector(self))
+
 
     def _apply_settings(self):
         SoarAgent._apply_settings(self)

@@ -11,7 +11,7 @@ locations = [ "fridge", "sink", "counter", "table", "pantry", "garbage" ]
 
 surfaces = [ "counter", "table" ]
 receptacles = [ "fridge", "sink", "pantry", "garbage" ]
-with_doors = [ "fridge", "pantry" ]
+doors = ["fridge", "pantry"]
 
 obj_positions = { "apple": "table", "soda": "table", 
             "fork": "counter", "mug": "counter",
@@ -30,19 +30,22 @@ sentences = []
 for i in range(NUM_MOVES):
     obj, prep, loc = get_rand_move()
 
+    # Generate a random move command
     sentences.append("Move the {} {} the {}.".format(obj, prep, loc))
     if i == 0:
+        # First time only -- give the goal
         sentences.append("The only goal is that the {} is {} the {}.".format(obj, prep[0:2], loc))
     obj_positions[obj] = loc
 
-    if loc in with_doors:
-        if random.randint(0, 1) == 0:
-            sentences.append("Close the {}.".format(loc))
-
+    # Randomly relocate one of the objects
     obj, rel, loc = get_rand_move()
     rel = rel[0:2] + "1"
     sentences.append("!PLACE {} {} {}".format(object_ids[obj], rel, object_ids[loc]))
 
+    # With a 25% probability, close one the of the doors
+    if random.randint(0, 4) == 0: 
+        door = random.choice(doors)
+        sentences.append("!CLOSE {}".format(object_ids[door]))
 
 with open("rand-move.script", 'w') as f:
     f.write("\n".join(sentences))
