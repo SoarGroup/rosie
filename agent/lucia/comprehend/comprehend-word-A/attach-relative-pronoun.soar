@@ -63,6 +63,29 @@ sp {comprehend-word*propose*attach-relative-pronoun*verb-object
         ^debug-info (concat |Attach RelativePronoun | <pronoun> | to the RefExpr | <ref-expr> |.|))
 }
 
+#    Propose to attach a RelativePronoun to the RefExpr that is the argument of the previous function
+sp {comprehend-word*propose*attach-relative-pronoun*function-argument
+   (state <s> ^problem-space comprehend-word
+              ^cxn <pronoun>
+              ^lexical-access done)
+   (<pronoun> ^is.a RelativePronoun
+)#             -^attached-to <attach-point>)
+   #    See whether what came before was a VerbWithArguments with an object
+   (<pronoun> ^previous <function-with-argument>)
+   (<function-with-argument> ^is.a FunctionWithArgument
+                             ^argument <ref-expr>)
+   (<ref-expr> ^is.a RefExpr)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name attach-relative-pronoun
+        ^type attachment
+        ^selected <pronoun>
+        ^attach-type |function-argument|
+        ^pronoun <pronoun>
+        ^attach-to <ref-expr>
+        ^debug-info (concat |Attach RelativePronoun | <pronoun> | to the RefExpr | <ref-expr> |.|))
+}
+
 
 ##################	APPLICATIONS	#####################
 
@@ -102,4 +125,27 @@ sp {comprehend-word*apply*attach-relative-pronoun*snip-to-verb-object
               ^previous <attach-point>)
    #   Write a message for the snip.
    (write (crlf) (concat |Snipping | <verb-with-args> | to get to | <attach-point> | .|))
+}
+
+#    Snip for the function-argument case
+sp {comprehend-word*apply*attach-relative-pronoun*snip-to-function-argument
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name attach-relative-pronoun
+        ^attach-type |function-argument|
+        ^pronoun <pronoun>
+        ^attach-to <attach-point>)      #   What to replace it with
+   #    Get info for the snip
+   (<pronoun> ^previous <function-with-arg>)#  The thing to be cut
+-->
+   #    THIS IS THE SNIP!!!
+   #    Change the previous pointer
+   #    This will orphan the VerbWithArguments and
+   #    leave it to be garbage collected.
+   #    Instead we'll point to its object,
+   #    allowing that to be matched
+   (<pronoun> ^previous <function-with-arg> -
+              ^previous <attach-point>)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <function-with-arg> | to get to | <attach-point> | .|))
 }
