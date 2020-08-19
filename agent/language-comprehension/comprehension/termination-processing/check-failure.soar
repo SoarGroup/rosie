@@ -15,7 +15,8 @@ sp {termination-processing*propose*check-failure
 sp {apply*check-failure*monitor
    (state <s> ^name termination-processing
               ^top-state.current-sentence-number <csn>
-              ^operator.name check-failure 
+              ^operator.name check-failure
+              ^agent-params.print-parsed-messages true
               ^segment <seg>)
    (<seg> ^original-sentence.complete-sentence <os>
           ^semantics <sem>)
@@ -42,6 +43,7 @@ sp {apply*check-failure*monitor*no-number
    (state <s> ^name termination-processing
              -^top-state.current-sentence-number <csn>
               ^operator.name check-failure 
+              ^agent-params.print-parsed-messages true
               ^segment <seg>)
    (<seg> ^original-sentence.complete-sentence <os>
           ^semantics <sem>)
@@ -58,8 +60,17 @@ sp {apply*check-failure*failure*retry*receiver
               ^segment <seg>
               ^failed-receiver <item>)
 -->
-   (write (crlf) |Parse FAILED. Receiver: | <item>)
+#   (write (crlf) |Parse FAILED. Receiver: | <item>)
    (<seg> ^parse-failed-receiver <item>)
+}
+sp {apply*check-failure*failure*retry*receiver*write
+  #:interrupt
+   (state <s> ^operator.name check-failure
+              ^agent-params.print-parsed-messages true 
+              ^segment <seg>
+              ^failed-receiver <item>)
+-->
+   (write (crlf) |Parse FAILED. Receiver: | <item>)
 }
 
 sp {apply*check-failure*failure*retry*assigner
@@ -69,9 +80,19 @@ sp {apply*check-failure*failure*retry*assigner
               ^failed-assigner <item>)
    (<seg> ^original-sentence <os>)
 -->
-   (write (crlf) |Parse FAILED - Assigner: | <item>)
+#   (write (crlf) |Parse FAILED - Assigner: | <item>)
    (<seg> ^parse-failed-assigner <item>)
    (<os> ^processing-result failure) 
+}
+sp {apply*check-failure*failure*retry*assigner*write
+#:interrupt
+   (state <s> ^operator.name check-failure 
+              ^agent-params.print-parsed-messages true 
+              ^segment <seg>
+              ^failed-assigner <item>)
+   (<seg> ^original-sentence <os>)
+-->
+   (write (crlf) |Parse FAILED - Assigner: | <item>)
 }
 
 #### EXTERNAL
@@ -86,13 +107,26 @@ sp {apply*check-failure*success
    (<sp> ^original-sentence <cs>
          ^semantics.message-type <mt>)
 -->
-   (write (crlf) |Parse SUCCEEDED.|)
+#   (write (crlf) |Parse SUCCEEDED.|)
 (<status> ^performed.dialog-event <de>)
    (<de> ^type process-sentence
          ^originator agent)
    (<sp> ^processed-terminator true)
    (<cs> ^processed-sentence true
          ^processing-result success)
+}
+sp {apply*check-failure*success*write
+   (state <s> ^operator.name check-failure 
+             -^top-state.parser-testing true
+              ^top-state.interaction.status <status>
+              ^agent-params.print-parsed-messages true 
+              ^segment <sp>
+             -^failed-receiver
+             -^failed-assigner)
+   (<sp> ^original-sentence <cs>
+         ^semantics.message-type <mt>)
+-->
+   (write (crlf) |Parse SUCCEEDED.|)
 }
 
 #### INTERNAL
@@ -109,13 +143,29 @@ sp {apply*check-failure*success*internal
          ^success-count <sc>)
    (<sp> ^original-sentence <cs>)
 -->
-   (write (crlf) |Parse SUCCEEDED.|)
+#   (write (crlf) |Parse SUCCEEDED.|)
 #   (<sp> ^processed-terminator true)
    (<cs> ^processed-sentence true
          ^processing-result success)
 #   (<ts> ^terminated-sentence <csn>
 #         ^success-count <sc> - 
 #                       (+ <sc> 1))
+#   (interrupt)
+}
+sp {apply*check-failure*success*internal*write
+   (state <s> ^operator <op>
+              ^top-state.parser-testing true
+              ^agent-params.print-parsed-messages true 
+              ^segment <sp>
+              ^top-state <ts>
+             -^failed-receiver
+             -^failed-assigner)
+   (<op> ^name check-failure)
+   (<ts> #^current-sentence-number <csn>
+         ^success-count <sc>)
+   (<sp> ^original-sentence <cs>)
+-->
+   (write (crlf) |Parse SUCCEEDED.|)
 #   (interrupt)
 }
 #
