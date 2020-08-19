@@ -1,0 +1,103 @@
+# different-object-status
+#   We simply add the predicate on the object
+
+sp {anystate*apply*attend-to-perception*different-object-status*add*new*predicate
+   (state <s> ^operator <o>)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type different-object-status
+        ^discrepancy-info <info>)
+   (<info> ^object-info.world-obj.predicates <obj-preds>
+           ^property-handle <prop>
+           ^predicate-handle <pred>)
+-->
+   (<obj-preds> ^<prop> <pred>)
+}
+
+sp {anystate*apply*attend-to-perception*different-object-status*remove*old*predicate
+   (state <s> ^operator <o>)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type different-object-status
+        ^discrepancy-info <info>)
+   (<info> ^object-info.world-obj.predicates <obj-preds>
+           ^property-handle <prop>
+           ^predicate-handle <pred>)
+   (<obj-preds> ^<prop> { <old-pred> <> <pred> })
+-->
+   (<obj-preds> ^<prop> <old-pred> -)
+}
+
+# if print-perception is on, print a message
+sp {anystate*apply*attend-to-perception*different-object-status*print-perception
+   (state <s> ^operator <o>
+              ^agent-params.print-perception true)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type different-object-status
+        ^discrepancy-info <info>)
+   (<info> ^object-info.object-handle <handle>
+           ^property-handle <prop>
+           ^predicate-handle <pred>)
+-->
+   (write |attend-to-perception(different-object-status): On object | <handle> |: | <prop> |=| <pred> (crlf))
+}
+
+### If an object becomes visible, remove any imagined predicates involving it (they should now come from perception)
+sp {anystate*apply*attend-to-perception*different-object-status*visible*remove*imagined*predicate
+   (state <s> ^operator <o>
+              ^top-state.world.predicates.predicate <pred>)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type different-object-status
+        ^discrepancy-info <info>)
+   (<info> ^object-info.world-obj <obj>
+           ^property-handle is-visible1)
+   (<pred> ^imagined <i>
+           ^instance <i>)
+   (<i> ^1 <obj>)
+-->
+   (<pred> ^imagined <i> -
+           ^instance <i> -)
+}
+
+### If an object becomes visible and it doesn't have a belief object, create one
+
+# Send copy_node command to svs
+sp {anystate*apply*attend-to-perception*different-object-status*visible*create*belief-obj
+   (state <s> ^operator <o>
+              ^top-state.svs.command <cmd>
+              ^agent-params.domain << tabletop fetch ai2thor >>)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type different-object-status
+        ^discrepancy-info <info>)
+   (<info> ^object-info <obj-info>
+           ^property-handle is-visible1
+           ^predicate-handle visible1)
+   (<obj-info> ^perception-id <perc-id>
+               ^belief-id <bel-id>
+              -^belief-obj)
+-->
+   (<cmd> ^copy_node <copy>)
+   (<copy> ^id <bel-id>
+           ^source <perc-id>
+           ^adjust true)
+}
+
+# Send copy_node command to svs
+sp {anystate*apply*attend-to-perception*different-object-status*visible*create*belief-obj*mobile
+   (state <s> ^operator <o>
+              ^top-state.svs.command <cmd>
+              ^agent-params.domain << magicbot cozmo >>)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type different-object-status
+        ^discrepancy-info <info>)
+   (<info> ^object-info <obj-info>
+           ^property-handle is-visible1
+           ^predicate-handle visible1)
+   (<obj-info> ^perception-id <perc-id>
+               ^belief-id <bel-id>
+              -^belief-obj)
+-->
+   (<cmd> ^copy_node <copy>)
+   (<copy> ^id <bel-id>
+           ^source <perc-id>
+           ^adjust false)
+}
+

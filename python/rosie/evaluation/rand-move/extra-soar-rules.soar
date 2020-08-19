@@ -3,9 +3,9 @@ sp {top-state*elaborate*agent-params*custom
               ^agent-params <p>)
 -->
    (<p> ^debug-ids true
-        ^report-tasks-to-output-link true
+#       ^report-tasks-to-output-link true
 #       ^debug-op-ties true
-        ^debug-wait-limit 3
+#       ^debug-wait-limit 3
 
 #       ^interrupt-operator retrospective-learning 
 #       ^interrupt-operator interpret-message retrospective-learning
@@ -15,9 +15,8 @@ sp {top-state*elaborate*agent-params*custom
         
         ^print-perception true
 #       ^print-new-task true
-        ^print-new-task-shorthand true
 #       ^print-wp-search-path-costs true
-        ^print-parsed-messages true
+#       ^print-parsed-messages true
 #       ^print-outgoing-messages true
 #       ^print-interaction-stack true
 
@@ -69,3 +68,49 @@ sp {top-state*prefer*interaction*new-segment-info*others*over*process-sentence
 }
 
 
+
+
+sp {complete-push-task-segment*report*time*info
+   (state <s> ^name push-task-segment
+              ^operator.name complete-push-task-segment
+              ^segment-to-push.task-operator.task-handle <task-h>
+              ^io.input-link.time <t>)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write |!START-TASK! | <task-h> | | <steps> | | <ms> (crlf))
+}
+
+sp {complete-pop-task-segment*report*time*info
+   (state <s> ^name pop-task-segment
+              ^operator.name complete-pop-task-segment
+              ^segment-to-pop.task-operator.task-handle <task-h>
+              ^io.input-link.time <t>)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write |!END-TASK! | <task-h> | | <steps> | | <ms> (crlf))
+}
+
+sp {search-for-next-subtask*start*report*time*info
+   (state <s> ^operator.name search-for-next-subtask
+              ^superstate.task-operator.task-handle <task-h>
+              ^io.input-link.time <t>
+             -^reported-time)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write |!BEGIN-SEARCH! | <task-h> | | <steps> | | <ms> (crlf))
+   (<s> ^reported-time true)
+}
+
+sp {search-for-next-subtask*finish*report*time*info
+   (state <s> ^name search-for-next-subtask
+              ^superstate.superstate.task-operator.task-handle <task-h>
+              ^operator.name << return-successful-operator initiate-interaction >>
+              ^io.input-link.time <t>)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write |!END-SEARCH! | <task-h> | | <steps> | | <ms> (crlf))
+}

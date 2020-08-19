@@ -98,6 +98,18 @@ sp {subproblem*execute*select-next-goal*retrieve*next-goal-id
            ^result-name next-goal-id)
 }
 
+# Retrieve the current goal node from smem
+sp {subproblem*execute*select-next-goal*retrieve*cur-goal-id
+   (state <s> ^name select-next-goal
+              ^task-operator.current-goal <goal-h>)
+-->
+  (<s> ^smem-query <query>)
+  (<query> ^cue.handle <goal-h>
+           ^depth 3
+           ^destination <s>
+           ^result-name cur-goal-id)
+}
+
 # Retrieve the task-concept-network from smem
 sp {subproblem*execute*select-next-goal*retrieve*TCN
    (state <s> ^name select-next-goal
@@ -125,6 +137,43 @@ sp {subproblem*execute*select-next-goal*retrieve*subtask-tcn
             ^result-name subtask-tcn)
    (<cue> ^handle <sub-h>)
 }
+
+#### If the next goal edge has not been marked as learned, do so
+
+sp {subproblem*execute*select-next-goal*propose*mark-edge-learned
+   (state <s> ^name select-next-goal
+              ^cur-goal-id.next <edge>
+              ^next-goal-handle <goal-h>)
+   (<edge> ^goal.handle <goal-h>
+          -^learned true)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name mark-edge-learned
+        ^edge <edge>)
+}
+
+sp {subproblem*execute*select-next-goal*apply*mark-edge-learned
+   (state <s> ^name select-next-goal
+              ^operator <o>
+              ^smem.command <cmd>)
+   (<o> ^name mark-edge-learned
+        ^edge <edge>)
+-->
+   (<edge> ^learned true)
+   (<cmd> ^store <edge>)
+}
+
+
+sp {subproblem*execute*select-next-goal*prefer*mark-edge-learned*over*learn-apply-rule
+   (state <s> ^name select-next-goal
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name mark-edge-learned)
+   (<o2> ^name learn-apply-rule)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
 
 #### ELABORATE OBJECT SLOTS
 

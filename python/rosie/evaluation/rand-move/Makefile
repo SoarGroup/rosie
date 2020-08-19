@@ -20,9 +20,9 @@ rand-move.world: world.info
 	python3 -m rosie.tools.mapmaker world.info --world
 	mv $(MOBILE_SIM_HOME)/worlds/world.world rand-move.world
 
-# rand-move.script: Makes the script to be used during the evaluation 
+# rand-move.script: Makes the script to be used during the evaluation -- given the number of moves to do
 rand-move.script: generate_script.py
-	python3 generate_script.py
+	python3 generate_script.py 100
 
 clean:
 	rm -f rand-move.script
