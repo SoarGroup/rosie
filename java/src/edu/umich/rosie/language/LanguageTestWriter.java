@@ -31,8 +31,16 @@ public class LanguageTestWriter extends FileWriterConnector implements PrintEven
     public void printEventHandler(int eventID, Object data, Agent agent, String message) {
     	final String preamble = "Interpreting Instructor Message:";
     	if (message.startsWith(preamble)) {
-    		writer.print(message.substring(preamble.length() + 2));
-    		writer.println();
+    		//	Strip off the preamble
+    		String rest = message.substring(preamble.length() + 2);
+    		//	This may get called twice with the same message data
+    		//	If so, the second time the sentence is not given,
+    		//	just the parser output message.
+    		//	In such a case, print nothing.
+    		if (!rest.startsWith("(")) {
+        		writer.print(rest);
+        		writer.println();
+    		}
     	}
     }
 }
