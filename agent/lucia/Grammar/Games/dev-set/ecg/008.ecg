@@ -1,0 +1,145 @@
+//  This file contains new ECG data needed for sentence
+//  008 of the Games dev-set.
+
+//  This is sentence #4 of 01.03_king-stacking-frogs script.txt.
+//  The sentence is:
+//      If the number of the locations between a location and a covered location
+//      is the number of the blocks that are on the covered location
+//      then you can move it onto the former location.
+
+
+//  A Multi-word Lexical
+//  This construction implements "the number of" as a function
+construction THE-NUMBER-OF  //  From Games 008
+   subcase of FunctionName
+   form
+      constraints
+         self.f.orth <-- "the number of"
+   meaning
+      constraints
+         self.m.fn-handle <-- "number1"
+
+//  Plural Nouns
+construction LOCATIONS
+   subcase of CommonNoun
+   constructional
+      constraints
+         self.features.case <-- "nom"
+         self.features.number <-- "plural"
+         self.features.person <-- "3rd"
+   form
+      constraints
+         self.f.orth <-- "locations"
+   meaning: Location
+
+construction BLOCKS
+   subcase of CommonNoun
+   constructional
+      constraints
+         self.features.case <-- "nom"
+         self.features.number <-- "plural"
+         self.features.person <-- "3rd"
+    form
+        constraints
+            self.f.orth <-- "blocks"
+   meaning: Block
+
+//  Properties
+construction COVERED
+    subcase of Property
+    form
+        constraints
+            self.f.orth <-- "covered"
+    meaning: PropertyDescriptor
+        constraints
+            self.m.class <-- @property
+            self.m.name <-- "covered"
+
+construction FORMER
+    subcase of Property
+    form
+        constraints
+            self.f.orth <-- "former"
+    meaning: PropertyDescriptor
+        constraints
+            self.m.class <-- @property
+            self.m.name <-- "former1"
+
+//  DiPrepositions
+general construction DiPreposition
+   subcase of Word
+   meaning: PrepCore
+
+construction BETWEEN
+   subcase of DiPreposition
+   form
+      constraints
+         self.f.orth <-- "between"
+   meaning
+      constraints
+         self.m.name <-- "between"
+
+//  A New Kind of Prepositional Phrase
+//  This requires two PropertySet constituents
+//  with AND in between.
+//  We are experimenting with two possible ways
+//  to do this.
+construction BetweenPropertySets
+   subcase of PrepPhrase
+   constructional
+      constituents
+         prep : DiPreposition
+         // The first way
+         props1 : PropertySetAnd
+         props2 : PropertySet
+//         conjunction: AND     //  No longer needed here
+         // The second way
+//         props1 : PropertySet
+//         props2 : AndPropertySet
+   meaning: PrepRelation2
+      constraints
+         self.m.prep <--> prep.m.name
+         self.m.object <--> props1.m
+         self.m.object2 <--> props2.m
+
+//  The two alternatives for handling the conjunction
+//  The first way
+construction PropertySetAnd
+//  The second way
+//construction AndPropertySet
+   constructional
+      constituents
+         // The first way
+         props : PropertySet
+         and: AND
+         // The second way
+//         and: AND
+//         props : PropertySet
+   meaning: PropertySetDescriptor
+      constraints
+         self.m <--> props.m
+
+
+   
+schema PrepRelation2
+   subcase of PrepRelation
+   roles
+      object2: RefDesc
+
+//  A Declarative saying that two referents are equal
+construction RefIsRef
+   subcase of Declarative
+   constructional
+      constituents
+         reference : RefExpr
+         tobe : FiniteToBe
+         object : RefExpr
+   meaning: EqualComparison
+      constraints
+         self.m.value1 <--> reference.m
+         self.m.value2 <--> object.m
+
+schema EqualComparison
+   roles
+      value1: RefDesc
+      value2: RefDesc

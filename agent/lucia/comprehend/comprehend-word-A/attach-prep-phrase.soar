@@ -28,7 +28,8 @@ sp {comprehend-word*propose*attach-prep-phrase*ref-expr
             -^attached-to <attach-point>)
    #    See whether what came before was a RefExpr
    (<phrase> ^previous <ref-expr>)
-   (<ref-expr> ^is.a RefExpr)
+   (<ref-expr> ^is.a RefExpr
+              -^is.a FunctionWithArgument)  # If FWA, needs a different proposal
    #    Exception: don't propose if what comes before the RefExpr
    #    is a FiniteToBe at the start of the sentence.
  -{(<ref-expr> ^previous <finite-to-be>)
@@ -37,10 +38,33 @@ sp {comprehend-word*propose*attach-prep-phrase*ref-expr
 -->
    (<s> ^operator <o> > +)
    (<o> ^name attach-prep-phrase
+        ^type attachment
         ^attach-type |ref-expr|
         ^prep-phrase <phrase>
         ^attach-to <ref-expr>
         ^debug-info (concat |Attach PrepPhrase | <phrase> | to the RefExpr | <ref-expr> |.|))
+}
+
+#    Propose an operator to attach a PrepPhrase to the argument
+#    of a FunctionWithArgument
+sp {comprehend-word*propose*attach-prep-phrase*function-argument
+   (state <s> ^problem-space comprehend-word
+              ^cxn <phrase>)
+   (<phrase> ^is.a PrepPhrase
+            -^attached-to <attach-point>)
+   #    See whether what came before was a FunctionWithArgument
+   (<phrase> ^previous <ref-expr>)
+   (<ref-expr> ^is.a RefExpr
+               ^is.a FunctionWithArgument
+               ^argument <argument>)
+-->
+   (<s> ^operator <o> > +)
+   (<o> ^name attach-prep-phrase
+        ^type attachment
+        ^attach-type |function-argument|
+        ^prep-phrase <phrase>
+        ^attach-to <argument>
+        ^debug-info (concat |Attach PrepPhrase | <phrase> | to the function argument | <argument> |.|))
 }
 
 #    Propose an operator to attach a PrepPhrase to the previous VerbWithArguments
@@ -55,6 +79,7 @@ sp {comprehend-word*propose*attach-prep-phrase*verb-with-args
 -->
    (<s> ^operator <o> > +)
    (<o> ^name attach-prep-phrase
+        ^type attachment
         ^attach-type |verb-with-args|
         ^prep-phrase <phrase>
         ^attach-to <verb>
@@ -78,6 +103,7 @@ sp {comprehend-word*propose*attach-prep-phrase*verb-object
 -->
    (<s> ^operator <o> > +)
    (<o> ^name attach-prep-phrase
+        ^type attachment
         ^attach-type |verb-object|
         ^prep-phrase <phrase>
         ^attach-to <ref-expr>
@@ -98,6 +124,7 @@ sp {comprehend-word*propose*attach-prep-phrase*verb-with-args*has-location
 -->
    (<s> ^operator <o> > +)
    (<o> ^name attach-prep-phrase
+        ^type attachment
         ^attach-type |verb-with-args-has-loc|
         ^location <location>
         ^prep-phrase <phrase>
@@ -123,6 +150,7 @@ sp {comprehend-word*propose*attach-prep-phrase*is-before-ref-expr
 -->
    (<s> ^operator <o> > +)
    (<o> ^name attach-prep-phrase
+        ^type attachment
         ^attach-type |is-before-ref-expr|
         ^prep-phrase <phrase>
         ^attach-to <finite-to-be>
@@ -293,6 +321,31 @@ sp {comprehend-word*apply*attach-prep-phrase*snip-to-verb-object
              ^previous <attach-point>)
    #   Write a message for the snip.
    (write (crlf) (concat |Snipping | <verb-with-args> | to get to | <attach-point> | .|))
+}
+
+#    Snip for the function-argument case
+sp {comprehend-word*apply*attach-prep-phrase*snip-to-function-argument
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name attach-prep-phrase
+        ^attach-type |function-argument|
+        ^prep-phrase <phrase>
+        ^attach-to <attach-point>)      #   What to replace it with
+   #    Get info for the snip
+   (<phrase> ^previous <function-with-argument>)#   The thing to be cut
+-->
+   #    THIS IS THE SNIP!!!
+   #    Change the previous pointer
+   #    This will orphan the FunctionWithArguments and
+   #    leave it to be garbage collected.
+   #    Instead we'll point to its argument,
+   #    allowing that to be matched
+   (<phrase> ^previous <function-with-argument> -
+             ^previous <attach-point>)
+   #    Attach this PrepPhrase to the argument
+   (<phrase> ^attached-to <attach-point>)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <function-with-argument> | to get to | <attach-point> | .|))
 }
 
 #    Snip for the verb-with-args-has-loc case

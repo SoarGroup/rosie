@@ -1,0 +1,118 @@
+//  This file contains all the constructions and schemas
+//  related to sentences containing "if" in the new form
+//  after being refactored 16 June 2020.
+//
+//  The constructions now here are:
+//      Conditional, IfConditionThen, IfConditionAs,
+//      IfConditionThenCommand, IfConditionCommand,
+//      CheckCondition, and RememberConditionasB
+//
+//  The related schemas now here are:
+//      Condition, IfThenCommand, and CheckIt
+//      
+
+// A whole new system for handle "If <condition> then <imperative>" sentences
+general construction Conditional
+
+// Condition structures
+construction IfConditionThen
+   constructional
+      constituents
+         if: IF
+         condition: Declarative
+         then: THEN
+
+construction IfConditionAs
+   constructional
+      constituents
+         if: IF
+         condition: Declarative
+         then: AS
+
+// Conditional statements
+construction IfConditionThenStatement
+   subcase of Conditional
+   constructional
+      constituents
+         conditionThen: IfConditionThen
+         statement: Declarative
+   meaning: IfThenStatement
+      constraints
+         self.m.condition <--> conditionThen.condition.m
+         self.m.statement <--> statement.m
+
+// Conditional commands
+construction IfConditionThenCommand
+   subcase of Conditional
+   constructional
+      constituents
+         conditionThen: IfConditionThen
+         command: Imperative
+   meaning: IfThenCommand
+      constraints
+         self.m.condition <--> conditionThen.condition.m
+         self.m.command <--> command.m
+
+construction IfConditionCommand
+   subcase of Conditional
+   constructional
+      constituents
+         if: IF
+         condition: Declarative
+         command: Imperative
+   meaning: IfThenCommand
+      constraints
+         self.m.condition <--> condition.m
+         self.m.command <--> command.m
+
+//	Constructions to handle sentences like "Check if <Declarative>."
+construction CheckCondition
+   constructional
+      constituents
+	     action: CHECK
+         if: IF
+         condition: Declarative
+   meaning: CheckIt
+      constraints
+         self.m.action <--> action.m
+         self.m.condition <--> condition.m
+ 
+//	Constructions to handle sentences like "Remember if <Declarative> as the message."
+construction RememberConditionasB
+   subcase of RememberAasB
+   constructional
+      constituents
+	     verb: REMEMBER
+         conditionAs : IfConditionAs
+         target : RefExpr
+   meaning: DoTransfer
+      evokes Condition as condition
+      constraints
+         self.m.action <--> verb.m
+         self.m.object <--> self.condition
+         self.m.object2 <--> target.m
+         self.condition.statement <--> conditionAs.condition.m
+
+//  Meaning schemas:
+// A schema for holding some condition
+schema Condition
+   roles
+      statement
+
+schema IfThenStatement
+   roles
+      condition
+      statement
+
+schema IfThenCommand
+   roles
+      condition
+      command
+
+// A schema for checking the value of some condition
+schema CheckIt
+   subcase of Action
+   roles
+      condition
+
+
