@@ -1578,6 +1578,10 @@ public class AgentMessageParser
 		{
 			adjectives.add(att_val.get("color"));
 		}
+		if(att_val.containsKey("modifier1"))
+		{
+			adjectives.add(att_val.get("modifier1"));
+		}
 		if(att_val.containsKey("name"))
 		{
 			adjectives.add(att_val.get("name"));
