@@ -63,6 +63,7 @@ class EvaluationGUI(Frame):
             self.script_list.select_set(self.script_index) 
             self.script_list.event_generate("<<ListboxSelect>>")
             self.script_index += 1
+            self.script_list.see(self.script_index)
             return self.script[self.script_index-1]
         return None
 

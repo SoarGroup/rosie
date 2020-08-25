@@ -4,11 +4,14 @@ script: rand-move.script
 
 world: rand-move.world
 
+run_evaluation: agent/rosie.rand-move.config
+	make run_mobile_sim &
+	make run_rosie &
+
 run_mobile_sim: rand-move.world
 	java soargroup.mobilesim.MobileGUI -w rand-move.world
 
-run_evaluation: agent/rosie.rand-move.config
-	java soargroup.mobilesim.MobileGUI -w rand-move.world &
+run_rosie: agent/rosie.rand-move.config
 	python3 -m rosie.evaluation.rand-move
 
 # agent/rosie.rand-move.config: Configures the rosie soar agent that will be sourced to run
