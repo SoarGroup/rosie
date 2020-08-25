@@ -28,9 +28,8 @@ def get_rand_move():
 
 sentences = []
 for i in range(NUM_MOVES):
-    obj, prep, loc = get_rand_move()
-
     # Generate a random move command
+    obj, prep, loc = get_rand_move()
     sentences.append("Move the {} {} the {}.".format(obj, prep, loc))
     if i == 0:
         # First time only -- give the goal
@@ -41,9 +40,10 @@ for i in range(NUM_MOVES):
     obj, rel, loc = get_rand_move()
     rel = rel[0:2] + "1"
     sentences.append("!PLACE {} {} {}".format(object_ids[obj], rel, object_ids[loc]))
+    obj_positions[obj] = loc
 
-    # With a 25% probability, close one the of the doors
-    if random.randint(0, 4) == 0: 
+    # With a 33% probability, close one the of the doors
+    if random.randint(0, 3) == 0: 
         door = random.choice(doors)
         sentences.append("!CLOSE {}".format(object_ids[door]))
 
