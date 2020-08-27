@@ -63,6 +63,8 @@ class EvaluationAgent(RosieAgent):
     def advance_script(self):
         message = self.eval_gui.get_next_script_message()
         if message is None:
+            self.execute_command("pc -f", True)
+            self.stop()
             return
         if message[0] == '!':
             self.eval_gui.append_message(message)
