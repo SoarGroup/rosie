@@ -77,7 +77,11 @@ class EvaluationGUI(Frame):
         if len(self.message_history) == 0 or self.message_history[-1] != message:
             self.message_history.append(message)
         self.history_index = len(self.message_history)
-        self.agent.connectors["language"].send_message(message)
+        # If it starts with a !, it's a special command
+        if message[0] == '!':
+            self.agent.handle_script_command(message[1:])
+        else:
+            self.agent.connectors["language"].send_message(message)
 
     def on_submit_click(self):
         self.send_message_to_agent(self.chat_entry.get())
