@@ -714,11 +714,44 @@ sp {comprehend-word*apply*ground-reference*done-already-there
    (<o> ^name ground-reference
         ^meaning <ref-desc>)
    #	Ignoring givenness for now
-   (<ref-desc> ^referent { <referent> <> nil })	#	Some referents on the RefDesc
+   (<ref-desc> ^referent { <referent> <> nil }	#	Some referents on the RefDesc
+               ^quantified nil) #   Only if there is no quantifier
 -->
    #    Set done flag
    (<s> ^reference resolved
         ^modifiers nil -)
+}
+
+#   Before finishing, add any specific quantifier
+#   Also, modify other parts of the object that
+#   should be different when quantified.
+#   This is currently coded for any quantifier,
+#   but it may only apply properly to "all".
+sp {comprehend-word*apply*ground-reference*add-quantification
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+#              ^modifiers nil    #    All modifiers have been applied
+              ^referent <referent>  #   Referent on the state
+)#             -^filter <filter>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   #   Find the quantifier
+   (<ref-desc> ^quantified { <quant-type> <> nil })
+   #   Find where to make changes
+   (<referent> ^item-type object
+               ^predicates <predicates>)
+   #   Find category, only do this for hypotheticals
+   (<predicates> ^category <category>
+                 ^dialog-object true
+                 ^is-visible1 not-visible1)
+-->
+   #    Add the quantification and make other changes
+   (<referent> ^item-type object -
+               ^item-type <category>)
+   (<predicates> ^is-visible1 not-visible1 -
+                 ^is-visible1 unknown-visible1
+                 ^quantified <quant>)
+   (<quant> ^handle <quant-type>)
 }
 
 #   Finish resolution - some were already there
