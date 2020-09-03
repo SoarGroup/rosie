@@ -33,9 +33,10 @@
 #   an additional rule in ground-reference.
 
 #   Reference 2) is resolved by the following rule
-#   The following is a custom rule to FAKE IT for 2) by adding a very
+#       2) it => the blocks that are on the covered location
+#   The following is a custom rule to FAKE it for 2) by adding a very
 #   customized apply rule for resolve-pronoun will only work
-#   for this case in this sentence
+#   for this case in this sentence.
 sp {comprehend-word*apply*resolve-pronoun*FAKE*008*it
    (state <s> ^problem-space comprehend-word
               ^operator <o>
@@ -72,9 +73,22 @@ sp {comprehend-word*apply*resolve-pronoun*FAKE*008*it
 }
 
 #   Reference 3) is resolved by the following rule
-#   The following is a custom rule to FAKE IT for 3) by adding a very
+#       3) the former location => a location
+#   The following is a custom rule to FAKE it for 3) by adding a very
 #   customized apply rule for ground-reference that will only work
-#   for this case in this sentence
+#   for this case in this sentence.
+#
+#   The rule first looks for the right construction, and then
+#   follows a long path to get the proper referent.
+#   In the first version of this rule, the proper construction
+#   was identified by: <ref-desc> ^text |the former location.|
+#   This worked fine in Lucia, but not in Rosie since Rosie
+#   does not keep punctuation with words.
+#   This version looks instead for the constituents of the construction
+#   to be the proper lexical constructions.
+#
+#   A GENERAL RULE: DON'T LET ANY RULE DEPEND ON PUNCTUATION!!!
+#
 sp {comprehend-word*apply*ground-reference*FAKE*008*the-former-location
    (state <s> ^problem-space comprehend-word
               ^operator <o>
@@ -82,8 +96,12 @@ sp {comprehend-word*apply*ground-reference*FAKE*008*the-former-location
    (<o> ^name ground-reference
         ^meaning <ref-desc>)
    #    Check for this special case
-   (<ref-desc> ^text |the former location.|
-               ^referent <old-ref>)
+   (<the-former-location> ^cxn-name SpecPropNoun
+                          ^spec.cxn-name THE
+                          ^prop.cxn-name FORMER
+                          ^noun.cxn-name LOCATION-noun)
+   #    Remember what the referent was
+   (<ref-desc> ^referent <old-ref>)
    #    Follow the breadcrumbs to the treasure
    (<the-former-location> ^previous <ONTO>)
    (<ONTO> ^previous <IfConditionThenStatement>)
