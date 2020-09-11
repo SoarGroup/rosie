@@ -730,13 +730,13 @@ sp {comprehend-word*apply*ground-reference*done-already-there
 sp {comprehend-word*apply*ground-reference*add-quantification
    (state <s> ^problem-space comprehend-word
               ^operator <o>
-#              ^modifiers nil    #    All modifiers have been applied
-              ^referent <referent>  #   Referent on the state
-)#             -^filter <filter>)
+              ^referent <referent>)  #   Referent on the state
    (<o> ^name ground-reference
         ^meaning <ref-desc>)
    #   Find the quantifier
-   (<ref-desc> ^quantified { <quant-type> <> nil })
+   (<ref-desc> ^quantified { <quantifier> <> nil })
+   (<quantifier> ^is.a Quantification
+                 ^type <quant-type>)
    #   Find where to make changes
    (<referent> ^item-type object
                ^predicates <predicates>)
@@ -753,6 +753,31 @@ sp {comprehend-word*apply*ground-reference*add-quantification
                  ^quantified <quant>)
    (<quant> ^handle <quant-type>)
 }
+
+#   Like above, but only for number quantifiers
+sp {comprehend-word*apply*ground-reference*add-number
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^referent <referent>)  #   Referent on the state
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   #   Find the quantifier
+   (<ref-desc> ^quantified { <quantifier> <> nil })
+   (<quantifier> ^is.a Concept
+                 ^concept-type number
+                 ^concept-handle <handle>)
+   #   Find where to make changes
+   (<referent> ^item-type object
+               ^predicates <predicates>)
+   #   Find category, only do this for hypotheticals
+   (<predicates> ^category <category>
+                 ^dialog-object true
+                 ^is-visible1 not-visible1)
+-->
+   #    Add the quantification
+   (<predicates> ^number (strlen <handle>))
+}
+
 
 #   Finish resolution - some were already there
 #   If the meaning has a relation and the referent object
@@ -787,8 +812,40 @@ sp {comprehend-word*apply*ground-reference*done-already-there*with-relation-1
         ^modifiers nil -)
 }
 
+#   The same as above, but with a negation
+sp {comprehend-word*apply*ground-reference*done-already-there*with-relation-1*negated
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              #    Look for the hypothetical flag
+              ^superstate.comprehension.hypothetical true
+              ^modifiers nil    #    All modifiers have been applied
+             -^referent <referent>  #   No referents on the state
+             -^filter <filter>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   #    Ignoring givenness for now
+   (<ref-desc> ^referent { <referent> <> nil }  #   Some referents on the RefDesc
+               ^relation { <relation> <> nil }) #   A relation on the RefDesc
+   (<relation> ^schema-name NegatedPrepRelation    #   Don't allow PrepRelation2
+               ^prep <prep>
+               ^object.referent <prep-obj-ref>
+               ^negation true)
+-->
+   #    Add the relation to the object
+   (<referent> ^relation <obj-relation>)
+   (<obj-relation> ^2 <prep-obj-ref>
+                   ^handle <prep>
+                   ^predicates <negation>)
+   (<negation> ^handle negation
+               ^modifier true)
+   #    Set done flag
+   (<s> ^reference resolved
+        ^modifiers nil -)
+}
+
 #   This version handles a relation with two arguments,
 #   like the preposition between.
+#   Will need another rule to handle negation.
 sp {comprehend-word*apply*ground-reference*done-already-there*with-relation-2
    (state <s> ^problem-space comprehend-word
               ^operator <o>
