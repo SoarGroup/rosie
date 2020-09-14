@@ -6,11 +6,12 @@ import sys
 
 from string import digits
 from pysoarlib.util import extract_wm_graph
+from rosie.tools import object_to_str
 
 strip_digits = lambda s: s.translate(str.maketrans('', '', digits))
 
 task_handle = lambda fields: strip_digits(fields['task-handle'])
-world_obj = lambda fields: RosieMessageParser.parse_obj(fields['object'].id)
+world_obj = lambda fields: object_to_str(fields['object'].id)
 
 class RosieMessageParser:
     def parse_message(root_id, message_type):
@@ -20,27 +21,6 @@ class RosieMessageParser:
         if message_parser is not None and callable(message_parser):
             return message_parser(fields)
         return message_type
-
-    def parse_obj(obj_id):
-        words = []
-        preds_id = obj_id.GetChildId("predicates")
-        # If the object has a sentence, use that
-        sent = preds_id.GetChildString("sentence")
-        if sent is not None:
-            return sent
-
-        words.append(preds_id.GetChildString("size"))
-        words.append(preds_id.GetChildString("color"))
-        words.append(preds_id.GetChildString("modifier1"))
-        words.append(preds_id.GetChildString("shape"))
-
-        name = preds_id.GetChildString("name")
-        if name is None: name = obj_id.GetChildString("root-category")
-        if name is None: name = preds_id.GetChildString("category")
-        words.append(name)
-
-        obj_desc = " ".join(word for word in words if word is not None)
-        return strip_digits(obj_desc)
 
     message_parser_map = {
         "ok": lambda fields: "Ok",

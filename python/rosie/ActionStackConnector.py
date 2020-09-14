@@ -3,62 +3,8 @@ import sys
 import traceback
 
 from string import digits
-from rosie import RosieMessageParser
+from rosie.tools import task_to_str
 from pysoarlib import AgentConnector
-
-
-def task_to_string(task_id):
-    task_handle = task_id.GetChildString("task-handle")
-
-    # Get the root identifier of each argument
-    arg_ids = ( task_id.GetChildId(arg_name) for arg_name in ("arg1", "arg2", "arg3", "when-clause") )
-    # Convert each non-null argument to a string
-    parsed_args = ( task_arg_to_string(arg_id) for arg_id in arg_ids if arg_id is not None)
-
-    return task_handle + "(" + ", ".join(parsed_args) + ")"
-
-def task_arg_to_string(arg_id):
-    arg_type = arg_id.GetChildString("arg-type")
-    if arg_type == "object":
-        return RosieMessageParser.parse_obj(arg_id.GetChildId("id"))
-    elif arg_type == "partial-predicate":
-        handle_str = arg_id.GetChildString("handle")
-        obj2_str = RosieMessageParser.parse_obj(arg_id.GetChildId("2"))
-        return "%s(%s)" % ( handle_str, obj2_str )
-    elif arg_type == "waypoint":
-        wp_id = arg_id.GetChildId("id")
-        return wp_id.GetChildString("handle")
-    elif arg_type == "concept":
-        return arg_id.GetChildString("handle")
-    elif arg_type == "measure":
-        return arg_id.GetChildString("number") + " " + arg_id.GetChildString("unit")
-    elif arg_type == "coordinate":
-        coord_id = arg_id.GetChildId("coord")
-        return "{%.2f, %.2f}" % ( coord_id.GetChildFloat("x"), coord_id.GetChildFloat("y") )
-    elif arg_type == "when-clause":
-        return "when" + pred_set_to_string(arg_id)
-    return "?"
-
-def pred_set_to_string(arg_id):
-    num_preds = arg_id.GetChildInt("pred-count")
-    parsed_preds = []
-    for i in range(num_preds):
-        pred = arg_id.GetChildId(str(i+1))
-        parsed_preds.append(predicate_to_string(pred))
-    return "{ " + ", ".join(parsed_preds) + " }"
-
-def predicate_to_string(pred_id):
-    pred_type = pred_id.GetChildString("type")
-    pred_handle = pred_id.GetChildString("handle")
-    if pred_type == "unary":
-        obj1_str = RosieMessageParser.parse_obj(pred_id.GetChildId("1"))
-        return "%s(%s)" % (pred_handle, obj1_str)
-    elif pred_type == "relation":
-        obj1_str = RosieMessageParser.parse_obj(pred_id.GetChildId("1"))
-        obj2_str = RosieMessageParser.parse_obj(pred_id.GetChildId("2"))
-        return "%s(%s, %s)" % (pred_handle, obj1_str, obj2_str)
-    else:
-        return "?"
 
 class ActionStackConnector(AgentConnector):
     def __init__(self, agent, print_handler=None):
@@ -93,7 +39,7 @@ class ActionStackConnector(AgentConnector):
             seg_id = root_id.GetChildId("segment")
             padding = "  " * (seg_id.GetChildInt("depth") - 1)
             task_id = seg_id.GetChildId("task-operator")
-            self.dispatch_task_change(padding + "> " + task_to_string(task_id))
+            self.dispatch_task_change(padding + "> " + task_to_str(task_id))
         except:
             self.print_handler("Error Parsing Started Task")
             self.print_handler(traceback.format_exc())
@@ -104,7 +50,7 @@ class ActionStackConnector(AgentConnector):
             seg_id = root_id.GetChildId("segment")
             padding = "  " * (seg_id.GetChildInt("depth") - 1)
             task_id = seg_id.GetChildId("task-operator")
-            self.dispatch_task_change(padding + "< " + task_to_string(task_id))
+            self.dispatch_task_change(padding + "< " + task_to_str(task_id))
         except:
             self.print_handler("Error Parsing Completed Task")
             self.print_handler(traceback.format_exc())

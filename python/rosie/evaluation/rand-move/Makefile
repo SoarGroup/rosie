@@ -4,6 +4,8 @@ script: rand-move.script
 
 world: rand-move.world
 
+agent: agent/rosie.rand-move.config
+
 run_evaluation: agent/rosie.rand-move.config
 	make run_mobile_sim &
 	make run_rosie &

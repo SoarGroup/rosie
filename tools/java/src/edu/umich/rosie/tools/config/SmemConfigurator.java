@@ -128,8 +128,11 @@ public class SmemConfigurator {
 		}
 
 		// Copy the custom smem file
-		File customSmemFile = new File(outputDir, config.customSmemFile.getName());
-		copySmemFile(config.customSmemFile, customSmemFile);
+		File customSmemFile = null;
+		if(config.customSmemFile != null){
+			customSmemFile = new File(outputDir, config.customSmemFile.getName());
+			copySmemFile(config.customSmemFile, customSmemFile);
+		}
 		
 		// Create a file that sources all smem files needed by the agent
 		File sourceFile = writeSmemSourceFile(outputDir, rosieAgentDir, rosieFiles, createdFiles, customSmemFile);
