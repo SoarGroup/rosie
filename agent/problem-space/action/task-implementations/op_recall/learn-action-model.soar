@@ -25,7 +25,7 @@ sp {op_recall1*learn-action-model*reject*performance*operators
    (<s> ^operator <o> -)
 }
 
-#### retrieve-previous-result
+#### OPERATOR: retrieve-previous-result
 # Retrieve from epmem an episode when the agent recalled something from smem
 
 sp {op_recall1*learn-action-model*propose*retrieve-previous-result
@@ -99,11 +99,113 @@ sp {op_recall1*learn-action-model*elaborate*retrieved-object*from*retrieved-epis
    (<s> ^retrieved-object <obj>)
 }
 
+
+
+##### OPERATOR: copy-retrieved-object
+## Create a copy of the retrieved object, replacing status predicates with their defaults
+#
+#sp {op_recall1*learn-action-model*propose*copy-retrieved-object
+#   (state <s> ^name op_recall1
+#              ^name learn-task-action-model
+#              ^retrieved-object <obj>
+#             -^object-copy)
+#-->
+#   (<s> ^operator <o> +)
+#   (<o> ^name copy-retrieved-object
+#        ^source <obj>
+#        ^source-preds <preds>
+#        ^copy-preds <copy-preds>)
+#}
+#
+## add normal predicates
+#sp {op_recall1*learn-action-model*elaborate*copy-retrieved-object*predicates
+#   (state <s> ^name op_recall1
+#              ^name learn-task-action-model
+#              ^operator <o> +)
+#   (<o> ^name copy-retrieved-object
+#        ^source.predicates.{ <prop> <> is-confirmed1 <> is-visible1 <> is-reachable1 } <pred>
+#        ^source-preds <preds>)
+#-->
+#   (<preds> ^<prop> <pred>)
+#}
+#
+## For status predicates, use the default values (e.g. dont assume the object is visible)
+#sp {op_recall1*learn-action-model*elaborate*copy-retrieved-object*predicates*not-confirmed1
+#   (state <s> ^name op_recall1
+#              ^name learn-task-action-model
+#              ^operator <o> +)
+#   (<o> ^name copy-retrieved-object
+#        ^source.predicates.is-confirmed1 <conf>
+#        ^source-preds <preds>)
+#-->
+#   (<preds> ^is-confirmed1 not-confirmed1)
+#}
+#
+#sp {op_recall1*learn-action-model*elaborate*copy-retrieved-object*predicates*not-visible1
+#   (state <s> ^name op_recall1
+#              ^name learn-task-action-model
+#              ^operator <o> +)
+#   (<o> ^name copy-retrieved-object
+#        ^source.predicates.is-visible1 <vis>
+#        ^source-preds <preds>)
+#-->
+#   (<preds> ^is-visible1 not-visible1)
+#}
+#
+#sp {op_recall1*learn-action-model*elaborate*copy-retrieved-object*predicates*not-reachable1
+#   (state <s> ^name op_recall1
+#              ^name learn-task-action-model
+#              ^operator <o> +)
+#   (<o> ^name copy-retrieved-object
+#        ^source.predicates.is-reachable1 <reach>
+#        ^source-preds <preds>)
+#-->
+#   (<preds> ^is-reachable1 not-reachable1)
+#}
+#
+## Copy the object
+#sp {op_recall1*learn-action-model*apply*copy-retrieved-object*create*copy
+#   (state <s> ^name op_recall1
+#              ^name learn-task-action-model
+#              ^operator <o>)
+#   (<o> ^name copy-retrieved-object
+#        ^source <src>
+#        ^source-preds <preds>
+#        ^copy-preds <copy-preds>)
+#   (<src> ^handle <h>
+#          ^root-category <root-cat>)
+#-->
+#   (<s> ^object-copy <copy>)
+#   (<copy> ^handle <h>
+#           ^item-type object
+#           ^root-category <root-cat>
+#           ^predicates <copy-preds>)
+#}
+#
+## Copy the predicates
+#sp {op_recall1*learn-action-model*apply*copy-retrieved-object*copy*predicates
+#   (state <s> ^name op_recall1
+#              ^name learn-task-action-model
+#              ^operator <o>)
+#   (<o> ^name copy-retrieved-object
+#        ^source-preds <preds>
+#        ^copy-preds <copy-preds>)
+#   (<preds> ^<prop> <pred>)
+#-->
+#   (<copy-preds> ^<prop> <pred>)
+#}
+#
+#
+#
+
+#### OPERATOR: learn-action-model-rule
+
 # Copy the retrieved object to the superstate as the action model
 sp {op_recall1*learn-action-model*propose*learn-action-model-rule
    (state <s> ^name op_recall1
               ^name learn-task-action-model
               ^retrieved-object <obj>)
+#             ^object-copy <obj>)
 -->
    (<s> ^operator <o> +)
    (<o> ^name learn-action-model-rule

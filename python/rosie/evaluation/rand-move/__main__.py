@@ -3,6 +3,7 @@ import tkinter.font
 
 import sys
 import os
+import signal
 
 from rosie.evaluation import EvaluationGUI
 
@@ -20,3 +21,4 @@ root = Tk()
 eval_gui = EvaluationGUI(agent_file, master=root)
 root.protocol("WM_DELETE_WINDOW", eval_gui.on_exit)
 root.mainloop()
+
