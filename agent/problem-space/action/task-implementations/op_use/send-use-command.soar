@@ -14,15 +14,58 @@ sp {op_use1*propose*send-use-command
    (<o> ^name send-use-command
         ^item-type command-operator
         ^command-name use-command
-        ^using-object <obj>
-        ^target-object <tar>)
+        ^arg1.id <obj>
+        ^arg2 <arg2>)
+   (<arg2> ^handle with1
+           ^2 <tar>)
 }
 
+### internal ###
 
-### model send-use-command (during planning) ###
+sp {op_use1*external*apply*send-use-command*internal
+   (state <s> ^name op_use1
+              ^problem-space.execution-type external
+              ^agent-params.domain internal
+              ^operator <o>
+              ^io.output-link <ol>
+              ^current-task-segment <seg>)
+   (<o> ^name send-use-command
+        ^command-name <cmd-name>
+        ^arg1.id <obj1>
+        ^arg2.{2} <obj2>)
+-->
+   (<ol> ^perform-action <pa>)
+   (<pa> ^item-type output-command
+         ^name use
+         ^object <obj1>
+         ^target <obj2>)
+   (<seg> ^<cmd-name> <pa>)
+}
 
-# TODO
+### magicbot ###
 
+sp {op_use1*external*apply*send-use-command*magicbot
+   (state <s> ^name op_use1
+              ^problem-space.execution-type external
+              ^agent-params.domain magicbot
+              ^operator <o>
+              ^io.output-link <ol>
+              ^current-task-segment <seg>)
+   (<o> ^name send-use-command
+        ^command-name <cmd-name>
+        ^arg1.id.perception-id <perc-id1>
+        ^arg2.{2}.perception-id <perc-id2>)
+-->
+   (<ol> ^do-control-law <cmd>)
+   (<cmd> ^name use-object
+          ^item-type output-command
+          ^parameters <params>
+          ^termination-condition.name stabilized)
+   (<params> ^object-id (int <perc-id1>)
+             ^target-id (int <perc-id2>))
+
+   (<seg> ^<cmd-name> <cmd>)
+}
 
 ### ai2thor + internal ###
 
@@ -35,8 +78,8 @@ sp {op_use1*external*apply*send-use-command*ai2thor*internal
               ^current-task-segment <seg>)
    (<o> ^name send-use-command
         ^command-name <cmd-name>
-        ^using-object.handle <obj-h>
-        ^target-object.handle <tar-h>)
+        ^arg1.id.handle <obj-h>
+        ^arg2.{2}.handle <tar-h>)
 -->
    (<ol> ^perform-action <pa>)
    (<pa> ^item-type output-command

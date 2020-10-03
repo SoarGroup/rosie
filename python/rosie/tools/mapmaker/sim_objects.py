@@ -125,6 +125,14 @@ class Person(SimObject):
             self.desc = strip_digits(self.preds.get('category'))
         return self
 
+class Mug(SimObject):
+    sim_class = "soargroup.mobilesim.sim.SimMug"
+    cat = "mug1"
+    def read_info(self, reader, scale=1.0):
+        super().read_info(reader, scale)
+        self.preds["is-filled1"] = "empty1"
+        return self
+
 class Chair(SimObject):
     cat = "chair1"
     def_props = ('custom-model', )
@@ -185,6 +193,12 @@ class Microwave(Shelves):
     door = "not-open1"
     cat = "microwave1"
     rgb = [ 50, 50, 50 ]
+
+class Kettle(SimObject):  
+    sim_class = "soargroup.mobilesim.sim.SimKettle"
+    cat = "kettle1"
+    def_props = ('grabbable', )
+    rgb = [ 150, 150, 150 ]
 
 class Drawer(SimObject):  
     sim_class = "soargroup.mobilesim.sim.SimDrawer"
