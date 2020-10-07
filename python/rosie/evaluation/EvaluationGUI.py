@@ -90,6 +90,7 @@ class EvaluationGUI(Frame):
 
     def send_message_to_agent(self, message):
         self.messages_list.insert(END, message)
+        self.messages_list.see(END)
         self.chat_entry.delete(0, END)
         if len(self.message_history) == 0 or self.message_history[-1] != message:
             self.message_history.append(message)

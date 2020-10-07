@@ -40,6 +40,7 @@ class FindEvaluationGUI(EvaluationGUI):
         # Add a printout showing the result of each task
         self.agent.add_connector("find_test", FindTestConnector(self.agent, 
             lambda obj, res: self.append_message("# Find result for " + obj + " = " + res)))
+        self.agent.connect()
 
 
 

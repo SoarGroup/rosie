@@ -1,4 +1,4 @@
-AGENT_NAME=find-test
+AGENT_NAME=serve
 
 all: agent/rosie.${AGENT_NAME}.config
 

@@ -42,12 +42,10 @@ class EvaluationAgent(RosieAgent):
 
     def handle_message(self, msg):
         self.eval_gui.append_message(msg)
-        if "new task" in msg:
-            self.advance_script()
-        elif "goal" in msg:
-            self.advance_script()
-        elif "can't find" in msg:
+        if "can't find" in msg:
             self.handle_find_request(msg)
+        else:
+            self.advance_script()
 
     def handle_find_request(self, msg):
         obj_cat = next(w for w in msg.split() if w[-1] == ',')

@@ -14,7 +14,7 @@ else:
     print("ERROR: Requires ROSIE_HOME environment variable set")
     sys.exit(0)
 
-agent_file = rosie_home + "/python/rosie/evaluation/rand-move/agent/rosie.rand-move.config"
+agent_file = rosie_home + "/python/rosie/evaluation/serve/agent/rosie.serve.config"
 
 root = Tk()
 eval_gui = EvaluationGUI(agent_file, master=root)
