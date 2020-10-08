@@ -13,6 +13,7 @@ def create_internal_world(world_info, fout):
     fout.write("\n")
     fout.write("sp {top-state*domain*internal*elaborate*internal-world*" + world_info.name + "\n")
     fout.write("   (state <s> ^superstate nil\n")
+    fout.write("              ^agent-params.domain internal\n")
     fout.write("              ^agent-params.simulate-perception true)\n")
     fout.write("-->\n")
     fout.write("   (<s> ^internal-world <w>)\n")
@@ -51,7 +52,7 @@ def create_internal_world(world_info, fout):
             continue
 
         fout.write("   (<objs> ^object {:s})\n".format(obj_id))
-        fout.write("   ({:s} ^handle {:s} ^waypoint {:s} ^predicates {:s})\n".format(obj_id, handle, obj_loc.handle, preds_id))
+        fout.write("   ({:s} ^handle {:s} ^perc-id {:d} ^waypoint {:s} ^predicates {:s})\n".format(obj_id, handle, i, obj_loc.handle, preds_id))
         fout.write("   ({:s} {:s})\n".format(preds_id, " ".join( "^{:s} {:s}".format(cat, pred) for cat, pred in preds.items() )))
         
         fout.write("\n")

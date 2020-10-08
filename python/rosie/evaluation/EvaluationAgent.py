@@ -12,10 +12,12 @@ strip_digits = lambda s: s.translate(str.maketrans('', '', string.digits))
 current_time_ms = lambda: int(round(time.time() * 1000))
 
 class EvaluationAgent(RosieAgent):
-    def __init__(self, eval_gui, config_filename=None, verbose=True, **kwargs):
+    def __init__(self, eval_gui, config_filename=None, auto_find=True, **kwargs):
         RosieAgent.__init__(self, config_filename=config_filename, **kwargs)
 
         self.eval_gui = eval_gui
+        self.auto_find = auto_find # If true, will answer find requests using world state
+                                   # If false, will assume the script has the answer
 
         self.lcm_conn = LCMConnector(self)
         self.add_connector("lcm", self.lcm_conn)
@@ -48,6 +50,11 @@ class EvaluationAgent(RosieAgent):
             self.advance_script()
 
     def handle_find_request(self, msg):
+        if not self.auto_find:
+            # Assume the script has the answer
+            self.advance_script()
+            return
+
         obj_cat = next(w for w in msg.split() if w[-1] == ',')
         obj_cat = obj_cat.replace(',', '')
         obj = self.perception.objects.get_object_by_cat(obj_cat)
@@ -73,8 +80,12 @@ class EvaluationAgent(RosieAgent):
             self.eval_gui.send_message_to_agent(message)
 
     def handle_script_command(self, message):
+        if self.settings['domain'] == 'internal':
+            self.get_connector('internal-world').handle_script_command(message)
+            return
+
         args = message.split()
-        # TELEPORT <obj-h> <x> <y> <z>
+        # TELEPORT <obj-h> <x> <y> <z> <wph>
         if args[0] == 'TELEPORT':
             self.handle_teleport_command(args)
         # PLACE <obj-h> <rel> <dest-h>

@@ -102,7 +102,9 @@ class EvaluationGUI(Frame):
             self.agent.connectors["language"].send_message(message)
 
     def on_submit_click(self):
-        self.send_message_to_agent(self.chat_entry.get())
+        message = self.chat_entry.get().strip()
+        if len(message) > 0:
+            self.send_message_to_agent(message)
         
     def on_run_click(self):
         self.agent.start()

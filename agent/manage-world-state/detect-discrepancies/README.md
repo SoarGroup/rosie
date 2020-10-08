@@ -104,3 +104,14 @@ The current-waypoint on the input-link doesn't match the world
   ([disc] ^waypoint-handle [wp-handle])
 ```
 
+
+**change-world-command**
+
+This isn't an actual discrepancy, instead it is triggered if there is a `^change-world`
+command put on the input-link. This happens when there is a line in a script that 
+changes the world state apart from the agent. 
+
+```
+([discs] ^change-world-command [disc])
+  ([disc] ^command-info [cmd]) # from input-link.change-world [cmd]
+```

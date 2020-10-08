@@ -25,12 +25,22 @@ if len(sys.argv) <= 1:
     print("  -i|--internal Will generate an internal world for rosie")
     print("  By default it will create all 3, unless 1+ are specified")
     print("")
+    print("  --output-dir <dir>  Will create the files in the given directory instead of the default")
+    print("  --agent-name <name>  Specifies the name to use when creating files instead of default")
+    print("")
     print("Example: python3 -m rosie.tools.mapmaker simple_office.info")
     print("  Input File : $ROSIE_HOME/tools/map_info/simple_office.info")
     print("")
     print("  Output File: $MOBILE_SIM_HOME/worlds/simple_office.world")
     print("  Output File: $ROSIE_HOME/agent/manage-world-state/waypoint-maps/simple_office.soar")
     print("  Output File: $ROSIE_HOME/agent/manage-world-state/internal-worlds/simple_office.soar")
+    print("")
+    print("Example: python3 -m rosie.tools.mapmaker simple_office.info --output_dir world_files")
+    print("  Input File : simple_office.info (Exists locally)")
+    print("")
+    print("  Output File: world_files/simple_office.world")
+    print("  Output File: world_files/waypoint-map.soar")
+    print("  Output File: world_files/internal-world.soar")
     sys.exit(0)
 
 
@@ -44,6 +54,8 @@ make_all      = len(sys.argv) == 2
 make_world    = make_all or "-w" in sys.argv or "--world" in sys.argv
 make_map      = make_all or "-m" in sys.argv or "--map" in sys.argv
 make_internal = make_all or "-i" in sys.argv or "--internal" in sys.argv
+output_dir    = next((sys.argv[i+1] for i in range(len(sys.argv)-1) if sys.argv[i] == "--output-dir"), None)
+agent_name    = next((sys.argv[i+1] for i in range(len(sys.argv)-1) if sys.argv[i] == "--agent-name"), world_stem)
 
 #################### CHECK ENVIRONMENT VARIABLES #######################
 
@@ -88,7 +100,10 @@ print("Success!\n")
 # Writing the world file defining the simulated world 
 #   $MOBILE_SIM_HOME/worlds/map_name.world
 if make_world and mobile_sim_home is not None:
-    world_filename = mobile_sim_home + "/worlds/" + world_stem + ".world"
+    if output_dir is None:
+        world_filename = mobile_sim_home + "/worlds/" + agent_name + ".world"
+    else:
+        world_filename = output_dir + "/" + agent_name + ".world"
 
     print("Writing world file: " + world_filename)
     with tempfile.TemporaryFile(mode='w+t') as tf:
@@ -100,7 +115,10 @@ if make_world and mobile_sim_home is not None:
 ##################### ROSIE WAYPOINT MAP ########################
 # Writing the waypoint map used by rosie to navigate
 #   $ROSIE_HOME/agent/manage-world-state/waypoint-maps/map_name.soar
-wpmap_filename = rosie_home + "/agent/manage-world-state/waypoint-maps/" + world_stem + ".soar"
+if output_dir is None:
+    wpmap_filename = rosie_home + "/agent/manage-world-state/waypoint-maps/" + agent_name + ".soar"
+else:
+    wpmap_filename = output_dir + "/waypoint-map.soar"
 
 if make_map:
     print("Writing waypoint-map file: " + wpmap_filename)
@@ -113,7 +131,10 @@ if make_map:
 ##################### ROSIE INTERNAL WORLD ########################
 # Writing the internal soar model of the world used without the simulator
 #   $ROSIE_HOME/agent/manage-world-state/internal-worlds/map_name.soar
-internal_filename = rosie_home + "/agent/manage-world-state/internal-worlds/" + world_stem + ".soar"
+if output_dir is None:
+    internal_filename = rosie_home + "/agent/manage-world-state/internal-worlds/" + agent_name + ".soar"
+else:
+    internal_filename = output_dir + "/internal-world.soar"
 
 if make_internal:
     print("Writing internal world soar file: " + internal_filename)

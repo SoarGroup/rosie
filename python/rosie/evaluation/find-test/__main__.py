@@ -29,14 +29,9 @@ class FindTestConnector(AgentConnector):
             status = root_id.GetChildString("status")
             self.result_handler(obj_handle, status)
 
-class FindEvaluationAgent(EvaluationAgent):
-    def handle_find_request(self, msg):
-        # Disable default behavior and use the script to answer a find request instead
-        self.advance_script()
-
 class FindEvaluationGUI(EvaluationGUI):
     def init_soar_agent(self, config_file):
-        self.agent = FindEvaluationAgent(self, config_filename=config_file)
+        self.agent = EvaluationAgent(self, config_filename=config_file, auto_find=False)
         # Add a printout showing the result of each task
         self.agent.add_connector("find_test", FindTestConnector(self.agent, 
             lambda obj, res: self.append_message("# Find result for " + obj + " = " + res)))

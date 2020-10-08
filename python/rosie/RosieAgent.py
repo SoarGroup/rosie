@@ -2,6 +2,7 @@ import subprocess
 
 from pysoarlib import SoarAgent, TimeConnector
 from .LanguageConnector import LanguageConnector
+from .InternalWorldConnector import InternalWorldConnector
 
 class RosieAgent(SoarAgent):
     """ Wraps the standard pysoarlib SoarAgent with a few rosie-specific config settings and features
@@ -25,6 +26,10 @@ class RosieAgent(SoarAgent):
 
         # Create a language connector to handle messages to/from Rosie
         self.add_connector("language", LanguageConnector(self))
+
+        # For an internal world, add a connector which can let scripts modify the internal world
+        if self.settings["domain"] == "internal":
+            self.add_connector("internal-world", InternalWorldConnector(self))
 
 
     def _apply_settings(self):
