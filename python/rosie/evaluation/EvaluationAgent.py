@@ -80,10 +80,6 @@ class EvaluationAgent(RosieAgent):
             self.eval_gui.send_message_to_agent(message)
 
     def handle_script_command(self, message):
-        if self.settings['domain'] == 'internal':
-            self.get_connector('internal-world').handle_script_command(message)
-            return
-
         args = message.split()
         # TELEPORT <obj-h> <x> <y> <z> <wph>
         if args[0] == 'TELEPORT':

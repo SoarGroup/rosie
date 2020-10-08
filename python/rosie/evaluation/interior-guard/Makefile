@@ -4,7 +4,6 @@ EVAL_DIR=${ROSIE_HOME}/python/rosie/evaluation/${AGENT_NAME}
 
 ROSIE_CONFIG=agent/rosie.${AGENT_NAME}.config
 SIM_WORLD=${AGENT_NAME}.world
-WORLD_FILES=
 
 all: ${ROSIE_CONFIG}
 
