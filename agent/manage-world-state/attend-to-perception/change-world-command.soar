@@ -1,0 +1,93 @@
+# change-world-command
+#   We simply add the predicate on the object
+
+
+# Move: Change the waypoint of the object
+sp {anystate*apply*attend-to-perception*change-world-command*move*object
+   (state <s> ^operator <o>
+              ^top-state.internal-world.objects.object <obj>)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type change-world-command
+        ^discrepancy-info.command-info <cmd>)
+   (<cmd> ^type move
+          ^object-id <obj-id>
+          ^waypoint-handle <wph>)
+   (<obj> ^perc-id <obj-id>
+          ^waypoint { <old-wp> <> <wph> })
+-->
+   (<obj> ^waypoint <old-wp> -
+          ^waypoint <wph>)
+}
+
+# place: Put one object in/on another
+sp {anystate*apply*attend-to-perception*change-world-command*place*object
+   (state <s> ^operator <o>
+              ^top-state.perception-monitor.object-monitor <obj-mon>
+              ^top-state.world <world>)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type change-world-command
+        ^discrepancy-info.command-info <cmd>)
+   (<cmd> ^type move
+          ^object-id <obj-id>
+          ^relation-handle <rel-h>
+          ^destination-id <dest-id>)
+   (<obj-mon> ^object-info <obj-info1> <obj-info2>)
+   (<obj-info1> ^input-link-obj.source-obj.perc-id <obj-id>
+                ^world-obj <obj1>)
+   (<obj-info2> ^input-link-obj.source-obj.perc-id <obj-id>
+                ^world-obj <obj2>)
+   (<pred> ^handle <rel-h>)
+  -{(<pred> ^instance <i>)
+    (<i> ^1 <obj1> ^2 <obj2>)}
+-->
+   (<pred> ^instance <i>)
+   (<i> ^1 <obj1> ^2 <obj2>)
+}
+
+# predicate: change the predicate on the object
+sp {anystate*apply*attend-to-perception*change-world-command*predicate
+   (state <s> ^operator <o>
+              ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type change-world-command
+        ^discrepancy-info.command-info <cmd>)
+   (<cmd> ^type predicate
+          ^object-id <obj-id>
+          ^property-handle <prop-h>
+          ^predicate-handle <pred-h>)
+   (<obj-info> ^input-link-obj <il-obj>)
+   (<il-obj> ^source-obj.perc-id <obj-id>
+             ^property <il-prop>)
+   (<il-prop> ^property-handle <prop-h>
+              ^predicate-handle { <old-pred> <> <pred-h> })
+-->
+   (<il-prop> ^predicate-handle <old-pred> -
+              ^predicate-handle <pred-h>)
+}
+
+# Send a message on the output link saying the command was handled
+sp {anystate*apply*attend-to-perception*change-world-command*send*handled-world-change*output-link
+   (state <s> ^operator <o>
+              ^top-state.io.output-link <out>)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type change-world-command
+        ^discrepancy-info.command-info <cmd>)
+   (<cmd> ^num <n>)
+-->
+   (<out> ^handled-world-change <hwc>)
+   (<hwc> ^num <n>)
+}
+
+# if print-perception is on, print a message
+sp {anystate*apply*attend-to-perception*change-world-command*print-perception
+   (state <s> ^operator <o>
+              ^agent-params.print-perception true)
+   (<o> ^name attend-to-perception
+        ^discrepancy-type change-world-command
+        ^discrepancy-info.command-info <cmd>)
+-->
+   (write |attend-to-perception(change-world-command):| (crlf))
+   (write (cmd p <cmd>) (crlf))
+}
+
+
