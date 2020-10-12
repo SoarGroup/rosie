@@ -2,6 +2,8 @@ import subprocess
 
 from pysoarlib import SoarAgent, TimeConnector
 from .LanguageConnector import LanguageConnector
+from .ScriptConnector import ScriptConnector
+from .InternalCommandHandler import InternalCommandHandler
 
 class RosieAgent(SoarAgent):
     """ Wraps the standard pysoarlib SoarAgent with a few rosie-specific config settings and features
@@ -15,6 +17,17 @@ class RosieAgent(SoarAgent):
         messages_file = [filename]
             A text file containing sentences to use as a script for Rosie (one sentence per line)
 
+        use_script_connector = true|false (default=false)
+            If true, adds a ScriptConnector which will automatically send messages to the agent
+            and for internal worlds, handle commands to change the internal world
+
+        find_help = manual|script|none|custom (default=manual)
+            If use_script_connector = true, this tells it how to handle any find requests that come up
+            none   = The answer will always be "Unknown"
+            script = The script is assumed to have the answer
+            manual = The instructor is expected to answer
+            custom = It is assumed the handler will be added elsewhere
+
     """
 
     def __init__(self, print_handler=None, config_filename=None, **kwargs):
@@ -26,6 +39,17 @@ class RosieAgent(SoarAgent):
         # Create a language connector to handle messages to/from Rosie
         self.add_connector("language", LanguageConnector(self))
 
+        if self.settings["domain"] == "internal":
+            self.add_connector("commands", InternalCommandHandler(self, self.print_handler))
+
+        if self.settings["domain"] == "internal" and self.use_script_connector:
+            script_conn = ScriptConnector(self, self.print_handler)
+            if self.find_help == "none":
+                script_conn.set_find_helper(lambda m: "Unknown.")
+            elif self.find_help == "script":
+                script_conn.set_find_helper(lambda m: script_conn.advance_script())
+            self.add_connector("script", script_conn)
+
 
     def _apply_settings(self):
         SoarAgent._apply_settings(self)
@@ -35,6 +59,8 @@ class RosieAgent(SoarAgent):
         self.reconfig_on_launch = self.settings.get("reconfig_on_launch", "false").lower() == "true"
 
         self.messages_file = self.settings.get("messages_file", None)
+        self.use_script_connector = self.settings.get("use_script_connector", "false").lower() == "true"
+        self.find_help = self.settings.get("find_help", "manual")
 
     def _create_soar_agent(self):
         if self.source_config is not None and self.reconfig_on_launch:
