@@ -31,10 +31,11 @@ class FindTestConnector(AgentConnector):
 
 class FindEvaluationGUI(EvaluationGUI):
     def init_soar_agent(self, config_file):
-        self.agent = EvaluationAgent(self, config_filename=config_file, auto_find=False)
+        self.agent = EvaluationAgent(self, config_filename=config_file)
         # Add a printout showing the result of each task
         self.agent.add_connector("find_test", FindTestConnector(self.agent, 
             lambda obj, res: self.append_message("# Find result for " + obj + " = " + res)))
+        # Add a printout showing the result of each task
         self.agent.connect()
 
 

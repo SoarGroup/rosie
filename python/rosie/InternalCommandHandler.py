@@ -25,7 +25,7 @@ class InternalCommandHandler(CommandHandler):
                 self.cur_command_id = None
             root_id.CreateStringWME("status", "complete")
             if self.callback is not None:
-                self.callback()
+                self.callback("success")
                 self.callback = None
 
     def _handle_move_command(self, obj_id, x, y, z, wp_handle):

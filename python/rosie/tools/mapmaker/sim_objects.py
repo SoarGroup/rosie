@@ -20,7 +20,9 @@ class SimObject:
         self.read_transform(reader, scale)
         self.read_color(reader)
         self.read_predicates(reader)
+        self.handle = self.cat + "_" + str(self.obj_id)
         return self
+
 
     # Write the object information in a way that the java class will understand
     def write_info(self, writer):
@@ -101,6 +103,8 @@ class SimObject:
         writer.write("  ivec 3\n")
         writer.write("    %(r)d %(g)d %(b)d\n" % \
                 { "r": self.rgb[0], "g": self.rgb[1], "b": self.rgb[2] })
+
+
 
 # This is not a Rosie Object, will not be perceived
 class BoxObject(SimObject):
@@ -232,7 +236,7 @@ class LightSwitch(SimObject):
 
     def write_info(self, writer):
         super().write_info(writer)
-        writer.write(self.region + "\n")
+        writer.write("    " + self.region + "\n")
 
 class Alarm(SimObject):
     sim_class = "soargroup.mobilesim.sim.SimAlarm"
@@ -240,3 +244,26 @@ class Alarm(SimObject):
     cat = "alarm1"
     rgb = [ 255, 0, 0 ]
 
+
+class Door(SimObject):  
+    sim_class = "soargroup.mobilesim.sim.SimDoor"
+
+    def __init__(self, edge, regions, scale=1.0):
+        SimObject.__init__(self)
+        self.cat = "door1"
+        self.handle = "door1_" + str(self.obj_id)
+        self.pos = [ edge.door_x, edge.door_y, 1.0*scale ]
+        self.rot = edge.door_rot
+        self.scl = [ 0.1*scale, edge.door_wid, 2.0*scale ]
+        self.rgb = [ 94, 76, 28 ]
+        self.reg1 = next(reg.handle for reg in regions if reg.tag_num == edge.start_wp)
+        self.reg2 = next(reg.handle for reg in regions if reg.tag_num == edge.end_wp)
+        self.state = edge.door_state
+        self.preds = { "category": self.cat }
+        self.preds["is-open1"] = ("open2" if self.state == "open" else "not-open1")
+        edge.set_door(self)
+
+    def write_info(self, writer):
+        super().write_info(writer)
+        writer.write("    " + self.reg1 + "\n")
+        writer.write("    " + self.reg2 + "\n")

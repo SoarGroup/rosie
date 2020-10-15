@@ -89,6 +89,10 @@ class Edge:
                 self.door_sy = edge.door_y + dy
                 self.door_ex = edge.door_x - dx
                 self.door_ey = edge.door_y - dy
+        self.make_door = edge.make_door
+        if self.make_door:
+            self.door_obj = edge.door_obj
+
     
     def write(self, nodes, fout):
         start = nodes[self.start]
@@ -100,8 +104,11 @@ class Edge:
         fout.write('    (%(edge)s ^start %(start)s ^end %(end)s \n' % \
                 { "edge": self.var, "start": start.var, "end": end.var })
         if self.has_door:
-            fout.write('         ^doorway true ^door_sx %(sx)s ^door_sy %(sy)s ^door_ex %(ex)s ^door_ey %(ey)s)\n' % \
+            fout.write('         ^doorway true ^door_sx %(sx)s ^door_sy %(sy)s ^door_ex %(ex)s ^door_ey %(ey)s' % \
                     { "sx": self.door_sx, "sy": self.door_sy, "ex": self.door_ex, "ey": self.door_ey })
+            if self.make_door:
+                fout.write(' ^door_handle ' + self.door_obj.handle)
+            fout.write(')\n')
         else:
             fout.write('         ^doorway false)\n')
                 

@@ -2,7 +2,7 @@
 
 TEST_LANG="python"
 # The list of tests that are possible to run
-FULL_TEST_LIST=(prim-actions procedural kitchen mobile serve)
+FULL_TEST_LIST=(prim-actions procedural kitchen mobile serve maintenance)
 
 TESTS_TO_RUN=()
 

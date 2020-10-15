@@ -95,10 +95,6 @@ class LanguageConnector(AgentConnector):
             self.language_id = None
 
     def send_message(self, message):
-        if message[0] == '!':
-            if "commands" in self.agent.connectors:
-                self.agent.get_connector("commands").handle_command(message[1:])
-            return
         if self.current_message != None:
             self.messages_to_remove.add(self.current_message)
         self.current_message = Message(message, self.next_message_id)

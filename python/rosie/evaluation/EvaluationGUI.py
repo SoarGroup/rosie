@@ -17,8 +17,7 @@ class EvaluationGUI(Frame):
         self.rowconfigure(1, weight=20, minsize=400)
         self.rowconfigure(2, weight=2, minsize=50)
 
-        # Row 0: Top row of buttons
-
+        # Row 0: Top row of buttons for running the agent
         self.run_button = Button(self, text="Run", font=("Times", "18"))
         self.run_button["command"] = self.on_run_click
         self.run_button.grid(row=0, column=0, sticky=N+S+E+W)
@@ -30,7 +29,6 @@ class EvaluationGUI(Frame):
         self.reset_button = Button(self, text="Reset", font=("Times", "18"))
         self.reset_button["command"] = self.on_reset_click
         self.reset_button.grid(row=0, column=2, sticky=N+S+E+W)
-
 
         # Row 1: Chat History (col 0-1), Script Messages (col 2-3)
         self.messages_list = Listbox(self, font=("Times", "12"))
@@ -62,49 +60,39 @@ class EvaluationGUI(Frame):
         self.agent = EvaluationAgent(self, config_filename=config_file)
         self.agent.connect()
 
-    def read_script(self):
+    def set_script(self, script):
         self.script_index = 0
-        self.script = []
-        if self.agent.messages_file != None:
-            with open(self.agent.messages_file, 'r') as f:
-                self.script = [ line.rstrip('\n') for line in f.readlines() if len(line.rstrip('\n')) > 0 and line[0] != '#']
-
+        self.script = script
         for message in self.script:
             self.script_list.insert(END, message)
 
         self.script_list.select_set(0) #This only sets focus on the first item.
         self.script_list.event_generate("<<ListboxSelect>>")
 
-    def get_next_script_message(self):
+    def advance_script(self):
         if self.script_index < len(self.script):
             self.script_list.select_set(self.script_index) 
             self.script_list.event_generate("<<ListboxSelect>>")
             self.script_index += 1
             self.script_list.see(self.script_index)
-            return self.script[self.script_index-1]
-        return None
 
-    def append_message(self, message):
+    def append_message(self, message, from_user=True):
         self.messages_list.insert(END, message)
         self.messages_list.see(END)
-
-    def send_message_to_agent(self, message):
-        self.messages_list.insert(END, message)
-        self.messages_list.see(END)
-        self.chat_entry.delete(0, END)
-        if len(self.message_history) == 0 or self.message_history[-1] != message:
-            self.message_history.append(message)
-        self.history_index = len(self.message_history)
-        # If it starts with a !, it's a special command
-        if message[0] == '!':
-            self.agent.handle_script_command(message[1:])
-        else:
-            self.agent.connectors["language"].send_message(message)
+        if from_user:
+            self.chat_entry.delete(0, END)
+            if len(self.message_history) == 0 or self.message_history[-1] != message:
+                self.message_history.append(message)
+            self.history_index = len(self.message_history)
 
     def on_submit_click(self):
         message = self.chat_entry.get().strip()
         if len(message) > 0:
-            self.send_message_to_agent(message)
+            self.append_message(message)
+            if message[0] == '!':
+                self.agent.connectors["commands"].handle_command(message[1:])
+            else:
+                self.agent.connectors["language"].send_message(message)
         
     def on_run_click(self):
         self.agent.start()
@@ -151,5 +139,4 @@ class EvaluationGUI(Frame):
         self.create_widgets()
         self.rosie_config_file = rosie_config
         self.init_soar_agent(rosie_config)
-        self.read_script()
 

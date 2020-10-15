@@ -21,8 +21,6 @@ def create_internal_world(world_info, fout):
     fout.write("        ^objects <objs>)\n")
     fout.write("\n")
 
-    name_counts = {}
-
     i = 0
 
     # Write the list of objects
@@ -35,24 +33,20 @@ def create_internal_world(world_info, fout):
 
         preds = dict( i for i in obj.preds.items() if i[1] is not None)
 
-        # Create a unique handle for the object
-        handle = preds['category']
-        
-        if handle not in name_counts:
-            name_counts[handle] = 0
-        name_counts[handle] += 1
-        handle += "_" + str(name_counts[handle])
-
         # Determine the object's location
-        obj_loc = next( (region for region in world_info.regions 
-            if region.contains_point(obj.pos[0], obj.pos[1])), None)
+        if preds['category'] == 'door1':
+            obj_wp = obj.reg1 + " " + obj.reg2
+        else:
+            obj_wp = next( (region.handle for region in world_info.regions 
+                if region.contains_point(obj.pos[0], obj.pos[1])), None)
 
-        if obj_loc is None:
-            print("ERROR No location for: " + handle)
+        if obj_wp is None:
+            print("ERROR No location for: " + obj.handle)
             continue
+        
 
         fout.write("   (<objs> ^object {:s})\n".format(obj_id))
-        fout.write("   ({:s} ^handle {:s} ^perc-id {:d} ^waypoint {:s} ^predicates {:s})\n".format(obj_id, handle, i, obj_loc.handle, preds_id))
+        fout.write("   ({:s} ^handle {:s} ^perc-id {:d} ^waypoint {:s} ^predicates {:s})\n".format(obj_id, obj.handle, i, obj_wp, preds_id))
         fout.write("   ({:s} {:s})\n".format(preds_id, " ".join( "^{:s} {:s}".format(cat, pred) for cat, pred in preds.items() )))
         
         fout.write("\n")

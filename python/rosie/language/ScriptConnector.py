@@ -37,7 +37,11 @@ class ScriptConnector(AgentConnector):
 
             message = self.script[self.script_index]
             self.script_index += 1
-            self.agent.get_connector("language").send_message(message)
+            if message[0] == '!':
+                self.agent.get_connector("commands").handle_command(message[1:], 
+                        lambda res: self.advance_script())
+            else:
+                self.agent.get_connector("language").send_message(message)
 
             for callback in self.callbacks:
                 callback(message)
@@ -54,10 +58,13 @@ class ScriptConnector(AgentConnector):
         self.script = list(lines)
 
     def handle_message(self, msg):
+        # Ignore ok messages
+        if msg.startswith('Ok'):
+            return
         if "can't find" in msg:
             answer = None
             if self.find_request_handler is not None:
-                answer = self.find_request_handler(self, msg)
+                answer = self.find_request_handler(msg)
             if answer is not None:
                 self.agent.get_connector("language").send_message(answer)
                 for callback in self.callbacks:

@@ -6,36 +6,44 @@ sp {op_approach*elaborate*candidate-coords
    (<s> ^candidate-coords <cc>)
 }
 
-sp {op_approach*elaborate*candidate-coords*has-front*true
+sp {op_approach*elaborate*candidate-coords*num-coords*true
    (state <s> ^name op_approach1
               ^candidate-coords <cc>)
-   (<cc> -^has-front false)
+   (<cc> -^num-coords > 1)
 -->
-   (<cc> ^has-front true)
+   (<cc> ^num-coords 1)
 }
 
-sp {op_approach*elaborate*candidate-coords*has-front*false*grabbable
+sp {op_approach*elaborate*candidate-coords*num-coords*4*grabbable
    (state <s> ^name op_approach1
               ^target-object.predicates.affordance1 grabbable1
               ^candidate-coords <cc>)
 -->
-   (<cc> ^has-front false)
+   (<cc> ^num-coords 4)
 }
 
-#sp {op_approach*elaborate*candidate-coords*has-front*true*person
+#sp {op_approach*elaborate*candidate-coords*num-coords*true*person
 #   (state <s> ^name op_approach1
 #              ^target-object.predicates.category person
 #              ^candidate-coords <cc>)
 #-->
-#   (<cc> ^has-front true)
+#   (<cc> ^num-coords true)
 #}
 
-sp {op_approach*elaborate*candidate-coords*has-front*false*vehicle
+sp {op_approach*elaborate*candidate-coords*num-coords*4*vehicle
    (state <s> ^name op_approach1
               ^target-object.predicates.category vehicle1
               ^candidate-coords <cc>)
 -->
-   (<cc> ^has-front false)
+   (<cc> ^num-coords 4)
+}
+
+sp {op_approach*elaborate*candidate-coords*num-coords*2*door
+   (state <s> ^name op_approach1
+              ^target-object.predicates.category door1
+              ^candidate-coords <cc>)
+-->
+   (<cc> ^num-coords 2)
 }
 
 # Compute the sin/cos of the target's yaw 
@@ -62,18 +70,36 @@ sp {op_approach*elaborate*candidate-coords*axis_dist
 
 # Compute only the 1 coordinate that goes from the target's position 
 #   along the x axis and that represents the goal coordinate
-sp {op_approach*elaborate*candidate-coords*1*coord*has-front*true
+sp {op_approach*elaborate*candidate-coords*1*coord
    (state <s> ^name op_approach1
               ^target-transform.pos <pos>
               ^candidate-coords <cc>)
    (<pos> ^x <px> ^y <py>)
-   (<cc> ^has-front true
+   (<cc> ^num-coords 1
          ^sin <sin> ^cos <cos>
          ^axis_x <ax> ^axis_y <ay>)
 -->
    (<cc> ^coord <c1>)
    (<c1> ^x (+ <px> (* <ax> <cos>))
          ^y (+ <py> (* <ax> <sin>)))
+}
+
+# Compute 2 coordinates that go from the target's position 
+#   along the x axis (front + back)
+sp {op_approach*elaborate*candidate-coords*2*coords
+   (state <s> ^name op_approach1
+              ^target-transform.pos <pos>
+              ^candidate-coords <cc>)
+   (<pos> ^x <px> ^y <py>)
+   (<cc> ^num-coords 2
+         ^sin <sin> ^cos <cos>
+         ^axis_x <ax>)
+-->
+   (<cc> ^coord <c1> <c2>)
+   (<c1> ^x (+ <px> (* <ax> <cos>))
+         ^y (+ <py> (* <ax> <sin>)))
+   (<c2> ^x (- <px> (* <ax> <cos>))
+         ^y (- <py> (* <ax> <sin>)))
 }
 
 # Compute 4 coordinates that go from the target's position 
@@ -84,7 +110,7 @@ sp {op_approach*elaborate*candidate-coords*all*4*coords
               ^target-transform.pos <pos>
               ^candidate-coords <cc>)
    (<pos> ^x <px> ^y <py>)
-   (<cc> ^has-front false 
+   (<cc> ^num-coords 4
          ^sin <sin> ^cos <cos>
          ^axis_x <ax> ^axis_y <ay>)
 -->
@@ -118,7 +144,7 @@ sp {op_approach*propose*check-candidate-coord
    (state <s> ^name op_approach1
               ^robot-coord
               ^candidate-coords <cc>)
-   (<cc> ^has-front false
+   (<cc> ^num-coords > 1
          ^coord <coord>)
    (<coord> -^is-clear)
 -->
@@ -232,7 +258,7 @@ sp {op_approach*propose*compute-goal-coord
               ^target-object.svs-obj.id <perc-id>
               ^candidate-coords <cc>
              -^goal-coord)
-   (<cc> ^has-front true
+   (<cc> ^num-coords 1
          ^coord <coord>)
 -->
    (<s> ^operator <o> + =)

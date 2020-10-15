@@ -44,6 +44,8 @@ class WorldInfo:
                     self.regions.append(RegionInfo().read_info(reader, self.scale))
                 elif itemtype == "edge":
                     self.edges.append(EdgeInfo().read_info(reader, self.scale))
+                elif itemtype == "door":
+                    self.edges.append(EdgeInfo(make_door=True).read_info(reader, self.scale))
                 elif itemtype == "wall":
                     self.walls.append(WallInfo().read_info(reader, self.scale))
                 elif itemtype == "wallchain":
@@ -51,6 +53,10 @@ class WorldInfo:
                 word = reader.nextWord()
         except Exception as e:
             raise Exception("Parsing Error on line " + str(reader.lineNum) + ":\n" + str(e))
+
+        for edge in self.edges:
+            if edge.make_door:
+                self.objects.append(sim_objects.Door(edge, self.regions, self.scale))
 
 
 ###### ROBOT ######
@@ -103,10 +109,14 @@ class RegionInfo:
 ###### EDGES ######
 
 class EdgeInfo:
-    def __init__(self):
+    def __init__(self, make_door=False):
         self.start_wp = 0
         self.end_wp = 0
         self.has_door = False
+        self.make_door = make_door
+
+    def set_door(self, door):
+        self.door_obj = door
     
     def read_info(self, reader, scale=1.0):
         self.start_wp = int(reader.nextWord())
@@ -119,7 +129,11 @@ class EdgeInfo:
             self.door_x = float(reader.nextWord()) * scale
             self.door_y = float(reader.nextWord()) * scale
             self.door_rot = float(reader.nextWord())
+        if self.make_door:
+            self.door_wid = float(reader.nextWord()) * scale # Door width
+            self.door_state = reader.nextWord() # either open or closed
         return self
+
 
 ###### WALLS ######
 

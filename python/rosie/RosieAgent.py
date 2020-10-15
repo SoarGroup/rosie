@@ -1,8 +1,7 @@
 import subprocess
 
 from pysoarlib import SoarAgent, TimeConnector
-from .LanguageConnector import LanguageConnector
-from .ScriptConnector import ScriptConnector
+from rosie.language import LanguageConnector, ScriptConnector
 from .InternalCommandHandler import InternalCommandHandler
 
 class RosieAgent(SoarAgent):
@@ -39,10 +38,10 @@ class RosieAgent(SoarAgent):
         # Create a language connector to handle messages to/from Rosie
         self.add_connector("language", LanguageConnector(self))
 
-        if self.settings["domain"] == "internal":
+        if self.domain == "internal":
             self.add_connector("commands", InternalCommandHandler(self, self.print_handler))
 
-        if self.settings["domain"] == "internal" and self.use_script_connector:
+        if self.use_script_connector:
             script_conn = ScriptConnector(self, self.print_handler)
             if self.find_help == "none":
                 script_conn.set_find_helper(lambda m: "Unknown.")
@@ -56,11 +55,15 @@ class RosieAgent(SoarAgent):
 
         # Rosie-specific settings
         self.source_config = self.settings.get("source_config", None)
-        self.reconfig_on_launch = self.settings.get("reconfig_on_launch", "false").lower() == "true"
+        self.reconfig_on_launch = self._parse_bool_setting("reconfig_on_launch", False)
 
         self.messages_file = self.settings.get("messages_file", None)
-        self.use_script_connector = self.settings.get("use_script_connector", "false").lower() == "true"
+        self.use_script_connector = self._parse_bool_setting("use_script_connector", False)
         self.find_help = self.settings.get("find_help", "manual")
+
+        self.domain = self.settings.get("domain", "internal")
+        if self.domain == "mobilesim":
+            self.domain = "magicbot"
 
     def _create_soar_agent(self):
         if self.source_config is not None and self.reconfig_on_launch:
@@ -69,5 +72,17 @@ class RosieAgent(SoarAgent):
             subprocess.check_output(['java', 'edu.umich.rosie.tools.config.RosieAgentConfigurator', self.source_config])
             self._read_config_file()
 
-        SoarAgent._create_soar_agent(self)
+        super()._create_soar_agent()
+        self.execute_command("svs --enable")
+        self.execute_command("svs connect_viewer 2000");
+
+    def _source_agent(self):
+        super()._source_agent()
+        # Elaborate the domain + simulate-perception on top-state.agent-params
+        self.execute_command("sp {top-state*agent-params*elaborate*domain\n" + 
+            "(state <s> ^superstate nil ^agent-params <p>) --> (<p> ^domain " + self.domain + ")}")
+        if self.domain == "internal":
+            self.execute_command("sp {top-state*agent-params*elaborate*sim-perc\n" + 
+            "(state <s> ^superstate nil ^agent-params <p>) --> (<p> ^simulate-perception true)}")
+
 

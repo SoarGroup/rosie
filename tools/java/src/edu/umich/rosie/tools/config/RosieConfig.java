@@ -30,7 +30,7 @@ public class RosieConfig {
 	//    DEFAULT - The directory containing the config file
 	public String agentDir;
 	
-	// domain = << magicbot tabletop internal fetch ai2thor cozmo >>  [REQUIRED]
+	// domain = << magicbot tabletop internal fetch ai2thor cozmo >>  [OPTIONAL]
 	//    The environment the agent is in (determines perception/action rules)
 	public String domain;
 	public static final HashSet<String> VALID_DOMAINS = new HashSet<String>(
@@ -161,11 +161,11 @@ public class RosieConfig {
 						"Must be one of: " + VALID_DOMAINS.toString());
 			}
 		} else {
-			throw new RosieConfigException("Missing domain parameter");
+			this.domain = null;
 		}
 
 		// simulate-perception
-		if (this.domain.equals("internal")){
+		if (this.domain != null && this.domain.equals("internal")){
 			this.simulate_perception = props.getProperty("simulate-perception", "false").toLowerCase().equals("true");
 		} else {
 			this.simulate_perception = false;
