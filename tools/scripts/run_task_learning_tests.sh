@@ -5,6 +5,7 @@ TEST_LANG="python"
 FULL_TEST_LIST=(prim-actions procedural kitchen mobile serve maintenance)
 
 TESTS_TO_RUN=()
+BUILD_ONLY=0
 
 # Iterate over each argument given
 while [[ $# -gt 0 ]]
@@ -16,6 +17,7 @@ do
 			echo "  -h|--help  prints help"
 			echo "  -j|--java  runs the tests using java (default is python)"
 			echo "  -l|--list  lists all runnable tests"
+			echo "  -b|--build  just build the agents, without running them"
 			echo "By default, it runs all the tests"
 			echo "  but you can specify only the tests you want:"
 			echo "  run_task_learning_tests kitchen"
@@ -23,6 +25,9 @@ do
 			;;
 		-j|--java)
 			TEST_LANG="java"
+			;;
+		-b|--build)
+			BUILD_ONLY=1
 			;;
 		-l|--list)
 			echo ${FULL_TEST_LIST[*]}
@@ -61,6 +66,10 @@ for test in	${TESTS_TO_RUN[*]}; do
 	cd $ROSIE_HOME/test-agents/task-tests/$test
 	echo "### Configure Agent"
 	java edu.umich.rosie.tools.config.RosieAgentConfigurator $test.config -s
+
+	if [[ $BUILD_ONLY -eq 1 ]]; then
+		continue
+	fi
 
 	if [ "$TEST_LANG" == "python" ]; then
 		echo ""

@@ -28,13 +28,20 @@ class InternalCommandHandler(CommandHandler):
                 self.callback("success")
                 self.callback = None
 
-    def _handle_move_command(self, obj_id, x, y, z, wp_handle):
+    def _handle_teleport_command(self, obj_id, x, y, z, wp_handle):
+        if wp_handle is not None:
+            self._handle_move_command(obj_id, wp_handle)
+
+    def _handle_move_command(self, obj_id, wp_handle):
         input_link = self.agent.agent.GetInputLink()
         self.cur_command_id = input_link.CreateIdWME("change-world")
         self.command_num += 1
         self.cur_command_id.CreateIntWME("num", self.command_num)
         self.cur_command_id.CreateStringWME("type", "move")
-        self.cur_command_id.CreateIntWME("object-id", obj_id)
+        try:
+            self.cur_command_id.CreateIntWME("object-id", int(obj_id))
+        except:
+            self.cur_command_id.CreateStringWME("object-id", obj_id)
         self.cur_command_id.CreateStringWME("waypoint-handle", wp_handle)
 
     def _handle_place_command(self, obj_id, rel_handle, dest_id):
@@ -43,9 +50,15 @@ class InternalCommandHandler(CommandHandler):
         self.command_num += 1
         self.cur_command_id.CreateIntWME("num", self.command_num)
         self.cur_command_id.CreateStringWME("type", "place")
-        self.cur_command_id.CreateIntWME("object-id", obj_id)
+        try:
+            self.cur_command_id.CreateIntWME("object-id", int(obj_id))
+        except:
+            self.cur_command_id.CreateStringWME("object-id", obj_id)
         self.cur_command_id.CreateStringWME("relation-handle", rel_handle)
-        self.cur_command_id.CreateIntWME("destination-id", dest_id)
+        try:
+            self.cur_command_id.CreateIntWME("destination-id", int(dest_id))
+        except:
+            self.cur_command_id.CreateStringWME("destination-id", dest_id)
 
     def _handle_set_pred_command(self, obj_id, prop_handle, pred_handle):
         input_link = self.agent.agent.GetInputLink()
@@ -53,7 +66,10 @@ class InternalCommandHandler(CommandHandler):
         self.command_num += 1
         self.cur_command_id.CreateIntWME("num", self.command_num)
         self.cur_command_id.CreateStringWME("type", "predicate")
-        self.cur_command_id.CreateIntWME("object-id", obj_id)
+        try:
+            self.cur_command_id.CreateIntWME("object-id", int(obj_id))
+        except:
+            self.cur_command_id.CreateStringWME("object-id", obj_id)
         self.cur_command_id.CreateStringWME("property-handle", prop_handle)
         self.cur_command_id.CreateStringWME("predicate-handle", pred_handle)
 

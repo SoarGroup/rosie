@@ -65,6 +65,7 @@ class ScriptConnector(AgentConnector):
             answer = None
             if self.find_request_handler is not None:
                 answer = self.find_request_handler(msg)
+            self.print_handler("CANT FIND " + str(answer))
             if answer is not None:
                 self.agent.get_connector("language").send_message(answer)
                 for callback in self.callbacks:

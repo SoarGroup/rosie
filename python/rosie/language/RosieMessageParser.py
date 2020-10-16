@@ -41,6 +41,7 @@ class RosieMessageParser:
         "retrospective-learning-failure": lambda fields: "I was unable to learn the task policy",
         "report-successful-training": lambda fields: "Ok",
         "task-execution-failure": lambda fields: "The " + task_handle(fields) + " task failed.",
+        "maintenance-goal-achieved": lambda fields: "I have achieved the goal of " + task_handle(fields) + ".",
         
         #added for games and puzzles
         "your-turn": lambda fields: "Your turn.",
