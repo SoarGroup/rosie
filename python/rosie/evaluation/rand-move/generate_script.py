@@ -39,13 +39,13 @@ for i in range(NUM_MOVES):
     # Randomly relocate one of the objects
     obj, rel, loc = get_rand_move()
     rel = rel[0:2] + "1"
-    sentences.append("!PLACE {} {} {}".format(object_ids[obj], rel, object_ids[loc]))
+    sentences.append("!CMD place {} {} {}".format(object_ids[obj], rel, object_ids[loc]))
     obj_positions[obj] = loc
 
     # With a 33% probability, close one the of the doors
     if random.randint(0, 3) == 0: 
         door = random.choice(doors)
-        sentences.append("!CLOSE {}".format(object_ids[door]))
+        sentences.append("!CMD close {}".format(object_ids[door]))
 
 with open("rand-move.script", 'w') as f:
     f.write("\n".join(sentences))

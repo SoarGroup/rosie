@@ -37,8 +37,8 @@ class ScriptConnector(AgentConnector):
 
             message = self.script[self.script_index]
             self.script_index += 1
-            if message[0] == '!':
-                self.agent.get_connector("commands").handle_command(message[1:], 
+            if message.startswith("!CMD"):
+                self.agent.get_connector("commands").handle_command(message, 
                         lambda res: self.advance_script())
             else:
                 self.agent.get_connector("language").send_message(message)
@@ -65,7 +65,6 @@ class ScriptConnector(AgentConnector):
             answer = None
             if self.find_request_handler is not None:
                 answer = self.find_request_handler(msg)
-            self.print_handler("CANT FIND " + str(answer))
             if answer is not None:
                 self.agent.get_connector("language").send_message(answer)
                 for callback in self.callbacks:

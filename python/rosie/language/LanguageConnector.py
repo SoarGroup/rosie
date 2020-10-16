@@ -52,6 +52,9 @@ class Message(WMInterface):
                 # Add the quote as a whole
                 word = quote
                 next_id.CreateStringWME("quoted", "true")
+            if word[0] == '!CMD':
+                # If the word starts with !
+                next_id.CreateStringWME("command", "true")
             next_id.CreateStringWME("spelling", word.lower())
             next_id = next_id.CreateIdWME("next")
         

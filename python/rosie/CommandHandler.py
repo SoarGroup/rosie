@@ -30,24 +30,23 @@ class CommandHandler(AgentConnector):
 
     def _execute_command(self):
         args = self.command.split()
-        cmd_name = args[0].upper()
-        if cmd_name[0] == '!':
-            # Strip ! off front if present
-            cmd_name = cmd_name[1:]
+        if args[0] == '!CMD':
+            args = args[1:]
+        cmd_name = args[0].lower()
 
         # START
-        if cmd_name == 'START':
+        if cmd_name == 'start':
             self.agent.start()
         # STOP
-        elif cmd_name == 'STOP':
+        elif cmd_name == 'stop':
             self.agent.stop()
         # WAIT <dcs>
         #   will wait the given number of decision cycles before reporting success
-        elif cmd_name == 'WAIT':
+        elif cmd_name == 'wait':
             self.wait_dcs = int(args[1])
         # CLI arg1 arg2 ...
         #   will execute a soar command (e.g. "CLI p s1 -d 2")
-        elif cmd_name == 'CLI':
+        elif cmd_name == 'cli':
             self.agent.execute_command(' '.join(args[1:]), print_res=True)
             if self.callback is not None:
                 self.callback("success")
@@ -55,32 +54,32 @@ class CommandHandler(AgentConnector):
 
         ### CHANGING PREDICATES
         # SET-STATE <obj-h> <prop-h> <pred-h>
-        elif cmd_name == 'SET-STATE':
+        elif cmd_name == 'set-state':
             self._handle_set_pred_command(args[1], args[2], args[3])
         # OPEN <obj-h> 
-        elif cmd_name == 'OPEN':
+        elif cmd_name == 'open':
             self._handle_set_pred_command(args[1], 'is-open1', 'open2')
         # CLOSE <obj-h> 
-        elif cmd_name == 'CLOSE':
+        elif cmd_name == 'close':
             self._handle_set_pred_command(args[1], 'is-open1', 'not-open1')
         # ON <obj-h> 
-        elif cmd_name == 'ON':
+        elif cmd_name == 'on':
             self._handle_set_pred_command(args[1], 'is-activated1', 'activated1')
         # OFF <obj-h> 
-        elif cmd_name == 'OFF':
+        elif cmd_name == 'off':
             self._handle_set_pred_command(args[1], 'is-activated1', 'not-activated1')
 
         ### MOVING OBJECTS
         # PLACE <obj-h> <rel> <dest-h>
-        elif cmd_name == 'PLACE':
+        elif cmd_name == 'place':
             self._handle_place_command(args[1], args[2], args[3])
         # MOVE <obj-h> <wph>
         #    Move the given object to the given waypoint
-        elif cmd_name == 'MOVE':
+        elif cmd_name == 'move':
             self._handle_move_command(args[1], args[2])
         # TELEPORT <obj-h> <x> <y> <z> <wph>?
         #    Move the given object to the given coordinate (with optional waypoint given)
-        elif cmd_name == 'TELEPORT':
+        elif cmd_name == 'teleport':
             self._handle_move_command(args[1], float(args[2]), float(args[3]), float(args[4]), args[5] if len(args) > 5 else None)
 
         ### COMMAND NOT RECOGNIZED

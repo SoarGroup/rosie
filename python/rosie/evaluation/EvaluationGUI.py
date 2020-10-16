@@ -89,8 +89,8 @@ class EvaluationGUI(Frame):
         message = self.chat_entry.get().strip()
         if len(message) > 0:
             self.append_message(message)
-            if message[0] == '!':
-                self.agent.connectors["commands"].handle_command(message[1:])
+            if message.startswith("!CMD"):
+                self.agent.connectors["commands"].handle_command(message)
             else:
                 self.agent.connectors["language"].send_message(message)
         

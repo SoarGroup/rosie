@@ -18,7 +18,10 @@ if len(sys.argv) <= 1:
     sys.exit(0)
 
 test_name = sys.argv[1]
+print_output = '-s' not in sys.argv
 
-agent = TestAgent(rosie_home + "/test-agents/task-tests/" + test_name + "/agent/rosie." + test_name + ".config")
+agent = TestAgent(config_filename=rosie_home + "/test-agents/task-tests/" + test_name + "/agent/rosie." + test_name + ".config", 
+        write_to_stdout=print_output, 
+        source_output=("summary" if print_output else "none"))
 agent.run_test(rosie_home + "/test-agents/task-tests/" + test_name + "/correct-output.txt")
 

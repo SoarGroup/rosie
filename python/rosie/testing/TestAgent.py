@@ -4,8 +4,8 @@ from rosie import RosieAgent, ActionStackConnector
 from pysoarlib import AgentConnector
 
 class TestAgent(RosieAgent):
-    def __init__(self, config_filename=None, **kwargs):
-        RosieAgent.__init__(self, config_filename=config_filename, write_to_stdout=True)
+    def __init__(self, **kwargs):
+        RosieAgent.__init__(self, **kwargs)
         self.outfile = None
         self.filename = self.settings["task_test_output_filename"]
 
@@ -15,7 +15,6 @@ class TestAgent(RosieAgent):
         self.connectors["action_stack"].register_task_change_callback(lambda s: self.write_output(s))
 
         self.add_print_event_handler(lambda msg: self.print_callback(msg))
-
 
     def write_output(self, message):
         if self.outfile is not None:
@@ -31,12 +30,14 @@ class TestAgent(RosieAgent):
         self.kill()
 
     def print_callback(self, message):
+        message = message.strip()
         if message.startswith("@TEST: "):
             self.write_output(message[7:])
     
     def _output_event_handler(self, agent_name, att_name, wme):
         sentence = wme.ConvertToIdentifier().GetChildString("sentence")
-        print(sentence)
+        if self.write_to_stdout:
+            print(sentence)
         self.write_output("I: \"" + sentence + "\"")
 
 

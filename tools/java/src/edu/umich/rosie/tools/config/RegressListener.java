@@ -1,6 +1,7 @@
+// Generated from src/edu/umich/rosie/tools/config/Regress.g4 by ANTLR 4.5
+
 package edu.umich.rosie.tools.config;
 
-// Generated from Regress.g4 by ANTLR 4.5
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 

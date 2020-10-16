@@ -6,6 +6,7 @@ FULL_TEST_LIST=(prim-actions procedural kitchen mobile serve maintenance)
 
 TESTS_TO_RUN=()
 BUILD_ONLY=0
+SILENT=""
 
 # Iterate over each argument given
 while [[ $# -gt 0 ]]
@@ -18,6 +19,7 @@ do
 			echo "  -j|--java  runs the tests using java (default is python)"
 			echo "  -l|--list  lists all runnable tests"
 			echo "  -b|--build  just build the agents, without running them"
+			echo "  -s|--silent  dont print any output except for the diffs"
 			echo "By default, it runs all the tests"
 			echo "  but you can specify only the tests you want:"
 			echo "  run_task_learning_tests kitchen"
@@ -28,6 +30,9 @@ do
 			;;
 		-b|--build)
 			BUILD_ONLY=1
+			;;
+		-s|--silent)
+			SILENT="-s"
 			;;
 		-l|--list)
 			echo ${FULL_TEST_LIST[*]}
@@ -74,7 +79,8 @@ for test in	${TESTS_TO_RUN[*]}; do
 	if [ "$TEST_LANG" == "python" ]; then
 		echo ""
 		echo "### Running $test using python"
-		python3 -m rosie.testing $test
+		echo $SILENT
+		python3 -m rosie.testing $test $SILENT
 	else
 		echo ""
 		echo "### Running $test using java"

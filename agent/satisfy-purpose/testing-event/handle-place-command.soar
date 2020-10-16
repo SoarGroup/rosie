@@ -1,0 +1,87 @@
+sp {testing-event*propose*handle-place-command
+   (state <s> ^name testing-event
+              ^purpose <p>
+             -^handled-command)
+   (<p> ^type handle-command
+        ^parameters.command <cmd>)
+   (<cmd> ^spelling place
+          ^next <arg1>)
+   (<arg1> ^spelling <obj-h>
+           ^next <arg2>)
+   (<arg2> ^spelling <rel-h>
+           ^next <arg3>)
+   (<arg3> ^spelling <dest-h>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name handle-place-command
+        ^object.id <obj-h>
+        ^relation-handle <wp-h>
+        ^destination.id <dest-h>)
+}
+
+sp {testing-event*elaborate*handle-place-command*object-arg*source
+   (state <s> ^name testing-event
+              ^operator <o> +
+              ^top-state.internal-world.objects.object <obj-src>)
+   (<o> ^name handle-place-command
+        ^{ << object destination >> } <obj-arg>)
+   (<obj-arg> ^id <obj-id>)
+   (<obj-src> ^{ << handle perc-id >> } <obj-id>)
+-->
+   (<obj-arg> ^source <obj-src>)
+}
+
+sp {testing-event*elaborate*handle-place-command*object-arg*world*object
+   (state <s> ^name testing-event
+              ^operator <o> +
+              ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
+   (<o> ^name handle-place-command
+        ^{ << object destination >> } <obj-arg>)
+   (<obj-arg> ^source <obj-src>)
+   (<obj-info> ^input-link-obj.source-obj <obj-src>
+               ^world-obj <obj>)
+-->
+   (<obj-arg> ^world <obj>)
+}
+
+# Add the desired relation
+sp {testing-event*apply*handle-place-command*add*relation
+   (state <s> ^name testing-event
+              ^operator <o>
+              ^top-state.world.predicates.predicate <pred>)
+   (<o> ^name handle-place-command
+        ^object.world <obj>
+        ^relation-handle <rel-h>
+        ^destination.world <dest>)
+   (<pred> ^handle <rel-h>)
+  -{(<pred> ^instance <i>)
+    (<i> ^1 <obj> ^2 <dest>)}
+-->
+   (<pred> ^instance <i>)
+   (<i> ^1 <obj> ^2 <dest>)
+}
+
+# Remove any other relations
+sp {anystate*apply*attend-to-perception*change-world-command*place*replace*relations
+   (state <s> ^name testing-event
+              ^operator <o>
+              ^top-state.world.predicates.predicate <pred>)
+   (<o> ^name handle-place-command
+        ^object.world <obj>)
+   (<pred> ^instance <i>)
+   (<i> ^<num> <obj>)
+   # don't replace in(obj, loc) predicate
+   -{ (<pred> ^handle in1)
+      (<i> ^{2}.predicates.category location) }
+-->
+   (<pred> ^instance <i> -)
+}
+
+
+# add performed-place flag
+sp {testing-event*apply*handle-place-command*add*performed-place*flag
+   (state <s> ^name testing-event
+              ^operator.name handle-place-command)
+-->
+   (<s> ^handled-command true)
+}
