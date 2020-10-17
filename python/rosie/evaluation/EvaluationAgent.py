@@ -12,7 +12,7 @@ current_time_ms = lambda: int(round(time.time() * 1000))
 
 class EvaluationAgent(MobileSimAgent):
     def __init__(self, eval_gui, config_filename=None, **kwargs):
-        MobileSimAgent.__init__(self, config_filename=config_filename, use_script_connector=True,**kwargs)
+        MobileSimAgent.__init__(self, config_filename=config_filename, use_script_connector=True, **kwargs)
         self.eval_gui = eval_gui
 
         self.get_connector("language").register_message_callback(lambda msg: self.handle_message(msg))

@@ -57,7 +57,8 @@ class EvaluationGUI(Frame):
         self.submit_button.grid(row=2, column=3, columnspan=1, sticky=N+S+E+W)
 
     def init_soar_agent(self, config_file):
-        self.agent = EvaluationAgent(self, config_filename=config_file)
+        print("FILE: " + config_file)
+        self.agent = EvaluationAgent(self, config_filename=config_file, **self.agent_kwargs)
         self.agent.connect()
 
     def set_script(self, script):
@@ -127,7 +128,7 @@ class EvaluationGUI(Frame):
         if self.master:
             self.master.destroy()
 
-    def __init__(self, rosie_config, master=None):
+    def __init__(self, rosie_config, agent_kwargs={ }, master=None):
         Frame.__init__(self, master, width=800, height=600)
         self.master = master
         master.columnconfigure(0, weight=1)
@@ -138,5 +139,6 @@ class EvaluationGUI(Frame):
 
         self.create_widgets()
         self.rosie_config_file = rosie_config
+        self.agent_kwargs = agent_kwargs
         self.init_soar_agent(rosie_config)
 
