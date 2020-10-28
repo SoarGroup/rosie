@@ -254,6 +254,32 @@ requires `visible1(per) & reachable1(per)`
 * Magicbot: Give is a primitive command
 
 
+<!-- ================================== PRESS ========================================= -->
+<a name="press"></a>
+
+## Press
+
+Have the robot press a button
+> *Press the blue button.*
+
+```
+([o] ^name op_press1 
+     ^task-handle press1
+     ^arg1 [type:object])  # The object to press
+```
+
+*Proposal:* <br>
+`pressable1(arg1) & confirmed1(arg1)`
+
+*Goal:* <br>
+`execute-command(press)`
+
+*Execute:* <br>
+requires `visible1(obj) & reachable1(obj)`
+* Internal: 
+* Magicbot: Press is a primitive command
+
+
 <!-- ================================== REMOVE ========================================= -->
 <a name="remove"></a>
 

@@ -134,7 +134,7 @@ class Mug(SimObject):
     cat = "mug1"
     def read_info(self, reader, scale=1.0):
         super().read_info(reader, scale)
-        self.preds["is-filled1"] = "empty1"
+        self.preds["contents1"] = "empty1"
         return self
 
 class Chair(SimObject):
@@ -204,6 +204,11 @@ class Kettle(SimObject):
     def_props = ('grabbable', )
     rgb = [ 150, 150, 150 ]
 
+class Cooler(SimObject):  
+    sim_class = "soargroup.mobilesim.sim.SimCooler"
+    cat = "cooler1"
+    rgb = [ 0, 0, 0 ]
+
 class Drawer(SimObject):  
     sim_class = "soargroup.mobilesim.sim.SimDrawer"
     cat = "drawer1"
@@ -237,6 +242,20 @@ class LightSwitch(SimObject):
     def write_info(self, writer):
         super().write_info(writer)
         writer.write("    " + self.region + "\n")
+
+class Button(SimObject):  
+    sim_class = "soargroup.mobilesim.sim.SimButton"
+    cat = "button1"
+    desc = "btn"
+    def read_info(self, reader, scale=1.0):
+        # 1 word - the target to trigger when pressed (they must have a handle defined)
+        self.target = reader.nextWord()
+        super().read_info(reader, scale)
+        return self
+
+    def write_info(self, writer):
+        super().write_info(writer)
+        writer.write("    " + self.target + "\n")
 
 class Alarm(SimObject):
     sim_class = "soargroup.mobilesim.sim.SimAlarm"
