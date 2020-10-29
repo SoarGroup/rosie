@@ -81,6 +81,9 @@ class SimObject:
         if hasattr(self, 'def_props'):
             for prop in self.def_props:
                 self.preds[prop] = None
+        # temp_id is an optional identifier used to have different objects in the world file
+        #   refer to each other. It is not exposed to Rosie at all 
+        self.temp_id = self.preds.get('temp_id', None)
 
     def write_predicates(self, writer):
         writer.write("  # Properties\n")
@@ -248,7 +251,7 @@ class Button(SimObject):
     cat = "button1"
     desc = "btn"
     def read_info(self, reader, scale=1.0):
-        # 1 word - the target to trigger when pressed (they must have a handle defined)
+        # 1 word - the target to trigger when pressed (they must have a temp_id defined)
         self.target = reader.nextWord()
         super().read_info(reader, scale)
         return self
@@ -256,6 +259,14 @@ class Button(SimObject):
     def write_info(self, writer):
         super().write_info(writer)
         writer.write("    " + self.target + "\n")
+
+    def write_extra_soar_info(self, writer, world_info):
+        # Try to find a target object with a matching temp_id
+        target = next((obj for obj in world_info.objects if obj.temp_id == self.target), None) 
+        if target is not None:
+            writer.write("   (<obj{:d}> ^target <obj{:d}>)\n".format(self.obj_id, target.obj_id))
+
+
 
 class Alarm(SimObject):
     sim_class = "soargroup.mobilesim.sim.SimAlarm"

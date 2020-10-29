@@ -25,6 +25,8 @@ agent/rosie.${AGENT_NAME}.config: agent.config smem-config.txt extra-smem-adds.s
 
 # ${AGENT_NAME}.world: Creates the world file that the mobile simulator will use
 ${AGENT_NAME}.world: world.info
+	python3 -m rosie.tools.mapmaker world.info --map --agent-name formulations
+	python3 -m rosie.tools.mapmaker world.info --internal --agent-name formulations
 	python3 -m rosie.tools.mapmaker world.info --world
 	mv $(MOBILE_SIM_HOME)/worlds/world.world ${AGENT_NAME}.world
 

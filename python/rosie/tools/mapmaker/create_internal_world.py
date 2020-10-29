@@ -21,17 +21,14 @@ def create_internal_world(world_info, fout):
     fout.write("        ^objects <objs>)\n")
     fout.write("\n")
 
-    i = 0
-
     # Write the list of objects
     for obj in world_info.objects:
         if not hasattr(obj, 'preds'):
             continue
-        i += 1
-        obj_id = "<obj" + str(i) + ">"
-        preds_id = "<obj" + str(i) + "-preds>"
+        obj_id = "<obj" + str(obj.obj_id) + ">"
+        preds_id = "<obj" + str(obj.obj_id) + "-preds>"
 
-        preds = dict( i for i in obj.preds.items() if i[1] is not None)
+        preds = dict( i for i in obj.preds.items() if i[1] is not None and i[0] != "temp_id")
 
         # Determine the object's location
         if preds['category'] == 'door1':
@@ -46,9 +43,12 @@ def create_internal_world(world_info, fout):
         
 
         fout.write("   (<objs> ^object {:s})\n".format(obj_id))
-        fout.write("   ({:s} ^handle {:s} ^perc-id {:d} ^waypoint {:s} ^predicates {:s})\n".format(obj_id, obj.handle, i, obj_wp, preds_id))
+        fout.write("   ({:s} ^handle {:s} ^perc-id {:d} ^waypoint {:s} ^predicates {:s})\n".format(obj_id, obj.handle, obj.obj_id, obj_wp, preds_id))
         fout.write("   ({:s} {:s})\n".format(preds_id, " ".join( "^{:s} {:s}".format(cat, pred) for cat, pred in preds.items() )))
-        
+
+        if hasattr(obj, 'write_extra_soar_info'):
+            obj.write_extra_soar_info(fout, world_info)
+
         fout.write("\n")
     # End of writing objects
 
