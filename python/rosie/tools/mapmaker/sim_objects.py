@@ -157,7 +157,7 @@ class Counter(SimObject):
 class Sink(SimObject):
     cat = "sink1"
     rgb = [ 150, 150, 150 ]
-    def_props = ('openbox', 'receptacle')
+    def_props = ('openbox', 'receptacle', 'drain')
 
 class Garbage(SimObject):
     cat = "garbage1"
