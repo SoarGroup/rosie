@@ -13,8 +13,7 @@ run_evaluation: agent/rosie.${AGENT_NAME}.config
 	make run_rosie NUM=${NUM}
 
 run_mobile_sim: ${AGENT_NAME}.world
-	java soargroup.mobilesim.MobileGUI -w ${AGENT_NAME}.world 
-#> mobile_sim_output.txt &
+	java soargroup.mobilesim.MobileGUI -w ${AGENT_NAME}.world > mobile_sim_output.txt &
 
 run_rosie: agent/rosie.${AGENT_NAME}.config
 	python3 -m rosie.evaluation.${AGENT_NAME} ${NUM} > rosie_output.txt &

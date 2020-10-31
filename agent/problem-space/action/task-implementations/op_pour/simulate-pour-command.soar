@@ -1,0 +1,59 @@
+### For the internal environment, simulate the use command on the top-state world ###
+
+sp {op_use1*propose*simulate-use-command
+   (state <s> ^name op_use1
+              ^problem-space.execution-type external
+              ^agent-params.domain internal
+              ^current-task-segment <seg>)
+   (<seg> ^use-command <cmd>)
+   (<cmd> -^status success)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name simulate-use-command
+        ^item-type command-operator
+        ^command <cmd>)
+}
+
+sp {op_use1*apply*simulate-use-command*mark*command*success
+   (state <s> ^name op_use1
+              ^operator <o>)
+   (<o> ^name simulate-use-command
+        ^command <cmd>)
+-->
+   (<cmd> ^status success)
+}
+
+# Pour dispenser - fill target with the contents
+sp {op_use1*apply*simulate-use-command*dispenser*fillable
+   (state <s> ^name op_use1
+              ^operator <o>
+             -^agent-params.simulate-perception true)
+   (<o> ^name simulate-use-command
+        ^command <cmd>)
+   (<cmd> ^object.predicates <opreds>
+          ^target.predicates <preds>)
+   (<opreds> ^affordance1 dispenser1
+             ^contents1 { <con> <> empty1 })
+   (<preds> ^affordance1 fillable1
+            ^contents1 empty1)
+-->
+   (<preds> ^contents1 empty1 -
+            ^contents1 <con>)
+}
+
+# Pour into drain - empty target
+sp {op_use1*apply*simulate-use-command*empty*fillable*drain
+   (state <s> ^name op_use1
+              ^operator <o>
+             -^agent-params.simulate-perception true)
+   (<o> ^name simulate-use-command
+        ^command <cmd>)
+   (<cmd> ^object.predicates <preds>
+          ^target.predicates.affordance1 drain1)
+   (<preds> ^affordance1 fillable1
+            ^contents1 { <liq> <> empty1 })
+-->
+   (<preds> ^contents1 <liq> -
+            ^contents1 empty1)
+}
+

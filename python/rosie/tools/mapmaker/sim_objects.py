@@ -133,8 +133,16 @@ class Person(SimObject):
         return self
 
 class Mug(SimObject):
-    sim_class = "soargroup.mobilesim.sim.SimMug"
+    sim_class = "soargroup.mobilesim.sim.SimCup"
     cat = "mug1"
+    def read_info(self, reader, scale=1.0):
+        super().read_info(reader, scale)
+        self.preds["contents1"] = "empty1"
+        return self
+
+class Cup(SimObject):
+    sim_class = "soargroup.mobilesim.sim.SimCup"
+    cat = "cup1"
     def read_info(self, reader, scale=1.0):
         super().read_info(reader, scale)
         self.preds["contents1"] = "empty1"
