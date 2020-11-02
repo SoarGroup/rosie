@@ -21,12 +21,6 @@ sp {top-state*elaborate*agent-params*custom
 #       ^print-interaction-stack true
 
 #       ^all-objects-reachable true
-
-   # KEY SETTING FOR THIS EVALUATION
-   # If true, strict version of innate task proposals will be used
-   #   where all the conditions will be present (should be no search inside a task)
-#       ^strict-preconditions true
-#       ^extra-action-models true
    )
 }
 
@@ -42,6 +36,21 @@ sp {top-state*elaborate*agent-params*custom
 
 #explain all on
 
+### Override the default search depth
+sp {search-for-next-subtask*elaborate*search-phase-info
+   (state <s> ^name search-for-next-subtask)
+-->
+   (<s> ^number-phases 2
+        ^search-phase-info <p1> <p2>)
+   # First phase - only consider subtasks with all objects in common with the current task
+   (<p1> ^num 1 ^max-depth 8 ^require-all-objects-match 1 ^reject-perc-ops 3)
+
+   # Second phase - level 1: any subtasks, level 2: subtasks with 1+ matching objects, 
+   #                level 3-4: only subtasks matching all objects
+   (<p2> ^num 2 ^max-depth 8 ^require-matching-object 2 ^require-all-objects-match 3 ^reject-perc-ops 3)
+}
+
+### Default relations
 sp {top-state*perception-monitor*predicate-monitor*elaborate*default*predicates*internal
    (state <s> ^superstate nil
               ^agent-params.domain internal
@@ -68,6 +77,7 @@ sp {top-state*perception-monitor*predicate-monitor*elaborate*default*predicates*
    (<preds> ^predicate.handle heard2)
 }
 
+
 #sp {DEBUG*monitor*control-law*status
 #   (state <s> ^superstate nil
 #              ^io.output-link.do-control-law <law>)
@@ -77,19 +87,8 @@ sp {top-state*perception-monitor*predicate-monitor*elaborate*default*predicates*
 #   (write (crlf) |STATUS OF CONTROL LAW | <name> | is | <status> (crlf))
 #}
 
-sp {top-state*prefer*interaction*new-segment-info*others*over*process-sentence
-   (state <s> ^superstate nil
-              ^operator <o1> +
-              ^operator <o2> +)
-   (<o1> ^name interaction
-         ^change-type new-segment-info
-         ^change-info.purpose.type <> process-sentence)
-   (<o2> ^name interaction
-         ^change-type new-segment-info
-         ^change-info.purpose.type process-sentence)
--->
-   (<s> ^operator <o1> > <o2>)
-}
+
+### PRINT EVENT INFO
 
 sp {complete-push-task-segment*report*time*info
    (state <s> ^name push-task-segment

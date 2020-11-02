@@ -8,13 +8,13 @@ agent: agent/rosie.rand-move.config
 
 run_evaluation: agent/rosie.rand-move.config
 	make run_mobile_sim &
-	make run_rosie &
+	make run_rosie AGENT_TYPE=${AGENT_TYPE} &
 
 run_mobile_sim: rand-move.world
 	java soargroup.mobilesim.MobileGUI -w rand-move.world > mobile_sim_output.txt
 
 run_rosie: agent/rosie.rand-move.config
-	python3 -m rosie.evaluation.rand-move #> rosie_output.txt
+	python3 -m rosie.evaluation.rand-move ${AGENT_TYPE} > rosie_output.txt
 
 # agent/rosie.rand-move.config: Configures the rosie soar agent that will be sourced to run
 agent/rosie.rand-move.config: agent.config smem-config.txt extra-smem-adds.soar extra-soar-rules.soar rand-move.world rand-move.script

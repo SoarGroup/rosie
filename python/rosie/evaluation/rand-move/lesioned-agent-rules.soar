@@ -1,0 +1,425 @@
+##### Extra rules for the lesioned agent variation
+
+### First: All preconditions are more strict,
+# So they are only proposed if the corresponding command would immediately work
+
+### OPEN
+sp {problem-space*action*propose-subtasks*propose*op_open1
+   (state <s> ^problem-space <ps>
+              ^world <w>)
+   (<ps> ^name action
+         ^propose-subtasks true)
+   (<w> ^robot.arm.holding-object false
+        ^objects.object <obj>)
+   (<obj> ^predicates <preds>)
+   (<preds> ^affordance1 openable1
+            ^is-open1 not-open1
+            ^is-visible1 visible1
+            ^is-reachable1 reachable1)
+-->
+   (<s> ^operator <op> +)
+   (<op> ^name op_open1 
+         ^item-type task-operator
+         ^task-handle open1
+         ^arg1 <arg1>)
+   (<arg1> ^arg-type object
+           ^id <obj>)
+}
+
+# CLOSE
+sp {problem-space*action*propose-subtasks*propose*op_close1
+   (state <s> ^problem-space <ps>
+              ^world <w>)
+   (<ps> ^name action
+         ^propose-subtasks true)
+   (<w> ^robot.arm.holding-object false
+        ^objects.object <obj>)
+   (<obj> ^predicates <preds>)
+   (<preds> ^affordance1 openable1
+            ^is-open1 open2
+            ^is-visible1 visible1
+            ^is-reachable1 reachable1)
+-->
+   (<s> ^operator <op> +)
+   (<op> ^name op_close1 
+         ^item-type task-operator
+         ^task-handle close1
+         ^arg1 <arg1>)
+   (<arg1> ^arg-type object
+           ^id <obj>)
+}
+
+### TURN ON
+sp {problem-space*action*propose-subtasks*propose*op_turn-on1
+   (state <s> ^problem-space <ps>
+              ^world <w>)
+   (<ps> ^name action
+         ^propose-subtasks true)
+   (<w> ^robot.arm.holding-object false
+        ^objects.object <obj>)
+   (<obj> ^predicates <preds>)
+   (<preds> ^affordance1 activatable1
+            ^is-activated1 not-activated1
+            ^is-visible1 visible1
+            ^is-reachable1 reachable1)
+-->
+   (<s> ^operator <op> +)
+   (<op> ^name op_turn-on1 
+         ^item-type task-operator
+         ^task-handle turn-on1
+         ^arg1 <arg1>)
+   (<arg1> ^arg-type object
+           ^id <obj>)
+}
+
+### TURN OFF
+sp {problem-space*action*propose-subtasks*propose*op_turn-off1
+   (state <s> ^problem-space <ps>
+              ^world <w>)
+   (<ps> ^name action
+         ^propose-subtasks true)
+   (<w> ^robot.arm.holding-object false
+        ^objects.object <obj>)
+   (<obj> ^predicates <preds>)
+   (<preds> ^affordance1 activatable1
+            ^is-activated1 activated1
+            ^is-visible1 visible1
+            ^is-reachable1 reachable1)
+-->
+   (<s> ^operator <op> +)
+   (<op> ^name op_turn-off1 
+         ^item-type task-operator
+         ^task-handle turn-off1
+         ^arg1 <arg1>)
+   (<arg1> ^arg-type object
+           ^id <obj>)
+}
+
+### PICK UP
+
+# Propose pick-up for an object not inside a receptacle
+sp {problem-space*action*propose*op_pick-up1
+   (state <s> ^problem-space <ps>
+              ^world <w>)
+   (<ps> ^name action
+         ^propose-subtasks true)
+   (<w> ^robot.arm.holding-object false
+        ^objects.object <obj>
+        ^predicates.predicate <in-pred>)
+   (<obj> ^predicates <preds>)
+   (<preds> ^affordance1 grabbable1
+            ^is-grabbed1 not-grabbed1
+            ^is-visible1 visible1
+            ^is-reachable1 reachable1)
+   (<in-pred> ^handle in1)
+   -{(<in-pred> ^instance <i>)
+     (<i> ^1 <obj> ^{2}.predicates.affordance1 receptacle1)}
+-->
+   (<s> ^operator <op> +)
+   (<op> ^name op_pick-up1 
+         ^item-type task-operator
+         ^task-handle pick-up1
+         ^arg1 <arg1>)
+   (<arg1> ^arg-type object
+           ^id <obj>)
+}
+
+# Propose pick-up for an object in a receptacle that doesn't have a door
+sp {problem-space*action*propose*op_pick-up1*inside*receptacle
+   (state <s> ^problem-space <ps>
+              ^world <w>)
+   (<ps> ^name action
+         ^propose-subtasks true)
+   (<w> ^robot.arm.holding-object false
+        ^objects <objs>
+        ^predicates.predicate <in-pred>)
+   (<objs> ^object <obj> <rec>)
+   (<obj> ^predicates <preds>)
+   (<preds> ^affordance1 grabbable1
+            ^is-grabbed1 not-grabbed1
+            ^is-visible1 visible1
+            ^is-reachable1 reachable1)
+   (<rec> ^predicates <rec-preds>)
+   (<rec-preds> ^affordance1 receptacle1
+                ^affordance1 always-open1)
+   (<in-pred> ^handle in1
+              ^instance <i>)
+   (<i> ^1 <obj> ^2 <rec>)
+-->
+   (<s> ^operator <op> +)
+   (<op> ^name op_pick-up1 
+         ^item-type task-operator
+         ^task-handle pick-up1
+         ^arg1 <arg1>)
+   (<arg1> ^arg-type object
+           ^id <obj>)
+}
+
+# Propose pick-up for an object inside an open receptacle
+sp {problem-space*action*propose*op_pick-up1*inside*open*receptacle
+   (state <s> ^problem-space <ps>
+              ^world <w>)
+   (<ps> ^name action
+         ^propose-subtasks true)
+   (<w> ^robot.arm.holding-object false
+        ^objects <objs>
+        ^predicates.predicate <in-pred>)
+   (<objs> ^object <obj> <rec>)
+   (<obj> ^predicates <preds>)
+   (<preds> ^affordance1 grabbable1
+            ^is-grabbed1 not-grabbed1
+            ^is-visible1 visible1
+            ^is-reachable1 reachable1)
+   (<rec> ^predicates <rec-preds>)
+   (<rec-preds> ^affordance1 openable1
+                ^is-open1 open2)
+   (<in-pred> ^handle in1
+              ^instance <i>)
+   (<i> ^1 <obj> ^2 <rec>)
+-->
+   (<s> ^operator <op> +)
+   (<op> ^name op_pick-up1 
+         ^item-type task-operator
+         ^task-handle pick-up1
+         ^arg1 <arg1>)
+   (<arg1> ^arg-type object
+           ^id <obj>)
+}
+
+### PUT DOWN
+
+# put down on the ground
+sp {problem-space*action*propose*op_put-down1*on*ground
+   (state <s> ^problem-space <ps>
+              ^world <w>)
+   (<w> ^objects.object <obj>)
+   (<ps> ^name action
+         ^propose-subtasks true)
+   (<obj> ^predicates.is-grabbed1 grabbed1)
+-->
+   (<s> ^operator <op> +)
+   (<op> ^name op_put-down1
+         ^item-type task-operator
+         ^task-handle put-down1
+         ^arg1 <arg1>)
+   (<arg1> ^arg-type object
+           ^id <obj>)
+}
+
+# put-down on surface (e.g. table, countertop)
+sp {problem-space*action*propose*op_put-down1*on1*surface1
+   (state <s> ^problem-space <ps>
+              ^world.objects.object <obj>
+              ^world.objects.object { <obj2> <> <obj> })
+   (<ps> ^name action
+         ^propose-subtasks true)
+   (<obj> ^predicates.is-grabbed1 grabbed1)
+   (<obj2> ^predicates <obj-preds>)
+   (<obj-preds> ^affordance1 surface1
+                ^is-visible1 visible1
+                ^is-reachable1 reachable1)
+-->
+   (<s> ^operator <op> +)
+   (<op> ^name op_put-down1
+         ^item-type task-operator
+         ^task-handle put-down1
+         ^arg1 <arg1>
+         ^arg2 <arg2>)
+   (<arg1> ^arg-type object
+           ^id <obj>)
+   (<arg2> ^arg-type partial-predicate
+           ^handle on1
+           ^2 <obj2>)
+}
+
+# put-down inside receptacle without a door (e.g. sink)
+sp {problem-space*action*propose*op_put-down1*in1*receptacle
+   (state <s> ^problem-space <ps>
+              ^world.objects.object <obj>
+              ^world.objects.object { <obj2> <> <obj> })
+   (<ps> ^name action
+         ^propose-subtasks true)
+   (<obj> ^predicates.is-grabbed1 grabbed1)
+   (<obj2> ^predicates <obj2-preds>)
+   (<obj2-preds> ^affordance1 receptacle1
+                 ^affordance1 always-open1
+                 ^is-visible1 visible1
+                 ^is-reachable1 reachable1)
+-->
+   (<s> ^operator <op> +)
+   (<op> ^name op_put-down1
+         ^item-type task-operator
+         ^task-handle put-down1
+         ^arg1 <arg1>
+         ^arg2 <arg2>)
+   (<arg1> ^arg-type object
+           ^id <obj>)
+   (<arg2> ^arg-type partial-predicate
+           ^handle in1
+           ^2 <obj2>)
+}
+
+# Put down inside a receptacle that can be closed (but is currently open)
+sp {problem-space*action*propose*op_put-down1*in1*open*openable*receptacle
+   (state <s> ^problem-space <ps>
+              ^world.objects.object <obj>
+              ^world.objects.object { <obj2> <> <obj> })
+   (<ps> ^name action
+         ^propose-subtasks true)
+   (<obj> ^predicates.is-grabbed1 grabbed1)
+   (<obj2> ^predicates <obj2-preds>)
+   (<obj2-preds> ^affordance1 openable1
+                 ^affordance1 receptacle1
+                 ^is-open1 open2
+                 ^is-visible1 visible1
+                 ^is-reachable1 reachable1)
+-->
+   (<s> ^operator <op> +)
+   (<op> ^name op_put-down1
+         ^item-type task-operator
+         ^task-handle put-down1
+         ^arg1 <arg1>
+         ^arg2 <arg2>)
+   (<arg1> ^arg-type object
+           ^id <obj>)
+   (<arg2> ^arg-type partial-predicate
+           ^handle in1
+           ^2 <obj2>)
+}
+
+### propose put-down on a block
+sp {problem-space*action*propose*op_put-down1*on*block
+   (state <s> ^problem-space <ps>
+              ^world.objects <objs>)
+   (<ps> ^name action
+         ^propose-subtasks true)
+   (<objs> ^object <obj1> { <obj2> <> <obj1> })
+   (<obj1> ^predicates.is-grabbed1 grabbed1)
+   (<obj2> ^predicates <obj2-preds>)
+   (<obj2-preds> ^category block
+                 ^is-visible1 visible1
+                 ^is-reachable1 reachable1)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name op_put-down1
+        ^item-type task-operator
+        ^task-handle put-down1
+        ^arg1 <arg1>
+        ^arg2 <arg2>)
+   (<arg1> ^arg-type object
+           ^id <obj1>)
+   (<arg2> ^arg-type partial-predicate
+           ^handle on1
+           ^2 <obj2>)
+}
+
+
+### Second: extra action models are needed to prevent search inside of innate tasks
+
+### VIEW: 
+
+# Change other objects to not-visible
+sp {problem-space*action*internal*apply*op_view1*make*others*not-visible
+   (state <s> ^problem-space.name action
+              ^problem-space.execution-type internal
+              ^agent-params.extra-action-models true
+              ^operator <op>
+              ^world.objects.object <obj>)
+   (<op> ^name op_view1
+         ^arg1.id { <target> <> <obj> })
+   (<obj> ^predicates <preds>)
+   (<preds> ^category << object person >>
+           -^affordance1 grabbable1
+            ^is-visible1 visible1)
+-->
+   (<preds> ^is-visible1 not-visible1
+            ^is-visible1 visible1 -)
+}
+
+# Only make a grabbable object not-visible if it is not currently grabbed
+sp {problem-space*action*internal*apply*op_view1*make*grabbable*others*not-visible
+   (state <s> ^problem-space.name action
+              ^problem-space.execution-type internal
+              ^agent-params.extra-action-models true
+              ^operator <op>
+              ^world.objects.object <obj>)
+   (<op> ^name op_view1
+         ^arg1.id { <target> <> <obj> })
+   (<obj> ^predicates <preds>)
+   (<preds> ^is-visible1 visible1
+            ^affordance1 grabbable1
+            ^is-grabbed1 not-grabbed1)
+-->
+   (<preds> ^is-visible1 not-visible1
+            ^is-visible1 visible1 -)
+}
+
+#### Change other objects to not reachable
+
+sp {problem-space*action*internal*apply*op_view1*make*non-grabbable*not-reachable
+   (state <s> ^problem-space.name action
+              ^problem-space.execution-type internal
+              ^agent-params.extra-action-models true
+              ^operator <op>
+              ^world.objects.object <obj>)
+   (<op> ^name op_view1
+         ^arg1.id { <target> <> <obj> })
+   (<obj> ^predicates <preds>)
+   (<preds> ^is-reachable1 reachable1
+           -^affordance1 grabbable1)
+-->
+   (<preds> ^is-reachable1 not-reachable1
+            ^is-reachable1 reachable1 -)
+}
+
+sp {problem-space*action*internal*apply*op_view1*make*grabbable*not-reachable
+   (state <s> ^problem-space.name action
+              ^problem-space.execution-type internal
+              ^agent-params.extra-action-models true
+              ^operator <op>
+              ^world.objects.object <obj>)
+   (<op> ^name op_view1
+         ^arg1.id { <target> <> <obj> })
+   (<obj> ^predicates <preds>)
+   (<preds> ^is-reachable1 reachable1
+            ^affordance1 grabbable1
+           -^is-grabbed1 grabbed1)
+-->
+   (<preds> ^is-reachable1 not-reachable1
+            ^is-reachable1 reachable1 -)
+}
+
+### APPROACH
+
+sp {problem-space*action*internal*apply*op_approach1*make*non-grabbable*not-reachable
+   (state <s> ^problem-space.name action
+              ^problem-space.execution-type internal
+              ^agent-params.extra-action-models true
+              ^operator <op>
+              ^world.objects.object <obj>)
+   (<op> ^name op_approach1
+         ^arg1.id { <target> <> <obj> })
+   (<obj> ^predicates <preds>)
+   (<preds> ^is-reachable1 reachable1
+           -^affordance1 grabbable1)
+-->
+   (<preds> ^is-reachable1 not-reachable1
+            ^is-reachable1 reachable1 -)
+}
+
+sp {problem-space*action*internal*apply*op_approach1*make*grabbable*not-reachable
+   (state <s> ^problem-space.name action
+              ^problem-space.execution-type internal
+              ^agent-params.extra-action-models true
+              ^operator <op>
+              ^world.objects.object <obj>)
+   (<op> ^name op_approach1
+         ^arg1.id { <target> <> <obj> })
+   (<obj> ^predicates <preds>)
+   (<preds> ^is-reachable1 reachable1
+            ^affordance1 grabbable1
+           -^is-grabbed1 grabbed1)
+-->
+   (<preds> ^is-reachable1 not-reachable1
+            ^is-reachable1 reachable1 -)
+}

@@ -18,6 +18,8 @@ agent_file = rosie_home + "/python/rosie/evaluation/rand-move/agent/rosie.rand-m
 
 root = Tk()
 eval_gui = EvaluationGUI(agent_file, master=root)
+if "lesioned" in sys.argv:
+    eval_gui.agent.execute_command("source lesioned-agent-rules.soar", print_res=True)
 root.protocol("WM_DELETE_WINDOW", eval_gui.on_exit)
 root.mainloop()
 
