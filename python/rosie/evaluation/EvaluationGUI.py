@@ -44,6 +44,7 @@ class EvaluationGUI(Frame):
         self.script_scrollbar.config(command=self.script_list.yview)
         self.script_list.grid(row=1, column=2, columnspan=2, sticky=N+S+E+W)
         self.script_scrollbar.pack(side=RIGHT, fill=Y)
+        self.script_list.bind('<Double-Button-1>', lambda ev: self.on_script_double_click(ev))
 
         # Row 2: Message Entry (Col 0-2) and Send Button (Col 3)
         self.chat_entry = Entry(self, font=("Times", "16"))
@@ -88,6 +89,9 @@ class EvaluationGUI(Frame):
 
     def on_submit_click(self):
         message = self.chat_entry.get().strip()
+        self.send_message_to_rosie(message)
+
+    def send_message_to_rosie(self, message):
         if len(message) > 0:
             self.append_message(message)
             if message.startswith("!CMD"):
@@ -111,6 +115,11 @@ class EvaluationGUI(Frame):
         self.messages_list.delete(0, END)
         
         self.init_soar_agent(self.rosie_config_file)
+
+    def on_script_double_click(self, event):
+        index = self.script_list.nearest(event.y)
+        message = self.script_list.get(index)
+        self.send_message_to_rosie(message)
 
     def scroll_history(self, delta):
         if self.history_index == 0 and delta == -1:
