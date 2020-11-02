@@ -53,18 +53,50 @@ sp {top-state*perception-monitor*predicate-monitor*elaborate*default*predicates*
    (<preds> ^predicate.handle heard2)
 }
 
-sp {top-state*prefer*interaction*new-segment-info*others*over*process-sentence
-   (state <s> ^superstate nil
-              ^operator <o1> +
-              ^operator <o2> +)
-   (<o1> ^name interaction
-         ^change-type new-segment-info
-         ^change-info.purpose.type <> process-sentence)
-   (<o2> ^name interaction
-         ^change-type new-segment-info
-         ^change-info.purpose.type process-sentence)
+
+
+### Rules for printing events
+sp {complete-push-task-segment*report*time*info
+   (state <s> ^name push-task-segment
+              ^operator.name complete-push-task-segment
+              ^segment-to-push.task-operator.task-handle <task-h>
+              ^io.input-link.time <t>)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
 -->
-   (<s> ^operator <o1> > <o2>)
+   (write |$START-TASK$ | <task-h> | | <steps> | | <ms> (crlf))
 }
 
+sp {complete-pop-task-segment*report*time*info
+   (state <s> ^name pop-task-segment
+              ^operator.name complete-pop-task-segment
+              ^segment-to-pop.task-operator.task-handle <task-h>
+              ^io.input-link.time <t>)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write |$END-TASK$ | <task-h> | | <steps> | | <ms> (crlf))
+}
 
+sp {search-for-next-subtask*start*report*time*info
+   (state <s> ^operator.name search-for-next-subtask
+              ^superstate.task-operator.task-handle <task-h>
+              ^io.input-link.time <t>
+             -^reported-time)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write |$BEGIN-SEARCH$ | <task-h> | | <steps> | | <ms> (crlf))
+   (<s> ^reported-time true)
+}
+
+sp {search-for-next-subtask*finish*report*time*info
+   (state <s> ^name search-for-next-subtask
+              ^superstate.superstate.task-operator.task-handle <task-h>
+              ^operator.name << return-successful-operator initiate-interaction >>
+              ^io.input-link.time <t>)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write |$END-SEARCH$ | <task-h> | | <steps> | | <ms> (crlf))
+}
