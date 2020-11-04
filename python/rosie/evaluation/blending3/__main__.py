@@ -15,7 +15,8 @@ else:
     print("ERROR: Requires ROSIE_HOME environment variable set")
     sys.exit(0)
 
-agent_file = rosie_home + "/python/rosie/evaluation/blending2/agent/rosie.blending2.config"
+agent_name = "blending3"
+agent_file = rosie_home + "/python/rosie/evaluation/" + agent_name + "/agent/rosie." + agent_name + ".config"
 
 root = Tk()
 eval_gui = EvaluationGUI(agent_file, master=root)

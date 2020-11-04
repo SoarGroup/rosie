@@ -39,7 +39,7 @@ sp {subproblem*execute*elaborate*operator*priority*18
 sp {subproblem*execute*elaborate*operator*priority*16
    (state <s> ^problem-space.subproblem execute
               ^operator <o> +)
-   (<o> ^name << learn-task-goal learn-new-subtask >>)
+   (<o> ^name << learn-task-goal learn-new-subtask create-composite-goal complete-composite-goal >>)
 -->
    (<o> ^priority 16)
 }
@@ -161,7 +161,8 @@ sp {problem-space*action*elaborate*force-state-no-change*if*unlearned*desired
              ^task-operator <task-op>
              ^superstate.operator <task-op>
             -^desired
-            -^current-task-segment.implicit-object)
+            -^current-task-segment.implicit-object
+            -^current-task-segment.learning-composite-goal true)
    (<task-op> ^current-goal <goal-h>)
 -->
    (<s> ^force-state-no-change true)
@@ -182,8 +183,22 @@ sp {subproblem*execute*reject*subtask*proposals*if*desired*satisfied
    (<s> ^operator <o> -)
 }
 
+# If the current goal is to performa certain subtask and it is performed, reject it
+sp {subproblem*execute*reject*subtask*operator*if*performed
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o> +
+              ^task-operator.performed-subtask <sh>
+              ^desired.<pnum> <gp>)
+   (<gp> ^type subtask
+         ^subtask-handle <sh>)
+   (<o> ^item-type task-operator
+        ^subtask-handle <sh>)
+-->
+   (<s> ^operator <o> -)
+}
+
 # If the current goal is to perform a certain subtask, give it a best preference
-sp {subproblem*execute*elaborate*pest-prev-eval*subtask*operator*matches*desired
+sp {subproblem*execute*elaborate*best-pref-eval*subtask*operator*matches*desired
    (state <s> ^problem-space.subproblem execute
               ^operator <o> +
               ^desired.<pnum> <gp>)
@@ -192,12 +207,12 @@ sp {subproblem*execute*elaborate*pest-prev-eval*subtask*operator*matches*desired
    (<o> ^item-type task-operator
         ^subtask-handle <sh>)
 -->
-   (<s> ^operator <o> >
+   (<s> ^operator <o> > =
         ^best-pref-eval <o>)
 }
 
 # If there is a ^prefer-subtask flag on the current-task-segment, give it a best preference
-sp {subproblem*execute*elaborate*pest-prev-eval*subtask*operator*prefer-subtask
+sp {subproblem*execute*elaborate*best-pref-eval*subtask*operator*prefer-subtask
    (state <s> ^problem-space.subproblem execute
               ^operator <o> +
               ^current-task-segment.prefer-subtask <sub-h>)

@@ -51,6 +51,10 @@ class CommandHandler(AgentConnector):
             if self.callback is not None:
                 self.callback("success")
                 self.callback = None
+        # IGNORE
+        #   will ignore what Rosie said
+        elif cmd_name == 'ignore':
+            pass
 
         ### CHANGING PREDICATES
         # SET-STATE <obj-h> <prop-h> <pred-h>

@@ -15,7 +15,8 @@ sp {interpret-message*propose*interpret-action-command
               ^instructor-message <msg>
               -^top-state.dialog-context
               -^new-segment-info
-             -^task-operator <op>)
+             -^task-operator <op>
+             -^interpreted true)
    (<msg> ^message-type command -^action.word-structure.spelling |what's| -^action.word-structure.spelling |whats| -^action.handle load1 -^action.handle load)
 -->
    (<s> ^operator <o> +)
@@ -101,8 +102,10 @@ sp {interpret-message*propose*interpret-ignore-list
 
 sp {interpret-message*apply*interpret-action-command
    (state <s> ^name interpret-message
-              ^instructor-message <msg>
-              ^operator.name interpret-action-command)
+              ^operator <o>
+              ^instructor-message <msg>)
+   (<o> ^name interpret-action-command
+       -^custom-handling true)
    (<msg> ^action <action>)
    (<action> ^handle <task-handle>		
              -^agent-explanation)
@@ -134,4 +137,36 @@ sp {interpret-message*apply*interpret-action-command*pop-segment*existing-task
 -->
    (<s> ^terminate-segment true
         ^pop-current-task true)
+}
+
+#####################################################
+# Special Command: Complete the following tasks
+#####################################################
+
+sp {interpret-message*elaborate*interpret-action-command*custom-handling*complete-following-tasks
+   (state <s> ^name interpret-message
+              ^operator <o> +
+              ^instructor-message <msg>)
+   (<o> ^name interpret-action-command)
+   (<msg> ^action.handle complete1
+          ^arg1.predicates <preds1>)
+   (<preds1> ^category task2
+             ^modifier1 following1)
+-->
+   (<o> ^command-type complete-following-tasks
+        ^custom-handling true)
+}
+
+sp {interpret-message*apply*interpret-action-command*complete-following-tasks
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^instructor-message <msg>
+              ^top-state.task-stack.bottom <bot>)
+   (<o> ^name interpret-action-command
+        ^command-type complete-following-tasks)
+-->
+   (interrupt)
+   (<bot> ^begin-composite-goal true)
+   (<msg> ^interpreted true)
+   (<s> ^interpreted true)
 }
