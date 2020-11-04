@@ -1,6 +1,6 @@
 AGENT_NAME=blending3
 
-all: agent/rosie.${AGENT_NAME}.config
+all: ${AGENT_NAME}.world agent/rosie.${AGENT_NAME}.config
 
 world: ${AGENT_NAME}.world
 
@@ -21,7 +21,8 @@ agent/rosie.${AGENT_NAME}.config: agent.config smem-config.txt extra-smem-adds.s
 
 # ${AGENT_NAME}.world: Creates the world file that the mobile simulator will use
 ${AGENT_NAME}.world: world.info
-	python3 -m rosie.tools.mapmaker world.info --internal --agent-name ${AGENT_NAME}
+	python3 -m rosie.tools.mapmaker world.info --internal --output-dir . --agent-name ${AGENT_NAME}
+	python3 -m rosie.tools.mapmaker world.info --map --output-dir . --agent-name ${AGENT_NAME}
 	python3 -m rosie.tools.mapmaker world.info --world --output-dir . --agent-name ${AGENT_NAME}
 
 clean:
@@ -30,6 +31,8 @@ clean:
 	rm -rf __pycache__
 	rm -f mobile_sim_output.txt
 	rm -f rosie_output.txt
+	rm -f waypoint-map.soar
+	rm -f internal-world.soar
 	rm -f ${AGENT_NAME}.log
 
 
