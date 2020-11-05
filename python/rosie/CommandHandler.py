@@ -2,15 +2,18 @@
 
 These are commands that are not sentences but can modify the simulator/internal world for example """
 import sys
+import time
 
 from pysoarlib import WMInterface, AgentConnector
+
+current_time_ms = lambda: int(round(time.time() * 1000))
 
 class CommandHandler(AgentConnector):
     def __init__(self, agent, print_handler=None):
         AgentConnector.__init__(self, agent, print_handler)
         self.callback = None
         self.command = None
-        self.wait_dcs = -1
+        self.wait_time = 0
 
     def handle_command(self, command, callback=None):
         self.command = command
@@ -20,13 +23,16 @@ class CommandHandler(AgentConnector):
         if self.command is not None:
             self._execute_command()
             self.command = None
+
+        if self.wait_time > 0:
+            if current_time_ms() > self.wait_time:
+                self._evoke_callback("success")
+                self.wait_time = 0
+
+    def _evoke_callback(self, message):
+        if self.callback is not None:
+            self.callback(message)
             self.callback = None
-
-        if self.wait_dcs >= 0:
-            self.wait_dcs -= 1
-            if self.wait_dcs == 0 and self.callback is not None:
-                self.callback("success")
-
 
     def _execute_command(self):
         args = self.command.split()
@@ -40,20 +46,18 @@ class CommandHandler(AgentConnector):
         # STOP
         elif cmd_name == 'stop':
             self.agent.stop()
-        # WAIT <dcs>
-        #   will wait the given number of decision cycles before reporting success
+        # WAIT <secs>
+        #   will wait the given number of seconds before reporting success
         elif cmd_name == 'wait':
-            self.wait_dcs = int(args[1])
+            self.wait_time = current_time_ms() + 1000*int(args[1])
         # CLI arg1 arg2 ...
         #   will execute a soar command (e.g. "CLI p s1 -d 2")
         elif cmd_name == 'cli':
             self.agent.execute_command(' '.join(args[1:]), print_res=True)
-            if self.callback is not None:
-                self.callback("success")
-                self.callback = None
-        # IGNORE
+            self._evoke_callback("success")
+        # IGNORE/SKIP
         #   will ignore what Rosie said
-        elif cmd_name == 'ignore':
+        elif cmd_name == 'ignore' or cmd_name == 'skip':
             pass
 
         ### CHANGING PREDICATES
@@ -84,11 +88,11 @@ class CommandHandler(AgentConnector):
         # TELEPORT <obj-h> <x> <y> <z> <wph>?
         #    Move the given object to the given coordinate (with optional waypoint given)
         elif cmd_name == 'teleport':
-            self._handle_move_command(args[1], float(args[2]), float(args[3]), float(args[4]), args[5] if len(args) > 5 else None)
+            self._handle_teleport_command(args[1], float(args[2]), float(args[3]), float(args[4]), args[5] if len(args) > 5 else None)
 
         ### COMMAND NOT RECOGNIZED
-        elif self.callback is not None:
-            self.callback("failure")
+        else:
+            self._evoke_callback("failure")
 
     def _handle_set_pred_command(self, obj_id, prop_handle, pred_handle):
         pass
