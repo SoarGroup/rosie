@@ -9,10 +9,10 @@ class TestAgent(RosieAgent):
         self.outfile = None
         self.filename = self.settings["task_test_output_filename"]
 
-        self.connectors["language"].register_message_callback(lambda s: self.write_output("R: \"" + s + "\""))
+        self.get_connector("language").register_message_callback(lambda s: self.write_output("R: \"" + s + "\""))
 
-        self.connectors["action_stack"] = ActionStackConnector(self)
-        self.connectors["action_stack"].register_task_change_callback(lambda s: self.write_output(s))
+        self.add_connector("action_stack", ActionStackConnector(self))
+        self.get_connector("action_stack").register_task_change_callback(lambda s: self.write_output(s))
 
         self.add_print_event_handler(lambda msg: self.print_callback(msg))
 

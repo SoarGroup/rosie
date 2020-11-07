@@ -1,8 +1,8 @@
 import subprocess
 
 from pysoarlib import SoarAgent, TimeConnector
+from rosie import CommandConnector
 from rosie.language import LanguageConnector, ScriptConnector
-from .InternalCommandHandler import InternalCommandHandler
 
 class RosieAgent(SoarAgent):
     """ Wraps the standard pysoarlib SoarAgent with a few rosie-specific config settings and features
@@ -20,6 +20,12 @@ class RosieAgent(SoarAgent):
             If true, adds a ScriptConnector which will automatically send messages to the agent
             and for internal worlds, handle commands to change the internal world
 
+        custom_language_connector = true|false (default=false)
+            If true, will rely on a subclass to create the language connector
+
+        custom_command_connector = true|false (default=false)
+            If true, will not create a command connector
+
         find_help = manual|script|none|custom (default=manual)
             If use_script_connector = true, this tells it how to handle any find requests that come up
             none   = The answer will always be "Unknown"
@@ -33,22 +39,39 @@ class RosieAgent(SoarAgent):
         SoarAgent.__init__(self, print_handler, config_filename, **kwargs)
 
         # Create a time connector to put timing information on the top state
-        self.add_connector("time", TimeConnector(self, include_ms=True, sim_clock=True, clock_step_ms=5000))
+        self.time_conn = TimeConnector(self, include_ms=True, sim_clock=True, clock_step_ms=5000)
+        self.add_connector("time", self.time_conn)
 
-        # Create a language connector to handle messages to/from Rosie
-        self.add_connector("language", LanguageConnector(self))
+        # Create the default language connector
+        if not self.custom_language_connector:
+            self.add_connector("language", LanguageConnector(self, self.print_handler))
 
-        if self.domain == "internal":
-            self.add_connector("commands", InternalCommandHandler(self, self.print_handler))
+        # Create the default commands connector
+        if not self.custom_command_connector:
+            self.add_connector("commands", CommandConnector(self, self.print_handler))
 
+        # If use_script_connector = True, add a ScriptConnector
+        #   This will automatically run through the messages and send the to the agent
         if self.use_script_connector:
-            script_conn = ScriptConnector(self, self.print_handler)
-            if self.find_help == "none":
-                script_conn.set_find_helper(lambda m: "Unknown.")
-            elif self.find_help == "script":
-                script_conn.set_find_helper(lambda m: script_conn.advance_script())
-            self.add_connector("script", script_conn)
+            self.add_connector("script", ScriptConnector(self, self.find_help, self.print_handler))
 
+
+    def send_message(self, message):
+        if message.startswith("!CMD") and self.has_connector("commands"):
+            self.get_connector("commands").handle_command(message)
+        else:
+            self.get_connector("language").send_message(message)
+
+    def _read_messages(self):
+        self.messages = []
+        try:
+            if self.messages_file != None:
+                with open(self.messages_file, 'r') as f:
+                    lines = ( line.strip() for line in f.readlines() )
+                    # Filter empty lines and commented lines
+                    self.messages = list( line for line in lines if len(line) > 0 and line[0] != '#' )
+        except:
+            pass
 
     def _apply_settings(self):
         SoarAgent._apply_settings(self)
@@ -58,6 +81,11 @@ class RosieAgent(SoarAgent):
         self.reconfig_on_launch = self._parse_bool_setting("reconfig_on_launch", False)
 
         self.messages_file = self.settings.get("messages_file", None)
+        self._read_messages()
+
+        self.custom_language_connector = self._parse_bool_setting("custom_language_connector", False)
+        self.custom_command_connector = self._parse_bool_setting("custom_command_connector", False)
+
         self.use_script_connector = self._parse_bool_setting("use_script_connector", False)
         self.find_help = self.settings.get("find_help", "manual")
 
