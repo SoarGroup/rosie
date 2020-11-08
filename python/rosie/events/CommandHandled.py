@@ -7,5 +7,5 @@ class CommandHandled:
         self.command = command
 
     def __str__(self):
-        return "CommandComplete: " + self.command 
+        return "CommandHandled: " + self.command 
 

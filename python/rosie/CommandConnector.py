@@ -51,6 +51,7 @@ class CommandConnector(AgentConnector):
 
         complete_now = False
 
+
         # START
         if cmd_name == 'start':
             self.agent.start()
@@ -146,5 +147,5 @@ class InternalCommandConnector(CommandConnector):
     def _handle_teleport_command(self, obj_id, x, y, z, wp_handle):
         if wp_handle is None:
             return True
-        return self._handle_move_command(self, obj_id, wp_handle)
+        return self._handle_move_command(obj_id, wp_handle)
 

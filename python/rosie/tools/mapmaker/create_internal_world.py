@@ -43,7 +43,7 @@ def create_internal_world(world_info, fout):
         
 
         fout.write("   (<objs> ^object {:s})\n".format(obj_id))
-        fout.write("   ({:s} ^handle {:s} ^perc-id {:d} ^waypoint {:s} ^predicates {:s})\n".format(obj_id, obj.handle, obj.obj_id, obj_wp, preds_id))
+        fout.write("   ({:s} ^handle {:s} ^perc-id |{:d}| ^waypoint {:s} ^predicates {:s})\n".format(obj_id, obj.handle, obj.obj_id, obj_wp, preds_id))
         fout.write("   ({:s} {:s})\n".format(preds_id, " ".join( "^{:s} {:s}".format(cat, pred) for cat, pred in preds.items() )))
 
         if hasattr(obj, 'write_extra_soar_info'):

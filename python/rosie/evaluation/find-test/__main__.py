@@ -6,7 +6,9 @@ import os
 
 from pysoarlib import AgentConnector
 from rosie import RosieGUI
+from rosie.testing import TestAgent
 from mobilesim.rosie import MobileSimAgent
+
 
 class FindTestConnector(AgentConnector):
     def __init__(self, agent, rosie_gui):
@@ -21,17 +23,18 @@ class FindTestConnector(AgentConnector):
             message = "# Find result for " + obj_handle + " = " + status
             self.rosie_gui.messages_list.add(message)
 
-
-def launch_gui(rosie_home):
-    AGENT_NAME = "find-test"
-
-    agent_file = rosie_home + "/python/rosie/evaluation/" + AGENT_NAME + "/agent/rosie." + AGENT_NAME + ".config"
-
+def launch_gui(rosie_config):
     root = Tk()
-    eval_agent = MobileSimAgent(agent_file)
+    eval_agent = MobileSimAgent(rosie_config)
     eval_gui = RosieGUI(eval_agent, master=root)
     eval_agent.add_connector("find_test", FindTestConnector(eval_agent, eval_gui))
+    eval_agent.execute_command("sp {agent-params*print-perception (state <s> ^superstate nil ^agent-params <p>) --> (<p> ^print-perception true)}")
     eval_gui.run()
+
+def run_test(rosie_config):
+    eval_agent = TestAgent(config_filename=rosie_config, write_to_stdout=True, source_output="summary",
+            task_test_output_filename='test-output.txt', watch_level=0)
+    eval_agent.run_test('correct-output.txt')
 
 def main():
     # Lookup $ROSIE_HOME
@@ -41,7 +44,13 @@ def main():
         print("ERROR: Requires ROSIE_HOME environment variable set")
         return
 
-    launch_gui(rosie_home)
+    AGENT_NAME = "find-test"
+    rosie_config = rosie_home + "/python/rosie/evaluation/" + AGENT_NAME + "/agent/rosie." + AGENT_NAME + ".config"
+
+    if "--test" in sys.argv:
+        run_test(rosie_config)
+    else:
+        launch_gui(rosie_config)
 
 if __name__ == "__main__":
     main()

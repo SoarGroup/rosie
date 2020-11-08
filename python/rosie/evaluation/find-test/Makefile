@@ -14,6 +14,11 @@ run_mobile_sim: ${AGENT_NAME}.world
 run_rosie: waypoint-map.soar internal-world.soar ${ROSIE_CONFIG} 
 	python3 -m rosie.evaluation.${AGENT_NAME} > rosie_output.txt &
 
+run_test: waypoint-map.soar internal-world.soar ${ROSIE_CONFIG} 
+	python3 -m rosie.evaluation.${AGENT_NAME} --test
+	echo "########### DIFF ##########"
+	diff test-output.txt correct-output.txt
+
 
 # agent/rosie.find-test.config: Configures the rosie soar agent that will be sourced to run
 ${ROSIE_CONFIG}: agent.config smem-config.txt extra-smem-adds.soar

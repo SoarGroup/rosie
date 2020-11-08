@@ -23,7 +23,8 @@ class ScriptConnector(AgentConnector):
         if find_help.lower() == "none":
             self.find_request_handler = lambda m: "Unknown."
         elif find_help.lower() == "script":
-            self.find_request_handler = lambda m: self.advance_script()
+            self.find_request_handler = lambda m: self.queue_find_help()
+        self.active_find_request = False
 
     # The given helper method will be called if the agent asks for help
     #    It should be a method taking 1 argument: The find request
@@ -36,6 +37,10 @@ class ScriptConnector(AgentConnector):
 
 
     ################################### INTERNAL METHODS #######################################
+
+    def queue_find_help(self):
+        self.active_find_request = True
+        self.send_next_message = True
 
     def connect(self):
         super().connect()
@@ -58,6 +63,15 @@ class ScriptConnector(AgentConnector):
 
             message = self.script[self.script_index]
             self.script_index += 1
+            if message.startswith('!FIND_HELP'):
+                if self.active_find_request:
+                    message = message[11:]
+                else:
+                    self.send_next_message = True
+                    return
+            else:
+                self.active_find_request = False
+
             self.agent.dispatch_event(ScriptMessageSent(message, self.script_index-1))
             self.agent.send_message(message)
 
