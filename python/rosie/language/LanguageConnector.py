@@ -8,6 +8,7 @@ import sys
 from string import digits
 from pysoarlib import WMInterface, AgentConnector
 from .RosieMessageParser import RosieMessageParser
+from rosie.events import AgentMessageSent, InstructorMessageSent
 
 class Message(WMInterface):
     """ Represents a single sentence that can be added to working memory as a linked list """
@@ -69,8 +70,6 @@ class LanguageConnector(AgentConnector):
         For output - will take a message type and generate a natural language sentence """
     def __init__(self, agent, print_handler=None):
         AgentConnector.__init__(self, agent, print_handler)
-        self.agent_message_callbacks = []
-        self.script_message_callbacks = []
         self.add_output_command("send-message")
         self.add_output_command("scripted-sentence")
 
@@ -79,12 +78,6 @@ class LanguageConnector(AgentConnector):
         self.language_id = None
 
         self.messages_to_remove = set()
-
-    def register_message_callback(self, agent_message_callback):
-        self.agent_message_callbacks.append(agent_message_callback)
-
-    def register_script_callback(self, script_message_callback):
-        self.script_message_callbacks.append(script_message_callback)
 
     def on_init_soar(self):
         if self.current_message != None:
@@ -127,13 +120,11 @@ class LanguageConnector(AgentConnector):
             return
 
         message = RosieMessageParser.parse_message(root_id, message_type)
-        for callback in self.agent_message_callbacks:
-            callback(message)
+        self.agent.dispatch_event(AgentMessageSent(message))
         root_id.CreateStringWME("status", "complete")
 
     def process_scripted_sentence(self, root_id):
         sentence = root_id.GetChildString("sentence")
-        for callback in self.script_message_callbacks:
-            callback(sentence)
+        self.agent.dispatch_event(InstructorMessageSent(sentence))
         root_id.CreateStringWME("handled", "true")
 

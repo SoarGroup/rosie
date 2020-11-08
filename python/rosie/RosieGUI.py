@@ -4,6 +4,7 @@ import tkinter.font
 import sys
 
 from . import RosieAgent
+from rosie.events import AgentMessageSent, ScriptMessageSent, InstructorMessageSent
 
 class RosieGUI(Frame):
     class MessagesList(Listbox):
@@ -103,14 +104,9 @@ class RosieGUI(Frame):
 
     def setup_soar_agent(self):
         """ Put any code that connects with the agent here """
-        self.agent.get_connector('language').register_message_callback(lambda msg: self.messages_list.add(msg))
-        self.agent.get_connector('language').register_script_callback(lambda msg: self.messages_list.add(msg))
-
-        if self.agent.has_connector('script'):
-            # If there is a script connector and it advances to the next message, 
-            #   add the message to the list and select the line in the script list
-            self.get_connector('script').register_script_callback(lambda msg, i: self.messages_list.add(msg))
-            self.get_connector('script').register_script_callback(lambda msg, i: self.script_list.select_line(i))
+        self.agent.add_event_handler(AgentMessageSent, lambda e: self.messages_list.add(e.message))
+        self.agent.add_event_handler(InstructorMessageSent, lambda e: self.messages_list.add(e.message))
+        self.agent.add_event_handler(ScriptMessageSent, lambda e: self.script_list.select_line(e.index))
 
     def run(self):
         self.agent.connect()
@@ -162,7 +158,6 @@ class RosieGUI(Frame):
 
     def send_message_to_rosie(self, message):
         if len(message) > 0:
-            self.messages_list.add(message)
             self.chat_entry.add_to_history(message)
             self.chat_entry.clear()
             self.agent.send_message(message)

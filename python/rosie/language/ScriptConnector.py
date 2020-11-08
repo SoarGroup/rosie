@@ -1,6 +1,7 @@
 """ This is a connector that will read the list of messages and send them one at a time to the agent """
 import sys
 
+from rosie.events import *
 from pysoarlib import WMInterface, AgentConnector
 
 class ScriptConnector(AgentConnector):
@@ -16,7 +17,6 @@ class ScriptConnector(AgentConnector):
 
     def __init__(self, agent, find_help, print_handler=None):
         AgentConnector.__init__(self, agent, print_handler)
-        self.callbacks = []
         self.send_next_message = False
 
         self.find_request_handler = None
@@ -30,12 +30,6 @@ class ScriptConnector(AgentConnector):
     def set_find_helper(self, find_helper):
         self.find_request_handler = find_helper
     
-    # Add a callback method that accepts a single string argument
-    # Whenever the next script message is sent to the agent, 
-    #   the callback should take 2 arguments - the message [str] and index [int]
-    def register_script_callback(self, callback):
-        self.callbacks.append(callback)
-
     # On the next input phase, it will send the next scripted message to the agent
     def advance_script(self):
         self.send_next_message = True
@@ -47,10 +41,9 @@ class ScriptConnector(AgentConnector):
         super().connect()
         self.script = list(self.agent.messages)
         self.script_index = 0
-        self.agent.get_connector("language").register_message_callback(lambda msg: self._agent_message_callback(msg))
 
-        if self.agent.has_connector("commands"):
-            self.agent.get_connector("commands").register_command_callback(lambda res: self.advance_script())
+        self.agent.add_event_handler(AgentMessageSent, lambda e: self._agent_message_handler(e.message))
+        self.agent.add_event_handler(CommandHandled, lambda e: self.advance_script())
 
     def on_init_soar(self):
         self.script_index = 0
@@ -65,12 +58,10 @@ class ScriptConnector(AgentConnector):
 
             message = self.script[self.script_index]
             self.script_index += 1
+            self.agent.dispatch_event(ScriptMessageSent(message, self.script_index-1))
             self.agent.send_message(message)
 
-            for callback in self.callbacks:
-                callback(message, self.script_index-1)
-
-    def _agent_message_callback(self, msg):
+    def _agent_message_handler(self, msg):
         """ If we get a message from the agent, advance the current script """
         if msg.startswith('Ok'):
             # Ignore ok messages

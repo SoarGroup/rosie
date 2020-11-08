@@ -1,7 +1,9 @@
 import subprocess
+import random
 
 from pysoarlib import SoarAgent, TimeConnector
-from rosie import CommandConnector
+from rosie import InternalCommandConnector
+from rosie.events import InstructorMessageSent
 from rosie.language import LanguageConnector, ScriptConnector
 
 class RosieAgent(SoarAgent):
@@ -47,13 +49,44 @@ class RosieAgent(SoarAgent):
             self.add_connector("language", LanguageConnector(self, self.print_handler))
 
         # Create the default commands connector
-        if not self.custom_command_connector:
-            self.add_connector("commands", CommandConnector(self, self.print_handler))
+        if not self.custom_command_connector and self.domain == "internal":
+            self.add_connector("commands", InternalCommandConnector(self, self.print_handler))
 
         # If use_script_connector = True, add a ScriptConnector
         #   This will automatically run through the messages and send the to the agent
         if self.use_script_connector:
             self.add_connector("script", ScriptConnector(self, self.find_help, self.print_handler))
+
+        self.event_handlers = { }
+
+    
+    ### Rosie Event Handlers
+    # Connectors can listen for various events by registering handlers
+
+    def add_event_handler(self, event_class, handler):
+        """ Tells the agent to call the given handler when the given event occurs 
+            Returns an id which can be used to remove the handler later """
+        if event_class not in self.event_handlers:
+            self.event_handlers[event_class] = []
+        # NOTE: These ids are random, so there is a tiny chance that two could get the same id and cause problems
+        rand_id = random.randint(0, 2**31)
+        self.event_handlers[event_class].append((rand_id, handler))
+        return rand_id
+
+    def dispatch_event(self, event):
+        """ Evoke all the added handlers for the given event """
+        handlers = self.event_handlers.get(event.__class__, [])
+        for handler in handlers:
+            handler[1](event)
+
+    def remove_event_handler(self, event_class, handler_id):
+        """ Removes the handler with the given id (returned by add_event_handler) """
+        if event_class not in self.event_handlers:
+            return
+        handler_index = next((i for i, h in enumerate(self.event_handlers[event_class]) if h[0] == handler_id), -1)
+        if handler_index != -1:
+            del self.event_handlers[event_class][handler_index]
+
 
 
     def send_message(self, message):
@@ -61,6 +94,7 @@ class RosieAgent(SoarAgent):
             self.get_connector("commands").handle_command(message)
         else:
             self.get_connector("language").send_message(message)
+        self.dispatch_event(InstructorMessageSent(message))
 
     def _read_messages(self):
         self.messages = []

@@ -3,24 +3,15 @@ import sys
 import traceback
 
 from string import digits
+from rosie.events import TaskStarted, TaskCompleted
 from rosie.tools import task_to_str
 from pysoarlib import AgentConnector
 
 class ActionStackConnector(AgentConnector):
     def __init__(self, agent, print_handler=None):
         AgentConnector.__init__(self, agent, print_handler)
-
         self.add_output_command("started-task")
         self.add_output_command("completed-task")
-
-        self.callbacks = []
-
-    def register_task_change_callback(self, callback):
-        self.callbacks.append(callback)
-
-    def dispatch_task_change(self, change_info):
-        for callback in self.callbacks:
-            callback(change_info)
 
     def on_init_soar(self):
         pass
@@ -37,20 +28,20 @@ class ActionStackConnector(AgentConnector):
     def process_started_task(self, root_id):
         try:
             seg_id = root_id.GetChildId("segment")
-            padding = "  " * (seg_id.GetChildInt("depth") - 1)
+            depth = seg_id.GetChildInt("depth")
             task_id = seg_id.GetChildId("task-operator")
-            self.dispatch_task_change(padding + "> " + task_to_str(task_id))
+            self.agent.dispatch_event(TaskStarted(task_to_str(task_id), depth))
         except:
-            self.print_handler("Error Parsing Started Task")
+            self.print_handler("Error Parsing Starteded Task")
             self.print_handler(traceback.format_exc())
         root_id.CreateStringWME("handled", "true")
 
     def process_completed_task(self, root_id):
         try:
             seg_id = root_id.GetChildId("segment")
-            padding = "  " * (seg_id.GetChildInt("depth") - 1)
+            depth = seg_id.GetChildInt("depth")
             task_id = seg_id.GetChildId("task-operator")
-            self.dispatch_task_change(padding + "< " + task_to_str(task_id))
+            self.agent.dispatch_event(TaskCompleted(task_to_str(task_id), depth))
         except:
             self.print_handler("Error Parsing Completed Task")
             self.print_handler(traceback.format_exc())

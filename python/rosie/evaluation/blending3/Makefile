@@ -9,7 +9,7 @@ run_mobile_sim: ${AGENT_NAME}.world
 	java soargroup.mobilesim.MobileGUI -w ${AGENT_NAME}.world > mobile_sim_output.txt &
 
 run_rosie: agent/rosie.${AGENT_NAME}.config
-	python3 -m rosie.evaluation.${AGENT_NAME} > rosie_output.txt &
+	python3 -m rosie.evaluation.${AGENT_NAME} #> rosie_output.txt &
 
 # agent/rosie.eval-${AGENT_NAME}.config: Configures the rosie soar agent that will be sourced to run
 agent/rosie.${AGENT_NAME}.config: internal-world.soar waypoint-map.soar agent.config smem-config.txt extra-smem-adds.soar extra-soar-rules.soar

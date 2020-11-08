@@ -1,6 +1,7 @@
 import sys
 
 from rosie import RosieAgent, ActionStackConnector
+from rosie.events import *
 from pysoarlib import AgentConnector
 
 class TestAgent(RosieAgent):
@@ -9,10 +10,15 @@ class TestAgent(RosieAgent):
         self.outfile = None
         self.filename = self.settings["task_test_output_filename"]
 
-        self.get_connector("language").register_message_callback(lambda s: self.write_output("R: \"" + s + "\""))
+        self.add_event_handler(AgentMessageSent, lambda e: self.write_output("R: \"" + e.message + "\""))
 
         self.add_connector("action_stack", ActionStackConnector(self))
-        self.get_connector("action_stack").register_task_change_callback(lambda s: self.write_output(s))
+
+        # Listen for start/end of a task and write it to the file
+        self.add_event_handler(TaskStarted, lambda e: 
+                self.write_output("  " * (e.depth-1) + "> " + e.task_desc))
+        self.add_event_handler(TaskCompleted, lambda e: 
+                self.write_output("  " * (e.depth-1) + "< " + e.task_desc))
 
         self.add_print_event_handler(lambda msg: self.print_callback(msg))
 
