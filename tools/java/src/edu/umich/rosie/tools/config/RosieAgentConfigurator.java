@@ -90,7 +90,7 @@ public class RosieAgentConfigurator {
 		agentSourceFile.write("pushd " + config.rosieHome + "/agent\n");
 		agentSourceFile.write("source _agent_source.soar\n\n");
 
-		if(config.domain != null && !(config.domain.equals("internal") && !config.simulate_perception)){
+		if(config.domain == null || (config.domain.equals("internal") && config.simulate_perception)){
 			agentSourceFile.write("svs --enable\n");
 		}
 

@@ -17,7 +17,7 @@ public class RosieConfig {
 	public static final HashSet<String> PROP_NAMES = new HashSet<String>(
 			Arrays.asList("agent-name", "agent-dir", "domain",
 					"parser", "parser-test",
-					"hypothetical", "simulate-perception",
+					"hypothetical", "simulate-perception", "enable-svs",
 					"sentence-source", "sentences-file", "world-file", "smem-config-file", 
 					"custom-soar-file", "custom-smem-file", 
 					"map-info-file", "object-info-file", "internal-world-file", "waypoint-map-file"));
@@ -39,6 +39,9 @@ public class RosieConfig {
 	// simulate-perception << true false >> [OPTIONAL]
 	//    Only relevant for domain=internal, whether more detailed perception is simulated
 	public Boolean simulate_perception;
+
+	// enable-svs << true false >> [DEFAULT=true]
+	public Boolean enable_svs;
 	
 	// parser = << laird lucia >>  [OPTIONAL] - The parser the agent should use
 	//    DEFAULT - laird
@@ -170,6 +173,9 @@ public class RosieConfig {
 		} else {
 			this.simulate_perception = false;
 		}
+
+		// enable-svs
+		this.enable_svs = props.getProperty("enable_svs", "true").toLowerCase().equals("true");
 		
 		// parser
 		if (props.containsKey("parser")){
@@ -326,6 +332,7 @@ public class RosieConfig {
 		sb.append("rosie-home = " + this.rosieHome + "\n");
 		sb.append("domain = " + this.domain + "\n");
 		sb.append("simulate-perception = " + new Boolean(this.simulate_perception).toString() + "\n");
+		sb.append("enable-svs = " + new Boolean(this.enable_svs).toString() + "\n");
 		sb.append("parser = " + this.parser + "\n");
 		sb.append("parser-test = " + this.parser_test + "\n");
 		sb.append("hypothetical = " + this.hypothetical + "\n");
