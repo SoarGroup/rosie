@@ -6,13 +6,9 @@ from tkinter import Tk
 from rosie import RosieGUI
 from mobilesim.rosie import MobileSimAgent
 
-def launch_gui(lesioned, rosie_home):
-    AGENT_NAME = "rand-move"
-
-    agent_file = rosie_home + "/python/rosie/evaluation/" + AGENT_NAME + "/agent/rosie." + AGENT_NAME + ".config"
-
+def launch_gui(rosie_config, lesioned):
     root = Tk()
-    eval_agent = MobileSimAgent(agent_file)
+    eval_agent = MobileSimAgent(rosie_config)
     eval_gui = RosieGUI(eval_agent, master=root)
     if "lesioned" in sys.argv:
         eval_agent.execute_command("source lesioned-agent-rules.soar", print_res=True)
@@ -30,7 +26,10 @@ def main():
         print("ERROR: Requires ROSIE_HOME environment variable set")
         return
 
-    launch_gui(lesioned, rosie_home)
+    AGENT_NAME = "rand-move"
+    rosie_config = rosie_home + "/python/rosie/evaluation/" + AGENT_NAME + "/agent/rosie." + AGENT_NAME + ".config"
+
+    launch_gui(rosie_config, lesioned)
 
 if __name__ == "__main__":
     main()

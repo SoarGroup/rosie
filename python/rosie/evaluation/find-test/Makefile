@@ -48,10 +48,10 @@ waypoint-map.soar: world.info
 #### Clean all files
 
 clean:
-	rm -f ${AGENT_NAME}.world
 	rm -rf agent
 	rm -rf output
 	rm -rf __pycache__
+	rm -f ${AGENT_NAME}.world
 	rm -f waypoint-map.soar
 	rm -f internal-world.soar
 

@@ -9,10 +9,12 @@ all: world rand-move.script ${ROSIE_CONFIG}
 run_evaluation: run_mobile_sim run_rosie
 
 run_mobile_sim: ${AGENT_NAME}.world
-	java soargroup.mobilesim.MobileGUI -w ${AGENT_NAME}.world > mobile_sim_output.txt &
+	mkdir -p output
+	java soargroup.mobilesim.MobileGUI -w ${AGENT_NAME}.world > output/mobile_sim_output.txt &
 
 run_rosie: waypoint-map.soar internal-world.soar rand-move.script ${ROSIE_CONFIG} 
-	python3 -m rosie.evaluation.${AGENT_NAME} ${AGENT_TYPE} > rosie_output.txt &
+	mkdir -p output
+	python3 -m rosie.evaluation.${AGENT_NAME} ${AGENT_TYPE} > output/rosie_output.txt &
 
 
 # agent/rosie.rand-move.config: Configures the rosie soar agent that will be sourced to run
@@ -43,12 +45,10 @@ waypoint-map.soar: world.info
 #### Clean all files
 
 clean:
-	rm -f ${AGENT_NAME}.world
 	rm -rf agent
+	rm -rf output
 	rm -rf __pycache__
-	rm -f rand-move.script
-	rm -f mobile_sim_output.txt
-	rm -f rosie_output.txt
+	rm -f ${AGENT_NAME}.world
 	rm -f waypoint-map.soar
 	rm -f internal-world.soar
 	rm -f ${AGENT_NAME}.log

@@ -5,23 +5,35 @@ import sys
 import os
 
 from rosie import RosieGUI
-from rosie.evaluation import EvaluationAgent
+from rosie.testing import TestAgent
+from mobilesim.rosie import MobileSimAgent
 
-def launch_gui(var_num, rosie_home):
+def launch_gui(rosie_config, var_num):
     """ var_num is an integer from 1-3 representing the agent variation to use """
 
-    agent_file = rosie_home + "/python/rosie/evaluation/blending2/agent/rosie.blending2.config"
-
     root = Tk()
-    var_script = "var" + str(var_num) + "-script.txt"
-    eval_agent = EvaluationAgent(agent_file, messages_file=var_script)
+    var_script = "variations/var" + str(var_num) + "-script.txt"
+    eval_agent = MobileSimAgent(rosie_config, messages_file=var_script)
+    eval_agent.messages.append("!CMD cli pc -f")
     eval_gui = RosieGUI(eval_agent, master=root)
 
     # Source rules specific to the agent variation
-    var_rules = "var" + str(var_num) + "-rules.soar"
+    var_rules = "variations/var" + str(var_num) + "-rules.soar"
     eval_agent.execute_command("source " + var_rules, print_res=True)
     
     eval_gui.run()
+
+def run_test(rosie_config, var_num):
+    var_script = "variations/var" + str(var_num) + "-script.txt"
+    eval_agent = TestAgent(config_filename=rosie_config, write_to_stdout=True, source_output="summary",
+            task_test_output_filename='output/test-output' + str(var_num) + '.txt', watch_level=0, 
+            messages_file=var_script)
+
+    # Source rules specific to the agent variation
+    var_rules = "variations/var" + str(var_num) + "-rules.soar"
+    eval_agent.execute_command("source " + var_rules, print_res=True)
+
+    eval_agent.run_test('correct-output.txt')
 
 def main():
     # 1 argument - the agent variation number (1-3)
@@ -45,7 +57,12 @@ def main():
         print("ERROR: Requires ROSIE_HOME environment variable set")
         return
 
-    launch_gui(var_num, rosie_home)
+    rosie_config = rosie_home + "/python/rosie/evaluation/blending2/agent/rosie.blending2.config"
+
+    if "--test" in sys.argv:
+        run_test(rosie_config, var_num)
+    else:
+        launch_gui(rosie_config, var_num)
 
 if __name__ == "__main__":
     main()
