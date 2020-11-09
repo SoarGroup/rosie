@@ -19,7 +19,7 @@ def launch_gui(rosie_config):
 
 def run_test(rosie_config):
     eval_agent = TestAgent(config_filename=rosie_config, write_to_stdout=True, source_output="summary",
-            task_test_output_filename='output/test-output.txt', watch_level=0)
+            task_test_output_filename='output/test-output.txt', watch_level=0, messages_file="script_internal.txt")
     eval_agent.run_test('correct-output.txt')
 
 def main():
