@@ -91,9 +91,7 @@ public class RosieAgentConfigurator {
 		agentSourceFile.write("source _agent_source.soar\n\n");
 
 		if(config.domain != null && !(config.domain.equals("internal") && !config.simulate_perception)){
-			agentSourceFile.write("# Tries to connect to the svs_viewer if it is running\n");
 			agentSourceFile.write("svs --enable\n");
-			agentSourceFile.write("svs connect_viewer 2000\n\n");
 		}
 
       // Source the proper language comprehension files

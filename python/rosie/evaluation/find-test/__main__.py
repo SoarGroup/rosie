@@ -28,12 +28,13 @@ def launch_gui(rosie_config):
     eval_agent = MobileSimAgent(rosie_config)
     eval_gui = RosieGUI(eval_agent, master=root)
     eval_agent.add_connector("find_test", FindTestConnector(eval_agent, eval_gui))
-    eval_agent.execute_command("sp {agent-params*print-perception (state <s> ^superstate nil ^agent-params <p>) --> (<p> ^print-perception true)}")
     eval_gui.run()
 
 def run_test(rosie_config):
     eval_agent = TestAgent(config_filename=rosie_config, write_to_stdout=True, source_output="summary",
-            task_test_output_filename='test-output.txt', watch_level=0)
+            task_test_output_filename='output/test-output.txt', watch_level=0)
+    eval_agent.add_agent_param("print-perception", "false")
+    eval_agent.add_agent_param("print-parsed-messages", "false")
     eval_agent.run_test('correct-output.txt')
 
 def main():

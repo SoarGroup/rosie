@@ -54,6 +54,7 @@ complete -F _rosie_agents_completion run_rosie
 #   Add -h for help info
 #   Add -l to list all possible tasks
 #   Add -j to use the java testing tool instead of the python default
+#   Add -v to print detailed information about the test
 #   You can specify individual tests instead of running them all, e.g.
 #      run_task_learning_tests test1 - will only run test1
 alias run_task_learning_tests="$ROSIE_HOME/tools/scripts/run_task_learning_tests.sh"

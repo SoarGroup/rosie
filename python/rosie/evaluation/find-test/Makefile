@@ -9,15 +9,18 @@ all: world ${ROSIE_CONFIG}
 run_evaluation: run_mobile_sim run_rosie
 
 run_mobile_sim: ${AGENT_NAME}.world
-	java soargroup.mobilesim.MobileGUI -w ${AGENT_NAME}.world > mobile_sim_output.txt &
+	mkdir -p output
+	java soargroup.mobilesim.MobileGUI -w ${AGENT_NAME}.world > output/mobile_sim_output.txt &
 
 run_rosie: waypoint-map.soar internal-world.soar ${ROSIE_CONFIG} 
-	python3 -m rosie.evaluation.${AGENT_NAME} > rosie_output.txt &
+	mkdir -p output
+	python3 -m rosie.evaluation.${AGENT_NAME} > output/rosie_output.txt &
 
 run_test: waypoint-map.soar internal-world.soar ${ROSIE_CONFIG} 
+	mkdir -p output
 	python3 -m rosie.evaluation.${AGENT_NAME} --test
 	echo "########### DIFF ##########"
-	diff test-output.txt correct-output.txt
+	diff output/test-output.txt correct-output.txt
 
 
 # agent/rosie.find-test.config: Configures the rosie soar agent that will be sourced to run
@@ -47,12 +50,10 @@ waypoint-map.soar: world.info
 clean:
 	rm -f ${AGENT_NAME}.world
 	rm -rf agent
+	rm -rf output
 	rm -rf __pycache__
-	rm -f mobile_sim_output.txt
-	rm -f rosie_output.txt
 	rm -f waypoint-map.soar
 	rm -f internal-world.soar
-	rm -f ${AGENT_NAME}.log
 
 
 
