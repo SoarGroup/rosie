@@ -141,7 +141,6 @@ class RosieAgent(SoarAgent):
         self.reconfig_on_launch = self._parse_bool_setting("reconfig_on_launch", False)
 
         self.messages_file = self.settings.get("messages_file", None)
-        self._read_messages()
 
         self.custom_language_connector = self._parse_bool_setting("custom_language_connector", False)
         self.use_script_connector = self._parse_bool_setting("use_script_connector", False)
@@ -163,8 +162,11 @@ class RosieAgent(SoarAgent):
         if self.source_config is not None and self.reconfig_on_launch:
             # Rerun the configuration tool and re-source the config file
             self.print_handler("RosieAgent: Running RosieAgentConfigurator")
-            subprocess.check_output(['java', 'edu.umich.rosie.tools.config.RosieAgentConfigurator', self.source_config])
+            output = subprocess.check_output(['java', 'edu.umich.rosie.tools.config.RosieAgentConfigurator', self.source_config])
+            #for line in str(output).split('\\n'):
+            #    self.print_handler(str(line))
             self._read_config_file()
+        self._read_messages()
 
         super()._create_soar_agent()
 
