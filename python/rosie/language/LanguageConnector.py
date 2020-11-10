@@ -33,7 +33,7 @@ class Message(WMInterface):
             punct = self.message[-1]
             self.message = self.message[:-1]
 
-        self.message = self.message.replace(',', '')
+        self.message = self.message.replace(',', ' ,')
 
         # If there is a quote in the sentence, adds it as a single unit (not broken into words)
         # (In place of the quote, puts a _XXX_ placeholder)
@@ -56,7 +56,8 @@ class Message(WMInterface):
                 word = quote
                 next_id.CreateStringWME("quoted", "true")
             if ':' in word:
-                next_id.CreateStringWME("is-time", "true")
+                # Special handling for times (assuming HH:MM)
+                next_id.CreateStringWME("clocktime", "true")
                 next_id.CreateIntWME("hour", int(word.split(':')[0]))
                 next_id.CreateIntWME("minute", int(word.split(':')[1]))
 

@@ -18,7 +18,7 @@ sp {task-utils*construct-task-operator*elaborate*construct-task-argument*concept
 sp {task-utils*construct-task-operator*elaborate*construct-task-argument*number
    (state <s> ^name construct-task-operator
               ^command-message <msg>)
-   (<msg> ^<arg-name> <num-arg>
+   (<msg> ^{ <arg-name> <> temporal-clause } <num-arg>
          -^{ <arg-name2> }.property.handle unit)
    (<num-arg> ^number <num>)
 -->
@@ -53,6 +53,15 @@ sp {task-utils*construct-task-operator*elaborate*modifiers
    (<s> ^modifiers <mods>)
 }
 
+sp {task-utils*construct-task-operator*elaborate*has-modifiers*empty*false
+   (state <s> ^name construct-task-operator
+              ^modifiers <mods>)
+   (<mods> ^handle <modh>)
+-->
+   (<mods> ^has-modifiers true)
+}
+
+# copy modifiers from the task operator
 sp {task-utils*construct-task-operator*elaborate*modifiers*from*command-message
    (state <s> ^name construct-task-operator
               ^command-message.modifier.handle { <mod> <> upwards }
@@ -61,6 +70,7 @@ sp {task-utils*construct-task-operator*elaborate*modifiers*from*command-message
    (<mods> ^handle <mod>)
 }
 
+# copy modifiers from the TCN
 sp {task-utils*construct-task-operator*elaborate*modifiers*from*tcn
    (state <s> ^name construct-task-operator
               ^task-concept-network.procedural.modifiers.mod-handle <mod>
@@ -69,48 +79,15 @@ sp {task-utils*construct-task-operator*elaborate*modifiers*from*tcn
    (<mods> ^handle <mod>)
 }
 
-# ENUMERATE: 1-3 modifiers
-
-sp {task-utils*construct-task-operator*elaborate*construct-task-argument*modifiers*1
+sp {task-utils*construct-task-operator*elaborate*construct-task-argument*modifiers
    (state <s> ^name construct-task-operator
               ^modifiers <mods>)
-   (<mods> ^handle <mod1>
-          -^handle { <mod2> <> <mod1> })
+   (<mods> ^has-modifiers true)
 -->
    (<s> ^construct-task-argument <cta>)
    (<cta> ^arg-type modifiers
           ^arg-name modifiers
-          ^source <src>)
-   (<src> ^handle <mod1>)
-}
-
-sp {task-utils*construct-task-operator*elaborate*construct-task-argument*modifiers*2
-   (state <s> ^name construct-task-operator
-              ^modifiers <mods>)
-   (<mods> ^handle <mod1>
-           ^handle { <mod2> > <mod1> }
-          -^handle { <mod3> <> <mod2> <> <mod1> })
--->
-   (<s> ^construct-task-argument <cta>)
-   (<cta> ^arg-type modifiers
-          ^arg-name modifiers
-          ^source <src>)
-   (<src> ^handle <mod1> <mod2>)
-}
-
-sp {task-utils*construct-task-operator*elaborate*construct-task-argument*modifiers*3
-   (state <s> ^name construct-task-operator
-              ^modifiers <mods>)
-   (<mods> ^handle <mod1>
-           ^handle { <mod2> > <mod1> }
-           ^handle { <mod3> > <mod2> }
-          -^handle { <mod4> <> <mod3> <> <mod2> <> <mod1> })
--->
-   (<s> ^construct-task-argument <cta>)
-   (<cta> ^arg-type modifiers
-          ^arg-name modifiers
-          ^source <src>)
-   (<src> ^handle <mod1> <mod2> <mod3>)
+          ^source <mods>)
 }
 
 
@@ -224,8 +201,7 @@ sp {task-utils*construct-task-operator*elaborate*construct-task-argument*partial
               ^command-message <msg>)
    (<msg> ^{ <arg-name> <> predicate <> relation } <arg>)
    (<arg> ^item-type predicate
-         -^{ << until-clause after-clause when-clause >>}
-          ^handle { <handle> <> for1 <> until1 <> when1 <> after1}
+          ^handle <handle>
           ^2 <obj2>)
 -->
    (<s> ^construct-task-argument <cta>)
@@ -237,12 +213,12 @@ sp {task-utils*construct-task-operator*elaborate*construct-task-argument*partial
            ^2 <obj2>)
 }
 
+# If the partial-predicate is called predicate or relation, rename to arg2
 sp {task-utils*construct-task-operator*elaborate*construct-task-argument*partial-predicate*rel*arg2
    (state <s> ^name construct-task-operator
               ^command-message <msg>)
    (<msg> ^{ <src-name> << predicate relation >> } <arg>)
    (<arg> ^item-type predicate
-         -^{ << until-clause after-clause when-clause >>}
           ^handle <handle>
           ^2 <obj2>)
 -->
@@ -292,20 +268,77 @@ sp {task-utils*construct-task-operator*elaborate*construct-task-argument*partial
    (<cta> ^reference-info.2 <ref2>)
 }
 
-#### clauses (until/after/when)
+#################################### temporal-clause #####################################
 
-sp {task-utils*construct-task-operator*elaborate*construct-task-argument*clause*is1*state*predicate
+# Start Clause
+sp {task-utils*construct-task-operator*elaborate*construct-task-argument*start-clause
    (state <s> ^name construct-task-operator
               ^command-message <msg>)
-   (<msg> ^<arg-name>.{ <clause-type> << until-clause after-clause when-clause >> } <clause>)
+   (<msg> ^temporal-predicate.handle << after1 when1 at1 >>
+          ^temporal-clause <clause>)
+-->
+   (<s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type temporal-clause
+          ^arg-name start-clause
+          ^message-clause <clause>)
+}
+
+# End Clause
+sp {task-utils*construct-task-operator*elaborate*construct-task-argument*end-clause
+   (state <s> ^name construct-task-operator
+              ^command-message <msg>)
+   (<msg> ^temporal-predicate.handle << until1 while1 for1 >>
+          ^temporal-clause <clause>)
+-->
+   (<s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type temporal-clause
+          ^arg-name end-clause
+          ^message-clause <clause>)
+}
+
+### Duration Predicate
+sp {task-utils*construct-task-operator*temporal-clause*duration*construct-predicate-set
+   (state <s> ^construct-task-argument <arg>)
+   (<arg> ^arg-type temporal-clause
+          ^message-clause <clause>
+   (<clause> ^number <num>
+             ^unit <unit>)
+-->
+   (<arg> ^source <src>)
+   (<src> ^pred-count 1
+          ^1 <pred1>)
+   (<pred1> ^type duration
+            ^number <num>
+            ^unit <unit>)
+}
+
+### Clocktime Predicate
+sp {task-utils*construct-task-operator*temporal-clause*clocktime*construct-predicate-set
+   (state <s> ^construct-task-argument <arg>)
+   (<arg> ^arg-type temporal-clause
+          ^message-clause <clause>
+   (<clause> ^hour <hour>
+             ^minute <min>)
+-->
+   (<arg> ^source <src>)
+   (<src> ^type start
+          ^pred-count 1
+          ^1 <pred1>)
+   (<pred1> ^type clocktime
+            ^hour <hour>
+            ^minute <min>)
+}
+
+### 1 Unary Predicate
+sp {task-utils*construct-task-argument*temporal-clause*elaborate*predicate-set*unary
+   (state <s> ^construct-task-argument <arg>)
+   (<arg> ^arg-type temporal-clause
+          ^message-clause <clause>
    (<clause> ^action.handle is1
              ^arg1 <obj>
              ^predicate.handle <pred-h>)
 -->
-   (<s> ^construct-task-argument <cta>)
-   (<cta> ^arg-type <clause-type>
-          ^arg-name <clause-type>
-          ^source <src>)
+   (<arg> ^source <src>)
    (<src> ^pred-count 1
           ^1 <pred1>)
    (<pred1> ^type unary
@@ -313,12 +346,12 @@ sp {task-utils*construct-task-operator*elaborate*construct-task-argument*clause*
             ^1 <obj>)
 }
 
-sp {task-utils*construct-task-operator*elaborate*construct-task-argument*clause*2*is*predicates
-   (state <s> ^name construct-task-operator
-              ^command-message <msg>)
-   (<msg> ^<arg-name>.{ <clause-type> << until-clause after-clause when-clause >> } <clause>)
-   (<clause> ^subclause <sub1> 
-             ^subclause { <sub2> > <sub1> })
+### 2 unary predicates
+sp {task-utils*construct-task-argument*temporal-clause*elaborate*predicate-set*2*unary
+   (state <s> ^construct-task-argument <arg>)
+   (<arg> ^arg-type temporal-clause
+          ^message-clause <clause>
+   (<clause> ^subclause <sub1> { <sub2> > <sub1> })
    (<sub1> ^action.handle is1
            ^arg1 <obj1>
            ^predicate.handle <pred1-h>)
@@ -326,10 +359,7 @@ sp {task-utils*construct-task-operator*elaborate*construct-task-argument*clause*
            ^arg1 <obj2>
            ^predicate.handle <pred2-h>)
 -->
-   (<s> ^construct-task-argument <cta>)
-   (<cta> ^arg-type <clause-type>
-          ^arg-name <clause-type>
-          ^source <src>)
+   (<arg> ^source <src>)
    (<src> ^pred-count 2
           ^1 <pred1>
           ^2 <pred2>)
@@ -341,90 +371,8 @@ sp {task-utils*construct-task-operator*elaborate*construct-task-argument*clause*
             ^1 <obj2>)
 }
 
-sp {task-utils*construct-task-operator*elaborate*construct-task-argument*clause*visible
-   (state <s> ^name construct-task-operator
-              ^command-message <msg>)
-   (<msg> ^<arg-name>.{ <clause-type> << until-clause after-clause when-clause >> } <clause>)
-   (<clause> ^action.handle sense1
-             ^agent.handle rosie
-             ^arg1 <obj>)
-   (<obj> -^unit << seconds minutes hours >>)
--->
-   (<s> ^construct-task-argument <cta>)
-   (<cta> ^arg-type <clause-type>
-          ^arg-name <clause-type>
-          ^source <src>)
-   (<src> ^pred-count 1
-          ^1 <pred1>)
-   (<pred1> ^type unary
-            ^handle visible1
-            ^1 <obj>)
-}
+#################################### conditions #####################################
 
-sp {task-utils*construct-task-operator*elaborate*construct-task-argument*until-clause*duration*predicate*for
-   (state <s> ^name construct-task-operator
-              ^command-message <msg>)
-   (<msg> ^<arg-name> <arg>)
-   (<arg> ^item-type predicate
-          ^handle for1
-          ^2 <time>)
-   (<time> ^number <num>
-           ^unit <unit>)
--->
-   (<s> ^construct-task-argument <cta>)
-   (<cta> ^arg-type until-clause
-          ^arg-name until-clause
-          ^source <src>)
-   (<src> ^pred-count 1
-          ^1 <pred1>)
-   (<pred1> ^type duration
-            ^number <num>
-            ^unit <unit>)
-}
-
-sp {task-utils*construct-task-operator*elaborate*construct-task-argument*clause*duration*predicate
-   (state <s> ^name construct-task-operator
-              ^command-message <msg>)
-   (<msg> ^<arg-name>.{ <clause-type> << until-clause after-clause when-clause >> } <clause>)
-   (<clause> ^action.handle sense1
-             ^agent.handle rosie
-             ^arg1 <obj>)
-   (<obj> ^number <num> 
-          ^unit { <unit> << minutes seconds >> })
--->
-   (<s> ^construct-task-argument <cta>)
-   (<cta> ^arg-type <clause-type>
-          ^arg-name <clause-type>
-          ^source <src>)
-   (<src> ^pred-count 1
-          ^1 <pred1>)
-   (<pred1> ^type duration
-            ^number <num>
-            ^unit <unit>)
-}
-
-sp {task-utils*construct-task-operator*elaborate*construct-task-argument*clause*clocktime*predicate
-   (state <s> ^name construct-task-operator
-              ^command-message <msg>)
-   (<msg> ^<arg-name>.{ <clause-type> << until-clause after-clause >> } <clause>)
-   (<clause> ^action.handle sense1
-             ^agent.handle rosie
-             ^arg1 <obj>)
-   (<obj> ^number <num> 
-          ^unit hours)
--->
-   (<s> ^construct-task-argument <cta>)
-   (<cta> ^arg-type <clause-type>
-          ^arg-name <clause-type>
-          ^source <src>)
-   (<src> ^pred-count 1
-          ^1 <pred1>)
-   (<pred1> ^type clocktime
-            ^hour (int (/ <num> 100) )
-            ^minute (mod <num> 100))
-}
-
-#### conditions
 sp {task-utils*construct-task-operator*elaborate*construct-task-argument*condition*1*predicate
    (state <s> ^name construct-task-operator
               ^command-message <msg>)
