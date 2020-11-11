@@ -91,7 +91,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         runEventCallbackIds = new ArrayList<Long>();
 		connectors = new HashMap<Class<?>, AgentConnector>();
         
-        time = new Time();
+        time = new Time(5000);
         
         if(this.config.remoteConnection){
         	int port = Kernel.kDefaultSMLPort;
