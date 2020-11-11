@@ -1,0 +1,58 @@
+# For any non-internal domain, when the agent is running very quickly
+#   it may receive a message that the command is finished 
+#   well before it gets the next perceptual update. 
+# e.g., it sends an open command, but the command finishes before it sees
+#       that the object is actually open
+# This delay can cause issues because the agent will think something went wrong
+#    or the command didn't work. 
+# To fix this, the agent will wait up to 500 ms after doing a command
+#    to make sure perception has updated 
+
+# When an external command is successful, propose wait-after-command to wait
+sp {subproblem*execute*propose*wait-after-command
+   (state <s> ^problem-space.subproblem execute
+              ^agent-params.domain <> internal
+              ^current-task-segment.<cmd-name> <cmd>)
+   (<cmd> ^item-type output-command
+          ^status << success succeeded complete >>
+         -^finished-waiting true)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name wait-after-command
+        ^command <cmd>)
+   (<s> ^waiting-after-command true)
+}
+
+# Set the end time as the current time plus 500 ms 
+sp {subproblem*execute*apply*wait-after-command*mark*stop-wait-time
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o>
+              ^io.input-link.time.milliseconds <ms>)
+   (<o> ^name wait-after-command
+        ^command <cmd>)
+   (<cmd> -^stop-wait-time)
+-->
+   (<cmd> ^stop-wait-time (+ <ms> 500))
+}
+
+# Allow waiting in the substate
+sp {wait-after-command*propose*wait
+   (state <s> ^name wait-after-command
+             -^operator.name wait)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name wait)
+}
+
+# Once the time is reached, mark the command with finished-waiting true
+sp {subproblem*execute*apply*wait-after-command*mark*finished-waiting
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o>
+              ^io.input-link.time.milliseconds >= <t>)
+   (<o> ^name wait-after-command
+        ^command <cmd>)
+   (<cmd> ^stop-wait-time <t>)
+-->
+   (<cmd> ^finished-waiting true)
+}
+

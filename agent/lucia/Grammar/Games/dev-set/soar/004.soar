@@ -1,0 +1,383 @@
+#   Soar code produced automatically 
+#   from file 'C:\Users\plind\OneDrive\GitHub\PLCode\Lucia\Grammars\Games\dev-set\ecg\004.ecg'.
+
+#   ONTO construction
+sp {comprehend-word*apply*lexical-access*ONTO-onto
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^input.word <word>)
+   (<o> ^name lexical-access)
+   (<word> ^orth |onto|
+           ^content <content1>)
+-->
+   (<s> ^cxn <cxn>)
+   (<cxn> ^cxn-name ONTO
+          ^is <a>
+          ^orth |onto|
+          ^text <content1>
+          ^f <form>
+          ^m <meaning>
+          ^subcase-of Preposition
+          ^first-lex nil)
+   (<a> ^a ONTO)
+}
+
+#   ONTO self.m.name <-- "on1" constraint
+sp {comprehend-word*ONTO-constraint*self-m-name*ASSIGN*on1
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <cxn>)
+   (<o> ^type construction)
+   (<cxn> ^is.a ONTO
+          ^orth |onto|
+          ^m <l-slot1>)
+   (<l-slot1> ^name { <target> <> |on1| })
+-->
+   (<l-slot1> ^name <target> -
+              ^name |on1|)
+}
+
+#   CAN-verb construction
+sp {comprehend-word*apply*lexical-access*CAN-verb-can
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^input.word <word>)
+   (<o> ^name lexical-access)
+   (<word> ^orth |can|
+           ^content <content1>)
+-->
+   (<s> ^cxn <cxn>)
+   (<cxn> ^cxn-name CAN-verb
+          ^is <a>
+          ^orth |can|
+          ^text <content1>
+          ^f <form>
+          ^m <meaning>
+          ^subcase-of EnablingVerb
+          ^first-lex nil)
+   (<a> ^a CAN-verb)
+}
+
+#   CAN-verb self.m.type <-- "can" constraint
+sp {comprehend-word*CAN-verb-constraint*self-m-type*ASSIGN*can
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <cxn>)
+   (<o> ^type construction)
+   (<cxn> ^is.a CAN-verb
+          ^orth |can|
+          ^m <l-slot1>)
+   (<l-slot1> ^type { <target> <> |can| })
+-->
+   (<l-slot1> ^type <target> -
+              ^type |can|)
+}
+
+#   Agent construction
+sp {comprehend-word*generalize-cxn*Agent*simple
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^<< cxn cxn-new >> <cxn>)
+   (<o> ^name << lexical-access match-construction >>)
+   (<cxn> ^subcase-of Agent
+          ^is <a>)
+   (<a> -^a Agent)
+-->
+   (<a> ^a Agent)
+   (<cxn> ^subcase-of Agent -)
+}
+
+#   EnablingVerb construction
+sp {comprehend-word*generalize-cxn*EnablingVerb*simple
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^<< cxn cxn-new >> <cxn>)
+   (<o> ^name << lexical-access match-construction >>)
+   (<cxn> ^subcase-of EnablingVerb
+          ^is <a>
+          ^m <meaning>)
+   (<a> -^a EnablingVerb)
+-->
+   (<a> ^a EnablingVerb)
+   (<cxn> ^subcase-of EnablingVerb -
+          ^evokes <e-meaning>)
+   (<e-meaning> ^schema AuxiliaryFeatures
+                ^target <meaning>)
+}
+
+#   Propose an operator for the EnablerPhrase construction
+sp {comprehend-word*propose*match-construction*EnablerPhrase
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done)
+   #   Look for the constituents
+   (<s> ^cxn <verb>)
+   (<verb> ^is.a EnablingVerb
+           ^previous <agent>)
+   (<agent> ^is.a Agent
+            ^previous <previous>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name match-construction
+        ^type construction
+        ^cxn-name EnablerPhrase
+        ^span 2
+        ^lexicals 0
+        ^verb <verb>
+        ^agent <agent>
+        ^previous <previous>
+        ^debug-info (concat |Match a EnablerPhrase construction, combination 0.|))
+}
+
+#   Apply the operator for the EnablerPhrase construction
+sp {comprehend-word*apply*match-construction*EnablerPhrase
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name match-construction
+        ^cxn-name EnablerPhrase
+        ^agent <agent>
+        ^verb <verb>
+        ^previous <previous>)
+-->
+   (<s> ^cxn-new <cxn-new>)
+   (<cxn-new> ^cxn-name EnablerPhrase
+              ^is <a>
+              ^f <form>
+              ^m <meaning>
+              ^constituents <constituents>
+              ^agent <agent>
+              ^verb <verb>
+              ^evokes <e-meaning>
+              ^previous <previous>)
+   (<a> ^a EnablerPhrase)
+   (<constituents> ^agent <agent>
+                   ^verb <verb>)
+   (<e-meaning> ^schema Enabler
+                ^target <meaning>)
+   #   Write a message for the construction that matched.
+   (write (crlf) (concat |Matched a EnablerPhrase construction.|))
+}
+
+#   EnablerPhrase self.m.agent <--> agent.m constraint
+sp {comprehend-word*EnablerPhrase-constraint*self-m-agent*UNIFY*agent-m
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn-new <cxn>)
+   (<o> ^type construction)
+   (<cxn> ^is.a EnablerPhrase
+          ^m <l-slot1>
+          ^agent <r-slot1>)
+   (<l-slot1> ^agent { <target> <> <value> })
+   (<r-slot1> ^m <value>)
+-->
+   (<l-slot1> ^agent <target> -
+              ^agent <value>)
+}
+
+#   EnablerPhrase self.m.ability <--> verb.m.type constraint
+sp {comprehend-word*EnablerPhrase-constraint*self-m-ability*UNIFY*verb-m-type
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn-new <cxn>)
+   (<o> ^type construction)
+   (<cxn> ^is.a EnablerPhrase
+          ^m <l-slot1>
+          ^verb <r-slot1>)
+   (<l-slot1> ^ability { <target> <> <value> })
+   (<r-slot1> ^m <r-slot2>)
+   (<r-slot2> ^type <value>)
+-->
+   (<l-slot1> ^ability <target> -
+              ^ability <value>)
+}
+
+#   Propose an operator for the EnabledCommandSentence construction
+sp {comprehend-word*propose*match-construction*EnabledCommandSentence
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done)
+   #   Look for the constituents
+   (<s> ^cxn <command>)
+   (<command> ^is.a Imperative
+              ^previous <enabler>)
+   (<enabler> ^is.a EnablerPhrase
+              ^previous <previous>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name match-construction
+        ^type construction
+        ^cxn-name EnabledCommandSentence
+        ^span 2
+        ^lexicals 0
+        ^command <command>
+        ^enabler <enabler>
+        ^previous <previous>
+        ^debug-info (concat |Match a EnabledCommandSentence construction, combination 0.|))
+}
+
+#   Apply the operator for the EnabledCommandSentence construction
+sp {comprehend-word*apply*match-construction*EnabledCommandSentence
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name match-construction
+        ^cxn-name EnabledCommandSentence
+        ^enabler <enabler>
+        ^command <command>
+        ^previous <previous>)
+-->
+   (<s> ^cxn-new <cxn-new>)
+   (<cxn-new> ^cxn-name EnabledCommandSentence
+              ^is <a>
+              ^f <form>
+              ^m <meaning>
+              ^subcase-of Declarative
+              ^constituents <constituents>
+              ^enabler <enabler>
+              ^command <command>
+              ^evokes <e-meaning>
+              ^previous <previous>)
+   (<a> ^a EnabledCommandSentence)
+   (<constituents> ^enabler <enabler>
+                   ^command <command>)
+   (<e-meaning> ^schema EnabledCommand
+                ^target <meaning>)
+   #   Write a message for the construction that matched.
+   (write (crlf) (concat |Matched a EnabledCommandSentence construction.|))
+}
+
+#   EnabledCommandSentence self.m.enabler <--> enabler.m constraint
+sp {comprehend-word*EnabledCommandSentence-constraint*self-m-enabler*UNIFY*enabler-m
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn-new <cxn>)
+   (<o> ^type construction)
+   (<cxn> ^is.a EnabledCommandSentence
+          ^m <l-slot1>
+          ^enabler <r-slot1>)
+   (<l-slot1> ^enabler { <target> <> <value> })
+   (<r-slot1> ^m <value>)
+-->
+   (<l-slot1> ^enabler <target> -
+              ^enabler <value>)
+}
+
+#   EnabledCommandSentence self.m.command <--> command.m constraint
+sp {comprehend-word*EnabledCommandSentence-constraint*self-m-command*UNIFY*command-m
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn-new <cxn>)
+   (<o> ^type construction)
+   (<cxn> ^is.a EnabledCommandSentence
+          ^m <l-slot1>
+          ^command <r-slot1>)
+   (<l-slot1> ^command { <target> <> <value> })
+   (<r-slot1> ^m <value>)
+-->
+   (<l-slot1> ^command <target> -
+              ^command <value>)
+}
+
+#   AuxiliaryFeatures schema
+sp {comprehend-word*evoked-schema*AuxiliaryFeatures*create
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^<< cxn cxn-new >> <cxn>)
+   (<o> ^type construction)
+   (<cxn> ^evokes <evoked>)
+   (<evoked> ^schema AuxiliaryFeatures
+             ^target <e-target>)
+   (<e-target> -^is <a>)
+-->
+   (<cxn> ^evokes <evoked> -)
+   (<e-target> ^schema-name AuxiliaryFeatures
+               ^is <a>
+               ^type nil)
+   (<a> ^a AuxiliaryFeatures)
+}
+
+#   AuxiliaryFeatures schema
+sp {comprehend-word*evoked-schema*AuxiliaryFeatures*exists
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^<< cxn cxn-new >> <cxn>)
+   (<o> ^type construction)
+   (<cxn> ^evokes <evoked>)
+   (<evoked> ^schema AuxiliaryFeatures
+             ^target <e-target>)
+   (<e-target> ^is <a>)
+-->
+   (<cxn> ^evokes <evoked> -)
+   (<e-target> ^type nil)
+   (<a> ^a AuxiliaryFeatures)
+}
+
+#   Enabler schema
+sp {comprehend-word*evoked-schema*Enabler*create
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^<< cxn cxn-new >> <cxn>)
+   (<o> ^type construction)
+   (<cxn> ^evokes <evoked>)
+   (<evoked> ^schema Enabler
+             ^target <e-target>)
+   (<e-target> -^is <a>)
+-->
+   (<cxn> ^evokes <evoked> -)
+   (<e-target> ^schema-name Enabler
+               ^is <a>
+               ^agent nil
+               ^ability nil)
+   (<a> ^a Enabler)
+}
+
+#   Enabler schema
+sp {comprehend-word*evoked-schema*Enabler*exists
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^<< cxn cxn-new >> <cxn>)
+   (<o> ^type construction)
+   (<cxn> ^evokes <evoked>)
+   (<evoked> ^schema Enabler
+             ^target <e-target>)
+   (<e-target> ^is <a>)
+-->
+   (<cxn> ^evokes <evoked> -)
+   (<e-target> ^agent nil
+               ^ability nil)
+   (<a> ^a Enabler)
+}
+
+#   EnabledCommand schema
+sp {comprehend-word*evoked-schema*EnabledCommand*create
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^<< cxn cxn-new >> <cxn>)
+   (<o> ^type construction)
+   (<cxn> ^evokes <evoked>)
+   (<evoked> ^schema EnabledCommand
+             ^target <e-target>)
+   (<e-target> -^is <a>)
+-->
+   (<cxn> ^evokes <evoked> -)
+   (<e-target> ^schema-name EnabledCommand
+               ^is <a>
+               ^enabler nil
+               ^command nil)
+   (<a> ^a EnabledCommand)
+}
+
+#   EnabledCommand schema
+sp {comprehend-word*evoked-schema*EnabledCommand*exists
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^<< cxn cxn-new >> <cxn>)
+   (<o> ^type construction)
+   (<cxn> ^evokes <evoked>)
+   (<evoked> ^schema EnabledCommand
+             ^target <e-target>)
+   (<e-target> ^is <a>)
+-->
+   (<cxn> ^evokes <evoked> -)
+   (<e-target> ^enabler nil
+               ^command nil)
+   (<a> ^a EnabledCommand)
+}
+

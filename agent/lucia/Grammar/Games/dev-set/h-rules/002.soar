@@ -1,0 +1,94 @@
+##!
+# @file
+#
+# @created plindes 20200312
+# File: 002.soar
+# Author: Peter Lindes
+# Created: 12 March 2020
+#
+# Desc: This file contains all the processing rules
+#       needed to add to be able to process sentence 002
+#       of the Games development set.
+#  This is sentence #2 of 01.01_blocks-world script.txt.
+#  The sentence is:
+#      Load init-blocksworld.
+#
+
+
+#   Propose an operator to interpret a LoadWorldCommand
+#   This operator uses the newer strategy of building
+#   a message directly in interpret without going on
+#   to the act operator.
+sp {interpret*propose*do-load-world-command
+   (state <s> ^problem-space interpret
+              ^comprehension <c>
+              ^discourse <d>
+              ^message nil)
+   (<c> ^cxn-stack <cxn>)
+   (<cxn> ^m <m>   #   Sometimes we need to see the syntax
+          ^previous nil)    #   Otherwise there was a syntax error
+   (<m> ^is.a LoadWorldCommand
+        ^word <word>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name do-load-world-command
+        ^type msg-interpretation
+        ^cxn <cxn>
+        ^meaning <m>
+        ^discourse <d>
+        ^handle (make-constant-symbol <word>)
+        ^debug-info (concat |Interpret a LoadWorldCommand.|))
+}
+
+#   Build a message for a LoadWorldCommand like this one:
+#       Load init-blocksworld.
+# TAKE THIS MEANING:
+#(M2 ^action M1 ^is A6 ^schema-name LoadWorldCommand ^source I11
+#       ^text |Load init-blocksworld.| ^word init-blocksworld)
+#  (M1 ^class nil ^is A3 ^modifier nil ^name load1
+#         ^schema-name ActionDescriptor ^source I9 ^text Load)
+#    (A3 ^a ActionDescriptor)
+#    (I9 ^left 0 ^right 0)
+#  (A6 ^a LoadWorldCommand)
+#  (I11 ^left 0 ^right 1)
+# AND BUILD A MESSAGE LIKE THIS:
+#(I66 ^action N47 ^arg1 N50 ^message-type command)
+#  (N47 ^handle load1 ^item-type action ^procedural L120 (@865))
+#    (L120 ^op_name initiate-load)
+#  (N50 ^handle init-blocksworld3 ^word-structure N49 (@999003))
+#    (N49 ^referent R232 (@999004) ^spelling init-blocksworld)
+#      (R232 ^handle init-blocksworld3 ^word-structure N49 (@999003))
+sp {interpret*apply*do-load-world-command
+   (state <s> ^problem-space interpret
+              ^operator <o>
+              ^message nil)
+   (<o> ^name do-load-world-command
+        ^meaning <m>
+        ^handle <handle>)
+   (<m> ^is.a LoadWorldCommand
+        ^action <action-desc>
+        ^word <word>)
+   #    Get an ActionDescriptor and its name
+   (<action-desc> ^is.a ActionDescriptor
+                  ^name <action-name>
+                  ^action <action>)
+-->
+   #    Build the message
+   (<s> ^message nil -
+        ^message <message>)
+   (<message> ^message-type command
+              ^arg1 <arg1>
+              ^action <action>)
+   #    Build the arg1 word structure
+   (<arg1> ^word-structure <word-struct>
+           ^handle <handle>)
+   (<word-struct> ^spelling <word>
+                  ^referent <referent>)
+   (<referent> ^word-structure <word-struct>
+           ^handle <handle>)
+      #    Mark things to store in smem
+   (<s> ^store-concept <word-struct>
+        ^store-concept <referent>)
+}
+
+

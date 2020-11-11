@@ -1,0 +1,54 @@
+//  This file has the grammar needed to comprehend function applications.
+//  It is derived from work on the Games data set, starting with sentence
+//  008 and the phrase "the number of".
+//
+//  Throughout the Games data set there are a number of "functions" made
+//  up of phrases of the form "the <fn-name> of X", where <fn-name> is
+//  a word like number, value, sum, row, column, etc., and X is a RefExpr.
+//
+//  These phrases will be treated as multi-word lexicals, with each such
+//  lexical being a subcase of a general construction called FunctionName.
+//
+//  The meaning of a FunctionName is a schema called Function, which
+//  has a single role called fn-handle. This handle will be usable to
+//  lookup a definition in smem.
+//
+//  A FunctionName will always (we hope) be followed by a RefExpr,
+//  and the two together will be recognized as a FunctionWithArgument.
+//
+//  A schema called FunctionApplication is a subcase of RefDesc.
+//  It adds an additional role called argument, which is also a RefDesc. 
+//
+//  The FunctionWithArgument construction has a FunctionApplication
+//  as its meaning, and puts the fn-handle in the name role,
+//  the constant "function" in the category role, and the meaning
+//  of its argument into its argument role.
+//
+
+//  A general construction for all functions
+general construction FunctionName
+   meaning: Function
+
+//  The schema for a function
+schema Function
+   roles
+      fn-handle
+
+//  The schema for function applications
+schema FunctionApplication
+   subcase of RefDesc
+   roles
+      argument: RefDesc
+
+//  The composite construction to combine a function with its argument.
+construction FunctionWithArgument
+   subcase of RefExpr
+   constructional
+      constituents
+         function : FunctionName
+         argument : RefExpr
+   meaning: FunctionApplication
+      constraints
+         self.m.name <--> function.m.fn-handle
+         self.m.category <-- "function"
+         self.m.argument <--> argument.m

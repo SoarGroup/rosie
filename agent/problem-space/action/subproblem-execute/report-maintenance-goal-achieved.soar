@@ -1,0 +1,59 @@
+sp {subproblem*execute*propose*report-maintenance-goal-achieved
+   (state <s> ^problem-space.subproblem execute
+              ^desired <des>
+              ^current-task-segment <seg>)
+   (<des> ^handle <goal-h>
+          ^satisfied true
+          ^modifiers.handle always1)
+   (<seg> -^reported-maintenance-goal <goal-h>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name report-maintenance-goal-achieved
+        ^goal-handle <goal-h>)
+}
+
+sp {subproblem*execute*apply*report-maintenance-goal-achieved
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o>
+              ^task-operator.task-handle <task-h>
+              ^current-task-segment <seg>
+              ^io.output-link <out>)
+   (<o> ^name report-maintenance-goal-achieved
+        ^goal-handle <goal-h>)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type maintenance-goal-achieved
+          ^fields.task-handle <task-h>)
+
+   (<seg> ^reported-maintenance-goal <goal-h>)
+}
+
+# If we have a maintenance goal (modifier always1) and we are using scripts, 
+#    then if we wait we should advance the current script
+sp {subproblem*execute*apply*report-maintenance-goal-achieved*advance*script
+   (state <s> ^problem-space.subproblem execute
+              ^operator.name report-maintenance-goal-achieved
+              ^desired <des>
+              ^top-state <ts>)
+   (<des> ^satisfied true
+          ^modifiers.handle always1)
+   (<ts> ^game-scripting true
+         ^n-sentence-number <csn>)
+-->
+   (<ts> ^n-sentence-number <csn> -)
+   (<ts> ^current-sentence-number <csn>)
+}
+
+sp {subproblem*execute*apply*any*operator*remove*reported-maintenance-goal*if*not*achieved
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o>
+              ^desired <des>
+              ^current-task-segment <seg>)
+   (<des> ^handle <goal-h>
+         -^satisfied true
+          ^modifiers.handle always1)
+   (<seg> ^reported-maintenance-goal <goal-h>)
+-->
+   (<seg> ^reported-maintenance-goal <goal-h> -)
+}
+

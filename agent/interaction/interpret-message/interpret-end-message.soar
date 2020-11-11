@@ -1,0 +1,77 @@
+###################################################################
+#
+# interpret-end-message
+#   Occurs when the intructor wishes to end a task/loop/list/etc.
+#   Construction: *-end-of-N
+#     E.g. 'End of task'
+#
+###################################################################
+
+#######
+# OPERATOR PROPOSAL
+#######
+sp {interpret-message*propose*interpret-end-message
+   (state <s> ^name interpret-message
+              ^instructor-message <msg>)
+   (<msg> ^message-type end-message
+          ^arg1.handle <arg1>
+         -^interaction-status.failure
+         -^interpreted true)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name interpret-end-message
+        ^message <msg>
+        ^predicate <arg1>)
+}
+
+sp {interpret-message*propose*interpret-end-message*finished
+   (state <s> ^name interpret-message
+   		  	 -^top-state.dialog-context <dc>
+              ^instructor-message <msg>)
+   (<msg> ^message-type finished
+         -^interaction-status.failure
+         -^interpreted true)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name interpret-end-message
+        ^message <msg>
+        ^predicate task1)
+}
+
+#####
+# OPERATOR APPLICATION
+#####
+
+sp {interpret-message*apply*interpret-end-message*task-completed*terminate-segment
+   (state <s> ^name interpret-message
+              ^operator <o>)
+   (<o> ^name interpret-end-message
+        ^message <msg>)
+-->
+   (<s> ^terminate-segment true
+        ^mark-interpreted <msg>)
+}
+
+# If we get 'End of task', mark the current task segment with ^finish-task true
+sp {interpret-message*apply*interpret-end-message*task1*mark*finish-task
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^top-state.task-stack.bottom { <seg> <> none })
+   (<o> ^name interpret-end-message
+        ^predicate task1)
+-->
+   (<seg> ^finish-task true)
+}
+
+# If we get 'End of list' and we are learning a composite goal, tell the agent to finish it
+sp {interpret-message*apply*interpret-end-message*list1*mark*finish-composite-goal
+   (state <s> ^name interpret-message
+              ^operator <o>
+              ^top-state.task-stack.bottom { <seg> <> none })
+   (<o> ^name interpret-end-message
+        ^predicate << list1 task1 >>)
+   (<seg> ^learning-composite-goal true)
+-->
+   (<seg> ^finish-composite-goal true)
+}
+

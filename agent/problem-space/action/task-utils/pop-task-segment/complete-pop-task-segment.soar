@@ -109,8 +109,7 @@ sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*report
               ^agent-params.report-tasks-to-output-link true
               ^segment-to-pop <seg>
               ^top-state.io.output-link <ol>)
-   (<seg> ^status success
-          ^depth <d>)
+   (<seg> ^depth <d>)
 -->
    (<ol> ^completed-task.segment <seg>)
    (<seg> ^depth <d>)
@@ -153,7 +152,7 @@ sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*report
 }
 
 # If the task failed, notify the parent task
-sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*failure*mark*subtask-failed
+sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*failure*mark*subtask-failure
    (state <s> ^name pop-task-segment
               ^operator.name complete-pop-task-segment
               ^segment-to-pop <seg>
@@ -162,8 +161,8 @@ sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*failur
           ^failure-info <info>
           ^task-operator <task-op>)
 -->
-   (<par-seg> ^subtask-failed <task-op>
-              ^failure-info <info>)
+   (<par-seg> ^subtask-failure <info>)
+   (<info> ^subtask <task-op>)
 }
 
 # If there is a policy-learning-needed flag, 
@@ -176,6 +175,7 @@ sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*push*l
               ^segment-to-pop <segment>
               ^top-state.interaction.changes <changes>)
    (<segment> ^policy-learning-needed true
+             -^subtask-failure.recoverable false
              ^status success
              ^task-operator.task-handle)
 -->
@@ -202,7 +202,7 @@ sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*remove
 }
 
 #   mark it performed in the current action
-sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*mark*performed-subtask*once*subtask
+sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*mark*performed-subtask*subtask
    (state <s> ^name pop-task-segment
               ^operator.name complete-pop-task-segment
               ^segment-to-pop <seg>)
@@ -221,7 +221,7 @@ sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*remove
               ^segment-to-pop <seg>
               ^task-stack.top <seg>
               ^top-state.world.objects.object.predicates <preds>)
-   (<preds> ^modifier1 { <mod> << starting1 desired1 answered1 >> })
+   (<preds> ^modifier1 { <mod> << starting1 desired1 answered1 recalled1 storage1 preferred1 >> })
 -->
    (<preds> ^modifier1 <mod> -)
 }
@@ -230,8 +230,8 @@ sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*remove
 sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*delete*dialog*info
   (state <s> ^name pop-task-segment
              ^operator.name complete-pop-task-segment
-             ^segment-to-pop <top>
-             ^task-stack.top <top>
+             ^segment-to-pop <seg>
+             ^task-stack.top <seg>
              ^top-state <top>)
   (<top> ^dialog-object-list <list>
          ^dialog-world <w>)
@@ -242,4 +242,16 @@ sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*delete
          ^dialog-object-list-saved nil
          ^dialog-world <new>)
   (<new> ^objects <objs> ^predicates <preds>)
+}
+
+# If there is a ^clear-task-stack flag, remove it when popping the top segment
+sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*remove*clear-task-stack
+  (state <s> ^name pop-task-segment
+             ^operator.name complete-pop-task-segment
+             ^segment-to-pop <top>
+             ^task-stack <stack>)
+   (<stack> ^top <top>
+            ^clear-task-stack true)
+-->
+   (<stack> ^clear-task-stack true -)
 }

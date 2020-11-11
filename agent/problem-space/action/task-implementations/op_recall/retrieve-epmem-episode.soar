@@ -1,23 +1,147 @@
+################################################################
+# recall from epmem 
+
+# If the task-operator has a when-clause
+#    we will try to retrieve an episode from epmem
+#    that satisfies the when-clause
+#    and find the desired object and copy it onto the world
+
+# Example: Recall the current location when a soda was visible
+# arg1 = current location
+# when-clause = visible(soda)
+# Will look for an episode with a visible soda and add the current location to the world
+
+sp {op_recall1*elaborate*memory-type*epmem
+   (state <s> ^name op_recall1
+              ^task-operator <task-op>)
+   (<task-op> ^arg1.id <obj1>
+              ^when-clause <when>)
+-->
+   (<s> ^memory-type epmem
+        ^object-to-retrieve <obj1>
+        ^query-predicates <preds>)
+}
+
+sp {op_recall1*elaborate*query-predicates*from*when-clause
+   (state <s> ^name op_recall1
+              ^query-predicates <preds>
+              ^task-operator.when-clause.{1} <p1>)
+   (<p1> ^handle <pred-h>
+         ^property-handle <prop-h>)
+-->
+   (<preds> ^<prop-h> <pred-h>)
+}
+
+sp {op_recall1*elaborate*query-predicates*from*when-clause*object
+   (state <s> ^name op_recall1
+              ^query-predicates <preds>
+              ^task-operator.when-clause.{1}.{1}.predicates.{ <prop-h> << name >> } <pred-h>)
+-->
+   (<preds> ^<prop-h> <pred-h>)
+}
+
+### operator retrieve-epmem-episode
+# Construct a query and retrieve an episode
 sp {op_recall1*epmem*propose*retrieve-epmem-episode
    (state <s> ^name op_recall1
               ^problem-space.execution-type external
               ^memory-type epmem
-              ^query-info <info>)
+              ^desired.handle recall1goal1
+              ^query-predicates <preds>
+             -^retrieved-episode)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name retrieve-epmem-episode
-        ^query-info <info>)
+        ^query-predicates <preds>)
 }
 
 sp {op_recall1*epmem*apply*retrieve-epmem-episode*query
    (state <s> ^name op_recall1
-              ^problem-space.execution-type external
-              ^memory-type epmem
-              ^query-info <info>
+              ^operator <o>
+              ^task-operator.when-clause.{1}.{1}.root-category <root>
               ^epmem.command <cmd>)
-   (<info> ^handle <pred-h>
-           ^property-handle <prop-h>
-           ^1 <obj>)
+   (<o> ^name retrieve-epmem-episode
+        ^query-predicates <preds>)
 -->
    (<cmd> ^query <q>)
+   (<q> ^world.objects.object <obj>)
+   (<obj> ^item-type object
+          ^root-category <root>
+          ^predicates <preds>)
+}
+
+# Success!
+sp {op_recall1*epmem*apply*retrieve-epmem-episode*success*copy*result
+   (state <s> ^name op_recall1
+              ^operator.name retrieve-epmem-episode
+              ^epmem <epmem>)
+   (<epmem> ^result <res>
+            ^result.retrieved <episode>
+            ^command <cmd>)
+   (<res> ^success <q>
+          ^retrieved <episode>
+          ^normalized-match-score 1.0
+          ^graph-match 1)
+   (<cmd> ^query <q>)
+-->
+   (<s> ^retrieved-episode <episode>)
+   (<cmd> ^query <q> -)
+}
+
+# Partial match, no good
+sp {op_recall1*epmem*apply*retrieve-epmem-episode*partial*match
+   (state <s> ^name op_recall1
+              ^operator.name retrieve-epmem-episode
+              ^epmem <epmem>)
+   (<epmem> ^result.normalized-match-score < 1.0
+            ^command <cmd>)
+   (<cmd> ^query <q>)
+-->
+   (<s> ^retrieved-episode none)
+   (<cmd> ^query <q> -)
+}
+
+sp {op_recall1*epmem*apply*retrieve-epmem-episode*no*graph-match
+   (state <s> ^name op_recall1
+              ^operator.name retrieve-epmem-episode
+              ^epmem <epmem>)
+   (<epmem> ^result.normalized-match-score 1.0
+            ^result.graph-match 0
+            ^command <cmd>)
+   (<cmd> ^query <q>)
+-->
+   (<s> ^retrieved-episode none)
+   (<cmd> ^query <q> -)
+}
+        
+# Failure
+sp {op_recall1*epmem*apply*retrieve-epmem-episode*failure
+   (state <s> ^name op_recall1
+              ^operator.name retrieve-epmem-episode
+              ^epmem <epmem>)
+   (<epmem> ^result.failure
+            ^command <cmd>)
+   (<cmd> ^query <q>)
+-->
+   (<s> ^retrieved-episode none)
+   (<cmd> ^query <q> -)
+}
+
+### If we retrieved an episode, try to match the desired object
+sp {op_recall1*epmem*elaborate*matching-epmem-object
+   (state <s> ^name op_recall1
+              ^memory-type epmem
+              ^retrieved-episode.world.objects.object <eobj>
+              ^object-to-retrieve <qobj>)
+   (<eobj> ^predicates <epreds>)
+   (<qobj> ^predicates <qpreds>)
+   # There are no predicates on the query object that are not on the object in epmem
+  -{(<qpreds> ^<prop1> <pred1>)
+    (<epreds> -^<prop1> <pred1>)}
+#   # There are no predicates on the semantic-edge that are not on the edge-object
+#  -{(<se> ^{ <prop2> <> tail } <pred2>)
+#    (<preds> -^<prop2> <pred2>)}
+#   (<se> ^tail <tail>)
+-->
+   (<s> ^matching-epmem-object <eobj>)
 }

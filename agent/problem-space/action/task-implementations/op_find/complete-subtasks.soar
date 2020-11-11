@@ -1,0 +1,53 @@
+####### tried-scan
+
+# Since go-to-location includes a scan, mark the current waypoint as being scanned
+sp {op_find1*apply*pop-task-segment*go-to-location*mark*tried-scan
+   (state <s> ^name op_find1
+              ^problem-space.execution-type external
+              ^operator <o>
+              ^world.robot.current-waypoint <wp>
+              ^current-task-segment <seg>)
+   (<o> ^name pop-task-segment
+        ^segment <pop-seg>)
+   (<pop-seg> ^performed-scan true
+              ^task-operator.task-handle go-to-location1)
+-->
+   (<seg> ^tried-scan <wp>)
+}
+
+# If the agent opens a location, clear the scan flag so it can try it again if necessary
+sp {op_find1*apply*pop-task-segment*open*remove*tried-scan
+   (state <s> ^name op_find1
+              ^problem-space.execution-type external
+              ^operator <o>
+              ^world.robot.current-waypoint <wp>
+              ^current-task-segment <seg>)
+   (<o> ^name pop-task-segment
+        ^segment.task-operator.task-handle open1)
+   (<seg> ^tried-scan <wp>)
+-->
+   (<seg> ^tried-scan <wp> -)
+}
+
+# If we recalled an object, add predicate in(target-object, recalled-object)
+sp {op_find1*apply*pop-task-segment*recall*add*in-predicate*recalled*object
+   (state <s> ^name op_find1
+              ^problem-space.execution-type external
+              ^operator <o>
+              ^target-object <obj>
+              ^world <w>)
+   (<o> ^name pop-task-segment
+        ^segment.task-operator.task-handle recall1)
+   (<w> ^objects.object <rec>
+        ^predicates.predicate <in-pred>)
+   (<rec> ^predicates <rec-preds>)
+   (<rec-preds> ^modifier1 recalled1
+               -^category nothing1)
+   (<in-pred> ^handle in1)
+ -{(<in-pred> ^instance <i>)
+   (<i> ^1 <obj> ^2 <rec>)}
+-->
+   (<in-pred> ^instance <i> ^imagined <i>)
+   (<i> ^1 <obj> ^2 <rec>)
+}
+

@@ -3,6 +3,8 @@
 #Action verbs: run, hop, dream, imagine [have a direct object, sometimes indirect object]
 # Linking Verbs: is, are, seems,  [have a predicate noun or predicate adjective]
 
+
+
 smem --add {
            (<prefer> ^spelling |prefer|
                      ^structure-type V
@@ -252,11 +254,31 @@ smem --add {
            (<unlock> ^spelling |unlock|
                     ^referent @unlock1
                     ^super-type @60998)
+                            
+    ## press
+           (<press> ^spelling |press|
+                   ^referent @press1
+                   ^super-type @60998)
+
+    ## keep - Keep a water on the table
+           (<keep> ^spelling |keep|
+                   ^referent @keep1
+                   ^super-type @60999)
 
     ## inspect
            (<inspect> ^spelling |inspect|
                    ^referent @inspect1
                    ^super-type @60997)
+
+    ## monitor
+           (<monitor> ^spelling |monitor|
+                   ^referent @monitor1
+                   ^super-type @60993)
+
+    ## observe
+           (<observe> ^spelling |observe|
+                   ^referent @observe1
+                   ^super-type @60993)
            
     ## organize           
            (<organize> ^spelling |organize|
@@ -487,6 +509,10 @@ smem --add {
            (<perform> ^spelling |perform|
                       ^referent @perform1
                       ^super-type @60998)
+
+           (<complete> ^spelling |complete|
+                      ^referent @complete1
+                      ^super-type @60998)
                                   
            (<bring> ^spelling |bring|
                       ^referent @bring1
@@ -499,6 +525,10 @@ smem --add {
            (<use> ^spelling |use|
                   ^referent @use1
                   ^super-type @60999)
+
+           (<pour> ^spelling |pour|
+                   ^referent @pour1
+                   ^super-type @60999)
 
            (<heat> ^spelling |heat|
                    ^referent @heat1
@@ -824,8 +854,16 @@ smem --add {
            ^semantic-structure action
            ^tense present
            ^number singular
-           ^assigners <DP1> <WHEN> <OF> <DP2>
+           ^assigners <ADJ> <ADV> <DP1> <WHEN> <OF> <DP2>
            ^converts-to VP)
+    (<ADJ> ^structure-type ADJ
+           ^syntactic-structure nil
+           ^semantic-structure modifier
+           ^optional true)
+    (<ADV> ^structure-type ADV
+           ^syntactic-structure nil
+           ^semantic-structure modifier
+           ^optional true)
     (<DP1> ^structure-type DP
            ^relative-position after
            ^before <WHEN> <DP2>
@@ -851,32 +889,40 @@ smem --add {
 }
 
 smem --add {    
-           (<ask> ^spelling |ask|
-                   ^referent @ask1
-                   ^structure-type V
-                   ^semantic-structure action
-                   ^tense present
-                   ^number singular
-                   ^assigners <VT1> <VT2> <VT3>
-                   ^converts-to VP)
-          (<VT1> ^structure-type PN
-                 ^before <VT2> <VT3>
-                 ^relative-position after
-                 ^syntactic-structure head
-                 ^semantic-structure agent
-                 ^optional true) 
-          (<VT2> ^structure-type U
-                 ^exclusive <VT3>
-                 ^relative-position after
-                 ^syntactic-structure complement
-                 ^semantic-structure arg1
-                 ^optional true) 
-          (<VT3> ^structure-type DP
-                 ^exclusive <VT2>
-                 ^relative-position after
-                 ^syntactic-structure complement
-                 ^semantic-structure arg1
-                 ^optional true) 
+     (<ask> ^spelling |ask|
+             ^referent @ask1
+             ^structure-type V
+             ^semantic-structure action
+             ^tense present
+             ^number singular
+             ^assigners <ADJ> <ADV> <VT1> <VT2> <VT3>
+             ^converts-to VP)
+    (<ADJ> ^structure-type ADJ
+           ^syntactic-structure nil
+           ^semantic-structure modifier
+           ^optional true)
+    (<ADV> ^structure-type ADV
+           ^syntactic-structure nil
+           ^semantic-structure modifier
+           ^optional true)
+    (<VT1> ^structure-type PN
+           ^before <VT2> <VT3>
+           ^relative-position after
+           ^syntactic-structure head
+           ^semantic-structure agent
+           ^optional true) 
+    (<VT2> ^structure-type U
+           ^exclusive <VT3>
+           ^relative-position after
+           ^syntactic-structure complement
+           ^semantic-structure arg1
+           ^optional true) 
+    (<VT3> ^structure-type DP
+           ^exclusive <VT2>
+           ^relative-position after
+           ^syntactic-structure complement
+           ^semantic-structure arg1
+           ^optional true) 
      
 }
 
@@ -1785,3 +1831,50 @@ smem --add {
                    ^referent @write1)
 }
 
+
+# AM: Added support for present-tense verbs that describe a relation between two things
+# structure-type REL_VERB
+# Potential examples: 
+#   The mug contains water. The person holds a book. The legs support the table. 
+smem --add {
+   (<sentence> ^construction |*-DP-REL_VERB-DP/N|
+               ^structure-type C
+               ^converts-to CP
+               ^current-word REL_VERB
+               ^message-type object-description
+               ^prior-word DP
+               ^prior-word-first false
+               ^assigners <arg1_DP> <rel_verb> <arg2_DP> <arg2_N>)
+   (<arg1_DP> ^structure-type DP
+              ^relative-position before
+              ^syntactic-structure head
+              ^semantic-structure arg1
+              ^required true)
+   (<rel_verb> ^structure-type REL_VERB
+               ^syntactic-structure predicate
+               ^semantic-structure predicate
+               ^before <arg2_DP> <arg2_N>
+               ^required true)
+   (<arg2_DP> ^structure-type DP
+          ^relative-position after
+          ^exclusive <arg2_N>
+          ^syntactic-structure complement 
+          ^semantic-structure arg2
+          ^referent-type literal
+          ^optional true)
+   (<arg2_N> ^structure-type N
+          ^relative-position after
+          ^exclusive <arg2_DP>
+          ^syntactic-structure predicate 
+          ^semantic-structure arg2
+          ^referent-type literal
+          ^optional true)
+
+   ### Instances of such verbs
+
+   (<contains> ^spelling |contains|
+               ^referent @contains1
+               ^structure-type REL_VERB
+               ^tense present
+               ^number singular)
+}

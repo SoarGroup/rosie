@@ -12,15 +12,30 @@ sp {top-state*perception-monitor*object-monitor*object-info*elaborate*status
 ##################################################################
 #
 # is-confirmed1 << confirmed1 not-confirmed1 >>
-#   true if there is a belief-obj for the object (known model)
+#   true for objects/people if there is a belief-obj for the object (known model)
+#   true for locations if it has a known waypoint
 #
 ##################################################################
 
+# For normal environments, confirmed if there is a belief object (known place in the world)
 sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*confirmed1
    (state <s> ^superstate nil
               ^agent-params.domain <> internal
               ^perception-monitor.object-monitor.object-info <obj-info>)
    (<obj-info> ^belief-obj <bel-obj>
+               ^world-obj.predicates.category << object person >>
+               ^status <status>)
+-->
+   (<status> ^is-confirmed1 confirmed1)
+}
+
+# For an internal environment, all input link objects are confirmed
+sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*confirmed1*internal
+   (state <s> ^superstate nil
+              ^agent-params.domain internal
+              ^perception-monitor.object-monitor.object-info <obj-info>)
+   (<obj-info> ^input-link-obj <il-obj>
+               ^world-obj.predicates.category << object person >>
                ^status <status>)
 -->
    (<status> ^is-confirmed1 confirmed1)
@@ -28,22 +43,11 @@ sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*con
 
 sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*confirmed1*location*has-waypoint
    (state <s> ^superstate nil
-              ^agent-params.domain internal
               ^perception-monitor.object-monitor.object-info <obj-info>)
    (<obj-info> ^world-obj <loc>
                ^status <status>)
    (<loc> ^predicates.category location
           ^waypoint <wp>)
--->
-   (<status> ^is-confirmed1 confirmed1)
-}
-
-sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*confirmed1*internal
-   (state <s> ^superstate nil
-              ^agent-params.domain internal
-              ^perception-monitor.object-monitor.object-info <obj-info>)
-   (<obj-info> ^input-link-obj <il-obj>
-               ^status <status>)
 -->
    (<status> ^is-confirmed1 confirmed1)
 }
@@ -279,7 +283,7 @@ sp {top-state*perception-monitor*object-monitor*object-info*status*elaborate*is-
    (<i> ^1 <obj> ^2 <rec>)
    (<rec> ^predicates <rec-preds>)
    (<rec-preds> ^affordance1 receptacle1
-                ^door2 closed2)
+                ^is-open1 not-open1)
 -->
    (<status> ^is-occluded true)
 }

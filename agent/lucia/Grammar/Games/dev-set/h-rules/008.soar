@@ -1,0 +1,310 @@
+##!
+# @file
+#
+# @created plindes 20200804
+# File: 008.soar
+# Author: Peter Lindes
+# Created: 4 August 2020
+#
+# Desc: This file contains all the processing rules
+#       needed to add to be able to process sentence 008
+#       of the Games development set, which is:
+#  This is sentence #4 of 01.03_king-stacking-frogs script.txt.
+#  The sentence is:
+#      If 
+#           the number of the locations between a location and a covered location
+#        is
+#           the number of the blocks that are on the covered location
+#      then
+#           you can move it onto the former location.
+#
+
+
+####################    RULES TO "FAKE" CO-REFERENT RESOLUTION  ###################
+
+#   This problem has three co-references that must be properly resolved.
+#   They are:
+#       1) the covered location => a covered location
+#       2) it => the blocks that are on the covered location
+#       3) the former location => a location
+#
+
+#   Reference 1) has been resolved in a fairly normal way with
+#   an additional rule in ground-reference.
+
+#   Reference 2) is resolved by the following rule
+#   The following is a custom rule to FAKE IT for 2) by adding a very
+#   customized apply rule for resolve-pronoun will only work
+#   for this case in this sentence
+sp {comprehend-word*apply*resolve-pronoun*FAKE*008*it
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <it>)
+   (<o> ^name resolve-pronoun
+        ^features <features>
+        ^meaning <ref-desc>)
+   #    We want "it"
+   (<features> ^case nom
+               ^number singular
+               ^person |3rd|)
+   #    Check for this special case
+   (<ref-desc> ^givenness pronoun
+               ^category <inanimate>
+               ^referent nil
+               ^text |it|)
+   #    Follow the breadcrumbs to the treasure
+   (<it> ^previous <MoveVerb>)
+   (<MoveVerb> ^previous <EnablerPhrase>)
+   (<EnablerPhrase> ^previous <IfConditionThen>)
+   (<IfConditionThen> ^condition <RefIsRef>)
+   (<RefIsRef> ^object <FunctionWithArgument>)
+   (<FunctionWithArgument> ^argument <RefExprRelClause>)
+   (<RefExprRelClause> ^m <the-blocks-that-are-on-the-covered-location>)
+   (<the-blocks-that-are-on-the-covered-location>
+        ^text |the blocks that are on the covered location|
+        ^referent <this-is-it>)
+-->
+   #    Post the referent on the RefDesc
+   (<ref-desc> ^referent nil -
+               ^referent <this-is-it>)
+   #    Set done flag
+   (<s> ^reference resolved)
+}
+
+#   Reference 3) is resolved by the following rule
+#   The following is a custom rule to FAKE IT for 3) by adding a very
+#   customized apply rule for ground-reference that will only work
+#   for this case in this sentence
+sp {comprehend-word*apply*ground-reference*FAKE*008*the-former-location
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <the-former-location>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   #    Check for this special case
+   (<ref-desc> ^text |the former location.|
+               ^referent <old-ref>)
+   #    Follow the breadcrumbs to the treasure
+   (<the-former-location> ^previous <ONTO>)
+   (<ONTO> ^previous <IfConditionThenStatement>)
+   (<IfConditionThenStatement> ^conditionThen <IfConditionThen>)
+   (<IfConditionThen> ^condition <RefIsRef>)
+   (<RefIsRef> ^reference <FunctionWithArgument>)
+   (<FunctionWithArgument> ^argument <RefExprPrepPhrase>)
+   (<RefExprPrepPhrase> ^prepPhrase <BetweenPropertySets>)
+   (<BetweenPropertySets> ^props1 <PropertySetAnd>)
+   (<PropertySetAnd> ^props <PropertySet>)
+   (<PropertySet> ^m <a-location>)
+   (<a-location> ^text |a location|
+                 ^referent <former>)
+-->
+   #    Post the referent on the RefDesc
+   (<ref-desc> ^referent <old-ref> -
+               ^referent <former>)
+   #    Set done flag
+   (<s> ^reference resolved)
+}
+
+
+####################    RULE TO "FAKE" SENTENCE INTERPRETATION  ###################
+
+
+#   Build a message for an IfThenStatement like this one:
+#     If the number of the locations between a location and a covered location
+#       is the number of the blocks that are on the covered location
+#       then you can move it onto the former location.
+# TAKE THIS (ABBREVIATED) MEANING:
+#  M75: IfThenStatement[If the number of the locations between a location and a covered location is the number of the blocks that are on the covered location then you can move it onto the former location.]
+#    statement<-M74: EnabledCommand[you can move it onto the former location.]
+#      command<-M73: Action[move it onto the former location.]
+#        location<-M72: PrepRelation[onto the former location.]
+#          object<-M71: RefDesc[the former location.]
+#            modifiers<-M67: PropertyDescriptor[former]
+#              name<-former1
+#              class<-property
+#            givenness<-definite
+#            category<-M69: Location[location.]
+#            name<-Location
+#            referent<-O68: null[]
+#              handle<-new-object-id2
+#          prep<-on1
+#        action<-M62: ActOnIt[move it]
+#          object<-M61: RefDesc[it]
+#            givenness<-pronoun
+#            category<-inanimate
+#            referent<-O132: null[]
+#              handle<-new-object-id4
+#          action<-M60: ActionDescriptor[move]
+#            name<-move1
+#            class<-action
+#            action<-L57: null[]
+#                op_name<-op_move1
+#              handle<-move1
+#      enabler<-M58: Enabler[you can]
+#        ability<-can
+#        agent<-M56: RefDesc[you]
+#    condition<-M53: EqualComparison[the number of the locations between a location and a covered location is the number of the blocks that are on the covered location]
+#      value2<-M52: FunctionApplication[the number of the blocks that are on the covered location]
+#        argument<-M50: RefDesc[the blocks that are on the covered location]
+#          relation<-M48: PrepRelation[on the covered location]
+#            object<-M47: RefDesc[the covered location]
+#              modifiers<-M43: PropertyDescriptor[covered]
+#                name<-covered
+#                class<-property
+#              givenness<-definite
+#              category<-M45: Location[location]
+#              name<-Location
+#              referent<-O96: null[]
+#                handle<-new-object-id3
+#            prep<-on1
+#          referent<-O132: null[]
+#            handle<-new-object-id4
+#          givenness<-definite
+#        category<-function
+#        name<-number1
+#      value1<-M26: FunctionApplication[the number of the locations between a location and a covered location]
+#        argument<-M24: RefDesc[the locations between a location and a covered location]
+#          relation<-M23: PrepRelation2[between a location and a covered location]
+#            object2<-M22: PropertySetDescriptor[a covered location]
+#              property<-M18: PropertyDescriptor[covered]
+#                name<-covered
+#                class<-property
+#              givenness<-indefinite
+#              referent<-O96: null[]
+#                handle<-new-object-id3
+#            object<-M14: PropertySetDescriptor[a location]
+#              givenness<-indefinite
+#              referent<-O68: null[]
+#                handle<-new-object-id2
+#            prep<-between
+#          referent<-O49: null[]
+#            handle<-new-object-id1
+#          givenness<-definite
+#          category<-M6: Location[locations]
+#        category<-function
+#        name<-number1
+#
+# AND BUILD A MESSAGE LIKE THIS:
+#(I215 ^if-subclause I249 ^message-type conditional ^then-subclause I302)
+#  (I249 ^action N301 ^arg1 I250 ^predicate I279)
+#    (N301 ^handle is1 ^item-type action)
+#    (I250 ^2 I251 ^handle of1 ^item-type predicate)
+#      (I251 ^2 P282 ^handle number1)
+#        (P282 ^handle new-object-id9 ^item-type object ^predicates P283
+#               ^predicates-copied true ^relation I245)
+#          (P283 ^category location ^dialog-object true
+#                 ^is-visible1 not-visible1 ^multiple true)
+#          (I245 ^2 P260 ^3 P273 ^handle between)
+#    (I279 ^2 I280 ^handle of1 ^item-type predicate)
+#      (I280 ^2 P342 ^handle number1)
+#  (I302 ^action N371 ^action-modifier N369 ^agent R287 ^arg1 P342 ^arg2 I300)
+#    (N371 ^goal L844 (@609) ^handle move1 ^item-type action
+#           ^procedural L845 (@608))
+#      (L844 ^1 L846 (@616) ^handle move1goal1 ^item-type task-goal
+#             ^subgoal-count 1)
+#        (L846 ^handle move1sg1 ^predicates L847 (@617))
+#          (L847 ^1 L848 (@618) ^pred-count 1)
+#            (L848 ^1 L850 (@613) ^2 L851 (@615) ^id L849 (@614) ^type relation)
+#      (L845 ^arg1 L852 (@610) ^arg2 L853 (@611) ^op_name op_move1
+#             ^subtasks L854 (@612))
+#        (L852 ^arg-type object ^id L850 (@613) ^required true)
+#        (L853 ^2 L851 (@615) ^arg-type partial-predicate ^id L849 (@614)
+#               ^required true)
+#    (N369 ^handle can)
+#    (R287 ^arm A4 ^debug-id rob ^handle rosie ^item-type object ^predicate P50)
+#      (A4 ^action wait)
+#      (P50 ^handle rosie)
+#    (P342 ^handle new-object-id10 ^item-type object ^predicates P343
+#           ^predicates-copied true ^relation I276)
+#      (P343 ^category block ^dialog-object true ^is-visible1 not-visible1
+#             ^multiple true)
+#      (I276 ^2 P273 ^handle on1)
+#        (P273 ^handle new-object-id8 ^item-type object ^predicates P274
+#               ^predicates-copied true)
+#          (P274 ^category location ^dialog-object true
+#                 ^is-visible1 not-visible1 ^property covered)
+#    (I300 ^2 P260 ^handle on1 ^item-type predicate)
+#      (P260 ^handle new-object-id7 ^item-type object ^predicates P261
+#             ^predicates-copied true)
+#        (P261 ^category location ^dialog-object true ^is-visible1 not-visible1)
+
+
+#   There are likely to be many variations of IfThenStatement.
+#   The following rule will handle the Games/008 sentence:
+#     If the number of the locations between a location and a covered location
+#       is the number of the blocks that are on the covered location
+#       then you can move it onto the former location.
+#   Other variations may need different rules, since
+#   these rules need to deal with a lot of details.
+sp {interpret*apply*do-if-then-statement*games-008
+   (state <s> ^problem-space interpret
+              ^operator <o>
+              ^message nil)
+   (<o> ^name do-if-then-statement
+        ^meaning <m>)
+   #    Look at the top level structure
+   (<m> ^is.a IfThenStatement
+        ^condition { <condition> <> nil }
+        ^statement { <statement> <> nil })
+   #    The condition part
+   (<condition> ^is.a EqualComparison
+                ^value1 <value1>
+                ^value2 <value2>)
+   (<value1> ^is.a FunctionApplication
+             ^name number1
+             ^argument <number-of-1-argument>)
+   (<number-of-1-argument> ^referent <number-of-1-object>)
+   (<value2> ^is.a FunctionApplication
+             ^name number1
+             ^argument <number-of-2-argument>)
+   (<number-of-2-argument> ^referent <number-of-2-object>)
+      #    The statement part
+   (<statement> ^is.a EnabledCommand
+                ^enabler <enabler>
+                ^command <command>)
+   (<command> ^location <move-location>
+              ^action <move-command>)
+   (<move-command> ^object.referent <move-object>
+                   ^action.action <move-action>)
+   (<move-location> ^object.referent <target-location>)
+-->
+   #    Build the message
+   (<s> ^message nil -
+        ^message <message>)
+   (<message> ^message-type conditional
+              ^if-subclause <if-clause>
+              ^then-subclause <then-clause>)
+   #    Build the condition
+   (<if-clause> ^predicate <number-of-2>
+                ^arg1 <number-of-1>
+                ^action <if-action>)
+   (<if-action> ^item-type action
+                ^handle is1)
+   (<number-of-1> ^2 <number-of-1-arg>
+                  ^handle of1
+                  ^item-type predicate)
+   (<number-of-1-arg> ^2 <number-of-1-object>
+                      ^handle number1)
+   (<number-of-2> ^2 <number-of-2-arg>
+                  ^handle of1
+                  ^item-type predicate)
+   (<number-of-2-arg> ^2 <number-of-2-object>
+                      ^handle number1)
+   #    Build the statement
+   (<then-clause> ^agent <then-agent>
+                  ^action-modifier <action-modifier>
+                  ^arg2 <action-arg-2>
+                  ^arg1 <move-object>
+                  ^action <move-action>)
+   (<action-modifier> ^handle can)
+   (<then-agent> ^predicate <rosie-predicate>
+                 ^debug-id rob
+                 ^arm <arm>
+                 ^handle rosie
+                 ^item-type object)
+   (<rosie-predicate> ^handle rosie)
+   (<arm> ^action wait)
+   (<action-arg-2> ^2 <target-location>
+                   ^handle on1
+                   ^item-type predicate)
+}

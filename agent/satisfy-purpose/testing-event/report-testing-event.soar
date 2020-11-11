@@ -1,0 +1,62 @@
+sp {testing-event*propose*report-testing-event
+   (state <s> ^name testing-event
+              ^handled-command true
+              ^command-name <cmd-name>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name report-testing-event
+        ^type <cmd-name>)
+}
+
+sp {testing-event*apply*report-testing-event*interaction*stack
+   (state <s> ^name testing-event
+              ^operator <o>
+              ^top-state.interaction.status <status>)
+   (<o> ^name report-testing-event
+        ^type <cmd-name>)
+-->
+   (<status> ^performed.testing-event <te>)
+   (<te> ^type <cmd-name>
+         ^originator agent)
+}
+
+# If we are scripting, then advance to the next sentence
+sp {testing-event*apply*report-testing-event*advance*script
+   (state <s> ^name testing-event
+              ^operator <o>
+              ^purpose.type handle-command
+              ^top-state <ts>)
+   (<o> ^name report-testing-event
+        ^type <cmd-name>)
+   (<ts> ^game-scripting true ^current-sentence-number <csn>)
+-->
+   (<ts> ^n-sentence-number (+ <csn> 1))
+   (<ts> ^current-sentence-number <csn> -)
+}
+
+# Report that the command is handled to the output link
+sp {testing-event*apply*report-testing-event*send*command-handled*output-link
+   (state <s> ^name testing-event
+              ^operator <o>
+              ^purpose.type handle-command
+              ^purpose.parameters.complete-command <comp>
+              ^top-state.io.output-link <out>)
+   (<o> ^name report-testing-event
+        ^type <cmd-name>)
+-->
+   (<out> ^handled-command <cmd>)
+   (<cmd> ^type <cmd-name>
+          ^command <comp>)
+}
+
+# Clean up a previous handled command if it hasn't been yet
+sp {testing-event*apply*report-testing-event*remove*previous*command-handled*output-link
+   (state <s> ^name testing-event
+              ^operator.name report-testing-event
+              ^purpose.parameters.complete-command <comp>
+              ^top-state.io.output-link <out>)
+   (<out> ^handled-command <cmd>)
+   (<cmd> ^command <> <comp>)
+-->
+   (<out> ^handled-command <cmd> -)
+}

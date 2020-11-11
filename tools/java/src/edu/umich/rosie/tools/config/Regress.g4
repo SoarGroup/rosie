@@ -1,4 +1,7 @@
 grammar Regress;
+@header {
+package edu.umich.rosie.tools.config;
+}
 corpus   : block+ COMMENT* ;
 block    : COMMENT* sentence FAILED? expected? ;
 sentence : sentenceWord (sentenceWord | ',' )* ('.' | TERMINATOR)? ;
@@ -10,7 +13,7 @@ value    : (variable | '@'? SYMBOL | WORD | NUMBER) ;
 variable : '<' WORD '>' ;
 QUOTE    : '"' ~["]* '"';
 SYMBOL   : [a-zA-Z][0-9]+ ;
-WORD     : [a-zA-Z][a-zA-Z0-9\-'_]* ;
+WORD     : [a-zA-Z!][a-zA-Z0-9\-'_]* ;
 NUMBER   : '-'? ('.' DIGIT+ | DIGIT+ ('.' DIGIT*)? ) ;
 fragment DIGIT : [0-9] ;
 PAREN    : [()] ;

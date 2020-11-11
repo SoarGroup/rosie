@@ -32,6 +32,21 @@ sp {add-object-to-world*propose*matches-object-predicates*source-type*belief
         ^matching-counts <mc>)
 }
 
+### Case 3: For an epmem object, match any objects that have no belief/perception
+sp {add-object-to-world*propose*matches-object-predicates*source-type*epmem
+   (state <s> ^name add-object-to-world
+              ^source-type epmem
+              ^source-obj <il-obj>
+              ^object-monitor.object-info <obj-info>
+             -^predicate-match)
+   (<obj-info> -^belief-obj)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name matches-object-predicates
+        ^object-info <obj-info>
+        ^matching-counts <mc>)
+}
+
 ### Elaborate matching predicates
 
 sp {add-object-to-world*elaborate*matches-object-predicates*matching-predicate
@@ -89,7 +104,8 @@ sp {matching-existing-object*elaborate*matching-object-predicates*number-matchin
 sp {add-object-to-world*elaborate*matches-object-predicates*conflicting-predicate
    (state <s> ^name add-object-to-world
               ^operator <o> +
-              ^new-object-predicates.<prop> <pred>)
+              ^new-object-predicates.<prop> <pred>
+             -^default-value <pred>)
    (<o> ^name matches-object-predicates
         ^object-info.world-obj.predicates <preds>)
    (<preds> -^<prop> <pred>
@@ -102,7 +118,7 @@ sp {add-object-to-world*elaborate*matches-object-predicates*conflicting-predicat
 sp {add-object-to-world*elaborate*matches-object-predicates*conflicting-predicate*required
    (state <s> ^name add-object-to-world
               ^operator <o> +
-              ^new-object-predicates.{ <prop> << category modifier1 name sentence possessive >> } <pred>)
+              ^new-object-predicates.{ <prop> << category modifier1 name sentence possessive >> } { <pred> <> recalled1 })
    (<o> ^name matches-object-predicates
         ^object-info.world-obj.predicates <preds>)
    (<preds> -^<prop> <pred>)
@@ -119,9 +135,24 @@ sp {add-object-to-world*prefer*matches-object-predicates*higher*matching-predica
               ^operator <o1> +
               ^operator <o2> +)
    (<o1> ^name matches-object-predicates
-         ^matching-predicate-count <c>)
+         ^number-matching-predicates <c>)
    (<o2> ^name matches-object-predicates
-         ^matching-predicate-count < <c>)
+         ^number-matching-predicates < <c>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+# If two have the same matching count, prefer one alphabetically (to make more deterministic)
+sp {add-object-to-world*prefer*matches-object-predicates*equal*number-matching-predicates*alphabet
+   (state <s> ^name add-object-to-world
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name matches-object-predicates
+         ^number-matching-predicates <c>
+         ^object-info.object-handle <h>)
+   (<o2> ^name matches-object-predicates
+         ^number-matching-predicates <c>
+         ^object-info.object-handle > <h>)
 -->
    (<s> ^operator <o1> > <o2>)
 }

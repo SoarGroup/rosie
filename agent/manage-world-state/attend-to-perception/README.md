@@ -226,5 +226,3 @@ A predicate match occurs if the candidate has at least 1 matching predicate, no 
 and more matching predicates will be preferred.
 Predicate conflicts if the candidate has a different predicate for the same property
 
-
-

@@ -1,0 +1,52 @@
+### For the internal environment, simulate the press command on the top-state world ###
+
+sp {op_press1*propose*simulate-press-command
+   (state <s> ^name op_press1
+              ^problem-space.execution-type external
+              ^agent-params.domain internal
+              ^current-task-segment <seg>)
+   (<seg> ^press-command <cmd>)
+   (<cmd> -^status success)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name simulate-press-command
+        ^item-type command-operator
+        ^command <cmd>)
+}
+
+sp {op_press1*apply*simulate-press-command*mark*command*success
+   (state <s> ^name op_press1
+              ^operator <o>)
+   (<o> ^name simulate-press-command
+        ^command <cmd>)
+-->
+   (<cmd> ^status success)
+}
+
+### The following are specific models for simulating dynamics in the environment
+# They only modify the simulated input-link, so they are not considered part of Rosie's world knowledge 
+
+sp {op_press1*apply*simulate-press-command*watercooler*dispense*water
+   (state <s> ^name op_press1
+              ^operator <o>
+              ^agent-params.simulate-perception true
+              ^top-state.perception-monitor.object-monitor.object-info <obj-info>
+              ^world.predicates.predicate <in-pred>)
+   (<o> ^name simulate-press-command
+        ^command.object <button>)
+   (<in-pred> ^handle in1
+              ^instance <ins1> <ins2>)
+   (<ins1> ^1 <button> ^2 <cooler>)
+   (<ins2> ^1 <vessel> ^2 <cooler>)
+   (<cooler> ^root-category cooler1)
+   (<vessel> ^predicates.affordance1 fillable1
+             ^predicates.contents1 empty1)
+   (<obj-info> ^input-link-obj.source-obj.predicates <src-preds>
+               ^world-obj <vessel>)
+   (<src-preds> ^contents1 empty1)
+-->
+   (<src-preds> ^contents1 empty1 -
+                ^contents1 water1)
+}
+
+

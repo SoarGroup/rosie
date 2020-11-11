@@ -1,0 +1,143 @@
+##!
+# @file
+#
+# @created plindes 20200226
+# File: 001.soar
+# Author: Peter Lindes
+# Created: 26 February 2020
+#
+# Desc: This file contains all the processing rules
+#       needed to add to be able to process sentence 001
+#       of the Games development set.
+#  This is sentence #1 of 01.01_blocks-world script.txt.
+#  The sentence is:
+#      The name of the puzzle is blocks-world.
+#
+
+
+#   Propose an operator to interpret a NameDefinition
+#   This operator uses the newer strategy of building
+#   a message directly in interpret without going on
+#   to the act operator.
+sp {interpret*propose*do-name-definition
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^comprehension <c>
+              ^discourse <d>
+              ^message nil)
+   (<c> ^cxn-stack <cxn>)
+   (<cxn> ^m <m>   #   Sometimes we need to see the syntax
+          ^previous nil)    #   Otherwise there was a syntax error
+   (<m> ^is.a NameDefinition)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name do-name-definition
+        ^type msg-interpretation
+        ^cxn <cxn>
+        ^meaning <m>
+        ^discourse <d>
+        ^debug-info (concat |Interpret a NameDefinition.|))
+}
+
+#   Build a message for a WordDefinition like this one:
+#       The name of the puzzle is blocks-world.
+# TAKE THIS MEANING:
+#(M10 ^is A34 ^name M3 ^relation M8 ^schema-name NameDefinition ^source I19
+#       ^text |The name of the puzzle is blocks-world.| ^word blocks-world)
+#  (A34 ^a NameDefinition)
+#  (M3 ^concept-handle name1 ^concept-type nil ^is A11 ^predicate L20 (@999166)
+#         ^rosie-category concept ^schema-name Name ^source I11
+#         ^text |The name|)
+#    (A11 ^a Concept ^a Name ^a Entity)
+#    (L20 ^handle name1 ^property L21 (@999155))
+#      (L21 ^handle concept ^type conceptual)
+#    (I11 ^left 0 ^right 1)
+#  (M8 ^is A26 ^object M7 ^prep of1 ^schema-name PrepRelation ^source I16
+#         ^text |of the puzzle|)
+#    (A26 ^a PrepRelation)
+#    (M7 ^category M6 ^givenness definite ^is A24 ^modifiers nil ^name Puzzle
+#           ^predicate L27 (@999160) ^referent nil ^relation nil
+#           ^schema-name RefDesc ^source I15 ^text |the puzzle|)
+#      (M6 ^concept-handle puzzle1 ^concept-type nil ^is A20
+#             ^predicate L25 (@999160) ^rosie-category concept
+#             ^schema-name Puzzle ^source I14 ^text puzzle)
+#        (A20 ^a Concept ^a Puzzle ^a Entity)
+#        (L25 ^handle puzzle1 ^property L26 (@999155))
+#          (L26 ^handle concept ^type conceptual)
+#        (I14 ^left 4 ^right 4)
+#      (A24 ^a RefDesc)
+#      (L27 ^handle puzzle1 ^property L28 (@999155))
+#        (L28 ^handle concept ^type conceptual)
+#      (I15 ^left 3 ^right 4)
+#    (I16 ^left 2 ^right 4)
+#  (I19 ^left 0 ^right 6)
+# AND BUILD A MESSAGE LIKE THIS:
+#	(I25 ^arg1 I43 ^message-type object-description ^predicate N38)
+#	  (I43 ^2 I44 ^handle of1 ^item-type predicate)
+#	    (I44 ^2 N15 ^handle name1)
+#	      (N15 ^handle puzzle1 ^property L47 (@100165))
+#	        (L47 ^handle concept ^type conceptual)
+#	  (N38 ^handle blocks-world1 ^item-type predicate
+#	         ^word-structure N37 (@999000))
+#	    (N37 ^referent R114 (@999001) ^spelling blocks-world)
+#	      (R114 ^handle blocks-world1 ^word-structure N37 (@999000))
+sp {interpret*apply*do-name-definition
+   (state <s> ^problem-space interpret
+              ^operator <o>
+              ^message nil)
+   (<o> ^name do-name-definition
+        ^meaning <m>)
+   (<m> ^is.a NameDefinition
+        ^name <ref-desc>
+        ^relation <relation>
+        ^word <word>)
+   #    Get a RefDesc
+   (<ref-desc> ^is.a Name
+               ^predicate <predicate>)
+   #    Find the main noun
+   (<predicate> ^handle <noun-1>
+                ^property <pred-prop>)
+   (<pred-prop> ^handle concept
+                ^type conceptual)
+   #    Find the preposition
+   (<relation> ^is.a PrepRelation
+               ^prep <prep>
+               ^object <pp-object>)
+   #    Find the secondary noun
+   (<pp-object> ^is.a RefDesc
+                ^predicate <predicate-2>)
+   (<predicate-2> ^handle <noun-2>
+                  ^property <pred-2-prop>)
+   (<pred-2-prop> ^handle concept
+                  ^type conceptual)
+-->
+   #    Build the message
+   (<s> ^message nil -
+        ^message <message>)
+   (<message> ^predicate <msg-predicate>
+              ^message-type object-description
+              ^arg1 <arg1>)
+   #    Build the arg1
+   (<arg1> ^item-type predicate
+           ^handle <prep>
+           ^2 <n-2-1>)
+   (<n-2-1> ^handle <noun-1>
+            ^2 <n-2-2>)
+   (<n-2-2> ^property <n-2-2-prop>
+            ^handle <noun-2>)
+   (<n-2-2-prop> ^type conceptual
+                 ^handle concept)
+   #    Build the predicate
+   (<msg-predicate> ^word-structure <word-struct>
+                    ^item-type predicate
+                    ^handle (concat <word> |1|))
+   (<word-struct> ^spelling <word>
+                  ^referent <referent>)
+   (<referent> ^word-structure <word-struct>
+               ^handle (concat <word> |1|))
+   #    Mark things to store in smem
+   (<s> ^store-concept <word-struct>
+        ^store-concept <referent>)
+}
+
+

@@ -1,0 +1,55 @@
+### Send the low-level press command when the object is visible + reachable ###
+
+sp {op_press1*propose*send-press-command
+   (state <s> ^name op_press1
+              ^target-object <obj>)
+   (<obj> ^predicates <preds>)
+   (<preds> ^is-visible1 visible1
+            ^is-reachable1 reachable1)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name send-press-command
+        ^item-type command-operator
+        ^command-name press-command
+        ^arg1.id <obj>)
+}
+
+
+### internal domain ###
+
+sp {op_press1*external*apply*send-press-command*internal
+   (state <s> ^name op_press1
+              ^problem-space.execution-type external
+              ^agent-params.domain internal
+              ^operator <o>
+              ^current-task-segment <seg>)
+   (<o> ^name send-press-command
+        ^command-name <cmd-name>
+        ^arg1.id <obj>)
+-->
+   (<seg> ^<cmd-name> <cmd>)
+   (<cmd> ^item-type output-command
+          ^name press
+          ^object <obj>)
+}
+
+### magicbot ###
+
+sp {op_press1*external*apply*send-press-command*magicbot
+   (state <s> ^name op_press1
+              ^agent-params.domain magicbot
+              ^operator <o>
+              ^io.output-link <ol>
+              ^current-task-segment <seg>)
+   (<o> ^name send-press-command
+        ^command-name <cmd-name>
+        ^arg1.id.perception-id <perc-id>)
+-->
+   (<ol> ^do-control-law <cmd>)
+   (<cmd> ^name press
+          ^item-type output-command
+          ^parameters.object-id (int <perc-id>)
+          ^termination-condition.name stabilized)
+   (<seg> ^<cmd-name> <cmd>)
+}
+

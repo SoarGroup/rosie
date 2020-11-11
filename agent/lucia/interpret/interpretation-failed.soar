@@ -8,6 +8,12 @@
 #
 # Desc:  Detect and recover from a crash within interpret.
 #
+#   There are two versions of the apply rule for different operators:
+#       1.  Type interpretation operators produce actions
+#           that are turned into message by the act operator.
+#       2.  Type msg-interpretation operators produce messages
+#           directly.
+#
 
 #    Propose an operator to detect a crash
 sp {interpret*propose*interpretation-failed*no-change
@@ -43,16 +49,17 @@ sp {interpret*propose*interpretation-failed*tie
 
 #    Apply the operator to recover from the crash
 #    by posting a FAILURE action
-sp {interpret*apply*interpretation-failed
+sp {interpret*apply*interpretation-failed*action
    (state <s> ^attribute state
               ^impasse no-change
               ^superstate <ss>
               ^operator <o>)
    (<o> ^name interpretation-failed
-        ^debug-info <message>)
+        ^debug-info <debug-info>)
    (<ss> ^attribute operator
          ^superstate <sss>)
    (<sss> ^problem-space interpret
+          ^operator.type interpretation
           ^top-state <ts>)
    (<ts> ^io.output-link <output>
         -^action )
@@ -69,5 +76,39 @@ sp {interpret*apply*interpretation-failed
    #   Report the interpretation to the outside world
    (<output> ^report-decision <action>)
    #    Report what happened
-   (write (concat <message>))
+   (write (concat <debug-info>))
+}
+
+#    Apply the operator to recover from the crash
+#    by posting a FAILURE message
+sp {interpret*apply*interpretation-failed*message
+   (state <s> ^attribute state
+              ^impasse no-change
+              ^superstate <ss>
+              ^operator <o>)
+   (<o> ^name interpretation-failed
+        ^debug-info <debug-info>)
+   (<ss> ^attribute operator
+         ^superstate <sss>)
+   (<sss> ^problem-space interpret
+          ^operator.type msg-interpretation
+          ^message nil
+          ^top-state <ts>)
+   (<ts> ^io.output-link <output>
+        -^action )
+-->
+   #   Add an action to report the failure
+   (<sss> ^message nil -
+          ^message <message>)
+   (<message> ^action FAILURE
+              ^result <result>
+              ^text |FAILED!|
+              ^next nil)
+   (<result> ^interaction-status <i-status>)
+   (<i-status> ^failure <f>)
+   (<f> ^type msg-interpretation)
+   #   Report the interpretation to the outside world
+   (<output> ^report-decision <message>)
+   #    Report what happened
+   (write (concat <debug-info>))
 }

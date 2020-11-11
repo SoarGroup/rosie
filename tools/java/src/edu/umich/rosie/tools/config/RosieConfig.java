@@ -17,7 +17,7 @@ public class RosieConfig {
 	public static final HashSet<String> PROP_NAMES = new HashSet<String>(
 			Arrays.asList("agent-name", "agent-dir", "domain",
 					"parser", "parser-test",
-					"hypothetical", "simulate-perception",
+					"hypothetical", "simulate-perception", "enable-svs",
 					"sentence-source", "sentences-file", "world-file", "smem-config-file", 
 					"custom-soar-file", "custom-smem-file", 
 					"map-info-file", "object-info-file", "internal-world-file", "waypoint-map-file"));
@@ -30,7 +30,7 @@ public class RosieConfig {
 	//    DEFAULT - The directory containing the config file
 	public String agentDir;
 	
-	// domain = << magicbot tabletop internal fetch ai2thor cozmo >>  [REQUIRED]
+	// domain = << magicbot tabletop internal fetch ai2thor cozmo >>  [OPTIONAL]
 	//    The environment the agent is in (determines perception/action rules)
 	public String domain;
 	public static final HashSet<String> VALID_DOMAINS = new HashSet<String>(
@@ -39,6 +39,9 @@ public class RosieConfig {
 	// simulate-perception << true false >> [OPTIONAL]
 	//    Only relevant for domain=internal, whether more detailed perception is simulated
 	public Boolean simulate_perception;
+
+	// enable-svs << true false >> [DEFAULT=true]
+	public Boolean enable_svs;
 	
 	// parser = << laird lucia >>  [OPTIONAL] - The parser the agent should use
 	//    DEFAULT - laird
@@ -161,15 +164,18 @@ public class RosieConfig {
 						"Must be one of: " + VALID_DOMAINS.toString());
 			}
 		} else {
-			throw new RosieConfigException("Missing domain parameter");
+			this.domain = null;
 		}
 
 		// simulate-perception
-		if (this.domain.equals("internal")){
+		if (this.domain != null && this.domain.equals("internal")){
 			this.simulate_perception = props.getProperty("simulate-perception", "false").toLowerCase().equals("true");
 		} else {
 			this.simulate_perception = false;
 		}
+
+		// enable-svs
+		this.enable_svs = props.getProperty("enable_svs", "true").toLowerCase().equals("true");
 		
 		// parser
 		if (props.containsKey("parser")){
@@ -273,14 +279,26 @@ public class RosieConfig {
 		
 		// internal-world-file
 		if (props.containsKey("internal-world-file")){
-			this.internalWorldFile = new File(this.rosieHome + "/agent/manage-world-state/internal-worlds/" + props.getProperty("internal-world-file"));
+			// Check if the file is local, if not, use the internal-worlds directory in the agent code
+			File worldFile = new File(configFile.getParent() + "/" + props.getProperty("internal-world-file").replaceAll("\\\\", "/"));
+			if(worldFile.exists()){
+				this.internalWorldFile = worldFile;
+			} else {
+				this.internalWorldFile = new File(this.rosieHome + "/agent/manage-world-state/internal-worlds/" + props.getProperty("internal-world-file"));
+			}
 		} else {
 			this.internalWorldFile = null;
 		}
 		
 		// waypoint-map-file
 		if (props.containsKey("waypoint-map-file")){
-			this.waypointMapFile = new File(this.rosieHome + "/agent/manage-world-state/waypoint-maps/" + props.getProperty("waypoint-map-file"));
+			// Check if the file is local, if not, use the internal-worlds directory in the agent code
+			File wpFile = new File(configFile.getParent() + "/" + props.getProperty("waypoint-map-file").replaceAll("\\\\", "/"));
+			if(wpFile.exists()){
+				this.waypointMapFile = wpFile;
+			} else {
+				this.waypointMapFile = new File(this.rosieHome + "/agent/manage-world-state/waypoint-maps/" + props.getProperty("waypoint-map-file"));
+			}
 		} else {
 			this.waypointMapFile = null;
 		}
@@ -314,6 +332,7 @@ public class RosieConfig {
 		sb.append("rosie-home = " + this.rosieHome + "\n");
 		sb.append("domain = " + this.domain + "\n");
 		sb.append("simulate-perception = " + new Boolean(this.simulate_perception).toString() + "\n");
+		sb.append("enable-svs = " + new Boolean(this.enable_svs).toString() + "\n");
 		sb.append("parser = " + this.parser + "\n");
 		sb.append("parser-test = " + this.parser_test + "\n");
 		sb.append("hypothetical = " + this.hypothetical + "\n");

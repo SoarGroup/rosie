@@ -86,6 +86,7 @@ sp {comprehend-word*propose*ground-reference
    (<ref-desc> ^is.a RefDesc)
    (<ref-desc> ^modifiers <modifiers>
               -^category.rosie-category concept #   Concepts should be looked up in smem
+              -^category function           #   Functions should be dealt with elsewhere
               -^givenness relative-pronoun	#	This should have been resolved previously
               -^givenness deictic           #   Ignore "this one" here
               -^givenness proper-name)      #   Proper names handled elsewhere
@@ -124,6 +125,9 @@ sp {comprehend-word*apply*ground-reference*category*already-grounded
 #   and later want to ground "the current location".
 #   So that other rule now will not fire if we're looking for
 #   "the current location".
+#
+#   PL 8/18/2020 - a Location is no longer a spatial-shape, instead
+#   it has ^category location. Thus the above comments no longer apply.
 sp {comprehend-word*apply*ground-reference*category*current-location
    (state <s> ^problem-space comprehend-word
               ^operator <o>
@@ -133,8 +137,7 @@ sp {comprehend-word*apply*ground-reference*category*current-location
    (<ref-desc> ^category <rosie-ref-desc>
                ^modifiers <modifiers>)
    #    Get the category
-   (<rosie-ref-desc> ^rosie-category spatial-shape
-                     ^spatial-shape location1)
+   (<rosie-ref-desc> ^rosie-category location)
    #    Look for the current location
    (<modifiers> ^is.a PropertyDescriptor
                 ^class state
@@ -169,10 +172,10 @@ sp {comprehend-word*apply*ground-reference*category*not-ONE
               ^top-state <ts>)
    (<o> ^name ground-reference
         ^meaning <ref-desc>)
-   (<ref-desc> ^category <rosie-ref-desc>)
+   (<ref-desc> ^category <rosie-ref-desc>
+               ^givenness { <x> <> |one-pronoun| })
    #    Get the category
-   (<rosie-ref-desc> ^rosie-category { <category> <> nil }
-                    -^givenness |one-pronoun|)
+   (<rosie-ref-desc> ^rosie-category { <category> <> nil })
    #    Select all referents of that category
    (<ts> ^world <world>)
    (<world> ^objects.object <object>)
@@ -186,22 +189,76 @@ sp {comprehend-word*apply*ground-reference*category*not-ONE
 }
 
 #   Look for objects of a given Rosie category, NOT for pronoun ONE
-#   A special case for spatial-shape
-#   This should fire if there is an object in the world whose ^category
-#   is spatial-shape and whose ^spatial-shape value is the same
-#   as the ^spatial-shape value under the ^category of our RefDesc.
-#   When this matches, we assume we have found the right object.
-sp {comprehend-word*apply*ground-reference*category*not-ONE*spatial-shape
+#   This version looks for a "salient" object
+#   For now, this should only happen for a definite RefDesc
+#   and only in hypothetical mode.
+sp {comprehend-word*apply*ground-reference*category*salient
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>
+              #    Look for the hypothetical flag
+              ^superstate.comprehension.hypothetical true)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   (<ref-desc> ^category <rosie-ref-desc>
+               ^givenness definite)
+   #    Get the category
+   (<rosie-ref-desc> ^rosie-category { <rosie-category> <> nil })
+   #    Select all referents of that category
+   (<ts> ^discourse.salient <salient>)
+   (<salient> ^reference <salient-refDesc>)
+   #    Make sure the categories match
+   (<salient-refDesc> ^category.rosie-category <rosie-category>)
+   #    Then get the object
+   (<salient-refDesc> ^referent { <object> <> nil })
+-->
+   #    Post the referent on the state
+   (<s> ^category done
+        ^referent <object>)
+}
+
+#   Look for objects of a any reasonable Rosie category,
+#   NOT for pronoun ONE
+sp {comprehend-word*apply*ground-reference*category*not-ONE*object
    (state <s> ^problem-space comprehend-word
               ^operator <o>
               ^top-state <ts>)
    (<o> ^name ground-reference
         ^meaning <ref-desc>)
-   (<ref-desc> ^category <rosie-ref-desc>)
-   #	Get the category
+   (<ref-desc> ^category <rosie-ref-desc>
+               ^givenness { <x> <> |one-pronoun| })
+   #    Get the category
+   (<rosie-ref-desc> ^rosie-category object)
+   #    Select all referents of that category
+   (<ts> ^world <world>)
+   (<world> ^objects.object <object>)
+   (<object> ^predicates <predicates>)
+   #    Don't do it here if the category is spatial-shape
+   (<predicates> ^category << object block location >>)
+-->
+   #    Post the referent on the state
+   (<s> ^category done
+        ^referent <object>)
+}
+
+#   Look for objects of a given Rosie category, NOT for pronoun ONE
+#   A special case for spatial-shape
+#   This should fire if there is an object in the world whose ^category
+#   is spatial-shape and whose ^spatial-shape value is the same
+#   as the ^spatial-shape value under the ^category of our RefDesc.
+#   This is typically an object created from a definite reference.
+#   When this matches, we assume we have found the right object.
+sp {comprehend-word*apply*ground-reference*category*not-ONE*spatial-shape*definite
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   (<ref-desc> ^category <rosie-ref-desc>
+               ^givenness { <x> <> |one-pronoun| })
+   #    Get the category
    (<rosie-ref-desc> ^rosie-category spatial-shape
-                     ^spatial-shape <category-value>
-                    -^givenness |one-pronoun|)
+                     ^spatial-shape <category-value>)
    #	Select all referents of that category
    (<ts> ^world <world>)
    (<world> ^objects.object <object>)
@@ -212,6 +269,34 @@ sp {comprehend-word*apply*ground-reference*category*not-ONE*spatial-shape
                  ^spatial-shape <category-value>)
 -->
    #	Post the referent on the state
+   (<s> ^category done
+        ^referent <object>)
+}
+#   Look for objects of a given Rosie category, NOT for pronoun ONE
+#   A special case for spatial-shape
+#   This should fire if there is an object in the world whose ^category
+#   is location.
+#   This is typically an object created from a indefinite reference.
+#   When this matches, we assume we have found the right object.
+sp {comprehend-word*apply*ground-reference*category*not-ONE*spatial-shape*indefinite
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   (<ref-desc> ^category <rosie-ref-desc>
+               ^givenness { <x> <> |one-pronoun| })
+   #    Get the category
+   (<rosie-ref-desc> ^rosie-category spatial-shape
+                     ^spatial-shape location1)
+   #    Select all referents of that category
+   (<ts> ^world <world>)
+   (<world> ^objects.object <object>)
+   (<object> ^predicates <predicates>)
+   #    Match the type of spatial-shape.
+   (<predicates> ^category location)
+-->
+   #    Post the referent on the state
    (<s> ^category done
         ^referent <object>)
 }
@@ -238,11 +323,11 @@ sp {comprehend-word*apply*ground-reference*category*not-ONE*spatial-shape*fails
    (<o> ^name ground-reference
         ^meaning <ref-desc>)
    (<ref-desc> ^category <rosie-ref-desc>
-               ^modifiers <modifiers>)
+               ^modifiers <modifiers>
+               ^givenness { <x> <> |one-pronoun| })
    #    Get the category
    (<rosie-ref-desc> ^rosie-category spatial-shape
-                     ^spatial-shape <category-value>
-                    -^givenness |one-pronoun|)
+                     ^spatial-shape <category-value>)
    #    Select all referents of that category
    (<ts> ^world <world>)
    (<world> ^objects.object <object>)
@@ -275,10 +360,10 @@ sp {comprehend-word*apply*ground-reference*category*for-ONE-with-antecedent
               ^operator <o>)
    (<o> ^name ground-reference
         ^meaning <ref-desc>)
-   (<ref-desc> ^category <rosie-ref-desc>)
+   (<ref-desc> ^category <rosie-ref-desc>
+               ^givenness |one-pronoun|)
    #    Get the category
-   (<rosie-ref-desc> ^rosie-category { <category> <> nil }
-                     ^givenness |one-pronoun|)
+   (<rosie-ref-desc> ^rosie-category { <category> <> nil })
    #    Select all referents of the pronoun
    (<rosie-ref-desc> ^referent { <object> <> nil })
 -->
@@ -296,10 +381,10 @@ sp {comprehend-word*apply*ground-reference*category*for-ONE-no-antecedent
               ^top-state <ts>)
    (<o> ^name ground-reference
         ^meaning <ref-desc>)
-   (<ref-desc> ^category <rosie-ref-desc>)
+   (<ref-desc> ^category <rosie-ref-desc>
+               ^givenness |one-pronoun|)
    #    Get the category
-   (<rosie-ref-desc> ^rosie-category { <category> <> nil }
-                     ^givenness |one-pronoun|)
+   (<rosie-ref-desc> ^rosie-category { <category> <> nil })
    #    Detect the lack of an antecedent
    (<rosie-ref-desc> ^referent nil)
    #    Select all referents of that category
@@ -340,12 +425,8 @@ sp {comprehend-word*apply*ground-reference*category-empty
    (<object> ^predicates <predicates>)
    (<predicates> ^category <category>)}
 -->
-   #	Post NONE referent on the RefDesc
-   (<ref-desc> ^referent nil -
-               ^referent NONE)
-   #	Set done flag
-   (<s> ^category done
-        ^reference resolved)
+   #    Set category done flag
+   (<s> ^category done)
 }
 
 #	Post filters from the ref-desc
@@ -407,6 +488,40 @@ sp {comprehend-word*apply*ground-reference*post-color-filter
    (<s> ^filter <filter>)
    (<filter> ^class color
              ^value <color>)
+}
+
+sp {comprehend-word*apply*ground-reference*post-state-filter
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   (<ref-desc> ^category <rosie-ref-desc>)
+   #    Get the state
+   (<rosie-ref-desc> ^state { <state> <> nil })
+-->
+   #    Post a state filter
+   (<s> ^filter <filter>)
+   (<filter> ^class state
+             ^value <state>)
+}
+
+#   If we are in hypothetical mode, we want to filter
+#   out all concrete objects for a definite RefDesc.
+#   This means filter out all with ^dialog-object true.
+sp {comprehend-word*apply*ground-reference*post-hypothetical-filter
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              #    Look for the hypothetical flag
+              ^superstate.comprehension.hypothetical true)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   #    Only if the RefDesc is definite
+   (<ref-desc> ^givenness definite)
+-->
+   #    Post a state filter
+   (<s> ^filter <filter>)
+   (<filter> ^class dialog-object
+             ^value true)
 }
 
 #	Apply any filter that has been posted
@@ -512,13 +627,6 @@ sp {comprehend-word*apply*ground-reference*modifiers-after*prep-phrase
 -->
    #	Put the existing referents on the state
    (<s> ^referent <referent>)
-#   #	Add a relation
-#   (<ref-desc> ^relation nil -
-#               ^relation <relation>)
-#   #	Post a new filter
-#   (<s> ^filter <filter>)
-#   (<filter> ^class <class>
-#             ^value <name>)
 }
 
 #	Finish resolution - found at least one
@@ -559,8 +667,9 @@ sp {comprehend-word*apply*ground-reference*done-none
    #	Post the referent on the RefDesc
    (<ref-desc> ^referent nil -
                ^referent NONE)
-   #	Set done flag
-   (<s> ^reference resolved)
+   #    Set done flag and clear the modifiers
+   (<s> ^reference resolved
+        ^modifiers nil -)
 }
 
 #   Finish resolution - found none, special case for "one"
@@ -590,8 +699,9 @@ sp {comprehend-word*apply*ground-reference*done-none*one
    #    Post the referent on the RefDesc
    (<ref-desc> ^referent nil -
                ^referent NONE)
-   #    Set done flag
-   (<s> ^reference resolved)
+   #    Set done flag and clear the modifiers
+   (<s> ^reference resolved
+        ^modifiers nil -)
 }
 
 #	Finish resolution - some were already there
@@ -606,6 +716,70 @@ sp {comprehend-word*apply*ground-reference*done-already-there
    #	Ignoring givenness for now
    (<ref-desc> ^referent { <referent> <> nil })	#	Some referents on the RefDesc
 -->
-   #	Set done flag, leave referents there
-   (<s> ^reference resolved)
+   #    Set done flag
+   (<s> ^reference resolved
+        ^modifiers nil -)
+}
+
+#   Finish resolution - some were already there
+#   If the meaning has a relation and the referent object
+#   does not, we need to add it there.
+#   This works only for a PrepRelation.
+#   This should only be an issue in hypothetical mode.
+#   This version handles a relation with a single argument,
+#   like any ordinary preposition.
+sp {comprehend-word*apply*ground-reference*done-already-there*with-relation-1
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              #    Look for the hypothetical flag
+              ^superstate.comprehension.hypothetical true
+              ^modifiers nil    #    All modifiers have been applied
+             -^referent <referent>  #   No referents on the state
+             -^filter <filter>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   #    Ignoring givenness for now
+   (<ref-desc> ^referent { <referent> <> nil }  #   Some referents on the RefDesc
+               ^relation { <relation> <> nil }) #   A relation on the RefDesc
+   (<relation> ^schema-name PrepRelation    #   Don't allow PrepRelation2
+               ^prep <prep>
+               ^object.referent <prep-obj-ref>)
+-->
+   #    Add the relation to the object
+   (<referent> ^relation <obj-relation>)
+   (<obj-relation> ^2 <prep-obj-ref>
+                   ^handle <prep>)
+   #    Set done flag
+   (<s> ^reference resolved
+        ^modifiers nil -)
+}
+
+#   This version handles a relation with two arguments,
+#   like the preposition between.
+sp {comprehend-word*apply*ground-reference*done-already-there*with-relation-2
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              #    Look for the hypothetical flag
+              ^superstate.comprehension.hypothetical true
+              ^modifiers nil    #    All modifiers have been applied
+             -^referent <referent>  #   No referents on the state
+             -^filter <filter>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>)
+   #    Ignoring givenness for now
+   (<ref-desc> ^referent { <referent> <> nil }  #   Some referents on the RefDesc
+               ^relation { <relation> <> nil }) #   A relation on the RefDesc
+   (<relation> ^is.a PrepRelation2
+               ^prep <prep>
+               ^object.referent <prep-obj-ref>
+               ^object2.referent <prep-obj2-ref>)
+-->
+   #    Add the relation to the object
+   (<referent> ^relation <obj-relation>)
+   (<obj-relation> ^2 <prep-obj-ref>
+                   ^3 <prep-obj2-ref>
+                   ^handle <prep>)
+   #    Set done flag
+   (<s> ^reference resolved
+        ^modifiers nil -)
 }

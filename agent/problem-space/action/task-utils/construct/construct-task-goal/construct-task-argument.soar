@@ -46,6 +46,67 @@ sp {task-utils*construct-task-goal*elaborate*construct-task-argument*relation*go
    (<ref-info> ^1 <ref1> ^2 <ref2>)
 }
 
+# Relation goal clause without nested arg2
+sp {task-utils*construct-task-goal*elaborate*construct-task-argument*relation*goal-clause*2
+   (state <s> ^name construct-task-goal
+              ^goal-clause <gcl>)
+   (<gcl> ^predicate <rel-pred>
+          ^arg1 <obj1>
+          ^arg2 <obj2>
+          ^reference-info <ref1> <ref2>)
+   (<rel-pred> ^handle <pred-h>
+               ^item-type relation)
+   (<obj1> ^item-type object)
+   (<obj2> ^item-type object)
+   (<ref1> ^arg-name arg1)
+   (<ref2> ^arg-name arg2)
+-->
+   (<s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type predicate
+          ^result-type goal-clause
+          ^source <src>
+          ^reference-info <ref-info>)
+   (<src> ^type relation
+          ^handle <pred-h>
+          ^1 <obj1>
+          ^2 <obj2>)
+   (<ref-info> ^1 <ref1> ^2 <ref2>)
+}
+
+# Relation goal clause but second argument is only a single category
+sp {task-utils*construct-task-goal*elaborate*construct-task-argument*unary*goal-clause*arg2*pred
+   (state <s> ^name construct-task-goal
+              ^goal-clause <gcl>)
+   (<gcl> ^predicate <rel-pred>
+          ^arg1 <obj1>
+          ^arg2 <arg2>
+          ^reference-info <ref1>
+         -^reference-info.arg-name arg2)
+   (<rel-pred> ^handle <rel-h>
+               ^item-type relation)
+   (<obj1> ^item-type object)
+   (<arg2> ^handle <arg2-cat>
+           ^property.handle category
+          -^item-type object)
+   (<ref1> ^arg-name arg1)
+-->
+   (<s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type predicate
+          ^result-type goal-clause
+          ^source <src>
+          ^reference-info <ref-info>)
+   (<src> ^type relation
+          ^handle <rel-h>
+          ^1 <obj1>
+          ^2 <obj2>)
+   (<obj2> ^handle (make-constant-symbol |obj_|)
+           ^root-category <arg2-cat>
+           ^predicates.category <arg2-cat>)
+   (<ref-info> ^1 <ref1> ^2 <ref2>)
+   (<ref2> ^arg-name arg2 ^referent <obj2>
+           ^constraint.category <arg2-cat>)
+}
+
 # Special Case: Construct a relation goal predicate for heard (goal is that the person heard the message)
 sp {task-utils*construct-task-goal*elaborate*construct-task-argument*relation*predicate*heard
    (state <s> ^name construct-task-goal
@@ -91,3 +152,62 @@ sp {task-utils*construct-task-goal*elaborate*construct-task-argument*unary*condi
    (<ref-info> ^1 <ref1>)
 }
 
+#################################### modifiers #####################################
+
+sp {task-utils*construct-task-goal*elaborate*modifiers
+   (state <s> ^name construct-task-goal)
+-->
+   (<s> ^modifiers <mods>)
+}
+
+sp {task-utils*construct-task-goal*elaborate*modifiers*from*goal
+   (state <s> ^name construct-task-goal
+              ^goal-clause.modifier.handle <mod>
+              ^modifiers <mods>)
+-->
+   (<mods> ^handle <mod>)
+}
+
+# ENUMERATE: 1-3 modifiers
+
+sp {task-utils*construct-task-goal*elaborate*construct-task-argument*modifiers*1
+   (state <s> ^name construct-task-goal
+              ^modifiers <mods>)
+   (<mods> ^handle <mod1>
+          -^handle { <mod2> <> <mod1> })
+-->
+   (<s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type modifiers
+          ^arg-name modifiers
+          ^source <src>)
+   (<src> ^handle <mod1>)
+}
+
+sp {task-utils*construct-task-goal*elaborate*construct-task-argument*modifiers*2
+   (state <s> ^name construct-task-goal
+              ^modifiers <mods>)
+   (<mods> ^handle <mod1>
+           ^handle { <mod2> > <mod1> }
+          -^handle { <mod3> <> <mod2> <> <mod1> })
+-->
+   (<s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type modifiers
+          ^arg-name modifiers
+          ^source <src>)
+   (<src> ^handle <mod1> <mod2>)
+}
+
+sp {task-utils*construct-task-goal*elaborate*construct-task-argument*modifiers*3
+   (state <s> ^name construct-task-goal
+              ^modifiers <mods>)
+   (<mods> ^handle <mod1>
+           ^handle { <mod2> > <mod1> }
+           ^handle { <mod3> > <mod2> }
+          -^handle { <mod4> <> <mod3> <> <mod2> <> <mod1> })
+-->
+   (<s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type modifiers
+          ^arg-name modifiers
+          ^source <src>)
+   (<src> ^handle <mod1> <mod2> <mod3>)
+}

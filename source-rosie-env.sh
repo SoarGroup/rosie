@@ -6,9 +6,9 @@ export CLASSPATH=$CLASSPATH:$ROSIE_HOME/java/rosie.jar
 export CLASSPATH=$CLASSPATH:$ROSIE_HOME/tools/java/rosie-tools.jar
 export CLASSPATH=$CLASSPATH:$ROSIE_HOME/tools/antlr-4.5-complete.jar
 
-export PYTHONPATH=$PYTHONPATH:$ROSIE_HOME/tools/python
+export PYTHONPATH=$PYTHONPATH:$ROSIE_HOME/python
 
-export ROSIE_EVAL=$ROSIE_HOME/tools/python/rosie/evaluation
+export ROSIE_EVAL=$ROSIE_HOME/python/rosie/evaluation
 
 
 ### Rosie Scripts
@@ -54,6 +54,7 @@ complete -F _rosie_agents_completion run_rosie
 #   Add -h for help info
 #   Add -l to list all possible tasks
 #   Add -j to use the java testing tool instead of the python default
+#   Add -v to print detailed information about the test
 #   You can specify individual tests instead of running them all, e.g.
 #      run_task_learning_tests test1 - will only run test1
 alias run_task_learning_tests="$ROSIE_HOME/tools/scripts/run_task_learning_tests.sh"
@@ -61,7 +62,7 @@ complete -F _task_tests_completion run_task_learning_tests
 
 
 ### run_rosie_eval <eval-name>
-# Runs one of the evaluations in tools/python/rosie/evaluation
+# Runs one of the evaluations in python/rosie/evaluation
 alias run_rosie_eval="$ROSIE_HOME/tools/scripts/run_rosie_eval.sh"
 complete -F _rosie_evaluations_completion run_rosie_eval
 
@@ -73,9 +74,15 @@ complete -F _rosie_evaluations_completion run_rosie_eval
 # Will replace word1 with word2 in all subfiles, 
 #   but consider entire soar words only 
 #   (will not match parts of rules/attributes/variables)
+# USE WITH CAUTION! 
 alias soar-find-replace="$ROSIE_HOME/tools/scripts/find_replace_soar.sh"
 
+### grep-soar-word <word>
+# Will grep the current directory recursively for the given word
+#   but will only match entire soar words
+#   (will not match parts of rules/attributes/variables)
+alias grep-soar-word="$ROSIE_HOME/tools/scripts/grep_soar_word.sh"
 
-### grep-agent <pattern>
+### grep-rosie <pattern>
 # Will grep the agent folder for the given pattern, ignoring language-comprehension, game-learning, and testing files
-alias grep-agent="$ROSIE_HOME/tools/scripts/grep_agent.sh"
+alias grep-rosie="$ROSIE_HOME/tools/scripts/grep_agent.sh"

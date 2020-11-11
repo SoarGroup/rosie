@@ -1,0 +1,68 @@
+### For the internal environment, simulate the pour command on the top-state world ###
+
+sp {op_pour1*propose*simulate-pour-command
+   (state <s> ^name op_pour1
+              ^problem-space.execution-type external
+              ^agent-params.domain internal
+              ^current-task-segment <seg>)
+   (<seg> ^pour-command <cmd>)
+   (<cmd> -^status success)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name simulate-pour-command
+        ^item-type command-operator
+        ^command <cmd>)
+}
+
+sp {op_pour1*apply*simulate-pour-command*mark*command*success
+   (state <s> ^name op_pour1
+              ^operator <o>)
+   (<o> ^name simulate-pour-command
+        ^command <cmd>)
+-->
+   (<cmd> ^status success)
+}
+
+# Pour dispenser - fill target with the contents
+sp {op_pour1*apply*simulate-pour-command*dispenser*fillable
+   (state <s> ^name op_pour1
+              ^operator <o>
+              ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
+   (<o> ^name simulate-pour-command
+        ^command <cmd>)
+   (<cmd> ^object <obj>
+          ^target <tar>)
+
+   (<obj> ^predicates <opreds>)
+   (<opreds> ^affordance1 dispenser1
+             ^contents1 { <con> <> empty1 })
+
+   (<tar> ^predicates <tpreds>)
+   (<tpreds> ^affordance1 fillable1
+            ^contents1 empty1)
+   (<obj-info> ^world-obj <tar>
+               ^input-link-obj.source-obj.predicates <src-preds>)
+-->
+   (<src-preds> ^contents1 empty1 -
+                ^contents1 <con>)
+}
+
+# Pour into drain - empty target
+sp {op_pour1*apply*simulate-pour-command*empty*fillable*drain
+   (state <s> ^name op_pour1
+              ^operator <o>)
+   (<o> ^name simulate-pour-command
+        ^command <cmd>)
+   (<cmd> ^object <obj>
+          ^target.predicates.affordance1 drain1)
+
+   (<obj> ^predicates <opreds>)
+   (<opreds> ^affordance1 fillable1
+             ^contents1 { <con> <> empty1 })
+   (<obj-info> ^world-obj <obj>
+               ^input-link-obj.source-obj.predicates <src-preds>)
+-->
+   (<src-preds> ^contents1 <con> -
+                ^contents1 empty1)
+}
+

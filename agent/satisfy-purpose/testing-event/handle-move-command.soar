@@ -1,0 +1,82 @@
+sp {testing-event*propose*handle-move-command
+   (state <s> ^name testing-event
+              ^purpose <p>
+             -^handled-command)
+   (<p> ^type handle-command
+        ^parameters.command <cmd>)
+   (<cmd> ^spelling move
+          ^next <arg1>)
+   (<arg1> ^spelling <obj-h>
+           ^next <arg2>)
+   (<arg2> ^spelling <wp-h>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name handle-move-command
+        ^object-id <obj-h>
+        ^waypoint-handle <wp-h>)
+}
+
+sp {testing-event*propose*handle-move-command*teleport
+   (state <s> ^name testing-event
+              ^purpose <p>
+             -^handled-command)
+   (<p> ^type handle-command
+        ^parameters.command <cmd>)
+   (<cmd> ^spelling teleport
+          ^next <arg1>)
+   (<arg1> ^spelling <obj-h>
+           ^next.next.next.next.spelling <wp-h>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name handle-move-command
+        ^object-id <obj-h>
+        ^waypoint-handle <wp-h>)
+}
+
+sp {testing-event*elaborate*handle-move-command*object-src
+   (state <s> ^name testing-event
+              ^operator <o> +
+              ^top-state.internal-world.objects.object <obj>)
+   (<o> ^name handle-move-command
+        ^object-id <obj-id>)
+   (<obj> ^{ << handle perc-id >> } <obj-id>)
+-->
+   (<o> ^object-src <obj>)
+}
+
+# change the waypoint
+sp {testing-event*apply*handle-move-command*change*waypoint
+   (state <s> ^name testing-event
+              ^operator <o>)
+   (<o> ^name handle-move-command
+        ^object-src <obj>
+        ^waypoint-handle <wph>)
+   (<obj> ^waypoint { <old-wp> <> <wph> })
+-->
+   (<obj> ^waypoint <old-wp> -
+          ^waypoint <wph>)
+}
+
+# remove any relations involving the object being moved
+sp {testing-event*apply*handle-move-command*remove*relations
+   (state <s> ^name testing-event
+              ^operator <o>
+              ^top-state.perception-monitor.object-monitor.object-info <obj-info>
+              ^top-state.world.predicates.predicate <pred>)
+   (<o> ^name handle-move-command
+        ^object-src <obj-src>)
+   (<obj-info> ^input-link-obj.source-obj <obj-src>
+               ^world-obj <obj>)
+   (<pred> ^instance <i>)
+   (<i> ^<num> <obj>)
+-->
+   (<pred> ^instance <i> -)
+}
+
+# add performed-move flag
+sp {testing-event*apply*handle-move-command*add*performed-move*flag
+   (state <s> ^name testing-event
+              ^operator.name handle-move-command)
+-->
+   (<s> ^handled-command true)
+}

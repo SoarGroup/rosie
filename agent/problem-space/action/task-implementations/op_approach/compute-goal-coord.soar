@@ -6,36 +6,44 @@ sp {op_approach*elaborate*candidate-coords
    (<s> ^candidate-coords <cc>)
 }
 
-sp {op_approach*elaborate*candidate-coords*has-front*true
+sp {op_approach*elaborate*candidate-coords*num-coords*true
    (state <s> ^name op_approach1
               ^candidate-coords <cc>)
-   (<cc> -^has-front false)
+   (<cc> -^num-coords > 1)
 -->
-   (<cc> ^has-front true)
+   (<cc> ^num-coords 1)
 }
 
-sp {op_approach*elaborate*candidate-coords*has-front*false*grabbable
+sp {op_approach*elaborate*candidate-coords*num-coords*4*grabbable
    (state <s> ^name op_approach1
               ^target-object.predicates.affordance1 grabbable1
               ^candidate-coords <cc>)
 -->
-   (<cc> ^has-front false)
+   (<cc> ^num-coords 4)
 }
 
-#sp {op_approach*elaborate*candidate-coords*has-front*true*person
+#sp {op_approach*elaborate*candidate-coords*num-coords*true*person
 #   (state <s> ^name op_approach1
 #              ^target-object.predicates.category person
 #              ^candidate-coords <cc>)
 #-->
-#   (<cc> ^has-front true)
+#   (<cc> ^num-coords true)
 #}
 
-sp {op_approach*elaborate*candidate-coords*has-front*false*vehicle
+sp {op_approach*elaborate*candidate-coords*num-coords*4*vehicle
    (state <s> ^name op_approach1
               ^target-object.predicates.category vehicle1
               ^candidate-coords <cc>)
 -->
-   (<cc> ^has-front false)
+   (<cc> ^num-coords 4)
+}
+
+sp {op_approach*elaborate*candidate-coords*num-coords*2*door
+   (state <s> ^name op_approach1
+              ^target-object.predicates.category door1
+              ^candidate-coords <cc>)
+-->
+   (<cc> ^num-coords 2)
 }
 
 # Compute the sin/cos of the target's yaw 
@@ -56,24 +64,42 @@ sp {op_approach*elaborate*candidate-coords*axis_dist
               ^candidate-coords <cc>)
    (<scl> ^x <sx> ^y <sy>)
 -->
-   (<cc> ^axis_x (+ (/ <sx> 2) 0.8)
-         ^axis_y (+ (/ <sy> 2) 0.8) )
+   (<cc> ^axis_x (+ (/ <sx> 2) 0.6)
+         ^axis_y (+ (/ <sy> 2) 0.6) )
 }
 
 # Compute only the 1 coordinate that goes from the target's position 
 #   along the x axis and that represents the goal coordinate
-sp {op_approach*elaborate*candidate-coords*1*coord*has-front*true
+sp {op_approach*elaborate*candidate-coords*1*coord
    (state <s> ^name op_approach1
               ^target-transform.pos <pos>
               ^candidate-coords <cc>)
    (<pos> ^x <px> ^y <py>)
-   (<cc> ^has-front true
+   (<cc> ^num-coords 1
          ^sin <sin> ^cos <cos>
          ^axis_x <ax> ^axis_y <ay>)
 -->
    (<cc> ^coord <c1>)
    (<c1> ^x (+ <px> (* <ax> <cos>))
          ^y (+ <py> (* <ax> <sin>)))
+}
+
+# Compute 2 coordinates that go from the target's position 
+#   along the x axis (front + back)
+sp {op_approach*elaborate*candidate-coords*2*coords
+   (state <s> ^name op_approach1
+              ^target-transform.pos <pos>
+              ^candidate-coords <cc>)
+   (<pos> ^x <px> ^y <py>)
+   (<cc> ^num-coords 2
+         ^sin <sin> ^cos <cos>
+         ^axis_x <ax>)
+-->
+   (<cc> ^coord <c1> <c2>)
+   (<c1> ^x (+ <px> (* <ax> <cos>))
+         ^y (+ <py> (* <ax> <sin>)))
+   (<c2> ^x (- <px> (* <ax> <cos>))
+         ^y (- <py> (* <ax> <sin>)))
 }
 
 # Compute 4 coordinates that go from the target's position 
@@ -84,7 +110,7 @@ sp {op_approach*elaborate*candidate-coords*all*4*coords
               ^target-transform.pos <pos>
               ^candidate-coords <cc>)
    (<pos> ^x <px> ^y <py>)
-   (<cc> ^has-front false 
+   (<cc> ^num-coords 4
          ^sin <sin> ^cos <cos>
          ^axis_x <ax> ^axis_y <ay>)
 -->
@@ -116,8 +142,9 @@ sp {op_approach*elaborate*candidate-coords*coord*dist_sq
 
 sp {op_approach*propose*check-candidate-coord
    (state <s> ^name op_approach1
+              ^robot-coord
               ^candidate-coords <cc>)
-   (<cc> ^has-front false
+   (<cc> ^num-coords > 1
          ^coord <coord>)
    (<coord> -^is-clear)
 -->
@@ -136,12 +163,12 @@ sp {op_approach*apply*check-candidate-coord*create*collision*object
 -->
    (<cmd> ^add_node <an>)
    (<an> ^id approach-collision
-         ^geometry sphere
+         ^geometry box
          ^parent world
          ^position <pos>
          ^scale <scl>)
    (<pos> ^x <x> ^y <y> ^z 0.5)
-   (<scl> ^x 0.25 ^y 0.25 ^z 0.25)
+   (<scl> ^x 0.20 ^y 0.20 ^z 1.00)
 }
 
 sp {op_approach*elaborate*collision-obj*from*svs*scene
@@ -178,7 +205,7 @@ sp {op_approach*elaborate*check-candidate-coord*is-clear*true
               ^operator <o> +
               ^intersect-command <cmd>)
    (<o> ^name check-candidate-coord)
-   (<cmd> ^result.record <any>
+   (<cmd> ^status success
          -^result.record.value true)
 -->
    (<o> ^is-clear true)
@@ -210,6 +237,17 @@ sp {op_approach*apply*check-candidate-coord*finish
    (<coord> ^is-clear <is-clear>)
 }
 
+#sp {op_approach*apply*check-candidate-coord*write
+#   (state <s> ^name op_approach1
+#              ^operator <o>)
+#   (<o> ^name check-candidate-coord
+#        ^coord <coord>
+#        ^is-clear <is-clear>)
+#   (<coord> ^x <x> ^y <y> ^dist_sq <dist>)
+#-->
+#   (write (crlf) |RESULT: | <x> |, | <y> | (| <dist> |) clear=| <is-clear> (crlf))
+#}
+
 ### Copy the best coordinate as the goal-coord
 #   (either the front of the object, or the closest clear point)
 
@@ -220,7 +258,7 @@ sp {op_approach*propose*compute-goal-coord
               ^target-object.svs-obj.id <perc-id>
               ^candidate-coords <cc>
              -^goal-coord)
-   (<cc> ^has-front true
+   (<cc> ^num-coords 1
          ^coord <coord>)
 -->
    (<s> ^operator <o> + =)

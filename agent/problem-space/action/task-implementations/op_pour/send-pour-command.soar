@@ -1,0 +1,68 @@
+### Send the low-level pour command when the target is visible and reachable ###
+
+sp {op_pour1*propose*send-pour-command
+   (state <s> ^name op_pour1
+              ^using-object <obj>
+              ^target-object <tar>)
+   (<obj> ^predicates <obj-preds>)
+   (<obj-preds> ^is-grabbed1 grabbed1)
+   (<tar> ^predicates <tar-preds>)
+   (<tar-preds> ^is-visible1 visible1
+                ^is-reachable1 reachable1)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name send-pour-command
+        ^item-type command-operator
+        ^command-name pour-command
+        ^arg1.id <obj>
+        ^arg2 <arg2>)
+   (<arg2> ^handle in1
+           ^2 <tar>)
+}
+
+### internal ###
+
+sp {op_pour1*external*apply*send-pour-command*internal
+   (state <s> ^name op_pour1
+              ^problem-space.execution-type external
+              ^agent-params.domain internal
+              ^operator <o>
+              ^io.output-link <ol>
+              ^current-task-segment <seg>)
+   (<o> ^name send-pour-command
+        ^command-name <cmd-name>
+        ^arg1.id <obj1>
+        ^arg2.{2} <obj2>)
+-->
+   (<ol> ^perform-action <pa>)
+   (<pa> ^item-type output-command
+         ^name pour
+         ^object <obj1>
+         ^target <obj2>)
+   (<seg> ^<cmd-name> <pa>)
+}
+
+### magicbot ###
+
+sp {op_pour1*external*apply*send-pour-command*magicbot
+   (state <s> ^name op_pour1
+              ^problem-space.execution-type external
+              ^agent-params.domain magicbot
+              ^operator <o>
+              ^io.output-link <ol>
+              ^current-task-segment <seg>)
+   (<o> ^name send-pour-command
+        ^command-name <cmd-name>
+        ^arg1.id.perception-id <perc-id1>
+        ^arg2.{2}.perception-id <perc-id2>)
+-->
+   (<ol> ^do-control-law <cmd>)
+   (<cmd> ^name use-object
+          ^item-type output-command
+          ^parameters <params>
+          ^termination-condition.name stabilized)
+   (<params> ^object-id (int <perc-id1>)
+             ^target-id (int <perc-id2>))
+
+   (<seg> ^<cmd-name> <cmd>)
+}

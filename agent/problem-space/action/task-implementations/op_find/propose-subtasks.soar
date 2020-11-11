@@ -1,3 +1,4 @@
+################### Level 1: Working Memory ##############
 
 # Known location in the world, propose go-to that location
 sp {op_find1*propose*op_go-to1*location
@@ -22,6 +23,50 @@ sp {op_find1*propose*op_go-to1*location
            ^2 <loc>)
 }
 
+# If the object is on a surface that is unconfirmed, find it
+sp {op_find1*propose*op_find1*on*surface
+   (state <s> ^name op_find1
+              ^problem-space.execution-type external
+              ^target-object <obj>
+              ^world.predicates.predicate <on-pred>)
+   (<on-pred> ^handle on1
+              ^instance <i>)
+   (<i> ^1 <obj> ^2 <surf>)
+   (<surf> ^predicates <surf-preds>)
+   (<surf-preds> ^affordance1 surface1
+                 ^is-confirmed1 not-confirmed1)
+-->
+   (<s> ^operator <open-op> + =)
+   (<open-op> ^name op_find1
+              ^item-type task-operator
+              ^task-handle find1
+              ^arg1 <surf-arg>)
+   (<surf-arg> ^arg-type object
+               ^id <surf>)
+}
+
+# If the object is in a receptacle that is unconfirmed, find it
+sp {op_find1*propose*op_find1*in*receptacle
+   (state <s> ^name op_find1
+              ^problem-space.execution-type external
+              ^target-object <obj>
+              ^world.predicates.predicate <in-pred>)
+   (<in-pred> ^handle in1
+              ^instance <i>)
+   (<i> ^1 <obj> ^2 <rec>)
+   (<rec> ^predicates <rec-preds>)
+   (<rec-preds> ^affordance1 receptacle1
+                ^is-confirmed1 not-confirmed1)
+-->
+   (<s> ^operator <open-op> + =)
+   (<open-op> ^name op_find1
+              ^item-type task-operator
+              ^task-handle find1
+              ^arg1 <rec-arg>)
+   (<rec-arg> ^arg-type object
+              ^id <rec>)
+}
+
 # If the object is inside a closed receptacle, open it
 sp {op_find1*propose*op_open1
    (state <s> ^name op_find1
@@ -35,7 +80,7 @@ sp {op_find1*propose*op_open1
    (<rec-preds> ^affordance1 receptacle1
                 ^affordance1 openable1
                 ^is-confirmed1 confirmed1
-                ^<prop> closed2)
+                ^is-open1 not-open1)
 -->
    (<s> ^operator <open-op> + =)
    (<open-op> ^name op_open1
@@ -46,15 +91,18 @@ sp {op_find1*propose*op_open1
               ^id <rec>)
 }
 
+################### Level 2: Local Search ##############
+
 # Scan the room to see if you can see it
 sp {op_find1*propose*op_scan
    (state <s> ^name op_find1
               ^problem-space.execution-type external
-              ^agent-params.domain << magicbot cozmo >>
+              ^agent-params.domain << internal magicbot cozmo >>
               ^target-object <obj>
-             -^current-task-segment.tried-scan true)
+             -^current-task-segment.tried-scan <wp>
+              ^world.robot.current-waypoint <wp>)
 -->
-   (<s> ^operator <o> +)
+   (<s> ^operator <o> + =)
    (<o> ^name op_scan1
         ^item-type task-operator
         ^task-handle scan1
@@ -68,6 +116,102 @@ sp {op_find1*propose*op_scan
            ^1 <obj>)
 }
 
+#################### Level 3: Long Term Memory ##############
+
+# Try to recall the location of the object from smem
+sp {op_find1*propose*op_recall1*object*location
+   (state <s> ^name op_find1
+              ^problem-space.execution-type external
+              ^target-object <obj>
+             -^task-operator.performed-subtask find1recall1)
+   (<obj> ^predicates.category object)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name op_recall1
+        ^item-type task-operator
+        ^task-handle recall1
+        ^subtask-handle find1recall1
+        ^modifiers <mods>
+        ^arg1 <arg1>
+        ^arg2 <arg2>)
+   (<mods> ^arg-type modifiers
+           ^handle once1)
+   (<arg1> ^arg-type object
+           ^id <loc-obj>)
+   (<loc-obj> ^item-type object
+              ^abstract true
+              ^root-category location
+              ^predicates.category location)
+   (<arg2> ^arg-type object
+           ^id <obj>)
+   (<s> ^best-pref-eval <o>)
+}
+
+# Try to recall the office of a person from smem
+sp {op_find1*propose*op_recall1*person*office
+   (state <s> ^name op_find1
+              ^problem-space.execution-type external
+              ^target-object <obj>
+             -^task-operator.performed-subtask find1recall2)
+   (<obj> ^predicates.category person)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name op_recall1
+        ^item-type task-operator
+        ^task-handle recall1
+        ^subtask-handle find1recall2
+        ^modifiers <mods>
+        ^arg1 <arg1>
+        ^arg2 <arg2>)
+   (<mods> ^arg-type modifiers
+           ^handle once1)
+   (<arg1> ^arg-type object
+           ^id <loc-obj>)
+   (<loc-obj> ^item-type object
+              ^abstract true
+              ^root-category office1
+              ^predicates.category office1)
+   (<arg2> ^arg-type object
+           ^id <obj>)
+   (<s> ^best-pref-eval <o>)
+}
+
+# Try to recall where an object/person was last seen
+sp {op_find1*propose*op_recall1*when*object*visible
+   (state <s> ^name op_find1
+              ^problem-space.execution-type external
+              ^target-object <obj>
+             -^task-operator.performed-subtask find1recall3)
+   (<obj> ^predicates.category << object person >>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name op_recall1
+        ^item-type task-operator
+        ^task-handle recall1
+        ^subtask-handle find1recall3
+        ^modifiers <mods>
+        ^arg1 <arg1>
+        ^when-clause <when>)
+   (<mods> ^arg-type modifiers
+           ^handle once1)
+   (<arg1> ^arg-type object
+           ^id <loc-obj>)
+   (<loc-obj> ^item-type object
+              ^abstract true
+              ^root-category location
+              ^predicates <loc-preds>)
+   (<loc-preds> ^modifier1 current1 ^category location)
+   (<when> ^arg-type when-clause
+           ^pred-count 1
+           ^1 <p1>)
+   (<p1> ^type unary
+         ^handle visible1
+         ^property-handle is-visible1
+         ^1 <obj>)
+   (<s> ^best-pref-eval <o>)
+}
+
+################### Level 4: Communication ##############
 # Ask the instructor if they know where the object is 
 sp {op_find1*propose*initiate-interaction*get-find-help
    (state <s> ^name op_find1
@@ -82,6 +226,7 @@ sp {op_find1*propose*initiate-interaction*get-find-help
         ^object <obj>)
 }
 
+################### Level 5: Global Search ##############
 
 # Explore the building to try and find it
 sp {op_find1*propose*op_explore
@@ -89,7 +234,7 @@ sp {op_find1*propose*op_explore
               ^problem-space.execution-type external
               ^target-object <obj>)
 -->
-   (<s> ^operator <o> +)
+   (<s> ^operator <o> + =)
    (<o> ^name op_explore1
         ^item-type task-operator
         ^task-handle explore1
@@ -103,12 +248,15 @@ sp {op_find1*propose*op_explore
            ^1 <obj>)
 }
 
+# When explore is first selected, if we already scanned the current waypoint
+#   tell explore to not scan it
 sp {op_find1*apply*complete-push-task-segment*op_explore*mark*completed-scan
    (state <s> ^name op_find1
               ^operator.name op_explore1
               ^child-task-segment <child>
-              ^current-task-segment <seg>)
-   (<seg> ^tried-scan true
+              ^current-task-segment <seg>
+              ^world.robot.current-waypoint <wp>)
+   (<seg> ^tried-scan <wp>
          -^marked-explored-scan true)
 -->
    (<child> ^completed-scan true)

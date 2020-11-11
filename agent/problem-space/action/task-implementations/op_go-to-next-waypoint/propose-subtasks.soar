@@ -1,4 +1,4 @@
-# Propose op_go-to-xy1 for each let in the position-set
+# Propose op_go-to-xy1 for each let in the position-set if not checking the door
 sp {op_go-to-next-waypoint1*propose*op_go-to-xy1
    (state <s> ^name op_go-to-next-waypoint1
               ^problem-space.execution-type external
@@ -6,7 +6,7 @@ sp {op_go-to-next-waypoint1*propose*op_go-to-xy1
               ^current-task-segment <seg>)
    (<seg> ^position-set.next <next>
          -^go-to-xy-command.status success)
-   (<next> ^x <x> ^y <y>)
+   (<next> ^x <x> ^y <y> -^check-door)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name op_go-to-xy1
@@ -44,3 +44,117 @@ sp {op_go-to-next-waypoint1*apply*pop-task-segment*op_go-to-xy1*mark*go-to-xy-co
    (<seg> ^go-to-xy-command.status success)
 }
 
+################# check-door true ####################
+
+# If check-door is true, face the door and make sure it is open
+sp {op_go-to-next-waypoint1*propose*op_face1
+   (state <s> ^name op_go-to-next-waypoint1
+              ^problem-space.execution-type external
+              ^agent-params.domain << magicbot cozmo >>
+              ^current-task-segment <seg>)
+   (<seg> ^position-set.next <next>
+         -^face-command.status success)
+   (<next> ^x <x> ^y <y> ^check-door)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name op_face1
+        ^item-type task-operator
+        ^task-handle face1
+        ^arg1 <arg1>)
+   (<arg1> ^arg-type coordinate
+           ^coord <next>)
+}
+
+sp {op_go-to-next-waypoint1*apply*pop-task-segment*op_face1*mark*face-command*success
+   (state <s> ^name op_go-to-next-waypoint1
+              ^operator <o>
+              ^current-task-segment <seg>)
+   (<o> ^name pop-task-segment
+        ^segment <child-seg>)
+   (<child-seg> ^status success
+                ^task-operator.name op_face1)
+-->
+   (<seg> ^face-command.status success)
+}
+
+# Select the door object 
+# (There should only ever be 1 door that is visible and reachable after facing it but this makes sure)
+sp {op_go-to-next-waypoint*propose*select-door-object
+   (state <s> ^name op_go-to-next-waypoint1
+              ^current-task-segment <seg>
+              ^world.objects.object <door>
+             -^door-object)
+   (<seg> ^position-set.next.check-door
+          ^face-command.status success)
+   (<door> ^root-category door1
+           ^predicates.is-visible1 visible1
+           ^predicates.is-reachable1 reachable1)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name select-door-object 
+        ^door <door>)
+}
+
+sp {op_go-to-next-waypoint*apply*select-door-object
+   (state <s> ^name op_go-to-next-waypoint1
+              ^operator <o>)
+   (<o> ^name select-door-object 
+        ^door <door>)
+-->
+   (<s> ^door-object <door>)
+}
+
+
+# If there is a door that is closed, open it
+sp {op_go-to-next-waypoint1*propose*op_open1*door-object
+   (state <s> ^name op_go-to-next-waypoint1
+              ^problem-space.execution-type external
+              ^agent-params.domain << magicbot >>
+              ^door-object <door>
+              ^current-task-segment.position-set.next.check-door)
+   (<door> ^predicates.is-open1 not-open1)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name op_open1
+        ^item-type task-operator
+        ^task-handle open1
+        ^arg1 <arg1>)
+   (<arg1> ^arg-type object
+           ^id <door>)
+}
+
+# internal
+sp {op_go-to-next-waypoint1*propose*op_open1*door-object*internal
+   (state <s> ^name op_go-to-next-waypoint1
+              ^problem-space.execution-type external
+              ^agent-params.domain internal
+              ^door-object <door>)
+   (<door> ^predicates.is-open1 not-open1)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name op_open1
+        ^item-type task-operator
+        ^task-handle open1
+        ^arg1 <arg1>)
+   (<arg1> ^arg-type object
+           ^id <door>)
+}
+
+# Once the door is open, go through it
+sp {op_go-to-next-waypoint1*propose*op_go-to-xy1*door*open
+   (state <s> ^name op_go-to-next-waypoint1
+              ^problem-space.execution-type external
+              ^agent-params.domain << magicbot cozmo >>
+              ^current-task-segment <seg>
+              ^door-object.predicates.is-open1 open2)
+   (<seg> ^position-set.next <next>)
+   (<next> ^x <x> ^y <y> ^check-door)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name op_go-to-xy1
+        ^item-type task-operator
+        ^task-handle go-to-xy1
+        ^arg1 <arg1>)
+   (<arg1> ^arg-type coordinate
+           ^coord <next>)
+}

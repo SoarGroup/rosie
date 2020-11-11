@@ -1,6 +1,7 @@
+// Generated from src/edu/umich/rosie/tools/config/Regress.g4 by ANTLR 4.5
+
 package edu.umich.rosie.tools.config;
 
-// Generated from Regress.g4 by ANTLR 4.5
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.*;

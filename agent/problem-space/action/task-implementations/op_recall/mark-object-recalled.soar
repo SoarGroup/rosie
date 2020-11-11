@@ -1,8 +1,7 @@
 
-sp {op_recall1*smem*propose*mark-object-recalled
+sp {op_recall1*propose*mark-object-recalled
    (state <s> ^name op_recall1
-              ^memory-type smem
-              ^tail-object <obj>)
+              ^added-object <obj>)
    (<obj> -^predicates.modifier1 recalled1)
 -->
    (<s> ^operator <o> + =)
@@ -20,12 +19,23 @@ sp {op_recall1*apply*mark-object-recalled
    (<preds> ^modifier1 recalled1)
 }
 
+sp {op_recall1*smem*apply*mark-object-recalled*copy*edge*predicates
+   (state <s> ^name op_recall1
+              ^operator <o>
+              ^edge-object.predicates.{ <prop> <> category } <pred>)
+   (<o> ^name mark-object-recalled
+        ^object <obj>)
+   (<obj> ^predicates <preds>)
+   (<preds> -^category nothing1)
+-->
+   (<preds> ^<prop> <pred>)
+}
+
 # Finish recall
 
-sp {op_recall1*smem*propose*finish-recall
+sp {op_recall1*propose*finish-recall
    (state <s> ^name op_recall1
-              ^memory-type smem
-              ^tail-object <obj>
+              ^added-object <obj>
               ^current-task-segment <seg>)
    (<obj> ^predicates.modifier1 recalled1)
    (<seg> -^recall-command.status success)
@@ -34,12 +44,22 @@ sp {op_recall1*smem*propose*finish-recall
    (<o> ^name finish-recall)
 }
 
+sp {op_recall1*apply*finish-recall*remove*recalled*predicate*from*others
+   (state <s> ^name op_recall1
+              ^operator.name finish-recall
+              ^added-object <obj>
+              ^world.objects.object { <obj2> <> <obj> })
+   (<obj2> ^predicates <preds>)
+   (<preds> ^modifier1 recalled1)
+-->
+   (<preds> ^modifier1 recalled1 -)
+}
+
 sp {op_recall*apply*finish-recall*add*object*to*parent*task-objects*added-object
    (state <s> ^name op_recall1
-              ^operator <o>
+              ^operator.name finish-recall
+              ^added-object <obj>
               ^parent-task-segment.task-objects <objs>)
-   (<o> ^name finish-recall
-        ^object <obj>)
 -->
    (<objs> ^added-object <obj>)
 }

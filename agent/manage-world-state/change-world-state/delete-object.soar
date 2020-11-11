@@ -1,40 +1,63 @@
 ##### delete-object
 # Delete the object from the world
 
-# Delete object-info from object-monitor (not for task objects)
-sp {anystate*apply*change-world-state*delete-object*remove*object-info
-   (state <s> ^operator <o>
-              ^top-state.svs.command <cmd>
-              ^top-state.perception-monitor.object-monitor <obj-mon>
-             -^top-state.task-stack.segments.segment.task-objects.object <obj>)
+
+# If an object is grabbed, don't delete
+sp {anystate*apply*change-world-state*delete-object*elaborate*ignore-delete*grabbed
+   (state <s> ^operator <o> +)
    (<o> ^name change-world-state
-        ^delete-object <obj-info>)
-   (<obj-mon> ^object-info <obj-info>)
-   (<obj-info> ^world-obj <obj>
-              -^world-obj.predicates.is-grabbed1 grabbed1)
+        ^delete-object <obj-info>
+       -^force-delete <obj-info>)
+   (<obj-info> ^world-obj.predicates.is-grabbed1 grabbed1)
 -->
-   (<obj-mon> ^object-info <obj-info> -)
+   (<o> ^ignore-delete <obj-info>)
 }
 
-# Removes the belief-obj from svs
+# If an object is a task object, don't delete
+sp {anystate*apply*change-world-state*delete-object*elaborate*ignore-delete*task-object
+   (state <s> ^operator <o> +
+              ^top-state.task-stack.segments.segment.task-objects.object <obj>)
+   (<o> ^name change-world-state
+        ^delete-object <obj-info>
+       -^force-delete <obj-info>)
+   (<obj-info> ^world-obj <obj>)
+-->
+   (<o> ^ignore-delete <obj-info>)
+}
+
+# Removes the belief-obj from svs (Always happens except for grabbed objects)
 sp {anystate*apply*change-world-state*delete-object*remove*belief-obj*from*svs
    (state <s> ^operator <o>
               ^top-state.svs.command <cmd>)
    (<o> ^name change-world-state
-        ^delete-object.belief-obj.id <id>)
+        ^delete-object <obj-info>)
+   (<obj-info> -^world-obj.predicates.is-grabbed1 grabbed1
+                ^belief-obj.id <id>)
 -->
    (<cmd> ^delete_node.id <id>)
+}
+
+# Delete object-info from object-monitor
+sp {anystate*apply*change-world-state*delete-object*remove*object-info
+   (state <s> ^operator <o>
+              ^top-state.perception-monitor.object-monitor <obj-mon>)
+   (<o> ^name change-world-state
+        ^delete-object <obj-info>
+       -^ignore-delete <obj-info>)
+   (<obj-mon> ^object-info <obj-info>)
+-->
+   (<obj-mon> ^object-info <obj-info> -)
 }
 
 # Delete object from the world
 sp {anystate*apply*change-world-state*delete-object*remove*object*world
    (state <s> ^operator <o>
-              ^top-state.world.objects <objs>
-             -^top-state.task-stack.segments.segment.task-objects.object <obj>)
+              ^top-state.world.objects <objs>)
    (<o> ^name change-world-state
-        ^delete-object.world-obj <obj>)
+        ^delete-object <obj-info>
+       -^ignore-delete <obj-info>)
+   (<obj-info> ^world-obj <obj>)
    (<objs> ^object <obj>)
-   (<obj> -^predicates.is-grabbed1 grabbed1)
 -->
    (<objs> ^object <obj> -)
 }
@@ -42,13 +65,13 @@ sp {anystate*apply*change-world-state*delete-object*remove*object*world
 # Removes any predicate instances involving the object
 sp {anystate*apply*change-world-state*delete-object*remove*predicates
    (state <s> ^operator <o>
-              ^top-state.world.predicates.predicate <pred>
-             -^top-state.task-stack.segments.segment.task-objects.object <obj>)
+              ^top-state.world.predicates.predicate <pred>)
    (<o> ^name change-world-state
-        ^delete-object.world-obj <obj>)
+        ^delete-object <obj-info>
+       -^ignore-delete <obj-info>)
+   (<obj-info> ^world-obj <obj>)
    (<pred> ^instance <i>)
    (<i> ^<num> <obj>)
-   (<obj> -^predicates.is-grabbed1 grabbed1)
 -->
    (<pred> ^instance <i> -)
 }
@@ -58,8 +81,22 @@ sp {anystate*apply*change-world-state*delete-object*print-perception
    (state <s> ^operator <o>
               ^agent-params.print-perception true)
    (<o> ^name change-world-state
-        ^delete-object.object-handle <obj-handle>)
+        ^delete-object <obj-info>
+       -^ignore-delete <obj-info>)
+   (<obj-info> ^object-handle <obj-handle>)
 -->
    (write |change-world-state: delete-object on object | <obj-handle> (crlf))
 }
    
+# Even if ignore-delete, still remove the visible predicate
+sp {anystate*apply*change-world-state*delete-object*ignore-delete*make*not-visible
+   (state <s> ^operator <o>)
+   (<o> ^name change-world-state
+        ^delete-object <obj-info>
+        ^ignore-delete <obj-info>)
+   (<obj-info> ^world-obj.predicates <preds>)
+   (<preds> ^is-visible1 visible1)
+-->
+   (<preds> ^is-visible1 visible1 -
+            ^is-visible1 not-visible1)
+}

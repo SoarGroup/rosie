@@ -1,9 +1,12 @@
 #!/bin/bash
 
 TEST_LANG="python"
-FULL_TEST_LIST=(prim-actions kitchen mobile procedural)
+# The list of tests that are possible to run
+FULL_TEST_LIST=(prim-actions procedural kitchen mobile serve maintenance)
 
 TESTS_TO_RUN=()
+BUILD_ONLY=0
+VERBOSE=""
 
 # Iterate over each argument given
 while [[ $# -gt 0 ]]
@@ -15,6 +18,8 @@ do
 			echo "  -h|--help  prints help"
 			echo "  -j|--java  runs the tests using java (default is python)"
 			echo "  -l|--list  lists all runnable tests"
+			echo "  -b|--build  just build the agents, without running them"
+			echo "  -v|--verbose print the dialog while the agent is running"
 			echo "By default, it runs all the tests"
 			echo "  but you can specify only the tests you want:"
 			echo "  run_task_learning_tests kitchen"
@@ -22,6 +27,12 @@ do
 			;;
 		-j|--java)
 			TEST_LANG="java"
+			;;
+		-b|--build)
+			BUILD_ONLY=1
+			;;
+		-v|--verbose)
+			VERBOSE="-v"
 			;;
 		-l|--list)
 			echo ${FULL_TEST_LIST[*]}
@@ -56,26 +67,32 @@ for test in	${TESTS_TO_RUN[*]}; do
 	fi
 
 	echo "################### TEST $test  #####################"
-	echo ""
 	cd $ROSIE_HOME/test-agents/task-tests/$test
-	echo "### Configure Agent"
+	if [[ $VERBOSE == "-v" ]]; then
+		echo "Running RosieAgentConfigurator"
+	fi
 	java edu.umich.rosie.tools.config.RosieAgentConfigurator $test.config -s
 
+	if [[ $BUILD_ONLY -eq 1 ]]; then
+		continue
+	fi
+
 	if [ "$TEST_LANG" == "python" ]; then
-		echo ""
-		echo "### Running $test using python"
-		python3 -m rosie.testing $test
+		echo "Running $test using python"
+		python3 -m rosie.testing $test $VERBOSE
 	else
-		echo ""
-		echo "### Running $test using java"
+		echo "Running $test using java"
 		java edu.umich.rosie.RosieCLI agent/rosie.$test.config
 	fi
 
-	echo ""
-	echo "### Comparing test-output vs correct-output for $test: "
+	if [[ $VERBOSE == "-v" ]]; then
+		echo ""
+		echo "Comparing output for test $test"
+	fi
+
+	echo "--------------------- DIFF START ------------------------ "
 	diff test-output.txt correct-output.txt
-	echo ""
-	echo "### End of Test $test"
+	echo "---------------------- DIFF END ------------------------- "
 	echo ""
 done
 

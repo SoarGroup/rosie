@@ -1,16 +1,27 @@
-
 # Delete any task objects that are not confirmed and are not on any other task segment
 sp {pop-task-segment*elaborate*old-objects
    (state <s> ^name pop-task-segment
               ^segment-to-pop <seg>
               ^task-stack.segments <segs>)
    (<seg> ^task-objects.object <obj>)
-   (<obj> -^predicates.is-confirmed1 confirmed1)
+   (<obj> -^predicates.is-confirmed1)
   -{(<segs> ^segment { <other-seg> <> <seg> })
     (<other-seg> ^task-objects.object <obj>)}
 -->
    (<s> ^old-object <obj>)
 }
+
+# Delete any abstract objects if we are popping the top segment
+sp {pop-task-segment*elaborate*old-objects*abstract*top
+   (state <s> ^name pop-task-segment
+              ^segment-to-pop.prev none
+              ^top-state.world.objects <objs>)
+   (<objs> ^object <obj>)
+   (<obj> ^predicates.is-confirmed1 not-confirmed1)
+-->
+   (<s> ^old-object <obj>)
+}
+
 
 sp {pop-task-segment*elaborate*old-object-info
    (state <s> ^name pop-task-segment
@@ -45,3 +56,4 @@ sp {pop-task-segment*apply*change-world-state*delete-object*remove*task-object
    (<s> ^old-object <obj> # Add so that they remain even when removed from task-objects
         ^old-object-info <obj-info>)
 }
+

@@ -12,6 +12,13 @@
 #       operators needed in the interpret state
 #       have completed.
 #
+#   There are two versions of interpretation operators:
+#       1.  Type interpretation operators produce actions
+#           that are turned into message by the act operator.
+#       2.  Type msg-interpretation operators produce messages
+#           directly.
+#   This operator has different apply rules for these two cases.
+#
 
 #    Propose an operator to finish up the interpret state
 sp {interpret*propose*interpret-done
@@ -30,8 +37,10 @@ sp {interpret*apply*interpret-done*action-chosen
               ^superstate <ss>
               ^problem-space interpret
               ^operator <o>
+              ^message nil
               ^action <a>)
    (<o> ^name interpret-done)
+   (<a> ^action { <x> <> FAILURE })
    (<ts> ^io.output-link <output>)
 -->
    #   Post the action to the superstate to complete interpret
@@ -40,18 +49,57 @@ sp {interpret*apply*interpret-done*action-chosen
    (<output> ^report-decision <a>)
 }
 
-#   This one fires when NO action was interpreted
+#   This one fires when a message was produced
+sp {interpret*apply*interpret-done*message-built
+   (state <s> ^top-state <ts>
+              ^superstate <ss>
+              ^problem-space interpret
+              ^operator <o>
+              ^message { <message> <> nil })
+   (<o> ^name interpret-done)
+   (<ts> ^io.output-link <output>)
+-->
+   #   Post the message to the superstate to complete interpret
+   #   The message is put on ^action-results just to conform
+   #   to the old way of using the act operator.
+   (<ss> ^action NONE
+         ^action-results <rr>)
+   (<rr> ^r <message>)
+   #   Report the message to the outside world
+   (<output> ^report-results <rr>)
+}
+
+#   This one fires when NO message or action was interpreted
 sp {interpret*apply*interpret-done*no-action
    (state <s> ^top-state <ts>
               ^superstate <ss>
               ^problem-space interpret
               ^operator <o>
+              ^message nil
              -^action <a>)
    (<o> ^name interpret-done)
    (<ts> ^io.output-link <output>)
 -->
    #   Post a NONE action to the superstate to complete interpret
    (<ss> ^action NONE)
+   #   Report the interpretation to the outside world
+   (<output> ^report-decision NONE)
+}
+
+#   This one fires when NO message but a FAILED action
+sp {interpret*apply*interpret-done*failed-action
+   (state <s> ^top-state <ts>
+              ^superstate <ss>
+              ^problem-space interpret
+              ^operator <o>
+              ^message nil
+              ^action <a>)
+   (<o> ^name interpret-done)
+   (<a> ^action FAILURE)
+   (<ts> ^io.output-link <output>)
+-->
+   #   Post the FAILURE action to the superstate to complete interpret
+   (<ss> ^action <a>)
    #   Report the interpretation to the outside world
    (<output> ^report-decision NONE)
 }

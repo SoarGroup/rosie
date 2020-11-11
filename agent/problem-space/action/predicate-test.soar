@@ -32,6 +32,20 @@ sp {problem-space*action*elaborate*desired*satisfied*from*predicate-test
    (<d> ^satisfied true)
 }
 
+# If we are doing a search and the ^interrupt-task-search flag is present,
+#   then if the goal is satisfied trigger an interrupt
+sp {DEBUG*interrupt-task-search
+   (state <s> ^name evaluate-operator
+              ^problem-space.name action
+              ^problem-space.subproblem search
+              ^agent-params.interrupt-task-search true
+              ^desired <d>)
+   (<d> ^satisfied true)
+-->
+   (write (crlf) |!!! TASK GOAL ACHIEVED !!!| (crlf))
+   (interrupt)
+}
+
 # By default, elaborated from the task-operator
 sp {problem-space*action*elaborate*predicate-test*from*task-operator*until-clause
    (state <s> ^problem-space.name action
@@ -111,6 +125,23 @@ sp {problem-space*action*elaborate*predicate-test*state*relation*satisfied
    (<pred> ^handle <pred-handle>
            ^instance <i>)
    (<i> ^1 <obj1> ^2 <obj2>)
+-->
+   (<s> ^satisfied <pt-pred>)
+}
+
+### relation special case - contains
+# If we're looking for the goal contains1(obj, <liquid>)
+#   then if the object has the predicate ^contents1 <liquid> it is satisfied
+sp {problem-space*action*elaborate*predicate-test*state*contains*relation*satisfied
+   (state <s> ^problem-space.name action
+              ^predicate-test.<pred-num> <pt-pred>
+              ^world <world>)
+   (<pt-pred> ^type relation
+           ^handle contains1
+           ^1 <obj1>
+           ^{2}.root-category <liquid>)
+   (<obj1> ^predicates <preds>)
+   (<preds> ^contents1 <liquid>)
 -->
    (<s> ^satisfied <pt-pred>)
 }
@@ -212,7 +243,7 @@ sp {problem-space*action*elaborate*predicate-test*duration*end-time*hours
 sp {problem-space*action*elaborate*predicate-test*duration*satisfied
    (state <s> ^problem-space.name action
               ^predicate-test.<pred-num> <pt-pred>
-              ^io.input-link.time.clock.elapsed-seconds <secs>)
+              ^io.input-link.time.clock.epoch <secs>)
    (<pt-pred> ^type duration
               ^end-time <= <secs>)
 -->
@@ -243,6 +274,17 @@ sp {problem-space*action*elaborate*predicate-test*subtask*satisfied
         ^subtask-handle <sub-h>)
 -->
    (<s> ^satisfied <p>)
+}
+
+sp {evaluate-operator*elaborate*desired*satisfied*if*performed*subtask
+   (state <s> ^name evaluate-operator
+              ^desired <des>
+              ^tried-tied-operator.subtask-handle <sub-h>)
+   (<des> ^<pnum> <p>)
+   (<p> ^type subtask
+        ^subtask-handle <sub-h>)
+-->
+   (<s> ^satisfied <des>)
 }
 
 # type = execute-command, the given command has status success
@@ -333,7 +375,7 @@ sp {problem-space*action*elaborate*predicate-test*object-exists*3*satisfied
 }
 
 
-# @ENUMERATE 1-5 PREDICATE SET PREDICATES
+# @ENUMERATE 1-8 PREDICATE SET PREDICATES
 
 # Note: pred-count 0 is possible, but usually only with custom goals that get marked satisfied manually
 
@@ -401,6 +443,54 @@ sp {problem-space*action*elaborate*predicate-test*satisfied*5*predicates
 -->
    (<s> ^satisfied <pt>)
 }
+ 
+# predicate-test with 6 predicates is satisfied
+sp {problem-space*action*elaborate*predicate-test*satisfied*6*predicates
+   (state <s> ^problem-space.name action
+              ^predicate-test <pt>
+              ^satisfied <p1> <p2> <p3> <p4> <p5> <p6>)
+   (<pt> ^pred-count 6
+         ^1 <p1> 
+         ^2 <p2> 
+         ^3 <p3>
+         ^4 <p4>
+         ^5 <p5>
+         ^6 <p6>)
+-->
+   (<s> ^satisfied <pt>)
+}
 
- 
- 
+# predicate-test with 7 predicates is satisfied
+sp {problem-space*action*elaborate*predicate-test*satisfied*7*predicates
+   (state <s> ^problem-space.name action
+              ^predicate-test <pt>
+              ^satisfied <p1> <p2> <p3> <p4> <p5> <p6> <p7>)
+   (<pt> ^pred-count 7
+         ^1 <p1> 
+         ^2 <p2> 
+         ^3 <p3>
+         ^4 <p4>
+         ^5 <p5>
+         ^6 <p6>
+         ^7 <p7>)
+-->
+   (<s> ^satisfied <pt>)
+}
+
+# predicate-test with 8 predicates is satisfied
+sp {problem-space*action*elaborate*predicate-test*satisfied*8*predicates
+   (state <s> ^problem-space.name action
+              ^predicate-test <pt>
+              ^satisfied <p1> <p2> <p3> <p4> <p5> <p6> <p7> <p8>)
+   (<pt> ^pred-count 8
+         ^1 <p1> 
+         ^2 <p2> 
+         ^3 <p3>
+         ^4 <p4>
+         ^5 <p5>
+         ^6 <p6>
+         ^7 <p7>
+         ^8 <p8>)
+-->
+   (<s> ^satisfied <pt>)
+}

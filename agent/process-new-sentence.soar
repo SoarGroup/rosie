@@ -12,6 +12,7 @@ sp {rosie*propose*process-new-sentence*scripted
    (<op> ^name process-new-sentence
          ^sentence <sentence>)
 }
+
 sp {rosie*propose*process-new-sentence*input-link
    (state <s> ^superstate nil
               #^agent-params.sentence-source chat
@@ -23,11 +24,69 @@ sp {rosie*propose*process-new-sentence*input-link
          ^original-sentence <sentence>)
 }
 
+
+#### SPECIAL COMMANDS #####
+# If the first word is !cmd, then it is not an actual NL sentence
+#   but a special command to the agent, usually for testing/scripting
+sp {rosie*elaborate*process-new-sentence*special-command
+   (state <s> ^superstate nil
+              ^operator <o> +)
+   (<o> ^name process-new-sentence
+        ^sentence.original-sentence <sent>)
+   (<sent> ^complete-sentence <comp-cmd>
+           ^next <cmd>)
+   (<cmd> ^spelling |!cmd|
+          ^next <next>)
+-->
+   (<o> ^special-command <next>
+        ^complete-command <comp-cmd>)
+}
+sp {rosie*elaborate*process-new-sentence*special-command*2
+   (state <s> ^superstate nil
+              ^operator <o> +)
+   (<o> ^name process-new-sentence
+        ^original-sentence <sent>)
+   (<sent> ^complete-sentence <comp-cmd>
+           ^next <cmd>)
+   (<cmd> ^spelling |!cmd|
+          ^next <next>)
+-->
+   (<o> ^special-command <next>
+        ^complete-command <comp-cmd>)
+}
+
+sp {rosie*apply*process-new-sentence*special-command*create*new-segment-info*handle-command
+   (state <s> ^superstate nil
+              ^operator <op>
+              ^top-state.interaction.changes <c>)
+   (<op> ^name process-new-sentence
+         ^special-command <cmd>
+         ^complete-command <comp>
+         ^{ << sentence original-sentence >> } <sentence>)
+   (<cmd> ^spelling <cmd-name>)
+-->
+   (<sentence> ^segment-proposed true)
+   (<c> ^new-segment-info <info>)
+   (<info> ^purpose <p>
+           ^originator instructor)
+   (<p> ^type handle-command 
+        ^parameters <params>
+        ^satisfaction <sat>)
+   (<params> ^command (deep-copy <cmd>)
+             ^complete-command <comp>)
+   (<sat> ^testing-event <te>)
+   (<te> ^type <cmd-name>
+         ^originator agent)
+}
+
+###########################
+
 sp {rosie*apply*process-new-sentence*copy*new-segment-info*from-script
    (state <s> ^superstate nil
               ^operator <op>
               ^top-state.interaction.changes <c>)
    (<op> ^name process-new-sentence
+        -^special-command <cmd>
          ^sentence <sentence>)
    (<sentence> ^original-sentence <os>)
    #(<os> ^complete-sentence <cs1>)
@@ -44,6 +103,7 @@ sp {rosie*apply*process-new-sentence*copy*new-segment-info*from-script
    (<de> ^type process-sentence
           ^originator agent)
 }
+
 sp {rosie*apply*process-new-sentence*scripted-sentence*output-link
    (state <s> ^superstate nil
               ^operator <op>
@@ -63,6 +123,7 @@ sp {rosie*apply*process-new-sentence*copy*new-segment-info*from-input-link
               ^operator <op>
               ^top-state.interaction.changes <c>)
    (<op> ^name process-new-sentence
+        -^special-command <cmd>
          ^original-sentence <os>)
 -->
  #  (write (crlf) (cmd print <os>))

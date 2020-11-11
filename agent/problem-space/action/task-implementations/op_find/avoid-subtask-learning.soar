@@ -1,0 +1,45 @@
+### If we ask for help and the instructor tells us to do something, 
+#     don't learn it as a subtask
+sp {op_find1*reject*learn-new-subtask
+   (state <s> ^name op_find1
+              ^problem-space.subproblem execute
+              ^operator <o> +)
+   (<o> ^name learn-new-subtask)
+-->
+   (<s> ^operator <o> -)
+}
+
+# Instead, if there is a new-subtask, directly propose it
+sp {op_find1*propose*new-subtask
+   (state <s> ^name op_find1
+              ^problem-space.subproblem execute
+              ^current-task-segment.new-subtask <sub-op>)
+-->
+   (<s> ^operator <sub-op> +)
+}
+
+# If there is a new-subtask, prefer it over initiate-interaction
+sp {op_find1*prefer*new-subtask*over*initiate-interaction
+   (state <s> ^name op_find1
+              ^problem-space.subproblem execute
+              ^current-task-segment.new-subtask <sub-op>
+              ^operator <sub-op> +
+              ^operator <o> +)
+   (<o> ^name initiate-interaction)
+-->
+   (<s> ^operator <sub-op> > <o>)
+}
+
+# Once the new-subtask is selected and applied, remove it from the current-task-segment
+sp {op_find1*apply*child-subtask*remove*new-subtask
+   (state <s> ^name op_find1
+              ^operator <o>
+              ^current-task-segment <seg>
+              ^child-task-segment.task-operator <o>)
+   (<seg> ^new-subtask <new-sub>)
+   (<new-sub> ^task-handle <task-h>)
+   (<o> ^task-handle <task-h>)
+-->
+   (<seg> ^new-subtask <new-sub> -)
+}
+
