@@ -279,26 +279,14 @@ public class RosieConfig {
 		
 		// internal-world-file
 		if (props.containsKey("internal-world-file")){
-			// Check if the file is local, if not, use the internal-worlds directory in the agent code
-			File worldFile = new File(configFile.getParent() + "/" + props.getProperty("internal-world-file").replaceAll("\\\\", "/"));
-			if(worldFile.exists()){
-				this.internalWorldFile = worldFile;
-			} else {
-				this.internalWorldFile = new File(this.rosieHome + "/agent/manage-world-state/internal-worlds/" + props.getProperty("internal-world-file"));
-			}
+			this.internalWorldFile = new File(this.rosieHome + "/agent/manage-world-state/internal-worlds/" + props.getProperty("internal-world-file"));
 		} else {
 			this.internalWorldFile = null;
 		}
 		
 		// waypoint-map-file
 		if (props.containsKey("waypoint-map-file")){
-			// Check if the file is local, if not, use the internal-worlds directory in the agent code
-			File wpFile = new File(configFile.getParent() + "/" + props.getProperty("waypoint-map-file").replaceAll("\\\\", "/"));
-			if(wpFile.exists()){
-				this.waypointMapFile = wpFile;
-			} else {
-				this.waypointMapFile = new File(this.rosieHome + "/agent/manage-world-state/waypoint-maps/" + props.getProperty("waypoint-map-file"));
-			}
+			this.waypointMapFile = new File(this.rosieHome + "/agent/manage-world-state/waypoint-maps/" + props.getProperty("waypoint-map-file"));
 		} else {
 			this.waypointMapFile = null;
 		}
