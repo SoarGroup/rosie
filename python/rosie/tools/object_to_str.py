@@ -21,7 +21,9 @@ def object_to_str(obj_id):
 
     words.append(preds_id.GetChildString("size"))
     words.append(preds_id.GetChildString("color"))
-    words.append(preds_id.GetChildString("modifier1"))
+    mods = preds_id.GetAllChildValues("modifier1")
+    if len(mods) > 0:
+        words.append(sorted(mods)[0])
     words.append(preds_id.GetChildString("shape"))
 
     name = preds_id.GetChildString("name")

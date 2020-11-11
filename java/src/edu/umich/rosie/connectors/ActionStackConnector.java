@@ -96,34 +96,28 @@ public class ActionStackConnector extends AgentConnector {
 	}
 
 	private String taskToString(Identifier taskId) {
+		final String[] ARG_NAMES = new String[]{ "arg1", "arg2", "arg3", "when-clause", "start-clause", "end-clause" };
 		String taskHandle = SoarUtil.getChildString(taskId, "task-handle");
-		Identifier arg1id = SoarUtil.getChildId(taskId, "arg1");
-		Identifier arg2id = SoarUtil.getChildId(taskId, "arg2");
-		Identifier arg3id = SoarUtil.getChildId(taskId, "arg3");
-		Identifier whenId = SoarUtil.getChildId(taskId, "when-clause");
 
-		String task = taskHandle + "(";
-		if (arg1id != null){
-			task += taskArgToString(arg1id);
-		}
-		if (arg2id != null){
-			if (arg1id != null){
-				task += ", ";
+		StringBuilder task = new StringBuilder();
+		task.append(taskHandle + "(");
+
+		boolean first = true;
+		for(String argName : ARG_NAMES){
+			Identifier argId = SoarUtil.getChildId(taskId, argName);
+			if(argId == null){
+				continue;
 			}
-			task += taskArgToString(arg2id);
+			if(!first){ task.append(", "); }
+			first = false;
+			task.append(taskArgToString(argName, argId));
 		}
-		if (arg3id != null){
-			task += ", " + taskArgToString(arg3id);
-		}
-		if (whenId != null){
-			task += ", " + taskArgToString(whenId);
-		}
-		task += ")";
+		task.append(")");
 
-		return task;
+		return task.toString();
 	}
 
-	private String taskArgToString(Identifier argId) {
+	private String taskArgToString(String argName, Identifier argId) {
 		String argType = SoarUtil.getChildString(argId, "arg-type");
 		if (argType.equals("object")) {
 			return AgentMessageParser.parseObject(SoarUtil.getChildId(argId, "id"));
@@ -139,8 +133,8 @@ public class ActionStackConnector extends AgentConnector {
 		} else if (argType.equals("measure")){
 			return SoarUtil.getChildString(argId, "number") + " " + 
 					SoarUtil.getChildString(argId, "unit");
-		} else if (argType.equals("when-clause")){
-			return "when" + predSetToString(argId);
+		} else if (argType.equals("temporal-clause")){
+			return argName.split("-")[0] + predSetToString(argId);
 		}
 		return "?";
 	}
@@ -165,6 +159,14 @@ public class ActionStackConnector extends AgentConnector {
 			String obj1_str = AgentMessageParser.parseObject(SoarUtil.getChildId(predId, "1"));
 			String obj2_str = AgentMessageParser.parseObject(SoarUtil.getChildId(predId, "2"));
 			return predHandle + "(" + obj1_str + ", " + obj2_str + ")";
+		} else if(predType.equals("duration")){
+			String number = SoarUtil.getChildString(predId, "number");
+			String unit = SoarUtil.getChildString(predId, "unit");
+			return number + " " + unit;
+		} else if(predType.equals("clocktime")){
+			String hour = SoarUtil.getChildString(predId, "hour");
+			String minute = SoarUtil.getChildString(predId, "minute");
+			return hour + ":" + minute;
 		} else {
 			return "?";
 		}

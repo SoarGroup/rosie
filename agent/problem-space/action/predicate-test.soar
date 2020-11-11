@@ -46,27 +46,30 @@ sp {DEBUG*interrupt-task-search
    (interrupt)
 }
 
-# By default, elaborated from the task-operator
-sp {problem-space*action*elaborate*predicate-test*from*task-operator*until-clause
+sp {problem-space*action*elaborate*predicate-test*from*task-operator*end-clause
    (state <s> ^problem-space.name action
-              ^task-operator.until-clause <pt>)
+              ^task-operator.end-clause <cl>)
 -->
-   (<s> ^predicate-test <pt>)
+   (<s> ^predicate-test <cl>)
 }
-
-sp {problem-space*action*elaborate*predicate-test*from*task-operator*after-clause
-   (state <s> ^problem-space.name action
-              ^task-operator.after-clause <pt>)
--->
-   (<s> ^predicate-test <pt>)
-}
-
 
 ### Start or Terminal goal nodes are always satisfied
 
 sp {problem-space*action*elaborate*desired*start-goal*satisfied
    (state <s> ^problem-space.name action
-              ^desired <des>)
+              ^desired <des>
+              ^task-operator <task-op>)
+   (<des> ^item-type start-goal)
+   (<task-op> -^start-clause)
+-->
+   (<des> ^satisfied true)
+}
+
+sp {problem-space*action*elaborate*desired*start-goal*satisfied*start-clause
+   (state <s> ^problem-space.name action
+              ^desired <des>
+              ^task-operator.start-clause <cl>
+              ^satisfied <cl>)
    (<des> ^item-type start-goal)
 -->
    (<des> ^satisfied true)
@@ -92,7 +95,8 @@ sp {problem-space*action*elaborate*predicate-test*state*predicate*satisfied
            ^handle <pred-handle>
            ^property-handle <prop-handle>
            ^{1} <obj>)
-   (<obj> ^predicates.<prop-handle> <pred-handle>)
+   (<obj> ^predicates <obj-preds>)
+   (<obj-preds> ^<prop-handle> <pred-handle>)
 -->
    (<s> ^satisfied <pred>)
 }
@@ -105,7 +109,8 @@ sp {problem-space*action*elaborate*predicate-test*state*predicate*satisfied*merg
            ^handle <pred-handle>
            ^property-handle <prop-handle>
            ^{1}.merged-into <obj>)
-   (<obj> ^predicates.<prop-handle> <pred-handle>)
+   (<obj> ^predicates <obj-preds>)
+   (<obj-preds> ^<prop-handle> <pred-handle>)
 -->
    (<s> ^satisfied <pred>)
 }
@@ -252,18 +257,32 @@ sp {problem-space*action*elaborate*predicate-test*duration*satisfied
 
 
 # type = clocktime, the current time is after the given time
-sp {problem-space*action*elaborate*predicate-test*clocktime*satisfied
+
+# same hour, greater minute
+sp {problem-space*action*elaborate*predicate-test*clocktime*satisfied*minute
    (state <s> ^problem-space.name action
               ^predicate-test.<pred-num> <pt-pred>
               ^io.input-link.time.clock <clock>)
    (<pt-pred> ^type clocktime
               ^hour <hour>
               ^minute <min>)
-   (<clock> ^hour >= <hour>
+   (<clock> ^hour <hour>
             ^minute >= <min>)
 -->
    (<s> ^satisfied <pt-pred>)
 }
+# greater hour
+sp {problem-space*action*elaborate*predicate-test*clocktime*satisfied*hour
+   (state <s> ^problem-space.name action
+              ^predicate-test.<pred-num> <pt-pred>
+              ^io.input-link.time.clock <clock>)
+   (<pt-pred> ^type clocktime
+              ^hour <hour>)
+   (<clock> ^hour > <hour>)
+-->
+   (<s> ^satisfied <pt-pred>)
+}
+
 
 # type = subtask, a specific subtask was performed
 sp {problem-space*action*elaborate*predicate-test*subtask*satisfied

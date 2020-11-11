@@ -148,6 +148,8 @@ public class AgentMessageParser
 		} else if(type.equals("task-execution-failure")){
 			return "The " + taskHandle(fieldsId) + "task failed.";
          	// AM: produced by problem-space/action/failure-handling
+		} else if(type.equals("maintenance-goal-achieved")){
+			return "I have achieved the goal of " + taskHandle(fieldsId) + ".";
 	    	} else if(type.equals("execution-failure")){
 	    		return translateExecutionFailure(fieldsId);
 	        } else if(type.equals("command-failure")){
@@ -1208,7 +1210,7 @@ public class AgentMessageParser
 	
 	public static String translateObjectDescription(Identifier fields){
 		Identifier descSetId = SoarUtil.getIdentifierOfAttribute(fields, "object");
-		return generateObjectDescription(descSetId); 
+		return parseObject(descSetId); 
 
 	//	if(descSetId == null){
 	//		return "An object";
@@ -1622,7 +1624,17 @@ public class AgentMessageParser
 
 		words.add(SoarUtil.getValueOfAttribute(predsId, "size"));
 		words.add(SoarUtil.getValueOfAttribute(predsId, "color"));
-		words.add(SoarUtil.getValueOfAttribute(predsId, "modifier1"));
+
+		Set<String> mods = SoarUtil.getAllValuesOfAttribute(predsId, "modifier1");
+		if(mods.size() > 0){
+			String lowest = "zzz";
+			for(String mod : mods){
+				if(mod.toLowerCase().compareTo(lowest) < 0){
+					lowest = mod;
+				}
+			}
+			words.add(lowest);
+		}
 		words.add(SoarUtil.getValueOfAttribute(predsId, "shape"));
 
 		String name = SoarUtil.getValueOfAttribute(predsId, "name");

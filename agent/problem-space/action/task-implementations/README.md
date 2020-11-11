@@ -612,9 +612,9 @@ Tries to find an unconfirmed object (in the world, but no belief object)
 
 *Execute:* (Internal, Magicbot, Cozmo)
 * `op_go-to-location(loc)` if the object is in a known location
-* `op_scan1(until(visible1(arg1)))` if we haven't tried that yet (not internal)
+* `op_scan1(end(visible1(arg1)))` if we haven't tried that yet (not internal)
 * `get-find-help` Ask the instructor for help
-* `op_explore1(until(visible1(arg1)))` search the entire environment
+* `op_explore1(end(visible1(arg1)))` search the entire environment
 
 
 <!-- ================================== SCAN ========================================= -->
@@ -627,12 +627,12 @@ Turn in place one full revolution, looking around the room
 ```
 ([o] ^name op_scan1
      ^task-handle scan1
-     ^until-clause [type:until-clause]) # Optionally specify end of scan
+     ^end-clause [type:temporal-clause]) # Optionally specify end of scan
 ```
 
 *Goal:* `execute-command(scan)`
-* Magicbot: Do a full turn, stop if until clause is satisfied
-* Cozmo: Do a full turn, stop if until clause is satisfied
+* Magicbot: Do a full turn, stop if end clause is satisfied
+* Cozmo: Do a full turn, stop if end clause is satisfied
 
 
 <!-- ================================== EXPLORE ========================================= -->
@@ -646,12 +646,12 @@ Have the robot drive to each room and scan it, usually trying to find an object
 ```
 ([o] ^name op_explore1 
      ^task-handle explore1
-     ^until-clause [type:until]) # usually present
+     ^end-clause [type:temporal-clause]) # usually present
 ```
 
 No proposal rule or action model
 
-*Goal:* until clause is met, or all waypoints were scanned
+*Goal:* end clause is met, or all waypoints were scanned
 
 *Execute:* (Internal, Magicbot, Cozmo)
 * If it has not scanned the current wp, propose `op_scan1()`

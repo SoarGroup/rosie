@@ -162,7 +162,9 @@ class RosieAgent(SoarAgent):
         if self.source_config is not None and self.reconfig_on_launch:
             # Rerun the configuration tool and re-source the config file
             self.print_handler("RosieAgent: Running RosieAgentConfigurator")
-            subprocess.check_output(['java', 'edu.umich.rosie.tools.config.RosieAgentConfigurator', self.source_config])
+            output = subprocess.check_output(['java', 'edu.umich.rosie.tools.config.RosieAgentConfigurator', self.source_config])
+            #for line in str(output).split('\\n'):
+            #    self.print_handler(str(line))
             self._read_config_file()
         self._read_messages()
 

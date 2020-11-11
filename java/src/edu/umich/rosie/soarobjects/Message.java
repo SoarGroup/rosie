@@ -43,7 +43,7 @@ public class Message implements ISoarObject
         	message = message.substring(0, message.length()-1);
         	punct = lastChar;
         }
-        
+
         // Extract quoted string to add as a single symbol
         String quote = null;
         int beginQuote = message.indexOf('"');
@@ -65,6 +65,12 @@ public class Message implements ISoarObject
         		word = quote;
         		nextID.CreateStringWME("quoted", "true");
         	}
+			if(word.indexOf(':') > 0){
+				nextID.CreateStringWME("clocktime", "true");
+				nextID.CreateIntWME("hour", new Integer(word.split("-")[0]));
+				nextID.CreateIntWME("minute", new Integer(word.split("-")[1]));
+			}
+
         	nextID.CreateStringWME("spelling", word.toLowerCase());
         	nextID = nextID.CreateIdWME("next");
         }

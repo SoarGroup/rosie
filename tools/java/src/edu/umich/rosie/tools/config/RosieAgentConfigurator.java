@@ -155,7 +155,9 @@ public class RosieAgentConfigurator {
 		// Custom soar file
 		if (config.customSoarFile != null && config.customSoarFile.exists()){
 			agentSourceFile.write("# Sourcing custom soar code specific to this agent\n");
-			agentSourceFile.write("source " + config.customSoarFile.getAbsolutePath().replaceAll("\\\\", "/") + "\n\n");
+			agentSourceFile.write("pushd " + config.customSoarFile.getParent().replaceAll("\\\\", "/") + "\n");
+			agentSourceFile.write("source " + config.customSoarFile.getName() + "\n");
+			agentSourceFile.write("popd\n\n");
 		}
 		
 		// Create the agent param wme's
