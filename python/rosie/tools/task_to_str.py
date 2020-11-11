@@ -9,13 +9,13 @@ def task_to_str(task_id):
     task_handle = task_id.GetChildString("task-handle")
 
     # Get the root identifier of each argument
-    arg_ids = ( task_id.GetChildId(arg_name) for arg_name in ("arg1", "arg2", "arg3", "when-clause") )
+    arg_list = ( (arg_name, task_id.GetChildId(arg_name)) for arg_name in ("arg1", "arg2", "arg3", "start-clause", "end-clause", "when-clause") )
     # Convert each non-null argument to a string
-    parsed_args = ( task_arg_to_str(arg_id) for arg_id in arg_ids if arg_id is not None)
+    parsed_args = ( task_arg_to_str(arg[0], arg[1]) for arg in arg_list if arg[1] is not None)
 
     return task_handle + "(" + ", ".join(parsed_args) + ")"
 
-def task_arg_to_str(arg_id):
+def task_arg_to_str(arg_name, arg_id):
     """ Given an sml Identifier root of a task argument, 
         returns a string representation of the argument """
     arg_type = arg_id.GetChildString("arg-type")
@@ -35,8 +35,8 @@ def task_arg_to_str(arg_id):
     elif arg_type == "coordinate":
         coord_id = arg_id.GetChildId("coord")
         return "{%.2f, %.2f}" % ( coord_id.GetChildFloat("x"), coord_id.GetChildFloat("y") )
-    elif arg_type == "when-clause":
-        return "when" + pred_set_to_str(arg_id)
+    elif arg_type == "temporal-clause":
+        return arg_name.split('-')[0] + pred_set_to_str(arg_id)
     return "?"
 
 def pred_set_to_str(arg_id):
@@ -63,6 +63,14 @@ def predicate_to_str(pred_id):
         obj1_str = object_to_str(pred_id.GetChildId("1"))
         obj2_str = object_to_str(pred_id.GetChildId("2"))
         return "%s(%s, %s)" % (pred_handle, obj1_str, obj2_str)
+    elif pred_type == "clocktime":
+        hour = pred_id.GetChildInt("hour")
+        minute = pred_id.GetChildInt("minute")
+        return "%d:%d" % (hour, minute)
+    elif pred_type == "duration":
+        number = pred_id.GetChildInt("number")
+        unit = pred_id.GetChildString("unit")
+        return "%d %s" % (number, unit)
     else:
         return "?"
 

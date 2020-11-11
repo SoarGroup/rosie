@@ -15,6 +15,7 @@ class CommandConnector(AgentConnector):
         self.queued_command = None
         self.active_command = None
         self.wait_time = 0
+        self.wait_steps = 0
 
         self.add_output_command("handled-command")
 
@@ -35,6 +36,11 @@ class CommandConnector(AgentConnector):
             if current_time_ms() > self.wait_time:
                 self.complete_command()
                 self.wait_time = 0
+
+        if self.wait_steps > 0:
+            self.wait_steps -= 1
+            if self.wait_steps == 0:
+                self.complete_command()
 
     def complete_command(self):
         if self.active_command is not None:
@@ -64,6 +70,10 @@ class CommandConnector(AgentConnector):
         #   will wait the given number of seconds before reporting success
         elif cmd_name == 'wait':
             self.wait_time = current_time_ms() + 1000*int(args[1])
+        # WAIT_DC <dcs>
+        #   will wait the given number of cycles before reporting success
+        elif cmd_name == 'wait_dc':
+            self.wait_steps = int(args[1])
         # CLI arg1 arg2 ...
         #   will execute a soar command (e.g. "CLI p s1 -d 2")
         elif cmd_name == 'cli':
