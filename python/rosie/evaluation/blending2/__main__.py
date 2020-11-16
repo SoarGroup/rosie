@@ -23,15 +23,14 @@ def launch_gui(rosie_config, var_num):
     
     eval_gui.run()
 
-def run_test(rosie_config, var_num):
-    var_script = "variations/var" + str(var_num) + "-script.txt"
+# Runs on the normal agent (variation 2)
+def run_test(rosie_config):
     eval_agent = TestAgent(config_filename=rosie_config, write_to_stdout=True, source_output="summary",
-            task_test_output_filename='output/test-output' + str(var_num) + '.txt', watch_level=0, 
-            messages_file=var_script)
+            task_test_output_filename='output/test-output.txt', watch_level=0, 
+            messages_file="variations/var2-script.txt")
 
     # Source rules specific to the agent variation
-    var_rules = "variations/var" + str(var_num) + "-rules.soar"
-    eval_agent.execute_command("source " + var_rules, print_res=True)
+    eval_agent.execute_command("source variations/var2-rules.soar", print_res=True)
 
     eval_agent.run_test('correct-output.txt')
 
@@ -60,7 +59,7 @@ def main():
     rosie_config = rosie_home + "/python/rosie/evaluation/blending2/agent/rosie.blending2.config"
 
     if "--test" in sys.argv:
-        run_test(rosie_config, var_num)
+        run_test(rosie_config)
     else:
         launch_gui(rosie_config, var_num)
 

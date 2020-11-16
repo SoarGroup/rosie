@@ -26,6 +26,19 @@ sp {add-node-to-goal-graph*elaborate*create-graph-edge*from*previous-node*with*c
            ^conditions <conds>)
 }
 
+# If told to ^insert-before-node <node-h>
+#   then create an edge from the created node to the following one
+sp {add-node-to-goal-graph*elaborate*create-graph-edge*to*following-node
+   (state <s> ^name add-node-to-goal-graph
+              ^created-node <node>
+              ^insert-before-node <next-h>
+              ^following-node <next>)
+-->
+   (<s> ^create-graph-edge <edge>)
+   (<edge> ^head <node> 
+           ^tail <next>)
+}
+
 # If told that this was the final goal, 
 #   then create an edge from the created node to the terminal node
 sp {add-node-to-goal-graph*elaborate*create-graph-edge*final-goal
@@ -85,4 +98,53 @@ sp {add-node-to-goal-graph*apply*create-graph-edge*with*conditions
 
    (<src> ^edge <next>)
    (<s> ^store-edge <src>)
+}
+
+#### OTHER
+
+sp {add-node-to-goal-graph*propose*create-goal-node
+   (state <s> ^name add-node-to-goal-graph
+              ^subtask-handle <sub-handle>
+              ^current-goal-id <next-id>
+              ^goal-graph-nodes.goal <prev-id>
+             -^subtask-goal-node)
+   (<prev-id> ^next <prev-next>)
+   (<prev-next> ^goal {@ <next-id>})
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name create-goal-node
+        ^subtask-handle <sub-handle>
+        ^next-goal-id <next-id>
+        ^prev-goal-id <prev-id>
+        ^prev-next-id <prev-next>)
+}
+
+sp {add-node-to-goal-graph*apply*create-goal-node
+   (state <s> ^name add-node-to-goal-graph
+              ^operator <o>
+              ^task-operator.task-handle <task-h>)
+   (<o> ^name create-goal-node
+        ^subtask-handle <sub-handle>
+        ^next-goal-id {@ <next-goal-id>}
+        ^prev-goal-id <prev-goal-id>
+        ^prev-next-id <prev-next>)
+   (<prev-next> ^goal <next-goal-id>)
+-->
+   (<s> ^subtask-goal-node <node>)
+   (<node> ^item-type task-goal
+           ^handle (make-constant-symbol <task-h> |goal|)
+           ^pred-count 1
+           ^1 <pred1>
+           ^next <next>)
+   (<pred1> ^type subtask
+            ^subtask-handle <sub-handle>)
+   # Next pointer to the current goal
+   (<next> ^goal <next-goal-id>)
+
+   # Make the previous goal point to this one instead
+   (<prev-next> ^goal <next-goal-id> -
+                ^goal <node>)
+
+   (<s> ^to-store <node> <pred1> <next> <prev-next>)
+   (<s> ^change-goal-handle <prev-goal-id>)
 }
