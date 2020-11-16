@@ -1,0 +1,85 @@
+
+########################## add-start-goal ###########################
+#
+# Propose the following operator:
+# (state <s> ^operator <o> +)
+# (<o> ^name add-start-goal
+#      ^task-handle <task-h>)
+#
+# In the substate, will initialize the goal-graph by adding a start node
+#   to the task-concept-network of the given task-handle
+# When finished, adds ^added-start-goal <goal-h> to superstate
+
+
+# Copy the task-handle from the superoperator
+sp {edit-goal-graph*add-start-goal*elabrate*task-handle*superoperator
+   (state <s> ^name add-start-goal
+              ^superstate.operator.task-handle <task-h>)
+-->
+   (<s> ^task-handle <task-h>)
+}
+
+# Elaborate the problem-space
+sp {edit-goal-graph*add-start-goal*elabrate*problem-space
+   (state <s> ^name add-start-goal)
+-->
+   (<s> ^default-problem-space no
+        ^problem-space.name edit-goal-graph)
+}
+
+### Step 1: Retrieve the TCN from smem (using smem-query operator)
+sp {edit-goal-graph*add-start-goal*elabrate*smem-query*task-concept-network
+   (state <s> ^name add-start-goal
+              ^task-handle <task-h>)
+-->
+   (<s> ^smem-query <q>)
+   (<q> ^cue.handle <task-h>
+        ^result-name task-concept-network
+        ^destination <s>)
+}
+
+### Step 2: operator add-start-goal-to-tcn
+# Create the goal-graph on the retrieved TCN 
+
+sp {edit-goal-graph*add-start-goal*propose*add-start-goal-to-tcn
+   (state <s> ^name add-start-goal
+              ^task-concept-network <tcn>)
+   (<tcn> -^goal-graph)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name add-start-goal-to-tcn)
+}
+
+sp {edit-goal-graph*add-start-goal*apply*add-start-goal-to-tcn
+   (state <s> ^name add-start-goal
+              ^operator.name add-start-goal-to-tcn
+              ^task-handle <task-h>
+              ^task-concept-network <tcn>)
+-->
+   (<tcn> ^goal-graph <start>)
+   (<start> ^handle (make-constant-symbol (concat <task-h> |start|)) ^item-type start-goal)
+   (<s> ^store-concept <tcn> <start>)
+}
+
+### Step 3: Store the updated TCN (using smem-store operator)
+
+
+### Step 4: Return success
+sp {edit-goal-graph*add-start-goal*propose*complete-add-start-goal
+   (state <s> ^name add-start-goal
+              ^task-concept-network.goal-graph.handle <goal-h>)
+-->
+   (<s> ^operator <o> + = <)
+   (<o> ^name complete-add-start-goal
+        ^goal-handle <goal-h>)
+}
+
+sp {edit-goal-graph*add-start-goal*apply*complete-add-start-goal*return*result
+   (state <s> ^name add-start-goal
+              ^operator <o>
+              ^superstate <ss>)
+   (<o> ^name complete-add-start-goal
+        ^goal-handle <goal-h>)
+-->
+   (<ss> ^added-start-goal <goal-h>)
+}
