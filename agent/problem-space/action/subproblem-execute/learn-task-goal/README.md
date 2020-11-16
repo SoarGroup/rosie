@@ -22,7 +22,6 @@ The task goal is a grounded representation of the goal and any conditions.
 ([s] ^task-goal [goal]) # from superstate.operator
 ([s] ^task-operator [task-op]) # from superstate.task-operator
 ([s] ^task-concept-network [tcn]) # The TCN for the current task-operator [smem-retrievals.soar]
-([s] ^current-goal-id [gid]) # The root LTI of the current task's goal [smem-retrievals.soar]
 ```
 
 **1. generalize-task-argument**
@@ -36,17 +35,13 @@ of the conditions that can be added to the TCN.
 Use the `task-utils/generalize/generalize-task-goal` operator to take the 
 grounded goal representation and create a generalized version where arguments are either connected to existing slots in the TCN or a set of descriptive predicates. 
 
-**3. add-goal-node-to-tcn**
+**3. add-node-to-goal-graph**
 
 Once the goal is generalized, create a new goal node and add it to the TCN 
-by creating a next pointer from the `current-goal-id` to the node. 
-Any goal conditions are added to this next pointer as well. 
+using `task-utils/add-node-to-goal-graph`. 
+If the task-goal has the flag `^final-goal true` then we tell `add-node-to-goal-graph` to append a terminal goal node.
 
-**4. store-goal**
-
-Once the goal is added to the TCN, store any LTI's that are new or have changed. 
-
-**5. complete-learn-task-goal**
+**4. complete-learn-task-goal**
 
 Finally, once everything has been stored, remove the `new-task-goal` from the current task segment and 
 report to the interaction-stack that we have performed a task event of type `learned-task-goal`. 
