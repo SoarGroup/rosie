@@ -21,6 +21,8 @@ run_rosie: waypoint-map.soar internal-world.soar ${ROSIE_CONFIG}
 run_test: waypoint-map.soar internal-world.soar ${ROSIE_CONFIG} 
 	mkdir -p output
 	python3 -m rosie.evaluation.${AGENT_NAME} --test
+	echo "########### DIFF ##########"
+	diff output/test-output.txt correct-output.txt
 
 
 # agent/rosie.blending2.config: Configures the rosie soar agent that will be sourced to run

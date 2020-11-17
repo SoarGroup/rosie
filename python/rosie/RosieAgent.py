@@ -6,7 +6,7 @@ from rosie import CommandConnector, InternalCommandConnector
 from rosie.events import InstructorMessageSent
 from rosie.language import LanguageConnector, ScriptConnector
 
-# Rule that elaborates an agent-param onto the top-state
+# Rule that elaborates an agent-param onto the top-state (0=attribute, 1=value)
 agent_param_rule = \
 """sp {{top-state*elaborate*agent-params*{0}
    (state <s> ^superstate nil
@@ -39,6 +39,9 @@ class RosieAgent(SoarAgent):
 
         custom_language_connector = true|false (default=false)
             If true, will rely on a subclass to create the language connector
+
+        clock_step_ms = [int] (default=50)
+            How many milliseconds the simulated clock on the input-link ticks every decision cycle
 
         agent_params = { }
             Specify att/val pairs to add to the ^agent-params wme in working memory
