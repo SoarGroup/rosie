@@ -1,9 +1,9 @@
 
 # Given the root LTI of a task concept network, 
 #   returns a nicely formatted string with the task, subtasks, and goal-graph
-def tcn_to_str(tcn_id):
+def tcn_to_str(tcn_id, print_ltis=True):
     SlotMap.clear()
-    return str(TCN(tcn_id))
+    return str(TCN(tcn_id, print_ltis))
 
 
 ################### INTERNAL STUFF #########################
@@ -14,9 +14,10 @@ is_id = lambda id: hasattr(id, 'GetIdentifierSymbol')
 has_child = lambda id, attr: (id.GetChildString(attr) is not None)
 
 class TCN:
-    def __init__(self, lti):
+    def __init__(self, lti, print_ltis=True):
         SlotMap.clear()
         self.lti = lti
+        self.print_ltis = print_ltis
         self.handle = lti.GetChildString('handle')
         self.task = TaskOperator(lti.GetChildId('procedural')) if has_child(lti, 'procedural') else None
         self.add_goal_graph()
@@ -29,7 +30,7 @@ class TCN:
         proc_id = self.lti.GetChildId('procedural')
         if proc_id is None or not has_child(proc_id, 'subtasks'):
             return
-        for subtask in proc_id.GetChildId('subtasks').GetAllChildIds('subtask'):
+        for subtask in sorted(proc_id.GetChildId('subtasks').GetAllChildIds('subtask')):
             self.subtasks[subtask.GetChildString('handle')] = TaskOperator(subtask)
 
     def add_goal_graph(self):
@@ -37,9 +38,11 @@ class TCN:
         self.root_node = self.add_goal_node(self.lti.GetChildId('goal-graph'))
 
     def add_goal_node(self, node_id):
+        if node_id is None:
+            return None
         if node_id in self.goal_nodes:
             return self.goal_nodes[node_id]
-        node = GoalNode(node_id)
+        node = GoalNode(node_id, self.print_ltis)
         self.goal_nodes[node_id] = node
         for next_id in node_id.GetAllChildIds('next'):
             tail = self.add_goal_node(next_id.GetChildId('goal'))
@@ -48,7 +51,8 @@ class TCN:
 
     def __str__(self):
         s = "############################################################################"
-        s = "Task Concept Network for {} ({})\n\n".format(self.handle, self.lti.GetIdentifierSymbol())
+        s = "Task Concept Network for {} {}\n\n".format(self.handle, \
+                (self.lti.GetIdentifierSymbol() if self.print_ltis else ''))
 
         if self.task is not None:
             s += "Task Structure:\n"
@@ -57,7 +61,8 @@ class TCN:
 
         s += "Subtasks:\n\n"
         for subtask in self.subtasks.values():
-            s += "  {} ({})\n".format(subtask.lti.GetChildString('handle'), subtask.lti.GetIdentifierSymbol())
+            s += "  {} {}\n".format(subtask.lti.GetChildString('handle'), \
+                (subtask.lti.GetIdentifierSymbol() if self.print_ltis else ''))
             s += str(subtask)
             s += '\n'
 
@@ -69,9 +74,9 @@ class TCN:
             while len(stack) > 0:
                 node = stack[0]
                 stack = stack[1:]
-                if node in visited:
+                if node.symbol in visited:
                     continue
-                visited.add(node)
+                visited.add(node.symbol)
                 s += str(node)
                 s += '\n'
                 for edge in node.edges:
@@ -110,7 +115,8 @@ class TaskOperator:
 ################### GOAL NODES #########################
 
 class GoalNode:
-    def __init__(self, lti):
+    def __init__(self, lti, print_ltis=True):
+        self.print_ltis = print_ltis
         self.symbol = lti.GetIdentifierSymbol()
         self.handle = lti.GetChildString('handle')
         self.type = lti.GetChildString('item-type')
@@ -119,7 +125,8 @@ class GoalNode:
     def add_edge(self, edge):
         self.edges.append(edge)
     def __str__(self):
-        s = "  {} ({}): {}\n".format(self.handle, self.symbol, str(self.preds) if self.preds is not None else self.type)
+        s = "  {}{}: {}\n".format(self.handle, ((' ' + self.symbol) if self.print_ltis else ''), \
+                str(self.preds) if self.preds is not None else self.type)
         for edge in self.edges:
             s += "    {}\n".format(str(edge))
         return s
@@ -284,8 +291,25 @@ class PredicateSlot(Slot):
         return self.default.GetChildString('predicate-handle')
 
 ### For testing
+#
+#example_tcn = \
+#"""
+#(@100000 ^goal-graph @1587 ^handle pick-up1 ^item-type action ^procedural @1588 [+0.000])
+#  (@1587 ^handle pick-up1start1 ^item-type start-goal ^next @1593 [+0.000])
+#  (@1588 ^arg1 @1589 ^op_name op_pick-up1 ^subtasks @1590 [+0.000])
+#    (@1593 ^goal @1592 [+0.000])
+#    (@1589 ^arg-type object ^id @1591 ^required true [+0.000])
+#    (@1590 [+0.000])
+#      (@1592 ^1 @1594 ^handle pick-up1goal1 ^item-type task-goal ^next @1595 ^pred-count 1 [+0.000])
+#      (@1591 [+0.000])
+#        (@1594 ^1 @1591 ^id @1597 ^type unary [+0.000])
+#        (@1595 ^goal @1596 [+0.000])
+#          (@1597 ^default @1598 [+0.000])
+#          (@1596 ^handle pick-up1term1 ^item-type terminal-goal [+0.000])
+#            (@1598 ^predicate-handle grabbed1 ^property-handle is-grabbed1 [+0.000])
+#"""
+#
 #from pysoarlib.util import PrintoutIdentifier, parse_wm_printout
-#with open('tcn_printout.txt', 'r') as f:
-#    tcn_id = PrintoutIdentifier(parse_wm_printout(str(f.read())), "@100028")
-#    print(str(TCN(tcn_id)))
+#tcn_id = PrintoutIdentifier(parse_wm_printout(example_tcn), "@100000")
+#print(tcn_to_str(tcn_id, print_ltis=True))
     

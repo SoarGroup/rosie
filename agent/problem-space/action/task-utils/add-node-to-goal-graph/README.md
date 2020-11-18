@@ -30,6 +30,11 @@ See `add-node-to-goal-graph_source.soar` for details about the substate.
 
 ^final-goal true
 # If present, will add a terminal node after the created one
+
+^add-else-link true
+# If present, and there are goal conditions, 
+#   it will add an intermediate node following the goal
+#   and create a default next link from the previous goal to the intermediate one
 ```
 
 ### Start Node
@@ -52,6 +57,7 @@ It is pointed to by the task concept network.
 ([start-node] ^handle move1start1 
               ^item-type start-goal)
 ```
+
 
 ### Predicate Node
 
@@ -220,3 +226,37 @@ This says to only select this goal node if the conditions are met.
              ^1 [p1])
 ```
 
+### Add Edge Link
+
+If flag ^add-else-link true is given, we add an intermediate node after the created node
+and connect a default next link from the previous node to the intermediate node.
+
+**Example Operator**
+```
+([o] ^name add-node-to-goal-graph
+     ^type predicate-set
+     ^task-handle move1
+     ^after move1start1
+     ^goal-conditions [conds]
+     ^goal-predicates [preds]
+     ^add-else-link true)
+```
+
+**Created Node**
+
+```
+([prev] ^handle move1start1 ^next [next] ^next [else])
+([next] ^conditions [conds]
+        ^goal [pred-node])
+([else] ^goal [int-node])
+
+([pred-node] ^handle move1goal1
+             ^next [next2]
+             ^item-type task-goal
+             ^pred-count 1
+             ^1 [p1])
+([next2] ^goal [int-node])
+
+([int-node] ^handle move1int1
+            ^item-type intermediate-goal)
+```

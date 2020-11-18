@@ -1,5 +1,5 @@
-# If there is no goal, ask the instructor
 
+# If there is no current goal, ask the instructor for one
 sp {task-state-no-change*propose*initiate-interaction*get-next-goal
    (state <s> ^name task-state-no-change
               ^desired.satisfied true
@@ -11,6 +11,7 @@ sp {task-state-no-change*propose*initiate-interaction*get-next-goal
         ^task-operator <task-op>)
 }
 
+# If we are currently learning a composite goal, ask the instructor for the next subtask for that goal
 sp {task-state-no-change*propose*initiate-interaction*get-next-subaction*learning-composite-goal
    (state <s> ^name task-state-no-change
               ^superstate.current-task-segment.learning-composite-goal true
@@ -22,14 +23,44 @@ sp {task-state-no-change*propose*initiate-interaction*get-next-subaction*learnin
         ^task-handle <task-h>)
 }
 
+## If there are next goals but none of their conditions are met, ask for an alternative
+#sp {task-state-no-change*elaborate*unmet-goal-conditions*true
+#   (state <s> ^name task-state-no-change
+#              ^unmet-conditions <any>)
+#-->
+#   (<s> ^unmet-goal-conditions true)
+#}
+#sp {task-state-no-change*propose*initiate-interaction*get-goal-alternative
+#   (state <s> ^name task-state-no-change
+#              ^unmet-goal-conditions true
+#              ^desired.satisfied true
+#              ^task-operator <task-op>)
+#-->
+#   (<s> ^operator <o> + =)
+#   (<o> ^name initiate-interaction
+#        ^type get-goal-alternative
+#        ^task-operator <task-op>)
+#}
+
+sp {task-state-no-change*propose*learn-select-next-goal-rule
+   (state <s> ^name task-state-no-change
+              ^current-goal <goal-h>
+              ^goal-id.next <next>
+              ^desired.satisfied true)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name learn-select-next-goal-rule
+        ^goal-handle <goal-h>
+        ^next-goal-link <next>)
+}
+
 sp {task-state-no-change*apply*initiate-interaction*get-next-goal*mark*learning*needed
    (state <s> ^name task-state-no-change
               ^operator <o>
               ^quiescence t
               ^superstate.current-task-segment <seg>)
    (<o> ^name initiate-interaction
-        ^type get-next-goal)
+        ^type << get-next-goal get-goal-alternative >>)
 -->
    (<seg> ^policy-learning-needed true)
 }
-
