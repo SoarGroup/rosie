@@ -32,8 +32,8 @@ class TestAgent(RosieAgent):
         self.add_print_event_handler(lambda msg: self.print_callback(msg))
 
     def write_output(self, message):
-        if self.outfile is not None:
-            self.outfile.write(message + "\n")
+        #if self.outfile is not None:
+        self.outfile.write(message + "\n")
 
     def run_test(self, correct_filename):
         self.connect()

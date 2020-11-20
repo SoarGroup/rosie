@@ -1,0 +1,180 @@
+###### Operator: select-object-argument
+# If there are multiple possible groundings - select only one
+
+### PROPOSAL
+
+# Propose select-object-argument for object arguments
+sp {task-utils*construct*propose*select-object-argument*object*arg
+   (state <s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type object
+          ^arg-name <arg-name>
+          ^parent <par>)
+   (<par> ^<arg-name> <obj>)
+   (<cta> -^source)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name select-object-argument
+        ^object <obj>
+        ^destination <cta>
+        ^result-name source)
+}
+
+# Propose select-object-argument for partial-predicate arguments
+sp {task-utils*construct*propose*select-object-argument*ppred*2
+   (state <s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type partial-predicate
+          ^parent <par>
+          ^source-name <src-name>
+          ^source <src>)
+   (<par> ^<src-name>.{2} <obj>)
+   (<src> -^2)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name select-object-argument
+        ^object <obj>
+        ^destination <src>
+        ^result-name 2)
+}
+
+# Propose select-object-argument for unary/relation object 1
+sp {task-utils*construct*propose*select-object-argument*predicate*1
+   (state <s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type predicate
+          ^parent <par>
+          ^source <src>)
+   (<par> ^arg1 <obj>)
+   (<src> ^type << unary relation >>
+         -^1)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name select-object-argument
+        ^object <obj>
+        ^destination <src>
+        ^result-name 1)
+}
+
+# Propose select-object-argument for relation object 2
+sp {task-utils*construct*propose*select-object-argument*predicate*2
+   (state <s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type predicate
+          ^parent <par>
+          ^source <src>)
+   (<par> ^predicate.{2} <obj>)
+   (<src> ^type relation
+         -^2)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name select-object-argument
+        ^object <obj>
+        ^destination <src>
+        ^result-name 2)
+}
+
+# Propose select-object-argument for relation object arg2
+sp {task-utils*construct*propose*select-object-argument*predicate*arg2
+   (state <s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type predicate
+          ^parent <par>
+          ^source <src>)
+   (<par> ^arg2 <obj>)
+   (<obj> ^item-type object)
+   (<src> ^type relation
+         -^2)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name select-object-argument
+        ^object <obj>
+        ^destination <src>
+        ^result-name 2)
+}
+
+### APPLICATION
+
+sp {task-utils*construct*apply*select-object-argument*copy*object
+   (state <s> ^operator <o>)
+   (<o> ^name select-object-argument 
+        ^object <obj>
+        ^destination <dest>
+        ^result-name <res-name>)
+-->
+   (<dest> ^<res-name> <obj>)
+}
+
+### ELABORATIONS
+
+### task-object true - if the object is anywhere on the task stack
+sp {task-utils*construct*elaborate*select-object-argument*task-object*true
+   (state <s> ^operator <o> +
+              ^top-state.task-stack.segments.segment.task-objects.object <obj>)
+   (<o> ^name select-object-argument 
+        ^object <obj>)
+-->
+   (<o> ^task-object true)
+}
+
+### bottom-task-object true - if the object is on the bottom task segment
+sp {task-utils*construct*elaborate*select-object-argument*bottom-task-object*true
+   (state <s> ^operator <o> +
+              ^top-state.task-stack.bottom.task-objects.object <obj>)
+   (<o> ^name select-object-argument 
+        ^object <obj>)
+-->
+   (<o> ^bottom-task-object true)
+}
+
+### preference-order 1 - not a task object
+sp {task-utils*construct*elaborate*select-object-argument*preference-order*1
+   (state <s> ^operator <o> +)
+   (<o> ^name select-object-argument 
+       -^task-object true)
+-->
+   (<o> ^preference-order 1)
+}
+
+### preference-order 2 - a non-bottom task object
+sp {task-utils*construct*elaborate*select-object-argument*preference-order*2
+   (state <s> ^operator <o> +)
+   (<o> ^name select-object-argument 
+        ^task-object true
+       -^bottom-task-object true)
+-->
+   (<o> ^preference-order 2)
+}
+
+### preference-order 3 - a bottom task object
+sp {task-utils*construct*elaborate*select-object-argument*preference-order*3
+   (state <s> ^operator <o> +)
+   (<o> ^name select-object-argument 
+        ^bottom-task-object true)
+-->
+   (<o> ^preference-order 3)
+}
+
+### PREFERENCES
+
+# Prefer a higher preference-order
+sp {task-utils*construct*select-object-argument*prefer*higher*preference-order
+   (state <s> ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name select-object-argument 
+         ^preference-order <po1>)
+   (<o2> ^name select-object-argument 
+         ^preference-order < <po1>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+# Break ties deterministically (alphabetically by object handle) - same preference-order 
+sp {task-utils*construct*select-object-argument*break*ties*deterministically
+   (state <s> ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name select-object-argument 
+         ^preference-order <po>
+         ^object.handle <objh>)
+   (<o2> ^name select-object-argument 
+         ^preference-order <po>
+         ^object.handle > <objh>)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
