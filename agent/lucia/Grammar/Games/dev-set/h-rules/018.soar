@@ -1,0 +1,196 @@
+##!
+# @file
+#
+# @created plindes 20200917
+# File: 018.soar
+# Author: Peter Lindes
+# Created: 17 September 2020
+#
+# Desc: This file contains all the processing rules
+#       needed to add to be able to process sentence 018
+#       of the Games development set.
+#  This is sentence #4 of 01.07_tower-of-hanoi script.txt.
+#  The sentence is:
+#      You can move a clear block onto a clear object that is larger than the block.
+#
+
+#   New snips are needed to parse this sentence because
+#   without any snips the parse looks like this:
+#
+#  C66: EnabledCommandSentence[You can move a clear block onto a clear object] m: M19
+#    enabler<-C15: EnablerPhrase[You can] m: M3
+#      agent<-C10: YOU[You] m: M1
+#      verb<-C14: CAN-verb[can] m: M2
+#    command<-C64: ImperativeWithLocation[move a clear block onto a clear object] m: M18
+#      command<-C39: TransitiveCommand[move a clear block] m: M10
+#        verb<-C21: MoveVerb[move] m: M5
+#          verb<-C20: MOVE[move] m: M4
+#        object<-C37: SpecPropNoun[a clear block] m: M9
+#          spec<-C26: A[a] m: M6
+#          prop<-C30: CLEAR[clear] m: M7
+#          noun<-C34: BLOCK[block] m: M8
+#      location<-C62: SimplePrepPhrase[onto a clear object] m: M17
+#        prep<-C46: ONTO[onto] m: M12
+#        object<-C60: SpecPropNoun[a clear object] m: M16
+#          spec<-C50: A[a] m: M13
+#          prop<-C54: CLEAR[clear] m: M14
+#          noun<-C58: OBJECT[object] m: M15
+#  C101: RefIsPrepPhrase[that is larger than the block.] m: M29
+#    ref<-C71: THAT-deictic[that] m: M20
+#    tobe<-C77: IS[is] m: M23
+#    phrase<-C99: SimplePrepPhrase[larger than the block.] m: M28
+#      prep<-C86: LARGER-THAN[larger than] m: M24
+#      object<-C97: SpecNoun[the block.] m: M27
+#        spec<-C90: THE[the] m: M25
+#        noun<-C94: BLOCK[block.] m: M26
+#
+#   This bad structure is because everything to "object" is a valid Declarative.
+#   Then the next word is "that", and since the preceding RefExpr "a clear object"
+#   is now down on level 4 of the tree, it can't be reached and we get THAT-deictic.
+#
+#   If we could snip both C66 and C64, then attach-relative-pronoun might work.
+#
+#   We will try making this the most general possible by snipping any
+#   VerbWithArguments, which is normally a complete sentence, if any
+#   lexical item follows it.
+#
+#   It may be necessary to reduce the generality to some extent. Regression tests
+#   will let us know. However, it something very general works overall, it might
+#   be possible to throw away some of the existing snip rules.
+#
+
+#######  Snip a VerbWithArguments if "that" follows  #####################
+  
+#    Propose an operator to snip a VerbWithArguments before "that"
+#    Only certain types of VerbWithArguments will make this fire,
+#    since some, like TransitiveCommand, should not be snipped.
+#    There must be a separate apply rule for each sentence type
+#    to be snipped in order to get the right target.
+sp {comprehend-word*propose*snip-sentence
+   (state <s> ^problem-space comprehend-word
+              ^cxn <lexical>
+              ^lexical-access done)
+   #    Do this in as general a way as possible
+   (<lexical> ^previous <sentence>
+              ^cxn-name <lex-name>
+              ^orth that)
+   (<sentence> ^is.a VerbWithArguments
+               ^cxn-name <top-name> 
+                    #   List all the accepted types here
+                    << EnabledCommandSentence ImperativeWithLocation >> )
+-->
+   (<s> ^operator <o> + > =)
+   (<o> ^name snip-sentence
+        ^type snip
+        ^goal snip-verb-with-arguments
+        ^debug-info (concat |Snip | <top-name> | followed by "that".|))
+}
+
+#    Snip away the top VerbWithArguments construction
+#    This version works with an EnabledCommandSentence
+sp {comprehend-word*apply*snip-sentence*enabled-command-sentence
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <lexical>)
+   (<o> ^name snip-sentence
+        ^type snip
+        ^goal snip-verb-with-arguments)
+   #    Find the target and things to report
+   (<lexical> ^previous <sentence>
+              ^cxn-name <lex-name>
+              ^orth that)
+   (<sentence> ^is.a VerbWithArguments
+               ^cxn-name EnabledCommandSentence
+               ^command <command>)
+-->
+   #    THIS IS THE SNIP!!!
+   #    Change the previous pointer
+   #    This will orphan the higher layers and
+   #    leave them to be garbage collected.
+   #    Instead we'll point to their last constituent,
+   #    allowing that to be matched
+   (<lexical> ^previous <sentence> -
+               ^previous <command>)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <sentence> | to get to | <command> |.|))
+}
+
+#    Snip away the top VerbWithArguments construction
+#    This version works with an ImperativeWithLocation
+sp {comprehend-word*apply*snip-sentence*imperative-with-location
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <lexical>)
+   (<o> ^name snip-sentence
+        ^type snip
+        ^goal snip-verb-with-arguments)
+   #    Find the target and things to report
+   (<lexical> ^previous <sentence>
+              ^cxn-name <lex-name>
+              ^orth that)
+   (<sentence> ^is.a VerbWithArguments
+               ^cxn-name ImperativeWithLocation
+               ^location <location>)
+-->
+   #    THIS IS THE SNIP!!!
+   #    Change the previous pointer
+   #    This will orphan the higher layers and
+   #    leave them to be garbage collected.
+   #    Instead we'll point to their last constituent,
+   #    allowing that to be matched
+   (<lexical> ^previous <sentence> -
+               ^previous <location>)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <sentence> | to get to | <location> |.|))
+}
+
+#######  Snip a PrepPhrase to get a RefExpr before "that"  #####################
+  
+#    Propose an operator to snip a PrepPhrase before a lexical
+#    This is necessary to get THAT-relative selected when needed.
+sp {comprehend-word*propose*snip*pp-before-that
+   (state <s> ^problem-space comprehend-word
+              ^cxn <lexical>
+              ^lexical-access done)
+   #    Do this in as general a way as possible
+   (<lexical> ^previous <prep-phrase>
+              ^cxn-name <lex-name>
+              ^orth |that|)
+   (<prep-phrase> ^is.a PrepPhrase
+                  ^cxn-name <pp-name>)
+-->
+   (<s> ^operator <o> + > =)
+   (<o> ^name snip
+        ^type snip
+        ^goal snip-pp-before-that
+        ^debug-info (concat |Snip a PrepPhrase followed by "that".|))
+}
+
+#    Snip away the top VerbWithArguments construction
+#    This version works with an ImperativeWithLocation
+sp {comprehend-word*apply*snip*pp-before-that
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <lexical>)
+   (<o> ^name snip
+        ^type snip
+        ^goal snip-pp-before-that)
+   #    Find the target and things to report
+   (<lexical> ^previous <prep-phrase>
+              ^cxn-name <lex-name>
+              ^orth |that|)
+   (<prep-phrase> ^is.a PrepPhrase
+                  ^cxn-name <pp-name>
+                  ^object <target>)
+-->
+   #    THIS IS THE SNIP!!!
+   #    Change the previous pointer
+   #    This will orphan the higher layers and
+   #    leave them to be garbage collected.
+   #    Instead we'll point to their last constituent,
+   #    allowing that to be matched
+   (<lexical> ^previous <prep-phrase> -
+               ^previous <target>)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <prep-phrase> | to get to | <target> |.|))
+}
