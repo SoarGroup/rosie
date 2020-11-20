@@ -12,6 +12,33 @@
 #		The result may be a single item, a set of items,
 #		or nothing.
 #
+#   THIS VERSION IS FOR RUNNING WITHOUT SIMULATED PERCEPTION
+#
+#   PL 10/21/2020 There are two versions of this operator,
+#   the *no-sim version and the *sim version.
+#   This is the *no-sim version, without -sim in the file name.
+#       1.  Each version has its own *propose*ground-reference*
+#           rule. The operator proposed has an attibute
+#           ^simulated-perception true/false depending on whether
+#           agent-params.simulate-perception is true or not.
+#       2.  Most of the apply rules do not care, at least now,
+#           which version they are fired under. All these rules
+#           are commented out in the -sim version of the file.
+#       3.  The apply rules where it matters have either *no-sim
+#           or *sim appended to their names, they check the
+#           ^simulated-perception true/false on the operator,
+#           and have appropriate differences in the code.
+#       4.  It may well be that, as more sentences are developed,
+#           more rules will have to be uncommented and differentiated.
+#       5.  The 10/21/2020 version works for the Robot 001
+#           sentence: "Move the fork onto the table.",
+#           which is the first sentence of the kitchen script.
+#       6.  In the 10/21/2020 version, only the *category*not-ONE*
+#           and *category*not-ONE*object* apply rules have both versions.
+#           The *post-name-filter apply rule has only a *no-sim
+#           version for now.
+#       7.  It is likely that more work will be needed here.
+#
 # Details:
 #	The ground-reference operator is proposed whenever:
 #		1. lexical-access is marked as done
@@ -76,12 +103,14 @@
 #
 
 #    Propose an operator to resolve a reference of a RefDesc
-sp {comprehend-word*propose*ground-reference
+#    This rule should fire only when NOT in SIMULATED PERCEPTION mode
+sp {comprehend-word*propose*ground-reference*no-sim
    (state <s> ^problem-space comprehend-word
               ^lexical-access done	# May need to see comprehend-word-done as proposed
               ^match-construction done
               ^cxn <cxn>
-             -^reference resolved)
+             -^reference resolved
+             -^top-state.agent-params.simulate-perception true)
    (<cxn> ^m <ref-desc>)
    (<ref-desc> ^is.a RefDesc)
    (<ref-desc> ^modifiers <modifiers>
@@ -96,6 +125,7 @@ sp {comprehend-word*propose*ground-reference
    (<o> ^name ground-reference
         ^type resolution
         ^meaning <ref-desc>
+        ^simulated-perception false
         ^debug-info (concat |Find the referent for a given RefDesc.|))
 }
 
@@ -166,12 +196,14 @@ sp {comprehend-word*apply*ground-reference*category*current-location
 }
 
 #   Look for objects of a given Rosie category, NOT for pronoun ONE
-sp {comprehend-word*apply*ground-reference*category*not-ONE
+#    This rule should fire only when NOT in SIMULATED PERCEPTION mode
+sp {comprehend-word*apply*ground-reference*category*not-ONE*no-sim
    (state <s> ^problem-space comprehend-word
               ^operator <o>
               ^top-state <ts>)
    (<o> ^name ground-reference
-        ^meaning <ref-desc>)
+        ^meaning <ref-desc>
+        ^simulated-perception false)
    (<ref-desc> ^category <rosie-ref-desc>
                ^givenness { <x> <> |one-pronoun| })
    #    Get the category
@@ -219,12 +251,14 @@ sp {comprehend-word*apply*ground-reference*category*salient
 
 #   Look for objects of a any reasonable Rosie category,
 #   NOT for pronoun ONE
-sp {comprehend-word*apply*ground-reference*category*not-ONE*object
+#    This rule should fire only when NOT in SIMULATED PERCEPTION mode
+sp {comprehend-word*apply*ground-reference*category*not-ONE*object*no-sim
    (state <s> ^problem-space comprehend-word
               ^operator <o>
               ^top-state <ts>)
    (<o> ^name ground-reference
-        ^meaning <ref-desc>)
+        ^meaning <ref-desc>
+        ^simulated-perception false)
    (<ref-desc> ^category <rosie-ref-desc>
                ^givenness { <x> <> |one-pronoun| })
    #    Get the category
@@ -430,11 +464,13 @@ sp {comprehend-word*apply*ground-reference*category-empty
 }
 
 #	Post filters from the ref-desc
-sp {comprehend-word*apply*ground-reference*post-name-filter
+#    This rule should fire only when NOT in SIMULATED PERCEPTION mode
+sp {comprehend-word*apply*ground-reference*post-name-filter*no-sim
    (state <s> ^problem-space comprehend-word
               ^operator <o>)
    (<o> ^name ground-reference
-        ^meaning <ref-desc>)
+        ^meaning <ref-desc>
+        ^simulated-perception false)
    (<ref-desc> ^category <rosie-ref-desc>)
    #	Get the name
    (<rosie-ref-desc> ^name { <name> <> nil })

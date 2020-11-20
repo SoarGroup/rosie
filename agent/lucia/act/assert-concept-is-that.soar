@@ -60,17 +60,42 @@ sp {act*propose*assert-concept-is-that
         ^debug-info (concat |We will create a new definition according to '| <text> |.'|))
 }
 
-#   2) Build a message skeleton
-sp {act*apply*assert-concept-is-that*create-message
+#   2) Build a message skeleton without a modifier
+sp {act*apply*assert-concept-is-that*create-message*no-modifier
    (state <s> ^problem-space act
-              ^operator <o>)
+              ^operator <o>
+              ^action <a>)
    (<o> ^name assert-concept-is-that
         ^arg1 <concept>)
+   #    Check for a modifier
+   (<a> ^modifier nil)
 -->
    #    Create a skeleton message
    (<s> ^result <message>)
    (<message> ^message-type object-description
               ^arg1 <concept>)
+   #    Create a skeleton for assertions
+   (<s> ^assertions <assertions>)
+   #    Create a skeleton for subclauses
+   (<s> ^subclauses <subclauses>)
+}
+
+#   2) Build a message skeleton with a modifier
+#   This is for sentences like "The only goal is that ..."
+sp {act*apply*assert-concept-is-that*create-message*with-modifier
+   (state <s> ^problem-space act
+              ^operator <o>
+              ^action <a>)
+   (<o> ^name assert-concept-is-that
+        ^arg1 <concept>)
+   #    Check for a modifier
+   (<a> ^modifier { <modifier> <> nil })
+-->
+   #    Create a skeleton message
+   (<s> ^result <message>)
+   (<message> ^message-type object-description
+              ^arg1 <concept>
+              ^arg1 <modifier>) # This is weird, but that's how it is
    #    Create a skeleton for assertions
    (<s> ^assertions <assertions>)
    #    Create a skeleton for subclauses
@@ -153,7 +178,11 @@ sp {act*apply*assert-concept-is-that*add-subclause*property-application
    #    Add subclause
    (<subclauses> ^<index> <subclause>)
    (<subclause> ^arg1 <object>
-                ^predicate <predicate>)
+                ^predicate <predicate>
+                ^action <is-action>)
+   #    Add this is-action for Rosie compatibility
+   (<is-action> ^item-type action
+                ^handle is1)
 }
 
 #   4) Build the subclause for clauses with "is"

@@ -19,6 +19,7 @@ sp {interpret*propose*do-assertion
               ^problem-space interpret
               ^comprehension <c>
               ^discourse <d>
+              ^message nil
              -^action <a>)
    (<c> ^cxn-stack <cxn>)
    (<cxn> ^m <m>)   #   Sometimes we need to see the syntax
@@ -277,8 +278,8 @@ sp {interpret*apply*this-is-a-that-assertion*done
 
 #################  ConceptIsThatAssertion   ####################### 
 
-#   Assert a ThisIsAThatAssertion itself, without predicate(s)
-sp {interpret*apply*concept-is-that-assertion
+#   Assert a ConceptIsThatAssertion, without modifier(s)
+sp {interpret*apply*concept-is-that-assertion*no-modifier
    (state <s> ^top-state <ts> 
               ^problem-space interpret
               ^operator <o>)
@@ -288,11 +289,42 @@ sp {interpret*apply*concept-is-that-assertion
         ^concept <concept>
         ^assertion <assertion>
         ^text <text>)
+   #    This rule should only apply when <concept> has no modifiers
+   (<concept> ^modifiers nil)
 -->
    #   Add an action to assert the equivalence relation, no predicates yet
    (<s> ^assert-concept-is-that <a-concept-is-that>)
    (<a-concept-is-that> ^action ASSERT-CONCEPT-IS-THAT
                      ^arg1 <concept>
+                     ^modifier nil # There is no modifier
+                     ^assertion <assertion>
+                     ^text <text>
+                     ^next nil)
+}
+
+#   Assert a ConceptIsThatAssertion, with modifier(s)
+#   This is for sentences like "The only goal is that ..."
+sp {interpret*apply*concept-is-that-assertion*with-modifier
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-assertion
+        ^meaning <m>)
+   (<m> ^is.a ConceptIsThatAssertion
+        ^concept <concept>
+        ^assertion <assertion>
+        ^text <text>)
+   #    This rule should only apply when <concept> has modifiers
+   (<concept> ^modifiers { <modifiers> <> nil })
+   #    Get the content of the modifier (assume only one)
+   (<modifiers> ^predicate <content>
+                ^next nil)  
+-->
+   #   Add an action to assert the equivalence relation, no predicates yet
+   (<s> ^assert-concept-is-that <a-concept-is-that>)
+   (<a-concept-is-that> ^action ASSERT-CONCEPT-IS-THAT
+                     ^arg1 <concept>
+                     ^modifier <content> # There is a modifier
                      ^assertion <assertion>
                      ^text <text>
                      ^next nil)
