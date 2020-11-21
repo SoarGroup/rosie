@@ -1,0 +1,57 @@
+# If there is a prevous node
+#   Then move any next edges from the previous node to the created tail node
+sp {add-node-to-goal-graph*elaborate*move-graph-edge*head*from*prev*to*new*tail
+   (state <s> ^name add-node-to-goal-graph
+              ^insert-type insert
+              ^tail-node <node>
+              ^previous-node <prev>
+             -^new-node.handle <new-h>)
+   (<prev> ^next <edge>)
+   (<edge> ^goal.handle <new-h>)
+-->
+   (<s> ^move-graph-edge <move>)
+   (<move> ^type head
+           ^old-head <prev>
+           ^new-head <node>
+           ^edge <edge>)
+}
+
+### PROPOSE: 1 operator for each ^move-graph-edge type=head elaborated on the state
+sp {add-node-to-goal-graph*propose*move-graph-edge-head
+   (state <s> ^name add-node-to-goal-graph
+              ^move-graph-edge <move>)
+   (<move> ^type head)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name move-graph-edge-head
+        ^info <move>)
+}
+
+## APPLY: Move the edge from the old head to the new head
+sp {add-node-to-goal-graph*apply*move-graph-edge-head
+   (state <s> ^name add-node-to-goal-graph
+              ^operator <o>)
+   (<o> ^name move-graph-edge-head
+        ^info <info>)
+   (<info> ^old-head <old>
+           ^new-head <new>
+           ^edge <edge>)
+   (<old> ^next <edge>)
+-->
+   (<old> ^next <edge> -)
+   (<new> ^next <edge>)
+
+   (<s> ^modified-node <old>)
+}
+
+## remove learned proposal
+sp {add-node-to-goal-graph*apply*move-graph-edge-head*remove*learned*proposal
+   (state <s> ^name add-node-to-goal-graph
+              ^operator <o>)
+   (<o> ^name move-graph-edge-head
+        ^info.edge <edge>)
+   (<edge> ^learned proposal)
+-->
+   (<edge> ^learned proposal -)
+   (<s> ^store-concept <edge>)
+}

@@ -19,7 +19,7 @@ sp {add-node-to-goal-graph*elaborate*task-handle*superoperator
 }
 
 # (<o> ^after <goal-h>) [OPTIONAL]
-# Will insert the new node after the given goal node
+# Will insert the new node into the goal graph after the given node
 sp {add-node-to-goal-graph*elaborate*insert-after-node*superoperator
    (state <s> ^name add-node-to-goal-graph
               ^superstate.operator.after <goal-h>)
@@ -34,6 +34,23 @@ sp {add-node-to-goal-graph*elaborate*insert-before-node*superoperator
               ^superstate.operator.before <goal-h>)
 -->
    (<s> ^insert-before-node <goal-h>)
+}
+
+# (<o> ^insert-type << insert append >>)
+sp {add-node-to-goal-graph*elaborate*insert-type*superoperator
+   (state <s> ^name add-node-to-goal-graph
+              ^superstate.operator.insert-type <type>)
+-->
+   (<s> ^insert-type <type>)
+}
+
+# Default insert type is append
+sp {add-node-to-goal-graph*elaborate*insert-type*default*append
+   (state <s> ^name add-node-to-goal-graph
+              ^superstate.operator <ssop>)
+   (<ssop> -^insert-type <type>)
+-->
+   (<s> ^insert-type append)
 }
 
 # (<o> ^final-goal true) [OPTIONAL]
@@ -97,6 +114,29 @@ sp {add-node-to-goal-graph*elabrate*default-problem-space*no
 
 
 ######### OTHER ##########
+
+
+#### retrieve-entire-goal-graph
+
+# If inserting the node before an existing one, retrieve the entire goal graph
+sp {add-node-to-goal-graph*elaborate*retrieve-entire-goal-graph*insert-before-node
+   (state <s> ^name add-node-to-goal-graph
+              ^insert-before-node <node-h>)
+-->
+   (<s> ^retrieve-entire-goal-graph true)
+}
+
+# If a node was modified, we have to retrieve the entire goal graph
+sp {add-node-to-goal-graph*elaborate*retrieve-entire-goal-graph*has-modified-node
+   (state <s> ^name add-node-to-goal-graph
+              ^has-modified-node true)
+-->
+   (<s> ^retrieve-entire-goal-graph true)
+}
+
+
+#### following-node
+
 sp {add-node-to-goal-graph*elaborate*following-node*from*goal-graph-nodes
    (state <s> ^name add-node-to-goal-graph
               ^insert-before-node <node-h>
@@ -104,4 +144,50 @@ sp {add-node-to-goal-graph*elaborate*following-node*from*goal-graph-nodes
    (<node> ^handle <node-h>)
 -->
    (<s> ^following-node <node>)
+}
+
+#### previous-node
+
+# If we are inserting after a node with exactly 1 next pointer 
+#   pointing to an intermediate goal, then use that as the previous node
+sp {add-node-to-goal-graph*elaborate*insert-after-int
+   (state <s> ^name add-node-to-goal-graph
+              ^insert-type insert
+              ^retrieved-previous <node>
+             -^new-node.handle <int-h>)
+   (<node> ^next <next>
+          -^next { <> <next> })
+   (<next> ^goal <int>)
+   (<int> ^item-type intermediate-goal
+          ^handle <int-h>)
+-->
+   (<s> ^insert-after-int <int>
+        ^previous-node <int>)
+}
+
+sp {add-node-to-goal-graph*elaborate*previous-node
+   (state <s> ^name add-node-to-goal-graph
+              ^retrieved-previous <node>
+             -^insert-after-int)
+-->
+   (<s> ^previous-node <node>)
+}
+
+
+#### tail-node
+# The newly created node that outgoing edges should leave from
+
+sp {add-node-to-goal-graph*elaborate*tail-node*no*intermediate
+   (state <s> ^name add-node-to-goal-graph
+              ^created-node <node>
+             -^created-intermediate-node)
+-->
+   (<s> ^tail-node <node>)
+}
+
+sp {add-node-to-goal-graph*elaborate*tail-node*intermediate
+   (state <s> ^name add-node-to-goal-graph
+              ^created-intermediate-node <node>)
+-->
+   (<s> ^tail-node <node>)
 }

@@ -204,6 +204,7 @@ def make_predicate(pred_id):
     if pred_type == 'duration':      return Duration(pred_id)
     if pred_type == 'object-exists': return Exists(pred_id)
     if pred_type == 'subtask':       return Subtask(pred_id)
+    if pred_type == 'status':        return Status(pred_id)
     print("UNKNOWN PREDICATE: " + pred_type)
     return None
 
@@ -248,6 +249,18 @@ class Subtask:
         self.handle = lti.GetChildString('subtask-handle')
     def __str__(self):
         return "exec({})".format(self.handle)
+
+class Status:
+    def __init__(self, lti):
+        self.type = lti.GetChildString('name')
+        if self.type == 'current-location':
+            self.loc = SlotMap.get_slot(ObjectSlot, lti.GetChildId('1'))
+        else:
+            self.loc = None
+    def __str__(self):
+        if self.loc is not None:
+            return "cur-loc({})".format(self.loc)
+        return self.type
 
 ################### SLOTS #########################
 
