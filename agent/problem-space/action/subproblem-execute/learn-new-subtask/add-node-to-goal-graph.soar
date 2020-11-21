@@ -5,8 +5,9 @@
 sp {learn-new-subtask*propose*add-node-to-goal-graph*subtask
    (state <s> ^name learn-new-subtask
               ^create-subtask-goal true
-              ^task-operator.task-handle <task-h>
+              ^task-operator.task-handle <task-h> 
               ^subtask-handle <sub-h>
+              ^subtask-operator.task-handle <> repeat1
               ^current-goal-id.handle <goal-h>
              -^created-subtask-goal)
 -->
@@ -18,17 +19,46 @@ sp {learn-new-subtask*propose*add-node-to-goal-graph*subtask
         ^after <goal-h>)
 }
 
+# If this is the start of a repeat block, add the initial repeat node
+sp {learn-new-subtask*propose*add-node-to-goal-graph*repeat
+   (state <s> ^name learn-new-subtask
+              ^create-subtask-goal true
+              ^task-operator.task-handle <task-h> 
+              ^subtask-handle <sub-h>
+              ^subtask-operator.task-handle repeat1
+              ^current-goal-id.handle <goal-h>
+             -^created-subtask-goal)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name add-node-to-goal-graph
+        ^type repeat
+        ^task-handle <task-h>
+        ^subtask-handle <sub-h>
+        ^after <goal-h>)
+}
+
+#### ELABORATE
+
 sp {learn-new-subtask*elaborate*add-node-to-goal-graph*goal-conditions
    (state <s> ^name learn-new-subtask
               ^operator <o> +
               ^generalize-task-argument <arg>)
-   (<o> ^name add-node-to-goal-graph
-        ^type subtask)
+   (<o> ^name add-node-to-goal-graph)
    (<arg> ^arg-type predicate-set
           ^type task-conditions
           ^general-arg-rep <conds>)
 -->
    (<o> ^goal-conditions <conds>)
+}
+
+sp {learn-new-subtask*elaborate*add-node-to-goal-graph*goal-conditions*repeat-conditions
+   (state <s> ^name learn-new-subtask
+              ^operator <o> +
+              ^repeat-conditions <conds>)
+   (<o> ^name add-node-to-goal-graph
+        ^type repeat)
+-->
+   (<o> ^repeat-conditions <conds>)
 }
 
 # If there are conditions and the instructor did not say it was a first task, 
@@ -53,11 +83,22 @@ sp {learn-new-subtask*elaborate*add-node-to-goal-graph*insert-type*insert
    (<o> ^insert-type insert)
 }
 
+sp {learn-new-subtask*elaborate*add-node-to-goal-graph*learning-repeat-block
+   (state <s> ^name learn-new-subtask
+              ^operator <o> +
+              ^superstate.current-task-segment <seg>)
+   (<o> ^name add-node-to-goal-graph)
+   (<seg> ^learning-repeat-block <goal-h>)
+-->
+   (<o> ^learning-repeat-block <goal-h>)
+}
+
+#### APPLY
+
 sp {learn-new-subtask*apply*add-node-to-goal-graph*subtask
    (state <s> ^name learn-new-subtask
               ^operator <o>)
    (<o> ^name add-node-to-goal-graph
-        ^type subtask
         ^add-node-result <node-h>)
 -->
    (<s> ^created-subtask-goal <node-h>)
@@ -67,7 +108,6 @@ sp {learn-new-subtask*apply*add-node-to-goal-graph*new-node-handle
    (state <s> ^name learn-new-subtask
               ^operator <o>)
    (<o> ^name add-node-to-goal-graph
-        ^type subtask
         ^new-node-handle <node-h>)
 -->
    (<s> ^new-node-handle <node-h>)
@@ -77,7 +117,6 @@ sp {learn-new-subtask*apply*add-node-to-goal-graph*mark*renamed-node
    (state <s> ^name learn-new-subtask
               ^operator <o>)
    (<o> ^name add-node-to-goal-graph
-        ^type subtask
         ^renamed-node <new-h>)
 -->
    (<s> ^renamed-current-goal <new-h>)
@@ -88,7 +127,6 @@ sp {learn-new-subtask*apply*add-node-to-goal-graph*mark*subtask*subgoal-specific
               ^operator <o>
               ^generalized-subtask <sub>)
    (<o> ^name add-node-to-goal-graph
-        ^type subtask
         ^add-node-result <node-h>)
 -->
    (<sub> ^subgoal-specific <node-h>)
