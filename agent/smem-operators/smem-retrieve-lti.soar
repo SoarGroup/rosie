@@ -2,7 +2,7 @@
 # Operator: smem lti retrieval operator which can be fired on any state
 # If you add the wme ^retrieve-lti <lti> to ANY state, it will do the retrieval
 #   of the substructure for epmem
-# Will add a ^retrieved-lti <lti> to the state when done
+# Will add a ^retrieved-lti <lti> to the smem-retrieve structure when done
 
 
 sp {anystate*propose*smem-retrieve-lti
@@ -29,7 +29,7 @@ sp {anystate*apply*smem-retrieve-lti*copy*retrieve*params
               ^smem.command <cmd>)
    (<o> ^name smem-retrieve-lti
         ^retrieve-info <info>)
-   (<info> ^{ <att> <> identifier <> retrieved } <val>)
+   (<info> ^{ <att> <> identifier <> retrieved <> result-name <> destination} <val>)
 -->
    (<cmd> ^<att> <val>)
 }
@@ -44,14 +44,43 @@ sp {anystate*apply*smem-retrieve-lti*copy*retrieve*params
 #   (<cmd> ^<command> <olti> -)
 #}
 
-sp {anystate*apply*smem-retrieve-lti*mark*retrieved
+sp {anystate*apply*smem-retrieve-lti*mark*retrieved*success
    (state <s> ^operator <o>
-              ^smem.result.{ << success failure >> } <lti>)
+              ^smem.result <res>)
+   (<res> ^success <lti>
+          ^retrieved <ret-lti>)
    (<o> ^name smem-retrieve-lti
         ^retrieve-info <ret>)
    (<ret> ^identifier <lti>)
 -->
-   (<ret> ^retrieved true)
+   (<ret> ^retrieved true
+          ^retrieved-lti <ret-lti>)
+}
+
+sp {anystate*apply*smem-retrieve-lti*mark*retrieved*failure
+   (state <s> ^operator <o>
+              ^smem.result <res>)
+   (<res> ^failure <lti>)
+   (<o> ^name smem-retrieve-lti
+        ^retrieve-info <ret>)
+   (<ret> ^identifier <lti>)
+-->
+   (<ret> ^retrieved true
+          ^retrieved-lti none)
+}
+
+sp {anystate*apply*smem-retrieve-lti*copy*result*to*destination
+   (state <s> ^operator <o>
+              ^smem.result <res>)
+   (<res> ^success <lti>
+          ^retrieved <ret-lti>)
+   (<o> ^name smem-retrieve-lti
+        ^retrieve-info <info>)
+   (<info> ^identifier <lti>
+           ^result-name <res-name>
+           ^destination <dest>)
+-->
+   (<dest> ^<res-name> <ret-lti>)
 }
 
 sp {anystate*apply*smem-retrieve-lti*clear*smem*command
