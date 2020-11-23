@@ -28,7 +28,7 @@ else:
     print("ERROR: Requires ROSIE_HOME environment variable set")
     sys.exit(0)
 
-rosie_config = rosie_home + "/python/rosie/evaluation/blending2/agent/rosie.blending2.config"
+rosie_config = "agent/rosie.fill.config"
 
 if "--test" in sys.argv:
     run_test(rosie_config)
