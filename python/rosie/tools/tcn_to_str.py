@@ -40,10 +40,11 @@ class TCN:
     def add_goal_node(self, node_id):
         if node_id is None:
             return None
-        if node_id in self.goal_nodes:
-            return self.goal_nodes[node_id]
+        node_sym = node_id.GetIdentifierSymbol()
+        if node_sym in self.goal_nodes:
+            return self.goal_nodes[node_sym]
         node = GoalNode(node_id, self.print_ltis)
-        self.goal_nodes[node_id] = node
+        self.goal_nodes[node_sym] = node
         for next_id in node_id.GetAllChildIds('next'):
             tail = self.add_goal_node(next_id.GetChildId('goal'))
             node.add_edge(GoalEdge(node, next_id, tail))

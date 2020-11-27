@@ -42,11 +42,11 @@ sp {add-node-to-goal-graph*elaborate*create-graph-edge*add-else-link
             ^tail <int>)
 }
 
-# node-type repeat - dont add conditions to the incoming edge, add to outgoing edge
+# node-type repeat - if there are conditions then add a link to the exit intermediate node with them
 sp {add-node-to-goal-graph*elaborate*create-graph-edge*repeat*with*conditions
    (state <s> ^name add-node-to-goal-graph
               ^node-type repeat
-              ^created-node <node>
+              ^repeat-node <node>
               ^repeat-conditions <conds>
               ^created-intermediate-node <int>)
 -->
@@ -59,7 +59,8 @@ sp {add-node-to-goal-graph*elaborate*create-graph-edge*repeat*with*conditions
 # learning-repeat-block - add an edge to the loop exit
 sp {add-node-to-goal-graph*elaborate*create-graph-edge*repeat*block*exit
    (state <s> ^name add-node-to-goal-graph
-              ^created-node <node>
+             -^node-type repeat
+              ^tail-node <node>
               ^learning-repeat-block <node-h>
               ^repeat-loop-exit <exit-link>)
    (<exit-link> ^conditions <conds>
@@ -69,6 +70,19 @@ sp {add-node-to-goal-graph*elaborate*create-graph-edge*repeat*block*exit
    (<edge2> ^head <node> 
             ^conditions <conds>
             ^tail <exit>)
+}
+
+# If we are closing the repeat loop, add the back edge to the first repeat
+sp {add-node-to-goal-graph*elaborate*create-graph-edge*close*repeat*loop
+   (state <s> ^name add-node-to-goal-graph
+              ^node-type repeat
+              ^closing-repeat-block true
+              ^repeat-node <repeat>
+              ^previous-node <prev>)
+-->
+   (<s> ^create-graph-edge <edge>)
+   (<edge> ^head <prev> 
+           ^tail <repeat>)
 }
 
 # If there is a following-node
