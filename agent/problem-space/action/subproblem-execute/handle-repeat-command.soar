@@ -1,0 +1,209 @@
+sp {subproblem*execute*propose*handle-repeat-command*new-subtask
+   (state <s> ^problem-space.subproblem execute
+              ^current-task-segment <seg>)
+   (<seg> ^new-subtask <subtask-op>)
+   (<subtask-op> ^task-handle repeat1)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name handle-repeat-command
+        ^command <subtask-op>)
+}
+
+#### SUBSTATE SETUP
+
+# no default problem space
+sp {handle-repeat-command*elaborate*default-problem-space*no
+   (state <s> ^name handle-repeat-command)
+-->
+   (<s> ^default-problem-space no)
+}
+
+# elaborate the repeat command from the superstate operator
+sp {handle-repeat-command*elaborate*repeat-command*superoperator
+   (state <s> ^name handle-repeat-command
+              ^superstate.operator.command <cmd>)
+-->
+   (<s> ^repeat-command <cmd>)
+}
+
+# elaborate the superstate task operator
+sp {handle-repeat-command*elaborate*task-operator*superstate
+   (state <s> ^name handle-repeat-command
+              ^superstate.task-operator <task-op>)
+-->
+   (<s> ^task-operator <task-op>)
+}
+
+# retrieve the task concept network for the task-operator
+sp {handle-repeat-command*elaborate*smem-query*task-concept-network
+   (state <s> ^name handle-repeat-command
+              ^task-operator.task-handle <task-handle>)
+-->
+  (<s> ^smem-query <query>)
+  (<query> ^cue.handle <task-handle>
+           ^depth 8
+           ^destination <s>
+           ^result-name task-concept-network)
+}
+
+#### If there is an end-clause, generalize it via generalize-task-argument
+
+sp {handle-repeat-command*elaborate*generalize-task-argument*repeat-conditions
+   (state <s> ^name handle-repeat-command
+              ^repeat-command.end-clause <end>)
+-->
+   (<s> ^generalize-task-argument <gen-arg>)
+   (<gen-arg> ^arg-type predicate-set
+              ^type repeat-conditions
+              ^instantiation <end>)
+}
+
+# Elaborate the reference task-operator and TCN used by generalize-task-argument
+sp {handle-repeat-command*elaborate*generalize-task-argument*goal-conditions*reference-info
+   (state <s> ^name handle-repeat-command
+              ^task-operator <task-op>
+              ^task-concept-network.procedural <tcn-proc>)
+-->
+   (<s> ^reference-task-op <task-op>
+        ^reference-tcn-proc <tcn-proc>)
+}
+
+# Copy the result as repeat-conditions
+sp {handle-repeat-command*elaborate*repeat-conditions
+   (state <s> ^name handle-repeat-command
+              ^generalize-task-argument <gen-arg>)
+   (<gen-arg> ^arg-type predicate-set
+              ^type repeat-conditions
+              ^general-arg-rep <conds>)
+-->
+   (<s> ^repeat-conditions <conds>)
+}
+
+sp {handle-repeat-command*prefer*generalize-task-argument*over*add-node-to-goal-graph
+   (state <s> ^name handle-repeat-command
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name generalize-task-argument)
+   (<o2> ^name add-node-to-goal-graph)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+##### Add the repeat node to the goal graph
+
+sp {handle-repeat-command*propose*add-node-to-goal-graph
+   (state <s> ^name handle-repeat-command
+              ^task-operator <task-op>
+             -^created-repeat-goal)
+   (<task-op> ^task-handle <task-h> 
+              ^current-goal.handle <goal-h>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name add-node-to-goal-graph
+        ^type repeat
+        ^task-handle <task-h>
+        ^after <goal-h>)
+}
+
+# Elaborate any conditions
+sp {handle-repeat-command*elaborate*add-node-to-goal-graph*repeat-conditions
+   (state <s> ^name handle-repeat-command
+              ^operator <o> +
+              ^repeat-conditions <conds>)
+   (<o> ^name add-node-to-goal-graph)
+-->
+   (<o> ^repeat-conditions <conds>)
+}
+
+# If we are current learning a repeat block, add the handle of the repeat node to the operator
+sp {handle-repeat-command*elaborate*add-node-to-goal-graph*learning-repeat-block
+   (state <s> ^name handle-repeat-command
+              ^operator <o> +
+              ^superstate.current-task-segment <seg>)
+   (<o> ^name add-node-to-goal-graph)
+   (<seg> ^learning-repeat-block <goal-h>)
+-->
+   (<o> ^learning-repeat-block <goal-h>)
+}
+
+sp {handle-repeat-command*apply*add-node-to-goal-graph*repeat
+   (state <s> ^name handle-repeat-command
+              ^operator <o>)
+   (<o> ^name add-node-to-goal-graph
+        ^type repeat
+        ^add-node-result <node-h>)
+-->
+   (<s> ^created-repeat-goal <node-h>)
+}
+
+sp {handle-repeat-command*apply*add-node-to-goal-graph*mark*complete-block
+   (state <s> ^name handle-repeat-command
+              ^operator <o>)
+   (<o> ^name add-node-to-goal-graph
+        ^type repeat
+        ^learning-repeat-block <node-h>
+        ^add-node-result <node-h>)
+-->
+   (<s> ^complete-block <node-h>)
+}
+
+##### complete-handle-repeat-command
+
+sp {handle-repeat-command*propose*complete-handle-repeat-command
+   (state <s> ^name handle-repeat-command
+              ^created-repeat-goal)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name complete-handle-repeat-command)
+}
+
+# Remove the new-subtask from the current task segment
+sp {handle-repeat-command*apply*complete-handle-repeat-command*remove*new-subtask
+   (state <s> ^name handle-repeat-command
+              ^operator.name complete-handle-repeat-command
+              ^superstate.current-task-segment <seg>
+              ^repeat-command <cmd>
+              ^top-state <ts>)
+   (<seg> ^new-subtask <cmd>)
+-->
+   (<seg> ^new-subtask <cmd> -)
+}
+
+# Mark the command as having been executed via the interaction status
+sp {handle-repeat-command*apply*complete-handle-repeat-command*terminate-segment
+   (state <s> ^name handle-repeat-command
+              ^operator.name complete-handle-repeat-command
+              ^repeat-command <cmd>
+              ^top-state.interaction <int>)
+   (<int> ^stack.segment.purpose <p>
+          ^changes <chgs>)
+   (<p> ^type execute-task
+        ^parameters.task-operator <cmd>)
+-->
+   (<chgs> ^terminate-segment true)
+}
+
+# If this is the first repeat command, mark the segment as learning-repeat-block
+sp {handle-repeat-command*apply*complete-handle-repeat-command*start*learning-repeat-block
+   (state <s> ^name handle-repeat-command
+              ^operator.name complete-handle-repeat-command
+              ^created-repeat-goal <node-h>
+             -^complete-block <node-h>
+              ^superstate.current-task-segment <seg>
+              ^top-state <ts>)
+-->
+   (<seg> ^learning-repeat-block <node-h>)
+}
+
+sp {handle-repeat-command*apply*complete-handle-repeat-command*complete*learning-repeat-block
+   (state <s> ^name handle-repeat-command
+              ^operator.name complete-handle-repeat-command
+              ^created-repeat-goal <node-h>
+              ^complete-block <node-h>
+              ^superstate.current-task-segment <seg>
+              ^top-state <ts>)
+   (<seg> ^learning-repeat-block <node-h>)
+-->
+   (<seg> ^learning-repeat-block <node-h> -)
+}
+
