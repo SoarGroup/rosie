@@ -1,0 +1,106 @@
+#### STATE NO CHANGE 
+
+sp {task-state-no-change*subproblem*execute*smem-query*unlearned-whenever-task
+   (state <s> ^name task-state-no-change
+              ^superstate.problem-space.subproblem execute)
+-->
+   (<s> ^smem-query <q>)
+   (<q> ^cue <cue>
+        ^depth 10
+        ^result-name unlearned-whenever-task
+        ^destination <s>)
+   (<cue> ^item-type whenever-task
+          ^unlearned true)
+}
+
+sp {task-state-no-change*learning-whenever-task-proposal*propose*learn-whenever-proposal
+   (state <s> ^name task-state-no-change
+              ^unlearned-whenever-task <task>)
+-->
+   (<s> ^operator <o> + = >)
+   (<o> ^name learn-whenever-proposal
+        ^whenever-task <task>)
+}
+
+#### learn-whenever-proposal
+# Instantiate the whenever task and conditions and then propose the result
+
+# Copy anything that we need from the superstate
+sp {learn-whenever-proposal*set*up*state
+   (state <s> ^name learn-whenever-proposal
+              ^superstate <ss>)
+   (<ss> ^operator.whenever-task <task>
+         ^superstate <sss>)
+   (<sss> ^world <w>
+         -^child-task-segment)
+   (<task> ^handle <whenever-h>
+           ^task <task-op>
+           ^conditions <conds>)
+-->
+   (<s> ^problem-space.name action
+        ^whenever-handle <whenever-h>
+        ^whenever-task <task-op>
+        ^whenever-conditions <conds>
+        ^world <w>)
+}
+
+### instantiate-task-argument - whenever-conditions
+sp {learn-whenever-proposal*elaborate*instantiate-task-argument*conditions
+   (state <s> ^name learn-whenever-proposal
+              ^whenever-conditions <conds>
+              ^whenever-task <task>)
+-->
+   (<s> ^instantiate-task-argument <ins-arg>)
+   (<ins-arg> ^arg-type conditions
+              ^general-arg-rep <conds>)
+
+   (<s> ^reference-tcn-proc <task>)
+}
+
+sp {learn-whenever-proposal*elaborate*predicate-test*conditions
+   (state <s> ^name learn-whenever-proposal
+              ^instantiate-task-argument <ins-arg>)
+   (<ins-arg> ^arg-type conditions
+              ^instantiation <i>)
+-->
+   (<s> ^predicate-test <i>
+        ^condition-test <i>)
+}
+
+### instantiate-task-operator - whenever-task
+sp {learn-whenever-proposal*elaborate*instantiate-task-operator*conditions
+   (state <s> ^name learn-whenever-proposal
+              ^condition-test <test>
+              ^satisfied <test>
+              ^whenever-task <task-rep>
+              ^world <w>)
+-->
+   (<s> ^instantiate-task-operator <ga>)
+   (<ga> ^general-task-rep <task-rep>
+         ^world <w>)
+}
+
+### propose-whenever-task - propose the instantiated task on the superstate
+
+sp {learn-whenever-proposal*propose*propose-whenever-task
+   (state <s> ^name learn-whenever-proposal
+              ^instantiate-task-operator.instantiation <task-op>)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name propose-whenever-task
+        ^task-operator <task-op>)
+}
+
+# CREATE RESULT
+sp {__WHENEVER__PROP__*problem-space*action*propose*whenever*task
+   (state <s> ^name learn-whenever-proposal
+              ^operator <o>
+              ^whenever-handle <when-h>
+              ^superstate.superstate <ss>)
+   (<o> ^name propose-whenever-task
+        ^task-operator <task-op>)
+-->
+   (<ss> ^operator <task-op> + =)
+   (<task-op> ^whenever-handle <when-h>)
+}
+

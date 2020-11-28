@@ -12,7 +12,7 @@ run_test: waypoint-map.soar internal-world.soar ${ROSIE_CONFIG}
 
 
 # agent/rosie.guide.config: Configures the rosie soar agent that will be sourced to run
-${ROSIE_CONFIG}: guide.config smem-config.txt extra-smem-adds.soar script.txt
+${ROSIE_CONFIG}: guide.config ../smem-config.txt extra-smem-adds.soar script.txt
 	java edu.umich.rosie.tools.config.RosieAgentConfigurator guide.config
 
 

@@ -9,6 +9,7 @@ export CLASSPATH=$CLASSPATH:$ROSIE_HOME/tools/antlr-4.5-complete.jar
 export PYTHONPATH=$PYTHONPATH:$ROSIE_HOME/python
 
 export ROSIE_EVAL=$ROSIE_HOME/python/rosie/evaluation
+export ROSIE_TESTS=$ROSIE_HOME/test-agents/task-tests
 
 
 ### Rosie Scripts
