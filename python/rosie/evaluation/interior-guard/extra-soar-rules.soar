@@ -57,3 +57,61 @@ sp {top-state*perception-monitor*predicate-monitor*elaborate*default*predicates*
    (<preds> ^predicate.handle heard2)
 }
 
+# Remove modifiers relieiving or emergency when the top task segment is popped
+sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*remove*modifiers*relieving
+   (state <s> ^name pop-task-segment
+              ^operator.name complete-pop-task-segment
+              ^segment-to-pop <seg>
+              ^task-stack.top <seg>
+              ^top-state.world.objects.object.predicates <preds>)
+   (<preds> ^modifier1 { <mod> << relieving1 emergency1 >> })
+-->
+   (<preds> ^modifier1 <mod> -)
+}
+
+########### SCRIPTING CONDITIONS ###############
+# These are ways of advancing the script in response to 
+# some conditions being met in the world
+
+sp {top-state*elaborate*script-triggers
+   (state <s> ^superstate nil)
+-->
+   (<s> ^script-triggers <tr>)
+}
+
+sp {top-state*propose*get-next-script-message
+   (state <s> ^superstate nil
+              ^script-triggers <tr>)
+   (<tr> ^trigger <h>
+        -^handled <h>)
+-->
+   (<s> ^operator <o> + > = !)
+   (<o> ^name get-next-script-message
+        ^handle <h>)
+}
+
+sp {top-state*apply*get-next-script-message
+   (state <s> ^superstate nil
+              ^operator <o>
+              ^script-triggers <tr>
+              ^interaction.changes <chgs>)
+   (<o> ^name get-next-script-message
+        ^handle <h>)
+-->
+   (<tr> ^handled <h>)
+   (<chgs> ^outgoing-message <msg>)
+   (<msg> ^type get-next-script-message
+          ^complete-message true
+          ^fields.trigger <h>)
+}
+
+# Trigger 1: First time we turn-on the lights in the messhall, interrupt
+sp {top-state*elaborate*script-triggers*alarm1
+   (state <s> ^superstate nil
+              ^script-triggers <tr>
+              ^task-stack.bottom.task-operator.name op_turn-on1
+              ^world.robot.current-location.predicates.name messhall1)
+-->
+   (<tr> ^trigger interrupt-inspect1)
+}
+
