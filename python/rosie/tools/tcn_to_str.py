@@ -20,10 +20,10 @@ class TCN:
         self.print_ltis = print_ltis
         self.handle = lti.GetChildString('handle')
         self.task = TaskOperator(lti.GetChildId('procedural')) if has_child(lti, 'procedural') else None
+        self.add_subtasks()
         self.add_goal_graph()
         for slot in SlotMap.slots.values():
             slot.implicit = False
-        self.add_subtasks()
 
     def add_subtasks(self):
         self.subtasks = {}
@@ -43,7 +43,7 @@ class TCN:
         node_sym = node_id.GetIdentifierSymbol()
         if node_sym in self.goal_nodes:
             return self.goal_nodes[node_sym]
-        node = GoalNode(node_id, self.print_ltis)
+        node = GoalNode(node_id, self.subtasks, self.print_ltis)
         self.goal_nodes[node_sym] = node
         for next_id in node_id.GetAllChildIds('next'):
             tail = self.add_goal_node(next_id.GetChildId('goal'))
@@ -116,12 +116,17 @@ class TaskOperator:
 ################### GOAL NODES #########################
 
 class GoalNode:
-    def __init__(self, lti, print_ltis=True):
+    def __init__(self, lti, subtask_map, print_ltis=True):
         self.print_ltis = print_ltis
         self.symbol = lti.GetIdentifierSymbol()
         self.handle = lti.GetChildString('handle')
         self.type = lti.GetChildString('item-type')
         self.preds = PredicateSet('', lti) if self.type == 'task-goal' else None
+        if self.preds is not None:
+            for pred in self.preds.preds:
+                if isinstance(pred, Subtask):
+                    subtask = next((sub for sub in subtask_map.values() if sub.lti.GetChildString('handle') == pred.handle), None)
+                    pred.task_name = "" if subtask is None else subtask.name
         self.edges = []
     def add_edge(self, edge):
         self.edges.append(edge)
@@ -199,13 +204,14 @@ class PredicateSet:
 
 def make_predicate(pred_id):
     pred_type = pred_id.GetChildString('type')
-    if pred_type == 'unary':         return Unary(pred_id)
-    if pred_type == 'relation':      return Relation(pred_id)
-    if pred_type == 'clocktime':     return Clocktime(pred_id)
-    if pred_type == 'duration':      return Duration(pred_id)
-    if pred_type == 'object-exists': return Exists(pred_id)
-    if pred_type == 'subtask':       return Subtask(pred_id)
-    if pred_type == 'status':        return Status(pred_id)
+    if pred_type == 'unary':          return Unary(pred_id)
+    if pred_type == 'relation':       return Relation(pred_id)
+    if pred_type == 'clocktime':      return Clocktime(pred_id)
+    if pred_type == 'duration':       return Duration(pred_id)
+    if pred_type == 'object-exists':  return Exists(pred_id)
+    if pred_type == 'object-missing': return Missing(pred_id)
+    if pred_type == 'subtask':        return Subtask(pred_id)
+    if pred_type == 'status':         return Status(pred_id)
     print("UNKNOWN PREDICATE: " + pred_type)
     return None
 
@@ -245,11 +251,18 @@ class Exists:
     def __str__(self):
         return "exists[{}]".format(','.join(self.preds))
 
+class Missing:
+    def __init__(self, lti):
+        self.preds = [ wme[1].GetChildString('predicate-handle') for wme in lti.GetAllChildWmes() if is_id(wme[1]) ]
+    def __str__(self):
+        return "missing[{}]".format(','.join(self.preds))
+
 class Subtask:
     def __init__(self, lti):
         self.handle = lti.GetChildString('subtask-handle')
+        self.task_name = ""
     def __str__(self):
-        return "exec({})".format(self.handle)
+        return "exec({}:{})".format(self.handle, self.task_name)
 
 class Status:
     def __init__(self, lti):

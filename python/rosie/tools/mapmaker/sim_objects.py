@@ -282,6 +282,11 @@ class Alarm(SimObject):
     cat = "alarm1"
     rgb = [ 255, 0, 0 ]
 
+    def read_info(self, reader, scale=1.0):
+        super().read_info(reader, scale)
+        self.preds["is-activated1"] = "not-activated1"
+        return self
+
 
 class Door(SimObject):  
     sim_class = "soargroup.mobilesim.sim.SimDoor"
