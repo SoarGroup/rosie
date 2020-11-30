@@ -220,6 +220,17 @@ class Cooler(SimObject):
     cat = "cooler1"
     rgb = [ 0, 0, 0 ]
 
+    def read_info(self, reader, scale=1.0):
+        # 1 word - either auto or manual
+        self.auto = reader.nextWord()
+        super().read_info(reader, scale)
+        return self
+
+    def write_info(self, writer):
+        super().write_info(writer)
+        writer.write("    " + self.auto + "\n")
+
+
 class Drawer(SimObject):  
     sim_class = "soargroup.mobilesim.sim.SimDrawer"
     cat = "drawer1"

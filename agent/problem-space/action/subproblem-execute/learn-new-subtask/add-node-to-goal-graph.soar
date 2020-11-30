@@ -4,37 +4,30 @@
 
 sp {learn-new-subtask*propose*add-node-to-goal-graph*subtask
    (state <s> ^name learn-new-subtask
-              ^create-subtask-goal true
+              ^create-goal-node <ntype>
               ^task-operator.task-handle <task-h> 
-              ^subtask-handle <sub-h>
               ^current-goal-id.handle <goal-h>
-             -^created-subtask-goal
-             -^create-composite-goal true)
+             -^created-goal-node)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name add-node-to-goal-graph
-        ^type subtask
-        ^task-handle <task-h>
-        ^subtask-handle <sub-h>
-        ^after <goal-h>)
-}
-
-# If the task was 'complete', create a composite node
-sp {learn-new-subtask*propose*add-node-to-goal-graph*composite
-   (state <s> ^name learn-new-subtask
-              ^create-composite-goal true
-              ^task-operator.task-handle <task-h> 
-              ^current-goal-id.handle <goal-h>
-             -^created-composite-goal)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name add-node-to-goal-graph
-        ^type composite
+        ^type <ntype>
         ^task-handle <task-h>
         ^after <goal-h>)
 }
 
 #### ELABORATE
+
+# If there is a subtask-handle, elaborate it
+sp {learn-new-subtask*elaborate*add-node-to-goal-graph*subtask*subtask-handle
+   (state <s> ^name learn-new-subtask
+              ^operator <o> +
+              ^subtask-handle <sub-h>)
+   (<o> ^name add-node-to-goal-graph
+        ^type subtask)
+-->
+   (<o> ^subtask-handle <sub-h>)
+}
 
 # If there are task conditions, add them
 sp {learn-new-subtask*elaborate*add-node-to-goal-graph*goal-conditions
@@ -56,6 +49,7 @@ sp {learn-new-subtask*elaborate*add-node-to-goal-graph*add-else-edge
               ^operator <o> +
              -^branch-task true)
    (<o> ^name add-node-to-goal-graph
+        ^type <> terminal
         ^goal-conditions <conds>)
 -->
    (<o> ^add-else-link true)
@@ -87,20 +81,9 @@ sp {learn-new-subtask*apply*add-node-to-goal-graph*subtask
    (state <s> ^name learn-new-subtask
               ^operator <o>)
    (<o> ^name add-node-to-goal-graph
-        ^type subtask
         ^add-node-result <node-h>)
 -->
-   (<s> ^created-subtask-goal <node-h>)
-}
-
-sp {learn-new-subtask*apply*add-node-to-goal-graph*created-composite-goal
-   (state <s> ^name learn-new-subtask
-              ^operator <o>)
-   (<o> ^name add-node-to-goal-graph
-        ^type composite
-        ^add-node-result <node-h>)
--->
-   (<s> ^created-composite-goal <node-h>)
+   (<s> ^created-goal-node <node-h>)
 }
 
 sp {learn-new-subtask*apply*add-node-to-goal-graph*new-node-handle

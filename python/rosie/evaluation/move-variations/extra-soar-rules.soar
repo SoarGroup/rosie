@@ -9,16 +9,16 @@ sp {top-state*elaborate*agent-params*custom
 #       ^debug-wait-limit 3
 
 #       ^interrupt-operator retrospective-learning 
-        ^interrupt-operator interpret-message 
+#       ^interrupt-operator interpret-message 
 #       ^interrupt-end-of-sentence true
 #       ^interrupt-new-task true
 #       ^interrupt-task-search true
         
-        ^print-perception true
+#       ^print-perception true
 #       ^print-new-task true
-        ^print-new-task-shorthand true
+#       ^print-new-task-shorthand true
 #       ^print-wp-search-path-costs true
-        ^print-parsed-messages true
+#       ^print-parsed-messages true
 #       ^print-outgoing-messages true
 #       ^print-interaction-stack true
 
@@ -27,20 +27,6 @@ sp {top-state*elaborate*agent-params*custom
 
 source waypoint-map.soar
 source internal-world.soar
-
-#### Increase the search depth over the default
-#sp {search-for-next-subtask*elaborate*search-phase-info
-#   (state <s> ^name search-for-next-subtask)
-#-->
-#   (<s> ^number-phases 2
-#        ^search-phase-info <p1> <p2>)
-#   # First phase - only consider subtasks with all objects in common with the current task
-#   (<p1> ^num 1 ^max-depth 4 ^require-all-objects-match 1 ^reject-perc-ops 3)
-#
-#   # Second phase - level 1: any subtasks, level 2: subtasks with 1+ matching objects, 
-#   #                level 3-4: only subtasks matching all objects
-#   (<p2> ^num 2 ^max-depth 4 ^require-matching-object 3 ^require-all-objects-match 4 ^reject-perc-ops 3)
-#}
 
 #explain all on
 
@@ -54,6 +40,7 @@ sp {top-state*perception-monitor*predicate-monitor*elaborate*default*predicates*
    (<preds> ^predicate.handle on1)
    (<preds> ^predicate.handle holding1)
    (<preds> ^predicate.handle heard2)
+   (<preds> ^predicate.handle contains1)
 }
 
 sp {top-state*perception-monitor*predicate-monitor*elaborate*default*predicates*magicbot
@@ -68,8 +55,11 @@ sp {top-state*perception-monitor*predicate-monitor*elaborate*default*predicates*
 
    (<preds> ^predicate.handle holding1)
    (<preds> ^predicate.handle heard2)
+   (<preds> ^predicate.handle contains1)
 }
 
+### These rules will advance the script when the agent hits 
+# a task with a start condition predicate test
 sp {subproblem*execute*propose*report-start-clause
    (state <s> ^problem-space.subproblem execute
               ^desired.item-type start-goal
@@ -97,7 +87,79 @@ sp {subproblem*execute*apply*report-start-clause
    (<seg> ^reported-start-clause true)
 }
 
-#
+### Top-state, elaborate clear if surface with nothing on it
+sp {top-state*world*elaborate*surface*clear
+   (state <s> ^superstate nil
+              ^world.objects.object <surface>
+              ^world.predicates.predicate <in-pred>)
+   (<surface> ^predicates <preds>)
+   (<preds> ^affordance1 surface1)
+   (<in-pred> ^handle on1)
+  -{(<in-pred> ^instance <i>) 
+    (<i> ^2 <surface>)}
+-->
+   (<preds> ^property clear)
+}
+
+### Putting something into the watercooler automatically fills it
+sp {execute*op_put-down1*apply*simulate-put-down-command*in1*cooler*dispense
+   (state <s> ^name op_put-down1
+              ^operator <o>
+              ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
+   (<o> ^name simulate-put-down-command
+        ^command <cmd>)
+   (<cmd> ^object <vessel>
+          ^destination <dp>)
+   (<dp> ^handle in1
+         ^{2}.root-category cooler1)
+   (<vessel> ^predicates.affordance1 fillable1)
+   (<obj-info> ^input-link-obj.source-obj.predicates <src-preds>
+               ^world-obj <vessel>)
+   (<src-preds> ^contents1 empty1)
+-->
+   (<src-preds> ^contents1 empty1 -
+                ^contents1 water1)
+}
+
+### Reject move if the relation is already satisfied
+sp {execute*action*reject*op_move1*if*relation*satisfied
+   (state <s> ^problem-space.subproblem execute
+             -^child-task-segment
+              ^operator <o> +
+              ^world.predicates.predicate <pred>)
+   (<o> ^name op_move1
+        ^arg1.id <obj1>
+        ^arg2 <arg2>)
+   (<arg2> ^handle <pred-h>
+           ^2 <obj2>)
+   (<pred> ^handle <pred-h>
+           ^instance <i>)
+   (<i> ^1 <obj1> ^2 <obj2>)
+-->
+   (<s> ^operator <o> -)
+}
+
+### Reject any task with 'from' if the object is not there
+sp {execute*action*reject*subtask*if*from*relation*not*satisfied
+   (state <s> ^problem-space.subproblem execute
+             -^child-task-segment
+              ^operator <o> +
+              ^world.predicates <preds>)
+   (<o> ^item-type task-operator
+        ^<arg1-name> <arg1>
+        ^<arg2-name> <arg2>)
+   (<arg1> ^arg-type object
+           ^id <obj1>)
+   (<arg2> ^arg-type partial-predicate
+           ^handle from1
+           ^2 <obj2>)
+  -{(<preds> ^predicate <pred>)
+    (<pred> ^instance <i>)
+    (<i> ^1 <obj1> ^2 <obj2>)}
+-->
+   (<s> ^operator <o> -)
+}
+
 ### Rules for printing events
 sp {complete-push-task-segment*report*time*info
    (state <s> ^name push-task-segment
@@ -107,7 +169,7 @@ sp {complete-push-task-segment*report*time*info
    (<t> ^steps <steps>
         ^milliseconds <ms>)
 -->
-   (write |$START-TASK$ | <task-h> | | <steps> | | <ms> (crlf))
+   (write (crlf) |$START-TASK$ | <task-h> | | <steps> | | <ms> (crlf))
 }
 
 sp {complete-pop-task-segment*report*time*info
@@ -118,7 +180,7 @@ sp {complete-pop-task-segment*report*time*info
    (<t> ^steps <steps>
         ^milliseconds <ms>)
 -->
-   (write |$END-TASK$ | <task-h> | | <steps> | | <ms> (crlf))
+   (write (crlf) |$END-TASK$ | <task-h> | | <steps> | | <ms> (crlf))
 }
 
 sp {search-for-next-subtask*start*report*time*info
@@ -129,7 +191,7 @@ sp {search-for-next-subtask*start*report*time*info
    (<t> ^steps <steps>
         ^milliseconds <ms>)
 -->
-   (write |$BEGIN-SEARCH$ | <task-h> | | <steps> | | <ms> (crlf))
+   (write (crlf) |$BEGIN-SEARCH$ | <task-h> | | <steps> | | <ms> (crlf))
    (<s> ^reported-time true)
 }
 
@@ -141,5 +203,5 @@ sp {search-for-next-subtask*finish*report*time*info
    (<t> ^steps <steps>
         ^milliseconds <ms>)
 -->
-   (write |$END-SEARCH$ | <task-h> | | <steps> | | <ms> (crlf))
+   (write (crlf) |$END-SEARCH$ | <task-h> | | <steps> | | <ms> (crlf))
 }

@@ -56,11 +56,12 @@ class RosieAgent(SoarAgent):
     """
 
 
-    def __init__(self, print_handler=None, config_filename=None, clock_step_ms=50, **kwargs):
+    def __init__(self, print_handler=None, config_filename=None, **kwargs):
         SoarAgent.__init__(self, print_handler, config_filename, **kwargs)
 
         # Create a time connector to put timing information on the top state
-        self.time_conn = TimeConnector(self, include_ms=True, sim_clock=True, clock_step_ms=clock_step_ms)
+        self.time_conn = TimeConnector(self, include_ms=True, sim_clock=True, 
+                clock_step_ms=int(self.settings.get('clock_step_ms', 50)))
         self.add_connector("time", self.time_conn)
 
         # Create the default language connector
