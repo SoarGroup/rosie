@@ -7,16 +7,16 @@ sp {top-state*elaborate*agent-params*custom
 #       ^debug-op-ties true
 #       ^debug-wait-limit 3
 
-        ^interrupt-operator interpret-message 
+#       ^interrupt-operator interpret-message 
 #       ^interrupt-end-of-sentence true
 #       ^interrupt-new-task true
 #       ^interrupt-task-search true
         
-        ^print-perception true
+#       ^print-perception true
 #       ^print-new-task true
-        ^print-new-task-shorthand true
+#       ^print-new-task-shorthand true
 #       ^print-wp-search-path-costs true
-        ^print-parsed-messages true
+#       ^print-parsed-messages true
 #       ^print-outgoing-messages true
 #       ^print-interaction-stack true
 
@@ -25,6 +25,7 @@ sp {top-state*elaborate*agent-params*custom
 
 # Load chunks for fetch
 source fetch-chunks.soar
+#source full-training-chunks.soar
 
 source waypoint-map.soar
 source internal-world.soar
@@ -115,6 +116,7 @@ sp {top-state*elaborate*script-triggers*messhall_1
    (<tr> ^trigger messhall_1)
 }
 
+# Trigger 2: First time we turn on the lights in the motorpool, interrupt
 sp {top-state*elaborate*script-triggers*motorpool_1
    (state <s> ^superstate nil
               ^script-triggers <tr>
@@ -124,3 +126,126 @@ sp {top-state*elaborate*script-triggers*motorpool_1
    (<tr> ^trigger motorpool_1)
 }
 
+#sp {top-state*elaborate*script-triggers*inspect-mh1
+#   (state <s> ^superstate nil
+#              ^script-triggers <tr>
+#              ^task-stack.segments.segment.task-operator <task-op>)
+#   (<task-op> ^task-handle inspect1
+#              ^arg1.id.predicates.name messhall1)
+#-->
+#   (<tr> ^trigger inspect-mh1)
+#}
+#
+#sp {top-state*elaborate*script-triggers*inspect-esp1
+#   (state <s> ^superstate nil
+#              ^script-triggers <tr>
+#              ^task-stack.segments.segment.task-operator <task-op>)
+#   (<task-op> ^task-handle inspect1
+#              ^arg1.id.root-category post1)
+#-->
+#   (<tr> ^trigger inspect-esp1)
+#}
+#
+#sp {top-state*elaborate*script-triggers*inspect-mp1
+#   (state <s> ^superstate nil
+#              ^script-triggers <tr>
+#              ^task-stack.segments.segment.task-operator <task-op>)
+#   (<task-op> ^task-handle inspect1
+#              ^arg1.id.predicates.name motorpool1)
+#-->
+#   (<tr> ^trigger inspect-mp1)
+#}
+#
+#sp {top-state*elaborate*script-triggers*inspect-mh2
+#   (state <s> ^superstate nil
+#              ^script-triggers <tr>
+#              ^task-stack.segments.segment.task-operator <task-op>)
+#   (<tr> ^handled inspect-mp1)
+#   (<task-op> ^task-handle inspect1
+#              ^arg1.id.predicates.name messhall1)
+#-->
+#   (<tr> ^trigger inspect-mh2)
+#}
+#
+#sp {top-state*elaborate*script-triggers*inspect-esp2
+#   (state <s> ^superstate nil
+#              ^script-triggers <tr>
+#              ^task-stack.segments.segment.task-operator <task-op>)
+#   (<tr> ^handled inspect-mh2)
+#   (<task-op> ^task-handle inspect1
+#              ^arg1.id.root-category post1)
+#-->
+#   (<tr> ^trigger inspect-esp2)
+#}
+#
+#sp {top-state*elaborate*script-triggers*inspect-mp2
+#   (state <s> ^superstate nil
+#              ^script-triggers <tr>
+#              ^task-stack.segments.segment.task-operator <task-op>)
+#   (<tr> ^handled inspect-esp2)
+#   (<task-op> ^task-handle inspect1
+#              ^arg1.id.predicates.name motorpool1)
+#-->
+#   (<tr> ^trigger inspect-mp2)
+#}
+
+
+###### Rules for printing events
+sp {complete-push-task-segment*report*time*info
+   (state <s> ^name push-task-segment
+              ^operator.name complete-push-task-segment
+              ^segment-to-push.task-operator.task-handle <task-h>
+              ^io.input-link.time <t>)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write (crlf) |$START-TASK$ | <task-h> | | <steps> | | <ms> (crlf))
+}
+
+sp {complete-pop-task-segment*report*time*info
+   (state <s> ^name pop-task-segment
+              ^operator.name complete-pop-task-segment
+              ^segment-to-pop.task-operator.task-handle <task-h>
+              ^io.input-link.time <t>)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write (crlf) |$END-TASK$ | <task-h> | | <steps> | | <ms> (crlf))
+}
+
+sp {search-for-next-subtask*start*report*time*info
+   (state <s> ^operator.name search-for-next-subtask
+              ^superstate.task-operator.task-handle <task-h>
+              ^io.input-link.time <t>
+             -^reported-time)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write (crlf) |$BEGIN-SEARCH$ | <task-h> | | <steps> | | <ms> (crlf))
+   (<s> ^reported-time true)
+}
+
+sp {search-for-next-subtask*finish*report*time*info
+   (state <s> ^name search-for-next-subtask
+              ^superstate.superstate.task-operator.task-handle <task-h>
+              ^operator.name << return-successful-operator initiate-interaction >>
+              ^io.input-link.time <t>)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write (crlf) |$END-SEARCH$ | <task-h> | | <steps> | | <ms> (crlf))
+}
+
+sp {apply*select-next-goal*report*goal*handle
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o>
+              ^apply-select-next-goal true
+              ^task-operator.task-handle <task-h>
+              ^io.input-link.time <t>)
+   (<o> ^name select-next-goal
+        ^next-goal-handle <goal-h>)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write (crlf) |$SELECTED-GOAL$ | <goal-h> | | <steps> | | <ms> (crlf))
+}

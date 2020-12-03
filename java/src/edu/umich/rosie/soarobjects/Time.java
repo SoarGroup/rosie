@@ -3,6 +3,7 @@ package edu.umich.rosie.soarobjects;
 import sml.Identifier;
 import edu.umich.rosie.soar.ISoarObject;
 import edu.umich.rosie.soar.IntWME;
+import edu.umich.rosie.soar.SoarUtil;
 import java.util.Calendar;
 
 public class Time implements ISoarObject{
@@ -38,7 +39,6 @@ public class Time implements ISoarObject{
 		this.clockEpoch = new IntWME("epoch", 0L);
 
 		this.clockWmes = new IntWME[]{ clockHour, clockMin, clockSec, clockMS, clockEpoch };
-
 		this.resetTime();
 	}
 
@@ -67,10 +67,17 @@ public class Time implements ISoarObject{
 		this.clockMS.setValue(0L);
 		this.clockEpoch.setValue(1605000000L);
 	}
+
+	public void setTime(long hour, long min){
+		this.resetTime();
+		clockHour.setValue(hour);
+		clockMin.setValue(min);
+	}
 	
 	public static long mstime(){
 		return (Calendar.getInstance()).getTimeInMillis();
 	}
+
 
 	@Override
 	public void addToWM(Identifier parentId) {

@@ -19,9 +19,9 @@ public class RegressParser extends Parser {
 	protected static final PredictionContextCache _sharedContextCache =
 		new PredictionContextCache();
 	public static final int
-		T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, T__5=6, T__6=7, T__7=8, QUOTE=9, 
-		SYMBOL=10, WORD=11, NUMBER=12, PAREN=13, TERMINATOR=14, FAILED=15, COMMENT=16, 
-		BRACKETS=17, WS=18;
+		T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, T__5=6, T__6=7, T__7=8, TIME=9, 
+		QUOTE=10, SYMBOL=11, WORD=12, NUMBER=13, PAREN=14, TERMINATOR=15, FAILED=16, 
+		COMMENT=17, BRACKETS=18, WS=19;
 	public static final int
 		RULE_corpus = 0, RULE_block = 1, RULE_sentence = 2, RULE_sentenceWord = 3, 
 		RULE_expected = 4, RULE_rhs = 5, RULE_attr = 6, RULE_value = 7, RULE_variable = 8;
@@ -32,12 +32,12 @@ public class RegressParser extends Parser {
 
 	private static final String[] _LITERAL_NAMES = {
 		null, "','", "'.'", "'('", "'@'", "')'", "'^'", "'<'", "'>'", null, null, 
-		null, null, null, null, "'#   FAILED!'"
+		null, null, null, null, null, "'#   FAILED!'"
 	};
 	private static final String[] _SYMBOLIC_NAMES = {
-		null, null, null, null, null, null, null, null, null, "QUOTE", "SYMBOL", 
-		"WORD", "NUMBER", "PAREN", "TERMINATOR", "FAILED", "COMMENT", "BRACKETS", 
-		"WS"
+		null, null, null, null, null, null, null, null, null, "TIME", "QUOTE", 
+		"SYMBOL", "WORD", "NUMBER", "PAREN", "TERMINATOR", "FAILED", "COMMENT", 
+		"BRACKETS", "WS"
 	};
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
@@ -288,6 +288,7 @@ public class RegressParser extends Parser {
 					{
 					setState(45);
 					switch (_input.LA(1)) {
+					case TIME:
 					case QUOTE:
 					case WORD:
 						{
@@ -339,6 +340,7 @@ public class RegressParser extends Parser {
 
 	public static class SentenceWordContext extends ParserRuleContext {
 		public TerminalNode QUOTE() { return getToken(RegressParser.QUOTE, 0); }
+		public TerminalNode TIME() { return getToken(RegressParser.TIME, 0); }
 		public TerminalNode WORD() { return getToken(RegressParser.WORD, 0); }
 		public SentenceWordContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -363,7 +365,7 @@ public class RegressParser extends Parser {
 			{
 			setState(53);
 			_la = _input.LA(1);
-			if ( !(_la==QUOTE || _la==WORD) ) {
+			if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << TIME) | (1L << QUOTE) | (1L << WORD))) != 0)) ) {
 			_errHandler.recoverInline(this);
 			} else {
 				consume();
@@ -752,7 +754,7 @@ public class RegressParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3\24n\4\2\t\2\4\3\t"+
+		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3\25n\4\2\t\2\4\3\t"+
 		"\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\3\2\6\2\26"+
 		"\n\2\r\2\16\2\27\3\2\7\2\33\n\2\f\2\16\2\36\13\2\3\3\7\3!\n\3\f\3\16\3"+
 		"$\13\3\3\3\3\3\5\3(\n\3\3\3\5\3+\n\3\3\4\3\4\3\4\7\4\60\n\4\f\4\16\4\63"+
@@ -760,26 +762,26 @@ public class RegressParser extends Parser {
 		"\r\6\16\6B\3\7\3\7\5\7G\n\7\3\7\3\7\3\7\3\7\5\7M\n\7\6\7O\n\7\r\7\16\7"+
 		"P\3\7\3\7\3\b\3\b\3\b\3\b\3\b\7\bZ\n\b\f\b\16\b]\13\b\5\b_\n\b\3\t\3\t"+
 		"\5\tc\n\t\3\t\3\t\3\t\5\th\n\t\3\n\3\n\3\n\3\n\3\n\2\2\13\2\4\6\b\n\f"+
-		"\16\20\22\2\4\4\2\4\4\20\20\4\2\13\13\r\rw\2\25\3\2\2\2\4\"\3\2\2\2\6"+
+		"\16\20\22\2\4\4\2\4\4\21\21\4\2\13\f\16\16w\2\25\3\2\2\2\4\"\3\2\2\2\6"+
 		",\3\2\2\2\b\67\3\2\2\2\n@\3\2\2\2\fD\3\2\2\2\16T\3\2\2\2\20g\3\2\2\2\22"+
 		"i\3\2\2\2\24\26\5\4\3\2\25\24\3\2\2\2\26\27\3\2\2\2\27\25\3\2\2\2\27\30"+
-		"\3\2\2\2\30\34\3\2\2\2\31\33\7\22\2\2\32\31\3\2\2\2\33\36\3\2\2\2\34\32"+
-		"\3\2\2\2\34\35\3\2\2\2\35\3\3\2\2\2\36\34\3\2\2\2\37!\7\22\2\2 \37\3\2"+
+		"\3\2\2\2\30\34\3\2\2\2\31\33\7\23\2\2\32\31\3\2\2\2\33\36\3\2\2\2\34\32"+
+		"\3\2\2\2\34\35\3\2\2\2\35\3\3\2\2\2\36\34\3\2\2\2\37!\7\23\2\2 \37\3\2"+
 		"\2\2!$\3\2\2\2\" \3\2\2\2\"#\3\2\2\2#%\3\2\2\2$\"\3\2\2\2%\'\5\6\4\2&"+
-		"(\7\21\2\2\'&\3\2\2\2\'(\3\2\2\2(*\3\2\2\2)+\5\n\6\2*)\3\2\2\2*+\3\2\2"+
+		"(\7\22\2\2\'&\3\2\2\2\'(\3\2\2\2(*\3\2\2\2)+\5\n\6\2*)\3\2\2\2*+\3\2\2"+
 		"\2+\5\3\2\2\2,\61\5\b\5\2-\60\5\b\5\2.\60\7\3\2\2/-\3\2\2\2/.\3\2\2\2"+
 		"\60\63\3\2\2\2\61/\3\2\2\2\61\62\3\2\2\2\62\65\3\2\2\2\63\61\3\2\2\2\64"+
 		"\66\t\2\2\2\65\64\3\2\2\2\65\66\3\2\2\2\66\7\3\2\2\2\678\t\3\2\28\t\3"+
-		"\2\2\29;\7\22\2\2:9\3\2\2\2;>\3\2\2\2<:\3\2\2\2<=\3\2\2\2=?\3\2\2\2><"+
+		"\2\2\29;\7\23\2\2:9\3\2\2\2;>\3\2\2\2<:\3\2\2\2<=\3\2\2\2=?\3\2\2\2><"+
 		"\3\2\2\2?A\5\f\7\2@<\3\2\2\2AB\3\2\2\2B@\3\2\2\2BC\3\2\2\2C\13\3\2\2\2"+
-		"DF\7\5\2\2EG\7\6\2\2FE\3\2\2\2FG\3\2\2\2GH\3\2\2\2HN\7\f\2\2IJ\5\16\b"+
-		"\2JL\5\20\t\2KM\7\22\2\2LK\3\2\2\2LM\3\2\2\2MO\3\2\2\2NI\3\2\2\2OP\3\2"+
+		"DF\7\5\2\2EG\7\6\2\2FE\3\2\2\2FG\3\2\2\2GH\3\2\2\2HN\7\r\2\2IJ\5\16\b"+
+		"\2JL\5\20\t\2KM\7\23\2\2LK\3\2\2\2LM\3\2\2\2MO\3\2\2\2NI\3\2\2\2OP\3\2"+
 		"\2\2PN\3\2\2\2PQ\3\2\2\2QR\3\2\2\2RS\7\7\2\2S\r\3\2\2\2T^\7\b\2\2U_\7"+
-		"\16\2\2V[\7\r\2\2WX\7\4\2\2XZ\7\r\2\2YW\3\2\2\2Z]\3\2\2\2[Y\3\2\2\2[\\"+
-		"\3\2\2\2\\_\3\2\2\2][\3\2\2\2^U\3\2\2\2^V\3\2\2\2_\17\3\2\2\2`h\5\22\n"+
-		"\2ac\7\6\2\2ba\3\2\2\2bc\3\2\2\2cd\3\2\2\2dh\7\f\2\2eh\7\r\2\2fh\7\16"+
-		"\2\2g`\3\2\2\2gb\3\2\2\2ge\3\2\2\2gf\3\2\2\2h\21\3\2\2\2ij\7\t\2\2jk\7"+
-		"\r\2\2kl\7\n\2\2l\23\3\2\2\2\23\27\34\"\'*/\61\65<BFLP[^bg";
+		"\17\2\2V[\7\16\2\2WX\7\4\2\2XZ\7\16\2\2YW\3\2\2\2Z]\3\2\2\2[Y\3\2\2\2"+
+		"[\\\3\2\2\2\\_\3\2\2\2][\3\2\2\2^U\3\2\2\2^V\3\2\2\2_\17\3\2\2\2`h\5\22"+
+		"\n\2ac\7\6\2\2ba\3\2\2\2bc\3\2\2\2cd\3\2\2\2dh\7\r\2\2eh\7\16\2\2fh\7"+
+		"\17\2\2g`\3\2\2\2gb\3\2\2\2ge\3\2\2\2gf\3\2\2\2h\21\3\2\2\2ij\7\t\2\2"+
+		"jk\7\16\2\2kl\7\n\2\2l\23\3\2\2\2\23\27\34\"\'*/\61\65<BFLP[^bg";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

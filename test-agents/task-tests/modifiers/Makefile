@@ -1,20 +1,19 @@
-AGENT_NAME=repeat
+AGENT_NAME=modifiers
 
 ROSIE_CONFIG=agent/rosie.${AGENT_NAME}.config
 
 all: world ${ROSIE_CONFIG}
 
-run_mobile_sim: ${AGENT_NAME}.world
-	java soargroup.mobilesim.MobileGUI -w ${AGENT_NAME}.world
 
 run_test: waypoint-map.soar internal-world.soar ${ROSIE_CONFIG} 
 	python3 -m rosie.testing ${AGENT_NAME} -v
 	echo "########### DIFF ##########"
 	diff test-output.txt correct-output.txt
 
-# agent/rosie.repeat.config: Configures the rosie soar agent that will be sourced to run
-${ROSIE_CONFIG}: ${AGENT_NAME}.config 
-	java edu.umich.rosie.tools.config.RosieAgentConfigurator ${AGENT_NAME}.config
+
+# agent/rosie.modifiers.config: Configures the rosie soar agent that will be sourced to run
+${ROSIE_CONFIG}: modifiers.config ../smem-config.txt extra-smem-adds.soar script.txt
+	java edu.umich.rosie.tools.config.RosieAgentConfigurator modifiers.config
 
 
 #### Generating World/Map Files

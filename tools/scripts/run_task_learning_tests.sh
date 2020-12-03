@@ -2,7 +2,7 @@
 
 TEST_LANG="python"
 # The list of tests that are possible to run
-FULL_TEST_LIST=(prim-actions kitchen mobile serve maintenance conditionals guide)
+FULL_TEST_LIST=(prim-actions kitchen mobile serve maintenance conditionals guide modifiers)
 
 TESTS_TO_RUN=()
 BUILD_ONLY=0

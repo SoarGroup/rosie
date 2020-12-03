@@ -5,11 +5,13 @@ import java.util.*;
 import sml.*;
 import sml.Agent.PrintEventInterface;
 import sml.Agent.RunEventInterface;
+import sml.Agent.OutputEventInterface;
+import edu.umich.rosie.soar.SoarUtil;
 import edu.umich.rosie.language.LanguageTestWriter;
 import edu.umich.rosie.soarobjects.Time;
 import edu.umich.rosie.connectors.LogfileWriter;
 
-public class SoarAgent implements RunEventInterface, PrintEventInterface {
+public class SoarAgent implements RunEventInterface, PrintEventInterface, OutputEventInterface {
     public static class AgentConfig{
         public String agentName;
         public String agentSource;
@@ -85,13 +87,16 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
     private long printCallbackId = -1;
     private ArrayList<Long> runEventCallbackIds;
 
+    private ArrayList<Long> outputHandlerCallbackIds;
+
     public SoarAgent(Properties props){
         this.config = new AgentConfig(props);
 
         runEventCallbackIds = new ArrayList<Long>();
+        outputHandlerCallbackIds = new ArrayList<Long>();
 		connectors = new HashMap<Class<?>, AgentConnector>();
         
-        time = new Time(5000);
+        time = new Time(50);
         
         if(this.config.remoteConnection){
         	int port = Kernel.kDefaultSMLPort;
@@ -136,6 +141,21 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 	public <T> T getConnector(Class<T> cls){
 		return (T)this.connectors.get(cls);
 	}
+
+    protected void onOutputEvent(String attName, Identifier id){
+    	if (attName.equals("set-time")){
+			processSetTimeMessage(id);
+    	}
+    }
+
+	protected void processSetTimeMessage(Identifier id){
+		Long h = SoarUtil.getChildInt(id, "hour");
+		Long m = SoarUtil.getChildInt(id, "minute");
+		if(h != null && m != null){
+			time.setTime(h, m);
+		}
+		id.CreateStringWME("status", "success");
+	}
 	
     public void createAgent(){
         //System.out.println("SoarAgent::createAgent()");
@@ -160,6 +180,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         runEventCallbackIds.add(agent.RegisterForRunEvent(smlRunEventId.smlEVENT_BEFORE_INPUT_PHASE, this, null));
         runEventCallbackIds.add(agent.RegisterForRunEvent(smlRunEventId.smlEVENT_AFTER_INPUT_PHASE, this, null));
         runEventCallbackIds.add(agent.RegisterForRunEvent(smlRunEventId.smlEVENT_AFTER_OUTPUT_PHASE, this, null));
+        outputHandlerCallbackIds.add(agent.AddOutputHandler("set-time", this, null));
 
         if(config.logFilename != null){
 			this.addConnector(new LogfileWriter(this, config.logFilename));
@@ -226,6 +247,11 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
             agent.UnregisterForRunEvent(callbackId);
         }
         runEventCallbackIds.clear();
+
+        for(Long callbackId : runEventCallbackIds){
+            agent.RemoveOutputHandler(callbackId);
+        }
+        outputHandlerCallbackIds.clear();
         
         if(printCallbackId != -1){
             agent.UnregisterForPrintEvent(printCallbackId);
@@ -424,5 +450,16 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         if(config.writeStandardOut){
             System.out.print(message);
         }
+    }
+
+    @Override
+    public void outputEventHandler(Object data, String agentName,
+            String attributeName, WMElement wme)
+    {
+    	if(!wme.IsJustAdded() || !wme.IsIdentifier()){
+    		return;
+    	}
+    	Identifier id = wme.ConvertToIdentifier();
+    	onOutputEvent(attributeName, id);
     }
 }

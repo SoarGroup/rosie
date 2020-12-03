@@ -313,7 +313,7 @@ class ObjectSlot(Slot):
 
 class PredicateSlot(Slot):
     def get_default(self):
-        if self.default is None:
+        if self.default is None or self.default.GetChildString('predicate-handle') is None:
             return ''
         return self.default.GetChildString('predicate-handle')
 
