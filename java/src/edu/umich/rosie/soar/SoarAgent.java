@@ -13,27 +13,31 @@ import edu.umich.rosie.connectors.LogfileWriter;
 
 public class SoarAgent implements RunEventInterface, PrintEventInterface, OutputEventInterface {
     public static class AgentConfig{
-        public String agentName;
-        public String agentSource;
-        public String smemSource;
+        public final String agentName;
+        public final String agentSource;
+        public final String smemSource;
 
-        public boolean spawnDebugger;
-        public int watchLevel;
-        public int throttleMS;
-		public boolean startRunning;
+        public final boolean spawnDebugger;
+        public final int watchLevel;
+        public final int throttleMS;
+		public final boolean startRunning;
         
-        public boolean remoteConnection;
+        public final boolean remoteConnection;
         
-        public String speechFile;
+        public final String speechFile;
 
-        public Boolean verbose;
-		public String logFilename;
-        public Boolean writeStandardOut;
+        public final boolean verbose;
+		public final String logFilename;
+        public final boolean writeStandardOut;
         
-		public String languageTestFilename;
+		public final String languageTestFilename;
         
-        public Boolean parserTest;
-        public String parser;
+        public final boolean parserTest;
+        public final String parser;
+
+		public final boolean simClock;
+		public final int clockStepMS;
+
 
         public AgentConfig(Properties props){
             spawnDebugger = props.getProperty("spawn-debugger", "true").equals("true");
@@ -49,24 +53,30 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface, Output
             verbose = props.getProperty("verbose", "true").equals("true");
             remoteConnection = props.getProperty("remote-connection", "false").equals("true");
 
-            try{
-                watchLevel = Integer.parseInt(props.getProperty("watch-level", "1"));
-            } catch (NumberFormatException e){
-                watchLevel = 1;
-            }
-
-            try{
-                throttleMS = Integer.parseInt(props.getProperty("decision-throttle-ms", "0"));
-            } catch(NumberFormatException e){
-                throttleMS = 0;
-            }
+			watchLevel = getIntProp(props, "watch-level", 1);
+			throttleMS = getIntProp(props, "decision-throttle-ms", 0);
 
             speechFile = props.getProperty("speech-file", "audio_files/sample");
 
 			logFilename = props.getProperty("log-filename", null);
 
 			languageTestFilename = props.getProperty("language-test-filename", null);
+
+			simClock = props.getProperty("sim-clock", "true").equals("true");
+			clockStepMS = getIntProp(props, "clock-step-ms", 50);
         }
+
+		private int getIntProp(Properties props, String propName, int defVal){
+			String propVal = props.getProperty(propName);
+			if(propVal == null){
+				return defVal;
+			}
+			try{
+				return Integer.parseInt(propVal);
+			} catch(NumberFormatException e){
+				return defVal;
+			}
+		}
     }
 
 	private HashMap<Class<?>, AgentConnector> connectors;
@@ -96,7 +106,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface, Output
         outputHandlerCallbackIds = new ArrayList<Long>();
 		connectors = new HashMap<Class<?>, AgentConnector>();
         
-        time = new Time(50);
+        time = new Time(config.simClock, config.clockStepMS);
         
         if(this.config.remoteConnection){
         	int port = Kernel.kDefaultSMLPort;

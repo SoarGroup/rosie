@@ -1,7 +1,7 @@
 import subprocess
 import random
 
-from pysoarlib import SoarAgent, TimeConnector
+from pysoarlib import SoarAgent
 from rosie import CommandConnector, InternalCommandConnector
 from rosie.events import InstructorMessageSent
 from rosie.language import LanguageConnector, ScriptConnector
@@ -40,9 +40,6 @@ class RosieAgent(SoarAgent):
         custom_language_connector = true|false (default=false)
             If true, will rely on a subclass to create the language connector
 
-        clock_step_ms = [int] (default=50)
-            How many milliseconds the simulated clock on the input-link ticks every decision cycle
-
         agent_params = { }
             Specify att/val pairs to add to the ^agent-params wme in working memory
 
@@ -56,13 +53,8 @@ class RosieAgent(SoarAgent):
     """
 
 
-    def __init__(self, print_handler=None, config_filename=None, **kwargs):
-        SoarAgent.__init__(self, print_handler, config_filename, **kwargs)
-
-        # Create a time connector to put timing information on the top state
-        self.time_conn = TimeConnector(self, include_ms=True, sim_clock=True, 
-                clock_step_ms=int(self.settings.get('clock_step_ms', 50)))
-        self.add_connector("time", self.time_conn)
+    def __init__(self, print_handler=None, config_filename=None, sim_clock=True, **kwargs):
+        SoarAgent.__init__(self, print_handler, config_filename, use_time_connector=True, sim_clock=sim_clock, **kwargs)
 
         # Create the default language connector
         if not self.custom_language_connector:
