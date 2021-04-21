@@ -32,6 +32,7 @@ class RosieMessageParser:
         "missing-argument": lambda fields: "I need more information to do that action",
         "learn-location-failure": lambda fields: "I don't know where I am.",
         "get-next-goal": lambda fields: "What is the next goal or subtask of " + task_handle(fields) + "?",
+        "get-goal-alternative": lambda fields: "What should I do for " + task_handle(fields) + " when other steps don't apply?",
         "no-action-context-for-goal": lambda fields: "I don't know what action that goal is for",
         "get-next-task": lambda fields: "I'm ready for a new task",
         "get-next-subaction": lambda fields: "What do I do next for " + task_handle(fields) + "?",

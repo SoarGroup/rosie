@@ -1,8 +1,10 @@
 import sys
 
 from rosie import RosieAgent, ActionStackConnector
+from rosie.tools import tcn_to_str
 from rosie.events import *
 from pysoarlib import AgentConnector
+from pysoarlib.util import PrintoutIdentifier
 
 class TestAgent(RosieAgent):
     def __init__(self, **kwargs):
@@ -30,8 +32,8 @@ class TestAgent(RosieAgent):
         self.add_print_event_handler(lambda msg: self.print_callback(msg))
 
     def write_output(self, message):
-        if self.outfile is not None:
-            self.outfile.write(message + "\n")
+        #if self.outfile is not None:
+        self.outfile.write(message + "\n")
 
     def run_test(self, correct_filename):
         self.connect()
@@ -46,4 +48,13 @@ class TestAgent(RosieAgent):
         if message.startswith("@TEST: "):
             self.write_output(message[7:])
 
+    def print_tcn(self, task_handle):
+        query_res = agent.execute_command("smem -q {(<t> ^handle " + task_handle + ")}")
+        if query_res.startswith("(@"):
+            tcn_lti = query_res.split()[0].replace("(", "")
+            tcn_id = PrintoutIdentifier.create(agent, tcn_lti, 20)
+            self.write_output(tcn_to_str(tcn_id))
+        else:
+            self.write_output("Query for task " + task_handle + " failed")
+            self.write_output(query_res)
 

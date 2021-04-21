@@ -1,0 +1,100 @@
+##!
+# @file
+#
+# @created plindes 20200910
+# File: 014.soar
+# Author: Peter Lindes
+# Created: 10 September 2020
+#
+# Desc: This file contains all the processing rules
+#       needed to add to be able to process sentence 014
+#       of the Games development set.
+#  This is sentence #11 of 01.04_lazy-stacking-frogs script.txt.
+#  The sentence is:
+#      The goal is that there are three clear locations.
+#
+
+#   A double snip is needed to parse this sentence because
+#   without any snips the parse looks like this:
+#
+#		  C47: ConceptIsThatDeclarative[The goal is that there are three] m: M14
+#		    firstPart<-C29: ConceptIsThat[The goal is that] m: M8
+#		      idea<-C17: SpecNoun[The goal] m: M3
+#		        spec<-C10: THE[The] m: M1
+#		        noun<-C14: GOAL[goal] m: M2
+#		      toBe<-C22: IS[is] m: M4
+#		      that<-C28: THAT-complementizer[that] m: M7
+#		    statement<-C45: ThereAreNumber[there are three] m: M13
+#		      there-are<-C39: ThereAre[there are] m: M11
+#		        there<-C34: THERE[there] m: M9
+#		        are<-C38: ARE[are] m: M10
+#		      number<-C44: THREE[three] m: M12
+#		  C58: PropertyNoun[clear locations.] m: M17
+#		    prop<-C52: CLEAR[clear] m: M15
+#		    noun<-C56: LOCATIONS[locations.] m: M16
+#
+#   This bad structure is because "there are three" is a valid Declarative.
+#   Once C58 above is built, we need to snipt both C47: ConceptIsThatDeclarative
+#   and C45: ThereAreNumber so that "three" can combine with "clear locations".
+#
+#   We will try making this very general by looking for any two layers
+#   over a right corner Quantifier when a RefExpr follows.
+#   Actually, it can't be all that general, but as much as possible
+#
+
+#######  Snip both ConceptIsThatDeclarative and ThereAreNumber #####################
+#######  if a RefExpr follows
+  
+#    Propose an operator to snip a two higher cxns
+#    to attach a RefExpr to a Quantifier.
+sp {comprehend-word*propose*snip*layers-over-quantifier-before-ref-expr
+   (state <s> ^problem-space comprehend-word
+              ^cxn <ref-expr>
+              ^lexical-access done)
+   #    Find the RefExpr's previous
+   #    Do this in as general a way as possible
+   (<ref-expr> ^is.a RefExpr
+               ^previous <layer-1>)
+   (<layer-1> ^is.a Declarative
+              ^cxn-name <name-1>
+              ^statement <layer-2>)
+   #    See whether what came before has a Quantifier
+   (<layer-2> ^is.a Declarative
+              ^cxn-name <name-2>
+              ^number <number>)
+   (<number> ^is.a Quantifier)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name snip
+        ^type snip
+        ^goal layers-over-quantifier-before-ref-expr
+        ^debug-info (concat |Snip | <name-1> | and | <name-2> | to attach a Quantifier.|))
+}
+
+#    Snip away two higher cxns to attach a RefExpr to a Quantifier.
+sp {comprehend-word*apply*snip*layers-over-quantifier-before-ref-expr
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <ref-expr>)
+   (<o> ^name snip
+        ^type snip
+        ^goal layers-over-quantifier-before-ref-expr)
+   #    Find the target and things to report
+   (<ref-expr> ^is.a RefExpr
+               ^previous <layer-1>)
+   (<layer-1> ^is.a Declarative
+              ^statement <layer-2>)
+   (<layer-2> ^is.a Declarative
+              ^number <number>)  #   What to cut to
+-->
+   #    THIS IS THE SNIP!!!
+   #    Change the previous pointer
+   #    This will orphan the higher layers and
+   #    leave them to be garbage collected.
+   #    Instead we'll point to their last constituent,
+   #    allowing that to be matched
+   (<ref-expr> ^previous <layer-1> -
+               ^previous <number>)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <layer-1> | and | <layer-2> | to get to | <number> |.|))
+}

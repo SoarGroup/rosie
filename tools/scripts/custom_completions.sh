@@ -22,12 +22,12 @@ _task_tests_completion()
 	COMPREPLY=( $(compgen -W "$(find $ROSIE_HOME/test-agents/task-tests/* -maxdepth 0 -type d -printf '%f ')" -- $cur) )
 }
 
-# Autocomplete evaluations in $ROSIE_HOME/python/rosie/evaluation/
-_rosie_evaluations_completion()
+# Autocomplete examples in $ROSIE_HOME/examples
+_rosie_examples_completion()
 {
 	local cur=${COMP_WORDS[COMP_CWORD]}
-	# Find all directories in rosie/evaluation
-	COMPREPLY=( $(compgen -W "$(find $ROSIE_HOME/python/rosie/evaluation/* -maxdepth 0 -type d -printf '%f ')" -- $cur) )
+	# Find all directories in rosie/examples
+	COMPREPLY=( $(compgen -W "$(find $ROSIE_HOME/examples/* -maxdepth 0 -type d -printf '%f ')" -- $cur) )
 }
 
 

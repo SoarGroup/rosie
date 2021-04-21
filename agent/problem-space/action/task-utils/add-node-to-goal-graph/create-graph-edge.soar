@@ -1,0 +1,184 @@
+
+# If there is a previous node, 
+#   then create an edge from the previuos node to the created one
+sp {add-node-to-goal-graph*elaborate*create-graph-edge*from*previous-node
+   (state <s> ^name add-node-to-goal-graph
+              ^created-node <node>
+              ^previous-node <prev>
+             -^goal-conditions)
+-->
+   (<s> ^create-graph-edge <edge>)
+   (<edge> ^head <prev> 
+           ^tail <node>)
+}
+
+sp {add-node-to-goal-graph*elaborate*create-graph-edge*from*previous-node*with*conditions
+   (state <s> ^name add-node-to-goal-graph
+              ^created-node <node>
+              ^previous-node <prev>
+              ^goal-conditions <conds>)
+-->
+   (<s> ^create-graph-edge <edge>)
+   (<edge> ^head <prev> 
+           ^tail <node>
+           ^conditions <conds>)
+}
+
+# If ^add-else-link true:
+#  add a link from the created node to the intermediate node
+#  add a link from the previous node to the intermediate node
+sp {add-node-to-goal-graph*elaborate*create-graph-edge*add-else-link
+   (state <s> ^name add-node-to-goal-graph
+              ^add-else-link true
+              ^previous-node <prev>
+              ^created-node <node>
+              ^created-intermediate-node <int>)
+-->
+   (<s> ^create-graph-edge <edge>)
+   (<edge> ^head <node> 
+           ^tail <int>)
+   (<s> ^create-graph-edge <edge2>)
+   (<edge2> ^head <prev> 
+            ^tail <int>)
+}
+
+# node-type repeat - if there are conditions then add a link to the exit intermediate node with them
+sp {add-node-to-goal-graph*elaborate*create-graph-edge*repeat*with*conditions
+   (state <s> ^name add-node-to-goal-graph
+              ^node-type repeat
+              ^repeat-node <node>
+              ^repeat-conditions <conds>
+             -^negated-conditions true
+              ^loop-exit-node <exit>)
+-->
+   (<s> ^create-graph-edge <edge2>)
+   (<edge2> ^head <node> 
+            ^tail <exit>
+            ^conditions <conds>)
+}
+
+# if the conditions are negated (while loop), dont add the conditions to the loop exit
+#   add them to the loop body to the intermediate node
+# i.e. exit the loop when the conditions are false
+sp {add-node-to-goal-graph*elaborate*create-graph-edge*repeat*with*negated*conditions
+   (state <s> ^name add-node-to-goal-graph
+              ^node-type repeat
+              ^repeat-node <node>
+              ^repeat-conditions <conds>
+              ^negated-conditions true
+              ^loop-exit-node <exit>
+              ^created-intermediate-node <int>)
+-->
+   (<s> ^create-graph-edge <edge1> <edge2>)
+   (<edge1> ^head <node> 
+            ^tail <exit>)
+   (<edge2> ^head <node> 
+            ^tail <int>
+            ^conditions <conds>)
+}
+
+## learning-repeat-block - add an edge to the loop exit
+#sp {add-node-to-goal-graph*elaborate*create-graph-edge*repeat*block*exit
+#   (state <s> ^name add-node-to-goal-graph
+#             -^node-type repeat
+#              ^tail-node <node>
+#              ^learning-repeat-block <node-h>
+#              ^repeat-loop-exit <exit-link>)
+#   (<exit-link> ^conditions <conds>
+#                ^goal <exit>)
+#-->
+#   (<s> ^create-graph-edge <edge2>)
+#   (<edge2> ^head <node> 
+#            ^conditions <conds>
+#            ^tail <exit>)
+#}
+
+# If we are closing the repeat loop, add the back edge to the first repeat
+sp {add-node-to-goal-graph*elaborate*create-graph-edge*close*repeat*loop
+   (state <s> ^name add-node-to-goal-graph
+              ^node-type repeat
+              ^closing-repeat-block true
+              ^repeat-node <repeat>
+              ^previous-node <prev>)
+-->
+   (<s> ^create-graph-edge <edge>)
+   (<edge> ^head <prev> 
+           ^tail <repeat>)
+}
+
+# If there is a following-node
+#   then create an edge from the created node to the following one
+sp {add-node-to-goal-graph*elaborate*create-graph-edge*to*following-node
+   (state <s> ^name add-node-to-goal-graph
+              ^created-node <node>
+              ^following-node <next>)
+-->
+   (<s> ^create-graph-edge <edge>)
+   (<edge> ^head <node> 
+           ^tail <next>)
+}
+
+# If told that this was the final goal, 
+#   then create an edge from the tail node to the terminal node
+sp {add-node-to-goal-graph*elaborate*create-graph-edge*final-goal
+   (state <s> ^name add-node-to-goal-graph
+              ^final-goal true
+              ^tail-node <node>
+              ^created-terminal-node <term>)
+-->
+   (<s> ^create-graph-edge <edge>)
+   (<edge> ^head <node> 
+           ^tail <term>)
+}
+
+### PROPOSE: 1 operator for each ^create-graph-edge elaborated on the state
+sp {add-node-to-goal-graph*propose*create-graph-edge
+   (state <s> ^name add-node-to-goal-graph
+              ^create-graph-edge <edge>)
+   (<edge> ^head <head>
+           ^tail <tail>
+          -^edge)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name create-graph-edge
+        ^source <edge>
+        ^head <head>
+        ^new-edge <new-edge>
+        ^tail <tail>)
+}
+
+## APPLY: Create a next pointer from the head to the tail
+sp {add-node-to-goal-graph*apply*create-graph-edge
+   (state <s> ^name add-node-to-goal-graph
+              ^operator <o>)
+   (<o> ^name create-graph-edge
+        ^source <src>
+        ^head <head>
+        ^new-edge <new-edge>
+        ^tail <tail>)
+   (<src> -^conditions)
+-->
+   (<head> ^next <new-edge>)
+   (<new-edge> ^goal <tail>)
+
+   (<src> ^edge <new-edge>)
+   (<s> ^store-edge <src>)
+}
+
+sp {add-node-to-goal-graph*apply*create-graph-edge*with*conditions
+   (state <s> ^name add-node-to-goal-graph
+              ^operator <o>)
+   (<o> ^name create-graph-edge
+        ^source <src>
+        ^head <head>
+        ^new-edge <new-edge>
+        ^tail <tail>)
+   (<src> ^conditions <conds>)
+-->
+   (<head> ^next <new-edge>)
+   (<new-edge> ^conditions <conds> ^goal <tail>)
+
+   (<src> ^edge <new-edge>)
+   (<s> ^store-edge <src>)
+}
+

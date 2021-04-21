@@ -84,6 +84,12 @@ class CommandConnector(AgentConnector):
         elif cmd_name == 'ignore' or cmd_name == 'skip':
             return
 
+        # SET-TIME <H> <MIN>
+        #   will set the input-link clock to the specific time
+        elif cmd_name == 'set-time':
+            self.agent.get_connector('time').set_time(int(args[1]), int(args[2]))
+            complete_now = True
+
         ### CHANGING PREDICATES
         # SET-STATE <obj-h> <prop-h> <pred-h>
         elif cmd_name == 'set-state':

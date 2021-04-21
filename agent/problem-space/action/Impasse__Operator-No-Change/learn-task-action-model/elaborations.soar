@@ -3,19 +3,59 @@ sp {action*execution-type*internal*OpNoChange*elaborate*state*name*learn-task-ac
               ^attribute operator
               ^superstate <ss>)
    (<ss> ^problem-space <ps>
-         ^operator.task-handle <h>)
+         ^operator <task-op>)
    (<ps> ^name action
          ^execution-type internal)
+   (<task-op> ^task-handle <h>)
 -->
-   (<s> ^name learn-task-action-model)
+   (<s> ^name learn-task-action-model
+        ^task-operator <task-op>
+        ^task-handle <h>)
+}
+
+### If there is custom code in an innate task that learns an action mode (such as recall)
+#     then it should elaborate the ^custom-model-learning true flag to disable default behavior
+
+sp {learn-task-action-model*elaborate*default-model-learning
+   (state <s> ^name learn-task-action-model
+             -^custom-model-learning)
+-->
+   (<s> ^default-model-learning true)
 }
 
 sp {learn-task-action-model*elaborate*smem-info
    (state <s> ^name learn-task-action-model
-              ^task-concept-network <tcn>)
-   (<tcn> ^goal-graph.first <goal>
-          ^procedural <proc>)
+              ^task-concept-network.procedural <proc>)
 -->
-   (<s> ^goal-id <goal>)
    (<s> ^procedural-id <proc>)
 }
+
+################## possible-goal ####################
+# If the task only contains a single goal node between the start and end, 
+#   with only unary or relation predicates
+#   it can be a possible action model source
+
+sp {learn-task-action-model*elaborate*possible-goal
+   (state <s> ^name learn-task-action-model
+              ^default-model-learning true
+              ^task-concept-network.goal-graph.next <next>)
+   (<next> ^goal <goal>)
+   (<goal> ^item-type task-goal
+           ^pred-count > 0
+           ^next.goal.item-type terminal-goal)
+  -{(<goal> ^<pnum> <gpred>)
+    (<gpred> ^type <> unary <> relation)}
+-->
+   (<s> ^possible-goal <pg>)
+   (<pg> ^next <next>
+         ^goal <goal>)
+}
+
+### Test the goal conditions against the state
+sp {learn-task-action-model*elaborate*predicate-test*goal*conditions
+   (state <s> ^name learn-task-action-model
+              ^possible-goal.instantiate-conditions.instantiation <ins>)
+-->
+   (<s> ^predicate-test <ins>)
+}
+

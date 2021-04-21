@@ -1,5 +1,36 @@
-### Only fire these application once a chunk has been learned
-# (Will create ^apply-select-next-goal true flag on the state)
+###################### select-next-goal ########################
+# When the current goal is satisfied, select the next one in the graph
+
+
+######################## PREFERENCES ##########################
+
+# Prefer select-next-goal if it is a loop-exit
+sp {subproblem*execute*prefer*select-next-goal*loop-exit
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name select-next-goal
+         ^has-conditions true
+         ^next-goal-type loop-exit)
+   (<o2> ^name select-next-goal
+         ^has-conditions true
+         ^next-goal-type <> loop-exit)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+# Prefer select-next-goal if it has conditions over default
+sp {subproblem*execute*prefer*select-next-goal*with*conditions
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name select-next-goal
+         ^has-conditions true)
+   (<o2> ^name select-next-goal
+         ^has-conditions false)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
 
 # Reject select-next-goal if the agent is waiting after a command
 sp {subproblem*execute*reject*select-next-goal*waiting-after-command
@@ -21,17 +52,37 @@ sp {subproblem*execute*reject*select-next-goal*active-ongoing-goal
    (<s> ^operator <o> -)
 }
 
-# Change the goal handle on the task-operator
-sp {subproblem*execute*apply*select-next-goal*change*current-goal*on*task-operator
-   (state <s> ^operator <o>
-              ^apply-select-next-goal true
-              ^task-operator <task-op>)
+# Reject if interrupt-task
+sp {subproblem*execute*reject*select-next-goal*interrupt-task
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o> +
+              ^current-task-segment <seg>)
    (<o> ^name select-next-goal
         ^next-goal-handle <goal-h>)
-   (<task-op> ^current-goal { <cur-goal-h> <> <goal-h> })
+   (<seg> ^interrupt-task true
+         -^new-goal-handle <goal-h>)
 -->
-   (<task-op> ^current-goal <cur-goal-h> -
-              ^current-goal <goal-h>)
+   (<s> ^operator <o> -)
+   (<s> ^interrupted-next-goal <goal-h>)
+}
+
+######################## APPLY ##########################
+
+### Only fire these application once a chunk has been learned
+# (Will create ^apply-select-next-goal true flag on the state)
+
+# Change the goal handle on the current-task-segment
+sp {subproblem*execute*apply*select-next-goal*change*current-goal*on*current-task-segment
+   (state <s> ^operator <o>
+              ^apply-select-next-goal true
+              ^current-task-segment <seg>)
+   (<o> ^name select-next-goal
+        ^next-goal-handle <goal-h>)
+   (<seg> ^current-goal <goal>)
+   (<goal> ^handle <> <goal-h>)
+-->
+   (<seg> ^current-goal <goal> -
+          ^current-goal.handle <goal-h>)
 }
 
 # Remove the apply-select-next-goal flag (means we learned the application rule)
@@ -52,20 +103,131 @@ sp {subproblem*execute*apply*select-next-goal*remove*goal-objects*from*current-t
    (<objs> ^goal-object <obj> -)
 }
 
-# Remove any ^performed-subtask flags from the task-operator
-sp {subproblem*execute*apply*select-next-goal*remove*performed-subtasks*from*task-operator
+# Remove any ^performed-subtask flags from the current-task-segment
+sp {subproblem*execute*apply*select-next-goal*remove*performed-subtasks*from*current-task-segment
    (state <s> ^operator.name select-next-goal
               ^apply-select-next-goal true
-              ^task-operator <task-op>)
-   (<task-op> ^performed-subtask <sub-h>)
+              ^current-task-segment <seg>)
+   (<seg> ^performed-subtask <sub-h>)
 -->
-   (<task-op> ^performed-subtask <sub-h> -)
+   (<seg> ^performed-subtask <sub-h> -)
 }
 
+# Remove any ^output-commands from the current-task-segment
+sp {subproblem*execute*apply*select-next-goal*remove*output-commands*from*current-task-segment
+   (state <s> ^operator.name select-next-goal
+              ^apply-select-next-goal true
+              ^current-task-segment <seg>)
+   (<seg> ^<cmd-name> <cmd>)
+   (<cmd> ^item-type output-command)
+-->
+   (<seg> ^<cmd-name> <cmd> -)
+}
 
-###################### select-next-goal ##################
-# When the current goal is satisfied, select the next one in the graph
+# Remove any output-commands from the output link
+sp {subproblem*execute*apply*select-next-goal*remove*output-commands*from*output-link
+   (state <s> ^operator.name select-next-goal
+              ^apply-select-next-goal true
+              ^io.output-link <out>
+              ^current-task-segment.<cmd-name> <cmd>)
+   (<out> ^<io-cmd> <cmd>)
+   (<cmd> ^item-type output-command)
+-->
+   (<out> ^<io-cmd> <cmd> -)
+}
 
+# Remove a finish-task flag on the current-task-segment
+sp {subproblem*execute*apply*select-next-goal*remove*finish-task*from*current-task-segment
+   (state <s> ^problem-space.subproblem execute
+              ^operator.name select-next-goal
+              ^apply-select-next-goal true
+              ^current-task-segment <seg>)
+   (<seg> ^finish-task true)
+-->
+   (<seg> ^finish-task true -)
+}
+
+# Remove a matching new-goal-handle from the current-task-segment
+sp {subproblem*execute*apply*select-next-goal*remove*new-goal-handle*from*current-task-segment
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o>
+              ^apply-select-next-goal true
+              ^current-task-segment <seg>)
+   (<o> ^name select-next-goal
+        ^next-goal-handle <goal-h>)
+   (<seg> ^new-goal-handle <goal-h>)
+-->
+   (<seg> ^new-goal-handle <goal-h> -)
+}
+
+# If we are selecting a repeat node, increment a loop counter
+sp {subproblem*execute*apply*select-next-goal*repeat-node*set*loop-count*0
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o>
+              ^apply-select-next-goal true
+              ^current-task-segment <seg>)
+   (<o> ^name select-next-goal
+        ^next-goal-type repeat-goal)
+   (<seg> -^loop-counter)
+-->
+   (<seg> ^loop-counter 0)
+}
+sp {subproblem*execute*apply*select-next-goal*repeat-node*set*loop-count*increment
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o>
+              ^apply-select-next-goal true
+              ^current-task-segment <seg>)
+   (<o> ^name select-next-goal
+        ^next-goal-type repeat-goal)
+   (<seg> ^loop-counter <n>)
+-->
+   (<seg> ^loop-counter <n> -
+          ^loop-counter (+ <n> 1))
+}
+
+# If we are finishing a task with a single repeat end-clause, increment a loop counter
+sp {subproblem*execute*apply*select-next-goal*terminal*repeat*task*set*loop-count*0
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o>
+              ^task-operator.end-clause.<pnum> <gp>
+              ^apply-select-next-goal true
+              ^current-task-segment <seg>)
+   (<o> ^name select-next-goal
+        ^next-goal-type terminal-goal)
+   (<gp> ^type duration ^unit times)
+   (<seg> -^loop-counter)
+-->
+   (<seg> ^loop-counter 1)
+}
+sp {subproblem*execute*apply*select-next-goal*terminal*repeat*task*set*loop-count*increment
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o>
+              ^task-operator.end-clause.<pnum> <gp>
+              ^apply-select-next-goal true
+              ^current-task-segment <seg>)
+   (<o> ^name select-next-goal
+        ^next-goal-type terminal-goal)
+   (<gp> ^type duration ^unit times)
+   (<seg> ^loop-counter <n>)
+-->
+   (<seg> ^loop-counter <n> -
+          ^loop-counter (+ <n> 1))
+}
+
+# If we are exiting a loop, clear the counter
+sp {subproblem*execute*apply*select-next-goal*repeat-node*clear*loop-counter
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o>
+              ^apply-select-next-goal true
+              ^current-task-segment <seg>)
+   (<o> ^name select-next-goal
+        ^next-goal-type loop-exit)
+   (<seg> ^loop-counter <n>)
+-->
+   (<seg> ^loop-counter <n> -)
+}
+
+######################    LEARN APPLY   ########################
 # This will learn an application rule which will change the goal is one step
 
 # Elaborate problem-space, turn learning on
@@ -77,11 +239,20 @@ sp {subproblem*execute*select-next-goal*force-learn
 }
 
 # Elaborate superstate info
+
 sp {subproblem*execute*select-next-goal*elaborate*next-goal-handle
    (state <s> ^name select-next-goal
               ^superstate.operator.next-goal-handle <goal-h>)
 -->
    (<s> ^next-goal-handle <goal-h>)
+}
+
+# Elaborate the current-goal-handle from the current-task-segment
+sp {subproblem*execute*select-next-goal*elaborate*current-goal-handle
+   (state <s> ^name select-next-goal
+              ^superstate.current-task-segment.current-goal.handle <goal-h>)
+-->
+   (<s> ^current-goal-handle <goal-h>)
 }
 
 # Elaborate task-operator
@@ -117,7 +288,7 @@ sp {subproblem*execute*select-next-goal*retrieve*next-goal-id
 # Retrieve the current goal node from smem
 sp {subproblem*execute*select-next-goal*retrieve*cur-goal-id
    (state <s> ^name select-next-goal
-              ^task-operator.current-goal <goal-h>)
+              ^current-goal-handle <goal-h>)
 -->
   (<s> ^smem-query <query>)
   (<query> ^cue.handle <goal-h>
@@ -152,42 +323,6 @@ sp {subproblem*execute*select-next-goal*retrieve*subtask-tcn
             ^destination <s>
             ^result-name subtask-tcn)
    (<cue> ^handle <sub-h>)
-}
-
-#### If the next goal edge has not been marked as learned, do so
-
-sp {subproblem*execute*select-next-goal*propose*mark-edge-learned
-   (state <s> ^name select-next-goal
-              ^cur-goal-id.next <edge>
-              ^next-goal-handle <goal-h>)
-   (<edge> ^goal.handle <goal-h>
-          -^learned true)
--->
-   (<s> ^operator <o> +)
-   (<o> ^name mark-edge-learned
-        ^edge <edge>)
-}
-
-sp {subproblem*execute*select-next-goal*apply*mark-edge-learned
-   (state <s> ^name select-next-goal
-              ^operator <o>
-              ^smem.command <cmd>)
-   (<o> ^name mark-edge-learned
-        ^edge <edge>)
--->
-   (<edge> ^learned true)
-   (<cmd> ^store <edge>)
-}
-
-
-sp {subproblem*execute*select-next-goal*prefer*mark-edge-learned*over*learn-apply-rule
-   (state <s> ^name select-next-goal
-              ^operator <o1> +
-              ^operator <o2> +)
-   (<o1> ^name mark-edge-learned)
-   (<o2> ^name learn-apply-rule)
--->
-   (<s> ^operator <o1> > <o2>)
 }
 
 
@@ -245,6 +380,18 @@ sp {subproblem*execute*select-next-goal*elaborate*object-slot*subtask*partial-pr
    (<arg> ^arg-type partial-predicate
          -^abstract true
           ^{2} <obj-slot>)
+-->
+   (<s> ^object-slot <obj-slot>)
+}
+
+sp {subproblem*execute*select-next-goal*elaborate*object-slot*subtask*temporal-clause*argument
+   (state <s> ^name select-next-goal
+              ^subtask-tcn <sub-tcn>)
+   (<sub-tcn> ^<arg-name> <arg>)
+   (<arg> ^arg-type temporal-clause
+          ^<pnum> <pred>)
+   (<pred> ^type << unary relation >>
+           ^{ << 1 2 >> } <obj-slot>)
 -->
    (<s> ^object-slot <obj-slot>)
 }
@@ -387,8 +534,8 @@ sp {subproblem*execute*apply*select-next-goal*change*current-goal*1*implicit
               ^task-operator <task-op>
               ^implicit-object   <obj1>
              -^implicit-object { <obj2> <> <obj1> })
-   (<task-op> ^current-goal { <cur-goal-h> <> <goal-h> })
    (<ss> ^current-task-segment <seg>)
+   (<seg> ^current-goal.handle { <cur-goal-h> <> <goal-h> })
 -->
    (<ss> ^apply-select-next-goal true)
    (<seg> ^implicit-object <obj1>)
@@ -403,8 +550,8 @@ sp {subproblem*execute*apply*select-next-goal*change*current-goal*2*implicit
               ^implicit-object <obj1>
               ^implicit-object { <obj2> > <obj1> }
              -^implicit-object { <obj3> <> <obj2> <> <obj1> })
-   (<task-op> ^current-goal { <cur-goal-h> <> <goal-h> })
    (<ss> ^current-task-segment <seg>)
+   (<seg> ^current-goal.handle { <cur-goal-h> <> <goal-h> })
 -->
    (<ss> ^apply-select-next-goal true)
    (<seg> ^implicit-object <obj1> <obj2>)
@@ -420,8 +567,8 @@ sp {subproblem*execute*apply*select-next-goal*change*current-goal*3*implicit
               ^implicit-object { <obj2> > <obj1> }
               ^implicit-object { <obj3> > <obj2> }
              -^implicit-object { <obj4> <> <obj3> <> <obj2> <> <obj1> })
-   (<task-op> ^current-goal { <cur-goal-h> <> <goal-h> })
    (<ss> ^current-task-segment <seg>)
+   (<seg> ^current-goal.handle { <cur-goal-h> <> <goal-h> })
 -->
    (<ss> ^apply-select-next-goal true)
    (<seg> ^implicit-object <obj1> <obj2> <obj3>)

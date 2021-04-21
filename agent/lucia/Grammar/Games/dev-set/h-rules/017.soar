@@ -1,0 +1,103 @@
+##!
+# @file
+#
+# @created plindes 20200915
+# File: 017.soar
+# Author: Peter Lindes
+# Created: 15 September 2020
+#
+# Desc: This file contains all the processing rules
+#       needed to add to be able to interpret sentence 017
+#       of the Games development set.
+#  This is sentence #7 of 01.06_stacking-frogs script.txt.
+#  The sentence is:
+#      The solution has three steps.
+#
+
+
+#   Propose an operator to interpret a SubjectActOnIt
+#   This operator uses the newer strategy of building
+#   a message directly in interpret without going on
+#   to the act operator.
+sp {interpret*propose*do-subject-act-on-it
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^comprehension <c>
+              ^discourse <d>
+              ^message nil)
+   (<c> ^cxn-stack <cxn>)
+   (<cxn> ^m <m>   #   Sometimes we need to see the syntax
+          ^previous nil)    #   Otherwise there was a syntax error
+   (<m> ^is.a SubjectActOnIt)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name do-subject-act-on-it
+        ^type msg-interpretation
+        ^cxn <cxn>
+        ^meaning <m>
+        ^discourse <d>
+        ^debug-info (concat |Interpret a SubjectActOnIt.|))
+}
+
+
+#    We want these new interpretation rules that go directly
+#    to messages to be preferred over the old ones.
+sp {interpret*preference*msg-interpretation-before-interpretation
+   (state <s> ^problem-space interpret
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^type msg-interpretation)
+   (<o2> ^type interpretation)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+
+#   Build a message for a WordDefinition like this one:
+#       The name of the puzzle is blocks-world.
+# TAKE THIS MEANING:
+#(M9 ^action M4 ^direction nil ^is A24 ^location nil ^object M8
+#       ^schema-name SubjectActOnIt ^source I17 ^subject M3
+#       ^text |The solution has three steps.|)
+#  (M4 ^action L19 (@101119) ^class action ^is A13 ^modifier nil ^name has
+#         ^schema-name ActionDescriptor ^source I12 ^text has)
+#  (A24 ^a ActOnIt ^a SubjectActOnIt ^a Action)
+#  (M8 ^category M7 ^givenness nil ^is A22 ^modifiers M6 ^name Steps
+#         ^quantified nil ^referent L25 (@999208) ^relation nil
+#         ^schema-name RefDesc ^source I16 ^text |three steps.|)
+#  (I17 ^left 0 ^right 4)
+#  (M3 ^category M2 ^givenness definite ^is A11 ^modifiers nil ^name Solution
+#         ^quantified nil ^referent O32 ^relation nil ^schema-name RefDesc
+#         ^source I11 ^text |The solution|)
+# AND BUILD A MESSAGE LIKE THIS:
+#(I1812 ^action N1453 ^agent P1117 ^arg1 P1126 ^message-type command)
+#  (N1453 ^handle has1 ^item-type action ^procedural L1860 (@718))
+#    (L1860 ^op_name initiate-has1)
+#  (P1117 ^handle new-object-id18 ^item-type object ^predicates P1118
+#         ^predicates-copied true)
+#    (P1118 ^category solution1 ^dialog-object true ^is-visible1 not-visible1)
+#  (P1126 ^handle new-object-id19 ^item-type object ^predicates P1127
+#         ^predicates-copied true)
+#    (P1127 ^category object ^dialog-object true ^is-visible1 not-visible1
+#           ^multiple true ^number 3 ^shape steps1)
+sp {interpret*apply*do-subject-act-on-it
+   (state <s> ^problem-space interpret
+              ^operator <o>
+              ^message nil)
+   (<o> ^name do-subject-act-on-it
+        ^meaning <m>)
+   (<m> ^is.a SubjectActOnIt
+        ^subject.referent <subject>
+        ^action.action <action>
+        ^object.referent <object>)
+-->
+   #    Build the message
+   (<s> ^message nil -
+        ^message <message>)
+   (<message> ^message-type command
+              ^arg1 <object>
+              ^agent <subject>
+              ^action <action>)
+}
+
+

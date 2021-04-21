@@ -5,33 +5,39 @@ import java.util.*;
 import sml.*;
 import sml.Agent.PrintEventInterface;
 import sml.Agent.RunEventInterface;
+import sml.Agent.OutputEventInterface;
+import edu.umich.rosie.soar.SoarUtil;
 import edu.umich.rosie.language.LanguageTestWriter;
 import edu.umich.rosie.soarobjects.Time;
 import edu.umich.rosie.connectors.LogfileWriter;
 
-public class SoarAgent implements RunEventInterface, PrintEventInterface {
+public class SoarAgent implements RunEventInterface, PrintEventInterface, OutputEventInterface {
     public static class AgentConfig{
-        public String agentName;
-        public String agentSource;
-        public String smemSource;
+        public final String agentName;
+        public final String agentSource;
+        public final String smemSource;
 
-        public boolean spawnDebugger;
-        public int watchLevel;
-        public int throttleMS;
-		public boolean startRunning;
+        public final boolean spawnDebugger;
+        public final int watchLevel;
+        public final int throttleMS;
+		public final boolean startRunning;
         
-        public boolean remoteConnection;
+        public final boolean remoteConnection;
         
-        public String speechFile;
+        public final String speechFile;
 
-        public Boolean verbose;
-		public String logFilename;
-        public Boolean writeStandardOut;
+        public final boolean verbose;
+		public final String logFilename;
+        public final boolean writeStandardOut;
         
-		public String languageTestFilename;
+		public final String languageTestFilename;
         
-        public Boolean parserTest;
-        public String parser;
+        public final boolean parserTest;
+        public final String parser;
+
+		public final boolean simClock;
+		public final int clockStepMS;
+
 
         public AgentConfig(Properties props){
             spawnDebugger = props.getProperty("spawn-debugger", "true").equals("true");
@@ -47,24 +53,30 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
             verbose = props.getProperty("verbose", "true").equals("true");
             remoteConnection = props.getProperty("remote-connection", "false").equals("true");
 
-            try{
-                watchLevel = Integer.parseInt(props.getProperty("watch-level", "1"));
-            } catch (NumberFormatException e){
-                watchLevel = 1;
-            }
-
-            try{
-                throttleMS = Integer.parseInt(props.getProperty("decision-throttle-ms", "0"));
-            } catch(NumberFormatException e){
-                throttleMS = 0;
-            }
+			watchLevel = getIntProp(props, "watch-level", 1);
+			throttleMS = getIntProp(props, "decision-throttle-ms", 0);
 
             speechFile = props.getProperty("speech-file", "audio_files/sample");
 
 			logFilename = props.getProperty("log-filename", null);
 
 			languageTestFilename = props.getProperty("language-test-filename", null);
+
+			simClock = props.getProperty("sim-clock", "true").equals("true");
+			clockStepMS = getIntProp(props, "clock-step-ms", 50);
         }
+
+		private int getIntProp(Properties props, String propName, int defVal){
+			String propVal = props.getProperty(propName);
+			if(propVal == null){
+				return defVal;
+			}
+			try{
+				return Integer.parseInt(propVal);
+			} catch(NumberFormatException e){
+				return defVal;
+			}
+		}
     }
 
 	private HashMap<Class<?>, AgentConnector> connectors;
@@ -85,13 +97,16 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
     private long printCallbackId = -1;
     private ArrayList<Long> runEventCallbackIds;
 
+    private ArrayList<Long> outputHandlerCallbackIds;
+
     public SoarAgent(Properties props){
         this.config = new AgentConfig(props);
 
         runEventCallbackIds = new ArrayList<Long>();
+        outputHandlerCallbackIds = new ArrayList<Long>();
 		connectors = new HashMap<Class<?>, AgentConnector>();
         
-        time = new Time(5000);
+        time = new Time(config.simClock, config.clockStepMS);
         
         if(this.config.remoteConnection){
         	int port = Kernel.kDefaultSMLPort;
@@ -136,6 +151,21 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
 	public <T> T getConnector(Class<T> cls){
 		return (T)this.connectors.get(cls);
 	}
+
+    protected void onOutputEvent(String attName, Identifier id){
+    	if (attName.equals("set-time")){
+			processSetTimeMessage(id);
+    	}
+    }
+
+	protected void processSetTimeMessage(Identifier id){
+		Long h = SoarUtil.getChildInt(id, "hour");
+		Long m = SoarUtil.getChildInt(id, "minute");
+		if(h != null && m != null){
+			time.setTime(h, m);
+		}
+		id.CreateStringWME("status", "success");
+	}
 	
     public void createAgent(){
         //System.out.println("SoarAgent::createAgent()");
@@ -160,6 +190,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         runEventCallbackIds.add(agent.RegisterForRunEvent(smlRunEventId.smlEVENT_BEFORE_INPUT_PHASE, this, null));
         runEventCallbackIds.add(agent.RegisterForRunEvent(smlRunEventId.smlEVENT_AFTER_INPUT_PHASE, this, null));
         runEventCallbackIds.add(agent.RegisterForRunEvent(smlRunEventId.smlEVENT_AFTER_OUTPUT_PHASE, this, null));
+        outputHandlerCallbackIds.add(agent.AddOutputHandler("set-time", this, null));
 
         if(config.logFilename != null){
 			this.addConnector(new LogfileWriter(this, config.logFilename));
@@ -226,6 +257,11 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
             agent.UnregisterForRunEvent(callbackId);
         }
         runEventCallbackIds.clear();
+
+        for(Long callbackId : runEventCallbackIds){
+            agent.RemoveOutputHandler(callbackId);
+        }
+        outputHandlerCallbackIds.clear();
         
         if(printCallbackId != -1){
             agent.UnregisterForPrintEvent(printCallbackId);
@@ -424,5 +460,16 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface {
         if(config.writeStandardOut){
             System.out.print(message);
         }
+    }
+
+    @Override
+    public void outputEventHandler(Object data, String agentName,
+            String attributeName, WMElement wme)
+    {
+    	if(!wme.IsJustAdded() || !wme.IsIdentifier()){
+    		return;
+    	}
+    	Identifier id = wme.ConvertToIdentifier();
+    	onOutputEvent(attributeName, id);
     }
 }

@@ -1,12 +1,12 @@
 import subprocess
 import random
 
-from pysoarlib import SoarAgent, TimeConnector
+from pysoarlib import SoarAgent
 from rosie import CommandConnector, InternalCommandConnector
 from rosie.events import InstructorMessageSent
 from rosie.language import LanguageConnector, ScriptConnector
 
-# Rule that elaborates an agent-param onto the top-state
+# Rule that elaborates an agent-param onto the top-state (0=attribute, 1=value)
 agent_param_rule = \
 """sp {{top-state*elaborate*agent-params*{0}
    (state <s> ^superstate nil
@@ -53,12 +53,8 @@ class RosieAgent(SoarAgent):
     """
 
 
-    def __init__(self, print_handler=None, config_filename=None, **kwargs):
-        SoarAgent.__init__(self, print_handler, config_filename, **kwargs)
-
-        # Create a time connector to put timing information on the top state
-        self.time_conn = TimeConnector(self, include_ms=True, sim_clock=True, clock_step_ms=5000)
-        self.add_connector("time", self.time_conn)
+    def __init__(self, print_handler=None, config_filename=None, sim_clock=True, **kwargs):
+        SoarAgent.__init__(self, print_handler, config_filename, use_time_connector=True, sim_clock=sim_clock, **kwargs)
 
         # Create the default language connector
         if not self.custom_language_connector:

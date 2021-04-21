@@ -1,0 +1,97 @@
+//  This file contains new ECG data needed for sentence
+//  017 of the Games dev-set.
+
+//  This is sentence #7 of 01.06_stacking-frogs script.txt.
+//  The sentence is:
+//      The solution has three steps.
+
+
+//  A Lexical
+construction SOLUTION
+   subcase of CommonNoun
+   form
+      constraints
+         self.f.orth <-- "solution"
+   meaning: Solution
+
+//  Its meaning schema
+schema Solution
+   subcase of RosieObject
+   constraints
+      rosie-category <-- solution1
+
+
+//  Another Lexical
+construction HAS
+   subcase of ActionVerb
+   form
+      constraints
+         self.f.orth <-- "has"
+   meaning: ActionDescriptor
+      constraints
+         self.m.class <-- @action
+         self.m.name <-- "has1"
+
+//  A lexical for "steps"
+//  This replaces one that didn't work well in
+//      xv-nouns.ecg for the cxn
+//      and xv-objects.ecg for the schema.
+//  It did not work well and needs to be treated
+//  more like locations.
+//  This showed up in the Games 017 sentence:
+//      The solution has three steps.
+//  and was used in Base #195:
+//      Follow these steps.
+construction STEPS
+   subcase of CommonNoun
+   constructional
+      constraints
+         self.features.case <-- "nom"
+         self.features.number <-- "plural"
+         self.features.person <-- "3rd"
+   form
+      constraints
+         self.f.orth <-- "steps"
+   meaning: Steps
+
+//  Its meaning schema
+schema Steps
+   subcase of RosieObject
+   roles
+      // This role is weird, but needed for Rosie
+      shape
+   constraints
+      rosie-category <-- object
+      shape <-- steps1
+
+
+//  Composite Constructions
+// A subject followed by the verb "has"
+// THis is a bit like SubjectVerb, and we have to keep
+// this separate from its parent to avoid SubjectVerb.
+construction SubjectHas
+   constructional
+      constituents
+         subject: RefExpr
+         has: HAS
+
+// A RefExprHas followed by an object
+construction SubjectHasObject
+   // It seems ridiculous to think of this as a command,
+   // but that's how Rosie handles it.
+   subcase of Imperative
+   constructional
+      constituents
+         subjectHas: SubjectHas
+         object: RefExpr
+   meaning: SubjectActOnIt
+      constraints
+         self.m.subject <--> subjectHas.subject.m
+         self.m.action <--> subjectHas.has.m
+         self.m.object <--> object.m
+
+//  Its meaning schema
+schema SubjectActOnIt
+   subcase of ActOnIt
+   roles
+      subject

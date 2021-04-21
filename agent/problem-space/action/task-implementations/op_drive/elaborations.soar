@@ -1,13 +1,4 @@
-#### CUSTOM GOAL HANDLING ####
-
-sp {op_drive1*elaborate*desired
-   (state <s> ^name op_drive1
-             -^copy-task-goal
-              ^task-operator.current-goal drive1goal1)
--->
-   (<s> ^desired <des>)
-   (<des> ^handle drive1goal1 ^pred-count 0)
-}
+### Custom goal handling for going through a door
 
 # Drive through the door
 sp {op_drive1*elaborate*through-door
@@ -40,9 +31,7 @@ sp {op_drive1*elaborate*distance*from*operator
 }
 
 
-################## GOAL SATISFACTION ###################################
-
-# If driving through a door: satisfied when the go-to-waypoint command finishes
+# If driving through a door: goal satisfied when the go-to-waypoint command finishes
 sp {op_drive1*through-door*apply*pop-task-segment*op_go-to-waypoint1*mark*goal*satisfied
    (state <s> ^name op_drive1
               ^problem-space.execution-type external
@@ -55,38 +44,3 @@ sp {op_drive1*through-door*apply*pop-task-segment*op_go-to-waypoint1*mark*goal*s
    (<des> ^satisfied true)
 }
 
-# No end-clause, wait until the drive-command is successful
-sp {op_drive1*elaborate*desired*satisfied*no*end-clause
-   (state <s> ^name op_drive1
-              ^problem-space.execution-type external
-              ^desired <des>
-              ^current-task-segment.drive-command.status << success succeeded >>
-             -^task-operator.end-clause)
-   (<des> ^handle drive1goal1)
--->
-   (<des> ^satisfied true)
-}
-
-# The end-clause is satisfied and the agent has stopped
-sp {op_drive1*elaborate*desired*satisfied*end-clause
-   (state <s> ^name op_drive1
-              ^problem-space.execution-type external
-              ^desired <des>
-              ^current-task-segment.stop-command.status << success succeeded >>
-              ^task-operator.end-clause.satisfied true)
-   (<des> ^handle drive1goal1)
--->
-   (<des> ^satisfied true)
-}
-
-# The end-clause is satisfied even before the agent starts driving
-sp {op_drive1*elaborate*desired*satisfied*end-clause*no*command*sent
-   (state <s> ^name op_drive1
-              ^problem-space.execution-type external
-              ^desired <des>
-             -^current-task-segment.drive-command
-              ^task-operator.end-clause.satisfied true)
-   (<des> ^handle drive1goal1)
--->
-   (<des> ^satisfied true)
-}

@@ -1,0 +1,125 @@
+# If a goal was modified, 
+# We need to change the handles of all previous goals so that their chunks will no longer fire
+#   for select-next-goal (want to learn new ones to select the pushed subgoal instead)
+
+sp {add-node-to-goal-graph*elaborate*modified-node*true
+   (state <s> ^name add-node-to-goal-graph
+              ^modified-node <node>)
+-->
+   (<s> ^has-modified-node true)
+}
+
+sp {add-node-to-goal-graph*elaborate*changed-goal-handles
+   (state <s> ^name add-node-to-goal-graph
+              ^has-modified-node true)
+-->
+   (<s> ^change-goal-handles <handles>)
+   (<handles> ^changed false)
+}
+
+# Add the modified node to the list of ones to change
+sp {add-node-to-goal-graph*elaborate*change-goal-handles*modified-node
+   (state <s> ^name add-node-to-goal-graph
+              ^modified-node <node>
+              ^change-goal-handles <handles>)
+-->
+   (<handles> ^goal <node>)
+}
+
+# Recurisvely add goals that point to other goals in the list
+sp {add-node-to-goal-graph*elaborate*change-goal-handles*recursive*before
+   (state <s> ^name add-node-to-goal-graph
+              ^change-goal-handles <handles>
+              ^goal-graph-nodes.goal <prev>
+              ^new-node.handle <new-h>)
+   (<handles> ^goal.handle <goal-h>)
+   (<prev> ^handle <> <new-h>
+           ^next.goal.handle <goal-h>)
+-->
+   (<handles> ^goal <prev>)
+}
+
+# Propose change-goal-handles if not changed yet
+sp {add-node-to-goal-graph*propose*change-goal-handles*not*changed
+   (state <s> ^name add-node-to-goal-graph
+              ^change-goal-handles <handles>)
+   (<handles> ^changed false)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name change-goal-handles)
+}
+
+# Apply - set changed to true
+sp {add-node-to-goal-graph*apply*change-goal-handles*mark*changed
+   (state <s> ^name add-node-to-goal-graph
+              ^operator.name change-goal-handles
+              ^change-goal-handles <handles>)
+   (<handles> ^changed false)
+-->
+   (<handles> ^changed false -
+              ^changed true)
+}
+
+# Apply - change start goals
+sp {add-node-to-goal-graph*apply*change-goal-handle*start
+   (state <s> ^name add-node-to-goal-graph
+              ^operator.name change-goal-handles
+              ^change-goal-handles.goal <goal>
+              ^task-handle <task-h>)
+   (<goal> ^item-type start-goal
+           ^handle <old-h>)
+-->
+   (<goal> ^handle <old-h> -
+           ^handle (make-constant-symbol <task-h> |start|))
+   (<s> ^store-concept <goal>
+        ^changed-handle <chg>)
+   (<chg> ^goal <goal>
+          ^old-handle <old-h>)
+}
+
+# Apply - change task goals
+sp {add-node-to-goal-graph*apply*change-goal-handle*task-goal
+   (state <s> ^name add-node-to-goal-graph
+              ^operator.name change-goal-handles
+              ^change-goal-handles.goal <goal>
+              ^task-handle <task-h>)
+   (<goal> ^item-type task-goal
+           ^handle <old-h>)
+-->
+   (<goal> ^handle <old-h> -
+           ^handle (make-constant-symbol <task-h> |goal|))
+   (<s> ^store-concept <goal>
+        ^changed-handle <chg>)
+   (<chg> ^goal <goal>
+          ^old-handle <old-h>)
+}
+
+# Apply - change intermediate
+sp {add-node-to-goal-graph*apply*change-goal-handle*intermediate
+   (state <s> ^name add-node-to-goal-graph
+              ^operator.name change-goal-handles
+              ^change-goal-handles.goal <goal>
+              ^task-handle <task-h>)
+   (<goal> ^item-type intermediate-goal
+           ^handle <old-h>)
+-->
+   (<goal> ^handle <old-h> -
+           ^handle (make-constant-symbol <task-h> |int|))
+   (<s> ^store-concept <goal>
+        ^changed-handle <chg>)
+   (<chg> ^goal <goal>
+          ^old-handle <old-h>)
+}
+
+# Apply - remove learned flags
+sp {add-node-to-goal-graph*apply*change-goal-handle*remove*learned-proposal*flag
+   (state <s> ^name add-node-to-goal-graph
+              ^operator.name change-goal-handles
+              ^change-goal-handles.goal.next <next>)
+   (<next> ^learned proposal)
+-->
+   (<next> ^learned proposal -)
+   (<s> ^store-concept <next>)
+}
+
+

@@ -1,30 +1,62 @@
 sp {task-state-no-change*propose*learn-select-next-goal-rule
    (state <s> ^name task-state-no-change
-              ^current-goal <goal-h>
+              ^current-goal-handle <goal-h>
               ^goal-id.next <next>
-              ^desired.satisfied true)
+              ^desired.satisfied true
+             -^superstate.interrupted-next-goal <next-h>)
+   (<next> ^goal.handle <next-h>)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name learn-select-next-goal-rule
         ^goal-handle <goal-h>
-        ^next-goal-link <next>)
+        ^next-goal-link <next>
+        ^next-goal-handle <next-h>)
 }
 
-sp {task-state-no-change*reject*learn-select-next-goal-rule*learned
+sp {task-state-no-change*elaborate*learn-select-next-goal-rule*dont-chunk*if*unleared*conditions
+   (state <s> ^name task-state-no-change
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name learn-select-next-goal-rule
+         ^next-goal-link <next1>)
+   (<next1> -^conditions)
+   (<o2> ^name learn-select-next-goal-rule
+         ^next-goal-link <next2>)
+   (<next2> ^conditions <conds>
+           -^learned proposal)
+-->
+   (<o1> ^dont-chunk true)
+}
+
+sp {task-state-no-change*prefer*learn-select-next-goal-rule*with*conditions
+   (state <s> ^name task-state-no-change
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name learn-select-next-goal-rule
+         ^next-goal-link.conditions)
+   (<o2> ^name learn-select-next-goal-rule
+         ^next-goal-link <next2>)
+   (<next2> -^conditions)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+sp {task-state-no-change*reject*learn-select-next-goal-rule*learned*proposal
    (state <s> ^name task-state-no-change
               ^operator <o> +)
    (<o> ^name learn-select-next-goal-rule
-        ^next-goal-link.learned true)
+        ^next-goal-link.learned proposal)
 -->
    (<s> ^operator <o> -)
 }
 
-sp {task-state-no-change*reject*learn-select-next-goal-rule*ignore-goal
+sp {task-state-no-change*reject*learn-select-next-goal-rule*unmet-conditions
    (state <s> ^name task-state-no-change
-              ^ignore-goal <goal>
+              ^unmet-conditions <goal>
               ^operator <o> +)
    (<o> ^name learn-select-next-goal-rule
         ^next-goal-link <goal>)
 -->
    (<s> ^operator <o> -)
 }
+

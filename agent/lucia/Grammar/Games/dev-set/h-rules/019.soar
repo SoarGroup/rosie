@@ -1,0 +1,159 @@
+##!
+# @file
+#
+# @created plindes 20200804
+# File: 019.soar
+# Author: Peter Lindes
+# Created: 21 September 2020
+#
+# Desc: This file contains all the processing rules
+#       needed to add to be able to process sentence 019
+#       of the Games development set, which is:
+#  This is sentence #6 of 01.07_tower-of-hanoi script.txt.
+#  The sentence is:
+#      If 
+#           the volume of a block
+#        is more than
+#           the volume of an object
+#      then
+#           the block is larger than the object.
+#
+
+####################    RULE FOR SENTENCE INTERPRETATION  ###################
+
+
+#   Build a message for an IfThenStatement like this one:
+#     If the number of the locations between a location and a covered location
+#       is the number of the blocks that are on the covered location
+#       then you can move it onto the former location.
+# TAKE THIS (ABBREVIATED) MEANING:
+#(M32 ^condition M19 ^is A108 ^schema-name IfThenStatement ^source I46
+#       ^statement M31
+#       ^text |If the volume of a block is more than the volume of an object then the block is larger than the object.|)
+#  (M19 ^is A60 ^modifier nil ^preprel M18 ^schema-name PrepPhraseAssertion
+#         ^source I31 ^target M8
+#         ^text |the volume of a block is more than the volume of an object|)
+#    (A60 ^a PrepPhraseAssertion ^a Assertion)
+#    (M18 ^is A56 ^object M17 ^prep more-than1 ^schema-name PrepRelation
+#           ^source I29 ^text |more than the volume of an object|)
+#    (I31 ^left 1 ^right 13)
+#    (M8 ^argument M7 ^category function ^givenness nil ^is A24 ^modifiers nil
+#           ^name volume ^quantified nil ^referent nil ^relation nil
+#           ^schema-name FunctionApplication ^source I17
+#           ^text |the volume of a block|)
+#  (A108 ^a IfThenStatement)
+#  (I46 ^left 0 ^right 21)
+#  (M31 ^is A101 ^modifier nil ^preprel M30 ^schema-name PrepPhraseAssertion
+#         ^source I45 ^target M24 ^text |the block is larger than the object.|)
+#    (A101 ^a PrepPhraseAssertion ^a Assertion)
+#    (M30 ^is A97 ^object M29 ^prep larger-than1 ^schema-name PrepRelation
+#           ^source I43 ^text |larger than the object.|)
+#    (I45 ^left 15 ^right 21)
+#    (M24 ^category M23 ^givenness definite ^is A78 ^modifiers nil ^name Block
+#           ^quantified nil ^referent O49 ^relation nil ^schema-name RefDesc
+#           ^source I36 ^text |the block|)
+#
+# AND BUILD A MESSAGE LIKE THIS:
+#(I390 ^if-subclause I409 ^message-type conditional ^then-subclause I438)
+#  (I409 ^action N364 ^arg1 I410 ^predicate I430)
+#    (N364 ^handle is1 ^item-type action)
+#    (I410 ^2 I411 ^handle of1 ^item-type predicate)
+#      (I411 ^2 P431 ^handle volume)
+#    (I430 ^2 N382 ^handle more-than1 ^item-type predicate)
+#      (N382 ^handle volume ^property L860 (@100209) ^relation I428)
+#        (L860 ^handle numeric ^type conceptual)
+#        (I428 ^2 P462 ^handle of1)
+#  (I438 ^action N414 ^arg1 P431 ^predicate I450)
+#    (N414 ^handle is1 ^item-type action)
+#    (P431 ^handle new-object-id10 ^item-type object ^predicates P432
+#           ^predicates-copied true)
+#      (P432 ^category block ^dialog-object true ^is-visible1 not-visible1)
+#    (I450 ^2 P462 ^handle larger-than1 ^item-type predicate)
+#      (P462 ^handle new-object-id11 ^item-type object ^predicates P463
+#             ^predicates-copied true)
+#        (P463 ^category object ^dialog-object true ^is-visible1 not-visible1)
+
+
+#   There are likely to be many variations of IfThenStatement.
+#   The following rule will handle the Games/019 sentence:
+#     If the volume of a block is more than the volume of an object
+#       then the block is larger than the object.
+#   Other variations may need different rules, since
+#   these rules need to deal with a lot of details.
+#
+#   The if-subclause here is kind of a mess, since the two
+#   "the volume of" phrases are represented completely
+#   differently. But, that's the gold standard!
+sp {interpret*apply*do-if-then-statement*games-019
+   (state <s> ^problem-space interpret
+              ^operator <o>
+              ^message nil)
+   (<o> ^name do-if-then-statement
+        ^meaning <m>)
+   #    Look at the top level structure
+   (<m> ^is.a IfThenStatement
+        ^condition { <condition> <> nil }
+        ^statement { <statement> <> nil })
+   #    The condition part
+   (<condition> ^is.a PrepPhraseAssertion
+                ^target <value1>
+                ^preprel <prep-rel1>)
+   (<value1> ^is.a FunctionApplication
+             ^name volume
+             ^argument <volume-of-1-argument>)
+   (<volume-of-1-argument> ^referent <volume-of-1-object>)
+   (<prep-rel1> ^prep <prep1>
+                ^object <value2>)
+   (<value2> ^is.a FunctionApplication
+             ^name volume
+             #  This next line is the really weird stuff
+             ^predicate.property <smem-volume>
+             ^argument <volume-of-2-argument>)
+   (<volume-of-2-argument> ^referent <volume-of-2-object>)
+   #    The statement part
+   (<statement> ^is.a PrepPhraseAssertion
+                ^target.referent <a-block>
+                ^preprel <prep-rel2>)
+   (<prep-rel2> ^prep <prep2>
+                ^object.referent <an-object>)
+   #    Add some extra logic to select just "the object"
+   #    when a second referent of "the block" looks good too.
+   (<prep-rel2> ^object.category.rosie-category <category>)
+   (<an-object> ^predicates.category <category>)
+-->
+   #    Build the message
+   (<s> ^message nil -
+        ^message <message>)
+   (<message> ^message-type conditional
+              ^then-subclause <then-clause>
+              ^if-subclause <if-clause>)
+   #    Build the condition
+   (<if-clause> ^predicate <if-predicate>
+                ^arg1 <volume-of-1>
+                ^action <if-action>)
+   (<if-action> ^item-type action
+                ^handle is1)
+   (<volume-of-1> ^2 <volume-of-1-arg>
+                  ^handle of1
+                  ^item-type predicate)
+   (<volume-of-1-arg> ^2 <volume-of-1-object>
+                      ^handle volume)
+   (<if-predicate> ^item-type predicate
+                   ^handle <prep1>
+                   ^2 <volume-structure>)
+   (<volume-structure> ^relation <of-structure>
+                       #  This next line is the really weird stuff
+                       ^property <smem-volume>
+                       ^handle volume)
+   (<of-structure> ^2 <an-object>
+                   ^handle of1)
+   #    Build the statement
+   (<then-clause> ^predicate <predicate>
+                  ^arg1 <a-block>
+                  ^action <then-action>)
+   (<then-action> ^item-type action
+                ^handle is1)
+   (<predicate> ^2 <an-object>
+                ^handle <prep2>
+                ^item-type predicate)
+}

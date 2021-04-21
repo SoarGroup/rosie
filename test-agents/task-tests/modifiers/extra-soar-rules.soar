@@ -1,0 +1,163 @@
+sp {top-state*elaborate*agent-params*custom
+   (state <s> ^superstate nil
+              ^agent-params <p>)
+-->
+   (<p> ^debug-ids true
+        ^report-tasks-to-output-link true
+#       ^report-find-results true
+#       ^debug-op-ties true
+#       ^debug-wait-limit 3
+
+#       ^interrupt-operator retrospective-learning 
+#       ^interrupt-operator interpret-message 
+#       ^interrupt-end-of-sentence true
+#       ^interrupt-new-task true
+#       ^interrupt-task-search true
+        
+#       ^print-perception true
+#       ^print-new-task true
+#       ^print-new-task-shorthand true
+#       ^print-wp-search-path-costs true
+#       ^print-parsed-messages true
+#       ^print-outgoing-messages true
+#       ^print-interaction-stack true
+
+   )
+}
+
+source waypoint-map.soar
+source internal-world.soar
+
+#explain all on
+
+sp {top-state*perception-monitor*predicate-monitor*elaborate*default*predicates*internal
+   (state <s> ^superstate nil
+              ^agent-params.domain internal
+              ^world.predicates <preds>
+              ^perception-monitor.predicate-monitor <pred-mon>)
+-->
+   (<preds> ^predicate.handle in1)
+   (<preds> ^predicate.handle on1)
+   (<preds> ^predicate.handle holding1)
+   (<preds> ^predicate.handle heard2)
+   (<preds> ^predicate.handle contains1)
+}
+
+### These rules will advance the script when the agent hits 
+# a task with a start condition predicate test
+sp {subproblem*execute*propose*report-start-clause
+   (state <s> ^problem-space.subproblem execute
+              ^desired.item-type start-goal
+              ^task-operator.start-clause <cl>
+             -^satisfied <cl>
+              ^current-task-segment <seg>)
+   (<cl> ^<pnum>.type << unary relation >>)
+   (<seg> -^reported-start-clause)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name report-start-clause)
+}
+
+sp {subproblem*execute*apply*report-start-clause*send-message*report-start-clause
+   (state <s> ^problem-space.subproblem execute
+              ^operator.name report-start-clause
+              ^task-operator.task-handle <task-h>
+              ^top-state <top>
+              ^current-task-segment <seg>
+              ^io.output-link <out>)
+   (<top> -^game-scripting true)
+-->
+   (<out> ^send-message <msg>)
+   (<msg> ^type report-start-clause
+          ^fields.task-handle <task-h>)
+
+   (<seg> ^reported-start-clause true)
+}
+
+sp {subproblem*execute*apply*report-start-clause*advance*current-sentence-number
+   (state <s> ^problem-space.subproblem execute
+              ^operator.name report-start-clause
+              ^top-state <top>
+              ^current-task-segment <seg>)
+   (<top> ^game-scripting true
+          ^n-sentence-number <num>)
+-->
+   (<top> ^n-sentence-number <num> -
+          ^current-sentence-number <num>)
+
+   (<seg> ^reported-start-clause true)
+}
+
+### Top-state, elaborate clear if surface with nothing on it
+sp {top-state*world*elaborate*surface*clear
+   (state <s> ^superstate nil
+              ^world.objects.object <surface>
+              ^world.predicates.predicate <in-pred>)
+   (<surface> ^predicates <preds>)
+   (<preds> ^affordance1 surface1)
+   (<in-pred> ^handle on1)
+  -{(<in-pred> ^instance <i>) 
+    (<i> ^2 <surface>)}
+-->
+   (<preds> ^property clear)
+}
+
+### Putting something into the watercooler automatically fills it
+sp {execute*op_put-down1*apply*simulate-put-down-command*in1*cooler*dispense
+   (state <s> ^name op_put-down1
+              ^operator <o>
+              ^top-state.perception-monitor.object-monitor.object-info <obj-info>)
+   (<o> ^name simulate-put-down-command
+        ^command <cmd>)
+   (<cmd> ^object <vessel>
+          ^destination <dp>)
+   (<dp> ^handle in1
+         ^{2}.root-category cooler1)
+   (<vessel> ^predicates.affordance1 fillable1)
+   (<obj-info> ^input-link-obj.source-obj.predicates <src-preds>
+               ^world-obj <vessel>)
+   (<src-preds> ^contents1 empty1)
+-->
+   (<src-preds> ^contents1 empty1 -
+                ^contents1 water1)
+}
+
+### Reject move if the relation is already satisfied
+sp {execute*action*reject*op_move1*if*relation*satisfied
+   (state <s> ^problem-space.subproblem execute
+             -^child-task-segment
+              ^operator <o> +
+              ^world.predicates.predicate <pred>)
+   (<o> ^name op_move1
+        ^arg1.id <obj1>
+        ^arg2 <arg2>)
+   (<arg2> ^handle <pred-h>
+           ^2 <obj2>)
+   (<pred> ^handle <pred-h>
+           ^instance <i>)
+   (<i> ^1 <obj1> ^2 <obj2>)
+-->
+   (<s> ^operator <o> -)
+}
+
+### Reject any task with 'from' if the object is not there
+sp {execute*action*reject*subtask*if*from*relation*not*satisfied
+   (state <s> ^problem-space.subproblem execute
+             -^child-task-segment
+              ^operator <o> +
+              ^world.predicates <preds>)
+   (<o> ^item-type task-operator
+        ^<arg1-name> <arg1>
+        ^<arg2-name> <arg2>)
+   (<arg1> ^arg-type object
+           ^id <obj1>)
+   (<arg2> ^arg-type partial-predicate
+           ^handle from1
+           ^2 <obj2>)
+  -{(<preds> ^predicate <pred>)
+    (<pred> ^instance <i>)
+    (<i> ^1 <obj1> ^2 <obj2>)}
+-->
+   (<s> ^operator <o> -)
+}
+

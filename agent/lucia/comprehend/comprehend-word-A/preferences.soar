@@ -110,42 +110,30 @@ sp {comprehend-word*preference*attachment-before-resolution
 
 #    Make an operator of type resolution higher preference
 #    than one of type construction.
-#    EXCEPT for an IsThat construction
+#    EXCEPT for a ConceptIsThat construction
 sp {comprehend-word*preference*resolution-before-construction
    (state <s> ^problem-space comprehend-word
               ^operator <o1> +
               ^operator <o2> +)
    (<o1> ^type resolution)
    (<o2> ^type construction
-        -^cxn-name IsThat)
+        -^cxn-name ConceptIsThat)
 -->
    (<s> ^operator <o1> > <o2>)
 }
 
 #    Make an operator of type construction higher preference
 #    than one of type resolution.
-#    WHEN it is an IsThat construction
+#    WHEN it is a ConceptIsThat construction
 sp {comprehend-word*preference*isthat-before-resolution
    (state <s> ^problem-space comprehend-word
               ^operator <o1> +
               ^operator <o2> +)
    (<o1> ^type resolution)
    (<o2> ^type construction
-         ^cxn-name IsThat)
+         ^cxn-name ConceptIsThat)
 -->
    (<s> ^operator <o1> < <o2>)
-}
-
-#    Make a resolve-it-in-condition operator higher preference
-#    than a resolve-pronoun operator.
-sp {comprehend-word*preference*it-in-condition-before-pronoun
-   (state <s> ^problem-space comprehend-word
-              ^operator <o1> +
-              ^operator <o2> +)
-   (<o1> ^name resolve-it-in-condition)
-   (<o2> ^name resolve-pronoun)
--->
-   (<s> ^operator <o1> > <o2>)
 }
 
 #    Make a fill-slot operator higher preference
@@ -264,11 +252,23 @@ sp {comprehend-word*preference*snip-before-lookup-concept
    (<s> ^operator <o1> > <o2>)
 }
 
+#   Prefer snip to lookup-action or lookup-concept
+#   This helps with "The goal is that you said the response in the starting location."
+sp {comprehend-word*preference*snip-before-attachment
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^type snip)
+   (<o2> ^type attachment)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
 
 #   A very special case to distinguish between match-construction
-#   operators for PropertySet and SpecNoun.
+#   operators for Property1Set and SpecNoun.
 #   For a determiner followed by "location" or something similar
-#   that can be either a PropertySet or a CommonNoun,
+#   that can be either a Property1Set or a CommonNoun,
 #   choose the noun interpretation of the determiner if definite
 #   and the class name if the determiner is indefinite
 sp {comprehend-word*preference*match-construction-noun-before-properties
@@ -279,7 +279,7 @@ sp {comprehend-word*preference*match-construction-noun-before-properties
          ^cxn-name << BareNoun SpecNoun SpecPropNoun >>
          ^spec <det>)
    (<o2> ^name match-construction
-         ^cxn-name PropertySet
+         ^cxn-name Property1Set
          ^det <det>)
    (<det> ^m.givenness definite)
    #    Get data for report
@@ -297,7 +297,7 @@ sp {comprehend-word*preference*match-construction-properties-before-noun
               ^operator <o1> +
               ^operator <o2> +)
    (<o1> ^name match-construction
-         ^cxn-name PropertySet
+         ^cxn-name Property1Set
          ^det <det>)
    (<o2> ^name match-construction
          ^cxn-name << BareNoun SpecNoun SpecPropNoun >>
@@ -313,7 +313,7 @@ sp {comprehend-word*preference*match-construction-properties-before-noun
    (write (crlf) (concat |Prefer PropSet/NP if indefinite: | <cname1> | > | <cname2> |, det = | <det-name> |.|))
 }
 
-#   For a PropertySet with just a noun, prefer BareNoun
+#   For a Property1Set with just a noun, prefer BareNoun
 sp {comprehend-word*preference*match-construction-bare-noun-before-property
    (state <s> ^problem-space comprehend-word
               ^operator <o1> +
@@ -321,7 +321,7 @@ sp {comprehend-word*preference*match-construction-bare-noun-before-property
    (<o1> ^name match-construction
          ^cxn-name BareNoun)
    (<o2> ^name match-construction
-         ^cxn-name PropertySet
+         ^cxn-name Property1Set
          ^span 1)
    #    Get data for report
    (<o1> ^cxn-name <cname1>)
@@ -332,20 +332,70 @@ sp {comprehend-word*preference*match-construction-bare-noun-before-property
    (write (crlf) (concat |Prefer BareNoun/PropSet: | <cname1> | > | <cname2> |.|))
 }
 
-##   Prefer NumberOfUnits over a SpecNoun 
-#sp {comprehend-word*preference*match-construction-NumberOfUnits-before-SpecNoun
-#   (state <s> ^problem-space comprehend-word
-#              ^operator <o1> +
-#              ^operator <o2> +)
-#   (<o1> ^name match-construction
-#         ^cxn-name NumberOfUnits)
-#   (<o2> ^name match-construction
-#         ^cxn-name SpecNoun)
-#   #    Get data for report
-#   (<o1> ^cxn-name <cname1>)
-#   (<o2> ^cxn-name <cname2>)
-#-->
-#   (<s> ^operator <o1> > <o2>)
-#   #    Report using this preference
-#   (write (crlf) (concat |Prefer NumberOfUnits/SpecNoun: | <cname1> | > | <cname2> |.|))
-#}
+#   Prefer a Properties2Set before a SpecProps2Noun,
+#   but only if the determiner is indefinite.
+sp {comprehend-word*preference*match-construction-Properties2Set-before-SpecProps2Noun
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name match-construction
+         ^cxn-name Properties2Set
+         ^det <determiner>
+         ^span 3)
+   (<determiner> ^m.givenness indefinite) 
+   (<o2> ^name match-construction
+         ^cxn-name SpecProps2Noun
+         ^span 3)
+   #    Get data for report
+   (<o1> ^cxn-name <cname1>)
+   (<o2> ^cxn-name <cname2>)
+-->
+   (<s> ^operator <o1> > <o2>)
+   #    Report using this preference
+   (write (crlf) (concat |Prefer Properties2Set/SpecProps2Noun: | <cname1> | > | <cname2> |.|))
+}
+
+#   Prefer a SpecProps2Noun before a Properties2Set,
+#   but only if the determiner is definite.
+sp {comprehend-word*preference*match-construction-SpecProps2Noun-before-Properties2Set
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name match-construction
+         ^cxn-name SpecProps2Noun
+         ^span 3)
+   (<o2> ^name match-construction
+         ^cxn-name Properties2Set
+         ^det <determiner>
+         ^span 3)
+   (<determiner> ^m.givenness definite) 
+   #    Get data for report
+   (<o1> ^cxn-name <cname1>)
+   (<o2> ^cxn-name <cname2>)
+-->
+   (<s> ^operator <o1> > <o2>)
+   #    Report using this preference
+   (write (crlf) (concat |Prefer SpecProps2Noun/Properties2Set: | <cname1> | > | <cname2> |.|))
+}
+
+#   Prefer a Props2Noun before a Properties2Set,
+#   but only if there is not determiner.
+sp {comprehend-word*preference*match-construction-Props2Noun-before-Properties2Set
+   (state <s> ^problem-space comprehend-word
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^name match-construction
+         ^cxn-name Props2Noun
+         ^span 2)
+   (<o2> ^name match-construction
+         ^cxn-name Properties2Set
+         ^det nil
+         ^span 2)
+   #    Get data for report
+   (<o1> ^cxn-name <cname1>)
+   (<o2> ^cxn-name <cname2>)
+-->
+   (<s> ^operator <o1> > <o2>)
+   #    Report using this preference
+   (write (crlf) (concat |Prefer SpecProps2Noun/Properties2Set: | <cname1> | > | <cname2> |.|))
+}

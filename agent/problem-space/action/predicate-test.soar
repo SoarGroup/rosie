@@ -46,14 +46,8 @@ sp {DEBUG*interrupt-task-search
    (interrupt)
 }
 
-sp {problem-space*action*elaborate*predicate-test*from*task-operator*end-clause
-   (state <s> ^problem-space.name action
-              ^task-operator.end-clause <cl>)
--->
-   (<s> ^predicate-test <cl>)
-}
 
-### Start or Terminal goal nodes are always satisfied
+### Start, Intermediate, or Terminal goal nodes are always satisfied
 
 sp {problem-space*action*elaborate*desired*start-goal*satisfied
    (state <s> ^problem-space.name action
@@ -75,7 +69,7 @@ sp {problem-space*action*elaborate*desired*start-goal*satisfied*start-clause
    (<des> ^satisfied true)
 }
 
-sp {problem-space*action*elaborate*desired*terminal-goal*satisfied
+sp {problem-space*action*elaborate*desired*terminal
    (state <s> ^problem-space.name action
               ^desired <des>)
    (<des> ^item-type terminal-goal)
@@ -255,6 +249,16 @@ sp {problem-space*action*elaborate*predicate-test*duration*satisfied
    (<s> ^satisfied <pt-pred>)
 }
 
+sp {problem-space*action*elaborate*predicate-test*duration*times*satisfied*loop-counter
+   (state <s> ^problem-space.name action
+              ^predicate-test.<pred-num> <pt-pred>
+              ^current-task-segment.loop-counter >= <n>)
+   (<pt-pred> ^type duration
+              ^unit times
+              ^number <n>)
+-->
+   (<s> ^satisfied <pt-pred>)
+}
 
 # type = clocktime, the current time is after the given time
 
@@ -288,7 +292,7 @@ sp {problem-space*action*elaborate*predicate-test*clocktime*satisfied*hour
 sp {problem-space*action*elaborate*predicate-test*subtask*satisfied
    (state <s> ^problem-space.name action
               ^predicate-test.<pred-num> <p>
-              ^task-operator.performed-subtask <sub-h>)
+              ^current-task-segment.performed-subtask <sub-h>)
    (<p> ^type subtask
         ^subtask-handle <sub-h>)
 -->
@@ -338,6 +342,20 @@ sp {problem-space*action*elaborate*predicate-test*missing-argument*satisfied
    (<task-op> -^<arg-name> <arg>)
 -->
    (<s> ^satisfied <p>)
+}
+
+# type = 
+sp {problem-space*action*elaborate*predicate-test*clocktime*satisfied*minute
+   (state <s> ^problem-space.name action
+              ^predicate-test.<pred-num> <pt-pred>
+              ^io.input-link.time.clock <clock>)
+   (<pt-pred> ^type clocktime
+              ^hour <hour>
+              ^minute <min>)
+   (<clock> ^hour <hour>
+            ^minute >= <min>)
+-->
+   (<s> ^satisfied <pt-pred>)
 }
 
 # @ENUMERATE 1-3 OBJECT-EXISTS PREDICATES
@@ -393,10 +411,72 @@ sp {problem-space*action*elaborate*predicate-test*object-exists*3*satisfied
    (<s> ^satisfied <p>)
 }
 
+# @ENUMERATE 1-3 OBJECT-MISSING PREDICATES
+
+sp {problem-space*action*elaborate*predicate-test*object-missing*1*satisfied
+   (state <s> ^problem-space.name action
+              ^predicate-test.<pred-num> <p>
+              ^world.objects <objs>)
+   (<p> ^type object-missing
+        ^pred-count 1
+        ^1 <p1>)
+   (<p1> ^property-handle <prop1> ^predicate-handle <pred1>)
+ -{(<objs> ^object.predicates <obj-preds>)
+   (<obj-preds> ^is-confirmed1 confirmed1
+                ^<prop1> <pred1>)}
+-->
+   (<s> ^satisfied <p>)
+}
+
+sp {problem-space*action*elaborate*predicate-test*object-missing*2*satisfied
+   (state <s> ^problem-space.name action
+              ^predicate-test.<pred-num> <p>
+              ^world.objects <objs>)
+   (<p> ^type object-missing
+        ^pred-count 2
+        ^1 <p1>
+        ^2 <p2>)
+   (<p1> ^property-handle <prop1> ^predicate-handle <pred1>)
+   (<p2> ^property-handle <prop2> ^predicate-handle <pred2>)
+ -{(<objs> ^object.predicates <obj-preds>)
+   (<obj-preds> ^is-confirmed1 confirmed1
+                ^<prop1> <pred1>
+                ^<prop2> <pred2>)}
+-->
+   (<s> ^satisfied <p>)
+}
+
+sp {problem-space*action*elaborate*predicate-test*object-missing*3*satisfied
+   (state <s> ^problem-space.name action
+              ^predicate-test.<pred-num> <p>
+              ^world.objects <objs>)
+   (<p> ^type object-missing
+        ^pred-count 3
+        ^1 <p1>
+        ^2 <p2>
+        ^3 <p3>)
+   (<p1> ^property-handle <prop1> ^predicate-handle <pred1>)
+   (<p2> ^property-handle <prop2> ^predicate-handle <pred2>)
+   (<p3> ^property-handle <prop3> ^predicate-handle <pred3>)
+ -{(<objs> ^object.predicates <obj-preds>)
+   (<obj-preds> ^is-confirmed1 confirmed1
+                ^<prop1> <pred1>
+                ^<prop2> <pred2>
+                ^<prop3> <pred3>)}
+-->
+   (<s> ^satisfied <p>)
+}
 
 # @ENUMERATE 1-8 PREDICATE SET PREDICATES
 
-# Note: pred-count 0 is possible, but usually only with custom goals that get marked satisfied manually
+# Empty goal 
+sp {problem-space*action*elaborate*desired*empty*goal
+   (state <s> ^problem-space.name action
+              ^desired <des>)
+   (<des> ^pred-count 0)
+-->
+   (<des> ^satisfied true)
+}
 
 # predicate-test with 1 predicate is satisfied
 sp {problem-space*action*elaborate*predicate-test*satisfied*1*predicate

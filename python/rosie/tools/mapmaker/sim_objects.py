@@ -220,6 +220,17 @@ class Cooler(SimObject):
     cat = "cooler1"
     rgb = [ 0, 0, 0 ]
 
+    def read_info(self, reader, scale=1.0):
+        # 1 word - either auto or manual
+        self.auto = reader.nextWord()
+        super().read_info(reader, scale)
+        return self
+
+    def write_info(self, writer):
+        super().write_info(writer)
+        writer.write("    " + self.auto + "\n")
+
+
 class Drawer(SimObject):  
     sim_class = "soargroup.mobilesim.sim.SimDrawer"
     cat = "drawer1"
@@ -281,6 +292,11 @@ class Alarm(SimObject):
     desc = "Alarm"
     cat = "alarm1"
     rgb = [ 255, 0, 0 ]
+
+    def read_info(self, reader, scale=1.0):
+        super().read_info(reader, scale)
+        self.preds["is-activated1"] = "not-activated1"
+        return self
 
 
 class Door(SimObject):  

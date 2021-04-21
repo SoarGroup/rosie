@@ -1,0 +1,70 @@
+# Once we have created a generalized version of the goal, 
+#   we add it after the current goal node in the goal-graph
+#   using task-utils/add-node-to-goal-graph
+
+sp {learn-task-goal*propose*add-node-to-goal-graph
+   (state <s> ^name learn-task-goal
+              ^task-concept-network.handle <task-h>
+              ^current-goal-handle <cur-goal-h>
+              ^generalized-goal <gpreds>
+             -^added-goal-node)
+-->
+   (<s> ^operator <o> + > =)
+   (<o> ^name add-node-to-goal-graph
+        ^type predicate-set
+        ^task-handle <task-h>
+        ^goal-predicates <gpreds>
+        ^after <cur-goal-h>)
+}
+
+### ELABORATIONS
+
+# copy any conditions onto the operator
+sp {learn-task-goal*elaborate*add-node-to-goal-graph*goal-conditions
+   (state <s> ^name learn-task-goal
+              ^operator <o> +
+              ^generalize-task-argument <arg>)
+   (<o> ^name add-node-to-goal-graph)
+   (<arg> ^arg-type predicate-set
+          ^type goal-conditions
+          ^general-arg-rep <conds>)
+-->
+   (<o> ^goal-conditions <conds>)
+}
+
+# If the instructor said this was the final/only goal, 
+#   tell add-node-to-goal-graph to add a terminal node after it
+sp {learn-task-goal*elaborate*add-node-to-goal-graph*terminal
+   (state <s> ^name learn-task-goal
+              ^operator <o> +
+              ^task-goal.final-goal true)
+   (<o> ^name add-node-to-goal-graph)
+-->
+   (<o> ^final-goal true)
+}
+
+# If there are conditions and the instructor did not say it was the final goal, 
+#   add an intermediate goal to merge the if and else paths
+sp {learn-task-goal*elaborate*add-node-to-goal-graph*add-else-edge
+   (state <s> ^name learn-task-goal
+              ^operator <o> +
+              ^task-goal <goal>)
+   (<goal> -^final-goal true)
+   (<o> ^name add-node-to-goal-graph
+        ^goal-conditions <conds>)
+-->
+   (<o> ^add-else-link true)
+}
+
+### APPLICATION
+sp {learn-task-goal*apply*add-node-to-goal-graph*copy*result
+   (state <s> ^name learn-task-goal
+              ^operator <o>)
+   (<o> ^name add-node-to-goal-graph
+        ^add-node-result <goal-h>)
+-->
+   (<s> ^added-goal-node <goal-h>)
+}
+
+
+

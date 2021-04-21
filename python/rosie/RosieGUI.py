@@ -11,6 +11,7 @@ class RosieGUI(Frame):
         """ Displays a list of messages that are the interaction history """
         def __init__(self, parent):
             Listbox.__init__(self, parent, font=("Times", "12"), takefocus=0)
+            self.parent = parent
             self.scrollbar = Scrollbar(self)
             self.config(yscrollcommand=self.scrollbar.set)
             self.scrollbar.config(command=self.yview)
@@ -24,6 +25,7 @@ class RosieGUI(Frame):
         """ Displays a list of script messages defined for Rosie """
         def __init__(self, parent, script):
             Listbox.__init__(self, parent, font=("Times", "10"), selectmode=SINGLE)
+            self.parent = parent
 
             self.scrollbar = Scrollbar(self)
             self.config(yscrollcommand=self.scrollbar.set)
@@ -52,6 +54,7 @@ class RosieGUI(Frame):
             Also keeps track of the message history and supports Up/Down keys to navigate """
         def __init__(self, parent):
             Entry.__init__(self, parent, font=("Times", "16"))
+            self.parent = parent
 
             self.bind('<Return>', lambda key: self.send_message())
             self.bind('<Up>', lambda key: self.scroll_history(-1))

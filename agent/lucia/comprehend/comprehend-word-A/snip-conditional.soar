@@ -1,0 +1,82 @@
+##!
+# @file
+#
+# @created plindes 20200618
+# File: snip-conditional.soar
+# Author: Peter Lindes
+# Created: 18 June 2020
+#
+# Desc: This file has a special snip operator intended for use
+#       just after a Conditional cxn has been built.
+#
+#       The idea is that a Conditional is always a complete
+#       structure, it never can be a constituent of something
+#       bigger. As a result, if another cxn comes after
+#       this cxn has been built, then the Conditional should
+#       be discarded so the additional material can be attached
+#       to some lower level cxn, then the Conditional will
+#       be rebuilt.
+#
+#       Given this philosophy, this operator will be proposed
+#       whenever another composite cxn follows a Conditional, and
+#       it will discard the conditional to connect its final
+#       child as the previous cxn of the composite cxn.
+#
+#       At first this was tried with the idea of doing the snip
+#       as soon as another lexical comes in, but that doesn't
+#       work because if the lexical item has more than one sense
+#       then we get multiple instances of this operator proposed
+#       and the result is an operator tie.
+#
+#       However, having it look for a composite after a Conditional
+#       seems to work fine, including for these sentences:
+#       1)  If the green box is large then go forward.
+#       2)  If the number of the locations between a location
+#           and a covered location is the number of the blocks
+#           that are on the covered location then you can move it
+#           onto the former location.
+#
+#
+
+
+#    Propose an operator to snip a Conditional when more content follows
+sp {comprehend-word*propose*snip-conditional
+   (state <s> ^problem-space comprehend-word
+              ^cxn <cxn>
+              ^lexical-access done)
+   #    Test for a composite
+   (<cxn> ^constituents <consts>
+          ^previous <previous>) 
+   #    See whether what came before is a Conditional
+   (<previous> ^is.a Conditional)
+-->
+   (<s> ^operator <o> + >)
+   (<o> ^name snip-conditional
+        ^type snip
+        ^debug-info (concat |Snip a Conditional to allow further content.|))
+}
+
+#    Discard the Conditional by making its last constituent
+#    be the previous of the composite cxn.
+sp {comprehend-word*apply*snip-conditional
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^cxn <cxn>)
+   (<o> ^name snip-conditional
+        ^type snip)
+   #    Get info for the snip
+   (<cxn> ^constituents <consts>
+          ^previous <conditional>) 
+   (<conditional> ^<< statement command >> <then-part>)  #   What to cut to
+-->
+   #    THIS IS THE SNIP!!!
+   #    Change the previous pointer
+   #    This will orphan the Conditional and
+   #    leave it to be garbage collected.
+   #    Instead we'll point to its constituents,
+   #    allowing that they may be matched
+   (<cxn> ^previous <conditional> -
+          ^previous <then-part>)
+   #   Write a message for the snip.
+   (write (crlf) (concat |Snipping | <conditional> | to get to | <then-part> |.|))
+}

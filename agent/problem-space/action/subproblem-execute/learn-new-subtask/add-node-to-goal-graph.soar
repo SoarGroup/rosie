@@ -1,0 +1,116 @@
+# If the subtask was given when the agent didn't have a goal
+# (Finished with the current goal and doesn't have a next one)
+# Then add a new procedural goal onto the goal-graph after the current goal
+
+sp {learn-new-subtask*propose*add-node-to-goal-graph*subtask
+   (state <s> ^name learn-new-subtask
+              ^create-goal-node <ntype>
+              ^task-operator.task-handle <task-h> 
+              ^current-goal-id.handle <goal-h>
+             -^created-goal-node)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name add-node-to-goal-graph
+        ^type <ntype>
+        ^task-handle <task-h>
+        ^after <goal-h>)
+}
+
+#### ELABORATE
+
+# If there is a subtask-handle, elaborate it
+sp {learn-new-subtask*elaborate*add-node-to-goal-graph*subtask*subtask-handle
+   (state <s> ^name learn-new-subtask
+              ^operator <o> +
+              ^subtask-handle <sub-h>)
+   (<o> ^name add-node-to-goal-graph
+        ^type subtask)
+-->
+   (<o> ^subtask-handle <sub-h>)
+}
+
+# If there are task conditions, add them
+sp {learn-new-subtask*elaborate*add-node-to-goal-graph*goal-conditions
+   (state <s> ^name learn-new-subtask
+              ^operator <o> +
+              ^generalize-task-argument <arg>)
+   (<o> ^name add-node-to-goal-graph)
+   (<arg> ^arg-type predicate-set
+          ^type task-conditions
+          ^general-arg-rep <conds>)
+-->
+   (<o> ^goal-conditions <conds>)
+}
+
+# If there are conditions and the instructor did not say it was a first task, 
+#   add an intermediate goal to merge the if and else paths
+sp {learn-new-subtask*elaborate*add-node-to-goal-graph*add-else-edge
+   (state <s> ^name learn-new-subtask
+              ^operator <o> +
+             -^branch-task true)
+   (<o> ^name add-node-to-goal-graph
+        ^type <> terminal
+        ^goal-conditions <conds>)
+-->
+   (<o> ^add-else-link true)
+}
+
+# If we are interrupting a task, insert instead of append
+sp {learn-new-subtask*elaborate*add-node-to-goal-graph*insert-type*insert
+   (state <s> ^name learn-new-subtask
+              ^operator <o> +
+              ^interrupting-current-task true)
+   (<o> ^name add-node-to-goal-graph)
+-->
+   (<o> ^insert-type insert)
+}
+
+# If we are current learning a repeat block, add the handle of the repeat node to the operator
+sp {learn-new-subtask*elaborate*add-node-to-goal-graph*learning-repeat-block
+   (state <s> ^name learn-new-subtask
+              ^operator <o> +
+              ^learning-repeat-block <goal-h>)
+   (<o> ^name add-node-to-goal-graph)
+-->
+   (<o> ^learning-repeat-block <goal-h>)
+}
+
+#### APPLY
+
+sp {learn-new-subtask*apply*add-node-to-goal-graph*subtask
+   (state <s> ^name learn-new-subtask
+              ^operator <o>)
+   (<o> ^name add-node-to-goal-graph
+        ^add-node-result <node-h>)
+-->
+   (<s> ^created-goal-node <node-h>)
+}
+
+sp {learn-new-subtask*apply*add-node-to-goal-graph*new-node-handle
+   (state <s> ^name learn-new-subtask
+              ^operator <o>)
+   (<o> ^name add-node-to-goal-graph
+        ^new-node-handle <node-h>)
+-->
+   (<s> ^new-node-handle <node-h>)
+}
+
+sp {learn-new-subtask*apply*add-node-to-goal-graph*mark*renamed-node
+   (state <s> ^name learn-new-subtask
+              ^operator <o>)
+   (<o> ^name add-node-to-goal-graph
+        ^renamed-node <new-h>)
+-->
+   (<s> ^renamed-current-goal <new-h>)
+}
+
+sp {learn-new-subtask*apply*add-node-to-goal-graph*mark*subtask*subgoal-specific
+   (state <s> ^name learn-new-subtask
+              ^operator <o>
+              ^generalized-subtask <sub>)
+   (<o> ^name add-node-to-goal-graph
+        ^add-node-result <node-h>)
+-->
+   (<sub> ^subgoal-specific <node-h>)
+}
+

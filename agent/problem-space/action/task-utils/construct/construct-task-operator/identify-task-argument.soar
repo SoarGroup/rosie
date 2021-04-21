@@ -1,0 +1,374 @@
+# identify all the arguments in the command message
+#   and elaborate construct-task-argument structures for each one
+#
+# If there is a potential for ambiguity (multiple arguments)
+#   use operator identify-task-argument to only create one
+
+#################################### concept #####################################
+
+sp {task-utils*construct-task-operator*elaborate*construct-task-argument*concept
+   (state <s> ^name construct-task-operator
+              ^command-message <msg>)
+   (<msg> ^<arg-name> <conc>)
+   (<conc> ^item-type concept
+          -^property.handle unit)
+-->
+   (<s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type concept
+          ^arg-name <arg-name>
+          ^source <conc>)
+}
+
+sp {task-utils*construct-task-operator*elaborate*construct-task-argument*concept*2
+   (state <s> ^name construct-task-operator
+              ^command-message <msg>)
+   (<msg> ^<arg-name> <conc>)
+   (<conc> -^item-type concept
+            ^property.handle concept)
+-->
+   (<s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type concept
+          ^arg-name <arg-name>
+          ^source <conc>)
+}
+
+#################################### number #####################################
+
+sp {task-utils*construct-task-operator*elaborate*construct-task-argument*number
+   (state <s> ^name construct-task-operator
+              ^command-message <msg>)
+   (<msg> ^{ <arg-name> <> temporal-clause } <num-arg>
+         -^{ <arg-name2> }.property.handle unit)
+   (<num-arg> ^number <num>)
+-->
+   (<s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type number
+          ^arg-name <arg-name>
+          ^source <num-arg>)
+}
+
+#################################### measure #####################################
+
+sp {task-utils*construct-task-operator*elaborate*construct-task-argument*measure
+   (state <s> ^name construct-task-operator
+              ^command-message <msg>)
+   (<msg> ^<arg-name1> <num-arg>
+          ^<arg-name2> <unit-arg>)
+   (<num-arg> ^handle <num> ^property.handle number)
+   (<unit-arg> ^handle <unit> ^property.handle unit)
+-->
+   (<s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type measure
+          ^arg-name <arg-name2>
+          ^source <src>)
+   (<src> ^number <num> ^unit <unit>)
+}
+
+#################################### modifiers #####################################
+
+sp {task-utils*construct-task-operator*elaborate*modifiers
+   (state <s> ^name construct-task-operator)
+-->
+   (<s> ^modifiers <mods>)
+}
+
+sp {task-utils*construct-task-operator*elaborate*has-modifiers*empty*false
+   (state <s> ^name construct-task-operator
+              ^modifiers <mods>)
+   (<mods> ^handle <modh>)
+-->
+   (<mods> ^has-modifiers true)
+}
+
+# copy modifiers from the task operator
+sp {task-utils*construct-task-operator*elaborate*modifiers*from*command-message
+   (state <s> ^name construct-task-operator
+              ^command-message.modifier.handle { <mod> <> upwards <> down1 }
+              ^modifiers <mods>)
+-->
+   (<mods> ^handle <mod>)
+}
+
+# copy modifiers from the TCN
+sp {task-utils*construct-task-operator*elaborate*modifiers*from*tcn
+   (state <s> ^name construct-task-operator
+              ^task-concept-network.procedural.modifiers.mod-handle <mod>
+              ^modifiers <mods>)
+-->
+   (<mods> ^handle <mod>)
+}
+
+sp {task-utils*construct-task-operator*elaborate*construct-task-argument*modifiers
+   (state <s> ^name construct-task-operator
+              ^modifiers <mods>)
+   (<mods> ^has-modifiers true)
+-->
+   (<s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type modifiers
+          ^arg-name modifiers
+          ^source <mods>)
+}
+
+#################################### object #####################################
+
+### Use identify-task-argument to make sure only 1 copy of the argument is created
+sp {task-utils*construct-task-operator*propose*identify-task-argument*object
+   (state <s> ^name construct-task-operator
+              ^command-message <msg>
+             -^construct-task-argument.arg-name <arg-name>)
+   (<msg> ^<arg-name> <obj>)
+   (<obj> ^item-type object)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name identify-task-argument
+        ^arg-type object
+        ^arg-name <arg-name>
+        ^parent <msg>)
+}
+
+sp {task-utils*construct-task-operator*apply*identify-task-argument*object
+   (state <s> ^name construct-task-operator
+              ^operator <o>)
+   (<o> ^name identify-task-argument
+        ^arg-type object
+        ^arg-name <arg-name>
+        ^parent <par>)
+-->
+   (<s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type object
+          ^arg-name <arg-name>
+          ^parent <par>)
+}
+
+###### Special Case: sentence argument 
+# turn message argument from say/ask into an object
+
+sp {task-utils*construct-task-operator*propose*identify-task-argument*sentence-object
+   (state <s> ^name construct-task-operator
+              ^command-message <msg>
+             -^construct-task-argument.arg-name <arg-name>)
+   (<msg> ^action.handle << say1 ask1 >>
+          ^<arg-name>.sentence <sentence>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name identify-task-argument
+        ^arg-type sentence-object
+        ^arg-name <arg-name>
+        ^sentence <sentence>)
+}
+
+sp {task-utils*construct-task-operator*apply*identify-task-argument*sentence-object
+   (state <s> ^name construct-task-operator
+              ^operator <o>)
+   (<o> ^name identify-task-argument
+        ^arg-type sentence-object
+        ^arg-name <arg-name>
+        ^sentence <sentence>)
+-->
+   (<s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type object
+          ^arg-name <arg-name>
+          ^abstract true
+          ^source <obj>
+          ^reference-info <ref-info>)
+   (<obj> ^item-type object
+          ^handle (make-constant-symbol |obj-hand|)
+          ^root-category message
+          ^predicates <preds>)
+   (<preds> ^category message
+            ^sentence <sentence>)
+   (<ref-info> ^constraint.category message
+               ^constraint.sentence <sentence>)
+}
+
+###### Special Case: 
+### Turn ask agent -> arg2 object (the person to ask)
+sp {task-utils*construct-task-operator*propose*identify-task-argument*ask-person
+   (state <s> ^name construct-task-operator
+              ^command-message <msg>
+             -^construct-task-argument.arg-name arg2)
+   (<msg> ^action.handle ask1
+          ^agent.handle <name>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name identify-task-argument
+        ^arg-type ask-person
+        ^arg-name arg2
+        ^person-name <name>)
+}
+
+sp {task-utils*construct-task-operator*apply*identify-task-argument*ask-person
+   (state <s> ^name construct-task-operator
+              ^operator <o>)
+   (<o> ^name identify-task-argument
+        ^arg-type ask-person
+        ^arg-name <arg-name>
+        ^person-name <name>)
+-->
+   (<s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type object
+          ^arg-name <arg-name>
+          ^source <obj>
+          ^reference-info <ref-info>)
+   (<obj> ^item-type object
+          ^handle (make-constant-symbol |obj-hand|)
+          ^root-category person
+          ^predicates <preds>)
+   (<preds> ^category person
+            ^name <name>)
+   (<ref-info> ^constraint.category person
+               ^constraint.name <name>)
+}
+
+
+##################################### partial-predicate #####################################
+
+# Case 1: Regular partial-predicate
+sp {task-utils*construct-task-operator*propose*identify-task-argument*partial-predicate
+   (state <s> ^name construct-task-operator
+              ^command-message <msg>
+             -^construct-task-argument.arg-name <arg-name>)
+   (<msg> ^{ <arg-name> <> predicate <> relation } <arg>)
+   (<arg> ^item-type predicate
+          ^handle <handle>
+          ^2 <obj2>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name identify-task-argument
+        ^arg-type partial-predicate
+        ^arg-name <arg-name>
+        ^source-name <arg-name>
+        ^parent <msg>
+        ^handle <handle>)
+}
+
+# Case 2: arg-name is predicate or relation -> rename to arg2
+sp {task-utils*construct-task-operator*propose*identify-task-argument*partial-predicate*rel*arg2
+   (state <s> ^name construct-task-operator
+              ^command-message <msg>
+             -^construct-task-argument.arg-name arg2)
+   (<msg> ^{ <src-name> << predicate relation >> } <arg>)
+   (<arg> ^item-type predicate
+          ^handle <handle>
+          ^2 <obj2>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name identify-task-argument
+        ^arg-type partial-predicate
+        ^arg-name arg2
+        ^source-name <src-name>
+        ^parent <msg>
+        ^handle <handle>)
+}
+
+# Apply: create the construct-task-argument partial-predicate structure
+sp {task-utils*construct-task-operator*apply*identify-task-argument*partial-predicate
+   (state <s> ^name construct-task-operator
+              ^operator <o>
+              ^command-message <msg>)
+   (<o> ^name identify-task-argument
+        ^arg-type partial-predicate
+        ^arg-name <arg-name>
+        ^source-name <src-name>
+        ^parent <par>
+        ^handle <handle>)
+-->
+   (<s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type partial-predicate
+          ^arg-name <arg-name>
+          ^parent <par>
+          ^source-name <src-name>
+          ^source <pred>)
+   (<pred> ^handle <handle>)
+}
+
+# Case 3: Special Case - arg2.2.relations --> copy as arg1
+# AM: Not sure why this is here or if it is needed anymore, 
+#     I added a halt if it is ever encountered, I think we can remove it
+sp {task-utils*construct-task-operator*elaborate*construct-task-argument*predicate*arg2*2*relations
+   (state <s> ^name construct-task-operator
+              ^command-message <msg>
+             -^construct-task-argument.arg-name arg1)
+   (<msg> ^arg2.{2}.relations <arg2>)
+   (<arg2> ^handle <handle>
+           ^2 <obj2>)
+-->
+   (write (crlf) |ASSERTION ERROR: Encountered unexpected parser message case | (crlf))
+   (write |--> problem-space/action/task-utils/construct/construct-task-operator/construct-task-argument.soar| (crlf))
+   (write |Aaron: I thought this rule was no longer needed| (crlf))
+   (halt)
+}
+
+#################################### test-subclause #####################################
+
+sp {task-utils*construct-task-operator*elaborate*construct-task-arguments*test-subclause
+   (state <s> ^name construct-task-operator
+              ^command-message <msg>)
+   (<msg> ^test-subclause <cl>)
+   (<cl> ^arg1 <obj> ^predicate.handle <pred-h>)
+   (<obj> ^item-type object)
+-->
+   (<s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type object
+          ^arg-name arg1
+          ^parent <cl>)
+   (<s> ^construct-task-argument <cta2>)
+   (<cta2> ^arg-type concept
+           ^arg-name arg2
+           ^source.handle <pred-h>)
+}
+
+
+#################################### temporal-clause #####################################
+
+# Start Clause
+sp {task-utils*construct-task-operator*elaborate*construct-task-argument*start-clause
+   (state <s> ^name construct-task-operator
+              ^command-message <msg>)
+   (<msg> ^temporal-predicate.handle << after1 when1 at1 >>
+          ^temporal-clause <clause>)
+-->
+   (<s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type temporal-clause
+          ^arg-name start-clause
+          ^source <clause>)
+}
+
+# End Clause
+sp {task-utils*construct-task-operator*elaborate*construct-task-argument*end-clause
+   (state <s> ^name construct-task-operator
+              ^command-message <msg>)
+   (<msg> ^temporal-predicate.handle << until1 for1 >>
+          ^temporal-clause <clause>)
+-->
+   (<s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type temporal-clause
+          ^arg-name end-clause
+          ^source <clause>)
+}
+
+# while = negated test
+sp {task-utils*construct-task-operator*elaborate*construct-task-argument*end-clause*negated
+   (state <s> ^name construct-task-operator
+              ^command-message <msg>)
+   (<msg> ^temporal-predicate.handle << while1 >>
+          ^temporal-clause <clause>)
+-->
+   (<s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type temporal-clause
+          ^arg-name end-clause
+          ^negated true
+          ^source <clause>)
+}
+
+#################################### conditions #####################################
+
+sp {task-utils*construct-task-operator*elaborate*construct-task-argument*conditions
+   (state <s> ^name construct-task-operator
+              ^command-message.conditions <conds>)
+-->
+   (<s> ^construct-task-argument <cta>)
+   (<cta> ^arg-type conditions
+          ^arg-name conditions
+          ^source <conds>)
+}

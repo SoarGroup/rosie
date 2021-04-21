@@ -56,10 +56,11 @@ which it can store in the parent's TCN.
 Once the subtask is generalized, it is added to the parent's TCN under `procedural.subtasks`. 
 The subtask is also given a unique subtask handle and is marked with `learned-proposal no`. 
 
-**4. add-subtask-goal**
+**4. add-node-to-goal-graph**
 
 Regardless of this being a new subtask, if there is not a current goal the agent is working towards, 
-it will create a new procedural goal node to be added to the goal graph. 
+it will create a new procedural goal node to be added to the goal graph after the current one. 
+(See `task-utils/add-node-to-goal-graph`)
 
 **5. store-subtask**
 
