@@ -1,0 +1,117 @@
+sp {top-state*elaborate*agent-params*custom
+   (state <s> ^superstate nil
+              ^agent-params <p>)
+-->
+   (<p> ^debug-ids true
+        ^report-tasks-to-output-link true
+        ^report-find-results true
+#       ^debug-op-ties true
+#       ^debug-wait-limit 3
+
+#       ^interrupt-operator retrospective-learning 
+#       ^interrupt-operator interpret-message 
+#       ^interrupt-end-of-sentence true
+#       ^interrupt-new-task true
+#       ^interrupt-task-search true
+        
+#       ^print-perception true
+#       ^print-new-task true
+#       ^print-new-task-shorthand true
+#       ^print-wp-search-path-costs true
+#       ^print-parsed-messages true
+#       ^print-outgoing-messages true
+#       ^print-interaction-stack true
+
+   )
+}
+
+source internal-world.soar
+source waypoint-map.soar
+
+#### Increase the search depth over the default
+#sp {search-for-next-subtask*elaborate*search-phase-info
+#   (state <s> ^name search-for-next-subtask)
+#-->
+#   (<s> ^number-phases 2
+#        ^search-phase-info <p1> <p2>)
+#   # First phase - only consider subtasks with all objects in common with the current task
+#   (<p1> ^num 1 ^max-depth 4 ^require-all-objects-match 1 ^reject-perc-ops 3)
+#
+#   # Second phase - level 1: any subtasks, level 2: subtasks with 1+ matching objects, 
+#   #                level 3-4: only subtasks matching all objects
+#   (<p2> ^num 2 ^max-depth 4 ^require-matching-object 3 ^require-all-objects-match 4 ^reject-perc-ops 3)
+#}
+
+#explain all on
+
+sp {top-state*perception-monitor*predicate-monitor*elaborate*default*predicates*internal
+   (state <s> ^superstate nil
+              ^agent-params.domain internal
+              ^world.predicates <preds>
+              ^perception-monitor.predicate-monitor <pred-mon>)
+-->
+   (<preds> ^predicate.handle in1)
+   (<preds> ^predicate.handle on1)
+   (<preds> ^predicate.handle holding1)
+   (<preds> ^predicate.handle heard2)
+}
+
+sp {top-state*perception-monitor*predicate-monitor*elaborate*default*predicates*magicbot
+   (state <s> ^superstate nil
+              ^agent-params.domain magicbot
+              ^world.predicates <preds>
+              ^perception-monitor.predicate-monitor <pred-mon>)
+-->
+   # Extract predicates via SVS
+   (<pred-mon> ^predicate-info.predicate-handle in1)
+   (<pred-mon> ^predicate-info.predicate-handle on1)
+
+   (<preds> ^predicate.handle holding1)
+   (<preds> ^predicate.handle heard2)
+}
+
+### Rules for printing events
+sp {complete-push-task-segment*report*time*info
+   (state <s> ^name push-task-segment
+              ^operator.name complete-push-task-segment
+              ^segment-to-push.task-operator.task-handle <task-h>
+              ^io.input-link.time <t>)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write |$START-TASK$ | <task-h> | | <steps> | | <ms> (crlf))
+}
+
+sp {complete-pop-task-segment*report*time*info
+   (state <s> ^name pop-task-segment
+              ^operator.name complete-pop-task-segment
+              ^segment-to-pop.task-operator.task-handle <task-h>
+              ^io.input-link.time <t>)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write |$END-TASK$ | <task-h> | | <steps> | | <ms> (crlf))
+}
+
+sp {search-for-next-subtask*start*report*time*info
+   (state <s> ^operator.name search-for-next-subtask
+              ^superstate.task-operator.task-handle <task-h>
+              ^io.input-link.time <t>
+             -^reported-time)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write |$BEGIN-SEARCH$ | <task-h> | | <steps> | | <ms> (crlf))
+   (<s> ^reported-time true)
+}
+
+sp {search-for-next-subtask*finish*report*time*info
+   (state <s> ^name search-for-next-subtask
+              ^superstate.superstate.task-operator.task-handle <task-h>
+              ^operator.name << return-successful-operator initiate-interaction >>
+              ^io.input-link.time <t>)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write |$END-SEARCH$ | <task-h> | | <steps> | | <ms> (crlf))
+}
