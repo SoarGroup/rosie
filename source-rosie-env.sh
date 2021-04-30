@@ -30,14 +30,14 @@ source $ROSIE_HOME/tools/scripts/custom_completions.sh
 ### build_agent <agent>
 # Runs the RosieAgentConfigurator tool on the given test-agent
 alias build_agent="$ROSIE_HOME/tools/scripts/build_agent.sh"
-complete -F _rosie_agents_completion build_agent
+#complete -F _rosie_agents_completion build_agent
 
 
 ### make_rosie_world <map_info>
 # Will take the given map info file
 # and build map and world files for both rosie and the mobile simulator
-alias make_rosie_world="$ROSIE_HOME/tools/scripts/make_rosie_world.sh"
-complete -F _map_info_completion make_rosie_world
+alias make_rosie_world="python3 -m rosie.tools.mapmaker"
+#complete -F _map_info_completion make_rosie_world
 
 
 ### run_rosie <agent>

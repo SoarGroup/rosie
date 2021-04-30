@@ -22,7 +22,7 @@ test_name = sys.argv[1]
 # Flag: -v|--verbose will print output to standard out
 print_output = ('-v' in sys.argv or '--verbose' in sys.argv)
 
-agent = TestAgent(config_filename=rosie_home + "/test-agents/task-tests/" + test_name + "/agent/rosie." + test_name + ".config", 
+agent = TestAgent(config_filename=rosie_home + "/test-agents/task-tests/" + test_name + "/agent/rosie-client.config",
         write_to_stdout=print_output, source_output=("summary" if print_output else "none"))
 
 agent.run_test(rosie_home + "/test-agents/task-tests/" + test_name + "/correct-output.txt")
