@@ -7,23 +7,23 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
-import edu.umich.rosie.soar.SoarAgent;
+import edu.umich.rosie.soar.SoarClient;
 
 public class AgentMenu extends JMenu{
-	private SoarAgent agent;
-	public AgentMenu(SoarAgent soarAgent){
+	private SoarClient client;
+	public AgentMenu(SoarClient soarClient){
 		super("Agent");
 		
-		this.agent = soarAgent;
+		this.client = soarClient;
     
 		// Full Reset: Completely clears all memories and re-sources the agent
 	    JMenuItem resetButton = new JMenuItem("Full Reset");
 	    resetButton.addActionListener(new ActionListener(){
 	    	public void actionPerformed(ActionEvent e){
-	    		if(agent.isRunning()){
-	    			JOptionPane.showMessageDialog(null, "The agent must be stopped first");
+	    		if(client.isRunning()){
+	    			JOptionPane.showMessageDialog(null, "The client must be stopped first");
 	    		} else {
-	    			agent.resetAgent();
+	    			client.resetAgent();
 	    		}
 	    	}
 	    });
@@ -35,10 +35,10 @@ public class AgentMenu extends JMenu{
 	    JMenuItem backupButton = new JMenuItem("Backup");
 	    backupButton.addActionListener(new ActionListener(){
 	    	public void actionPerformed(ActionEvent e){
-	    		if(agent.isRunning()){
-	    			JOptionPane.showMessageDialog(null, "The agent must be stopped first");
+	    		if(client.isRunning()){
+	    			JOptionPane.showMessageDialog(null, "The client must be stopped first");
 	    		} else {
-	    			agent.backup("default");
+	    			client.backup("default");
 	    		}
 	    	}
 	    });
@@ -48,10 +48,10 @@ public class AgentMenu extends JMenu{
 	    JMenuItem restoreButton = new JMenuItem("Restore");
 	    restoreButton.addActionListener(new ActionListener(){
 	    	public void actionPerformed(ActionEvent e){
-	    		if(agent.isRunning()){
-	    			JOptionPane.showMessageDialog(null, "The agent must be stopped first");
+	    		if(client.isRunning()){
+	    			JOptionPane.showMessageDialog(null, "The client must be stopped first");
 	    		} else {
-	    			agent.restore("default");
+	    			client.restore("default");
 	    		}
 	    	}
 	    });
@@ -61,15 +61,15 @@ public class AgentMenu extends JMenu{
 	    JMenuItem backupToFileButton = new JMenuItem("Backup To File");
 	    backupToFileButton.addActionListener(new ActionListener(){
 	    	public void actionPerformed(ActionEvent e){
-	    		if(agent.isRunning()){
-	    			JOptionPane.showMessageDialog(null, "The agent must be stopped first");
+	    		if(client.isRunning()){
+	    			JOptionPane.showMessageDialog(null, "The client must be stopped first");
 	    		} else {
 	        		String sessionName = JOptionPane.showInputDialog(null, 
 	          			  "Enter the session name to backup",
 	          			  "Backup To File",
 	          			  JOptionPane.QUESTION_MESSAGE);
 	        		if (sessionName != null && !(sessionName.equals(""))){
-				    agent.backup(sessionName);
+				    client.backup(sessionName);
 				  }
 				}
 	    	}
@@ -80,15 +80,15 @@ public class AgentMenu extends JMenu{
 	    JMenuItem restoreFromFileButton = new JMenuItem("Restore From File");
 	    restoreFromFileButton.addActionListener(new ActionListener(){
 	    	public void actionPerformed(ActionEvent e){
-	    		if(agent.isRunning()){
-	    			JOptionPane.showMessageDialog(null, "The agent must be stopped first");
+	    		if(client.isRunning()){
+	    			JOptionPane.showMessageDialog(null, "The client must be stopped first");
 	    		} else {
 	        		String sessionName = JOptionPane.showInputDialog(null, 
 	          			  "Enter the session name to restore",
 	          			  "Restore from File",
 	          			  JOptionPane.QUESTION_MESSAGE);
                                 if (sessionName != null && !(sessionName.equals(""))){
-				    agent.restore(sessionName);
+				    client.restore(sessionName);
 				 }
                                }
 	    	}
@@ -105,7 +105,7 @@ public class AgentMenu extends JMenu{
 	        			  "Enter the command",
 	        			  "SML Command",
 	        			  JOptionPane.QUESTION_MESSAGE);
-	  			System.out.println(agent.sendCommand(command));
+	  			System.out.println(client.sendCommand(command));
 	    	}
 	    });
 	    this.add(commandButton);  

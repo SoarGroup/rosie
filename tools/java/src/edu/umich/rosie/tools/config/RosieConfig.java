@@ -12,26 +12,28 @@ public class RosieConfig {
 			super(message);
 		}
 	}
-
-	// A set of property names used in the config file
-	public static final HashSet<String> PROP_NAMES = new HashSet<String>(
-			Arrays.asList("agent-name", "agent-dir", "smem-config-file", 
-				"domain", "world-file",
-					"parser", "parser-test", "hypothetical",
-					"sentence-source", "sentences-file"));
-	
-	// agent-name = <string> [OPTIONAL] - The name of the agent (used as root of file names)
-	//   DEFAULT - The name of the config file (minus extension)
-	public String agentName;
 	
 	// agent-dir = <string>  [OPTIONAL] - The directory the agent should be created in
 	//    DEFAULT - The directory containing the config file
 	public File agentDir = null;
 
-	// smem-config-file = <filename> [OPTIONAL]
-	//     A file with info about what concepts to include from smem
-	//    (File used by SmemConfigurator)
-	public File smemConfigFile = null;
+	// agent-name = <string> [REQUIRED] - The name of the agent (used as root of file names)
+	//   DEFAULT - The name of the config file (minus extension)
+	public String agentName = null;
+	
+	// source-soar-file = <file> [ANY NUMBER]
+	//     Extra soar files that should be sourced by the agent
+	//     Can prefix with ${config_dir} or ${rosie_agent}
+	public List<File> sourceSoarFiles = new ArrayList<File>();
+
+	// source-smem-file = <file> [ANY NUMBER]
+	//     A smem file relative to the config directory that should be sourced by the agent (after being mapped)
+	public List<File> sourceSmemFiles = new ArrayList<File>();
+
+	// smem-config-file = <file> [ANY NUMBER]
+	//     An smem config file that should be included (can define templates/files to be mapped)
+	//     Can prefix with ${config_dir} or ${rosie_agent}
+	public List<File> smemConfigFiles = new ArrayList<File>();
 	
 	// domain = << magicbot tabletop internal fetch ai2thor cozmo >>  [OPTIONAL]
 	//    The environment the agent is in (determines perception/action rules)
@@ -73,15 +75,6 @@ public class RosieConfig {
 	//    A file with a list of sentences
 	//    (File used by SentencesGenerator)
 	public File sentencesFile = null;
-	
-	// source-soar-file = <file> [ANY NUMBER]
-	//     Extra soar files that should be sourced by the agent
-	//     Can prefix with ${config_dir} or ${rosie_agent}
-	public List<File> sourceSoarFiles = new ArrayList<File>();
-
-	// source-smem-file = <file> [ANY NUMBER]
-	//     A smem file relative to the config directory that should be sourced by the agent (after being mapped)
-	public List<File> sourceSmemFiles = new ArrayList<File>();
 
 
 	// Any other properties in the file will be passed on to the created rosie-client.config file
@@ -159,14 +152,18 @@ public class RosieConfig {
 			}
 			this.sourceSmemFiles.add(smemFile);
 		}
+		else if(settingName.equals("smem-config-file")){
+			File smemConfigFile = new File(settingValue);
+			if(!smemConfigFile.exists()){
+				smemConfigFile = new File(this.sourceDir, settingValue);
+			}
+			this.smemConfigFiles.add(smemConfigFile);
+		}
 		else if(settingName.equals("domain")){
 			this.domain = settingValue.toLowerCase();
 		}
 		else if(settingName.equals("world-file")){
 			this.worldFile = new File(this.sourceDir + "/" + settingValue);
-		}
-		else if(settingName.equals("smem-config-file")){
-			this.smemConfigFile = new File(this.sourceDir + "/" + settingValue);
 		}
 		else if(settingName.equals("parser")){
 			this.parser = settingValue.toLowerCase();
@@ -206,7 +203,6 @@ public class RosieConfig {
 		validateOptions("sentence-source", this.sentenceSource, VALID_SENTENCE_SRCS);
 
 		validateFile("world-file", this.worldFile);
-		validateFile("smem-config-file", this.smemConfigFile);
 		validateFile("sentences-file", this.sentencesFile);
 
 		for(File f : this.sourceSoarFiles){
@@ -214,6 +210,9 @@ public class RosieConfig {
 		}
 		for(File f : this.sourceSmemFiles){
 			validateFile("source-smem-file", f);
+		}
+		for(File f : this.smemConfigFiles){
+			validateFile("smem-config-file", f);
 		}
 
 	}
@@ -242,7 +241,6 @@ public class RosieConfig {
 		sb.append("sentence-source = " + this.sentenceSource + "\n");
 		sb.append("sentences-file = " + (this.sentencesFile == null ? "None" : this.sentencesFile.getName()) + "\n");
 		sb.append("world-file = " + (this.worldFile == null ? "None" : this.worldFile.getName()) + "\n");
-		sb.append("smem-config-file = " + (this.smemConfigFile == null ? "None" : this.smemConfigFile.getName()) + "\n");
 
 		sb.append("\nSourcing the following soar files:\n");
 		for(File f : this.sourceSoarFiles){
@@ -251,6 +249,11 @@ public class RosieConfig {
 
 		sb.append("\nSourcing the following local smem files:\n");
 		for(File f : this.sourceSmemFiles){
+			sb.append("   > " + f.getAbsolutePath() + "\n");
+		}
+
+		sb.append("\nIncluding the following smem config files:\n");
+		for(File f : this.smemConfigFiles){
 			sb.append("   > " + f.getAbsolutePath() + "\n");
 		}
 

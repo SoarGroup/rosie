@@ -12,31 +12,31 @@ import java.util.Properties;
 
 import edu.umich.rosie.language.InternalMessagePasser;
 import edu.umich.rosie.language.LanguageConnector;
-import edu.umich.rosie.soar.SoarAgent;
+import edu.umich.rosie.soar.SoarClient;
 import edu.umich.soar.debugger.SWTApplication;
 import edu.umich.rosie.connectors.ActionStackConnector;
 import edu.umich.rosie.connectors.TaskTestWriter;
 
 public class RosieCLI
 {
-	private SoarAgent soarAgent;
+	private SoarClient soarClient;
 
 	private LanguageConnector language;
 
     public RosieCLI(Properties props)
     {
-    	soarAgent = new SoarAgent(props);
+    	soarClient = new SoarClient(props);
     	
     	InternalMessagePasser internalPasser = new InternalMessagePasser();
     	
-    	language = new LanguageConnector(soarAgent, props, internalPasser);
-		soarAgent.addConnector(language);
+    	language = new LanguageConnector(soarClient, props, internalPasser);
+		soarClient.addConnector(language);
 
-		// print-action-stack = true
+		// use-action-stack-connector = true
 		// Create an ActionStackConnector and print any task events to the console
-		if(props.getProperty("print-action-stack", "false").equals("true")){
-			ActionStackConnector asConn = new ActionStackConnector(soarAgent);
-			soarAgent.addConnector(asConn);
+		if(props.getProperty("use-action-stack-connector", "false").equals("true")){
+			ActionStackConnector asConn = new ActionStackConnector(soarClient);
+			soarClient.addConnector(asConn);
 			asConn.registerForTaskEvent(new ActionStackConnector.TaskEventListener(){
 				public void taskEventHandler(String taskInfo){
 					System.out.println(taskInfo);
@@ -48,18 +48,18 @@ public class RosieCLI
 		// Will add a TaskTestWriter and create an output file in the task testing format
 		String taskTestFilename = props.getProperty("task-test-output-filename", null);
 		if(taskTestFilename != null){
-			soarAgent.addConnector(new TaskTestWriter(soarAgent, taskTestFilename));
+			soarClient.addConnector(new TaskTestWriter(soarClient, taskTestFilename));
 		}
 
-    	soarAgent.createAgent();
+    	soarClient.createAgent();
     }
 
 	public void run(){
-		soarAgent.sendCommand("run");
+		soarClient.sendCommand("run");
 	}
 
 	public void shutdown(){
-		soarAgent.kill();
+		soarClient.kill();
 	}
 
     public static void main(String[] args) {

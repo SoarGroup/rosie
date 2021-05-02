@@ -1,7 +1,7 @@
 AGENT_NAME=template
 
-ROSIE_CONFIG=agent/rosie.${AGENT_NAME}.config
-TEST_CONFIG=test-agent/rosie.${AGENT_NAME}.config
+ROSIE_CONFIG=agent/rosie-client.config
+TEST_CONFIG=test-agent/rosie-client.config
 
 all: world ${ROSIE_CONFIG}
 

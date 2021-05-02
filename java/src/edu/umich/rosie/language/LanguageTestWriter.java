@@ -2,26 +2,26 @@ package edu.umich.rosie.language;
 
 import sml.*;
 import sml.Agent.PrintEventInterface;
-import edu.umich.rosie.soar.SoarAgent;
+import edu.umich.rosie.soar.SoarClient;
 import edu.umich.rosie.soar.FileWriterConnector;
 
 public class LanguageTestWriter extends FileWriterConnector implements PrintEventInterface {
 	private long printCallbackId = -1;
 
-	public LanguageTestWriter(SoarAgent agent, String filename){
-		super(agent, filename);
+	public LanguageTestWriter(SoarClient client, String filename){
+		super(client, filename);
 	}
 
 	@Override
 	public void connect(){
-        printCallbackId = soarAgent.getAgent().RegisterForPrintEvent(smlPrintEventId.smlEVENT_PRINT, this, null);
+        printCallbackId = soarClient.getAgent().RegisterForPrintEvent(smlPrintEventId.smlEVENT_PRINT, this, null);
 		super.connect();
 	}
 	
 	@Override
 	public void disconnect(){
         if(printCallbackId != -1){
-            soarAgent.getAgent().UnregisterForPrintEvent(printCallbackId);
+            soarClient.getAgent().UnregisterForPrintEvent(printCallbackId);
 			printCallbackId = -1;
         }
 		super.disconnect();

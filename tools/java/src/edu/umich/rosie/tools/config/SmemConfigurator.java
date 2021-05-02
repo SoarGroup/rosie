@@ -110,18 +110,14 @@ public class SmemConfigurator {
 
 		File templateDir = new File(config.rosieAgentDir, "/init-smem/templates");
 		Stack<File> dirStack = new Stack<File>();
-		dirStack.push(config.rosieAgentDir);
 		List<File> rosieFiles = new ArrayList<File>();
 		Map<String, File> createdFiles = new HashMap<String, File>();
 
-		// Parse the default smem config file
-		File defaultSmemConfig = new File(config.rosieAgentDir, "_smem_config.txt");
-		parseSmemConfigurationFile(defaultSmemConfig, smemDir, templateDir, dirStack, createdFiles, rosieFiles);
-
-		// Parse the custom smem config file
-		if(config.smemConfigFile != null){
-			assert(dirStack.size() == 1);
-			parseSmemConfigurationFile(config.smemConfigFile, smemDir, templateDir, dirStack, createdFiles, rosieFiles);
+		// Parse any the custom smem config file
+		for(File smemConfigFile : config.smemConfigFiles){
+			dirStack.push(new File(smemConfigFile.getParent()));
+			parseSmemConfigurationFile(smemConfigFile, smemDir, templateDir, dirStack, createdFiles, rosieFiles);
+			dirStack.pop();
 		}
 
 		// Add any other smem files

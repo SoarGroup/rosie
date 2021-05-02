@@ -21,10 +21,10 @@ def main():
     agent_dir = rosie_home + "/examples/" + AGENT_NAME 
 
     if "--test" in sys.argv:
-        rosie_config = agent_dir + "/test-agent/rosie." + AGENT_NAME + ".config"
+        rosie_config = agent_dir + "/test-agent/rosie-client.config"
         run_test(rosie_config)
     else:
-        rosie_config = agent_dir + "/agent/rosie." + AGENT_NAME + ".config"
+        rosie_config = agent_dir + "/agent/rosie-client.config"
         launch_gui(rosie_config)
 
 def launch_gui(rosie_config):

@@ -5,7 +5,7 @@ import java.util.Properties;
 
 import edu.umich.rosie.language.IMessagePasser.RosieMessage;
 import edu.umich.rosie.soar.AgentConnector;
-import edu.umich.rosie.soar.SoarAgent;
+import edu.umich.rosie.soar.SoarClient;
 import edu.umich.rosie.soar.SoarUtil;
 import edu.umich.rosie.soarobjects.Message;
 import sml.Identifier;
@@ -29,14 +29,14 @@ public class LanguageConnector extends AgentConnector implements IMessagePasser.
 	
 	private IMessagePasser messagePasser;
 	
-	public LanguageConnector(SoarAgent agent, Properties props, IMessagePasser messagePasser){
-		super(agent);
+	public LanguageConnector(SoarClient client, Properties props, IMessagePasser messagePasser){
+		super(client);
 		
 		//String speechFile =
 				props.getProperty("speech-file", "audio_file/sample");
 		
         this.tts = new TextToSpeech();
-        //this.stt = new SpeechToText(speechFile, agent);
+        //this.stt = new SpeechToText(speechFile, client);
         
         curMessage = null;
         messagesToRemove = new HashSet<Message>();

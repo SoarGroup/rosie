@@ -1,7 +1,7 @@
 import sys
 import os
 
-from rosie.testing.TestAgent import TestAgent
+from rosie.testing.TesterClient import TesterClient
 
 # Lookup $ROSIE_HOME environment variable [REQUIRED]
 rosie_home = ""
@@ -22,7 +22,7 @@ test_name = sys.argv[1]
 # Flag: -v|--verbose will print output to standard out
 print_output = ('-v' in sys.argv or '--verbose' in sys.argv)
 
-agent = TestAgent(config_filename=rosie_home + "/test-agents/task-tests/" + test_name + "/agent/rosie-client.config",
+agent = TesterClient(config_filename=rosie_home + "/test-agents/task-tests/" + test_name + "/agent/rosie-client.config",
         write_to_stdout=print_output, source_output=("summary" if print_output else "none"))
 
 agent.run_test(rosie_home + "/test-agents/task-tests/" + test_name + "/correct-output.txt")
