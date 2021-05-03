@@ -15,19 +15,19 @@ run_mobile_sim: ${AGENT_NAME}.world
 
 run_rosie: waypoint-map.soar internal-world.soar ${ROSIE_CONFIG} 
 	mkdir -p output
-	#java soargroup.rosie.RosieGUI ${ROSIE_CONFIG}
-	python3 run_agent.py > output/rosie_output.txt &
+	python3 -m rosie.RosieGUI ${ROSIE_CONFIG} > output/rosie_output.txt &
 
 run_test: waypoint-map.soar internal-world.soar ${TEST_CONFIG} 
 	mkdir -p output
-	python3 run_agent.py --test
-	echo "########### DIFF ##########"
+	python3 -m rosie.testing.run_rosie_test ${TEST_CONFIG} output/test-output.txt
+	@echo "#################### DIFF ####################"
 	diff output/test-output.txt correct-output.txt
 
 
 # agent/rosie.template.config: Configures the rosie soar agent that will be sourced to run
-${ROSIE_CONFIG}: agent.config smem-config.txt extra-smem-adds.soar
-	java edu.umich.rosie.tools.config.RosieAgentConfigurator agent.config
+${ROSIE_CONFIG}: rosie.config smem-config.txt extra-smem-adds.soar
+	java edu.umich.rosie.tools.config.RosieAgentConfigurator rosie.config
+
 
 # test-agent/rosie.template.config: Configures the rosie soar agent that will be sourced for the test
 ${TEST_CONFIG}: test.config smem-config.txt extra-smem-adds.soar
@@ -61,6 +61,4 @@ clean:
 	rm -f ${AGENT_NAME}.world
 	rm -f waypoint-map.soar
 	rm -f internal-world.soar
-
-
 

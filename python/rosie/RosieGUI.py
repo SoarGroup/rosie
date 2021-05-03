@@ -175,7 +175,7 @@ def main():
     rosie_config = sys.argv[1]
 
     root = Tk()
-    rosie_client = RosieClient(rosie_config)
+    rosie_client = RosieClient(config_filename=rosie_config)
     rosie_gui = RosieGUI(rosie_client, master=root)
     rosie_gui.run()
 

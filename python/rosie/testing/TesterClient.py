@@ -8,10 +8,8 @@ from pysoarlib.util import PrintoutIdentifier
 
 class TesterClient(RosieClient):
     def __init__(self, **kwargs):
-        RosieClient.__init__(self, use_action_stack_connector=True, **kwargs)
+        RosieClient.__init__(self, **kwargs)
         self.outfile = None
-        self.filename = self.settings["task_test_output_filename"]
-
         self.add_agent_param("print-test-output", "true")
 
         # Listen for messages and write/print them
@@ -34,9 +32,9 @@ class TesterClient(RosieClient):
         #if self.outfile is not None:
         self.outfile.write(message + "\n")
 
-    def run_test(self, correct_filename):
+    def run_test(self, output_filename):
         self.connect()
-        self.outfile = open(self.filename, 'w')
+        self.outfile = open(output_filename, 'w')
         self.execute_command("run")
         self.outfile.close()
         self.outfile = None

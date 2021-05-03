@@ -79,6 +79,7 @@ auto-generated `rosie-client.config` file by the RosieAgentConfigurator tool.
 
 `start-running = [bool]` If true, the agent will start running when connect is called
 
+
 **Language Settings**
 
 `messages-file = filename]` A text file containing sentences to use as possible messages to Rosie (populates GUI)
@@ -97,7 +98,6 @@ will be printed to standard out
 
 `log-filename = [file]` The name of the log file to write (with `enable-log = true`)
 
-`print-action-stack = [bool] (JAVA)` If true, will print out a message every time the agent begins/ends a task.
 
 
 ## Rosie Agent Settings (agent-params)

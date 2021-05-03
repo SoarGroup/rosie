@@ -79,7 +79,7 @@ for test in	${TESTS_TO_RUN[*]}; do
 
 	if [ "$TEST_LANG" == "python" ]; then
 		echo "Running $test using python"
-		python3 -m rosie.testing.run_task_test $test $VERBOSE
+		python3 -m rosie.testing.run_rosie_test agent/rosie-client.config test-output.txt $VERBOSE
 	else
 		echo "Running $test using java"
 		java edu.umich.rosie.RosieCLI agent/rosie-client.config

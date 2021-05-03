@@ -31,9 +31,6 @@ class RosieClient(SoarClient):
         messages_file = [filename]
             A text file containing sentences to use as a script for Rosie (one sentence per line)
 
-        use_action_stack_connector = true|false 
-            If true, adds an ActionStackConnector to print out task events
-
         use_script_connector = true|false (default=false)
             If true, adds a ScriptConnector which will automatically send messages to the agent
 
@@ -56,24 +53,20 @@ class RosieClient(SoarClient):
     def __init__(self, print_handler=None, config_filename=None, sim_clock=True, **kwargs):
         SoarClient.__init__(self, print_handler, config_filename, use_time_connector=True, sim_clock=sim_clock, **kwargs)
 
-        # Create the default language connector
         self.add_connector("language", LanguageConnector(self))
-
-        # If use_action_stack_connector = True, adds an ActionStackConnector
-        if self.use_action_stack_connector:
-            self.add_connector("action_stack", ActionStackConnector(self))
+        self.add_connector("action_stack", ActionStackConnector(self))
 
         # If use_script_connector = True, add a ScriptConnector
         #   This will automatically run through the messages and send the to the agent
         if self.use_script_connector:
             self.add_connector("script", ScriptConnector(self, self.find_help))
 
-        ## Create the default command connector
-        #if self.use_command_connector:
-        #    if self.domain == "internal":
-        #        self.add_connector("commands", InternalCommandConnector(self))
-        #    else:
-        #        self.add_connector("commands", CommandConnector(self))
+        # Create the default command connector
+        if self.use_command_connector:
+            if self.domain == "internal":
+                self.add_connector("commands", InternalCommandConnector(self))
+            else:
+                self.add_connector("commands", CommandConnector(self))
 
         # Map from an Event Class to callback methods that will handle the event
         self.event_handlers = { }
@@ -135,13 +128,13 @@ class RosieClient(SoarClient):
     def _apply_settings(self):
         SoarClient._apply_settings(self)
 
+        self.domain = self.settings.get("domain", "internal")
+
         # Rosie-specific settings
         self.source_config = self.settings.get("source_config", None)
         self.reconfig_on_launch = self._parse_bool_setting("reconfig_on_launch", False)
 
         self.messages_file = self.settings.get("messages_file", None)
-
-        self.use_action_stack_connector = self._parse_bool_setting("use_action_stack_connector", False)
 
         self.use_script_connector = self._parse_bool_setting("use_script_connector", False)
         self.find_help = self.settings.get("find_help", "manual")
