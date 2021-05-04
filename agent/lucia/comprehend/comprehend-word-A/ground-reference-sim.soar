@@ -103,7 +103,7 @@
 #
 
 #    Propose an operator to resolve a reference of a RefDesc
-#    This rule should fire ONLY when in SIMULATED PERCEPTION mode
+#    This rule should fire ONLY when IN SIMULATED PERCEPTION mode
 sp {comprehend-word*propose*ground-reference*sim
    (state <s> ^problem-space comprehend-word
               ^lexical-access done	# May need to see comprehend-word-done as proposed
@@ -112,13 +112,22 @@ sp {comprehend-word*propose*ground-reference*sim
              -^reference resolved
               ^top-state.agent-params.simulate-perception true)
    (<cxn> ^m <ref-desc>)
-   (<ref-desc> ^is.a RefDesc)
+   (<ref-desc> ^is.a RefDesc
+              -^is.a KnownObject)
    (<ref-desc> ^modifiers <modifiers>
               -^category.rosie-category concept #   Concepts should be looked up in smem
               -^category function           #   Functions should be dealt with elsewhere
               -^givenness relative-pronoun	#	This should have been resolved previously
               -^givenness deictic           #   Ignore "this one" here
               -^givenness proper-name)      #   Proper names handled elsewhere
+   #    Avoid a weird special case
+   #    This happens for a sentence like "Drive forward one meter."
+   #    Really "one" as a pronoun should not look like a noun
+   #    that can be matched by BareNoun, but if not then we cannot
+   #    get something like SpecPropNoun for a sentence like
+   #    "Put the green one in the pantry."
+  -(<cxn> ^cxn-name BareNoun
+          ^noun.cxn-name ONE-pronoun) 
 -->
    (<s> ^operator <o> +
         ^modifiers <modifiers>)
@@ -196,7 +205,7 @@ sp {comprehend-word*propose*ground-reference*sim
 #}
 
 ##   Look for objects of a given Rosie category, NOT for pronoun ONE
-##    This rule should fire ONLY when in SIMULATED PERCEPTION mode
+##    This rule should fire ONLY when IN SIMULATED PERCEPTION mode
 #   PL 11/3/2020 It appears this is not really needed in sim mode.
 #sp {comprehend-word*apply*ground-reference*category*not-ONE*sim
 #   (state <s> ^problem-space comprehend-word
@@ -252,8 +261,8 @@ sp {comprehend-word*propose*ground-reference*sim
 #}
 
 #   Look for objects of a any reasonable Rosie category,
-#   NOT for pronoun ONE
-#    This rule should fire ONLY when in SIMULATED PERCEPTION mode
+#   NOT for pronoun ONE by itself
+#   This rule should fire only when IN SIMULATED PERCEPTION mode
 sp {comprehend-word*apply*ground-reference*category*not-ONE*object*sim
    (state <s> ^problem-space comprehend-word
               ^operator <o>
@@ -270,8 +279,33 @@ sp {comprehend-word*apply*ground-reference*category*not-ONE*object*sim
    (<ts> ^world <world>)
    (<world> ^objects.object <object>)
    (<object> ^predicates <predicates>)
-   #    Don't do it here if the category is spatial-shape
+   #    Don't do it here if the category doesn't match
    (<predicates> ^category <category>)
+-->
+   #    Post the referent on the state
+   (<s> ^category done
+        ^referent <object>)
+}
+
+#   Look for objects with a particular root-category
+#   NOT for pronoun ONE by itself
+#   This rule should fire only when IN SIMULATED PERCEPTION mode
+sp {comprehend-word*apply*ground-reference*category*not-ONE*root-category*sim
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>
+        ^simulated-perception true)
+   (<ref-desc> ^category <rosie-ref-desc>
+               ^givenness { <x> <> |one-pronoun| })
+   #    Get the category
+   (<rosie-ref-desc> ^rosie-category << object block location >>
+                     ^root-category <root-category>)
+   #    Select all referents of that category
+   (<ts> ^world <world>)
+   (<world> ^objects.object <object>)
+   (<object> ^root-category <root-category>)
 -->
    #    Post the referent on the state
    (<s> ^category done
@@ -436,36 +470,39 @@ sp {comprehend-word*apply*ground-reference*category*not-ONE*object*sim
 #        ^referent <object>)
 #}
 
-##   There are no objects of a given Rosie category
-#sp {comprehend-word*apply*ground-reference*category-empty
-#   (state <s> ^problem-space comprehend-word
-#              ^operator <o>
-#              ^top-state <ts>)
-#   (<o> ^name ground-reference
-#        ^meaning <ref-desc>)
-#   (<ref-desc> ^category <rosie-ref-desc>
-#               ^referent nil)
-#   #    Don't fire this rule if the RefDesc is for "the current location"
-# -{(<ref-desc> ^category <rd-category>
-#               ^givenness definite
-#               ^modifiers <modifiers>)
-#   (<modifiers> ^is.a PropertyDescriptor
-#                ^class state
-#                ^predicate <current-property>)
-#   (<current-property> ^item-type property
-#                       ^type state
-#                       ^handle current)}
-#   #	Get the category
-#   (<rosie-ref-desc> ^rosie-category { <category> <> nil })
-#   #	Select all referents of that category
-#   (<ts> ^world <world>)
-# -{(<world> ^objects.object <object>)
-#   (<object> ^predicates <predicates>)
-#   (<predicates> ^category <category>)}
-#-->
-#   #    Set category done flag
-#   (<s> ^category done)
-#}
+#   There are no objects of a given Rosie category
+#   This rule should fire only when IN SIMULATED PERCEPTION mode
+sp {comprehend-word*apply*ground-reference*category-empty*sim
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>
+        ^simulated-perception true)
+   (<ref-desc> ^category <rosie-ref-desc>
+               ^referent nil)
+   #    Get the category
+   (<rosie-ref-desc> ^rosie-category << object block location >>
+                     ^category <category>)
+   #    Don't fire this rule if the RefDesc is for "the current location"
+ -{(<ref-desc> ^category <rd-category>
+               ^givenness definite
+               ^modifiers <modifiers>)
+   (<modifiers> ^is.a PropertyDescriptor
+                ^class state
+                ^predicate <current-property>)
+   (<current-property> ^item-type property
+                       ^type state
+                       ^handle current)}
+   #	Select all referents of that category
+   (<ts> ^world <world>)
+ -{(<world> ^objects.object <object>)
+   (<object> ^predicates <predicates>)
+   (<predicates> ^category <category>)}
+-->
+   #    Set category done flag
+   (<s> ^category done)
+}
 
 #	Post filters from the ref-desc
 #sp {comprehend-word*apply*ground-reference*post-name-filter

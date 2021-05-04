@@ -60,11 +60,12 @@ sp {comprehend-word*propose*create-new-object*no-referent
 #   Create an object with a given Rosie category
 #   and add it to the world
 #   This is used for the normal (non-hypothetical) case.
+#    This rule should fire only when NOT in SIMULATED PERCEPTION mode
 sp {comprehend-word*apply*create-new-object*category*normal
    (state <s> ^problem-space comprehend-word
               ^operator <o>
               ^superstate.comprehension.hypothetical false
-              ^top-state <ts>)
+             -^top-state.agent-params.simulate-perception true)
    (<o> ^name create-new-object
         ^category <category>
         ^object-list <object-list>)
@@ -80,6 +81,34 @@ sp {comprehend-word*apply*create-new-object*category*normal
                  ^is-visible1 not-visible1)
    #    Add it to the world
    (<object-list> ^object <object>)
+}
+
+#   Create an object with a given Rosie category
+#   and add it to the world
+#   This is used for the normal (non-hypothetical) case.
+#   This rule should fire only when IN SIMULATED PERCEPTION mode
+#   This rule does NOT add the object to the world.
+sp {comprehend-word*apply*create-new-object*category*sim
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^superstate.comprehension.hypothetical false
+              ^top-state.agent-params.simulate-perception true)
+   (<o> ^name create-new-object
+        ^category <category>
+        ^meaning <ref-desc>)
+   #    Find the root category
+   (<ref-desc> ^category.category <root-category>)
+-->
+   #    Create the object on the state
+   (<s> ^new-object <object>)
+   (<object> ^handle (make-constant-symbol |new-object-id|)
+             ^item-type object
+             ^predicates <predicates>
+             ^predicates-copied true
+             ^root-category <root-category>)
+   (<predicates> ^category <category>
+                 ^dialog-object true
+                 ^is-visible1 not-visible1)
 }
 
 ################  For a RefDesc in a hypothetical situation  #############
