@@ -8,7 +8,7 @@ import sml.Agent.RunEventInterface;
 import sml.Kernel.AgentEventInterface;
 
 public abstract class AgentConnector implements OutputEventInterface, RunEventInterface, AgentEventInterface {
-    protected SoarAgent soarAgent;
+    protected SoarClient soarClient;
     
     private String[] outputHandlerNames;
     private HashSet<Long> outputHandlerCallbackIds;
@@ -17,8 +17,8 @@ public abstract class AgentConnector implements OutputEventInterface, RunEventIn
     
     private boolean connected;
 	
-	public AgentConnector(SoarAgent agent){
-        this.soarAgent = agent;
+	public AgentConnector(SoarClient client){
+        this.soarClient = client;
         
         this.outputHandlerCallbackIds = new HashSet<Long>();
         this.outputHandlerNames = new String[]{};
@@ -53,13 +53,13 @@ public abstract class AgentConnector implements OutputEventInterface, RunEventIn
 			return;
 		}
 		for(String name : outputHandlerNames){
-			outputHandlerCallbackIds.add(soarAgent.getAgent().AddOutputHandler(name, this, null));
+			outputHandlerCallbackIds.add(soarClient.getAgent().AddOutputHandler(name, this, null));
 		}
 
-		inputPhaseCallbackId = soarAgent.getAgent().RegisterForRunEvent(
+		inputPhaseCallbackId = soarClient.getAgent().RegisterForRunEvent(
                 smlRunEventId.smlEVENT_BEFORE_INPUT_PHASE, this, null);
 		
-		initAgentCallbackId = soarAgent.getAgent().GetKernel().RegisterForAgentEvent(
+		initAgentCallbackId = soarClient.getAgent().GetKernel().RegisterForAgentEvent(
 				smlAgentEventId.smlEVENT_BEFORE_AGENT_REINITIALIZED, this, null);
 		
 		connected = true;
@@ -71,14 +71,14 @@ public abstract class AgentConnector implements OutputEventInterface, RunEventIn
 		}
 		
 		for(Long callbackId : outputHandlerCallbackIds){
-			soarAgent.getAgent().RemoveOutputHandler(callbackId);
+			soarClient.getAgent().RemoveOutputHandler(callbackId);
 		}
 		outputHandlerCallbackIds.clear();
 
-		soarAgent.getAgent().UnregisterForRunEvent(inputPhaseCallbackId);
+		soarClient.getAgent().UnregisterForRunEvent(inputPhaseCallbackId);
 		inputPhaseCallbackId = 0;
 		
-		soarAgent.getAgent().GetKernel().UnregisterForAgentEvent(initAgentCallbackId);
+		soarClient.getAgent().GetKernel().UnregisterForAgentEvent(initAgentCallbackId);
 		initAgentCallbackId = 0;
 
 		connected = false;

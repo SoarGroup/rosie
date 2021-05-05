@@ -11,8 +11,8 @@ import edu.umich.rosie.language.LanguageTestWriter;
 import edu.umich.rosie.soarobjects.Time;
 import edu.umich.rosie.connectors.LogfileWriter;
 
-public class SoarAgent implements RunEventInterface, PrintEventInterface, OutputEventInterface {
-    public static class AgentConfig{
+public class SoarClient implements RunEventInterface, PrintEventInterface, OutputEventInterface {
+    public static class ClientConfig{
         public final String agentName;
         public final String agentSource;
         public final String smemSource;
@@ -39,7 +39,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface, Output
 		public final int clockStepMS;
 
 
-        public AgentConfig(Properties props){
+        public ClientConfig(Properties props){
             spawnDebugger = props.getProperty("spawn-debugger", "true").equals("true");
             startRunning = props.getProperty("start-running", "false").equals("true");
             writeStandardOut = props.getProperty("write-to-stdout", "false").equals("true");
@@ -47,7 +47,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface, Output
             parser = props.getProperty("parser", "lucia");
             parserTest = props.getProperty("parser-test", "false").equals("true");
            
-            agentName = props.getProperty("agent-name", "SoarAgent");
+            agentName = props.getProperty("agent-name", "soaragent");
             agentSource = props.getProperty("agent-source", null);
             smemSource = props.getProperty("smem-source", null);
             verbose = props.getProperty("verbose", "true").equals("true");
@@ -86,7 +86,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface, Output
     private Kernel kernel;
     private Agent agent;
 
-    private AgentConfig config;
+    private ClientConfig config;
 
     private boolean debuggerSpawned = false;
     private boolean isRunning = false;
@@ -99,8 +99,8 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface, Output
 
     private ArrayList<Long> outputHandlerCallbackIds;
 
-    public SoarAgent(Properties props){
-        this.config = new AgentConfig(props);
+    public SoarClient(Properties props){
+        this.config = new ClientConfig(props);
 
         runEventCallbackIds = new ArrayList<Long>();
         outputHandlerCallbackIds = new ArrayList<Long>();
@@ -168,7 +168,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface, Output
 	}
 	
     public void createAgent(){
-        //System.out.println("SoarAgent::createAgent()");
+        //System.out.println("SoarClient::createAgent()");
         // Initialize Soar Agent
         if(config.remoteConnection){
 			agent = kernel.GetAgentByIndex(0);
@@ -243,7 +243,7 @@ public class SoarAgent implements RunEventInterface, PrintEventInterface, Output
     }
 
     public void kill(){
-        System.out.println("SoarAgent::kill()");
+        System.out.println("SoarClient::kill()");
         queueStop = true;
         while(isRunning){
             try {

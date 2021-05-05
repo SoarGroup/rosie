@@ -76,8 +76,8 @@ class LanguageConnector(AgentConnector):
     """ Will handle natural language input and output to a soar agent
         For input - will add sentences onto the input link as a linked list
         For output - will take a message type and generate a natural language sentence """
-    def __init__(self, agent, print_handler=None):
-        AgentConnector.__init__(self, agent, print_handler)
+    def __init__(self, client):
+        AgentConnector.__init__(self, client)
         self.add_output_command("send-message")
         self.add_output_command("scripted-sentence")
 
@@ -124,15 +124,15 @@ class LanguageConnector(AgentConnector):
         if not message_type:
             root_id.CreateStringWME("status", "error")
             root_id.CreateStringWME("error-info", "send-message has no type")
-            self.print_handler("LanguageConnector: Error - send-message has no type")
+            self.client.print_handler("LanguageConnector: Error - send-message has no type")
             return
 
         message = RosieMessageParser.parse_message(root_id, message_type)
-        self.agent.dispatch_event(AgentMessageSent(message))
+        self.client.dispatch_event(AgentMessageSent(message))
         root_id.CreateStringWME("status", "complete")
 
     def process_scripted_sentence(self, root_id):
         sentence = root_id.GetChildString("sentence")
-        self.agent.dispatch_event(InstructorMessageSent(sentence))
+        self.client.dispatch_event(InstructorMessageSent(sentence))
         root_id.CreateStringWME("handled", "true")
 

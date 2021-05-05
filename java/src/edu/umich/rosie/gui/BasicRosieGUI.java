@@ -18,13 +18,13 @@ import edu.umich.rosie.language.ChatPanel;
 import edu.umich.rosie.language.InstructorMessagePanel;
 import edu.umich.rosie.language.InternalMessagePasser;
 import edu.umich.rosie.language.LanguageConnector;
-import edu.umich.rosie.soar.SoarAgent;
+import edu.umich.rosie.soar.SoarClient;
 import edu.umich.rosie.connectors.ActionStackConnector;
 
 @SuppressWarnings("serial")
 public class BasicRosieGUI extends JFrame
 {
-	private SoarAgent soarAgent;
+	private SoarClient soarClient;
 
 	private JButton startStopButton;
 	
@@ -38,24 +38,24 @@ public class BasicRosieGUI extends JFrame
     	getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.LINE_AXIS));
         addWindowListener(new WindowAdapter() {
         	public void windowClosing(WindowEvent w) {
-        		soarAgent.kill();
+        		soarClient.kill();
         	}
      	});
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 
-    	soarAgent = new SoarAgent(props);
+    	soarClient = new SoarClient(props);
     	
     	InternalMessagePasser internalPasser = new InternalMessagePasser();
     	
-    	language = new LanguageConnector(soarAgent, props, internalPasser);
-    	soarAgent.addConnector(language);
+    	language = new LanguageConnector(soarClient, props, internalPasser);
+    	soarClient.addConnector(language);
 
 		// print-action-stack = true
 		// Create an ActionStackConnector and print any task events to the console
 		if(props.getProperty("print-action-stack", "false").equals("true")){
-			ActionStackConnector asConn = new ActionStackConnector(soarAgent);
-			soarAgent.addConnector(asConn);
+			ActionStackConnector asConn = new ActionStackConnector(soarClient);
+			soarClient.addConnector(asConn);
 			asConn.registerForTaskEvent(new ActionStackConnector.TaskEventListener(){
 				public void taskEventHandler(String taskInfo){
 					System.out.println(taskInfo);
@@ -63,14 +63,14 @@ public class BasicRosieGUI extends JFrame
 			});
 		}
 
-    	ChatPanel chat = new ChatPanel(soarAgent, this, internalPasser);
+    	ChatPanel chat = new ChatPanel(soarClient, this, internalPasser);
     	this.add(chat);
     	
     	add(new InstructorMessagePanel(chat, props));
 
     	setupMenu();
     	
-    	soarAgent.createAgent();
+    	soarClient.createAgent();
     	
     	this.setVisible(true);
     }
@@ -81,12 +81,12 @@ public class BasicRosieGUI extends JFrame
     	startStopButton = new JButton("START");
         startStopButton.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
-				if(soarAgent.isRunning()){
+				if(soarClient.isRunning()){
 					startStopButton.setText("START");
-					soarAgent.stop();
+					soarClient.stop();
 				} else {
 					startStopButton.setText("STOP");
-					soarAgent.start();
+					soarClient.start();
 				}
 			}
         });
@@ -94,7 +94,7 @@ public class BasicRosieGUI extends JFrame
         
         menuBar.add(startStopButton);
 
-    	menuBar.add(new AgentMenu(soarAgent));
+    	menuBar.add(new AgentMenu(soarClient));
     	
     	this.setJMenuBar(menuBar);
     }

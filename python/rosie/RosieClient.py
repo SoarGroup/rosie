@@ -1,8 +1,8 @@
 import subprocess
 import random
 
-from pysoarlib import SoarAgent
-from rosie import CommandConnector, InternalCommandConnector
+from pysoarlib import SoarClient
+from rosie import ActionStackConnector, CommandConnector, InternalCommandConnector
 from rosie.events import InstructorMessageSent
 from rosie.language import LanguageConnector, ScriptConnector
 
@@ -16,8 +16,8 @@ agent_param_rule = \
 }}
 """
 
-class RosieAgent(SoarAgent):
-    """ Wraps the standard pysoarlib SoarAgent with a few rosie-specific config settings and features
+class RosieClient(SoarClient):
+    """ Wraps the standard pysoarlib SoarClient with a few rosie-specific config settings and features
 
         source_config = [string]
             The file used to configure this agent (Rosie-specific configuration)
@@ -37,9 +37,6 @@ class RosieAgent(SoarAgent):
         use_command_connector = true|false (default=true)
             If true, will create a command connector to handle special instructor commands that change the world/agent
 
-        custom_language_connector = true|false (default=false)
-            If true, will rely on a subclass to create the language connector
-
         agent_params = { }
             Specify att/val pairs to add to the ^agent-params wme in working memory
 
@@ -54,23 +51,22 @@ class RosieAgent(SoarAgent):
 
 
     def __init__(self, print_handler=None, config_filename=None, sim_clock=True, **kwargs):
-        SoarAgent.__init__(self, print_handler, config_filename, use_time_connector=True, sim_clock=sim_clock, **kwargs)
+        SoarClient.__init__(self, print_handler, config_filename, use_time_connector=True, sim_clock=sim_clock, **kwargs)
 
-        # Create the default language connector
-        if not self.custom_language_connector:
-            self.add_connector("language", LanguageConnector(self, self.print_handler))
+        self.add_connector("language", LanguageConnector(self))
+        self.add_connector("action_stack", ActionStackConnector(self))
 
         # If use_script_connector = True, add a ScriptConnector
         #   This will automatically run through the messages and send the to the agent
         if self.use_script_connector:
-            self.add_connector("script", ScriptConnector(self, self.find_help, self.print_handler))
+            self.add_connector("script", ScriptConnector(self, self.find_help))
 
         # Create the default command connector
         if self.use_command_connector:
             if self.domain == "internal":
-                self.add_connector("commands", InternalCommandConnector(self, self.print_handler))
+                self.add_connector("commands", InternalCommandConnector(self))
             else:
-                self.add_connector("commands", CommandConnector(self, self.print_handler))
+                self.add_connector("commands", CommandConnector(self))
 
         # Map from an Event Class to callback methods that will handle the event
         self.event_handlers = { }
@@ -130,7 +126,9 @@ class RosieAgent(SoarAgent):
             pass
 
     def _apply_settings(self):
-        SoarAgent._apply_settings(self)
+        SoarClient._apply_settings(self)
+
+        self.domain = self.settings.get("domain", "internal")
 
         # Rosie-specific settings
         self.source_config = self.settings.get("source_config", None)
@@ -138,7 +136,6 @@ class RosieAgent(SoarAgent):
 
         self.messages_file = self.settings.get("messages_file", None)
 
-        self.custom_language_connector = self._parse_bool_setting("custom_language_connector", False)
         self.use_script_connector = self._parse_bool_setting("use_script_connector", False)
         self.find_help = self.settings.get("find_help", "manual")
 
@@ -146,18 +143,11 @@ class RosieAgent(SoarAgent):
 
         self.agent_params = self.settings.get("agent_params", {})
 
-        self.domain = self.settings.get("domain", "internal")
-        if self.domain == "mobilesim":
-            self.domain = "magicbot"
-        self.agent_params["domain"] = self.domain
-        if self.domain == "internal":
-            self.agent_params["simulate-perception"] = "true"
-
 
     def _create_soar_agent(self):
         if self.source_config is not None and self.reconfig_on_launch:
             # Rerun the configuration tool and re-source the config file
-            self.print_handler("RosieAgent: Running RosieAgentConfigurator")
+            self.print_handler("RosieClient: Running RosieAgentConfigurator")
             output = subprocess.check_output(['java', 'edu.umich.rosie.tools.config.RosieAgentConfigurator', self.source_config])
             #for line in str(output).split('\\n'):
             #    self.print_handler(str(line))

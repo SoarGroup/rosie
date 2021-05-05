@@ -2,7 +2,7 @@ package edu.umich.rosie.connectors;
 
 import sml.*;
 import sml.Agent.PrintEventInterface;
-import edu.umich.rosie.soar.SoarAgent;
+import edu.umich.rosie.soar.SoarClient;
 import edu.umich.rosie.soar.SoarUtil;
 import edu.umich.rosie.soar.FileWriterConnector;
 import edu.umich.rosie.connectors.ActionStackConnector;
@@ -15,13 +15,13 @@ public class TaskTestWriter extends FileWriterConnector
 							implements TaskEventListener, IMessageListener, PrintEventInterface {
 	private long printCallbackId = -1;
 
-	public TaskTestWriter(SoarAgent agent, String filename){
-		super(agent, filename);
+	public TaskTestWriter(SoarClient client, String filename){
+		super(client, filename);
 
-		// Ensure that the soar agent has an ActionStackConnector
-		ActionStackConnector asConn = soarAgent.getConnector(ActionStackConnector.class);
+		// Ensure that the soar client has an ActionStackConnector
+		ActionStackConnector asConn = soarClient.getConnector(ActionStackConnector.class);
 		if(asConn == null){
-			soarAgent.addConnector(new ActionStackConnector(soarAgent));
+			soarClient.addConnector(new ActionStackConnector(soarClient));
 		}
 
 		this.setOutputHandlerNames(new String[]{ "scripted-sentence" });
@@ -29,14 +29,14 @@ public class TaskTestWriter extends FileWriterConnector
 
 	@Override
 	public void connect(){
-		soarAgent.getConnector(ActionStackConnector.class)
+		soarClient.getConnector(ActionStackConnector.class)
 			.registerForTaskEvent(this);
 
-		soarAgent.getConnector(LanguageConnector.class)
+		soarClient.getConnector(LanguageConnector.class)
 			.getMessagePasser()
 			.addMessageListener(this);
 
-        printCallbackId = soarAgent.getAgent().RegisterForPrintEvent(smlPrintEventId.smlEVENT_PRINT, this, null);
+        printCallbackId = soarClient.getAgent().RegisterForPrintEvent(smlPrintEventId.smlEVENT_PRINT, this, null);
 
 		super.connect();
 	}
@@ -44,15 +44,15 @@ public class TaskTestWriter extends FileWriterConnector
 	@Override
 	public void disconnect(){
 		
-		soarAgent.getConnector(ActionStackConnector.class)
+		soarClient.getConnector(ActionStackConnector.class)
 			.unregisterForTaskEvent(this);
 
-		soarAgent.getConnector(LanguageConnector.class)
+		soarClient.getConnector(LanguageConnector.class)
 			.getMessagePasser()
 			.removeMessageListener(this);
 
         if(printCallbackId != -1){
-            soarAgent.getAgent().UnregisterForPrintEvent(printCallbackId);
+            soarClient.getAgent().UnregisterForPrintEvent(printCallbackId);
 			printCallbackId = -1;
         }
 

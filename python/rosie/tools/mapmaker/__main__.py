@@ -18,26 +18,23 @@ from rosie.tools.mapmaker.create_internal_world import create_internal_world
 
 if len(sys.argv) <= 1:
     print("python3 -m rosie.tools.mapmaker [map_info_file] [opts..]")
-    print("  map_file_file is a specification of the world to create in $ROSIE_HOME/tools/map_info")
+    print("  map_file_file is a specification of the world")
+    print("")
     print("Will generate a set of world/map files for a rosie environment")
+    print("  (By default it will create all 3, unless 1+ are specified)")
     print("  -w|--world    Will generate the mobilesim world files")
     print("  -m|--map      Will generate waypoint maps")
     print("  -i|--internal Will generate an internal world for rosie")
-    print("  By default it will create all 3, unless 1+ are specified")
     print("")
     print("  --output-dir <dir>  Will create the files in the given directory instead of the default")
-    print("  --agent-name <name>  Specifies the name to use when creating files instead of default")
+    print("  --agent-name <name>  Specifies the name to use when creating files instead of matching the map file name")
     print("")
     print("Example: python3 -m rosie.tools.mapmaker simple_office.info")
-    print("  Input File : $ROSIE_HOME/tools/map_info/simple_office.info")
-    print("")
     print("  Output File: $MOBILE_SIM_HOME/worlds/simple_office.world")
     print("  Output File: $ROSIE_HOME/agent/manage-world-state/waypoint-maps/simple_office.soar")
     print("  Output File: $ROSIE_HOME/agent/manage-world-state/internal-worlds/simple_office.soar")
     print("")
     print("Example: python3 -m rosie.tools.mapmaker simple_office.info --output_dir world_files")
-    print("  Input File : simple_office.info (Exists locally)")
-    print("")
     print("  Output File: world_files/simple_office.world")
     print("  Output File: world_files/waypoint-map.soar")
     print("  Output File: world_files/internal-world.soar")
@@ -75,23 +72,14 @@ else:
 
 #################### PARSE THE MAP_INFO FILE #######################
 
-# Read the file
-info_filename = rosie_home + "/tools/map_info/" + map_info
-
 # First try locally
 print("Parsing info file: " + map_info)
 try:
     world_info = parse_info_file(world_stem, map_info)
 except Exception as e:
-    world_info = None
+    print(e)
+    sys.exit(0)
 
-if world_info is None:
-    print("Parsing info file: " + info_filename)
-    try:
-        world_info = parse_info_file(world_stem, info_filename)
-    except Exception as e:
-        print(e)
-        sys.exit(0)
 print("Success!\n")
 
 

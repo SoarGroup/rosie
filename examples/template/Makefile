@@ -1,42 +1,51 @@
 AGENT_NAME=template
 
-ROSIE_CONFIG=agent/rosie.${AGENT_NAME}.config
-TEST_CONFIG=test-agent/rosie.${AGENT_NAME}.config
-
-all: world ${ROSIE_CONFIG}
+ROSIE_CONFIG=agent/rosie-client.config
+TEST_CONFIG=test-agent/rosie-client.config
 
 
-# Launches both the simulator and the test chat panel
+#### Running Various Build Scripts
+
+all: world agent test
+
+agent: ${ROSIE_CONFIG}
+
+test: ${TEST_CONFIG}
+
+world: ${AGENT_NAME}.world waypoint-map.soar internal-world.soar
+
+
+
+#### Running Different Versions
+
 run_example: run_mobile_sim run_rosie
 
 run_mobile_sim: ${AGENT_NAME}.world
-	mkdir -p output
-	java soargroup.mobilesim.MobileGUI -w ${AGENT_NAME}.world > output/mobile_sim_output.txt &
+	java soargroup.mobilesim.MobileGUI -w ${AGENT_NAME}.world &
 
 run_rosie: waypoint-map.soar internal-world.soar ${ROSIE_CONFIG} 
-	mkdir -p output
-	#java soargroup.rosie.RosieGUI ${ROSIE_CONFIG}
-	python3 run_agent.py > output/rosie_output.txt &
+	python3 -m mobilesim.rosie.MobileRosieGUI ${ROSIE_CONFIG} &
 
 run_test: waypoint-map.soar internal-world.soar ${TEST_CONFIG} 
-	mkdir -p output
-	python3 run_agent.py --test
-	echo "########### DIFF ##########"
-	diff output/test-output.txt correct-output.txt
+	python3 -m rosie.testing.run_rosie_test ${TEST_CONFIG} test-output.txt
+	@echo "#################### DIFF ####################"
+	diff test-output.txt correct-output.txt
 
+
+#### Configuring Rosie Agents
 
 # agent/rosie.template.config: Configures the rosie soar agent that will be sourced to run
-${ROSIE_CONFIG}: agent.config smem-config.txt extra-smem-adds.soar
-	java edu.umich.rosie.tools.config.RosieAgentConfigurator agent.config
+${ROSIE_CONFIG}: rosie.config smem-config.txt extra-smem-adds.soar
+	java edu.umich.rosie.tools.config.RosieAgentConfigurator rosie.config
+
 
 # test-agent/rosie.template.config: Configures the rosie soar agent that will be sourced for the test
 ${TEST_CONFIG}: test.config smem-config.txt extra-smem-adds.soar
 	java edu.umich.rosie.tools.config.RosieAgentConfigurator test.config
 
 
-#### Generating World/Map Files
 
-world: ${AGENT_NAME}.world waypoint-map.soar internal-world.soar
+#### Generating World/Map Files
 
 # ${AGENT_NAME}.world: Creates the world file that the mobile simulator will use
 ${AGENT_NAME}.world: world.info
@@ -56,11 +65,10 @@ waypoint-map.soar: world.info
 clean:
 	rm -rf agent
 	rm -rf test-agent
-	rm -rf output
 	rm -rf __pycache__
+	rm -rf *.log
+	rm -f test-output.txt
 	rm -f ${AGENT_NAME}.world
 	rm -f waypoint-map.soar
 	rm -f internal-world.soar
-
-
 
