@@ -62,7 +62,6 @@ auto-generated `rosie-client.config` file by the RosieAgentConfigurator tool.
 
 `source-config = [file]` The file used by the RosieAgentConfigurator to generate this file
 
-`reconfig-on-launch = [bool] (PYTHON)` If true, will run the RosieAgentConfigurator tool every time the client is started
 
 `agent-name = [str]` The name used when creating the SoarAgent
 
@@ -79,10 +78,11 @@ auto-generated `rosie-client.config` file by the RosieAgentConfigurator tool.
 
 `start-running = [bool]` If true, the agent will start running when connect is called
 
+`reconfig-on-launch = [bool] (PYTHON)` If true, will run the RosieAgentConfigurator tool every time the client is started
 
 **Language Settings**
 
-`messages-file = filename]` A text file containing sentences to use as possible messages to Rosie (populates GUI)
+`messages-file = [filename]` A text file containing sentences to use as possible messages to Rosie (populates GUI)
 
 
 **Controlling Output**
