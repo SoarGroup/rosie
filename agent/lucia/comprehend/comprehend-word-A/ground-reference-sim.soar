@@ -37,7 +37,9 @@
 #           and *category*not-ONE*object* apply rules have both versions.
 #           The *post-name-filter apply rule has only a *no-sim
 #           version for now.
-#       7.  It is likely that more work will be needed here.
+#       7.  On 5/4/2021 the *category-empty rule was uncommented
+#           and made to work for the *sim mode.
+#       8.  It is likely that more work will be needed here.
 #
 # Details:
 #	The ground-reference operator is proposed whenever:
@@ -51,6 +53,9 @@
 #           - these should have been resolved previously
 #       6. the ^givenness of the RefDesc is not "proper-name"
 #           - these are handled by ground-proper-name
+#       7. a new version for "proper-name" is being added
+#          on 5/7/2021 to handle a situation in the *sim
+#          mode where a person is in the world model.
 #	The operator retracts whenever ^reference resolved is set
 #
 #	The value of the ^category wme of the RefDesc will be
@@ -102,12 +107,114 @@
 #	on the state, causing the operator to be retracted.
 #
 
+
+#############   RULES FOR THE PROPER NAME OF A PERSON  ################
+
+#   For now these rules will only run in SIMULATED PERCEPTION mode.
+#   When we're not simulating perception, perhaps we wouldn't
+#   be seeing people in the world.
+
 #    Propose an operator to resolve a reference of a RefDesc
+#    This rule is only for after lexical access for a proper name.
+#    This rule should fire ONLY when IN SIMULATED PERCEPTION mode
+#    However, it might be good to have this in either mode.
+sp {comprehend-word*propose*ground-reference*person*sim
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done  # May need to see comprehend-word-done as proposed
+             -^match-construction done  #   This should happen right after lexical-access
+              ^cxn <cxn>
+             -^reference resolved
+              ^top-state.agent-params.simulate-perception true)
+   (<cxn> ^is.a ProperName
+          ^m <ref-desc>)
+   (<ref-desc> ^is.a RefDesc
+               ^is.a RosieObject
+              -^is.a KnownObject)
+   (<ref-desc> ^modifiers nil
+               ^givenness proper-name       #   Proper names handled here
+               ^rosie-category person       #   This should be a person
+               ^name <proper-name>          #   Get the actual name to report
+              -^category.rosie-category concept #   Concepts should be looked up in smem
+              -^category function           #   Functions should be dealt with elsewhere
+              -^givenness relative-pronoun  #   This should have been resolved previously
+              -^givenness deictic)          #   Ignore "this one" here
+   #    Avoid a weird special case
+   #    This happens for a sentence like "Drive forward one meter."
+   #    Really "one" as a pronoun should not look like a noun
+   #    that can be matched by BareNoun, but if not then we cannot
+   #    get something like SpecPropNoun for a sentence like
+   #    "Put the green one in the pantry."
+  -(<cxn> ^cxn-name BareNoun
+          ^noun.cxn-name ONE-pronoun) 
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name ground-reference
+        ^type resolution
+        ^meaning <ref-desc>
+        ^simulated-perception true
+        ^debug-info (concat |Find the referent for a given RefDesc for "| <proper-name> |".|))
+}
+
+
+#    An apply rule to find a person in the world.
+#    This rule should fire only when NOT in SIMULATED PERCEPTION mode
+sp {comprehend-word*apply*ground-reference*category*person*sim
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>
+        ^simulated-perception true)
+   #    Check for a named person
+   #    Why is the rosie-category in a different place
+   #    here than for other things???
+   (<ref-desc> ^rosie-category person
+               ^givenness proper-name)
+   #    Select all referents of that category
+   (<ts> ^world <world>)
+   (<world> ^objects.object <object>)
+   (<object> ^predicates <predicates>)
+   #    Look for a person
+   (<predicates> ^category person)
+-->
+   #    Post the referent on the state
+   (<s> ^category done
+        ^referent <object>)
+}
+
+#   Post filters from the ref-desc
+#    This is a special case for a ProperName of a person.
+#    The way the name is represented is rather weird.
+#    This rule should fire only when IN SIMULATED PERCEPTION mode
+sp {comprehend-word*apply*ground-reference*post-name-filter*person*sim
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>
+        ^simulated-perception true)
+   (<ref-desc> ^constraint <constraint>)
+   #    Get the name
+   (<constraint> ^attr handle
+                 ^value { <name> <> nil })
+-->
+   #    Post a name filter
+   (<s> ^filter <filter>
+        ^modifiers nil) #   There should be no modifiers to a ProperName
+   (<filter> ^class name
+             ^value <name>)
+}
+
+
+#############   RULES FOR OTHER NORMAL STUFF  ################
+
+#    Propose an operator to resolve a reference of a RefDesc
+#    This rule is only for RefDesc's that come from
+#    a match-construction, ie. normal objects
 #    This rule should fire ONLY when IN SIMULATED PERCEPTION mode
 sp {comprehend-word*propose*ground-reference*sim
    (state <s> ^problem-space comprehend-word
               ^lexical-access done	# May need to see comprehend-word-done as proposed
-              ^match-construction done
+              ^match-construction done  #   This should happen after match-construction
               ^cxn <cxn>
              -^reference resolved
               ^top-state.agent-params.simulate-perception true)
@@ -137,6 +244,7 @@ sp {comprehend-word*propose*ground-reference*sim
         ^simulated-perception true
         ^debug-info (concat |Find the referent for a given RefDesc.|))
 }
+
 
 ##   Handle the case where the noun already has been grounded
 ##   This will happen for KnownObjects
