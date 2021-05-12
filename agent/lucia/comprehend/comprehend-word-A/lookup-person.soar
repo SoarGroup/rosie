@@ -1,0 +1,66 @@
+##!
+# @file
+#
+# @created plind 20210511
+# File: lookup-person.soar
+# Author: Peter Lindes
+# Created: 11 May 2021
+#
+# Desc: Looks up a named person in smem to find its referent.
+#       This version is customized for the Rosie environment.
+#
+#       This operator should run after ground-reference
+#       has tried to find the person in the world model
+#       and the person is not there.
+#
+
+#   Propose an operator to resolve the reference of a person
+sp {comprehend-word*propose*lookup-person
+   (state <s> ^problem-space comprehend-word
+              ^lexical-access done  # May need to see comprehend-word-done as proposed
+              ^cxn <cxn>
+             -^smem.command.query <q>)
+   (<cxn> ^m <person>)
+   (<person> ^is.a RosieObject
+             ^givenness proper-name
+             ^rosie-category person
+             ^constraint <constraint>
+             ^referent NONE)
+   #    The handle is under a constraint
+   (<constraint> ^attr handle
+                 ^value <handle>)
+-->
+   (<s> ^operator <o> > + =)    #   May need more if multiple lexicals
+   (<o> ^name lookup-person
+        ^type resolution
+        ^r-type person
+        ^cxn <cxn>
+        ^person-name <handle>  #   In Rosie smem, the handle is used as the name
+        ^person <person>
+        ^debug-info (concat |Find the referent in smem for a given person.|))
+}
+
+#   Make a retrieval request
+sp {comprehend-word*apply*lookup-person
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name lookup-person
+        ^r-type person
+        ^cxn <cxn>
+        ^person-name <name>
+        ^person <person>)
+-->
+   #    Request a retrieval of the predicate
+   (<s> ^retrieval <r>)
+   (<r> ^cxn <cxn>
+        ^handle (concat person- <name>)
+        ^target <person>
+        ^attribute referent)
+}
+
+
+##################  QUERY RULE   #####################
+
+#   Put a retrieval query on the smem link
+#   Use the universal rule in retrieve-item
+
