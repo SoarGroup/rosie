@@ -112,13 +112,21 @@ sp {comprehend-word*propose*ground-reference*no-sim
              -^reference resolved
              -^top-state.agent-params.simulate-perception true)
    (<cxn> ^m <ref-desc>)
-   (<ref-desc> ^is.a RefDesc)
-   (<ref-desc> ^modifiers <modifiers>
+   (<ref-desc> ^is.a RefDesc
+               ^modifiers <modifiers>
               -^category.rosie-category concept #   Concepts should be looked up in smem
               -^category function           #   Functions should be dealt with elsewhere
               -^givenness relative-pronoun	#	This should have been resolved previously
               -^givenness deictic           #   Ignore "this one" here
               -^givenness proper-name)      #   Proper names handled elsewhere
+   #    Avoid a weird special case
+   #    This happens for a sentence like "Drive forward one meter."
+   #    Really "one" as a pronoun should not look like a noun
+   #    that can be matched by BareNoun, but if not then we cannot
+   #    get something like SpecPropNoun for a sentence like
+   #    "Put the green one in the pantry."
+  -(<cxn> ^cxn-name BareNoun
+          ^noun.cxn-name ONE-pronoun) 
 -->
    (<s> ^operator <o> +
         ^modifiers <modifiers>)
@@ -250,8 +258,8 @@ sp {comprehend-word*apply*ground-reference*category*salient
 }
 
 #   Look for objects of a any reasonable Rosie category,
-#   NOT for pronoun ONE
-#    This rule should fire only when NOT in SIMULATED PERCEPTION mode
+#   NOT for pronoun ONE by itself
+#   This rule should fire only when NOT in SIMULATED PERCEPTION mode
 sp {comprehend-word*apply*ground-reference*category*not-ONE*object*no-sim
    (state <s> ^problem-space comprehend-word
               ^operator <o>
@@ -481,11 +489,32 @@ sp {comprehend-word*apply*ground-reference*post-name-filter*no-sim
              ^value <name>)
 }
 
-sp {comprehend-word*apply*ground-reference*post-shape-filter
+#   This works for "kitchen" and similar locations  PL 5/19/2021
+sp {comprehend-word*apply*ground-reference*post-handle-filter*no-sim
    (state <s> ^problem-space comprehend-word
               ^operator <o>)
    (<o> ^name ground-reference
-        ^meaning <ref-desc>)
+        ^meaning <ref-desc>
+        ^simulated-perception false)
+   (<ref-desc> ^category <rosie-ref-desc>)
+   #    Get the handle
+   (<rosie-ref-desc> ^rosie-category location
+                     ^handle { <handle> <> nil })
+-->
+   #    Post a handle filter
+   #    This looks at the top layer,
+   #    not at the predicates
+   (<s> ^filter-top <filter>)
+   (<filter> ^class handle
+             ^value <handle>)
+}
+
+sp {comprehend-word*apply*ground-reference*post-shape-filter*no-sim
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>
+        ^simulated-perception false)
    (<ref-desc> ^category <rosie-ref-desc>)
    #	Get the shape
    (<rosie-ref-desc> ^shape { <shape> <> nil })
@@ -496,11 +525,12 @@ sp {comprehend-word*apply*ground-reference*post-shape-filter
              ^value <shape>)
 }
 
-sp {comprehend-word*apply*ground-reference*post-size-filter
+sp {comprehend-word*apply*ground-reference*post-size-filter*no-sim
    (state <s> ^problem-space comprehend-word
               ^operator <o>)
    (<o> ^name ground-reference
-        ^meaning <ref-desc>)
+        ^meaning <ref-desc>
+        ^simulated-perception false)
    (<ref-desc> ^category <rosie-ref-desc>)
    #	Get the size
    (<rosie-ref-desc> ^size { <size> <> nil })
@@ -511,11 +541,12 @@ sp {comprehend-word*apply*ground-reference*post-size-filter
              ^value <size>)
 }
 
-sp {comprehend-word*apply*ground-reference*post-color-filter
+sp {comprehend-word*apply*ground-reference*post-color-filter*no-sim
    (state <s> ^problem-space comprehend-word
               ^operator <o>)
    (<o> ^name ground-reference
-        ^meaning <ref-desc>)
+        ^meaning <ref-desc>
+        ^simulated-perception false)
    (<ref-desc> ^category <rosie-ref-desc>)
    #	Get the color
    (<rosie-ref-desc> ^color { <color> <> nil })
@@ -526,11 +557,12 @@ sp {comprehend-word*apply*ground-reference*post-color-filter
              ^value <color>)
 }
 
-sp {comprehend-word*apply*ground-reference*post-state-filter
+sp {comprehend-word*apply*ground-reference*post-state-filter*no-sim
    (state <s> ^problem-space comprehend-word
               ^operator <o>)
    (<o> ^name ground-reference
-        ^meaning <ref-desc>)
+        ^meaning <ref-desc>
+        ^simulated-perception false)
    (<ref-desc> ^category <rosie-ref-desc>)
    #    Get the state
    (<rosie-ref-desc> ^state { <state> <> nil })
@@ -544,13 +576,14 @@ sp {comprehend-word*apply*ground-reference*post-state-filter
 #   If we are in hypothetical mode, we want to filter
 #   out all concrete objects for a definite RefDesc.
 #   This means filter out all with ^dialog-object true.
-sp {comprehend-word*apply*ground-reference*post-hypothetical-filter
+sp {comprehend-word*apply*ground-reference*post-hypothetical-filter*no-sim
    (state <s> ^problem-space comprehend-word
               ^operator <o>
               #    Look for the hypothetical flag
               ^superstate.comprehension.hypothetical true)
    (<o> ^name ground-reference
-        ^meaning <ref-desc>)
+        ^meaning <ref-desc>
+        ^simulated-perception false)
    #    Only if the RefDesc is definite
    (<ref-desc> ^givenness definite)
 -->
@@ -577,6 +610,26 @@ sp {comprehend-word*apply*ground-reference*apply-filter
    (<s> ^referent <object> -)
 }
 
+#   Apply any filter-top that has been posted
+#   This version looks for an attr on the
+#   object itself, not in its predicates.
+#   This is needed for things like
+#   the handle of a location.
+sp {comprehend-word*apply*ground-reference*apply-filter*top
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^filter-top <filter>
+              ^referent <object>)
+   (<o> ^name ground-reference)
+   (<filter> ^class <class>
+             ^value <value>)
+   #    Remove a referent that doesn't pass the filter
+   (<object> -^<class> <value>)
+-->
+   #    Delete the referent from the state
+   (<s> ^referent <object> -)
+}
+
 #	Remove a posted filter whether it applied or not 
 sp {comprehend-word*apply*ground-reference*remove-filter
    (state <s> ^problem-space comprehend-word
@@ -588,6 +641,19 @@ sp {comprehend-word*apply*ground-reference*remove-filter
 -->
    #	Delete this filter
    (<s> ^filter <filter> -)
+}
+
+#   Remove a posted filter-top whether it applied or not 
+sp {comprehend-word*apply*ground-reference*remove-filter*top
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^filter-top <filter>)
+   (<o> ^name ground-reference)
+   (<filter> ^class <class>
+             ^value <value>)
+-->
+   #    Delete this filter
+   (<s> ^filter-top <filter> -)
 }
 
 #   Apply any modifiers
@@ -671,7 +737,8 @@ sp {comprehend-word*apply*ground-reference*done-found
               ^operator <o>
               ^referent <referent>
               ^modifiers nil    #    All modifiers have been applied
-             -^filter <filter>)
+             -^filter <filter>          #    All filters have been applied
+             -^filter-top <filter-top>) #    All filter-tops have been applied
    (<o> ^name ground-reference
         ^meaning <ref-desc>)
    #	Ignoring givenness for now

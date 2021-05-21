@@ -129,7 +129,7 @@ sp {comprehend-word*propose*ground-reference*person*sim
           ^m <ref-desc>)
    (<ref-desc> ^is.a RefDesc
                ^is.a RosieObject
-              -^is.a KnownObject)
+               ^is.a KnownObject)
    (<ref-desc> ^modifiers nil
                ^givenness proper-name       #   Proper names handled here
                ^rosie-category person       #   This should be a person
@@ -192,10 +192,10 @@ sp {comprehend-word*apply*ground-reference*post-name-filter*person*sim
    (<o> ^name ground-reference
         ^meaning <ref-desc>
         ^simulated-perception true)
-   (<ref-desc> ^constraint <constraint>)
    #    Get the name
-   (<constraint> ^attr handle
-                 ^value { <name> <> nil })
+   (<ref-desc> ^givenness proper-name
+               ^rosie-category person
+               ^handle <name>)
 -->
    #    Post a name filter
    (<s> ^filter <filter>
@@ -220,8 +220,7 @@ sp {comprehend-word*propose*ground-reference*sim
               ^top-state.agent-params.simulate-perception true)
    (<cxn> ^m <ref-desc>)
    (<ref-desc> ^is.a RefDesc
-              -^is.a KnownObject)
-   (<ref-desc> ^modifiers <modifiers>
+               ^modifiers <modifiers>
               -^category.rosie-category concept #   Concepts should be looked up in smem
               -^category function           #   Functions should be dealt with elsewhere
               -^givenness relative-pronoun	#	This should have been resolved previously
@@ -369,7 +368,8 @@ sp {comprehend-word*propose*ground-reference*sim
 #}
 
 #   Look for objects of a any reasonable Rosie category,
-#   NOT for pronoun ONE by itself
+#   based on the OTHER category, if it is not nil,
+#   NOT for pronoun ONE by itself.
 #   This rule should fire only when IN SIMULATED PERCEPTION mode
 sp {comprehend-word*apply*ground-reference*category*not-ONE*object*sim
    (state <s> ^problem-space comprehend-word
@@ -382,13 +382,44 @@ sp {comprehend-word*apply*ground-reference*category*not-ONE*object*sim
                ^givenness { <x> <> |one-pronoun| })
    #    Get the category
    (<rosie-ref-desc> ^rosie-category << object block location >>
-                     ^category <category>)
+                     ^category { <category> <> nil })  #   The OTHER category
    #    Select all referents of that category
    (<ts> ^world <world>)
    (<world> ^objects.object <object>)
    (<object> ^predicates <predicates>)
    #    Don't do it here if the category doesn't match
    (<predicates> ^category <category>)
+-->
+   #    Post the referent on the state
+   (<s> ^category done
+        ^referent <object>)
+}
+
+
+#   A rule to ground MapLocations to the world, if possible.
+#   based on the rosie-category itself, if the OTHER category is nil,
+#   NOT for pronoun ONE by itself.
+#   This works well for things like MapLocations.
+#   This rule should fire only when IN SIMULATED PERCEPTION mode
+sp {comprehend-word*apply*ground-reference*category*not-ONE*rosie-category*sim
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>
+        ^simulated-perception true)
+   (<ref-desc> ^category <rosie-ref-desc>
+               ^givenness { <x> <> |one-pronoun| })
+   #    Get the category
+   (<rosie-ref-desc> ^rosie-category { <rosie-category>  << block location >> }
+                     ^category nil  #   Only if the OTHER category is nil
+                    -^root-category
+                    -^handle )
+   #    Select all referents of that category
+   (<ts> ^world <world>)
+   (<world> ^objects.object <object>)
+   (<object> ^predicates <predicates>)
+   (<predicates> ^category <rosie-category>)
 -->
    #    Post the referent on the state
    (<s> ^category done
@@ -409,11 +440,40 @@ sp {comprehend-word*apply*ground-reference*category*not-ONE*root-category*sim
                ^givenness { <x> <> |one-pronoun| })
    #    Get the category
    (<rosie-ref-desc> ^rosie-category << object block location >>
-                     ^root-category <root-category>)
+                     ^category nil  #   Only if the OTHER category is nil
+                     ^root-category <root-category>
+                    -^handle )
    #    Select all referents of that category
    (<ts> ^world <world>)
    (<world> ^objects.object <object>)
    (<object> ^root-category <root-category>)
+-->
+   #    Post the referent on the state
+   (<s> ^category done
+        ^referent <object>)
+}
+
+#   Look for objects with a specific handle
+#   NOT for pronoun ONE by itself
+#   This rule should fire only when IN SIMULATED PERCEPTION mode
+sp {comprehend-word*apply*ground-reference*category*not-ONE*handle*sim
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>
+        ^simulated-perception true)
+   (<ref-desc> ^category <rosie-ref-desc>
+               ^givenness { <x> <> |one-pronoun| })
+   #    Get the category
+   (<rosie-ref-desc> ^rosie-category << object block location >>
+                     ^category nil  #   Only if the OTHER category is nil
+                     ^handle <handle>
+                    -^root-category )
+   #    Select all referents of that category
+   (<ts> ^world <world>)
+   (<world> ^objects.object <object>)
+   (<object> ^handle <handle>)
 -->
    #    Post the referent on the state
    (<s> ^category done

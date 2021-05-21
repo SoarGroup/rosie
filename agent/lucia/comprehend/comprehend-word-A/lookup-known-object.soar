@@ -27,12 +27,11 @@ sp {comprehend-word*propose*lookup-known-object
    (state <s> ^problem-space comprehend-word
               ^lexical-access done  # May need to see comprehend-word-done as proposed
               ^cxn <cxn>
-             -^reference resolved
              -^smem.command.query <q>)
    (<cxn> ^m <known-object>)
    (<known-object> ^is.a KnownObject
                    ^handle <handle>
-                  -^referent { <object> <> nil })
+                   ^referent NONE)
 -->
    (<s> ^operator <o> > + =)    #   May need more if multiple lexicals
    (<o> ^name lookup-known-object
@@ -44,7 +43,7 @@ sp {comprehend-word*propose*lookup-known-object
         ^debug-info (concat |Find the referent for a given KnownObject.|))
 }
 
-#   Make a retrieval request
+#   Make a retrieval request if not a person
 #   The rule comprehend-word*apply*lookup-operator*do-query
 #   defined elsewhere will set up an smem query.
 sp {comprehend-word*apply*lookup-known-object
@@ -55,6 +54,9 @@ sp {comprehend-word*apply*lookup-known-object
         ^cxn <cxn>
         ^handle <handle>
         ^known-object <known-object>)
+   #    Check that this is NOT a person
+   (<cxn> ^m <meaning>)
+   (<meaning> ^rosie-category { <r-c> <> person })
 -->
    #    Request a retrieval of the predicate
    (<s> ^retrieval <r>)
@@ -63,4 +65,33 @@ sp {comprehend-word*apply*lookup-known-object
         ^target <known-object>
         ^attribute referent)
 }
+
+#   Make a retrieval request it IS a person
+#   The rule comprehend-word*apply*lookup-operator*do-query
+#   defined elsewhere will set up an smem query.
+sp {comprehend-word*apply*lookup-known-object*person
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>)
+   (<o> ^name lookup-known-object
+        ^r-type known-object
+        ^cxn <cxn>
+        ^handle <name>  #   Here the handle is based on the name
+        ^known-object <known-object>)
+   #    Check that this IS a person
+   (<cxn> ^m <meaning>)
+   (<meaning> ^rosie-category person)
+-->
+   #    Request a retrieval of the predicate
+   (<s> ^retrieval <r>)
+   (<r> ^cxn <cxn>
+        ^handle (concat person- <name>) #   Build the complete handle
+        ^target <known-object>
+        ^attribute referent)
+}
+
+
+##################  QUERY RULE   #####################
+
+#   Put a retrieval query on the smem link
+#   Use the universal rule in retrieve-item
 
