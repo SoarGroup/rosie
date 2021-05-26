@@ -128,10 +128,12 @@ sp {act*apply*actions-done*command*rel*ref-info*by-name
 }
 
 #   A rule for the ^predicate relation on a command using category
-#   Use this if there is no name or possessive
+#   Use this if there is no name or possessive, and the language
+#   does NOT say "current".
 sp {act*apply*actions-done*command*rel*ref-info*by-category
    (state <s> ^operator <o>
               ^result <message>
+              ^top-state <top-state>
              -^top-state.dialog-context
              -^top-state.agent-params.disable-reference-info true
              -^top-state.agent-params.hypothetical true)
@@ -142,14 +144,65 @@ sp {act*apply*actions-done*command*rel*ref-info*by-category
                ^handle << in1 on1 to1 >>
                ^2 <referent>)
    (<referent> ^root-category <root>
+               #    Don't fire for other cases
               -^name <name>
               -^possessive <possessive>)
+   #    Make sure there was NOT "current" in the language
+ -{(<top-state> ^comprehension.cxn-stack.m <meaning>)
+   (<meaning> ^location <location>)
+   (<location> ^is.a PrepRelation
+               ^prep << in1 on1 to1 >>
+               ^object.modifiers <modifiers>)
+   (<modifiers> ^class state
+                ^name current)}
 -->
    (<message> ^reference-info <info>)
    (<info> ^referent <referent>
            ^constraint <constraint1>
            ^arg-name relation)
    (<constraint1> ^category <root>)
+}
+
+#   A rule for the ^predicate relation on a command using category
+#   This is a very special case for "the current location"
+#   It's not enough to just check that the object has the current1
+#   modifier, because if the language said "the kitchen" and
+#   the kitchen was current we don't want the double ref-info.
+#   Therefore, we have to check that the language said "current".
+sp {act*apply*actions-done*command*rel*ref-info*by-current-location
+   (state <s> ^operator <o>
+              ^result <message>
+              ^top-state <top-state>
+             -^top-state.dialog-context
+             -^top-state.agent-params.disable-reference-info true
+             -^top-state.agent-params.hypothetical true)
+   (<o> ^name actions-done)
+   (<message> ^message-type command
+              ^predicate <relation>)
+   (<relation> ^item-type predicate
+               ^handle << in1 on1 to1 >>
+               ^2 <referent>)
+   (<referent> ^predicates <predicates>)
+   #    It appears that location is necessary,
+   #    but we can be flexible about the modifier.
+   (<predicates> ^category location
+                 ^modifier1 current1)
+   #    Make sure there IS "current" in the language
+   (<top-state> ^comprehension.cxn-stack.m <meaning>)
+   (<meaning> ^location <location>)
+   (<location> ^is.a PrepRelation
+               ^prep << in1 on1 to1 >>
+               ^object.modifiers <modifiers>)
+   (<modifiers> ^class state
+                ^name current)
+-->
+   (<message> ^reference-info <info>)
+   (<info> ^referent <referent>
+           ^constraint <constraint1>
+           ^constraint <constraint2>
+           ^arg-name relation)
+   (<constraint1> ^category location)
+   (<constraint2> ^modifier1 current1)
 }
 
 #   A rule for the ^predicate relation on a command using possessive

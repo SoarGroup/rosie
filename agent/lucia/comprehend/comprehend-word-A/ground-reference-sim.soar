@@ -262,54 +262,57 @@ sp {comprehend-word*propose*ground-reference*sim
 #        ^referent <referent>)
 #}
 
-##   Look for an object that fits the special case for "the current location"
-##   This rule had a weird interaction with the rule called
-##   comprehend-word*apply*ground-reference*category*not-ONE*spatial-shape*fails.
-##   That rule has to abort the grounding if a spatial shape matches
-##   something in the world but their ^spatial-shape values are different.
-##   That will happen if we have created a new object for "an empty room"
-##   and later want to ground "the current location".
-##   So that other rule now will not fire if we're looking for
-##   "the current location".
-##
-##   PL 8/18/2020 - a Location is no longer a spatial-shape, instead
-##   it has ^category location. Thus the above comments no longer apply.
-#sp {comprehend-word*apply*ground-reference*category*current-location
-#   (state <s> ^problem-space comprehend-word
-#              ^operator <o>
-#              ^top-state <ts>)
-#   (<o> ^name ground-reference
-#        ^meaning <ref-desc>)
-#   (<ref-desc> ^category <rosie-ref-desc>
-#               ^modifiers <modifiers>)
-#   #    Get the category
-#   (<rosie-ref-desc> ^rosie-category location)
-#   #    Look for the current location
-#   (<modifiers> ^is.a PropertyDescriptor
-#                ^class state
-#                ^predicate <current-property>)
-#   (<current-property> ^item-type property
-#                       ^type state
-#                       ^handle current)
-#   #    Select all referents that fit
-#   (<ts> ^world <world>)
-#   (<world> ^objects.object <object>)
-#   (<object> ^item-type location
-#             ^predicates <predicates>
-#             ^handle <handle>)
-#   (<predicates> ^category location
-#                 ^property current
-#                 ^spatial-shape <spatial-shape>)
-#-->
-#   #    Post the referent on the RefDesc
-#   (<ref-desc> ^referent nil -
-#               ^referent <object>)
-#   #    Post the referent on the state
-#   (<s> ^category done
-#        ^referent <object>)
-#   #    Set done flag
-#   (<s> ^reference resolved)
-#}
+#   Look for an object that fits the special case for "the current location"
+#   This rule had a weird interaction with the rule called
+#   comprehend-word*apply*ground-reference*category*not-ONE*spatial-shape*fails.
+#   That rule has to abort the grounding if a spatial shape matches
+#   something in the world but their ^spatial-shape values are different.
+#   That will happen if we have created a new object for "an empty room"
+#   and later want to ground "the current location".
+#   So that other rule now will not fire if we're looking for
+#   "the current location".
+#
+#   PL 8/18/2020 - a Location is no longer a spatial-shape, instead
+#   it has ^category location. Thus the above comments no longer apply.
+#   This rule should fire ONLY when IN SIMULATED PERCEPTION mode
+#   In SIM mode the formatting of the object in the world is different
+sp {comprehend-word*apply*ground-reference*category*current-location*sim
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>
+        ^simulated-perception true)
+   (<ref-desc> ^category <rosie-ref-desc>
+               ^modifiers <modifiers>)
+   #    Get the category
+   (<rosie-ref-desc> ^rosie-category location)
+   #    Look for the current location
+   (<modifiers> ^is.a PropertyDescriptor
+                ^class state
+                ^predicate <current-property>)
+   #    Look for the SIM mode form
+   (<current-property> ^handle current
+                       ^property.handle property)
+   #    Select all referents that fit
+   (<ts> ^world <world>)
+   (<world> ^objects.object <object>)
+   #    Look for the SIM mode form
+   (<object> ^item-type object
+             ^predicates <predicates>
+             ^handle <handle>)
+   (<predicates> ^category location
+                 ^modifier1 current1)
+-->
+   #    Post the referent on the RefDesc
+   (<ref-desc> ^referent nil -
+               ^referent <object>)
+   #    Post the referent on the state
+   (<s> ^category done
+        ^referent <object>)
+   #    Set done flag
+   (<s> ^reference resolved)
+}
 
 ##   Look for objects of a given Rosie category, NOT for pronoun ONE
 ##    This rule should fire ONLY when IN SIMULATED PERCEPTION mode
