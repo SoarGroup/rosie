@@ -276,7 +276,46 @@ sp {comprehend-word*propose*ground-reference*sim
 #   it has ^category location. Thus the above comments no longer apply.
 #   This rule should fire ONLY when IN SIMULATED PERCEPTION mode
 #   In SIM mode the formatting of the object in the world is different
-sp {comprehend-word*apply*ground-reference*category*current-location*sim
+#sp {comprehend-word*apply*ground-reference*category*current-location*sim
+#   (state <s> ^problem-space comprehend-word
+#              ^operator <o>
+#              ^top-state <ts>)
+#   (<o> ^name ground-reference
+#        ^meaning <ref-desc>
+#        ^simulated-perception true)
+#   (<ref-desc> ^category <rosie-ref-desc>
+#               ^modifiers <modifiers>)
+#   #    Get the category
+#   (<rosie-ref-desc> ^rosie-category location)
+#   #    Look for the current location
+#   (<modifiers> ^is.a PropertyDescriptor
+#                ^class state
+#                ^name current)
+#   #    Select all referents that fit
+#   (<ts> ^world <world>)
+#   (<world> ^objects.object <object>)
+#   #    Look for the SIM mode form
+#   (<object> ^item-type object
+#             ^predicates <predicates>
+#             ^handle <handle>)
+#   (<predicates> ^category location
+#                 ^modifier1 current1)
+#-->
+#   #    Post the referent on the RefDesc
+#   (<ref-desc> ^referent nil -
+#               ^referent <object>)
+#   #    Post the referent on the state
+#   (<s> ^category done
+#        ^referent <object>)
+#   #    Set done flag
+#   (<s> ^reference resolved)
+#}
+
+#   Look for an object that fits the special case for locations
+#   that have a state name like "current" or "starting"
+#   This rule should fire ONLY when IN SIMULATED PERCEPTION mode
+#   In SIM mode the formatting of the object in the world is different
+sp {comprehend-word*apply*ground-reference*category*named-location*sim
    (state <s> ^problem-space comprehend-word
               ^operator <o>
               ^top-state <ts>)
@@ -290,10 +329,7 @@ sp {comprehend-word*apply*ground-reference*category*current-location*sim
    #    Look for the current location
    (<modifiers> ^is.a PropertyDescriptor
                 ^class state
-                ^predicate <current-property>)
-   #    Look for the SIM mode form
-   (<current-property> ^handle current
-                       ^property.handle property)
+                ^name <state-name>)
    #    Select all referents that fit
    (<ts> ^world <world>)
    (<world> ^objects.object <object>)
@@ -302,7 +338,7 @@ sp {comprehend-word*apply*ground-reference*category*current-location*sim
              ^predicates <predicates>
              ^handle <handle>)
    (<predicates> ^category location
-                 ^modifier1 current1)
+                 ^modifier1 <state-name>)
 -->
    #    Post the referent on the RefDesc
    (<ref-desc> ^referent nil -
@@ -310,6 +346,43 @@ sp {comprehend-word*apply*ground-reference*category*current-location*sim
    #    Post the referent on the state
    (<s> ^category done
         ^referent <object>)
+   #    Set done flag
+   (<s> ^reference resolved)
+}
+
+#   Look for an object that fits the special case for locations
+#   that have a state name like "current" or "starting", and
+#   report NONE if none was found.
+#   This rule should fire ONLY when IN SIMULATED PERCEPTION mode
+#   In SIM mode the formatting of the object in the world is different
+sp {comprehend-word*apply*ground-reference*category*named-location*sim*fails
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^top-state <ts>)
+   (<o> ^name ground-reference
+        ^meaning <ref-desc>
+        ^simulated-perception true)
+   (<ref-desc> ^category <rosie-ref-desc>
+               ^modifiers <modifiers>)
+   #    Get the category
+   (<rosie-ref-desc> ^rosie-category location)
+   #    Look for the current location
+   (<modifiers> ^is.a PropertyDescriptor
+                ^class state
+                ^name <state-name>)
+   #    Select all referents that fit
+ -{(<ts> ^world <world>)
+   (<world> ^objects.object <object>)
+   #    Look for the SIM mode form
+   (<object> ^item-type object
+             ^predicates <predicates>
+             ^handle <handle>)
+   (<predicates> ^category location
+                 ^modifier1 <state-name>)}
+-->
+   #    Post the referent on the RefDesc
+   (<ref-desc> ^referent nil -
+               ^referent NONE)
    #    Set done flag
    (<s> ^reference resolved)
 }

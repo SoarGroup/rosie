@@ -83,12 +83,12 @@ sp {comprehend-word*apply*create-new-object*category*normal
    (<object-list> ^object <object>)
 }
 
-#   Create an object with a given Rosie category
-#   and add it to the world
+#   Create an object with a given root-category
 #   This is used for the normal (non-hypothetical) case.
 #   This rule should fire only when IN SIMULATED PERCEPTION mode
 #   This rule does NOT add the object to the world.
-sp {comprehend-word*apply*create-new-object*category*sim
+#   This version works for things with a root-category
+sp {comprehend-word*apply*create-new-object*root-category*sim
    (state <s> ^problem-space comprehend-word
               ^operator <o>
               ^superstate.comprehension.hypothetical false
@@ -109,6 +109,41 @@ sp {comprehend-word*apply*create-new-object*category*sim
    (<predicates> ^category <root-category>
                  ^dialog-object true
                  ^is-visible1 not-visible1)
+}
+
+#   Create location with a state name like "current" or "starting"
+#   This is used for the normal (non-hypothetical) case.
+#   This rule should fire only when IN SIMULATED PERCEPTION mode
+#   This rule does NOT add the object to the world.
+#   This version works for things with a root-category
+sp {comprehend-word*apply*create-new-object*named-location*sim
+   (state <s> ^problem-space comprehend-word
+              ^operator <o>
+              ^superstate.comprehension.hypothetical false
+              ^top-state.agent-params.simulate-perception true
+              ^modifiers <modifiers>)
+   (<o> ^name create-new-object
+        ^category <category>
+        ^meaning <ref-desc>)
+   #    Find the state name
+   (<ref-desc> ^modifiers <modifiers>)
+   (<modifiers> ^class state
+                ^name <state-name>)
+-->
+   #    Create the object on the state
+   (<s> ^new-object <object>)
+   (<object> ^predicates-copied true
+             ^predicates <predicates>    # Needed to get reference-info
+             ^item-type object
+             ^handle (make-constant-symbol |new-object-id|) )
+   (<predicates> ^category location
+                 ^dialog-object true
+                 ^modifier1 <state-name>
+                 ^is-visible1 not-visible1)
+   #    For this special case, remove the modifiers from the state
+   #    This avoids an extra state attribute on the object
+   (<s> ^modifiers <modifiers> -
+        ^modifiers nil)
 }
 
 ################  For a RefDesc in a hypothetical situation  #############
