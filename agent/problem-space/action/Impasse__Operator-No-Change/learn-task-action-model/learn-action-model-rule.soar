@@ -1,15 +1,42 @@
 
+### Propose learn-action-model-rule for an instantiated goal
+sp {learn-task-action-model*propose*learn-action-model-rule*instantiated*goal
+   (state <s> ^name learn-task-action-model
+              ^default-model-learning true
+              ^possible-goal <pg>)
+   (<pg> -^instantiate-conditions
+          ^instantiate-goal.instantiation <ins>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name learn-action-model-rule
+        ^goal-instantiation <ins>)
+}
 
-### If there is custom code in an innate task that learns an action mode (such as recall)
-#     then it should elaborate the ^custom-model-learning true flag to disable default behavior
+### Propose learn-action-model-rule for an instantiated goal with conditions
+sp {learn-task-action-model*propose*learn-action-model-rule*instantiated*goal*with*conditions
+   (state <s> ^name learn-task-action-model
+              ^default-model-learning true
+              ^possible-goal <pg>
+              ^satisfied <conds>)
+   (<pg> ^instantiate-conditions.instantiation <conds>
+         ^instantiate-goal.instantiation <ins>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name learn-action-model-rule
+        ^goal-instantiation <ins>
+        ^goal-conditions <conds>)
+}
+
+### If there are no valid goals to learn as action models, just learn the default changes
 sp {learn-task-action-model*propose*learn-action-model-rule
    (state <s> ^name learn-task-action-model
-             -^custom-model-learning true)
-   #^created-desired <d>)
+              ^default-model-learning true)
 -->
-   (<s> ^operator <o> + > =)
+   (<s> ^operator <o> + < =)
    (<o> ^name learn-action-model-rule)
 }
+
+### Learn all the required changes to the state when evaluating an operator
 
 sp {execution-type*internal*apply*task-operator*mark*tried-tied-operator
    (state <s> ^name learn-task-action-model
@@ -33,15 +60,37 @@ sp {execution-type*internal*apply*task-operator*update*current-evaluation-depth
          ^current-evaluation-depth (- <ced> 1))
 }
 
-sp {__TASK_MODEL__*problem-space*action*interal*apply*task*action-model*unary*predicate
+sp {execution-type*internal*apply*task-operator*increment*plan-length
    (state <s> ^name learn-task-action-model
               ^operator.name learn-action-model-rule
+              ^superstate <ss>)
+   (<ss> ^operator <o>
+         ^plan-length <n>)
+-->
+   (<ss> ^plan-length <n> -
+         ^plan-length (+ <n> 1))
+}
+
+sp {execution-type*internal*apply*task-operator*mark*performed-subtask
+   (state <s> ^name learn-task-action-model
+              ^operator.name learn-action-model-rule
+              ^task-operator.subtask-handle <sub-h>
+              ^superstate.current-task-segment <seg>)
+-->
+   (<seg> ^performed-subtask <sub-h>)
+}
+
+### If there are any unary/relation goal predicates, use them as action model changes to the world
+
+sp {__TASK_MODEL__*problem-space*action*interal*apply*task*action-model*unary*predicate
+   (state <s> ^name learn-task-action-model
+              ^operator <o>
               ^superstate.problem-space <ps>
-              ^created-desired <des>)
+              ^world.objects.object <obj>)
    (<ps> ^name action
          ^execution-type internal)
-   (<des> ^pred-count 1
-          ^<gpnum> <gp>)
+   (<o> ^name learn-action-model-rule
+        ^goal-instantiation.<pnum> <gp>)
    (<gp> ^type unary
          ^handle <pred-h>
          ^property-handle <prop-h>
@@ -53,13 +102,13 @@ sp {__TASK_MODEL__*problem-space*action*interal*apply*task*action-model*unary*pr
 
 sp {__TASK_MODEL__*problem-space*action*internal*apply*task*action-model*remove*other*predicate
    (state <s> ^name learn-task-action-model
-              ^operator.name learn-action-model-rule
+              ^operator <o>
               ^superstate.problem-space <ps>
-              ^created-desired <des>)
+              ^world.objects.object <obj>)
    (<ps> ^name action
          ^execution-type internal)
-   (<des> ^pred-count 1
-          ^<gpnum> <gp>)
+   (<o> ^name learn-action-model-rule
+        ^goal-instantiation.<pnum> <gp>)
    (<gp> ^type unary
          ^handle <pred-h>
          ^property-handle <prop-h>
@@ -72,18 +121,20 @@ sp {__TASK_MODEL__*problem-space*action*internal*apply*task*action-model*remove*
 
 sp {__TASK_MODEL__*problem-space*action*interal*apply*task*action-model*1*relation
    (state <s> ^name learn-task-action-model
-              ^operator.name learn-action-model-rule
+              ^operator <o>
               ^superstate.problem-space <ps>
-              ^created-desired <des>
-              ^world.predicates.predicate <wpred>)
+              ^world <w>)
    (<ps> ^name action
          ^execution-type internal)
-   (<des> ^pred-count 1
-          ^<gpnum> <gp>)
+   (<o> ^name learn-action-model-rule
+        ^goal-instantiation.<pnum> <gp>)
    (<gp> ^type relation
          ^handle <rel-h>
          ^1 <obj1>
          ^2 <obj2>)
+   (<w> ^objects <objs>
+        ^predicates.predicate <wpred>)
+   (<objs> ^object <obj1> <obj2>)
    (<wpred> ^handle <rel-h>)
    -{(<wpred> ^instance <i>)
      (<i> ^1 <obj1> ^2 <obj2>)}

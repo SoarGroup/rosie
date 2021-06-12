@@ -38,9 +38,18 @@ sp {subproblem*execute*elaborate*clear-state-no-change*priority*19
 sp {subproblem*execute*elaborate*operator*priority*18
    (state <s> ^problem-space.subproblem execute
               ^operator <o> +)
-   (<o> ^name << remove-start-of-execution-flag mark-start-time retrieve-start-goal >>)
+   (<o> ^name << remove-start-of-execution-flag mark-start-time retrieve-start-goal reset-task >>)
 -->
    (<o> ^priority 18)
+}
+
+# Priority=17: edit goal graph
+sp {subproblem*execute*elaborate*operator*priority*17
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o> +)
+   (<o> ^name << handle-repeat-command add-node-to-goal-graph complete-composite-goal >>)
+-->
+   (<o> ^priority 17)
 }
 
 # Priority=16: learn-task-goal, learn-new-subtask
@@ -48,7 +57,7 @@ sp {subproblem*execute*elaborate*operator*priority*18
 sp {subproblem*execute*elaborate*operator*priority*16
    (state <s> ^problem-space.subproblem execute
               ^operator <o> +)
-   (<o> ^name << learn-task-goal learn-new-subtask add-node-to-goal-graph complete-composite-goal >>)
+   (<o> ^name << learn-task-goal learn-new-subtask >>)
 -->
    (<o> ^priority 16)
 }
@@ -69,6 +78,16 @@ sp {subproblem*execute*elaborate*operator*priority*12
    (<o> ^name << attend-to-perception add-object-to-world >>)
 -->
    (<o> ^priority 12)
+}
+
+# Priority = 11, interrupt with a whenever-task
+sp {subproblem*execute*elaborate*operator*priority*11
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o> +)
+   (<o> ^item-type task-operator
+        ^whenever-handle <h>)
+-->
+   (<o> ^priority 11)
 }
 
 # Priority=10, select-next-goal, complete-task 
@@ -111,7 +130,8 @@ sp {subproblem*execute*elaborate*operator*default*priority*6
 sp {subproblem*execute*elaborate*task-stack*operators*priority*4
    (state <s> ^problem-space.subproblem execute
               ^operator <o> +)
-   (<o> ^item-type << task-operator command-operator >>)
+   (<o> ^item-type << task-operator command-operator >>
+       -^whenever-handle)
 -->
    (<o> ^priority 4)
 }
@@ -135,18 +155,18 @@ sp {subproblem*execute*if*child-task-segment*reject*all*others
               ^child-task-segment.task-operator <task-op>
               ^operator <task-op> +
               ^operator { <o2> <> <task-op> } +)
-   (<o2> ^name <> pop-task-segment)
+   (<o2> ^name <> pop-task-segment <> change-child-task-goal)
 -->
    (<s> ^operator <o2> -)
 }
 
-# Only operator to prefer over child-task is pop-task-segment
+# Only operator to prefer over child-task is pop-task-segment and change-child-task-goal
 sp {subproblem*execute*prefer*operators*over*subtask
    (state <s> ^problem-space.subproblem execute
               ^child-task-segment.task-operator <task-op>
               ^operator <task-op> +
               ^operator <o2> +)
-   (<o2> ^name pop-task-segment )
+   (<o2> ^name << pop-task-segment change-child-task-goal >>)
 -->
    (<s> ^operator <o2> > <task-op>)
 }
@@ -176,11 +196,11 @@ sp {subproblem*execute*learn-task-action-model*force-state-no-change
 sp {problem-space*action*elaborate*force-state-no-change*if*unlearned*desired
   (state <s> ^problem-space.subproblem execute
              ^task-operator <task-op>
-             ^superstate.operator <task-op>
-            -^desired
-            -^current-task-segment.implicit-object
-            -^current-task-segment.learning-composite-goal true)
-   (<task-op> ^current-goal <goal-h>)
+             ^current-task-segment <seg>
+            -^desired)
+   (<seg> ^current-goal.handle <goal-h>
+         -^implicit-object
+         -^learning-composite-goal)
 -->
    (<s> ^force-state-no-change true)
 }
@@ -195,16 +215,16 @@ sp {subproblem*execute*reject*subtask*proposals*if*desired*satisfied
              -^require-subtask <op-name>
               ^desired.satisfied true)
    (<o> ^item-type << task-operator command-operator >>
-        ^name { <op-name> <> send-stop-command })
+        ^name { <op-name> <> send-stop-command }
+       -^whenever-handle)
 -->
    (<s> ^operator <o> -)
 }
 
 # If the current goal is to performa certain subtask and it is performed, reject it
 sp {subproblem*execute*reject*subtask*operator*if*performed
-   (state <s> ^problem-space.subproblem execute
-              ^operator <o> +
-              ^task-operator.performed-subtask <sh>
+   (state <s> ^operator <o> +
+              ^current-task-segment.performed-subtask <sh>
               ^desired.<pnum> <gp>)
    (<gp> ^type subtask
          ^subtask-handle <sh>)
@@ -276,3 +296,36 @@ sp {subproblem*execute*reject*complete-task*if*unfinished*command
    (<s> ^operator <o> -)
 }
 
+### Whenever tasks - higher preference than other tasks
+sp {subproblem*execute*prefer*whenever-task*over*other*tasks
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o1> +
+              ^operator <o2> +)
+   (<o1> ^item-type task-operator
+         ^whenever-handle <when-h>)
+   (<o2> ^item-type task-operator
+        -^whenever-handle)
+-->
+   (<s> ^operator <o1> > <o2>)
+}
+
+# reject if we are already doing the task
+sp {subproblem*execute*reject*whenever-task*if*already*executing
+   (state <s> ^problem-space.subproblem execute
+              ^task-stack.segments.segment.task-operator.name <task-name>
+              ^operator <o1> +)
+   (<o1> ^name <task-name>
+         ^whenever-handle <when-h>)
+-->
+   (<s> ^operator <o1> -)
+}
+
+# Reject for go-to-next-waypoint
+sp {subproblem*execute*reject*whenever-task*go-to-next-waypoint
+   (state <s> ^name << op_go-to-xy1 op_face1 op_go-to-next-waypoint1 >>
+              ^operator <o1> +)
+   (<o1> ^name <task-name>
+         ^whenever-handle <when-h>)
+-->
+   (<s> ^operator <o1> -)
+}

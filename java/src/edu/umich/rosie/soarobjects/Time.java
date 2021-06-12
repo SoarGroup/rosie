@@ -3,12 +3,15 @@ package edu.umich.rosie.soarobjects;
 import sml.Identifier;
 import edu.umich.rosie.soar.ISoarObject;
 import edu.umich.rosie.soar.IntWME;
+import edu.umich.rosie.soar.SoarUtil;
 import java.util.Calendar;
 
 public class Time implements ISoarObject{
 	private long startTime;
+	private long lastTime;
 	private boolean added = false;
 
+	private boolean simClock;
 	private int clockStep;
 
 	private Identifier timeId = null;
@@ -24,8 +27,9 @@ public class Time implements ISoarObject{
 	private IntWME clockEpoch;
 	private IntWME[] clockWmes;
 	
-	public Time(int clockStep){
-		this.clockStep = clockStep;
+	public Time(boolean simClock, int clockStepMS){
+		this.simClock = simClock;
+		this.clockStep = clockStepMS;
 		
 		this.milsecs = new IntWME("milliseconds", 0L);
 		this.seconds = new IntWME("seconds", 0L);
@@ -38,8 +42,22 @@ public class Time implements ISoarObject{
 		this.clockEpoch = new IntWME("epoch", 0L);
 
 		this.clockWmes = new IntWME[]{ clockHour, clockMin, clockSec, clockMS, clockEpoch };
-
 		this.resetTime();
+	}
+
+	public void updateClock(){
+		Calendar curTime = Calendar.getInstance();
+		long millis = curTime.getTimeInMillis();
+		long diff = millis - lastTime;
+		if(clockMS.getValue() + diff > 1000){
+			// Tests if we hit a new second
+			clockEpoch.setValue((long)(millis/1000));
+			clockSec.setValue((long)curTime.get(Calendar.SECOND));
+			clockMin.setValue((long)curTime.get(Calendar.MINUTE));
+			clockHour.setValue((long)curTime.get(Calendar.HOUR_OF_DAY));
+		}
+		clockMS.setValue(millis % 1000);
+		lastTime = millis;
 	}
 
 	public void tick(){
@@ -61,16 +79,27 @@ public class Time implements ISoarObject{
 
 	private void resetTime(){
 		this.startTime = mstime();
+		this.lastTime = mstime();
 		this.clockHour.setValue(8L);
 		this.clockMin.setValue(0L);
 		this.clockSec.setValue(0L);
 		this.clockMS.setValue(0L);
 		this.clockEpoch.setValue(1605000000L);
+		if(!simClock){
+			updateClock();
+		}
+	}
+
+	public void setTime(long hour, long min){
+		this.resetTime();
+		clockHour.setValue(hour);
+		clockMin.setValue(min);
 	}
 	
 	public static long mstime(){
 		return (Calendar.getInstance()).getTimeInMillis();
 	}
+
 
 	@Override
 	public void addToWM(Identifier parentId) {
@@ -111,7 +140,11 @@ public class Time implements ISoarObject{
 		steps.setValue(steps.getValue()+1);
 		steps.updateWM();
 
-		this.tick();
+		if(simClock){
+			this.tick();
+		} else {
+			this.updateClock();
+		}
 		for(IntWME wme : clockWmes){
 			wme.updateWM();
 		}

@@ -66,6 +66,12 @@ public class TranslateSentence extends RegressBaseListener {
 			"   (<w%d> ^spelling |%s|\n"
 			+ "         ^quoted true\n"
 			+ "         ^next %s)\n";
+	static final String TIME_WORD_WME = 
+			"   (<w%d> ^spelling |%s|\n"
+			+ "        ^clocktime true\n"
+			+ "        ^hour %s\n"
+			+ "        ^minute %s\n"
+			+ "        ^next %s)\n";
 			
 	
 //	static final String EXPECTATION_WME =
@@ -158,16 +164,17 @@ public class TranslateSentence extends RegressBaseListener {
 			// Each sentence word can either be a WORD or QUOTE
 			TerminalNode word = sWord.getToken(RegressParser.WORD, 0);
 			TerminalNode quote = sWord.getToken(RegressParser.QUOTE, 0);
+			TerminalNode clocktime = sWord.getToken(RegressParser.TIME, 0);
+			TerminalNode comma = sWord.getToken(RegressParser.COMMA, 0);
         	String nextId = String.format("<w%d>", wordNumber + 1);
 
 			if(word != null){
 				// The word is a single word
 				sentenceBuilder.append(" " + word.getText());
-
-				String wordWme = String.format(WORD_WME, wordNumber,
-										word.getText().toLowerCase(),  nextId);
+				String wordText = word.getText().toLowerCase();
+				String wordWme = String.format(WORD_WME, wordNumber, wordText, nextId);
 				wordWmesBuilder.append(wordWme);
-			
+
 			} else if(quote != null){
 				// The word is a quoted message
 				sentenceBuilder.append(" " + quote.getText());
@@ -175,8 +182,18 @@ public class TranslateSentence extends RegressBaseListener {
 				String quoteWme = String.format(QUOTED_WORD_WME, wordNumber,
 										quote.getText().replaceAll("\"", ""), nextId);
 				wordWmesBuilder.append(quoteWme);
+			} else if (clocktime != null){
+				sentenceBuilder.append(" " + clocktime.getText());
+				String hour = clocktime.getText().split(":")[0];
+				String min = clocktime.getText().split(":")[1];
+				String timeWme = String.format(TIME_WORD_WME, wordNumber, clocktime.getText(), hour, min, nextId);
+				wordWmesBuilder.append(timeWme);
+			} else if (comma != null){
+				sentenceBuilder.append(",");
+				String wordWme = String.format(WORD_WME, wordNumber, ",", nextId);
+				wordWmesBuilder.append(wordWme);
 			} else {
-				System.err.println("SentenceWord was not a WORD or QUOTE");
+				System.err.println("SentenceWord was not a WORD, TIME, or QUOTE");
 				return;
 			}
 			wordNumber += 1;

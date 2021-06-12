@@ -44,6 +44,8 @@ public class Message implements ISoarObject
         	punct = lastChar;
         }
 
+		message = message.replaceAll(",", " ,");
+
         // Extract quoted string to add as a single symbol
         String quote = null;
         int beginQuote = message.indexOf('"');

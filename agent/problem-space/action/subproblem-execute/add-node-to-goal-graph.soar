@@ -1,48 +1,16 @@
-#### If the instructor gives the command 'Complete the following tasks'
-# The agent will add the flag ^begin-composite-goal true to the current-task-segment
-# This operator will see the flag and create a new goal in the goal-graph 
-#   which will represent one or more subtasks
-
-# Uses the add-node-to-goal-graph operator in task-utils
-
-sp {subproblem*execute*propose*add-node-to-goal-graph*composite
-   (state <s> ^problem-space.subproblem execute
-              ^task-operator <task-op>
-              ^current-task-segment.begin-composite-goal true)
-   (<task-op> ^task-handle <task-h>
-              ^current-goal <goal-h>)
--->
-   (<s> ^operator <o> + =)
-   (<o> ^name add-node-to-goal-graph
-        ^type composite
-        ^task-handle <task-h>
-        ^after <goal-h>)
-}
-
-sp {subproblem*execute*apply*add-node-to-goal-graph*composite
-   (state <s> ^problem-space.subproblem execute
-              ^operator <o>
-              ^current-task-segment <seg>)
-   (<o> ^name add-node-to-goal-graph
-        ^type composite
-        ^add-node-result <node-h>)
-   (<seg> ^begin-composite-goal true)
--->
-   (<seg> ^begin-composite-goal true -
-          ^learning-composite-goal true)
-}
 
 # If the instructor told us the task is done, add a terminal node
 sp {subproblem*execute*propose*add-node-to-goal-graph*terminal
    (state <s> ^problem-space.subproblem execute
               ^desired <des>
               ^task-operator <task-op>
-              ^current-task-segment.finish-task true)
+              ^current-task-segment <seg>)
    (<des> ^satisfied true
          -^item-type terminal-goal
          -^modifiers.handle always1)
-   (<task-op> ^task-handle <task-h>
-              ^current-goal <goal-h>)
+   (<task-op> ^task-handle <task-h>)
+   (<seg> ^current-goal.handle <goal-h>
+          ^finish-task true)
 -->
    (<s> ^operator <o> + =)
    (<o> ^name add-node-to-goal-graph

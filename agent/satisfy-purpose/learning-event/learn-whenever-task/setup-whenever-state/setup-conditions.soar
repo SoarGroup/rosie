@@ -1,0 +1,203 @@
+### Here we need to make sure that the conditions are satisfied in the copied world
+
+
+### First, elaborate each type of condition
+sp {setup-whenever-state*elaborate*check-condition*unary
+   (state <s> ^name setup-whenever-state
+              ^whenever-task.conditions.<pnum> <pred>)
+   (<pred> ^type unary
+           ^id.default <pdef>
+           ^{1}.default <def1>)
+   (<pdef> ^property-handle <prop-h>
+           ^predicate-handle <pred-h>)
+-->
+   (<s> ^check-condition <cc>)
+   (<cc> ^type unary
+         ^property-handle <prop-h>
+         ^predicate-handle <pred-h>
+         ^1 <obj1>)
+   (<obj1> ^predicates <def1>)
+}
+
+sp {setup-whenever-state*elaborate*check-condition*relation
+   (state <s> ^name setup-whenever-state
+              ^whenever-task.conditions.<pnum> <pred>)
+   (<pred> ^type relation
+           ^id.default.predicate-handle <pred-h>
+           ^{1}.default <def1>
+           ^{2}.default <def2>)
+-->
+   (<s> ^check-condition <cc>)
+   (<cc> ^type relation
+         ^predicate-handle <pred-h>
+         ^1 <obj1>
+         ^2 <obj2>)
+   (<obj1> ^predicates <def1>)
+   (<obj2> ^predicates <def2>)
+}
+
+sp {setup-whenever-state*elaborate*check-condition*object-exists
+   (state <s> ^name setup-whenever-state
+              ^whenever-task.conditions.<pnum> <pred>)
+   (<pred> ^type object-exists)
+-->
+   (<s> ^check-condition <cc>)
+   (<cc> ^type object-exists
+         ^source <pred>
+         ^1 <obj1>)
+   (<obj1> ^predicates <preds1>)
+}
+
+sp {setup-whenever-state*elaborate*check-condition*object-exists*copy*predicates
+   (state <s> ^name setup-whenever-state
+              ^check-condition <cc>)
+   (<cc> ^type object-exists
+         ^source <pred>
+         ^{1}.predicates <obj1>)
+   (<pred> ^type object-exists
+           ^<n> <obj-pred>)
+   (<obj-pred> ^property-handle <prop-h>
+               ^predicate-handle <pred-h>)
+-->
+   (<obj1> ^<prop-h> <pred-h>)
+}
+  
+### Second, check for objects in the world that match those in the condition
+
+sp {setup-whenever-state*elaborate*check-condition*object-match
+   (state <s> ^name setup-whenever-state
+              ^check-condition <cc>
+              ^world.objects.object <wobj>)
+   (<cc> ^{ << 1 2 >> } <obj>)
+   (<obj> ^predicates <preds>)
+   (<wobj> ^predicates <wpreds>)
+   -{(<preds> ^<prop-h> <pred-h>)
+     (<wpreds> -^<prop-h> <pred-h>)}
+-->
+   (<obj> ^object-match <wobj>)
+}
+
+### Third, if there is no matching object in the world, create one
+
+sp {setup-whenever-state*propose*create-condition-object
+   (state <s> ^name setup-whenever-state
+              ^check-condition <cc>)
+   (<cc> ^{ << 1 2 >> } <obj>)
+   (<obj> ^predicates <preds> 
+         -^object-match)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name create-condition-object
+        ^object <obj>
+        ^predicates <preds>)
+}
+
+sp {setup-whenever-state*apply*create-condition-object
+   (state <s> ^name setup-whenever-state
+              ^operator <o>
+              ^world.objects <objs>)
+   (<o> ^name create-condition-object
+        ^object <obj>
+        ^predicates <preds>)
+   (<preds> ^category <cat>)
+-->
+   (<objs> ^object <new-obj>)
+   (<new-obj> ^handle (make-constant-symbol |obj-hand|)
+              ^item-type object
+              ^root-category <cat>
+              ^predicates <preds>)
+}
+
+sp {setup-whenever-state*apply*create-condition-object*no*category
+   (state <s> ^name setup-whenever-state
+              ^operator <o>
+              ^world.objects <objs>)
+   (<o> ^name create-condition-object
+        ^object <obj>
+        ^predicates <preds>)
+   (<preds> -^category <cat>)
+-->
+   (<objs> ^object <new-obj>)
+   (<new-obj> ^handle (make-constant-symbol |obj-hand|)
+              ^item-type object
+              ^root-category entity1
+              ^predicates <preds>)
+   (<preds> ^category entity1)
+}
+
+### Fourth, if there is no matching unary predicate, add it to an object
+sp {setup-whenever-state*propose*create-unary-predicate
+   (state <s> ^name setup-whenever-state
+              ^check-condition <cc>)
+   (<cc> ^type unary
+         ^property-handle <prop-h>
+         ^predicate-handle <pred-h>
+         ^1 <obj1>)
+   (<obj1> ^object-match <wobj>
+          -^object-match.predicates.<prop-h> <pred-h>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name create-unary-predicate
+        ^object <wobj>
+        ^property-handle <prop-h>
+        ^predicate-handle <pred-h>)
+}
+
+sp {setup-whenever-state*apply*create-unary-predicate
+   (state <s> ^name setup-whenever-state
+              ^operator <o>)
+   (<o> ^name create-unary-predicate
+        ^object.predicates <preds>
+        ^property-handle <prop-h>
+        ^predicate-handle <pred-h>)
+-->
+   (<preds> ^<prop-h> <pred-h>)
+}
+
+### Fifth, if there is no matching relation predicate, create one
+
+sp {setup-whenever-state*elaborate*check-condition*relation-match
+   (state <s> ^name setup-whenever-state
+              ^check-condition <cc>
+              ^world.predicates.predicate <pred>)
+   (<cc> ^type relation
+         ^predicate-handle <pred-h>
+         ^{1}.object-match <obj1>
+         ^{2}.object-match <obj2>)
+   (<pred> ^handle <pred-h>
+           ^instance <i>)
+   (<i> ^1 <obj1> ^2 <obj2>)
+-->
+   (<cc> ^relation-match <i>)
+}
+
+sp {setup-whenever-state*propose*create-relation-predicate
+   (state <s> ^name setup-whenever-state
+              ^check-condition <cc>)
+   (<cc> ^type relation
+         ^predicate-handle <pred-h>
+         ^{1}.object-match <obj1>
+         ^{2}.object-match <obj2>
+        -^relation-match)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name create-relation-predicate
+        ^predicate-handle <pred-h>
+        ^obj1 <obj1>
+        ^obj2 <obj2>)
+}
+
+sp {setup-whenever-state*apply*create-relation-predicate
+   (state <s> ^name setup-whenever-state
+              ^operator <o>
+              ^world.predicates.predicate <pred>)
+   (<o> ^name create-relation-predicate
+        ^predicate-handle <pred-h>
+        ^obj1 <obj1>
+        ^obj2 <obj2>)
+   (<pred> ^handle <pred-h>)
+-->
+   (<pred> ^instance <i>)
+   (<i> ^1 <obj1> ^2 <obj2>)
+}
+
