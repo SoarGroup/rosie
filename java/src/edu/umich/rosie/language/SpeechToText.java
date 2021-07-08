@@ -10,7 +10,7 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.TargetDataLine;
 
 import edu.umich.rosie.language.LanguageConnector.MessageType;
-import edu.umich.rosie.soar.SoarAgent;
+import edu.umich.rosie.soar.SoarClient;
 
 public class SpeechToText {
     // Audio Recorder for Speech to Text
@@ -22,11 +22,11 @@ public class SpeechToText {
 
     private String speechFile;
     
-    private SoarAgent soarAgent;
+    private SoarClient soarClient;
 
-    public SpeechToText(String speechFile, SoarAgent soarAgent){
+    public SpeechToText(String speechFile, SoarClient soarClient){
         this.speechFile = speechFile;
-        this.soarAgent = soarAgent;
+        this.soarClient = soarClient;
 
     	this.audioFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 16000.0F, 16, 1, 2, 16000.0F, false);
         this.audioFile = new File("audio_files/forward.raw");
@@ -67,7 +67,7 @@ public class SpeechToText {
     		result = result.toLowerCase();
 
     	System.out.println("STT Result: " + result);
-		LanguageConnector conn = soarAgent.getConnector(LanguageConnector.class);
+		LanguageConnector conn = soarClient.getConnector(LanguageConnector.class);
     	conn.sendMessage(result, MessageType.INSTRUCTOR_MESSAGE);
 	}
 }

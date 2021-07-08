@@ -1,6 +1,6 @@
 package edu.umich.rosie.tools.config;
 
-import java.io.File;
+import java.io.*;
 import java.util.*;
 
 public class RosieConfig {
@@ -12,412 +12,254 @@ public class RosieConfig {
 			super(message);
 		}
 	}
-
-	// A set of property names used in the config file
-	public static final HashSet<String> PROP_NAMES = new HashSet<String>(
-			Arrays.asList("agent-name", "agent-dir", "domain",
-					"parser", "parser-test",
-					"hypothetical", "simulate-perception", "enable-svs",
-					"sentence-source", "sentences-file", "world-file", "smem-config-file", 
-					"custom-soar-file", "custom-smem-file", 
-					"map-info-file", "object-info-file", "internal-world-file", "waypoint-map-file"));
-	
-	// agent-name = <string> [OPTIONAL] - The name of the agent (used as root of file names)
-	//   DEFAULT - The name of the config file (minus extension)
-	public String agentName;
 	
 	// agent-dir = <string>  [OPTIONAL] - The directory the agent should be created in
 	//    DEFAULT - The directory containing the config file
-	public String agentDir;
+	public File agentDir = null;
+
+	// agent-name = <string> [REQUIRED] - The name of the agent (used as root of file names)
+	//   DEFAULT - The name of the config file (minus extension)
+	public String agentName = null;
+	
+	// source-soar-file = <file> [ANY NUMBER]
+	//     Extra soar files that should be sourced by the agent
+	//     Can prefix with ${config_dir} or ${rosie_agent}
+	public List<File> sourceSoarFiles = new ArrayList<File>();
+
+	// source-smem-file = <file> [ANY NUMBER]
+	//     A smem file relative to the config directory that should be sourced by the agent (after being mapped)
+	public List<File> sourceSmemFiles = new ArrayList<File>();
+
+	// smem-config-file = <file> [ANY NUMBER]
+	//     An smem config file that should be included (can define templates/files to be mapped)
+	//     Can prefix with ${config_dir} or ${rosie_agent}
+	public List<File> smemConfigFiles = new ArrayList<File>();
 	
 	// domain = << magicbot tabletop internal fetch ai2thor cozmo >>  [OPTIONAL]
 	//    The environment the agent is in (determines perception/action rules)
-	public String domain;
+	public String domain = null;
 	public static final HashSet<String> VALID_DOMAINS = new HashSet<String>(
 			Arrays.asList("magicbot", "tabletop", "internal", "fetch", "ai2thor", "cozmo"));
+	
+	// world-file = <filename> [OPTIONAL]
+	//    A file with info about the top-state world 
+	//    (File used by WorldGenerator)
+	public File worldFile = null;
 
-	// simulate-perception << true false >> [OPTIONAL]
-	//    Only relevant for domain=internal, whether more detailed perception is simulated
-	public Boolean simulate_perception;
-
-	// enable-svs << true false >> [DEFAULT=true]
-	public Boolean enable_svs;
 	
 	// parser = << laird lucia >>  [OPTIONAL] - The parser the agent should use
 	//    DEFAULT - laird
-	public String parser;
-	public static final String DEFAULT_PARSER = "laird";
+	public String parser = "laird";
 	public static final HashSet<String> VALID_PARSERS = new HashSet<String>(
 			Arrays.asList("laird", "lucia"));
 	
 	// parser-test = << true false >>  [OPTIONAL] - Whether to parse in test mode
 	//    DEFAULT - false
-	public String parser_test;
-	public static final String DEFAULT_PARSER_TEST = "false";
+	public String parser_test = "false";
 	public static final HashSet<String> VALID_PARSER_TESTS = new HashSet<String>(
 			Arrays.asList("true", "false"));
 	
 	// hypothetical = << true false >>  [OPTIONAL] - Whether to parse hypothetically in test mode
 	//    DEFAULT - false
-	public String hypothetical;
-	public static final String DEFAULT_HYPOTHETICAL = "false";
+	public String hypothetical = "false";
 	public static final HashSet<String> VALID_HYPOTHETICALS = new HashSet<String>(
 			Arrays.asList("true", "false"));
 	
 	// sentence-source = << chat scripts >>  [OPTIONAL] - Where sentences come from
 	//    DEFAULT - chat
-	public String sentenceSource;
-	public static final String DEFAULT_SENTENCE_SRC = "chat";
+	public String sentenceSource = "chat";
 	public static final HashSet<String> VALID_SENTENCE_SRCS = new HashSet<String>(
 			Arrays.asList("chat", "scripts"));
 	
 	// sentences-file = <filename> [OPTIONAL] 
 	//    A file with a list of sentences
 	//    (File used by SentencesGenerator)
-	public File sentencesFile;
+	public File sentencesFile = null;
+
+
+	// Any other properties in the file will be passed on to the created rosie-client.config file
+	public HashMap<String, String> clientSettings = new HashMap<String, String>();
 	
-	// world-file = <filename> [OPTIONAL]
-	//    A file with info about the top-state world 
-	//    (File used by WorldGenerator)
-	public File worldFile;
 
-	// smem-config-file = <filename> [OPTIONAL]
-	//     A file with info about what concepts to include from smem
-	//    (File used by SmemConfigurator)
-	public File smemConfigFile;
-
-	// use-default-smem-config = <bool> [OPTIONAL, default=True]
-	//    If true (default) will use agent/init-smem/default-smem-config.txt to setup smem
-	public Boolean useDefaultSmemConfig;
-	public static final Boolean DEFAULT_USE_DEFAULT_SMEM_CONFIG = true;
+	// SETTINGS SET DURING CREATION
 	
-	// custom-soar-file = <filename> [OPTIONAL]
-	//     A file containing soar code that will be sourced by the agent
-	public File customSoarFile;
-
-	// custom-smem-file = <filename> [OPTIONAL]
-	//     A file containing smem adds that will be sourced by the agent
-	public File customSmemFile;
-
-	// map-info-file = <filename> [OPTIONAL]
-	//     A file containing information about the map the agent is driving in (room regions)
-	public File mapInfoFile;
-
-	// object-info-file = <filename> [OPTIONAL]
-	//     A file containing information used to simulate or annotate object properties 
-	public File objectInfoFile;
-
-	// internal-world-file = <filename> [OPTIONAL]
-	//     A file inside agent/manage-world-state/internal-worlds used to initialize the top-state world
-	public File internalWorldFile;
-
-	// waypoint-map-file = <filename> [OPTIONAL]
-	//     A file inside agent/manage-world-state/waypoint-maps which defines a waypoint map used for navigation
-	public File waypointMapFile;
-
-	// extra-rosie-files = <file1>;<file2>;... [OPTIONAL]
-	//     A file relative to the rosie agent directory that should be sourced by soar
-	//     Can specify more than 1 if separated by semicolons
-	public List<String> extraRosieFiles;
-
-	// Any other properties in the file will be put into the created rosie.config file
-	public HashMap<String, String> otherSettings;
-	
-	// rosieHome - the directory containing rosie
-	public String rosieHome;
+	// rosieAgentDir - the directory containing the rosie agent
+	public final File rosieAgentDir;
 
 	// sourceFile - the full path of the file this config was created from
-	public String sourceFile;
+	public final File sourceFile;
+
+	// sourceDir - the directory containing this config file
+	public final File sourceDir;
 	
-	public RosieConfig(File configFile, Properties props, String rosieHome) throws RosieConfigException {
-		String configDir = configFile.getParent().replaceAll("\\\\", "/");
-		
-		// rosieHome
-		this.rosieHome = rosieHome; 
+	private String cleanPath(String path){
+		return path.replaceAll("\\\\", "/");
+	}
 
-		// sourceFile
-		this.sourceFile = configFile.getAbsolutePath().replaceAll("\\\\", "/");
+	public RosieConfig(File configFile, String rosieHome) throws RosieConfigException {
+		this.sourceFile = configFile;
+		this.sourceDir = configFile.getParentFile();
+		this.agentDir = new File(this.sourceDir, "agent");
+		this.rosieAgentDir = new File(rosieHome + "/agent");
+		validateFile("ROSIE_HOME", this.rosieAgentDir);
 
-		// agent-name
-		if (props.containsKey("agent-name")){
-			this.agentName = props.getProperty("agent-name");
-		} else {
-			this.agentName = configFile.getName();
-			if (this.agentName.lastIndexOf(".") > 0){
-				this.agentName = this.agentName.substring(0, this.agentName.lastIndexOf("."));
+		try {
+			BufferedReader reader = new BufferedReader(new FileReader(configFile));
+			String line;
+			int lineNum = 0;
+			while((line = reader.readLine()) != null){
+				line = line.trim();
+				if(line.length() > 0 && line.charAt(0) != '#'){
+					String[] args = line.split(" ");
+					if(args.length < 3 || !args[1].equals("=")){
+						throw new IOException("Error parsing setting on line " + String.valueOf(lineNum) + ":\n" + line);
+					}
+					handleSetting(args[0], args[2]);
+				}
+				lineNum += 1;
 			}
+			reader.close();
+		} catch (IOException e){
+			throw new RosieConfigException("Error reading the config file:\n" + e);
 		}
-		
-		// agent-dir
-		if (props.containsKey("agent-dir")){
-			this.agentDir = configFile.getParent() + "/" + props.getProperty("agent-dir").replaceAll("\\\\", "/");
-		} else {
-			this.agentDir = configFile.getParent() + "/agent";
+
+		this.validate();
+	}
+
+	private void handleSetting(String settingName, String settingValue) {
+		settingValue = settingValue.replace("${agent-dir}", this.agentDir.getAbsolutePath());
+		settingValue = settingValue.replace("${config-dir}", this.sourceDir.getAbsolutePath());
+		settingValue = settingValue.replace("${rosie-agent}", this.rosieAgentDir.getAbsolutePath());
+		settingValue = cleanPath(settingValue);
+
+		if(settingName.equals("agent-name")){
+			this.agentName = settingValue;
 		}
-		this.agentDir = this.agentDir.replaceAll("\\\\", "/");
-		
+		else if(settingName.equals("agent-dir")){
+			this.agentDir = new File(this.sourceDir, settingValue);
+		}
+		else if(settingName.equals("source-soar-file")){
+			File soarFile = new File(settingValue);
+			if(!soarFile.exists()){
+				soarFile = new File(this.sourceDir, settingValue);
+			}
+			this.sourceSoarFiles.add(soarFile);
+		}
+		else if(settingName.equals("source-smem-file")){
+			File smemFile = new File(settingValue);
+			if(!smemFile.exists()){
+				smemFile = new File(this.sourceDir, settingValue);
+			}
+			this.sourceSmemFiles.add(smemFile);
+		}
+		else if(settingName.equals("smem-config-file")){
+			File smemConfigFile = new File(settingValue);
+			if(!smemConfigFile.exists()){
+				smemConfigFile = new File(this.sourceDir, settingValue);
+			}
+			this.smemConfigFiles.add(smemConfigFile);
+		}
+		else if(settingName.equals("domain")){
+			this.domain = settingValue.toLowerCase();
+		}
+		else if(settingName.equals("world-file")){
+			this.worldFile = new File(this.sourceDir + "/" + settingValue);
+		}
+		else if(settingName.equals("parser")){
+			this.parser = settingValue.toLowerCase();
+		}
+		else if(settingName.equals("parser-test")){
+			this.parser_test = settingValue.toLowerCase();
+		}
+		else if(settingName.equals("hypothetical")){
+			this.hypothetical = settingValue.toLowerCase();
+		}
+		else if(settingName.equals("sentence-source")){
+			this.sentenceSource = settingValue.toLowerCase();
+		}
+		else if(settingName.equals("sentences-file")){
+			this.sentencesFile = new File(this.sourceDir, settingValue);
+		}
+		else {
+			this.clientSettings.put(settingName, settingValue);
+		}
+
+	}
+
+	private void validate() throws RosieConfigException {
+		// agentName
+		if(this.agentName == null){
+			throw new RosieConfigException("agent-name is required");
+		}
+
 		// domain
-		if (props.containsKey("domain")){
-			this.domain = props.getProperty("domain").toLowerCase();
-			if(!VALID_DOMAINS.contains(this.domain)){
-				throw new RosieConfigException("domain " + this.domain + " is not valid\n" + 
-						"Must be one of: " + VALID_DOMAINS.toString());
-			}
-		} else {
-			this.domain = null;
+		if(this.domain != null){
+			validateOptions("domain", this.domain, VALID_DOMAINS);
 		}
 
-		// simulate-perception
-		if (this.domain != null && this.domain.equals("internal")){
-			this.simulate_perception = props.getProperty("simulate-perception", "false").toLowerCase().equals("true");
-		} else {
-			this.simulate_perception = false;
+		validateOptions("parser", this.parser, VALID_PARSERS);
+		validateOptions("parser-test", this.parser_test, VALID_PARSER_TESTS);
+		validateOptions("hypothetical", this.hypothetical, VALID_HYPOTHETICALS);
+		validateOptions("sentence-source", this.sentenceSource, VALID_SENTENCE_SRCS);
+
+		validateFile("world-file", this.worldFile);
+		validateFile("sentences-file", this.sentencesFile);
+
+		for(File f : this.sourceSoarFiles){
+			validateFile("source-soar-file", f);
+		}
+		for(File f : this.sourceSmemFiles){
+			validateFile("source-smem-file", f);
+		}
+		for(File f : this.smemConfigFiles){
+			validateFile("smem-config-file", f);
 		}
 
-		// enable-svs
-		this.enable_svs = props.getProperty("enable_svs", "true").toLowerCase().equals("true");
-		
-		// parser
-		if (props.containsKey("parser")){
-			this.parser = props.getProperty("parser").toLowerCase();
-			if(!VALID_PARSERS.contains(this.parser)){
-				throw new RosieConfigException("parser " + this.parser + " is not valid\n" + 
-						"Must be one of: " + VALID_PARSERS.toString());
-			}
-		} else {
-			parser = DEFAULT_PARSER;
-		}
-		
-		// parser-test
-		if (props.containsKey("parser-test")){
-			this.parser_test = props.getProperty("parser-test").toLowerCase();
-			if(!VALID_PARSER_TESTS.contains(this.parser_test)){
-				throw new RosieConfigException("parser_test " + this.parser_test + " is not valid\n" + 
-						"Must be one of: " + VALID_PARSER_TESTS.toString());
-			}
-		} else {
-			parser_test = DEFAULT_PARSER_TEST;
-		}
-		
-		// hypothetical
-		if (props.containsKey("hypothetical")){
-			this.hypothetical = props.getProperty("hypothetical").toLowerCase();
-			if(!VALID_HYPOTHETICALS.contains(this.hypothetical)){
-				throw new RosieConfigException("hypothetical " + this.hypothetical + " is not valid\n" + 
-						"Must be one of: " + VALID_HYPOTHETICALS.toString());
-			}
-		} else {
-			hypothetical = DEFAULT_HYPOTHETICAL;
-		}
-		
-		// sentence-source
-		if (props.containsKey("sentence-source")){
-			this.sentenceSource = props.getProperty("sentence-source").toLowerCase();
-			if(!VALID_SENTENCE_SRCS.contains(this.sentenceSource)){
-				throw new RosieConfigException("sentence-source " + this.sentenceSource + " is not valid\n" + 
-						"Must be one of: " + VALID_SENTENCE_SRCS.toString());
-			}
-		} else {
-			this.sentenceSource = DEFAULT_SENTENCE_SRC;
-		}
-		
-		// sentences-file
-		if (props.containsKey("sentences-file")){
-			this.sentencesFile = new File(configDir + "/" + props.getProperty("sentences-file"));
-		} else {
-			this.sentencesFile = null;
-		}
-		
-		// world-file
-		if (props.containsKey("world-file")){
-			this.worldFile = new File(configDir + "/" + props.getProperty("world-file"));
-		} else {
-			this.worldFile = null;
-		}
-		
-		// smem-config-file
-		if (props.containsKey("smem-config-file")){
-			this.smemConfigFile = new File(configDir + "/" + props.getProperty("smem-config-file"));
-		} else {
-			this.smemConfigFile = null;
-		}
-		
-		// use-default-smem-config
-		if (props.containsKey("use-default-smem-config")){
-			this.useDefaultSmemConfig = new Boolean(props.getProperty("use-default-smem-config"));
-		} else {
-			this.useDefaultSmemConfig = DEFAULT_USE_DEFAULT_SMEM_CONFIG;
-		}
-		
-		// custom-soar-file
-		if (props.containsKey("custom-soar-file")){
-			this.customSoarFile = new File(configDir + "/" + props.getProperty("custom-soar-file"));
-		} else {
-			this.customSoarFile = null;
-		}
-		
-		// custom-smem-file
-		if (props.containsKey("custom-smem-file")){
-			this.customSmemFile = new File(configDir + "/" + props.getProperty("custom-smem-file"));
-		} else {
-			this.customSmemFile = null;
-		}
-		
-		// map-info-file
-		if (props.containsKey("map-info-file")){
-			this.mapInfoFile = new File(configDir + "/" + props.getProperty("map-info-file"));
-		} else {
-			this.mapInfoFile = null;
-		}
-		
-		// object-info-file
-		if (props.containsKey("object-info-file")){
-			this.objectInfoFile = new File(configDir + "/" + props.getProperty("object-info-file"));
-		} else {
-			this.objectInfoFile = null;
-		}
-		
-		// internal-world-file
-		if (props.containsKey("internal-world-file")){
-			this.internalWorldFile = new File(this.rosieHome + "/agent/manage-world-state/internal-worlds/" + props.getProperty("internal-world-file"));
-		} else {
-			this.internalWorldFile = null;
-		}
-		
-		// waypoint-map-file
-		if (props.containsKey("waypoint-map-file")){
-			this.waypointMapFile = new File(this.rosieHome + "/agent/manage-world-state/waypoint-maps/" + props.getProperty("waypoint-map-file"));
-		} else {
-			this.waypointMapFile = null;
-		}
+	}
 
-		// extra-rosie-files
-		if (props.containsKey("extra-rosie-files")){
-			String files = props.getProperty("extra-rosie-files");
-			extraRosieFiles = new ArrayList<String>(Arrays.asList(files.split(";")));
-		} else {
-			extraRosieFiles = new ArrayList<String>();
+	private void validateOptions(String name, String value, HashSet<String> options) throws RosieConfigException {
+		if(!options.contains(value)){
+			throw new RosieConfigException(name + " " + value + " is not valid\n" + 
+					"Must be one of: " + options.toString());
 		}
-		
-		// otherSettings
-		// Anything else in the config file will be 
-		this.otherSettings = new HashMap<String, String>();
-		for(Map.Entry<Object, Object> e : props.entrySet()){
-			String name = (String)e.getKey();
-			String val = (String)e.getValue();
-			if(!PROP_NAMES.contains(name)){
-				val = val.replace("${agent-dir}", agentDir);
-				val = val.replace("${config-dir}", configDir);
-				this.otherSettings.put(name, val);
-			}
+	}
+
+	private void validateFile(String name, File file) throws RosieConfigException {
+		if(file != null && !file.exists()){
+			throw new RosieConfigException(name + " file " + file.getName() + " does not exist");
 		}
 	}
 	
 	public String toString(){
 		StringBuilder sb = new StringBuilder();
 		sb.append("agent-name = " + this.agentName + "\n");
-		sb.append("agent-dir = " + this.agentDir + "\n");
-		sb.append("rosie-home = " + this.rosieHome + "\n");
+		sb.append("agent-dir = " + this.agentDir.getName() + "\n");
 		sb.append("domain = " + this.domain + "\n");
-		sb.append("simulate-perception = " + new Boolean(this.simulate_perception).toString() + "\n");
-		sb.append("enable-svs = " + new Boolean(this.enable_svs).toString() + "\n");
 		sb.append("parser = " + this.parser + "\n");
 		sb.append("parser-test = " + this.parser_test + "\n");
 		sb.append("hypothetical = " + this.hypothetical + "\n");
 		sb.append("sentence-source = " + this.sentenceSource + "\n");
+		sb.append("sentences-file = " + (this.sentencesFile == null ? "None" : this.sentencesFile.getName()) + "\n");
+		sb.append("world-file = " + (this.worldFile == null ? "None" : this.worldFile.getName()) + "\n");
 
-		if(this.sentencesFile != null){
-			sb.append("sentences-file = " + this.sentencesFile.getName() + "\n");
-			if(!this.sentencesFile.exists()){
-				sb.append("  !!! File does not exist !!!\n");
-			}
-		} else {
-			sb.append("sentences-file = None\n");
+		sb.append("\nSourcing the following soar files:\n");
+		for(File f : this.sourceSoarFiles){
+			sb.append("   > " + f.getAbsolutePath() + "\n");
 		}
 
-		if(this.worldFile != null){
-			sb.append("world-file = " + this.worldFile.getName() + "\n");
-			if(!this.worldFile.exists()){
-				sb.append("  !!! File does not exist !!!\n");
-			}
-		} else {
-			sb.append("world-file = None\n");
+		sb.append("\nSourcing the following local smem files:\n");
+		for(File f : this.sourceSmemFiles){
+			sb.append("   > " + f.getAbsolutePath() + "\n");
 		}
 
-		if(this.smemConfigFile != null){
-			sb.append("smem-config-file = " + this.smemConfigFile.getName() + "\n");
-			if(!this.smemConfigFile.exists()){
-				sb.append("  !!! File does not exist !!!\n");
-			}
-		} else {
-			sb.append("smem-config-file = None\n");
+		sb.append("\nIncluding the following smem config files:\n");
+		for(File f : this.smemConfigFiles){
+			sb.append("   > " + f.getAbsolutePath() + "\n");
 		}
 
-		sb.append("use-default-smem-config = " + this.useDefaultSmemConfig.toString() + "\n");
-
-		if(this.customSoarFile != null){
-			sb.append("custom-soar-file = " + this.customSoarFile.getName() + "\n");
-			if(!this.customSoarFile.exists()){
-				sb.append("  !!! File does not exist !!!\n");
-			}
-		} else {
-			sb.append("custom-soar-file = None\n");
-		}
-
-		if(this.customSmemFile != null){
-			sb.append("custom-smem-file = " + this.customSmemFile.getName() + "\n");
-			if(!this.customSmemFile.exists()){
-				sb.append("  !!! File does not exist !!!\n");
-			}
-		} else {
-			sb.append("custom-smem-file = None\n");
-		}
-
-		if(this.mapInfoFile != null){
-			sb.append("map-info-file = " + this.mapInfoFile.getName() + "\n");
-			if(!this.mapInfoFile.exists()){
-				sb.append("  !!! File does not exist !!!\n");
-			}
-		} else {
-			sb.append("map-info-file = None\n");
-		}
-
-		if(this.objectInfoFile != null){
-			sb.append("object-info-file = " + this.objectInfoFile.getName() + "\n");
-			if(!this.objectInfoFile.exists()){
-				sb.append("  !!! File does not exist !!!\n");
-			}
-		} else {
-			sb.append("object-info-file = None\n");
-		}
-
-		if(this.internalWorldFile != null){
-			sb.append("internal-world-file = " + this.internalWorldFile.getName() + "\n");
-			if(!this.internalWorldFile.exists()){
-				sb.append("  !!! File does not exist !!!\n");
-			}
-		} else {
-			sb.append("internal-world-file = None\n");
-		}
-
-		if(this.waypointMapFile != null){
-			sb.append("waypoint-map-file = " + this.waypointMapFile.getName() + "\n");
-			if(!this.waypointMapFile.exists()){
-				sb.append("  !!! File does not exist !!!\n");
-			}
-		} else {
-			sb.append("waypoint-map-file = None\n");
-		}
-
-		Integer numFiles = this.extraRosieFiles.size();
-		sb.append("Number of extra-rosie-files: " + numFiles.toString() + "\n");
-		for(String f : this.extraRosieFiles){
-			sb.append("   > " + f + "\n");
-		}
-		
-		
-		for(Map.Entry<String, String> e : this.otherSettings.entrySet()){
-			sb.append(e.getKey() + " = " + e.getValue() + "\n");
+		sb.append("\nOther client settings added to rosie-client.config\n");	
+		for(Map.Entry<String, String> e : this.clientSettings.entrySet()){
+			sb.append("   > " + e.getKey() + " = " + e.getValue() + "\n");
 		}
 		
 		return sb.toString();

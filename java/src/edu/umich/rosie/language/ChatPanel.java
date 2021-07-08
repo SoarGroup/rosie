@@ -25,7 +25,7 @@ import javax.swing.text.*;
 
 import edu.umich.rosie.language.LanguageConnector.MessageType;
 import edu.umich.rosie.language.IMessagePasser.*;
-import edu.umich.rosie.soar.SoarAgent;
+import edu.umich.rosie.soar.SoarClient;
 
 public class ChatPanel extends JPanel implements IMessagePasser.IMessageListener{
 	// GUI COMPONENTS
@@ -54,14 +54,14 @@ public class ChatPanel extends JPanel implements IMessagePasser.IMessageListener
     // OTHER
     private Object outputLock = new Object();
     
-    private SoarAgent soarAgent;
+    private SoarClient soarClient;
     
     private IMessagePasser messageLogger;
 
 	private BlockingQueue<RosieMessage> queuedMessages = new LinkedBlockingQueue<RosieMessage>();
 
-    public ChatPanel(SoarAgent agent, JFrame parentFrame, IMessagePasser messageLogger) {
-        this.soarAgent = agent;
+    public ChatPanel(SoarClient client, JFrame parentFrame, IMessagePasser messageLogger) {
+        this.soarClient = client;
         
         setupGUI(parentFrame);
 		setupStyles();
@@ -203,7 +203,7 @@ public class ChatPanel extends JPanel implements IMessagePasser.IMessageListener
 			for(RosieMessage message : messages){
 				Style msgStyle = chatDoc.getStyle(message.type.toString());
 				DateFormat dateFormat = new SimpleDateFormat("mm:ss:SSS");
-				//int dc = soarAgent.getAgent().GetDecisionCycleCounter();
+				//int dc = soarClient.getAgent().GetDecisionCycleCounter();
 				Date d = new Date();
 				
 				//String fullMessage = dc + " " + dateFormat.format(d) + " ";
@@ -250,21 +250,21 @@ public class ChatPanel extends JPanel implements IMessagePasser.IMessageListener
 				upPressed();
 			} else if(arg0.getKeyCode() == KeyEvent.VK_DOWN){
 				downPressed();
-			} else if(arg0.getKeyCode() == KeyEvent.VK_CONTROL && soarAgent != null){
-				LanguageConnector lang = soarAgent.getConnector(LanguageConnector.class);
+			} else if(arg0.getKeyCode() == KeyEvent.VK_CONTROL && soarClient != null){
+				LanguageConnector lang = soarClient.getConnector(LanguageConnector.class);
 				//lang.getSTT().startListening();
 			}
 		}
 		public void keyReleased(KeyEvent arg0) {
-			if(arg0.getKeyCode() == KeyEvent.VK_CONTROL && soarAgent != null){
-				LanguageConnector lang = soarAgent.getConnector(LanguageConnector.class);
+			if(arg0.getKeyCode() == KeyEvent.VK_CONTROL && soarClient != null){
+				LanguageConnector lang = soarClient.getConnector(LanguageConnector.class);
 				//lang.getSTT().stopListening();
 			}
-			if(arg0.getKeyCode() == KeyEvent.VK_F1 && soarAgent != null){
-				if(soarAgent.isRunning()){
-					soarAgent.stop();
+			if(arg0.getKeyCode() == KeyEvent.VK_F1 && soarClient != null){
+				if(soarClient.isRunning()){
+					soarClient.stop();
 				} else {
-					soarAgent.start();
+					soarClient.start();
 				}
 			}
 		}

@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.Properties;
 
 import edu.umich.rosie.soar.SVSCommands;
-import edu.umich.rosie.soar.SoarAgent;
+import edu.umich.rosie.soar.SoarClient;
 import sml.Kernel;
 import sml.Agent;
 
@@ -30,13 +30,13 @@ public class SVSTester {
     }
 
 	public SVSTester(Properties props){
-		SoarAgent agent = new SoarAgent(props);
-		agent.createAgent();
+		SoarClient client = new SoarClient(props);
+		client.createAgent();
 		StringBuilder sb = new StringBuilder();
 		sb.append(SVSCommands.addBox("box1", new double[]{1, 1, 0}, new double[]{0.5, 0.5, 0.5}));
 		sb.append(SVSCommands.addBox("box2", new double[]{1, -0.5, 0}, new double[]{0.5, 0.5, 0.5}));
 		sb.append(SVSCommands.addBox("box3", new double[]{1, 0, 0}, new double[]{0.5, 0.5, 0.5}));
-		agent.getAgent().SendSVSInput(sb.toString());
+		client.getAgent().SendSVSInput(sb.toString());
 		while(true){}
 	}
 }

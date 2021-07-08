@@ -10,8 +10,8 @@ from rosie.events import CommandHandled
 current_time_ms = lambda: int(round(time.time() * 1000))
 
 class CommandConnector(AgentConnector):
-    def __init__(self, agent, print_handler=None):
-        AgentConnector.__init__(self, agent, print_handler)
+    def __init__(self, client):
+        AgentConnector.__init__(self, client)
         self.queued_command = None
         self.active_command = None
         self.wait_time = 0
@@ -24,7 +24,7 @@ class CommandConnector(AgentConnector):
 
     def on_output_event(self, command_name, root_id):
         if command_name == "handled-command":
-            self.agent.dispatch_event(CommandHandled(root_id.GetChildString("command")))
+            self.client.dispatch_event(CommandHandled(root_id.GetChildString("command")))
             root_id.CreateStringWME("handled", "true")
 
     def on_input_phase(self, input_link):
@@ -46,7 +46,7 @@ class CommandConnector(AgentConnector):
         if self.active_command is not None:
             command = self.active_command
             self.active_command = None
-            self.agent.dispatch_event(CommandHandled(command))
+            self.client.dispatch_event(CommandHandled(command))
 
     def _execute_command(self, command):
         self.active_command = command
@@ -60,11 +60,11 @@ class CommandConnector(AgentConnector):
 
         # START
         if cmd_name == 'start':
-            self.agent.start()
+            self.client.start()
             complete_now = True
         # STOP
         elif cmd_name == 'stop':
-            self.agent.stop()
+            self.client.stop()
             complete_now = True
         # WAIT <secs>
         #   will wait the given number of seconds before reporting success
@@ -77,7 +77,7 @@ class CommandConnector(AgentConnector):
         # CLI arg1 arg2 ...
         #   will execute a soar command (e.g. "CLI p s1 -d 2")
         elif cmd_name == 'cli':
-            self.agent.execute_command(' '.join(args[1:]), print_res=True)
+            self.client.execute_command(' '.join(args[1:]), print_res=True)
             complete_now = True
         # IGNORE/SKIP
         #   will ignore what Rosie said
@@ -87,7 +87,7 @@ class CommandConnector(AgentConnector):
         # SET-TIME <H> <MIN>
         #   will set the input-link clock to the specific time
         elif cmd_name == 'set-time':
-            self.agent.get_connector('time').set_time(int(args[1]), int(args[2]))
+            self.client.get_connector('time').set_time(int(args[1]), int(args[2]))
             complete_now = True
 
         ### CHANGING PREDICATES
@@ -145,19 +145,19 @@ class CommandConnector(AgentConnector):
 
 
 class InternalCommandConnector(CommandConnector):
-    def __init__(self, agent, print_handler=None):
-        CommandConnector.__init__(self, agent, print_handler)
+    def __init__(self, client):
+        CommandConnector.__init__(self, client)
 
     def _handle_set_pred_command(self, obj_id, prop_handle, pred_handle):
-        self.agent.get_connector("language").send_message(self.active_command)
+        self.client.get_connector("language").send_message(self.active_command)
         return False
 
     def _handle_place_command(self, obj_id, rel_handle, dest_id):
-        self.agent.get_connector("language").send_message(self.active_command)
+        self.client.get_connector("language").send_message(self.active_command)
         return False
 
     def _handle_move_command(self, obj_id, wp_handle):
-        self.agent.get_connector("language").send_message(self.active_command)
+        self.client.get_connector("language").send_message(self.active_command)
         return False
 
     def _handle_teleport_command(self, obj_id, x, y, z, wp_handle):

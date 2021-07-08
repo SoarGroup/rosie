@@ -243,4 +243,16 @@ public class SoarUtil
         }
         return attStrings;
     }
+
+	public static Set<Identifier> getAllChildIds(Identifier id, String attribute){
+        Set<Identifier> childIds = new HashSet<Identifier>();
+        for(int index = 0; index < id.GetNumberChildren(); index++){
+            WMElement wme = id.GetChild(index);
+            if(wme.GetAttribute().equals(attribute) && wme.IsIdentifier()){
+                childIds.add(wme.ConvertToIdentifier());
+            }
+        }
+        return childIds;
+
+	}
 }

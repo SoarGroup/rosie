@@ -3,7 +3,7 @@ import tkinter.font
 
 import sys
 
-from . import RosieAgent
+from . import RosieClient
 from rosie.events import AgentMessageSent, ScriptMessageSent, InstructorMessageSent
 
 class RosieGUI(Frame):
@@ -91,28 +91,28 @@ class RosieGUI(Frame):
 
 
     """ Creates a single chat box interface to send messages to Rosie and receive messages back """
-    def __init__(self, rosie_agent, master):
+    def __init__(self, rosie_client, master):
         Frame.__init__(self, master, width=800, height=600)
-        self.agent = rosie_agent
+        self.rosie_client = rosie_client
 
         self.master = master
         master.columnconfigure(0, weight=1)
         master.rowconfigure(0, weight=1)
 
         self.create_widgets()
-        self.setup_soar_agent()
+        self.setup_rosie_client()
 
         master.geometry("800x600")
         master.protocol("WM_DELETE_WINDOW", self.on_exit)
 
-    def setup_soar_agent(self):
-        """ Put any code that connects with the agent here """
-        self.agent.add_event_handler(AgentMessageSent, lambda e: self.messages_list.add(e.message))
-        self.agent.add_event_handler(InstructorMessageSent, lambda e: self.messages_list.add(e.message))
-        self.agent.add_event_handler(ScriptMessageSent, lambda e: self.script_list.select_line(e.index))
+    def setup_rosie_client(self):
+        """ Put any code that connects with the rosie_client here """
+        self.rosie_client.add_event_handler(AgentMessageSent, lambda e: self.messages_list.add(e.message))
+        self.rosie_client.add_event_handler(InstructorMessageSent, lambda e: self.messages_list.add(e.message))
+        self.rosie_client.add_event_handler(ScriptMessageSent, lambda e: self.script_list.select_line(e.index))
 
     def run(self):
-        self.agent.connect()
+        self.rosie_client.connect()
         self.master.mainloop()
 
     def create_widgets(self):
@@ -127,13 +127,13 @@ class RosieGUI(Frame):
         self.rowconfigure(1, weight=20, minsize=400)
         self.rowconfigure(2, weight=2, minsize=50)
 
-        # Row 0: Top row of buttons for running the agent
+        # Row 0: Top row of buttons for running Rosie
         self.run_button = Button(self, text="Run", font=("Times", "18"))
-        self.run_button["command"] = lambda: self.agent.start()
+        self.run_button["command"] = lambda: self.rosie_client.start()
         self.run_button.grid(row=0, column=0, sticky=N+S+E+W)
 
         self.stop_button = Button(self, text="Stop", font=("Times", "18"))
-        self.stop_button["command"] = lambda: self.agent.stop()
+        self.stop_button["command"] = lambda: self.rosie_client.stop()
         self.stop_button.grid(row=0, column=1, sticky=N+S+E+W)
 
         # Row 1: Message History (Col 0-1) and Script Messages (Col 2-3)
@@ -141,7 +141,9 @@ class RosieGUI(Frame):
         self.messages_list = RosieGUI.MessagesList(self)
         self.messages_list.grid(row=1, column=0, columnspan=2, sticky=N+S+E+W)
 
-        self.script_list = RosieGUI.ScriptList(self, self.agent.messages)
+        print("AGENT MESSAGES")
+        print(self.rosie_client.messages)
+        self.script_list = RosieGUI.ScriptList(self, self.rosie_client.messages)
         self.script_list.click_handler = lambda msg: self.send_message_to_rosie(msg)
         self.script_list.grid(row=1, column=2, columnspan=2, sticky=N+S+E+W)
 
@@ -155,7 +157,7 @@ class RosieGUI(Frame):
         self.submit_button.grid(row=2, column=3, columnspan=1, sticky=N+S+E+W)
 
     def on_exit(self):
-        self.agent.kill()
+        self.rosie_client.kill()
         if self.master:
             self.master.destroy()
 
@@ -163,7 +165,7 @@ class RosieGUI(Frame):
         if len(message) > 0:
             self.chat_entry.add_to_history(message)
             self.chat_entry.clear()
-            self.agent.send_message(message)
+            self.rosie_client.send_message(message)
 
 
 def main():
@@ -173,8 +175,8 @@ def main():
     rosie_config = sys.argv[1]
 
     root = Tk()
-    rosie_agent = RosieAgent(rosie_config)
-    rosie_gui = RosieGUI(rosie_agent, master=root)
+    rosie_client = RosieClient(config_filename=rosie_config)
+    rosie_gui = RosieGUI(rosie_client, master=root)
     rosie_gui.run()
 
 if __name__ == "__main__":

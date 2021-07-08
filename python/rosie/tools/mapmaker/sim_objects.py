@@ -13,7 +13,7 @@ class SimObject:
     # Instantiate the object by reading parameters from the reader
     # cat px py pz row sx sy sz r g b num_preds p1=v1 p2=v2 ...
     # (note that cat, pos, rot, scl can all be overriden by child class)
-    # Should return self
+    # !!! Should return self !!!
     def read_info(self, reader, scale=1.0):
         if not hasattr(self, 'cat'):
             self.cat = reader.nextWord()
@@ -34,7 +34,7 @@ class SimObject:
         self.write_color(writer)
         self.write_predicates(writer)
 
-    ### READ/WRITE the transform (pos/rot/scale)
+    ### READ/WRITE the transform (3 floats for pos, 1 float for rotation, 3 floats for scale)
 
     def read_transform(self, reader, scale):
         if not hasattr(self, 'pos'):
@@ -60,7 +60,7 @@ class SimObject:
         writer.write("  %(x)s %(y)s %(z)s\n" % \
                 { "x": pf(self.scl[0]), "y": pf(self.scl[1]), "z": pf(self.scl[2]) })
 
-    ### READ/WRITE object predicates
+    ### READ/WRITE object predicates (an integer N followed by N words)
     
     def read_predicates(self, reader):
         # 1 int - number of predicates
@@ -94,7 +94,7 @@ class SimObject:
             else:
                 writer.write("    %s=%s\n" % (prop, val) )
 
-    ### READ/WRITE color
+    ### READ/WRITE color (3 int values)
     
     def read_color(self, reader):
         if not hasattr(self, 'rgb'):

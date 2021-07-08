@@ -5,7 +5,7 @@ from rosie.events import *
 from pysoarlib import WMInterface, AgentConnector
 
 class ScriptConnector(AgentConnector):
-    """ The ScriptConnector will automatically run through the list of messages on the RosieAgent
+    """ The ScriptConnector will automatically run through the list of messages on the RosieClient
             and send each one to the agent through the input-link using the LanguageConnector """
 
     """ FindHelp: Different ways the script connector can respond if Rosie asks for help finding something
@@ -15,8 +15,8 @@ class ScriptConnector(AgentConnector):
         custom # Some other code will handle the request (set the handler via set_find_helper)
     """
 
-    def __init__(self, agent, find_help, print_handler=None):
-        AgentConnector.__init__(self, agent, print_handler)
+    def __init__(self, client, find_help):
+        AgentConnector.__init__(self, client)
         self.send_next_message = False
 
         self.find_request_handler = None
@@ -44,11 +44,11 @@ class ScriptConnector(AgentConnector):
 
     def connect(self):
         super().connect()
-        self.script = list(self.agent.messages)
+        self.script = list(self.client.messages)
         self.script_index = 0
 
-        self.agent.add_event_handler(AgentMessageSent, lambda e: self._agent_message_handler(e.message))
-        self.agent.add_event_handler(CommandHandled, lambda e: self.advance_script())
+        self.client.add_event_handler(AgentMessageSent, lambda e: self._agent_message_handler(e.message))
+        self.client.add_event_handler(CommandHandled, lambda e: self.advance_script())
 
     def on_init_soar(self):
         self.script_index = 0
@@ -72,8 +72,8 @@ class ScriptConnector(AgentConnector):
             else:
                 self.active_find_request = False
 
-            self.agent.dispatch_event(ScriptMessageSent(message, self.script_index-1))
-            self.agent.send_message(message)
+            self.client.dispatch_event(ScriptMessageSent(message, self.script_index-1))
+            self.client.send_message(message)
 
     def _agent_message_handler(self, msg):
         """ If we get a message from the agent, advance the current script """
@@ -90,5 +90,5 @@ class ScriptConnector(AgentConnector):
         if self.find_request_handler is not None:
             answer = self.find_request_handler(msg)
         if answer is not None:
-            self.agent.send_message(answer)
+            self.client.send_message(answer)
 

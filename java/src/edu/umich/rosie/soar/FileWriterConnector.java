@@ -8,8 +8,8 @@ public abstract class FileWriterConnector extends AgentConnector {
 	protected String filename;
     protected PrintStream writer = null;
 
-	public FileWriterConnector(SoarAgent agent, String filename){
-		super(agent);
+	public FileWriterConnector(SoarClient client, String filename){
+		super(client);
 
 		this.filename = filename;
 	}
