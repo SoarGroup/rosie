@@ -74,6 +74,8 @@ auto-generated `rosie-client.config` file by the RosieAgentConfigurator tool.
 
 **Running the Agent**
 
+`remote-connection = [bool]` If true, will try connecting to a remote kernel/agent
+
 `spawn-debugger = [bool]` If true, will spawn the Java debugger (requires $SOAR_HOME)
 
 `start-running = [bool]` If true, the agent will start running when connect is called
@@ -91,12 +93,25 @@ auto-generated `rosie-client.config` file by the RosieAgentConfigurator tool.
 
 `watch-level = [int]` The Soar watch/trace level (default = 1)
 
-`write-to-stdout = [bool]` If true, all agent/soar output (e.g. rhs writes) 
+`write-to-stdout = [bool]` If true, all agent/soar output (e.g. soar traces, rhs writes) 
 will be printed to standard out
 
 `enable-log = [bool]` If true, all agent/soar output (e.g. rhs writes) will be written to a log file
 
 `log-filename = [file]` The name of the log file to write (with `enable-log = true`)
+
+**Clock Settings**
+
+Rosie needs access to time info on the input-link, so the client adds timing info. This includes both elapsed time since the agent began, and a wall clock with time. 
+
+`sim-clock = [bool] (default=true)` If true, the clock on the input-link will be simulated,
+where it advances a fixed step each decision cycle. 
+If false, it will use real-world time.
+
+`clock-step-ms = [int] (default=50)` The number of milliseconds to advance 
+the simulated clock each decision cycle
+
+`
 
 
 

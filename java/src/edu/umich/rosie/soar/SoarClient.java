@@ -19,14 +19,14 @@ public class SoarClient implements RunEventInterface, PrintEventInterface, Outpu
 
         public final boolean spawnDebugger;
         public final int watchLevel;
-        public final int throttleMS;
 		public final boolean startRunning;
         
         public final boolean remoteConnection;
         
         public final String speechFile;
 
-        public final boolean verbose;
+        public enum OutputLevel { NONE, SUMMARY, FULL };
+		public final OutputLevel outputLevel;
 		public final String logFilename;
         public final boolean writeStandardOut;
         
@@ -40,30 +40,70 @@ public class SoarClient implements RunEventInterface, PrintEventInterface, Outpu
 
 
         public ClientConfig(Properties props){
-            spawnDebugger = props.getProperty("spawn-debugger", "true").equals("true");
-            startRunning = props.getProperty("start-running", "false").equals("true");
-            writeStandardOut = props.getProperty("write-to-stdout", "false").equals("true");
-
-            parser = props.getProperty("parser", "lucia");
-            parserTest = props.getProperty("parser-test", "false").equals("true");
-           
+			// agent-name = [str] - The name to use when creating the SoarAgent
             agentName = props.getProperty("agent-name", "soaragent");
+
+			// agent-source = [file] - The root soar file to source all the agent productions
             agentSource = props.getProperty("agent-source", null);
+
+			// smem-source = [file] - The root soar file to source all smem add commands
             smemSource = props.getProperty("smem-source", null);
-            verbose = props.getProperty("verbose", "true").equals("true");
+
+			// source-output = [full|summary|none] - How much output to print when sourcing hte agent
+			String sourceOutput = props.getProperty("source-output", "summary");
+			if(sourceOutput.equals("full")){
+				outputLevel = OutputLevel.FULL;
+			} else if(sourceOutput.equals("none")){
+				outputLevel = OutputLevel.NONE;
+			} else {
+				outputLevel = OutputLevel.SUMMARY;
+			}
+
+			// parser = [laird|lucia] - Which parser to use
+            parser = props.getProperty("parser", "lucia");
+
+			// parser-test = [true|false] - Used for testing the lucia parser
+            parserTest = props.getProperty("parser-test", "false").equals("true");
+
+			// watch-level = [int] - The soar watch/trace level (default=1)
+			watchLevel = getIntProp(props, "watch-level", 1);
+
+			// spawn-debugger = [true|false] - If true, spawns the java debugger
+            spawnDebugger = props.getProperty("spawn-debugger", "true").equals("true");
+
+			// remote-connection = [true|false] - If true will connect to a remote kernel/agent
+			//    instead of creating a new one
             remoteConnection = props.getProperty("remote-connection", "false").equals("true");
 
-			watchLevel = getIntProp(props, "watch-level", 1);
-			throttleMS = getIntProp(props, "decision-throttle-ms", 0);
+			// start-running = [true|false] - If true, will automatically run the agent
+            startRunning = props.getProperty("start-running", "false").equals("true");
 
-            speechFile = props.getProperty("speech-file", "audio_files/sample");
+			// write-to-stdout = [true|false] - If true, will print all soar/agent output to standard output
+            writeStandardOut = props.getProperty("write-to-stdout", "false").equals("true");
 
+			// log-filename = [file]
+			//    If given, Rosie will write all output to the given file
 			logFilename = props.getProperty("log-filename", null);
 
+			// CLOCK - A clock structure will be put on the input-link with time info
+			// sim-clock = [true|false] - If true (default), the clock will simulate the
+			//    time instead of using real-world time
+			//    (It will advance a fixed amount of ms per decision cycle)
+			//    This is useful for debugging/testing
+			simClock = props.getProperty("sim-clock", "true").equals("true");
+
+			// clock-step-ms = [int] (Default=50) - If using a simulated clock, 
+			//    this is how many ms it will advance the clock each decision cycle
+			clockStepMS = getIntProp(props, "clock-step-ms", 50);
+           
+
+			// speech-file = [file] - needed for text to speech (depricated)
+            speechFile = props.getProperty("speech-file", "audio_files/sample");
+
+
+			// language-test-filename = [file] - Used during parser testing
 			languageTestFilename = props.getProperty("language-test-filename", null);
 
-			simClock = props.getProperty("sim-clock", "true").equals("true");
-			clockStepMS = getIntProp(props, "clock-step-ms", 50);
         }
 
 		private int getIntProp(Properties props, String propName, int defVal){
@@ -112,7 +152,7 @@ public class SoarClient implements RunEventInterface, PrintEventInterface, Outpu
         	int port = Kernel.kDefaultSMLPort;
 			kernel = Kernel.CreateRemoteConnection(true, null, port, false);
 			if (kernel == null){
-			   throw new IllegalStateException("CreateRemoveConnection() returned null");
+			   throw new IllegalStateException("CreateRemoteConnection() returned null");
 			}
 			System.out.println("CreatedConnection");
         } else {
@@ -359,36 +399,82 @@ public class SoarClient implements RunEventInterface, PrintEventInterface, Outpu
         agent.ExecuteCommandLine("epmem --set database memory");
 
         if(config.smemSource != null){
-        	//System.out.println("------------- SOURCING SMEM ---------------");
+			// Source smem structures
             String res = agent.ExecuteCommandLine("source " + config.smemSource);
-            parseSmemSourceInfo(res);
+
+			// Print the result to stdout, determined by the output level in the config
+			switch(config.outputLevel){
+				case FULL:
+					System.out.println("------------- SOURCING SMEM ---------------");
+					System.out.println(res);
+					break;
+				case SUMMARY:
+					printSmemSourceInfo(res);
+					break;
+				case NONE:
+			}
         }
 
         if(config.agentSource != null){
-        	//System.out.println("---------- SOURCING PRODUCTIONS -----------");
-            //System.out.println(config.agentSource);
+			// Source the soar rules
         	String res = agent.ExecuteCommandLine("source " + config.agentSource + " -v");
-            parseAgentSourceInfo(res, config.verbose);
+
+			// Print the result to stdout, determined by the output level in the config
+			switch(config.outputLevel){
+				case FULL:
+					System.out.println("---------- SOURCING PRODUCTIONS -----------");
+					System.out.println(config.agentSource);
+					System.out.println(res);
+					break;
+				case SUMMARY:
+					printAgentSourceInfo(res);
+					break;
+				case NONE:
+			}
+
+			// Find any rules that were replaced (indicates duplicate rules)
+			if(config.outputLevel != ClientConfig.OutputLevel.NONE){
+				List<String> replacedRules = findReplacedRules(res);
+				if(replacedRules.size() > 0){
+					System.out.println("DUPLICATE RULES:");
+				}
+				for(String rule : replacedRules){
+					System.out.println("  " + rule);
+				}
+			}
         }
     }
 
-    private void parseSmemSourceInfo(String info){
+    private void printSmemSourceInfo(String info){
         String[] lines = info.split("\n");
+		Integer kn_counter = 0;
         for(String line : lines){
             line = line.trim();
             if(line.length() == 0){
                 continue;
             }
             if(line.startsWith("Knowledge")){
+				kn_counter += 1;
                 continue;
             }
-            //System.out.println(line);
+            System.out.println(line);
         }
-        //System.out.println("Loaded Semantic Memory");
+		System.out.println("Knowledge added to semantic memory [" + kn_counter.toString() + " times]");
+        System.out.println("Loaded Semantic Memory");
     }
 
-    private void parseAgentSourceInfo(String info, boolean verbose){
+	private List<String> findReplacedRules(String info){
     	ArrayList<String> replaced = new ArrayList<String>();
+        String[] lines = info.split("\n");
+        for(String line : lines){
+            if(line.startsWith("Replacing")){
+            	replaced.add(line.substring(21, line.length()));
+            }
+        }
+		return replaced;
+	}
+
+    private void printAgentSourceInfo(String info){
         String[] lines = info.split("\n");
         for(String line : lines){
             if(line.trim().length() == 0){
@@ -404,21 +490,12 @@ public class SoarClient implements RunEventInterface, PrintEventInterface, Outpu
                 continue;
             }
             if(line.startsWith("Replacing")){
-            	replaced.add(line.substring(21, line.length()));
             	continue;
             }
-			if(verbose){
-				System.out.println(line);
-			}
+			System.out.println(line);
         }
-		if(replaced.size() > 0){
-			System.out.println("DUPLICATE RULES:");
-		}
-        for(String rule : replaced){
-        	System.out.println("  " + rule);
-        }
-
     }
+
 
     @SuppressWarnings("incomplete-switch")
 	@Override
@@ -435,13 +512,6 @@ public class SoarClient implements RunEventInterface, PrintEventInterface, Outpu
                 time.updateWM();
             } else {
                 time.addToWM(agent.GetInputLink());
-            }
-            if(config.throttleMS > 0){
-                try {
-                    Thread.sleep(config.throttleMS);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
             }
             break;
         case smlEVENT_AFTER_INPUT_PHASE:
