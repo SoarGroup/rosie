@@ -60,11 +60,12 @@ sp {comprehend*apply*next-word*normal
         ^word <w>
         ^count <old-c> -
         ^count (+ <old-c> 1)
+        ^lexical-access needed  #   A flag for System B to do lexical access
         ^comprehended true -
         ^comprehended false)
    #    DON'T TRY TO PUT THE WORD ON THE CURRENT STATE DIRECTLY
    #    OR THE GDS WILL BLOW YOU AWAY!!!!
-   (write (crlf) (concat |Received word #| (+ <old-c> 2) |: | <text>))
+   (write (crlf) (concat |Received word #| (+ <old-c> 1) |: | <text>))
    #    Clean up the output link
    (<output> ^request-word <next-word> -
              ^request-word complete)
@@ -83,14 +84,18 @@ sp {comprehend*apply*next-word*normal
 #   Case 2: This word is somewhere in the middle.  It is not
 #           the first word, nor is it the last.
 #   Case 3: This is the last word, but not also the first.
-#           Here we have to through away final the '.' word.
-#   case 4: This is both the first word and the last word.
+#           Here we have to throw away the final the '.' word.
+#   Case 4: This is both the first word and the last word.
 #           Here we have to skip over the initial '*' word
 #           and throw away the final '.' word.
 #
+#   For each of these cases there is an A and a B version
+#   of the apply rule. The B version handles quoted strings
+#   for Lucia, and the A version handles unquoted words.
+#
 
-#   Case 1 apply rule
-sp {comprehend*apply*next-word*first-word-not-last
+#   Case 1A apply rule
+sp {comprehend*apply*next-word*first-word-not-last*not-quoted
    (state <s> ^problem-space comprehend
               ^input <i>
               ^operator <o>
@@ -105,6 +110,7 @@ sp {comprehend*apply*next-word*first-word-not-last
    (<sentence> ^spelling |*|
                ^next <first>)
    (<first> ^spelling <text>
+           -^quoted true
             ^next <next>)
    #    Don't fire if this is the last word
  -{(<next> ^spelling << |.| |?| |!| >>)}
@@ -113,6 +119,7 @@ sp {comprehend*apply*next-word*first-word-not-last
         ^word <w>
         ^count -1 -
         ^count 1
+        ^lexical-access needed  #   A flag for System B to do lexical access
         ^comprehended true -
         ^comprehended false
         ^next nil -
@@ -130,8 +137,52 @@ sp {comprehend*apply*next-word*first-word-not-last
    (write (crlf) (concat |Received word #1: | <text>))
 }
 
-#   Case 2 apply rule
-sp {comprehend*apply*next-word*in-the-middle
+#   Case 1B apply rule
+sp {comprehend*apply*next-word*first-word-not-last*quoted
+   (state <s> ^problem-space comprehend
+              ^input <i>
+              ^operator <o>
+              ^sentence <sentence>)
+   (<o> ^name next-word)
+   (<i> ^word nil
+        ^count -1
+        ^comprehended true
+        ^next nil
+        ^content nil)
+   #    Skip over the "*" to get to the first real word
+   (<sentence> ^spelling |*|
+               ^next <first>)
+   (<first> ^spelling <text>
+            ^quoted true
+            ^next <next>)
+   #    Don't fire if this is the last word
+ -{(<next> ^spelling << |.| |?| |!| >>)}
+-->
+   (<i> ^word nil -
+        ^word <w>
+        ^count -1 -
+        ^count 1
+        ^lexical-access needed  #   A flag for System B to do lexical access
+        ^comprehended true -
+        ^comprehended false
+        ^next nil -
+        ^next <next>
+        ^content nil -
+        ^content (concat |\"| <text> |\"|))
+   #    Build a word for Rosie, not all the info there
+   (<w> ^content <text>
+        ^is-quoted true
+        ^orth <text>
+        ^post-punct ||
+        ^pre-punct ||
+        ^word (concat |\"| <text> |\"|)
+        ^word-count 0)
+   #    CASE 1:
+   (write (crlf) (concat |Received word #1: | (concat |\"| <text> |\"|)))
+}
+
+#   Case 2A apply rule
+sp {comprehend*apply*next-word*in-the-middle*not-quoted
    (state <s> ^problem-space comprehend
               ^input <i>
               ^operator <o>)
@@ -142,6 +193,7 @@ sp {comprehend*apply*next-word*in-the-middle
         ^next { <next> <> nil }
         ^content <old-text>)
    (<next> ^spelling <text>
+          -^quoted true
            ^next <next-next>)
    #    Don't fire if this is the last word
   -{(<next> ^next <next-next>)
@@ -152,6 +204,7 @@ sp {comprehend*apply*next-word*in-the-middle
         ^word <w>
         ^count <old-count> -
         ^count (+ <old-count> 1)
+        ^lexical-access needed  #   A flag for System B to do lexical access
         ^comprehended true -
         ^comprehended false
         ^next <next> -
@@ -169,8 +222,50 @@ sp {comprehend*apply*next-word*in-the-middle
    (write (crlf) (concat |Received word #| (+ <old-count> 1) |: | <text>))
 }
 
-#   Case 3 apply rule
-sp {comprehend*apply*next-word*last-word-not-first
+#   Case 2B apply rule
+sp {comprehend*apply*next-word*in-the-middle*quoted
+   (state <s> ^problem-space comprehend
+              ^input <i>
+              ^operator <o>)
+   (<o> ^name next-word)
+   (<i> ^word { <old-word> <> nil }
+        ^count <old-count>
+        ^comprehended true
+        ^next { <next> <> nil }
+        ^content <old-text>)
+   (<next> ^spelling <text>
+           ^quoted true
+           ^next <next-next>)
+   #    Don't fire if this is the last word
+  -{(<next> ^next <next-next>)
+    (<next-next> ^next nil
+                 ^spelling << |.| |?| |!| >>)}
+-->
+   (<i> ^word <old-word> -
+        ^word <w>
+        ^count <old-count> -
+        ^count (+ <old-count> 1)
+        ^lexical-access needed  #   A flag for System B to do lexical access
+        ^comprehended true -
+        ^comprehended false
+        ^next <next> -
+        ^next <next-next>
+        ^content <old-text> -
+        ^content (concat <old-text> | | (concat |\"| <text> |\"|)))
+   #    Build a word for Rosie, not all the info there
+   (<w> ^content <text>
+        ^is-quoted true
+        ^orth <text>
+        ^post-punct ||
+        ^pre-punct ||
+        ^word (concat |\"| <text> |\"|)
+        ^word-count <old-count>)
+   #    CASE 1:
+   (write (crlf) (concat |Received word #| (+ <old-count> 1) |: | (concat |\"| <text> |\"|)))
+}
+
+#   Case 3A apply rule
+sp {comprehend*apply*next-word*last-word-not-first*not-quoted
    (state <s> ^problem-space comprehend
               ^input <i>
               ^operator <o>
@@ -182,6 +277,7 @@ sp {comprehend*apply*next-word*last-word-not-first
         ^next { <next> <> nil }
         ^content <old-text>)
    (<next> ^spelling <text>
+          -^quoted true
            ^next <next-next>)
    #    Fire only if this is the last word
    (<next-next> ^next nil
@@ -191,6 +287,7 @@ sp {comprehend*apply*next-word*last-word-not-first
         ^word <w>
         ^count <old-count> -
         ^count (+ <old-count> 1)
+        ^lexical-access needed  #   A flag for System B to do lexical access
         ^comprehended true -
         ^comprehended false
         ^next <next> -
@@ -209,8 +306,51 @@ sp {comprehend*apply*next-word*last-word-not-first
    (write (crlf) (concat |Received word #| (+ <old-count> 1) |: | <text>))
 }
 
-#   Case 4 apply rule
-sp {comprehend*apply*next-word*first-and-last
+#   Case 3B apply rule
+sp {comprehend*apply*next-word*last-word-not-first*quoted
+   (state <s> ^problem-space comprehend
+              ^input <i>
+              ^operator <o>
+)#              ^sentence <sentence>)
+   (<o> ^name next-word)
+   (<i> ^word <old-word>
+        ^count <old-count>
+        ^comprehended true
+        ^next { <next> <> nil }
+        ^content <old-text>)
+   (<next> ^spelling <text>
+           ^quoted true
+           ^next <next-next>)
+   #    Fire only if this is the last word
+   (<next-next> ^next nil
+           ^spelling << |.| |?| |!| >>)
+-->
+   (<i> ^word <old-word> -
+        ^word <w>
+        ^count <old-count> -
+        ^count (+ <old-count> 1)
+        ^lexical-access needed  #   A flag for System B to do lexical access
+        ^comprehended true -
+        ^comprehended false
+        ^next <next> -
+        ^next nil
+        ^content <old-text> -
+        ^content (concat <old-text> | | (concat |\"| <text> |\"|)))
+   #    Build a word for Rosie, not all the info there
+   (<w> ^content <text>
+        ^has-terminator true
+        ^is-quoted true
+        ^orth <text>
+        ^post-punct ||
+        ^pre-punct ||
+        ^word (concat |\"| <text> |\"|)
+        ^word-count <old-count>)
+   #    CASE 3:
+   (write (crlf) (concat |Received word #| (+ <old-count> 1) |: | (concat |\"| <text> |\"|)))
+}
+
+#   Case 4A apply rule
+sp {comprehend*apply*next-word*first-and-last*not-quoted
    (state <s> ^problem-space comprehend
               ^input <i>
               ^operator <o>
@@ -225,6 +365,7 @@ sp {comprehend*apply*next-word*first-and-last
    (<sentence> ^spelling |*|
                ^next <first>)
    (<first> ^spelling <text>
+           -^quoted true
             ^next <next>)
    #    Fire only if this is also the last word
    (<next> ^next nil
@@ -234,6 +375,7 @@ sp {comprehend*apply*next-word*first-and-last
         ^word <w>
         ^count <old-count> -
         ^count (+ <old-count> 1)
+        ^lexical-access needed  #   A flag for System B to do lexical access
         ^comprehended true -
         ^comprehended false
         ^next <next> -
@@ -250,6 +392,52 @@ sp {comprehend*apply*next-word*first-and-last
         ^word-count <old-count>)
    #    CASE 4:
    (write (crlf) (concat |Received word #1: | <text>))
+}
+
+#   Case 4B apply rule
+sp {comprehend*apply*next-word*first-and-last*quoted
+   (state <s> ^problem-space comprehend
+              ^input <i>
+              ^operator <o>
+              ^sentence <sentence>)
+   (<o> ^name next-word)
+   (<i> ^word <old-word>
+        ^count <old-count>
+        ^comprehended true
+        ^next nil
+        ^content nil)
+   #    Skip over the "*" to get to the first real word
+   (<sentence> ^spelling |*|
+               ^next <first>)
+   (<first> ^spelling <text>
+            ^quoted true
+            ^next <next>)
+   #    Fire only if this is also the last word
+   (<next> ^next nil
+           ^spelling << |.| |?| |!| >>)
+-->
+   (<i> ^word <old-word> -
+        ^word <w>
+        ^count <old-count> -
+        ^count (+ <old-count> 1)
+        ^lexical-access needed  #   A flag for System B to do lexical access
+        ^comprehended true -
+        ^comprehended false
+        ^next <next> -
+        ^next nil
+        ^content nil -
+        ^content (concat |\"| <text> |\"|))
+   #    Build a word for Rosie, not all the info there
+   (<w> ^content <text>
+        ^has-terminator true
+        ^is-quoted true
+        ^orth <text>
+        ^post-punct ||
+        ^pre-punct ||
+        ^word (concat |\"| <text> |\"|)
+        ^word-count <old-count>)
+   #    CASE 4:
+   (write (crlf) (concat |Received word #1: | (concat |\"| <text> |\"|)))
 }
 
 ############### THE SAME FOR BOTH SYSTEMS #################
