@@ -60,7 +60,7 @@ learn from a single training episode and generalize quickly.
 
 **[AAAI22 Demo poster](pics/AAAI22_Poster.pdf)** <br>
 
-**[AAAI22 Copyright form](pics/AAAI22_Copyright.pdf)** <br>
+**[AAAI22 Paper](papers/AAAI_22_Paper.pdf)** <br>
 
 <a name="videos"></a>
 # Videos
