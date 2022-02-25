@@ -11,6 +11,7 @@ It does this in an online, interactive manner where it detects missing knowledge
 search or initiates new interactions to obtain that knowledge. 
 Rosie is a project at the University of Michigan Soar Lab, led by Professor John E. Laird. 
 
+**[- AAAI22 Demo](#demo)** <br>
 **[- Videos](#videos)** <br>
 **[- Publications](#publications)**
 
@@ -38,6 +39,28 @@ Rosie is a project at the University of Michigan Soar Lab, led by Professor John
 **[Article in IEEE Magazine about ITL](https://web.eecs.umich.edu/~soar/sitemaker/docs/pubs/Laird_et_al_InteractiveTaskLearning_IEEE_IntelligentSystems_2017.pdf)**
 
 **[Recent book describing ITL](https://books.google.com/books?hl=en&id=UU6qDwAAQBAJ)**
+
+<a name="demo"></a>
+# AAAI22 Demo
+## [AAAI22 Demo](https://youtu.be/_KsqaUavksk)
+
+![AAAI22 Demo](pics/AAAI22Demo.png)
+
+We present a demonstration of the interactive task learning
+agent Rosie, where it learns the task of patrolling a simulated
+barracks environment through situated natural language instruction.
+In doing so, it builds a sizable task hierarchy composed of both
+innate and learned tasks, tasks formulated as achieving a goal
+or following a procedure, tasks with conditional branches and
+loops, and involving communicative and mental actions. Rosie is
+implemented in the Soar cognitive architecture, and represents
+tasks using a declarative task network which it compiles into
+procedural rules through chunking. This is key to allowing it to
+learn from a single training episode and generalize quickly.
+
+**[AAAI22 Demo poster](pics/AAAI22_Poster.pdf)** <br>
+
+**[AAAI22 Copyright form](pics/AAAI22_Copyright.pdf)** <br>
 
 <a name="videos"></a>
 # Videos
