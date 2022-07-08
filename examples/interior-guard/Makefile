@@ -19,7 +19,7 @@ world: ${AGENT_NAME}.world waypoint-map.soar internal-world.soar
 run_example: run_mobile_sim run_rosie
 
 run_mobile_sim: ${AGENT_NAME}.world
-	java soargroup.mobilesim.MobileGUI -w ${AGENT_NAME}.world &
+	java soargroup.mobilesim.MobileGUI -w ${AGENT_NAME}.world -f &
 
 run_rosie: waypoint-map.soar internal-world.soar ${ROSIE_CONFIG} 
 	python3 -m mobilesim.rosie.MobileRosieGUI ${ROSIE_CONFIG} &
