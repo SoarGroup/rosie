@@ -1,0 +1,115 @@
+##!
+# @file
+#
+# @created plindes 20210809
+# File: do-short-answer.soar
+# Author: Peter Lindes
+# Created: 9 August 2021
+#
+# Desc:  This operator will create one or more actions
+#        to produce a message for a sentence that
+#        is a very short reply to a question.
+#
+#        One form is where a RefExpr makes up the whole
+#        aentence and we make an object-definition based on
+#        just this simple RefExpr.
+#
+#        Another form is where a QUOTED-STRING makes up the whole
+#        aentence and we make an quoted-sentence message.
+#
+#        This operator is of type msg-interpretation,
+#        meaning it produces a message directly
+#        instead of an action for act to process.
+#        
+
+#   Propose an operator to produce an object-definition
+#   from just a RefExpr
+sp {interpret*propose*do-short-answer*ref-expr
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^comprehension <c>
+              ^message nil)
+   #    Look for a singleton RefExpr,
+   #    i.e. one the covers the whole sentence.
+   (<c> ^cxn-stack <cxn>)
+   (<cxn> ^is.a RefExpr
+          ^previous nil
+          ^m <m>)
+   (<m> ^is.a RefDesc
+        ^text <text>)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name do-short-answer
+        ^is-a RefExpr
+        ^type msg-interpretation
+        ^meaning <m>
+        ^debug-info (concat |Build a message for a simple RefExpr: | <text> |.|))
+}
+
+#   Build an object-definition message from a RefDesc
+#   Include the reference-info here too.
+sp {interpret*apply*do-short-answer*ref-expr
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-short-answer
+        ^is-a RefExpr
+        ^meaning <m>)
+   (<m> ^is.a RefDesc
+        ^referent <object>)
+   (<object> ^root-category <category>)
+-->
+   #   Post a message to define the object
+   (<s> ^message nil -
+        ^message <msg>)
+   (<msg> ^reference-info <ref-info>
+          ^message-type object-definition
+          ^arg1 <object>)
+   (<ref-info> ^referent <object>
+               ^constraint <constraint>
+               ^arg-name arg1)
+   (<constraint> ^category <category>)
+}
+
+#   Propose an operator to produce a quoted-sentence
+#   message from just a QUOTED-STRING
+sp {interpret*propose*do-short-answer*quoted-string
+   (state <s> ^top-state <ts> 
+              ^problem-space interpret
+              ^comprehension <c>
+              ^message nil)
+   #    Look for a singleton QUOTED-STRING,
+   #    i.e. one the covers the whole sentence.
+   (<c> ^cxn-stack <cxn>)
+   (<cxn> ^is.a |QUOTED-STRING|
+          ^orth <orth>
+          ^previous nil)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name do-short-answer
+        ^is-a |QUOTED-STRING|
+        ^orth <orth>
+        ^type msg-interpretation
+        ^debug-info (concat |Build a message for just a QUOTED-STRING: | <orth> |.|))
+}
+
+#   Build an quoted-sentence message from a QUOTED-STRING
+sp {interpret*apply*do-short-answer
+   (state <s> ^problem-space interpret
+              ^operator <o>)
+   (<o> ^name do-short-answer
+        ^is-a |QUOTED-STRING|
+        ^orth <orth>)
+-->
+   #   Post a message to define the string
+   (<s> ^message nil -
+        ^message <msg>)
+   (<msg> ^message-type quoted-sentence
+          ^arg1 <string>)
+   #    The following line has to be different between
+   #    the Lucia version and the Rosie version.
+   #    The end result in the message is the same.
+   #    WHY SHOULD THIS BE??? THIS IS VERY STRANGE!!!
+#   (<string> ^sentence (concat |\|| <orth> |\||)    #   Lucia version
+   (<string> ^sentence <orth>                       #   Rosie version
+             ^handle (make-constant-symbol |string-object-handle|))
+}
