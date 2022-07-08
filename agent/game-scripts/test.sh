@@ -29,10 +29,11 @@ declare -a solves=(1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 0 1 1 0 1 1
 #declare -a skips=(0 1 0 0 0 0 1 0 0 1 1 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 1)	
 
 #declare -a skips=(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)	
-declare -a skips=(0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)	
+declare -a skips=(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)	
 
 #declare -a skips=(1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1) 
 
+#declare -a skips=(1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1) 
 
 #declare -a skips=(1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1) 
 #declare -a skips=(1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1) 
@@ -42,6 +43,8 @@ declare -a skips=(0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
 #make options, maybe shell args for solving or not, and even if transfer or not?, could do, might need to change how print files a bit
 #no s1, need "gamename1"
 #make so green yes no for passing test
+
+echo ${#arr[@]}
 
 for ((c=0; c<${#arr[@]}; ++c)); do
 	game=${arr[c]}
@@ -97,20 +100,25 @@ for ((c=0; c<${#arr[@]}; ++c)); do
 			#python generatehtml.py $dir
 			#cp dialog.html learning-data/*/$dir/
 			#cp dialog.txt learning-data/*/$dir/
+			
+			
 			cp soar-game.script script.txt
-			cp script.txt learning-data/*/$dir/
+			#add#cp script.txt learning-data/*/$dir/
 			
 			cp chunks.txt learned-chunks.txt
 			
-			cp learned-chunks.txt learning-data/*/$dir/
-			cp parse.txt learning-data/*/$dir/
+			#add#cp learned-chunks.txt learning-data/*/$dir/
+			#add#cp parse.txt learning-data/*/$dir/
 			
 			if [ $solv -eq 0 ]
 			then
 				continue
 			fi
 			
-			
+
+			sed -i "s|affordance1 grabbable1|arm-status not-grabbed|g" solution.txt
+			sed -i "s|is-grabbed1 not-grabbed1|is-grabbable1 grabbable1|g" solution.txt
+
 			python calculateTeachSolvetime.py
 			python calculateStatesExplored.py
 			
@@ -140,13 +148,12 @@ for ((c=0; c<${#arr[@]}; ++c)); do
 			diff -s $rfile$sol learning-data/*/$dir/$solution$dot$numsol
 			if [[ $foundsol < 1 ]];
 			then
-				#cp $rfile$sol $stored$game$sol$dot$numsol
 				cp $rfile$sol $solution$dot$numsol
-				cp $solution$dot$numsol learning-data/*/$dir/
+				#addcp $solution$dot$numsol learning-data/*/$dir/
 				rm $solution$dot$numsol
 			fi
 
-			rm $rfile$sol 
+			#rm $rfile$sol 
 						
 			#print out time, states searched
 			echo "Learning/Solution time (seconds):"
@@ -169,9 +176,9 @@ for ((c=0; c<${#arr[@]}; ++c)); do
 			cp startend.decisions decisions.txt
 			cp states.txt search-states.txt
 			
-			cp learning-time.txt learning-data/*/$dir/
-			cp decisions.txt learning-data/*/$dir/
-			cp search-states.txt learning-data/*/$dir/
+			#add#cp learning-time.txt learning-data/*/$dir/
+			#add#cp decisions.txt learning-data/*/$dir/
+			#add#cp search-states.txt learning-data/*/$dir/
 			
 			#compare against benchmark timing
 			#python compareSolutionTime.py $rfile
