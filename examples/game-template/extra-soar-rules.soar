@@ -1,0 +1,1680 @@
+sp {top-state*elaborate*agent-params*custom
+   (state <s> ^superstate nil
+              ^agent-params <p>)
+-->
+   (<p> ^debug-ids true
+        ^report-find-results true
+#       ^debug-op-ties true
+#       ^debug-wait-limit 3
+
+#       ^interrupt-operator retrospective-learning 
+#       ^interrupt-operator interpret-message 
+#       ^interrupt-end-of-sentence true
+#       ^interrupt-new-task true
+#       ^interrupt-task-search true
+        
+#       ^print-perception true
+#       ^print-new-task true
+#       ^print-new-task-shorthand true
+#       ^print-wp-search-path-costs true
+#       ^print-parsed-messages true
+#       ^print-outgoing-messages true
+#       ^print-interaction-stack true
+
+   )
+}
+
+#### Increase the search depth over the default
+#sp {search-for-next-subtask*elaborate*search-phase-info
+#   (state <s> ^name search-for-next-subtask)
+#-->
+#   (<s> ^number-phases 2
+#        ^search-phase-info <p1> <p2>)
+#   # First phase - only consider subtasks with all objects in common with the current task
+#   (<p1> ^num 1 ^max-depth 4 ^require-all-objects-match 1 ^reject-perc-ops 3)
+#
+#   # Second phase - level 1: any subtasks, level 2: subtasks with 1+ matching objects, 
+#   #                level 3-4: only subtasks matching all objects
+#   (<p2> ^num 2 ^max-depth 4 ^require-matching-object 3 ^require-all-objects-match 4 ^reject-perc-ops 3)
+#}
+
+#explain all on
+
+sp {top-state*perception-monitor*predicate-monitor*elaborate*default*predicates*internal
+   (state <s> ^superstate nil
+              ^agent-params.domain internal
+              ^world.predicates <preds>
+              ^perception-monitor.predicate-monitor <pred-mon>)
+-->
+   (<preds> ^predicate.handle in1)
+   (<preds> ^predicate.handle on1)
+   (<preds> ^predicate.handle holding1)
+   (<preds> ^predicate.handle heard2)
+}
+
+sp {top-state*perception-monitor*predicate-monitor*elaborate*default*predicates*magicbot
+   (state <s> ^superstate nil
+              ^agent-params.domain magicbot
+              ^world.predicates <preds>
+              ^perception-monitor.predicate-monitor <pred-mon>)
+-->
+   # Extract predicates via SVS
+   (<pred-mon> ^predicate-info.predicate-handle in1)
+   (<pred-mon> ^predicate-info.predicate-handle on1)
+
+   (<preds> ^predicate.handle holding1)
+   (<preds> ^predicate.handle heard2)
+}
+
+### Rules for printing events
+sp {complete-push-task-segment*report*time*info
+   (state <s> ^name push-task-segment
+              ^operator.name complete-push-task-segment
+              ^segment-to-push.task-operator.task-handle <task-h>
+              ^io.input-link.time <t>)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write |$START-TASK$ | <task-h> | | <steps> | | <ms> (crlf))
+}
+
+sp {complete-pop-task-segment*report*time*info
+   (state <s> ^name pop-task-segment
+              ^operator.name complete-pop-task-segment
+              ^segment-to-pop.task-operator.task-handle <task-h>
+              ^io.input-link.time <t>)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write |$END-TASK$ | <task-h> | | <steps> | | <ms> (crlf))
+}
+
+sp {search-for-next-subtask*start*report*time*info
+   (state <s> ^operator.name search-for-next-subtask
+              ^superstate.task-operator.task-handle <task-h>
+              ^io.input-link.time <t>
+             -^reported-time)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write |$BEGIN-SEARCH$ | <task-h> | | <steps> | | <ms> (crlf))
+   (<s> ^reported-time true)
+}
+
+sp {search-for-next-subtask*finish*report*time*info
+   (state <s> ^name search-for-next-subtask
+              ^superstate.superstate.task-operator.task-handle <task-h>
+              ^operator.name << return-successful-operator initiate-interaction >>
+              ^io.input-link.time <t>)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write |$END-SEARCH$ | <task-h> | | <steps> | | <ms> (crlf))
+}
+
+# sp {learn-desired-elaboration-rule*apply*complete-learn-desired-elaboration-rule*t1069-1
+#     (state <s1> ^action-context <o5> ^superstate <s2> ^problem-space <p3>
+#           ^task-concept-network <n6>)
+#     (<o5> ^action-type composite ^<c1> <a1> ^{ < <c1> <c2> } <a2>)
+#     (<s2> ^operator <o5>)
+#     (<p3> ^name action)
+#     (<n6> ^procedural <p2> ^goal <g2>)
+#     (<g2> ^predicate <g1> -^predicate { <> <g1> <pred2> })
+#     (<g1> ^type relation ^2 <o2> ^1 <o1> ^id <p1>)
+#     (<a1> ^arg-type predicate ^2 <o3> ^handle <c3>)
+#     (<p2> ^<c1> <n2> ^<c1> <n3> ^<c1> <n4> ^<c2> <n1> ^<c2> <n5>)
+#     (<n2> ^arg-type predicate ^id <p1>)
+#     (<n3> ^arg-type predicate ^2 <o2>)
+#    -{ (<p2> ^{ <> <c2> <> <c1> <arg3-name> } <parg3>)
+#       (<o5> ^<arg3-name> <arg3>)}
+#     (<a2> ^arg-type object ^id <o4>)
+#     (<n1> ^arg-type object ^id <o1>)
+# -->
+#     (<s1> ^desired <d1> +)
+#     (<d1> ^predicate <r1> +)
+#     (<r1> ^type relation + ^handle <c3> + ^1 <o4> + ^2 <o3> +)
+# }
+# sp {selection*select*success-evaluation-becomes-best-preference*tie*t1778-1
+#     (state <s1> ^operator <o2> + ^problem-space <p2> ^desired <d1> ^world <n5>)
+#     (<o2> ^name initiate-put-down1 ^arg2 <a2> ^arg1 <a1>)
+#     (<a2> ^arg-type predicate ^2 <n2> ^handle <c4>)
+#     (<a1> ^arg-type object ^id <n3>)
+#     (<p2> ^action-type composite ^name action ^name <c5>)
+#     (<d1> ^predicate <n1>)
+#     (<n1> ^type relation ^2 <n2> ^1 <n3> ^handle <c1>)
+#     (<n2> ^item-type <c3>)
+#     (<n3> ^item-type <c2>)
+#     (<n5> ^objects <o1> ^predicates <p1>)
+#     (<p1> ^predicate <n4>)
+#     (<n4> ^handle <c1>)
+#     (<o1> ^object <n3> ^object <n2>)
+# -->
+#     (<s1> ^operator <o2> > ^operator <o2> = 1)
+# }
+# sp {selection*select*success-evaluation-becomes-best-preference*tie*t1778-3
+#     (state <s1> ^desired <d1> ^operator <o2> + ^problem-space <p3>
+#           ^top-state <s2> ^world <n4>)
+#    -{ (<s1> ^operator <o*1>)
+#       (<o*1> ^name evaluate-operator)}
+#     (<d1> ^predicate <r1>)
+#     (<r1> ^type relation ^1 <n2> ^2 <n1> ^handle <c3>)
+#     (<o2> ^name initiate-pick-up1 ^arg1 <a1> ^name <c5>)
+#     (<a1> ^arg-type object ^id <n2>)
+#     (<n2> ^predicates <p1> ^item-type <c2>)
+#     (<p1> ^is-grabbed1 not-grabbed1)
+#     (<p3> ^action-type composite ^name action ^name <c4>)
+#     (<n1> ^item-type <c1>)
+#     (<s2> ^agent-params <p4>)
+#     (<p4> ^domain arm)
+#     (<n4> ^objects <o1> ^predicates <p2>)
+#     (<p2> ^predicate <n3>)
+#     (<n3> ^handle <c3>)
+#     (<o1> ^object <n1> ^object <n2>)
+# -->
+#     (<s1> ^operator <o2> > ^operator <o2> = 1)
+# }
+
+#Stored move chunks
+sp {chunk*__TASK_POLICY__*problem-space*action*subtask*best*preference*OpNoChange*t2290-5
+    :chunk
+    (state <s1> ^desired <d1> ^task-operator <t1> ^name <n1> ^operator <o1> +
+          ^problem-space <p3> ^world <w1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^handle <h1>)
+    (<t1> -^subtask-handle <s2> ^task-handle move1 ^arg2 <a4> ^arg1 <a5>
+          ^name { <n1> <> evaluate-operator })
+   -{ (<t1> ^{ <a1> <> arg2 <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<a4> ^arg-type partial-predicate ^handle on1 ^2 <i3>)
+    (<a5> ^arg-type object ^id <i2>)
+    (<i1> ^handle on1 ^type relation ^1 <i2> ^2 <i3>)
+    (<i2> ^predicates <p1>)
+    (<p1> -^dont-copy is-grabbed1 ^is-grabbed1 not-grabbed1)
+    (<i3> ^predicates <p2>)
+    (<p2> -^dont-copy is-confirmed1 -^dont-copy affordance1
+          ^affordance1 surface1 ^is-confirmed1 confirmed1)
+   -{ (<o1> ^{ <a6> <> arg1 } <a7>)
+      (<a7> ^arg-type <a8>)}
+    (<o1> ^name op_pick-up1 ^arg1 <a9> ^subtask-handle <s3> ^task-handle <t2>)
+    (<a9> ^arg-type object ^id <i2>)
+    (<p3> ^name action ^name <n2>)
+    (<w1> ^objects <o2> ^predicates <p4>)
+    (<o2> ^object <i3> ^object <i2>)
+    (<p4> ^predicate <p5>)
+    (<p5> ^handle on1)
+    -->
+    (<s1> ^operator <o1> > ^best-pref-eval <o1>)
+}
+
+sp {chunk*problem-space*action*elaborate*subtask-plan-length*OpNoChange*t2290-4
+    :chunk
+    (state <s1> ^desired <d1> ^task-operator <t1> ^task-operator <t2>
+          ^name <n1> ^name <n2> ^operator <o1> + ^problem-space <p3>
+          ^world <w1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^1 <i6> ^handle <h1>
+          ^handle <h2>)
+    (<t1> -^subtask-handle <s2> ^task-handle move1 ^arg2 <a4> ^arg1 <a5>
+          ^name { <n1> <> evaluate-operator })
+   -{ (<t1> ^{ <a1> <> arg2 <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<a4> ^arg-type partial-predicate ^handle on1 ^2 <i4>)
+    (<a5> ^arg-type object ^id <i2>)
+    (<t2> ^task-handle move1 ^arg2 <a6> ^arg1 <a7>
+          ^name { <n2> <> evaluate-operator })
+    (<a6> ^arg-type partial-predicate ^handle on1 ^2 <i5>)
+    (<a7> ^arg-type object ^id <i3>)
+    (<i1> ^handle on1 ^type relation ^1 <i2> ^2 <i4>)
+    (<i2> ^predicates <p1>)
+    (<p1> -^dont-copy is-grabbed1 ^is-grabbed1 not-grabbed1)
+    (<i3> ^predicates <p1>)
+    (<i4> ^predicates <p2>)
+    (<p2> -^dont-copy is-confirmed1 -^dont-copy affordance1
+          ^affordance1 surface1 ^is-confirmed1 confirmed1)
+    (<i5> ^predicates <p2>)
+    (<i6> ^handle on1 ^2 <i5> ^1 <i3> ^type relation)
+   -{ (<o1> ^{ <a8> <> arg1 } <a9>)
+      (<a9> ^arg-type <a10>)}
+    (<o1> ^name op_pick-up1 ^arg1 <a11> ^arg1 <a12> ^subtask-handle <s3>
+          ^subtask-handle <s4> ^task-handle <t3> ^task-handle <t4>)
+    (<a11> ^arg-type object ^id <i2>)
+    (<a12> ^arg-type object ^id <i3>)
+    (<p3> ^name action ^name <n3> ^name <n4>)
+    (<w1> ^objects <o2> ^predicates <p4>)
+    (<o2> ^object <i4> ^object <i2> ^object <i5> ^object <i3>)
+    (<p4> ^predicate <p5> ^predicate <p6>)
+    (<p5> ^handle on1)
+    (<p6> ^handle on1)
+    -->
+    (<o1> ^plan-length 2)
+}
+
+sp {chunk*__PLAN__LEN__*problem-space*action*subtask*plan-length*OpNoChange*t2290-3
+    :chunk
+    (state <s1> ^desired <d1> ^task-operator <t1> ^task-operator <t2>
+          ^name <n1> ^name <n2> ^operator <o1> + ^problem-space <p3>
+          ^world <w1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^1 <i6> ^handle <h1>
+          ^handle <h2>)
+    (<t1> -^subtask-handle <s2> ^task-handle move1 ^arg2 <a4> ^arg1 <a5>
+          ^name { <n1> <> evaluate-operator })
+   -{ (<t1> ^{ <a1> <> arg2 <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<a4> ^arg-type partial-predicate ^handle on1 ^2 <i4>)
+    (<a5> ^arg-type object ^id <i2>)
+    (<t2> ^task-handle move1 ^arg2 <a6> ^arg1 <a7>
+          ^name { <n2> <> evaluate-operator })
+    (<a6> ^arg-type partial-predicate ^handle on1 ^2 <i5>)
+    (<a7> ^arg-type object ^id <i3>)
+    (<i1> ^handle on1 ^type relation ^1 <i2> ^2 <i4>)
+    (<i2> ^predicates <p1>)
+    (<p1> -^dont-copy is-grabbed1 ^is-grabbed1 not-grabbed1)
+    (<i3> ^predicates <p1>)
+    (<i4> ^predicates <p2>)
+    (<p2> -^dont-copy is-confirmed1 -^dont-copy affordance1
+          ^affordance1 surface1 ^is-confirmed1 confirmed1)
+    (<i5> ^predicates <p2>)
+    (<i6> ^handle on1 ^2 <i5> ^1 <i3> ^type relation)
+   -{ (<o1> ^{ <a8> <> arg1 } <a9>)
+      (<a9> ^arg-type <a10>)}
+    (<o1> ^name op_pick-up1 ^arg1 <a11> ^arg1 <a12> ^subtask-handle <s3>
+          ^subtask-handle <s4> ^task-handle <t3> ^task-handle <t4>)
+    (<a11> ^arg-type object ^id <i2>)
+    (<a12> ^arg-type object ^id <i3>)
+    (<p3> ^name action ^name <n3> ^name <n4>)
+    (<w1> ^objects <o2> ^predicates <p4>)
+    (<o2> ^object <i4> ^object <i2> ^object <i5> ^object <i3>)
+    (<p4> ^predicate <p5> ^predicate <p6>)
+    (<p5> ^handle on1)
+    (<p6> ^handle on1)
+    -->
+    (<s1> ^operator <o1> > ^best-pref-eval <o1>)
+    (<o1> ^plan-length 2)
+}
+
+sp {chunk*evaluate-operator*elaborate*evaluation*from-subgoal*duplicate-desired*Tie*t2290-2
+    :chunk
+    (state <s1> ^operator <o1> ^evaluation <e1> ^problem-space <p1>
+          ^superstate <s5> ^world <w1>)
+    (<o1> ^name evaluate-operator ^evaluation <e1> ^superoperator <s2>
+          ^superproblem-space <s4> ^evaluation <e2> ^superoperator <s7>
+          ^superstate <s8>)
+   -{ (<s2> ^{ <a1> <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<s2> ^name op_pick-up1 ^arg1 <a4> ^subtask-handle <s3> ^task-handle <t2>)
+    (<a4> ^arg-type object ^id <i2>)
+    (<p1> ^name action)
+    (<e2> ^desired <d1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^handle <h1>)
+    (<i1> ^handle on1 ^type relation ^1 <i2> ^2 <i3>)
+    (<i2> ^predicates <p2>)
+    (<p2> -^dont-copy is-grabbed1 ^is-grabbed1 not-grabbed1)
+    (<s5> ^desired <d1> ^task-operator <t1>)
+    (<t1> -^subtask-handle <s6> ^task-handle move1 ^arg2 <a8> ^arg1 <a9>
+          ^name { <n1> <> evaluate-operator })
+   -{ (<t1> ^{ <a5> <> arg2 <> arg1 } <a6>)
+      (<a6> ^arg-type <a7>)}
+    (<a8> ^arg-type partial-predicate ^handle on1 ^2 <i3>)
+    (<a9> ^arg-type object ^id <i2>)
+    (<i3> ^predicates <p3>)
+    (<p3> -^dont-copy is-confirmed1 -^dont-copy affordance1
+          ^affordance1 surface1 ^is-confirmed1 confirmed1)
+    (<w1> ^objects <o2> ^predicates <p4>)
+    (<o2> ^object <i3> ^object <i2>)
+    (<p4> ^predicate <p5>)
+    (<p5> ^handle on1)
+    (<s8> ^name <n1>)
+    (<s4> ^name <n2>)
+    -->
+    (<e1> ^symbolic-value success)
+}
+
+sp {chunk*evaluate-operator*elaborate*evaluation*plan-length*Tie*t2290-1
+    :chunk
+    (state <s1> ^operator <o1> ^evaluation <e1> ^problem-space <p1>
+          ^superstate <s5> ^world <w1>)
+    (<o1> ^name evaluate-operator ^evaluation <e1> ^superoperator <s2>
+          ^superproblem-space <s4> ^evaluation <e2> ^superoperator <s7>
+          ^superstate <s8>)
+   -{ (<s2> ^{ <a1> <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<s2> ^name op_pick-up1 ^arg1 <a4> ^subtask-handle <s3> ^task-handle <t2>)
+    (<a4> ^arg-type object ^id <i2>)
+    (<p1> ^name action)
+    (<e2> ^desired <d1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^handle <h1>)
+    (<i1> ^handle on1 ^type relation ^1 <i2> ^2 <i3>)
+    (<i2> ^predicates <p2>)
+    (<p2> -^dont-copy is-grabbed1 ^is-grabbed1 not-grabbed1)
+    (<s5> ^desired <d1> ^task-operator <t1>)
+    (<t1> -^subtask-handle <s6> ^task-handle move1 ^arg2 <a8> ^arg1 <a9>
+          ^name { <n1> <> evaluate-operator })
+   -{ (<t1> ^{ <a5> <> arg2 <> arg1 } <a6>)
+      (<a6> ^arg-type <a7>)}
+    (<a8> ^arg-type partial-predicate ^handle on1 ^2 <i3>)
+    (<a9> ^arg-type object ^id <i2>)
+    (<i3> ^predicates <p3>)
+    (<p3> -^dont-copy is-confirmed1 -^dont-copy affordance1
+          ^affordance1 surface1 ^is-confirmed1 confirmed1)
+    (<w1> ^objects <o2> ^predicates <p4>)
+    (<o2> ^object <i3> ^object <i2>)
+    (<p4> ^predicate <p5>)
+    (<p5> ^handle on1)
+    (<s8> ^name <n1>)
+    (<s4> ^name <n2>)
+    -->
+    (<e1> ^plan-length 2)
+}
+
+sp {chunk*__TASK_POLICY__*problem-space*action*subtask*best*preference*OpNoChange*t2275-5
+    :chunk
+    (state <s1> ^desired <d1> ^operator <o1> + ^problem-space <p1> ^world <w1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^handle <h2>)
+    (<i1> ^type relation ^handle <h1> ^1 <i2> ^2 <i3>)
+   -{ (<o1> ^{ <a1> <> arg2 <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<o1> ^name op_put-down1 ^arg2 <a4> ^arg1 <a5> ^subtask-handle <s2>
+          ^task-handle <t1>)
+    (<a4> ^arg-type partial-predicate ^handle <h1> ^2 <i3>)
+    (<a5> ^arg-type object ^id <i2>)
+    (<p1> ^name action ^name <n1>)
+    (<w1> ^objects <o2> ^predicates <p2>)
+    (<o2> ^object <i3> ^object <i2>)
+    (<p2> ^predicate <p3>)
+    (<p3> ^handle <h1>)
+    -->
+    (<s1> ^operator <o1> > ^best-pref-eval <o1>)
+}
+
+sp {chunk*problem-space*action*elaborate*subtask-plan-length*OpNoChange*t2275-4
+    :chunk
+    (state <s1> ^desired <d1> ^operator <o1> + ^problem-space <p1> ^world <w1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^1 <i2> ^handle <h3>
+          ^handle <h4>)
+    (<i1> ^type relation ^handle <h1> ^1 <i3> ^2 <i5>)
+    (<i2> ^type relation ^handle <h2> ^1 <i4> ^2 <i6>)
+   -{ (<o1> ^{ <a1> <> arg2 <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<o1> ^name op_put-down1 ^arg2 <a4> ^arg2 <a5> ^arg1 <a6> ^arg1 <a7>
+          ^subtask-handle <s2> ^subtask-handle <s3> ^task-handle <t1>
+          ^task-handle <t2>)
+    (<a4> ^arg-type partial-predicate ^handle <h1> ^2 <i5>)
+    (<a5> ^arg-type partial-predicate ^handle <h2> ^2 <i6>)
+    (<a6> ^arg-type object ^id <i3>)
+    (<a7> ^arg-type object ^id <i4>)
+    (<p1> ^name action ^name <n1> ^name <n2>)
+    (<w1> ^objects <o2> ^predicates <p2>)
+    (<o2> ^object <i5> ^object <i3> ^object <i6> ^object <i4>)
+    (<p2> ^predicate <p3> ^predicate <p4>)
+    (<p3> ^handle <h1>)
+    (<p4> ^handle <h2>)
+    -->
+    (<o1> ^plan-length 1)
+}
+
+sp {chunk*__PLAN__LEN__*problem-space*action*subtask*plan-length*OpNoChange*t2275-3
+    :chunk
+    (state <s1> ^desired <d1> ^operator <o1> + ^problem-space <p1> ^world <w1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^1 <i2> ^handle <h3>
+          ^handle <h4>)
+    (<i1> ^type relation ^handle <h1> ^1 <i3> ^2 <i5>)
+    (<i2> ^type relation ^handle <h2> ^1 <i4> ^2 <i6>)
+   -{ (<o1> ^{ <a1> <> arg2 <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<o1> ^name op_put-down1 ^arg2 <a4> ^arg2 <a5> ^arg1 <a6> ^arg1 <a7>
+          ^subtask-handle <s2> ^subtask-handle <s3> ^task-handle <t1>
+          ^task-handle <t2>)
+    (<a4> ^arg-type partial-predicate ^handle <h1> ^2 <i5>)
+    (<a5> ^arg-type partial-predicate ^handle <h2> ^2 <i6>)
+    (<a6> ^arg-type object ^id <i3>)
+    (<a7> ^arg-type object ^id <i4>)
+    (<p1> ^name action ^name <n1> ^name <n2>)
+    (<w1> ^objects <o2> ^predicates <p2>)
+    (<o2> ^object <i5> ^object <i3> ^object <i6> ^object <i4>)
+    (<p2> ^predicate <p3> ^predicate <p4>)
+    (<p3> ^handle <h1>)
+    (<p4> ^handle <h2>)
+    -->
+    (<s1> ^operator <o1> > ^best-pref-eval <o1>)
+    (<o1> ^plan-length 1)
+}
+
+sp {chunk*evaluate-operator*elaborate*evaluation*from-subgoal*duplicate-desired*Tie*t2275-2
+    :chunk
+    (state <s1> ^operator <o1> ^evaluation <e1> ^problem-space <p1>
+          ^superstate <s5> ^world <w1>)
+    (<o1> ^name evaluate-operator ^evaluation <e1> ^superoperator <s2>
+          ^superproblem-space <s4> ^evaluation <e2> ^superoperator <s6>)
+   -{ (<s2> ^{ <a1> <> arg2 <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<s2> ^name op_put-down1 ^arg2 <a4> ^arg1 <a5> ^subtask-handle <s3>
+          ^task-handle <t1>)
+    (<a4> ^arg-type partial-predicate ^handle <h1> ^2 <i3>)
+    (<a5> ^arg-type object ^id <i2>)
+    (<p1> ^name action)
+    (<e2> ^desired <d1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^handle <h2>)
+    (<i1> ^type relation ^handle <h1> ^1 <i2> ^2 <i3>)
+    (<s5> ^desired <d1>)
+    (<w1> ^objects <o2> ^predicates <p2>)
+    (<o2> ^object <i3> ^object <i2>)
+    (<p2> ^predicate <p3>)
+    (<p3> ^handle <h1>)
+    (<s4> ^name <n1>)
+    -->
+    (<e1> ^symbolic-value success)
+}
+
+sp {chunk*evaluate-operator*elaborate*evaluation*plan-length*Tie*t2275-1
+    :chunk
+    (state <s1> ^operator <o1> ^evaluation <e1> ^problem-space <p1>
+          ^superstate <s5> ^world <w1>)
+    (<o1> ^name evaluate-operator ^evaluation <e1> ^superoperator <s2>
+          ^superproblem-space <s4> ^evaluation <e2> ^superoperator <s6>)
+   -{ (<s2> ^{ <a1> <> arg2 <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<s2> ^name op_put-down1 ^arg2 <a4> ^arg1 <a5> ^subtask-handle <s3>
+          ^task-handle <t1>)
+    (<a4> ^arg-type partial-predicate ^handle <h1> ^2 <i3>)
+    (<a5> ^arg-type object ^id <i2>)
+    (<p1> ^name action)
+    (<e2> ^desired <d1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^handle <h2>)
+    (<i1> ^type relation ^handle <h1> ^1 <i2> ^2 <i3>)
+    (<s5> ^desired <d1>)
+    (<w1> ^objects <o2> ^predicates <p2>)
+    (<o2> ^object <i3> ^object <i2>)
+    (<p2> ^predicate <p3>)
+    (<p3> ^handle <h1>)
+    (<s4> ^name <n1>)
+    -->
+    (<e1> ^plan-length 1)
+}
+
+sp {chunkx2*__TASK_T_GOAL_*task*elaborate*desired*terminal-goal*OpNoChange*t2241-1
+    :chunk
+    (state <s1> ^current-task-segment <c1> -^copy-task-goal <c2>
+          ^problem-space <p1> ^task-operator <t1> ^name <n1>)
+    (<c1> ^current-goal <c3>)
+    (<c3> ^handle move1term4)
+    (<p1> ^name action)
+    (<t1> ^name <n1>)
+    -->
+    (<s1> ^desired <d1>)
+    (<d1> ^handle move1term4 ^item-type terminal-goal)
+}
+
+sp {chunk*subproblem*execute*apply*select-next-goal*change*current-goal*0*implicit*OpNoChange*t2230-1
+    :chunk
+    (state <s1> ^task-operator <t1> ^operator <o1>)
+    (<t1> ^task-handle move1)
+    (<o1> ^next-goal-handle move1term4 ^name select-next-goal)
+    -->
+    (<s1> ^apply-select-next-goal true)
+}
+
+sp {chunkx2*__SEL_NEXT_GOAL__*propose*select-next-goal*superstate*OpNoChange*t2221-1
+    :chunk
+    (state <s1> ^desired <d1> ^problem-space <p1> ^current-task-segment <c1>
+          ^task-operator <t1> ^name <n1>)
+    (<d1> ^satisfied true)
+    (<p1> ^name action)
+    (<c1> ^current-goal <c2>)
+    (<c2> ^handle move1goal3)
+    (<t1> ^name <n1>)
+    -->
+    (<s1> ^operator <o1> + ^operator <o1> =)
+    (<o1> ^name select-next-goal ^next-goal-handle move1term4
+           ^next-goal-type terminal-goal ^has-conditions false)
+}
+
+sp {chunk*__TASK_POLICY__*problem-space*action*subtask*best*preference*OpNoChange*t2192-5
+    :chunk
+    (state <s1> ^name op_put-down1 ^desired <d1> ^task-operator <t1>
+          ^operator <o1> + ^problem-space <p3> ^world <w1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^handle <h1>)
+   -{ (<t1> ^{ <a1> <> arg2 <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<t1> ^arg2 <a4> ^arg1 <a5> ^subtask-handle <s3> ^task-handle <t3>
+          ^name <n2>)
+    (<a4> ^arg-type partial-predicate ^2 <i3> ^handle <h3>)
+    (<a5> ^arg-type object ^id <i2>)
+    (<i1> ^type relation ^1 <i2> ^2 <i3> ^handle <h2>)
+    (<i2> ^predicates <p1>)
+    (<p1> -^dont-copy is-grabbed1 ^is-grabbed1 grabbed1)
+    (<i3> ^predicates <p2>)
+    (<p2> -^dont-copy is-visible1 -^dont-copy is-reachable1
+          ^is-reachable1 not-reachable1 ^is-visible1 visible1)
+   -{ (<o1> ^{ <a6> <> arg1 } <a7>)
+      (<a7> ^arg-type <a8>)}
+    (<o1> ^name op_approach1 ^arg1 <a9> ^subtask-handle <s2> ^task-handle <t2>)
+    (<a9> ^arg-type object ^id <i3>)
+    (<p3> ^name action ^name <n1>)
+    (<w1> ^objects <o2>)
+    (<o2> ^object <i3> ^object <i2>)
+    -->
+    (<s1> ^operator <o1> > ^best-pref-eval <o1>)
+}
+
+sp {chunk*problem-space*action*elaborate*subtask-plan-length*OpNoChange*t2192-4
+    :chunk
+    (state <s1> ^name op_put-down1 ^desired <d1> ^task-operator <t1>
+          ^operator <o1> + ^problem-space <p3> ^world <w1> ^task-operator <t5>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^1 <i4> ^handle <h1>
+          ^handle <h4>)
+   -{ (<t1> ^{ <a1> <> arg2 <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<t1> ^arg2 <a4> ^arg1 <a5> ^subtask-handle <s3> ^task-handle <t3>
+          ^name <n2>)
+    (<a4> ^arg-type partial-predicate ^2 <i3> ^handle <h3>)
+    (<a5> ^arg-type object ^id <i2>)
+    (<i1> ^type relation ^1 <i2> ^2 <i3> ^handle <h2>)
+    (<i2> ^predicates <p1>)
+    (<p1> -^dont-copy is-grabbed1 ^is-grabbed1 grabbed1)
+    (<i3> ^predicates <p2>)
+    (<p2> -^dont-copy is-visible1 -^dont-copy is-reachable1
+          ^is-reachable1 not-reachable1 ^is-visible1 visible1)
+    (<i4> ^type relation ^2 <i5> ^1 <i6> ^handle <h5>)
+    (<i5> ^predicates <p2>)
+    (<i6> ^predicates <p1>)
+   -{ (<o1> ^{ <a6> <> arg1 } <a7>)
+      (<a7> ^arg-type <a8>)}
+    (<o1> ^name op_approach1 ^arg1 <a9> ^arg1 <a10> ^subtask-handle <s2>
+          ^subtask-handle <s4> ^task-handle <t2> ^task-handle <t4>)
+    (<a9> ^arg-type object ^id <i3>)
+    (<a10> ^arg-type object ^id <i5>)
+    (<p3> ^name action ^name <n1> ^name <n3>)
+    (<w1> ^objects <o2>)
+    (<o2> ^object <i3> ^object <i2> ^object <i5> ^object <i6>)
+    (<t5> ^arg2 <a11> ^arg1 <a12> ^subtask-handle <s5> ^task-handle <t6>
+          ^name <n4>)
+    (<a11> ^arg-type partial-predicate ^2 <i5> ^handle <h6>)
+    (<a12> ^arg-type object ^id <i6>)
+    -->
+    (<o1> ^plan-length 1)
+}
+
+sp {chunk*__PLAN__LEN__*problem-space*action*subtask*plan-length*OpNoChange*t2192-3
+    :chunk
+    (state <s1> ^name op_put-down1 ^desired <d1> ^task-operator <t1>
+          ^operator <o1> + ^problem-space <p3> ^world <w1> ^task-operator <t5>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^1 <i4> ^handle <h1>
+          ^handle <h4>)
+   -{ (<t1> ^{ <a1> <> arg2 <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<t1> ^arg2 <a4> ^arg1 <a5> ^subtask-handle <s3> ^task-handle <t3>
+          ^name <n2>)
+    (<a4> ^arg-type partial-predicate ^2 <i3> ^handle <h3>)
+    (<a5> ^arg-type object ^id <i2>)
+    (<i1> ^type relation ^1 <i2> ^2 <i3> ^handle <h2>)
+    (<i2> ^predicates <p1>)
+    (<p1> -^dont-copy is-grabbed1 ^is-grabbed1 grabbed1)
+    (<i3> ^predicates <p2>)
+    (<p2> -^dont-copy is-visible1 -^dont-copy is-reachable1
+          ^is-reachable1 not-reachable1 ^is-visible1 visible1)
+    (<i4> ^type relation ^2 <i5> ^1 <i6> ^handle <h5>)
+    (<i5> ^predicates <p2>)
+    (<i6> ^predicates <p1>)
+   -{ (<o1> ^{ <a6> <> arg1 } <a7>)
+      (<a7> ^arg-type <a8>)}
+    (<o1> ^name op_approach1 ^arg1 <a9> ^arg1 <a10> ^subtask-handle <s2>
+          ^subtask-handle <s4> ^task-handle <t2> ^task-handle <t4>)
+    (<a9> ^arg-type object ^id <i3>)
+    (<a10> ^arg-type object ^id <i5>)
+    (<p3> ^name action ^name <n1> ^name <n3>)
+    (<w1> ^objects <o2>)
+    (<o2> ^object <i3> ^object <i2> ^object <i5> ^object <i6>)
+    (<t5> ^arg2 <a11> ^arg1 <a12> ^subtask-handle <s5> ^task-handle <t6>
+          ^name <n4>)
+    (<a11> ^arg-type partial-predicate ^2 <i5> ^handle <h6>)
+    (<a12> ^arg-type object ^id <i6>)
+    -->
+    (<s1> ^operator <o1> > ^best-pref-eval <o1>)
+    (<o1> ^plan-length 1)
+}
+
+sp {chunk*evaluate-operator*elaborate*evaluation*from-subgoal*duplicate-desired*Tie*t2192-2
+    :chunk
+    (state <s1> ^operator <o1> ^evaluation <e1> ^problem-space <p1>
+          ^superstate <s6> ^world <w1>)
+    (<o1> ^name evaluate-operator ^evaluation <e1> ^superoperator <s2>
+          ^superstate <s3> ^superproblem-space <s5> ^evaluation <e2>
+          ^superoperator <s8>)
+   -{ (<s2> ^{ <a1> <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<s2> ^name op_approach1 ^arg1 <a4> ^subtask-handle <s4> ^task-handle <t2>)
+    (<a4> ^arg-type object ^id <i2>)
+    (<s3> ^name op_put-down1)
+    (<p1> ^name action)
+    (<e2> ^desired <d1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^handle <h1>)
+    (<i1> ^type relation ^2 <i2> ^1 <i3> ^handle <h2>)
+    (<i2> ^predicates <p2>)
+    (<p2> -^dont-copy is-visible1 -^dont-copy is-reachable1
+          ^is-reachable1 not-reachable1 ^is-visible1 visible1)
+    (<s6> ^desired <d1> ^task-operator <t1>)
+   -{ (<t1> ^{ <a5> <> arg2 <> arg1 } <a6>)
+      (<a6> ^arg-type <a7>)}
+    (<t1> ^arg2 <a8> ^arg1 <a9> ^subtask-handle <s7> ^task-handle <t3>
+          ^name <n2>)
+    (<a8> ^arg-type partial-predicate ^2 <i2> ^handle <h3>)
+    (<a9> ^arg-type object ^id <i3>)
+    (<i3> ^predicates <p3>)
+    (<p3> -^dont-copy is-grabbed1 ^is-grabbed1 grabbed1)
+    (<w1> ^objects <o2>)
+    (<o2> ^object <i2> ^object <i3>)
+    (<s5> ^name <n1>)
+    -->
+    (<e1> ^symbolic-value success)
+}
+
+sp {chunk*evaluate-operator*elaborate*evaluation*plan-length*Tie*t2192-1
+    :chunk
+    (state <s1> ^operator <o1> ^evaluation <e1> ^problem-space <p1>
+          ^superstate <s6> ^world <w1>)
+    (<o1> ^name evaluate-operator ^evaluation <e1> ^superoperator <s2>
+          ^superstate <s3> ^superproblem-space <s5> ^evaluation <e2>
+          ^superoperator <s8>)
+   -{ (<s2> ^{ <a1> <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<s2> ^name op_approach1 ^arg1 <a4> ^subtask-handle <s4> ^task-handle <t2>)
+    (<a4> ^arg-type object ^id <i2>)
+    (<s3> ^name op_put-down1)
+    (<p1> ^name action)
+    (<e2> ^desired <d1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^handle <h1>)
+    (<i1> ^type relation ^2 <i2> ^1 <i3> ^handle <h2>)
+    (<i2> ^predicates <p2>)
+    (<p2> -^dont-copy is-visible1 -^dont-copy is-reachable1
+          ^is-reachable1 not-reachable1 ^is-visible1 visible1)
+    (<s6> ^desired <d1> ^task-operator <t1>)
+   -{ (<t1> ^{ <a5> <> arg2 <> arg1 } <a6>)
+      (<a6> ^arg-type <a7>)}
+    (<t1> ^arg2 <a8> ^arg1 <a9> ^subtask-handle <s7> ^task-handle <t3>
+          ^name <n2>)
+    (<a8> ^arg-type partial-predicate ^2 <i2> ^handle <h3>)
+    (<a9> ^arg-type object ^id <i3>)
+    (<i3> ^predicates <p3>)
+    (<p3> -^dont-copy is-grabbed1 ^is-grabbed1 grabbed1)
+    (<w1> ^objects <o2>)
+    (<o2> ^object <i2> ^object <i3>)
+    (<s5> ^name <n1>)
+    -->
+    (<e1> ^plan-length 1)
+}
+
+sp {chunkx2*__TASK_T_GOAL_*task*elaborate*desired*terminal-goal*OpNoChange*t2163-1
+    :chunk
+    (state <s1> ^current-task-segment <c1> -^copy-task-goal <c2>
+          ^problem-space <p1> ^task-operator <t1> ^name <n1>)
+    (<c1> ^current-goal <c3>)
+    (<c3> ^handle put-down1term1)
+    (<p1> ^name action)
+    (<t1> ^name <n1>)
+    -->
+    (<s1> ^desired <d1>)
+    (<d1> ^handle put-down1term1 ^item-type terminal-goal)
+}
+
+sp {chunk*subproblem*execute*apply*select-next-goal*change*current-goal*0*implicit*OpNoChange*t2153-1
+    :chunk
+    (state <s1> ^task-operator <t1> ^operator <o1>)
+    (<t1> ^task-handle put-down1)
+    (<o1> ^next-goal-handle put-down1term1 ^name select-next-goal)
+    -->
+    (<s1> ^apply-select-next-goal true)
+}
+
+sp {chunkx2*__SEL_NEXT_GOAL__*propose*select-next-goal*superstate*OpNoChange*t2144-1
+    :chunk
+    (state <s1> ^desired <d1> ^problem-space <p1> ^current-task-segment <c1>
+          ^task-operator <t1> ^name <n1>)
+    (<d1> ^satisfied true)
+    (<p1> ^name action)
+    (<c1> ^current-goal <c2>)
+    (<c2> ^handle put-down1goal2)
+    (<t1> ^name <n1>)
+    -->
+    (<s1> ^operator <o1> + ^operator <o1> =)
+    (<o1> ^name select-next-goal ^next-goal-handle put-down1term1
+           ^next-goal-type terminal-goal ^has-conditions false)
+}
+
+sp {chunkx2*__PROP__SUBT__*problem-space*action*propose*subtask*3*OpNoChange*t2105-1
+    :chunk
+    (state <s1> ^task-operator <t1> ^name <n1> ^problem-space <p1> ^world <w1>)
+    (<t1> ^task-handle put-down1 ^arg2 <a1> ^name <n1>)
+    (<a1> ^arg-type partial-predicate ^2 <i1>)
+    (<p1> ^name action)
+    (<w1> ^objects <o1>)
+    (<o1> ^object <i1>)
+    (<i1> ^predicates <p2>)
+    (<p2> ^is-reachable1 not-reachable1 ^is-visible1 visible1)
+    -->
+    (<s1> ^operator <o2> +)
+    (<o2> ^task-handle approach1 ^item-type task-operator ^name op_approach1
+           ^arg1 <a2> ^subtask-handle subtask8)
+    (<a2> ^id <i1> ^arg-type object)
+}
+
+sp {chunk*evaluate-operator*elaborate*evaluation*from-subgoal*duplicate-desired*Tie*t2066-2
+    :chunk
+    (state <s1> ^operator <o1> ^evaluation <e1> ^problem-space <p1>
+          ^superstate <s6> ^world <w1>)
+    (<o1> ^name evaluate-operator ^evaluation <e1> ^superoperator <s2>
+          ^superstate <s4> ^superproblem-space <s5> ^evaluation <e2>
+          ^superoperator <s8>)
+    (<s2> -^subtask-handle <s3> ^name op_approach1 ^arg1 <a4>
+          ^task-handle <t2>)
+   -{ (<s2> ^{ <a1> <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<a4> ^arg-type object ^id <i2>)
+    (<s4> ^name op_put-down1)
+    (<p1> ^name action)
+    (<e2> ^desired <d1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^handle <h1>)
+    (<i1> ^type relation ^2 <i2> ^1 <i3> ^handle <h2>)
+    (<i2> ^predicates <p2>)
+    (<p2> -^dont-copy is-visible1 -^dont-copy is-reachable1
+          ^is-reachable1 not-reachable1 ^is-visible1 visible1)
+    (<s6> ^desired <d1> ^task-operator <t1>)
+   -{ (<t1> ^{ <a5> <> arg2 <> arg1 } <a6>)
+      (<a6> ^arg-type <a7>)}
+    (<t1> ^arg2 <a8> ^arg1 <a9> ^subtask-handle <s7> ^task-handle <t3>
+          ^name <n2>)
+    (<a8> ^arg-type partial-predicate ^2 <i2> ^handle <h3>)
+    (<a9> ^arg-type object ^id <i3>)
+    (<i3> ^predicates <p3>)
+    (<p3> -^dont-copy is-grabbed1 ^is-grabbed1 grabbed1)
+    (<w1> ^objects <o2>)
+    (<o2> ^object <i2> ^object <i3>)
+    (<s5> ^name <n1>)
+    -->
+    (<e1> ^symbolic-value success)
+}
+
+sp {chunk*evaluate-operator*elaborate*evaluation*plan-length*Tie*t2066-1
+    :chunk
+    (state <s1> ^operator <o1> ^evaluation <e1> ^problem-space <p1>
+          ^superstate <s6> ^world <w1>)
+    (<o1> ^name evaluate-operator ^evaluation <e1> ^superoperator <s2>
+          ^superstate <s4> ^superproblem-space <s5> ^evaluation <e2>
+          ^superoperator <s8>)
+    (<s2> -^subtask-handle <s3> ^name op_approach1 ^arg1 <a4>
+          ^task-handle <t2>)
+   -{ (<s2> ^{ <a1> <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<a4> ^arg-type object ^id <i2>)
+    (<s4> ^name op_put-down1)
+    (<p1> ^name action)
+    (<e2> ^desired <d1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^handle <h1>)
+    (<i1> ^type relation ^2 <i2> ^1 <i3> ^handle <h2>)
+    (<i2> ^predicates <p2>)
+    (<p2> -^dont-copy is-visible1 -^dont-copy is-reachable1
+          ^is-reachable1 not-reachable1 ^is-visible1 visible1)
+    (<s6> ^desired <d1> ^task-operator <t1>)
+   -{ (<t1> ^{ <a5> <> arg2 <> arg1 } <a6>)
+      (<a6> ^arg-type <a7>)}
+    (<t1> ^arg2 <a8> ^arg1 <a9> ^subtask-handle <s7> ^task-handle <t3>
+          ^name <n2>)
+    (<a8> ^arg-type partial-predicate ^2 <i2> ^handle <h3>)
+    (<a9> ^arg-type object ^id <i3>)
+    (<i3> ^predicates <p3>)
+    (<p3> -^dont-copy is-grabbed1 ^is-grabbed1 grabbed1)
+    (<w1> ^objects <o2>)
+    (<o2> ^object <i2> ^object <i3>)
+    (<s5> ^name <n1>)
+    -->
+    (<e1> ^plan-length 1)
+}
+
+sp {chunk*__COPY__TASK__*anystate*copy-task-operator*elaborate*copy*OpNoChange*t2059-1
+    :chunk
+    (state <s1> ^copy-task-operator <c1>)
+    (<c1> ^object-map <o1> ^copy-name <c2> ^destination <d1>
+          ^task-operator <t1>)
+    (<t1> ^subtask-handle <s2> ^task-handle <t2> ^name <n1> ^<a1> <a2>
+          ^{ <a3> < <a1> } <a4>)
+    (<a2> ^arg-type partial-predicate ^handle <h1> ^2 <i1>)
+    (<o1> ^<i1> <i2> ^<i3> <i4>)
+   -{ (<t1> ^{ <a5> <> <a1> <> <a3> } <a6>)
+      (<a6> ^arg-type <a7>)}
+    (<a4> ^arg-type object ^id <i3>)
+    -->
+    (<d1> ^<c2> <c3>)
+    (<c3> ^subtask-handle <s2> ^task-handle <t2> ^item-type task-operator
+           ^name <n1> ^<a1> <a8> ^<a3> <a9>)
+    (<a8> ^2 <i2> ^handle <h1> ^arg-type partial-predicate)
+    (<a9> ^id <i4> ^arg-type object)
+}
+
+sp {chunkx2*__TASK__GOAL__*task*elaborate*desired*OpNoChange*t2046-1
+    :chunk
+    (state <s1> ^current-task-segment <c1> -^copy-task-goal <c2>
+          ^task-operator <t1> ^name <n1> ^problem-space <p1> ^world <w1>)
+    (<c1> ^current-goal <c3>)
+    (<c3> ^handle put-down1goal2)
+    (<t1> ^task-handle put-down1 ^arg2 <a1> ^arg2 <a2> ^arg1 <a3> ^name <n1>)
+    (<a1> ^arg-type partial-predicate ^2 <i2>)
+    (<a2> ^arg-type partial-predicate ^handle <h1>)
+    (<a3> ^arg-type object ^id <i1>)
+    (<p1> ^name action)
+    -->
+    (<s1> ^desired <d1>)
+    (<d1> ^1 <i3> ^pred-count 1 ^handle put-down1goal2)
+    (<i3> ^2 <i2> ^1 <i1> ^handle <h1> ^type relation)
+}
+
+sp {chunk*subproblem*execute*apply*select-next-goal*change*current-goal*0*implicit*OpNoChange*t2028-1
+    :chunk
+    (state <s1> ^task-operator <t1> ^operator <o1>)
+    (<t1> ^task-handle put-down1)
+    (<o1> ^next-goal-handle put-down1goal2 ^name select-next-goal)
+    -->
+    (<s1> ^apply-select-next-goal true)
+}
+
+sp {chunkx2*__SEL_NEXT_GOAL__*propose*select-next-goal*superstate*OpNoChange*t2019-1
+    :chunk
+    (state <s1> ^desired <d1> ^task-operator <t1> ^name <n1>
+          ^problem-space <p1> ^current-task-segment <c1>
+          ^current-task-segment <c2> ^world <w1>)
+    (<d1> ^satisfied true)
+    (<t1> ^task-handle put-down1 ^name <n1> ^arg2 <a1>)
+    (<p1> ^name action)
+    (<c2> ^current-goal <c3>)
+    (<c3> ^handle put-down1start1)
+    -->
+    (<s1> ^operator <o1> + ^operator <o1> =)
+    (<o1> ^name select-next-goal ^next-goal-handle put-down1goal2
+           ^next-goal-type task-goal ^has-conditions true)
+}
+
+sp {chunkx2*__TASK_S_GOAL_*task*elaborate*desired*start-goal*OpNoChange*t2000-1
+    :chunk
+    (state <s1> ^current-task-segment <c1> -^copy-task-goal <c2>
+          ^problem-space <p1> ^task-operator <t1> ^name <n1>)
+    (<c1> ^current-goal <c3>)
+    (<c3> ^handle put-down1start1)
+    (<p1> ^name action)
+    (<t1> ^name <n1>)
+    -->
+    (<s1> ^desired <d1>)
+    (<d1> ^handle put-down1start1 ^item-type start-goal)
+}
+
+sp {chunk*__COPY__TASK__*anystate*apply*copy-task-operator*OpNoChange*t1977-1
+    :chunk
+    (state <s1> ^operator <o1>)
+    (<o1> -^object-map <o2> ^name copy-task-operator ^copy-name <c1>
+          ^destination <d1> ^task-operator <t1>)
+    (<t1> ^subtask-handle <s2> ^task-handle <t2> ^name <n1> ^<a1> <a2>
+          ^{ <a3> < <a1> } <a4>)
+    (<a2> ^arg-type partial-predicate ^2 <i1> ^handle <h1>)
+    (<i1> -^abstract true)
+   -{ (<t1> ^{ <a5> <> <a1> <> <a3> } <a6>)
+      (<a6> ^arg-type <a7>)}
+    (<a4> ^arg-type object ^id <i2>)
+    (<i2> -^abstract true)
+    -->
+    (<d1> ^<c1> <c2>)
+    (<c2> ^subtask-handle <s2> ^task-handle <t2> ^item-type task-operator
+           ^name <n1> ^<a1> <a8> ^<a3> <a9>)
+    (<a8> ^2 <i1> ^handle <h1> ^arg-type partial-predicate)
+    (<a9> ^id <i2> ^arg-type object)
+}
+
+sp {chunkx2*__PROP__SUBT__*problem-space*action*propose*subtask*3*OpNoChange*t1969-1
+    :chunk
+    (state <s1> ^task-operator <t1> ^name <n1> ^problem-space <p1> ^world <w1>)
+    (<t1> ^task-handle move1 ^arg2 <a1> ^arg2 <a2> ^arg1 <a3> ^name <n1>)
+    (<a1> ^arg-type partial-predicate ^2 { <i2> <> <i1> })
+    (<a2> ^arg-type partial-predicate ^handle on1)
+    (<a3> ^arg-type object ^id <i1>)
+    (<p1> ^name action)
+    (<w1> ^objects <o1>)
+    (<o1> ^object <i1> ^object <i2>)
+    (<i1> ^predicates <p2>)
+    (<p2> ^is-grabbed1 grabbed1)
+    (<i2> ^predicates <p3>)
+    (<p3> ^affordance1 surface1 ^is-confirmed1 confirmed1)
+    -->
+    (<s1> ^operator <o2> +)
+    (<o2> ^task-handle put-down1 ^item-type task-operator ^name op_put-down1
+           ^arg2 <a4> ^arg1 <a5> ^subtask-handle subtask7)
+    (<a4> ^2 <i2> ^handle on1 ^arg-type partial-predicate)
+    (<a5> ^id <i1> ^arg-type object)
+}
+
+sp {chunk*__MATCH_TASK__*anystate*match-task-operator*elaborate*successful-match*OpNoChange*t1968-1
+    :chunk
+    (state <s1> ^match-task-operator <m1>)
+    (<m1> ^candidate-tasks <c1> ^task-operator <t2>)
+    (<c1> ^candidate-task-operator <c2>)
+    (<c2> ^task-handle <t1> ^<a1> <a3> ^<a4> <a12>)
+    (<t2> ^task-handle <t1> ^<a1> <a2> ^{ <a4> < <a1> } <a5>)
+    (<a2> ^arg-type partial-predicate ^handle <h1> ^2 <i1>)
+    (<a3> ^arg-type partial-predicate ^handle <h1> ^2 <i1>)
+   -{ (<c2> ^{ <a6> <> <a1> <> <a4> } <a7>)
+      (<a7> ^arg-type <a8>)}
+   -{ (<t2> ^{ <a9> <> <a1> <> <a4> } <a10>)
+      (<a10> ^arg-type <a11>)}
+    (<a5> ^arg-type object ^id <i2>)
+    (<a12> ^arg-type object ^id <i2>)
+    -->
+    (<m1> ^successful-match <c2>)
+}
+
+sp {chunk*__TASK_POLICY__*problem-space*action*subtask*best*preference*OpNoChange*t1891-5
+    :chunk
+    (state <s1> ^name op_pick-up1 ^desired <d1> ^task-operator <t1>
+          ^operator <o1> + ^problem-space <p2> ^world <w1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^handle <h1>)
+   -{ (<t1> ^{ <a1> <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<t1> ^arg1 <a4> ^subtask-handle <s3> ^task-handle <t3> ^name <n2>)
+    (<a4> ^arg-type object ^id <i2>)
+    (<i1> ^type unary ^1 <i2> ^property-handle <p3> ^handle <h2>)
+    (<i2> ^predicates <p1>)
+    (<p1> -^dont-copy is-visible1 -^dont-copy is-grabbed1
+          -^dont-copy is-reachable1 ^is-reachable1 not-reachable1
+          ^is-grabbed1 not-grabbed1 ^is-visible1 visible1)
+   -{ (<o1> ^{ <a5> <> arg1 } <a6>)
+      (<a6> ^arg-type <a7>)}
+    (<o1> ^name op_approach1 ^arg1 <a8> ^subtask-handle <s2> ^task-handle <t2>)
+    (<a8> ^arg-type object ^id <i2>)
+    (<p2> ^name action ^name <n1>)
+    (<w1> ^objects <o2>)
+    (<o2> ^object <i2>)
+    -->
+    (<s1> ^operator <o1> > ^best-pref-eval <o1>)
+}
+
+sp {chunk*problem-space*action*elaborate*subtask-plan-length*OpNoChange*t1891-4
+    :chunk
+    (state <s1> ^name op_pick-up1 ^desired <d1> ^task-operator <t1>
+          ^operator <o1> + ^problem-space <p2> ^world <w1> ^task-operator <t5>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^1 <i3> ^handle <h1>
+          ^handle <h3>)
+   -{ (<t1> ^{ <a1> <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<t1> ^arg1 <a4> ^subtask-handle <s3> ^task-handle <t3> ^name <n2>)
+    (<a4> ^arg-type object ^id <i2>)
+    (<i1> ^type unary ^1 <i2> ^property-handle <p3> ^handle <h2>)
+    (<i2> ^predicates <p1>)
+    (<p1> -^dont-copy is-visible1 -^dont-copy is-grabbed1
+          -^dont-copy is-reachable1 ^is-reachable1 not-reachable1
+          ^is-grabbed1 not-grabbed1 ^is-visible1 visible1)
+    (<i3> ^type unary ^1 <i4> ^property-handle <p4> ^handle <h4>)
+    (<i4> ^predicates <p1>)
+   -{ (<o1> ^{ <a5> <> arg1 } <a6>)
+      (<a6> ^arg-type <a7>)}
+    (<o1> ^name op_approach1 ^arg1 <a8> ^arg1 <a9> ^subtask-handle <s2>
+          ^subtask-handle <s4> ^task-handle <t2> ^task-handle <t4>)
+    (<a8> ^arg-type object ^id <i2>)
+    (<a9> ^arg-type object ^id <i4>)
+    (<p2> ^name action ^name <n1> ^name <n3>)
+    (<w1> ^objects <o2>)
+    (<o2> ^object <i2> ^object <i4>)
+    (<t5> ^arg1 <a10> ^subtask-handle <s5> ^task-handle <t6> ^name <n4>)
+    (<a10> ^arg-type object ^id <i4>)
+    -->
+    (<o1> ^plan-length 1)
+}
+
+sp {chunk*__PLAN__LEN__*problem-space*action*subtask*plan-length*OpNoChange*t1891-3
+    :chunk
+    (state <s1> ^name op_pick-up1 ^desired <d1> ^task-operator <t1>
+          ^operator <o1> + ^problem-space <p2> ^world <w1> ^task-operator <t5>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^1 <i3> ^handle <h1>
+          ^handle <h3>)
+   -{ (<t1> ^{ <a1> <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<t1> ^arg1 <a4> ^subtask-handle <s3> ^task-handle <t3> ^name <n2>)
+    (<a4> ^arg-type object ^id <i2>)
+    (<i1> ^type unary ^1 <i2> ^property-handle <p3> ^handle <h2>)
+    (<i2> ^predicates <p1>)
+    (<p1> -^dont-copy is-visible1 -^dont-copy is-grabbed1
+          -^dont-copy is-reachable1 ^is-reachable1 not-reachable1
+          ^is-grabbed1 not-grabbed1 ^is-visible1 visible1)
+    (<i3> ^type unary ^1 <i4> ^property-handle <p4> ^handle <h4>)
+    (<i4> ^predicates <p1>)
+   -{ (<o1> ^{ <a5> <> arg1 } <a6>)
+      (<a6> ^arg-type <a7>)}
+    (<o1> ^name op_approach1 ^arg1 <a8> ^arg1 <a9> ^subtask-handle <s2>
+          ^subtask-handle <s4> ^task-handle <t2> ^task-handle <t4>)
+    (<a8> ^arg-type object ^id <i2>)
+    (<a9> ^arg-type object ^id <i4>)
+    (<p2> ^name action ^name <n1> ^name <n3>)
+    (<w1> ^objects <o2>)
+    (<o2> ^object <i2> ^object <i4>)
+    (<t5> ^arg1 <a10> ^subtask-handle <s5> ^task-handle <t6> ^name <n4>)
+    (<a10> ^arg-type object ^id <i4>)
+    -->
+    (<s1> ^operator <o1> > ^best-pref-eval <o1>)
+    (<o1> ^plan-length 1)
+}
+
+sp {chunk*evaluate-operator*elaborate*evaluation*from-subgoal*duplicate-desired*Tie*t1891-2
+    :chunk
+    (state <s1> ^operator <o1> ^evaluation <e1> ^problem-space <p1>
+          ^superstate <s6> ^world <w1>)
+    (<o1> ^name evaluate-operator ^evaluation <e1> ^superoperator <s2>
+          ^superstate <s3> ^superproblem-space <s5> ^evaluation <e2>
+          ^superoperator <s8>)
+   -{ (<s2> ^{ <a1> <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<s2> ^name op_approach1 ^arg1 <a4> ^subtask-handle <s4> ^task-handle <t2>)
+    (<a4> ^arg-type object ^id <i2>)
+    (<s3> ^name op_pick-up1)
+    (<p1> ^name action)
+    (<e2> ^desired <d1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^handle <h1>)
+    (<i1> ^type unary ^1 <i2> ^property-handle <p3> ^handle <h2>)
+    (<i2> ^predicates <p2>)
+    (<p2> -^dont-copy is-visible1 -^dont-copy is-grabbed1
+          -^dont-copy is-reachable1 ^is-reachable1 not-reachable1
+          ^is-grabbed1 not-grabbed1 ^is-visible1 visible1)
+    (<s6> ^desired <d1> ^task-operator <t1>)
+   -{ (<t1> ^{ <a5> <> arg1 } <a6>)
+      (<a6> ^arg-type <a7>)}
+    (<t1> ^arg1 <a8> ^subtask-handle <s7> ^task-handle <t3> ^name <n2>)
+    (<a8> ^arg-type object ^id <i2>)
+    (<w1> ^objects <o2>)
+    (<o2> ^object <i2>)
+    (<s5> ^name <n1>)
+    -->
+    (<e1> ^symbolic-value success)
+}
+
+sp {chunk*evaluate-operator*elaborate*evaluation*plan-length*Tie*t1891-1
+    :chunk
+    (state <s1> ^operator <o1> ^evaluation <e1> ^problem-space <p1>
+          ^superstate <s6> ^world <w1>)
+    (<o1> ^name evaluate-operator ^evaluation <e1> ^superoperator <s2>
+          ^superstate <s3> ^superproblem-space <s5> ^evaluation <e2>
+          ^superoperator <s8>)
+   -{ (<s2> ^{ <a1> <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<s2> ^name op_approach1 ^arg1 <a4> ^subtask-handle <s4> ^task-handle <t2>)
+    (<a4> ^arg-type object ^id <i2>)
+    (<s3> ^name op_pick-up1)
+    (<p1> ^name action)
+    (<e2> ^desired <d1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^handle <h1>)
+    (<i1> ^type unary ^1 <i2> ^property-handle <p3> ^handle <h2>)
+    (<i2> ^predicates <p2>)
+    (<p2> -^dont-copy is-visible1 -^dont-copy is-grabbed1
+          -^dont-copy is-reachable1 ^is-reachable1 not-reachable1
+          ^is-grabbed1 not-grabbed1 ^is-visible1 visible1)
+    (<s6> ^desired <d1> ^task-operator <t1>)
+   -{ (<t1> ^{ <a5> <> arg1 } <a6>)
+      (<a6> ^arg-type <a7>)}
+    (<t1> ^arg1 <a8> ^subtask-handle <s7> ^task-handle <t3> ^name <n2>)
+    (<a8> ^arg-type object ^id <i2>)
+    (<w1> ^objects <o2>)
+    (<o2> ^object <i2>)
+    (<s5> ^name <n1>)
+    -->
+    (<e1> ^plan-length 1)
+}
+
+sp {chunkx2*__TASK_T_GOAL_*task*elaborate*desired*terminal-goal*OpNoChange*t1862-1
+    :chunk
+    (state <s1> ^current-task-segment <c1> -^copy-task-goal <c2>
+          ^problem-space <p1> ^task-operator <t1> ^name <n1>)
+    (<c1> ^current-goal <c3>)
+    (<c3> ^handle pick-up1term1)
+    (<p1> ^name action)
+    (<t1> ^name <n1>)
+    -->
+    (<s1> ^desired <d1>)
+    (<d1> ^handle pick-up1term1 ^item-type terminal-goal)
+}
+
+sp {chunk*subproblem*execute*apply*select-next-goal*change*current-goal*0*implicit*OpNoChange*t1852-1
+    :chunk
+    (state <s1> ^task-operator <t1> ^operator <o1>)
+    (<t1> ^task-handle pick-up1)
+    (<o1> ^next-goal-handle pick-up1term1 ^name select-next-goal)
+    -->
+    (<s1> ^apply-select-next-goal true)
+}
+
+sp {chunkx2*__SEL_NEXT_GOAL__*propose*select-next-goal*superstate*OpNoChange*t1843-1
+    :chunk
+    (state <s1> ^desired <d1> ^problem-space <p1> ^current-task-segment <c1>
+          ^task-operator <t1> ^name <n1>)
+    (<d1> ^satisfied true)
+    (<p1> ^name action)
+    (<c1> ^current-goal <c2>)
+    (<c2> ^handle pick-up1goal1)
+    (<t1> ^name <n1>)
+    -->
+    (<s1> ^operator <o1> + ^operator <o1> =)
+    (<o1> ^name select-next-goal ^next-goal-handle pick-up1term1
+           ^next-goal-type terminal-goal ^has-conditions false)
+}
+
+sp {chunkx2*__TASK_T_GOAL_*task*elaborate*desired*terminal-goal*OpNoChange*t1823-1
+    :chunk
+    (state <s1> ^current-task-segment <c1> -^copy-task-goal <c2>
+          ^problem-space <p1> ^task-operator <t1> ^name <n1>)
+    (<c1> ^current-goal <c3>)
+    (<c3> ^handle approach1term1)
+    (<p1> ^name action)
+    (<t1> ^name <n1>)
+    -->
+    (<s1> ^desired <d1>)
+    (<d1> ^handle approach1term1 ^item-type terminal-goal)
+}
+
+sp {chunk*subproblem*execute*apply*select-next-goal*change*current-goal*0*implicit*OpNoChange*t1813-1
+    :chunk
+    (state <s1> ^task-operator <t1> ^operator <o1>)
+    (<t1> ^task-handle approach1)
+    (<o1> ^next-goal-handle approach1term1 ^name select-next-goal)
+    -->
+    (<s1> ^apply-select-next-goal true)
+}
+
+sp {chunkx2*__SEL_NEXT_GOAL__*propose*select-next-goal*superstate*OpNoChange*t1804-1
+    :chunk
+    (state <s1> ^desired <d1> ^problem-space <p1> ^current-task-segment <c1>
+          ^task-operator <t1> ^name <n1>)
+    (<d1> ^satisfied true)
+    (<p1> ^name action)
+    (<c1> ^current-goal <c2>)
+    (<c2> ^handle approach1goal1)
+    (<t1> ^name <n1>)
+    -->
+    (<s1> ^operator <o1> + ^operator <o1> =)
+    (<o1> ^name select-next-goal ^next-goal-handle approach1term1
+           ^next-goal-type terminal-goal ^has-conditions false)
+}
+
+sp {chunkx2*__TASK__GOAL__*task*elaborate*desired*OpNoChange*t1788-1
+    :chunk
+    (state <s1> ^current-task-segment <c1> -^copy-task-goal <c2>
+          ^task-operator <t1> ^name <n1> ^problem-space <p1> ^world <w1>)
+    (<c1> ^current-goal <c3>)
+    (<c3> ^handle approach1goal1)
+    (<t1> ^task-handle approach1 ^arg1 <a1> ^name <n1>)
+    (<a1> ^arg-type object ^id <i1>)
+    (<p1> ^name action)
+    -->
+    (<s1> ^desired <d1>)
+    (<d1> ^1 <i2> ^pred-count 1 ^handle approach1goal1)
+    (<i2> ^1 <i1> ^property-handle is-reachable1 ^handle reachable1
+           ^type unary)
+}
+
+sp {chunk*subproblem*execute*apply*select-next-goal*change*current-goal*0*implicit*OpNoChange*t1771-1
+    :chunk
+    (state <s1> ^task-operator <t1> ^operator <o1>)
+    (<t1> ^task-handle approach1)
+    (<o1> ^next-goal-handle approach1goal1 ^name select-next-goal)
+    -->
+    (<s1> ^apply-select-next-goal true)
+}
+
+sp {chunkx2*__SEL_NEXT_GOAL__*propose*select-next-goal*superstate*OpNoChange*t1762-1
+    :chunk
+    (state <s1> ^desired <d1> ^problem-space <p1> ^current-task-segment <c1>
+          ^task-operator <t1> ^name <n1>)
+    (<d1> ^satisfied true)
+    (<p1> ^name action)
+    (<c1> ^current-goal <c2>)
+    (<c2> ^handle approach1start1)
+    (<t1> ^name <n1>)
+    -->
+    (<s1> ^operator <o1> + ^operator <o1> =)
+    (<o1> ^name select-next-goal ^next-goal-handle approach1goal1
+           ^next-goal-type task-goal ^has-conditions false)
+}
+
+sp {chunkx2*__TASK_S_GOAL_*task*elaborate*desired*start-goal*OpNoChange*t1749-1
+    :chunk
+    (state <s1> ^current-task-segment <c1> -^copy-task-goal <c2>
+          ^problem-space <p1> ^task-operator <t1> ^name <n1>)
+    (<c1> ^current-goal <c3>)
+    (<c3> ^handle approach1start1)
+    (<p1> ^name action)
+    (<t1> ^name <n1>)
+    -->
+    (<s1> ^desired <d1>)
+    (<d1> ^handle approach1start1 ^item-type start-goal)
+}
+
+sp {chunkx2*__PROP__SUBT__*problem-space*action*propose*subtask*3*OpNoChange*t1725-1
+    :chunk
+    (state <s1> ^task-operator <t1> ^name <n1> ^problem-space <p1> ^world <w1>)
+    (<t1> ^task-handle pick-up1 ^arg1 <a1> ^name <n1>)
+    (<a1> ^arg-type object ^id <i1>)
+    (<p1> ^name action)
+    (<w1> ^objects <o1>)
+    (<o1> ^object <i1>)
+    (<i1> ^predicates <p2>)
+    (<p2> ^is-reachable1 not-reachable1 ^is-visible1 visible1)
+    -->
+    (<s1> ^operator <o2> +)
+    (<o2> ^task-handle approach1 ^item-type task-operator ^name op_approach1
+           ^arg1 <a2> ^subtask-handle subtask6)
+    (<a2> ^id <i1> ^arg-type object)
+}
+
+sp {chunk*evaluate-operator*elaborate*evaluation*from-subgoal*duplicate-desired*Tie*t1686-2
+    :chunk
+    (state <s1> ^operator <o1> ^evaluation <e1> ^problem-space <p1>
+          ^superstate <s6> ^world <w1>)
+    (<o1> ^name evaluate-operator ^evaluation <e1> ^superoperator <s2>
+          ^superstate <s4> ^superproblem-space <s5> ^evaluation <e2>
+          ^superoperator <s8>)
+    (<s2> -^subtask-handle <s3> ^name op_approach1 ^arg1 <a4>
+          ^task-handle <t2>)
+   -{ (<s2> ^{ <a1> <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<a4> ^arg-type object ^id <i2>)
+    (<s4> ^name op_pick-up1)
+    (<p1> ^name action)
+    (<e2> ^desired <d1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^handle <h1>)
+    (<i1> ^type unary ^1 <i2> ^property-handle <p3> ^handle <h2>)
+    (<i2> ^predicates <p2>)
+    (<p2> -^dont-copy is-visible1 -^dont-copy is-grabbed1
+          -^dont-copy is-reachable1 ^is-reachable1 not-reachable1
+          ^is-grabbed1 not-grabbed1 ^is-visible1 visible1)
+    (<s6> ^desired <d1> ^task-operator <t1>)
+   -{ (<t1> ^{ <a5> <> arg1 } <a6>)
+      (<a6> ^arg-type <a7>)}
+    (<t1> ^arg1 <a8> ^subtask-handle <s7> ^task-handle <t3> ^name <n2>)
+    (<a8> ^arg-type object ^id <i2>)
+    (<w1> ^objects <o2>)
+    (<o2> ^object <i2>)
+    (<s5> ^name <n1>)
+    -->
+    (<e1> ^symbolic-value success)
+}
+
+sp {chunk*evaluate-operator*elaborate*evaluation*plan-length*Tie*t1686-1
+    :chunk
+    (state <s1> ^operator <o1> ^evaluation <e1> ^problem-space <p1>
+          ^superstate <s6> ^world <w1>)
+    (<o1> ^name evaluate-operator ^evaluation <e1> ^superoperator <s2>
+          ^superstate <s4> ^superproblem-space <s5> ^evaluation <e2>
+          ^superoperator <s8>)
+    (<s2> -^subtask-handle <s3> ^name op_approach1 ^arg1 <a4>
+          ^task-handle <t2>)
+   -{ (<s2> ^{ <a1> <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<a4> ^arg-type object ^id <i2>)
+    (<s4> ^name op_pick-up1)
+    (<p1> ^name action)
+    (<e2> ^desired <d1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^handle <h1>)
+    (<i1> ^type unary ^1 <i2> ^property-handle <p3> ^handle <h2>)
+    (<i2> ^predicates <p2>)
+    (<p2> -^dont-copy is-visible1 -^dont-copy is-grabbed1
+          -^dont-copy is-reachable1 ^is-reachable1 not-reachable1
+          ^is-grabbed1 not-grabbed1 ^is-visible1 visible1)
+    (<s6> ^desired <d1> ^task-operator <t1>)
+   -{ (<t1> ^{ <a5> <> arg1 } <a6>)
+      (<a6> ^arg-type <a7>)}
+    (<t1> ^arg1 <a8> ^subtask-handle <s7> ^task-handle <t3> ^name <n2>)
+    (<a8> ^arg-type object ^id <i2>)
+    (<w1> ^objects <o2>)
+    (<o2> ^object <i2>)
+    (<s5> ^name <n1>)
+    -->
+    (<e1> ^plan-length 1)
+}
+
+sp {chunk*__COPY__GOAL__*anystate*copy-task-goal*elaborate*copy*no*modifiers*OpNoChange*t1679-1
+    :chunk
+    (state <s1> ^copy-task-goal <c1> ^deep-copy-world <d1>)
+    (<c1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^handle <h1>)
+    (<i1> ^type unary ^property-handle <p1> ^handle <h2> ^1 <i2>)
+    (<d1> ^copy-objects-map <c2>)
+    (<c2> ^<i2> <i3>)
+    -->
+    (<s1> ^desired <d2>)
+    (<d2> ^duplicate-of <c1> ^handle <h1> ^1 <i4> ^pred-count 1)
+    (<i4> ^1 <i3> ^property-handle <p1> ^handle <h2> ^type unary)
+}
+
+sp {chunk*__COPY__TASK__*anystate*copy-task-operator*elaborate*copy*OpNoChange*t1674-1
+    :chunk
+    (state <s1> ^copy-task-operator <c1>)
+    (<c1> ^object-map <o1> ^copy-name <c2> ^destination <d1>
+          ^task-operator <t1>)
+    (<t1> ^subtask-handle <s2> ^task-handle <t2> ^name <n1> ^<a1> <a2>)
+   -{ (<t1> ^{ <a3> <> <a1> } <a4>)
+      (<a4> ^arg-type <a5>)}
+    (<a2> ^arg-type object ^id <i1>)
+    (<o1> ^<i1> <i2>)
+    -->
+    (<d1> ^<c2> <c3>)
+    (<c3> ^subtask-handle <s2> ^task-handle <t2> ^item-type task-operator
+           ^name <n1> ^<a1> <a6>)
+    (<a6> ^id <i2> ^arg-type object)
+}
+
+sp {chunkx2*__TASK__GOAL__*task*elaborate*desired*OpNoChange*t1664-1
+    :chunk
+    (state <s1> ^current-task-segment <c1> -^copy-task-goal <c2>
+          ^task-operator <t1> ^name <n1> ^problem-space <p1> ^world <w1>)
+    (<c1> ^current-goal <c3>)
+    (<c3> ^handle pick-up1goal1)
+    (<t1> ^task-handle pick-up1 ^arg1 <a1> ^name <n1>)
+    (<a1> ^arg-type object ^id <i1>)
+    (<p1> ^name action)
+    -->
+    (<s1> ^desired <d1>)
+    (<d1> ^1 <i2> ^pred-count 1 ^handle pick-up1goal1)
+    (<i2> ^1 <i1> ^property-handle is-grabbed1 ^handle grabbed1 ^type unary)
+}
+
+sp {chunk*subproblem*execute*apply*select-next-goal*change*current-goal*0*implicit*OpNoChange*t1647-1
+    :chunk
+    (state <s1> ^task-operator <t1> ^operator <o1>)
+    (<t1> ^task-handle pick-up1)
+    (<o1> ^next-goal-handle pick-up1goal1 ^name select-next-goal)
+    -->
+    (<s1> ^apply-select-next-goal true)
+}
+
+sp {chunkx2*__SEL_NEXT_GOAL__*propose*select-next-goal*superstate*OpNoChange*t1638-1
+    :chunk
+    (state <s1> ^desired <d1> ^problem-space <p1> ^current-task-segment <c1>
+          ^task-operator <t1> ^name <n1>)
+    (<d1> ^satisfied true)
+    (<p1> ^name action)
+    (<c1> ^current-goal <c2>)
+    (<c2> ^handle pick-up1start1)
+    (<t1> ^name <n1>)
+    -->
+    (<s1> ^operator <o1> + ^operator <o1> =)
+    (<o1> ^name select-next-goal ^next-goal-handle pick-up1goal1
+           ^next-goal-type task-goal ^has-conditions false)
+}
+
+sp {chunkx2*__TASK_S_GOAL_*task*elaborate*desired*start-goal*OpNoChange*t1632-1
+    :chunk
+    (state <s1> ^current-task-segment <c1> -^copy-task-goal <c2>
+          ^problem-space <p1> ^task-operator <t1> ^name <n1>)
+    (<c1> ^current-goal <c3>)
+    (<c3> ^handle pick-up1start1)
+    (<p1> ^name action)
+    (<t1> ^name <n1>)
+    -->
+    (<s1> ^desired <d1>)
+    (<d1> ^handle pick-up1start1 ^item-type start-goal)
+}
+
+sp {chunk*__COPY__TASK__*anystate*apply*copy-task-operator*OpNoChange*t1611-1
+    :chunk
+    (state <s1> ^operator <o1>)
+    (<o1> -^object-map <o2> ^name copy-task-operator ^copy-name <c1>
+          ^destination <d1> ^task-operator <t1>)
+    (<t1> ^subtask-handle <s2> ^task-handle <t2> ^name <n1> ^<a1> <a2>)
+   -{ (<t1> ^{ <a3> <> <a1> } <a4>)
+      (<a4> ^arg-type <a5>)}
+    (<a2> ^arg-type object ^id <i1>)
+    (<i1> -^abstract true)
+    -->
+    (<d1> ^<c1> <c2>)
+    (<c2> ^subtask-handle <s2> ^task-handle <t2> ^item-type task-operator
+           ^name <n1> ^<a1> <a6>)
+    (<a6> ^id <i1> ^arg-type object)
+}
+
+sp {chunkx2*__PROP__SUBT__*problem-space*action*propose*subtask*3*OpNoChange*t1605-1
+    :chunk
+    (state <s1> ^task-operator <t1> ^name <n1> ^problem-space <p1> ^world <w1>)
+    (<t1> ^task-handle move1 ^arg1 <a1> ^name <n1>)
+    (<a1> ^arg-type object ^id <i1>)
+    (<p1> ^name action)
+    (<w1> ^robot <r1> ^objects <o1>)
+    (<r1> ^arm <a2>)
+    (<a2> ^holding-object false)
+    (<o1> ^object <i1>)
+    (<i1> ^predicates <p2>)
+    (<p2> ^affordance1 grabbable1 ^is-grabbed1 not-grabbed1
+          ^is-confirmed1 confirmed1)
+    -->
+    (<s1> ^operator <o2> +)
+    (<o2> ^task-handle pick-up1 ^item-type task-operator ^name op_pick-up1
+           ^arg1 <a3> ^subtask-handle subtask5)
+    (<a3> ^id <i1> ^arg-type object)
+}
+
+sp {chunk*__MATCH_TASK__*anystate*match-task-operator*elaborate*successful-match*OpNoChange*t1604-1
+    :chunk
+    (state <s1> ^match-task-operator <m1>)
+    (<m1> ^candidate-tasks <c1> ^task-operator <t2>)
+    (<c1> ^candidate-task-operator <c2>)
+    (<c2> ^task-handle <t1> ^<a1> <a9>)
+    (<t2> ^task-handle <t1> ^<a1> <a2>)
+   -{ (<c2> ^{ <a3> <> <a1> } <a4>)
+      (<a4> ^arg-type <a5>)}
+   -{ (<t2> ^{ <a6> <> <a1> } <a7>)
+      (<a7> ^arg-type <a8>)}
+    (<a2> ^arg-type object ^id <i1>)
+    (<a9> ^arg-type object ^id <i1>)
+    -->
+    (<m1> ^successful-match <c2>)
+}
+
+sp {chunk*evaluate-operator*elaborate*evaluation*from-subgoal*duplicate-desired*Tie*t1564-2
+    :chunk
+    (state <s1> ^operator <o1> ^evaluation <e1> ^problem-space <p1>
+          ^superstate <s5> ^world <w1>)
+    (<o1> ^name evaluate-operator ^evaluation <e1> ^superoperator <s2>
+          ^superproblem-space <s4> ^evaluation <e2> ^superoperator <s6>)
+    (<s2> -^subtask-handle <s3> ^name op_pick-up1 ^arg1 <a4> ^task-handle <t1>)
+   -{ (<s2> ^{ <a1> <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<a4> ^arg-type object ^id <i2>)
+    (<p1> ^name action ^learning <l1>)
+    (<l1> ^type exploration)
+    (<e2> ^desired <d1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^handle <h1>)
+    (<i1> ^handle on1 ^type relation ^1 <i2> ^2 <i3>)
+    (<i2> ^predicates <p2>)
+    (<p2> -^dont-copy is-grabbed1 ^is-grabbed1 not-grabbed1)
+    (<s5> ^desired <d1>)
+    (<w1> ^objects <o2> ^predicates <p4>)
+    (<o2> ^object <i2> ^object <i3>)
+    (<i3> ^predicates <p3>)
+    (<p3> -^dont-copy is-confirmed1 -^dont-copy affordance1
+          ^affordance1 surface1 ^is-confirmed1 confirmed1)
+    (<p4> ^predicate <p5>)
+    (<p5> ^handle on1)
+    (<s4> ^name <n1>)
+    -->
+    (<e1> ^symbolic-value success)
+}
+
+sp {chunk*evaluate-operator*elaborate*evaluation*plan-length*Tie*t1564-1
+    :chunk
+    (state <s1> ^operator <o1> ^evaluation <e1> ^problem-space <p1>
+          ^superstate <s5> ^world <w1>)
+    (<o1> ^name evaluate-operator ^evaluation <e1> ^superoperator <s2>
+          ^superproblem-space <s4> ^evaluation <e2> ^superoperator <s6>)
+    (<s2> -^subtask-handle <s3> ^name op_pick-up1 ^arg1 <a4> ^task-handle <t1>)
+   -{ (<s2> ^{ <a1> <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<a4> ^arg-type object ^id <i2>)
+    (<p1> ^name action ^learning <l1>)
+    (<l1> ^type exploration)
+    (<e2> ^desired <d1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^handle <h1>)
+    (<i1> ^handle on1 ^type relation ^1 <i2> ^2 <i3>)
+    (<i2> ^predicates <p2>)
+    (<p2> -^dont-copy is-grabbed1 ^is-grabbed1 not-grabbed1)
+    (<s5> ^desired <d1>)
+    (<w1> ^objects <o2> ^predicates <p4>)
+    (<o2> ^object <i2> ^object <i3>)
+    (<i3> ^predicates <p3>)
+    (<p3> -^dont-copy is-confirmed1 -^dont-copy affordance1
+          ^affordance1 surface1 ^is-confirmed1 confirmed1)
+    (<p4> ^predicate <p5>)
+    (<p5> ^handle on1)
+    (<s4> ^name <n1>)
+    -->
+    (<e1> ^plan-length 2)
+}
+
+sp {chunk*evaluate-operator*elaborate*evaluation*from-subgoal*duplicate-desired*Tie*t1563-2
+    :chunk
+    (state <s1> ^operator <o1> ^evaluation <e1> ^problem-space <p1>
+          ^superstate <s5> ^world <w1>)
+    (<o1> ^name evaluate-operator ^evaluation <e1> ^superoperator <s2>
+          ^superproblem-space <s4> ^evaluation <e2> ^superoperator <s6>)
+    (<s2> -^subtask-handle <s3> ^name op_put-down1 ^arg2 <a4> ^arg1 <a5>
+          ^task-handle <t1>)
+   -{ (<s2> ^{ <a1> <> arg2 <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<a4> ^arg-type partial-predicate ^handle <h1> ^2 <i3>)
+    (<a5> ^arg-type object ^id <i2>)
+    (<p1> ^name action)
+    (<e2> ^desired <d1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^handle <h2>)
+    (<i1> ^type relation ^handle <h1> ^1 <i2> ^2 <i3>)
+    (<s5> ^desired <d1>)
+    (<w1> ^objects <o2> ^predicates <p2>)
+    (<o2> ^object <i3> ^object <i2>)
+    (<p2> ^predicate <p3>)
+    (<p3> ^handle <h1>)
+    (<s4> ^name <n1>)
+    -->
+    (<e1> ^symbolic-value success)
+}
+
+sp {chunk*evaluate-operator*elaborate*evaluation*plan-length*Tie*t1563-1
+    :chunk
+    (state <s1> ^operator <o1> ^evaluation <e1> ^problem-space <p1>
+          ^superstate <s5> ^world <w1>)
+    (<o1> ^name evaluate-operator ^evaluation <e1> ^superoperator <s2>
+          ^superproblem-space <s4> ^evaluation <e2> ^superoperator <s6>)
+    (<s2> -^subtask-handle <s3> ^name op_put-down1 ^arg2 <a4> ^arg1 <a5>
+          ^task-handle <t1>)
+   -{ (<s2> ^{ <a1> <> arg2 <> arg1 } <a2>)
+      (<a2> ^arg-type <a3>)}
+    (<a4> ^arg-type partial-predicate ^handle <h1> ^2 <i3>)
+    (<a5> ^arg-type object ^id <i2>)
+    (<p1> ^name action)
+    (<e2> ^desired <d1>)
+    (<d1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^handle <h2>)
+    (<i1> ^type relation ^handle <h1> ^1 <i2> ^2 <i3>)
+    (<s5> ^desired <d1>)
+    (<w1> ^objects <o2> ^predicates <p2>)
+    (<o2> ^object <i3> ^object <i2>)
+    (<p2> ^predicate <p3>)
+    (<p3> ^handle <h1>)
+    (<s4> ^name <n1>)
+    -->
+    (<e1> ^plan-length 1)
+}
+
+sp {chunk*__COPY__TASK__*anystate*copy-task-operator*elaborate*copy*OpNoChange*t1522-1
+    :chunk
+    (state <s1> ^copy-task-operator <c1>)
+    (<c1> ^task-operator <t1> ^object-map <o1> ^copy-name <c2>
+          ^destination <d1>)
+    (<t1> -^subtask-handle <s2> ^task-handle <t2> ^name <n1> ^<a1> <a2>)
+   -{ (<t1> ^{ <a3> <> <a1> } <a4>)
+      (<a4> ^arg-type <a5>)}
+    (<a2> ^arg-type object ^id <i1>)
+    (<o1> ^<i1> <i2>)
+    -->
+    (<d1> ^<c2> <c3>)
+    (<c3> ^task-handle <t2> ^item-type task-operator ^name <n1> ^<a1> <a6>)
+    (<a6> ^id <i2> ^arg-type object)
+}
+
+sp {chunk*__COPY__GOAL__*anystate*copy-task-goal*elaborate*copy*no*modifiers*OpNoChange*t1514-1
+    :chunk
+    (state <s1> ^copy-task-goal <c1> ^deep-copy-world <d1>)
+    (<c1> -^modifiers <m1> ^pred-count 1 ^1 <i1> ^handle <h1>)
+    (<i1> ^type relation ^handle <h2> ^2 <i2> ^1 <i3>)
+    (<d1> ^copy-objects-map <c2>)
+    (<c2> ^<i3> <i4> ^<i2> <i5>)
+    -->
+    (<s1> ^desired <d2>)
+    (<d2> ^duplicate-of <c1> ^handle <h1> ^1 <i6> ^pred-count 1)
+    (<i6> ^2 <i5> ^1 <i4> ^handle <h2> ^type relation)
+}
+
+sp {chunk*__COPY__TASK__*anystate*copy-task-operator*elaborate*copy*OpNoChange*t1508-1
+    :chunk
+    (state <s1> ^copy-task-operator <c1>)
+    (<c1> ^task-operator <t1> ^object-map <o1> ^copy-name <c2>
+          ^destination <d1>)
+    (<t1> -^subtask-handle <s2> ^task-handle <t2> ^name <n1> ^<a1> <a2>
+          ^{ <a3> < <a1> } <a4>)
+    (<a2> ^arg-type partial-predicate ^handle <h1> ^2 <i1>)
+    (<o1> ^<i1> <i2> ^<i3> <i4>)
+   -{ (<t1> ^{ <a5> <> <a1> <> <a3> } <a6>)
+      (<a6> ^arg-type <a7>)}
+    (<a4> ^arg-type object ^id <i3>)
+    -->
+    (<d1> ^<c2> <c3>)
+    (<c3> ^task-handle <t2> ^item-type task-operator ^name <n1> ^<a1> <a8>
+           ^<a3> <a9>)
+    (<a8> ^2 <i2> ^handle <h1> ^arg-type partial-predicate)
+    (<a9> ^id <i4> ^arg-type object)
+}
+
+sp {chunkx2*__TASK__GOAL__*task*elaborate*desired*OpNoChange*t1495-1
+    :chunk
+    (state <s1> ^current-task-segment <c1> -^copy-task-goal <c2>
+          ^task-operator <t1> ^name <n1> ^problem-space <p1> ^world <w1>)
+    (<c1> ^current-goal <c3>)
+    (<c3> ^handle move1goal3)
+    (<t1> ^task-handle move1 ^arg2 <a1> ^arg2 <a2> ^arg1 <a3> ^name <n1>)
+    (<a1> ^arg-type partial-predicate ^2 <i2>)
+    (<a2> ^arg-type partial-predicate ^handle <h1>)
+    (<a3> ^arg-type object ^id <i1>)
+    (<p1> ^name action)
+    -->
+    (<s1> ^desired <d1>)
+    (<d1> ^1 <i3> ^pred-count 1 ^handle move1goal3)
+    (<i3> ^2 <i2> ^1 <i1> ^handle <h1> ^type relation)
+}
+
+sp {chunk*subproblem*execute*apply*select-next-goal*change*current-goal*0*implicit*OpNoChange*t1476-1
+    :chunk
+    (state <s1> ^task-operator <t1> ^operator <o1>)
+    (<t1> ^task-handle move1)
+    (<o1> ^next-goal-handle move1goal3 ^name select-next-goal)
+    -->
+    (<s1> ^apply-select-next-goal true)
+}
+
+sp {chunkx2*__SEL_NEXT_GOAL__*propose*select-next-goal*superstate*OpNoChange*t1467-1
+    :chunk
+    (state <s1> ^desired <d1> ^problem-space <p1> ^current-task-segment <c1>
+          ^task-operator <t1> ^name <n1>)
+    (<d1> ^satisfied true)
+    (<p1> ^name action)
+    (<c1> ^current-goal <c2>)
+    (<c2> ^handle move1start2)
+    (<t1> ^name <n1>)
+    -->
+    (<s1> ^operator <o1> + ^operator <o1> =)
+    (<o1> ^name select-next-goal ^next-goal-handle move1goal3
+           ^next-goal-type task-goal ^has-conditions false)
+}
+
+sp {chunkx2*__TASK_S_GOAL_*task*elaborate*desired*start-goal*OpNoChange*t847-1
+    :chunk
+    (state <s1> ^current-task-segment <c1> -^copy-task-goal <c2>
+          ^problem-space <p1> ^task-operator <t1> ^name <n1>)
+    (<c1> ^current-goal <c3>)
+    (<c3> ^handle move1start2)
+    (<p1> ^name action)
+    (<t1> ^name <n1>)
+    -->
+    (<s1> ^desired <d1>)
+    (<d1> ^handle move1start2 ^item-type start-goal)
+}
