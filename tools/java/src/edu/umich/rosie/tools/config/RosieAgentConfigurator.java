@@ -3,12 +3,10 @@ package edu.umich.rosie.tools.config;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Map;
-import java.util.Properties;
 
 public class RosieAgentConfigurator {
 	public static void ConfigureAgent(RosieConfig config){
@@ -23,7 +21,8 @@ public class RosieAgentConfigurator {
 
 			// Different filenames used by the agent
 			String clientConfigFilename = config.agentDir.getAbsolutePath() + "/rosie-client.config";
-			String agentSourceFilename = config.agentDir.getAbsolutePath() + "/" + config.agentName + "_source.soar";
+			String agentSourceFilename =
+					(config.agentDir.getAbsolutePath() + "/" + config.agentName + "_source.soar").replaceAll("\\\\", "/");
 			File smemSourceFile = SmemConfigurator.configureSmem(config);
 			
 			// Write the 3 files
@@ -78,7 +77,7 @@ public class RosieAgentConfigurator {
 		
 		// BEGIN SOURCING ROSIE FILES
 		agentSourceFile.write("# Sourcing rosie agent\n");
-		agentSourceFile.write("pushd " + config.rosieAgentDir.getAbsolutePath() + "\n");
+		agentSourceFile.write("pushd " + config.rosieAgentDir.getAbsolutePath().replaceAll("\\\\", "/") + "\n");
 		agentSourceFile.write("source _agent_source.soar\n\n");
 
       // Source the proper language comprehension files
@@ -103,7 +102,7 @@ public class RosieAgentConfigurator {
 		// END SOURCING ROSIE FILES
 
 		// BEGIN SOURCING FILES IN THE CREATED AGENT DIR
-		agentSourceFile.write("pushd " + config.agentDir.getAbsolutePath() + "\n\n");
+		agentSourceFile.write("pushd " + config.agentDir.getAbsolutePath().replaceAll("\\\\", "/") + "\n\n");
 
 		// Sentences
 		if (config.sentenceSource.equals("scripts") && config.sentencesFile != null && config.sentencesFile.exists()){
@@ -127,7 +126,7 @@ public class RosieAgentConfigurator {
 		// Source each local soar file
 		agentSourceFile.write("# Sourcing any extra soar files:\n");
 		for(File soarFile : config.sourceSoarFiles){
-			agentSourceFile.write("source " + soarFile.getAbsolutePath() + "\n");
+			agentSourceFile.write("source " + soarFile.getAbsolutePath().replaceAll("\\\\", "/") + "\n");
 		}
 		agentSourceFile.write("\n");
 
