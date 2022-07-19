@@ -108,7 +108,7 @@ public class RosieConfig {
 			String line;
 			int lineNum = 0;
 			while((line = reader.readLine()) != null){
-				line = line.strip();
+				line = line.trim();
 				if(line.length() > 0 && line.charAt(0) != '#'){
 					String[] args = line.split(" ");
 					if(args.length < 3 || !args[1].equals("=")){
