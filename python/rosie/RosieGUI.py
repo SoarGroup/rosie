@@ -99,6 +99,8 @@ class RosieGUI(Frame):
         master.columnconfigure(0, weight=1)
         master.rowconfigure(0, weight=1)
 
+        self.combined_message = ""
+
         self.create_widgets()
         self.setup_rosie_client()
 
@@ -114,6 +116,13 @@ class RosieGUI(Frame):
     def run(self):
         self.rosie_client.connect()
         self.master.mainloop()
+
+    def send_combined_message(self):
+        self.combined_message = self.chat_entry.get().strip() + " " + self.chat_entry_1.get().strip() + "."
+        self.send_message_to_rosie(self.combined_message)
+        self.chat_entry.clear()
+        self.chat_entry_1.clear()
+
 
     def create_widgets(self):
         self.grid(row=0, column=0, sticky=N+S+E+W)
@@ -149,11 +158,17 @@ class RosieGUI(Frame):
 
         # Row 2: Message Entry (Col 0-2) and Send Button (Col 3)
 
+        #Todo - Check if you can make a list of chat_entries instead of this to make this cleaner
         self.chat_entry = RosieGUI.ChatEntry(self)
-        self.chat_entry.grid(row=2, column=0, columnspan=3, sticky=N+S+E+W)
+        self.chat_entry.grid(row=2, column=0, columnspan=1, sticky=N+S+E+W)
+
+        self.chat_entry_1 = RosieGUI.ChatEntry(self)
+        self.chat_entry_1.grid(row=2, column=1, columnspan=2, sticky=N+S+E+W)
+
+        #PR-Todo: enter check for all chat entries being populated with text
 
         self.submit_button = Button(self, text="Send", font=("Times", "24"))
-        self.submit_button["command"] = lambda: self.chat_entry.send_message()
+        self.submit_button["command"] = lambda: self.send_combined_message()
         self.submit_button.grid(row=2, column=3, columnspan=1, sticky=N+S+E+W)
 
     def on_exit(self):
@@ -163,8 +178,9 @@ class RosieGUI(Frame):
 
     def send_message_to_rosie(self, message):
         if len(message) > 0:
-            self.chat_entry.add_to_history(message)
+            # self.chat_entry.add_to_history(message) #Todo- Comment this for now but this needs to be adjusted so that history is together.
             self.chat_entry.clear()
+            self.chat_entry_1.clear()
             self.rosie_client.send_message(message)
 
 
