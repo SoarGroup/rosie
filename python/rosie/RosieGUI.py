@@ -92,7 +92,7 @@ class RosieGUI(Frame):
 
     """ Creates a single chat box interface to send messages to Rosie and receive messages back """
     def __init__(self, rosie_client, master):
-        Frame.__init__(self, master, width=800, height=600)
+        Frame.__init__(self, master, width=1000, height=600)
         self.rosie_client = rosie_client
 
         self.master = master
@@ -100,11 +100,12 @@ class RosieGUI(Frame):
         master.rowconfigure(0, weight=1)
 
         self.combined_message = ""
+        self.chat_entries = []
 
         self.create_widgets()
         self.setup_rosie_client()
 
-        master.geometry("800x600")
+        master.geometry("1000x600")
         master.protocol("WM_DELETE_WINDOW", self.on_exit)
 
     def setup_rosie_client(self):
@@ -118,23 +119,40 @@ class RosieGUI(Frame):
         self.master.mainloop()
 
     def send_combined_message(self):
-        self.combined_message = self.chat_entry.get().strip() + " " + self.chat_entry_1.get().strip() + "."
+        self.combined_message = ""
+        for text in self.chat_entries:
+            self.combined_message += text.get().strip() + " "
+        self.combined_message = self.combined_message.strip() + "."
         self.send_message_to_rosie(self.combined_message)
-        self.chat_entry.clear()
-        self.chat_entry_1.clear()
+        for text in self.chat_entries:
+            text.clear()
 
+    def enable_action_template1(self):
+        for id in range(2,4):
+            self.chat_entries[id].config(state = "disabled")
+
+    def enable_action_template2(self):
+        for id in range(2,4):
+            self.chat_entries[id].config(state = "normal")
 
     def create_widgets(self):
         self.grid(row=0, column=0, sticky=N+S+E+W)
 
-        # 3 rows x 4 cols grid
+        # 4 rows x 5 cols grid
+        
+        # ToDo - Need to set the num_columns based on the template
+        self.num_columns = 4
+        
         self.columnconfigure(0, weight=1, minsize=200)
         self.columnconfigure(1, weight=1, minsize=200)
         self.columnconfigure(2, weight=1, minsize=200)
         self.columnconfigure(3, weight=1, minsize=200)
+        self.columnconfigure(4, weight=1, minsize=200)
         self.rowconfigure(0, weight=1, minsize=25)
         self.rowconfigure(1, weight=20, minsize=400)
         self.rowconfigure(2, weight=2, minsize=50)
+        self.rowconfigure(3, weight=2, minsize=50)
+
 
         # Row 0: Top row of buttons for running Rosie
         self.run_button = Button(self, text="Run", font=("Times", "18"))
@@ -145,31 +163,49 @@ class RosieGUI(Frame):
         self.stop_button["command"] = lambda: self.rosie_client.stop()
         self.stop_button.grid(row=0, column=1, sticky=N+S+E+W)
 
-        # Row 1: Message History (Col 0-1) and Script Messages (Col 2-3)
+
+        # Row 1: Message History (Col 0-2) and Script Messages (Col 3-4)
 
         self.messages_list = RosieGUI.MessagesList(self)
-        self.messages_list.grid(row=1, column=0, columnspan=2, sticky=N+S+E+W)
+        self.messages_list.grid(row=1, column=0, columnspan=3, sticky=N+S+E+W)
 
         print("AGENT MESSAGES")
         print(self.rosie_client.messages)
         self.script_list = RosieGUI.ScriptList(self, self.rosie_client.messages)
         self.script_list.click_handler = lambda msg: self.send_message_to_rosie(msg)
-        self.script_list.grid(row=1, column=2, columnspan=2, sticky=N+S+E+W)
+        self.script_list.grid(row=1, column=3, columnspan=2, sticky=N+S+E+W)
 
-        # Row 2: Message Entry (Col 0-2) and Send Button (Col 3)
 
-        #Todo - Check if you can make a list of chat_entries instead of this to make this cleaner
-        self.chat_entry = RosieGUI.ChatEntry(self)
-        self.chat_entry.grid(row=2, column=0, columnspan=1, sticky=N+S+E+W)
+        # Row 2: Template input labels (Col 0-2) + Buttons to enable AT1 and AT2 (Col 3-4)
 
-        self.chat_entry_1 = RosieGUI.ChatEntry(self)
-        self.chat_entry_1.grid(row=2, column=1, columnspan=2, sticky=N+S+E+W)
+        # Todo - Update text in labels based on the template chosen
+        # For example, if participant chooses AT1, they will see "Verb + Noun Phrase"
+
+        for i in range(2):
+            label = Label(self, text="Test", font=("Times", "24"))
+            label.grid(row=2, column=i, columnspan=1)
+   
+        self.enable_at1_button = Button(self, text="Enable AT1", font=("Times", "18"))
+        self.enable_at1_button["command"] = lambda: self.enable_action_template1()
+        self.enable_at1_button.grid(row=2, column=3, sticky=N+S+E+W)
+
+        self.enable_at2_button = Button(self, text="Enable AT2", font=("Times", "18"))
+        self.enable_at2_button["command"] = lambda: self.enable_action_template2()
+        self.enable_at2_button.grid(row=2, column=4, sticky=N+S+E+W)
+
+
+        # Row 3: Message Entry (Col 0-3) and Send Button (Col 4)
+
+        for i in range(self.num_columns):
+            entry = RosieGUI.ChatEntry(self)
+            entry.grid(row=3, column=i, columnspan=1, sticky=N+S+E+W)
+            self.chat_entries.append(entry)
 
         #PR-Todo: enter check for all chat entries being populated with text
 
         self.submit_button = Button(self, text="Send", font=("Times", "24"))
         self.submit_button["command"] = lambda: self.send_combined_message()
-        self.submit_button.grid(row=2, column=3, columnspan=1, sticky=N+S+E+W)
+        self.submit_button.grid(row=3, column=4, columnspan=1, sticky=N+S+E+W)
 
     def on_exit(self):
         self.rosie_client.kill()
@@ -178,9 +214,11 @@ class RosieGUI(Frame):
 
     def send_message_to_rosie(self, message):
         if len(message) > 0:
-            # self.chat_entry.add_to_history(message) #Todo- Comment this for now but this needs to be adjusted so that history is together.
-            self.chat_entry.clear()
-            self.chat_entry_1.clear()
+            #Todo- Comment this for now but this needs to be adjusted based on whether you do different templates v/s one entry
+            # self.chat_entry.add_to_history(message)
+            for text in self.chat_entries:
+                text.clear()
+
             self.rosie_client.send_message(message)
 
 
