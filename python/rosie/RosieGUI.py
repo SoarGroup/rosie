@@ -89,21 +89,40 @@ class RosieGUI(Frame):
         def clear(self):
             self.delete(0, END)
 
+    #ToDo: We may not need a class for this switch unless we are literally running functions
     class SwitchTextBoxes:
         def __init__(self, parent):
             self.parent = parent
         
+        """ Function to enable selected input template textboxes and disable the other input template textboxes """
         def enable_template_input(self, temp_type):
             #default = "Incorrect Input"
-            [sublist[i].config(state = "disabled") for sublist in self.parent.chat_entries for i in range(len(sublist))] 
+            for sublist in self.parent.chat_entries:
+                for i in range(len(sublist)):
+                    sublist[i].clear()
+                    sublist[i].config(state = "disabled")
+
             if temp_type == "AT1":
-                [self.parent.chat_entries[0] [i-2].config(state = "normal") for i in range(2,4)]
+                for i in range(2,4): 
+                    self.parent.chat_entries[0][i-2].config(state = "normal")
             elif temp_type == "AT2":
-                [self.parent.chat_entries[1] [i-2].config(state = "normal") for i in range(2,6)]
+                for i in range(2,6):
+                    self.parent.chat_entries[1][i-2].config(state = "normal")
             elif temp_type == "GT1":
-                [self.parent.chat_entries[2] [i-2].config(state = "normal") for i in range(2,5)]
+                for i in range(2,5):
+                    self.parent.chat_entries[2][i-2].config(state = "normal")
             else:
-                [self.parent.chat_entries[3] [i-2].config(state = "normal") for i in range(2,6)]
+                for i in range(2,6):
+                    self.parent.chat_entries[3][i-2].config(state = "normal")
+
+            #switcher.get(temp_type, "nothing")
+            #return getattr(self, 'case_' + str(temp_type), lambda: default)()
+
+        # def case_AT1(self):
+
+        # def case_AT2(self):
+
+
 
     """ Creates a single chat box interface to send messages to Rosie and receive messages back """
     def __init__(self, rosie_client, master):
@@ -139,17 +158,9 @@ class RosieGUI(Frame):
             self.combined_message += text.get().strip() + " "
         self.combined_message = self.combined_message.strip() + "."
         self.send_message_to_rosie(self.combined_message)
-        # need to clear all the chat_entries
-        for text in self.chat_entries:
-            text.clear()
-
-    def enable_action_template1(self):
-        for id in range(2,4):
-            self.chat_entries[id].config(state = "disabled")
-
-    def enable_action_template2(self):
-        for id in range(2,4):
-            self.chat_entries[id].config(state = "normal")
+        for sublist in self.chat_entries:
+            for i in range(len(sublist)):
+                sublist[i].clear()
 
     def create_widgets(self):
         self.grid(row=0, column=0, sticky=N+S+E+W)
@@ -282,8 +293,9 @@ class RosieGUI(Frame):
         if len(message) > 0:
             #Todo- Comment this for now but this needs to be adjusted based on whether you do different templates v/s one entry
             # self.chat_entry.add_to_history(message)
-            for text in self.chat_entries:
-                text.clear()
+            for sublist in self.chat_entries:
+                for i in range(len(sublist)):
+                    sublist[i].clear()
 
             self.rosie_client.send_message(message)
 
