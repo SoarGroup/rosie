@@ -101,6 +101,7 @@ class RosieGUI(Frame):
                 for i in range(len(sublist)):
                     sublist[i].clear()
                     sublist[i].config(state = "disabled")
+            self.parent.current_selected_template = temp_type
 
             if temp_type == "AT1":
                 for i in range(2,4): 
@@ -135,6 +136,7 @@ class RosieGUI(Frame):
 
         self.combined_message = ""
         self.chat_entries = []
+        self.current_selected_template = ""
 
         self.create_widgets()
         self.setup_rosie_client()
@@ -154,8 +156,22 @@ class RosieGUI(Frame):
 
     def send_combined_message(self):
         self.combined_message = ""
-        for text in self.chat_entries:
-            self.combined_message += text.get().strip() + " "
+        
+        if self.current_selected_template == "AT1":
+            for i in range(2,4):
+                self.combined_message += self.chat_entries[0][i-2].get().strip() + " "
+        elif self.current_selected_template == "AT2":
+            for i in range(2,6):
+                self.combined_message += self.chat_entries[1][i-2].get().strip() + " "
+        elif self.current_selected_template == "GT1":
+            self.combined_message = "The goal is that "
+            for i in range(2,5):
+                self.combined_message += self.chat_entries[2][i-2].get().strip() + " "
+        else:
+            self.combined_message = "The goal is that "
+            for i in range(2,6):
+                self.combined_message += self.chat_entries[3][i-2].get().strip() + " "
+        
         self.combined_message = self.combined_message.strip() + "."
         self.send_message_to_rosie(self.combined_message)
         for sublist in self.chat_entries:
