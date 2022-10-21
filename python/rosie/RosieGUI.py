@@ -1,8 +1,7 @@
-from tkinter import *
-import tkinter.font
-
+import os
 import sys
-from turtle import bgcolor
+from tkinter import *
+from ttkwidgets.autocomplete import AutocompleteEntryListbox
 
 from . import RosieClient
 from rosie.events import AgentMessageSent, ScriptMessageSent, InstructorMessageSent
@@ -105,8 +104,14 @@ class RosieGUI(Frame):
         master.rowconfigure(0, weight=1)
 
         self.combined_message = ""
-        self.chat_entries = []
-        self.chat_entry_labels = []
+        self.listbox_entries = []
+        self.listbox_entry_labels = []
+        
+        # Initialize lists of the different parts of speech for list dropdowns
+        self.verb_list = []
+        self.prep_list = []
+        self.noun_list = []
+        self.object_states_list = []
 
         self.create_widgets()
         self.setup_rosie_client()
@@ -124,6 +129,29 @@ class RosieGUI(Frame):
         self.rosie_client.connect()
         self.master.mainloop()
 
+    """Import parts of speech lists from documents to python lists"""
+    def create_parts_of_speech_lists(self):
+        pos_folder_path = "/home/preetir/rosie-project/rosie/python/rosie/parts-of-speech-lists"
+
+        # Create list of verbs
+        self.verb_list = open(os.path.join(pos_folder_path, "verbs.txt")).read().splitlines()
+        self.verb_list = sorted(self.verb_list)
+        
+        # Create list of prepositions
+        self.prep_list = open(os.path.join(pos_folder_path, "prepositions.txt")).read().splitlines()
+        self.prep_list = sorted(self.prep_list)
+        
+        # Create list of nouns
+        self.noun_list = open(os.path.join(pos_folder_path, "nouns.txt")).read().splitlines()
+        self.noun_list = sorted(self.noun_list)
+        
+        # Create list of being verbs
+        self.being_verb_list = ["are","are not","is","is not"]
+        
+        # Create list of object states
+        self.object_states_list = open(os.path.join(pos_folder_path, "object-states.txt")).read().splitlines()
+        self.object_states_list = sorted(self.object_states_list)
+
     def send_combined_message(self):
     # maybe use the add_to_history function as a way to combine over time.
     ## ToDo - change font sizes back
@@ -131,45 +159,68 @@ class RosieGUI(Frame):
         
         if self.last_selected_option == 0:
             for i in range(2,4):
-                self.combined_message += self.chat_entries[0][i-2].get().strip() + " "
+                self.combined_message += self.listbox_entries[0][i-2].get().strip() + " "
         elif self.last_selected_option == 1:
             for i in range(2,6):
-                self.combined_message += self.chat_entries[1][i-2].get().strip() + " "
+                self.combined_message += self.listbox_entries[1][i-2].get().strip() + " "
         elif self.last_selected_option == 2:
             self.combined_message = "The goal is that "
             for i in range(2,5):
-                self.combined_message += self.chat_entries[2][i-2].get().strip() + " "
+                self.combined_message += self.listbox_entries[2][i-2].get().strip() + " "
         else:
             self.combined_message = "The goal is that "
             for i in range(2,6):
-                self.combined_message += self.chat_entries[3][i-2].get().strip() + " "
+                self.combined_message += self.listbox_entries[3][i-2].get().strip() + " "
         
         self.combined_message = self.combined_message.strip() + "."    
         self.send_message_to_rosie(self.combined_message)
-        for sublist in self.chat_entries:
+        for sublist in self.listbox_entries:
             for i in range(len(sublist)):
                 sublist[i].clear()
 
+    """Populate listbox entries with predefined lists of parts of speech"""
+    def populate_template_listboxes(self):
+        # Populate verb listboxes
+        self.listbox_entries[0][0].configure(completevalues=self.verb_list)
+        self.listbox_entries[1][0].configure(completevalues=self.verb_list)
+
+        # Populate being verb listboxes
+        self.listbox_entries[2][1].configure(completevalues=self.being_verb_list)
+        self.listbox_entries[3][1].configure(completevalues=self.being_verb_list)
+
+        # Populate preposition listboxes
+        self.listbox_entries[1][2].configure(completevalues=self.prep_list)
+        self.listbox_entries[3][2].configure(completevalues=self.prep_list)   
+
+        # Populate noun listboxes
+        index_noun_list = [(0,1),(1,1),(1,3),(2,0),(3,0),(3,3)]
+        for tuple in index_noun_list:
+            self.listbox_entries[tuple[0]][tuple[1]].configure(completevalues=self.noun_list)
+
+        # Populate object states listboxes
+        self.listbox_entries[2][2].configure(completevalues=self.object_states_list)
+    
     """ Function to hide all template labels and entries"""
     def hide_template_entries(self):
-        for row in self.chat_entries:
-            for entry in row:
-                entry.grid_remove()
-        for row in self.chat_entry_labels:
+        for row in self.listbox_entries:
+            for listbox_entry in row:
+                listbox_entry.grid_remove()
+        for row in self.listbox_entry_labels:
             for label in row:
                 label.grid_remove()
 
     """ Function to show the template labels and entries linked to the selected option in the options menu"""
     def show_selected_template_entries(self, selected_index):
-        for entry in self.chat_entries[selected_index]:
-            entry.grid()
-        for label in self.chat_entry_labels[selected_index]:
+        for listbox_entry in self.listbox_entries[selected_index]:
+            listbox_entry.grid()
+        for label in self.listbox_entry_labels[selected_index]:
             label.grid()
         
     def create_widgets(self):
         # ToDo: A way to clean up this code may be to get all the grid statements together and function statements(lambda etc) in another batch
         # https://tkdocs.com/tutorial/grid.html
         # https://www.askpython.com/python-modules/tkinter/python-tkinter-grid-example
+        self.create_parts_of_speech_lists()
         self.grid(row=0, column=0, sticky=N+S+E+W)
 
         # 10 rows x 6 cols grid        
@@ -224,9 +275,10 @@ class RosieGUI(Frame):
         def callback(*args):            
             # Clear the textboxes from the last selected option
             if self.last_selected_option != -1:
-                for entry in self.chat_entries[self.last_selected_option]:
-                    entry.grid_remove()
-                for label in self.chat_entry_labels[self.last_selected_option]:
+                for listbox_t in self.listbox_entries[self.last_selected_option]:
+                    listbox_t.clear()
+                    listbox_t.grid_remove()
+                for label in self.listbox_entry_labels[self.last_selected_option]:
                     label.grid_remove()
 
             selected_index = options.index(selected_option.get().strip())
@@ -252,118 +304,126 @@ class RosieGUI(Frame):
 
         # Row 3-4: Action Template 1 Labels (Col 0-1)
         action_template1_label_list = []
-        label1_et1 = Label(self, text="Verb", font=("Times", "12"))
+        label1_et1 = Label(self, text="Verb", font=("Times", "14"))
         label1_et1.grid(row=3, column=0, columnspan=1)
-        label1_et2 = Label(self, text="Turn on", font=("Times", "14", "italic"))
+        label1_et2 = Label(self, text="Turn on", font=("Times", "15", "italic"))
         label1_et2.grid(row=4, column=0, columnspan=1)
-        label1_et3 = Label(self, text="Noun Phrase", font=("Times", "12"))
+        label1_et3 = Label(self, text="Noun Phrase", font=("Times", "14"))
         label1_et3.grid(row=3, column=1, columnspan=1)
-        label1_et4 = Label(self, text="the alarm", font=("Times", "14", "italic"))
+        label1_et4 = Label(self, text="the alarm", font=("Times", "15", "italic"))
         label1_et4.grid(row=4, column=1, columnspan=1)
         action_template1_label_list.extend([label1_et1,label1_et2,label1_et3,label1_et4])
-        self.chat_entry_labels.append(action_template1_label_list)
+        self.listbox_entry_labels.append(action_template1_label_list)
 
         # Row 5: Action Template 1 Text Input (Col 0-1)
         action_template1_list = []
         for i in range(0,2):
-            entry = RosieGUI.ChatEntry(self)
-            entry.grid(row=5, column=i, columnspan=1, sticky=N+S+E+W)
-            action_template1_list.append(entry)
-        self.chat_entries.append(action_template1_list)
+            listbox_entry = AutocompleteEntryListbox(self, font=("Arial", "12"))
+            listbox_entry.grid(row=5, column=i, columnspan=1, sticky=N+S+E+W)
+            
+            action_template1_list.append(listbox_entry)
+        self.listbox_entries.append(action_template1_list)
+
         
         # Row 3-4: Action Template 2 Labels (Col 0-3)
         action_template2_label_list = []
-        label2_et1 = Label(self, text="Verb", font=("Times", "12"))
+        label2_et1 = Label(self, text="Verb", font=("Times", "14"))
         label2_et1.grid(row=3, column=0, columnspan=1)
-        label2_et2 = Label(self, text="Fetch", font=("Times", "14", "italic"))
+        label2_et2 = Label(self, text="Fetch", font=("Times", "15", "italic"))
         label2_et2.grid(row=4, column=0, columnspan=1)
-        label2_et3 = Label(self, text="Noun Phrase", font=("Times", "12"))
+        label2_et3 = Label(self, text="Noun Phrase", font=("Times", "14"))
         label2_et3.grid(row=3, column=1, columnspan=1)
-        label2_et4 = Label(self, text="an extinguisher", font=("Times", "14", "italic"))
+        label2_et4 = Label(self, text="an extinguisher", font=("Times", "15", "italic"))
         label2_et4.grid(row=4, column=1, columnspan=1)
-        label2_et5 = Label(self, text="Preposition", font=("Times", "12"))
+        label2_et5 = Label(self, text="Preposition", font=("Times", "14"))
         label2_et5.grid(row=3, column=2, columnspan=1)
-        label2_et6 = Label(self, text="from", font=("Times", "14", "italic"))
+        label2_et6 = Label(self, text="from", font=("Times", "15", "italic"))
         label2_et6.grid(row=4, column=2, columnspan=1)
-        label2_et7 = Label(self, text="Noun Phrase", font=("Times", "12"))
+        label2_et7 = Label(self, text="Noun Phrase", font=("Times", "14"))
         label2_et7.grid(row=3, column=3, columnspan=1)
-        label2_et8 = Label(self, text="the supply room", font=("Times", "14", "italic"))
+        label2_et8 = Label(self, text="the supply room", font=("Times", "15", "italic"))
         label2_et8.grid(row=4, column=3, columnspan=1)
         action_template2_label_list.extend([label2_et1,label2_et2,label2_et3,label2_et4,label2_et5,label2_et6,label2_et7,label2_et8])
-        self.chat_entry_labels.append(action_template2_label_list)
+        self.listbox_entry_labels.append(action_template2_label_list)
         
         # Row 5: Action Template 2 Text Input (Col 0-3)
         action_template2_list = []
         for i in range(0,4):
-            entry = RosieGUI.ChatEntry(self)
-            entry.grid(row=5, column=i, columnspan=1, sticky=N+S+E+W)
-            action_template2_list.append(entry)        
-        self.chat_entries.append(action_template2_list)
+            listbox_entry = AutocompleteEntryListbox(self, font=("Arial", "12"))
+            listbox_entry.grid(row=5, column=i, columnspan=1, sticky=N+S+E+W)
+
+            action_template2_list.append(listbox_entry)        
+        self.listbox_entries.append(action_template2_list)
+
 
         # Row 6-8: Goal Template 1
         goal_template1_label_list = []
         # Goal Template 1 - Chat Entry Default Label
-        goal_label1_et1 = Label(self, text="The goal is that", font=("Times", "14"))
+        goal_label1_et1 = Label(self, text="The goal is that", font=("Times", "15"))
         goal_label1_et1.grid(row=8, column=0, columnspan=1)
         # Goal Template 1 Labels (Col 1-3)
-        goal_label1_et2 = Label(self, text="Noun Phrase", font=("Times", "12"))
+        goal_label1_et2 = Label(self, text="Noun Phrase", font=("Times", "14"))
         goal_label1_et2.grid(row=6, column=1, columnspan=1)
-        goal_label1_et3 = Label(self, text="the alarm", font=("Times", "14", "italic"))
+        goal_label1_et3 = Label(self, text="the alarm", font=("Times", "15", "italic"))
         goal_label1_et3.grid(row=7, column=1, columnspan=1)
-        goal_label1_et4 = Label(self, text="Verb", font=("Times", "12"))
+        goal_label1_et4 = Label(self, text="Verb", font=("Times", "14"))
         goal_label1_et4.grid(row=6, column=2, columnspan=1)
-        goal_label1_et5 = Label(self, text="is", font=("Times", "14", "italic"))
+        goal_label1_et5 = Label(self, text="is", font=("Times", "15", "italic"))
         goal_label1_et5.grid(row=7, column=2, columnspan=1)
-        goal_label1_et6 = Label(self, text="Object State", font=("Times", "12"))
+        goal_label1_et6 = Label(self, text="Object State", font=("Times", "14"))
         goal_label1_et6.grid(row=6, column=3, columnspan=1)
-        goal_label1_et7 = Label(self, text="on", font=("Times", "14", "italic"))
+        goal_label1_et7 = Label(self, text="on", font=("Times", "15", "italic"))
         goal_label1_et7.grid(row=7, column=3, columnspan=1)
         
         goal_template1_label_list.extend([goal_label1_et1,goal_label1_et2,goal_label1_et3,goal_label1_et4,goal_label1_et5,goal_label1_et6,goal_label1_et7])
-        self.chat_entry_labels.append(goal_template1_label_list)
+        self.listbox_entry_labels.append(goal_template1_label_list)
 
         # Row 8: Goal Template 1 Text Input (Col 1-3)
         goal_template1_list = []
         for i in range(1,4):
-            entry = RosieGUI.ChatEntry(self)
-            entry.grid(row=8, column=i, columnspan=1, sticky=N+S+E+W)
-            goal_template1_list.append(entry)
-        self.chat_entries.append(goal_template1_list)  
+            listbox_entry = AutocompleteEntryListbox(self, font=("Arial", "12"))
+            listbox_entry.grid(row=8, column=i, columnspan=1, sticky=N+S+E+W)
+
+            goal_template1_list.append(listbox_entry)
+        self.listbox_entries.append(goal_template1_list)  
+
 
         # Row 6-8: Goal Template 2
         goal_template2_label_list = []
         # Goal Template 2 - Chat Entry Default Label
-        goal_label2_et1 = Label(self, text="The goal is that", font=("Times", "14"))
+        goal_label2_et1 = Label(self, text="The goal is that", font=("Times", "15"))
         goal_label2_et1.grid(row=8, column=0, columnspan=1)
         # Goal Template 2 Labels (Col 1-3)
-        goal_label2_et2 = Label(self, text="Noun Phrase", font=("Times", "12"))
+        goal_label2_et2 = Label(self, text="Noun Phrase", font=("Times", "14"))
         goal_label2_et2.grid(row=6, column=1, columnspan=1)
-        goal_label2_et3 = Label(self, text="the extinguisher", font=("Times", "14", "italic"))
+        goal_label2_et3 = Label(self, text="the extinguisher", font=("Times", "15", "italic"))
         goal_label2_et3.grid(row=7, column=1, columnspan=1)
-        goal_label2_et4 = Label(self, text="Verb", font=("Times", "12"))
+        goal_label2_et4 = Label(self, text="Verb", font=("Times", "14"))
         goal_label2_et4.grid(row=6, column=2, columnspan=1)
-        goal_label2_et5 = Label(self, text="is", font=("Times", "14", "italic"))
+        goal_label2_et5 = Label(self, text="is", font=("Times", "15", "italic"))
         goal_label2_et5.grid(row=7, column=2, columnspan=1)
-        goal_label2_et6 = Label(self, text="Preposition", font=("Times", "12"))
+        goal_label2_et6 = Label(self, text="Preposition", font=("Times", "14"))
         goal_label2_et6.grid(row=6, column=3, columnspan=1)
-        goal_label2_et7 = Label(self, text="in", font=("Times", "14", "italic"))
+        goal_label2_et7 = Label(self, text="in", font=("Times", "15", "italic"))
         goal_label2_et7.grid(row=7, column=3, columnspan=1)
-        goal_label2_et8 = Label(self, text="Noun Phrase", font=("Times", "12"))
+        goal_label2_et8 = Label(self, text="Noun Phrase", font=("Times", "14"))
         goal_label2_et8.grid(row=6, column=4, columnspan=1)
-        goal_label2_et9 = Label(self, text="the sentry-post", font=("Times", "14", "italic"))
+        goal_label2_et9 = Label(self, text="the sentry-post", font=("Times", "15", "italic"))
         goal_label2_et9.grid(row=7, column=4, columnspan=1)
 
         goal_template2_label_list.extend([goal_label2_et1,goal_label2_et2,goal_label2_et3,goal_label2_et4,goal_label2_et5,
                                           goal_label2_et6,goal_label2_et7,goal_label2_et8,goal_label2_et9])
-        self.chat_entry_labels.append(goal_template2_label_list)
+        self.listbox_entry_labels.append(goal_template2_label_list)
 
         # Row 8: Goal Template 2 Text Input (Col 1-4)
         goal_template2_list = []    
         for i in range(1,5): 
-            entry = RosieGUI.ChatEntry(self)
-            entry.grid(row=8, column=i, columnspan=1, sticky=N+S+E+W)
-            goal_template2_list.append(entry)
-        self.chat_entries.append(goal_template2_list)
+            listbox_entry = AutocompleteEntryListbox(self, font=("Arial", "12"))
+            listbox_entry.grid(row=8, column=i, columnspan=1, sticky=N+S+E+W)
+
+            goal_template2_list.append(listbox_entry)
+        self.listbox_entries.append(goal_template2_list)
+        
         
         # Row 9: Send Button (Col 5)
         # ToDo: enter check for all chat entries being populated with text
@@ -371,6 +431,9 @@ class RosieGUI(Frame):
         self.submit_button["command"] = lambda: self.send_combined_message()
         self.submit_button.grid(row=9, column=5, sticky=N+S+E+W)
         
+        # Populate all the listboxes with individual POS lists
+        self.populate_template_listboxes()       
+ 
         # Hide all template labels and entries at the beginning
         self.hide_template_entries()
 
@@ -383,7 +446,7 @@ class RosieGUI(Frame):
         if len(message) > 0:
             #Todo- Comment this for now but this needs to be adjusted based on whether you do different templates v/s one entry
             # self.chat_entry.add_to_history(message)
-            for sublist in self.chat_entries:
+            for sublist in self.listbox_entries:
                 for i in range(len(sublist)):
                     sublist[i].clear()
 
