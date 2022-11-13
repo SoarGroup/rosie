@@ -1,6 +1,7 @@
 import os
 import sys
 from tkinter import *
+from tkinter.ttk import Treeview
 from ttkwidgets.autocomplete import AutocompleteEntryListbox
 
 from . import RosieClient
@@ -20,6 +21,7 @@ class RosieGUI(Frame):
         def add(self, message):
             self.insert(END, message)
             self.see(END)
+
 
     class ScriptList(Listbox):
         """ Displays a list of script messages defined for Rosie """
@@ -49,50 +51,6 @@ class RosieGUI(Frame):
             self.event_generate("<<ListboxSelect>>")
             self.see(index)
 
-    class ChatEntry(Entry):
-        """ Defines a text entry box where the instructor can type messages for Rosie
-            Also keeps track of the message history and supports Up/Down keys to navigate """
-        def __init__(self, parent):
-            Entry.__init__(self, parent, font=("Times", "16"), state="normal")
-            self.parent = parent
-
-            # self.bind('<Return>', lambda key: self.send_message())
-            # self.bind('<Up>', lambda key: self.scroll_history(-1))
-            # self.bind('<Down>', lambda key: self.scroll_history(1))
-
-            self.message_history = []
-            self.history_index = 0
-
-        def add_to_history(self, message):
-            if len(self.message_history) == 0 or self.message_history[-1] != message:
-                self.message_history.append(message)
-            self.history_index = len(self.message_history)
-
-        def scroll_history(self, delta):
-            """ change the index into the message history by delta (integer)
-                and set the message entry box to that message """
-            self.clear()
-            if delta < 0 and self.history_index + delta < 0:
-                self.history_index = 0
-            elif delta > 0 and self.history_index + delta >= len(self.message_history):
-                self.history_index = len(self.message_history)
-            else:
-                self.history_index += delta
-
-            if self.history_index < len(self.message_history):
-                self.insert(END, self.message_history[self.history_index])
-
-        def send_message(self):
-            self.parent.send_message_to_rosie(self.get().strip())
-            self.clear()
-
-        def clear(self):
-            self.delete(0, END)
-
-    #ToDo: We may not need a class for this switch unless we are literally running functions
-    class SwitchTextBoxes:
-        def __init__(self, parent):
-            self.parent = parent
 
     """ Creates a single chat box interface to send messages to Rosie and receive messages back """
     def __init__(self, rosie_client, master):
@@ -116,7 +74,7 @@ class RosieGUI(Frame):
         self.create_widgets()
         self.setup_rosie_client()
 
-        master.geometry("1200x800")
+        master.geometry("1366x768")
         master.protocol("WM_DELETE_WINDOW", self.on_exit)
 
     def setup_rosie_client(self):
@@ -152,25 +110,29 @@ class RosieGUI(Frame):
         self.object_states_list = open(os.path.join(pos_folder_path, "object-states.txt")).read().splitlines()
         self.object_states_list = sorted(self.object_states_list)
 
-    def send_combined_message(self):
+    def send_combined_message(self, message_type):
     # maybe use the add_to_history function as a way to combine over time.
     ## ToDo - change font sizes back
         self.combined_message = ""
-        
-        if self.last_selected_option == 0:
-            for i in range(2,4):
-                self.combined_message += self.listbox_entries[0][i-2].get().strip() + " "
+
+        if message_type == "done":
+            self.combined_message += "You are done"
+        elif self.last_selected_option == 0:
+            self.combined_message += self.listbox_entries[0][0].get().strip() + " the " + self.listbox_entries[0][1].get().strip()
         elif self.last_selected_option == 1:
-            for i in range(2,6):
-                self.combined_message += self.listbox_entries[1][i-2].get().strip() + " "
+            self.combined_message += self.listbox_entries[1][0].get().strip() + " the "
+            for i in range(1,3):
+                self.combined_message += self.listbox_entries[1][i].get().strip() + " "
+            self.combined_message += "the " + self.listbox_entries[1][3].get().strip()
         elif self.last_selected_option == 2:
-            self.combined_message = "The goal is that "
-            for i in range(2,5):
-                self.combined_message += self.listbox_entries[2][i-2].get().strip() + " "
+            self.combined_message = "The goal is that the "
+            for i in range(0,3):
+                self.combined_message += self.listbox_entries[2][i].get().strip() + " "
         else:
-            self.combined_message = "The goal is that "
-            for i in range(2,6):
-                self.combined_message += self.listbox_entries[3][i-2].get().strip() + " "
+            self.combined_message = "The goal is that the "
+            for i in range(0,3):
+                self.combined_message += self.listbox_entries[3][i].get().strip() + " "
+            self.combined_message += "the " + self.listbox_entries[3][3].get().strip()
         
         self.combined_message = self.combined_message.strip() + "."    
         self.send_message_to_rosie(self.combined_message)
@@ -215,7 +177,19 @@ class RosieGUI(Frame):
             listbox_entry.grid()
         for label in self.listbox_entry_labels[selected_index]:
             label.grid()
-        
+    
+    """Function to enable selected input template and disable the last selected template"""
+    def enable_template_input(self, selected_index):
+        if self.last_selected_option != -1:
+            for listbox_t in self.listbox_entries[self.last_selected_option]:
+                listbox_t.clear()
+                listbox_t.grid_remove()
+            for label in self.listbox_entry_labels[self.last_selected_option]:
+                label.grid_remove()
+        self.last_selected_option = selected_index
+        self.show_selected_template_entries(selected_index)
+ 
+    
     def create_widgets(self):
         # ToDo: A way to clean up this code may be to get all the grid statements together and function statements(lambda etc) in another batch
         # https://tkdocs.com/tutorial/grid.html
@@ -232,10 +206,10 @@ class RosieGUI(Frame):
         self.columnconfigure(5, weight=1, minsize=150)
         self.rowconfigure(0, weight=1, minsize=25)
         self.rowconfigure(1, weight=20, minsize=300)
-        self.rowconfigure(2, weight=1, minsize=30)
+        self.rowconfigure(2, weight=2, minsize=50)
+        self.rowconfigure(3, weight=2, minsize=50)
 
         # Action Templates 1 and 2
-        self.rowconfigure(3, weight=2, minsize=30)
         self.rowconfigure(4, weight=2, minsize=30)
         self.rowconfigure(5, weight=2, minsize=30)
 
@@ -245,6 +219,7 @@ class RosieGUI(Frame):
         self.rowconfigure(8, weight=2, minsize=30)
 
         self.rowconfigure(9, weight=1, minsize=30)
+        self.rowconfigure(10, weight=1, minsize=30)
 
 
         # Row 0: Top row of buttons for running Rosie
@@ -268,168 +243,183 @@ class RosieGUI(Frame):
         # self.script_list.click_handler = lambda msg: self.send_message_to_rosie(msg)
         # self.script_list.grid(row=1, column=4, columnspan=4, sticky=N+S+E+W)
 
-
-        # Row 2: OptionMenu dropbox to select different template entry boxes (Col 0-2)
-        self.last_selected_option = -1
         
-        def callback(*args):            
-            # Clear the textboxes from the last selected option
-            if self.last_selected_option != -1:
-                for listbox_t in self.listbox_entries[self.last_selected_option]:
-                    listbox_t.clear()
-                    listbox_t.grid_remove()
-                for label in self.listbox_entry_labels[self.last_selected_option]:
-                    label.grid_remove()
+        # Row 2: Buttons to enable/disable template inputs (Col 1-4)
+        self.last_selected_option = -1
 
-            selected_index = options.index(selected_option.get().strip())
-            self.last_selected_option = selected_index
-            self.show_selected_template_entries(selected_index)
-    
-        #Set the Menu initially
-        selected_option = StringVar(value="Select Any Template Input")
-        selected_option.trace("w", callback)
-    
-        options = ["Action Template 1", 
-                   "Action Template 2", 
-                   "Goal Template 1", 
-                   "Goal Template 2"]
-      
-        self.template_optionsmenu = OptionMenu(self, selected_option, *options)
-        self.template_optionsmenu.grid(row=2, column=0, columnspan=2, sticky=N+S+E+W)
-        self.template_optionsmenu.config(font=("Arial", "14"))
-        self.template_optionsmenu["menu"].config(font=("Arial", "14"))
+        self.enable_at1_button = Button(self, text="Ask robot to do something:\n Action + Object\n\"Turn on the alarm\"", font=("Times", "15"), padx=10)
+        self.enable_at1_button["command"] = lambda: self.enable_template_input(0)
+        self.enable_at1_button.grid(row=2, column=0, rowspan=2, sticky=N+S+E+W)
 
+        self.enable_at2_button = Button(self, text="Ask robot to do something:\n Action + Object1 + Prep + Object2\n\"Fetch the coffee from the kitchen\"", font=("Times", "15"), padx=10)
+        self.enable_at2_button["command"] = lambda: self.enable_template_input(1)
+        self.enable_at2_button.grid(row=2, column=1, rowspan=2, columnspan=2, sticky=N+S+E+W)
+ 
+        self.enable_gt1_button = Button(self, text="Provide desired world state\nfor robot to achieve:\nObject + Linking-verb + Object State\n\"The alarm is on\"", font=("Times", "15"), padx=10)
+        self.enable_gt1_button["command"] = lambda: self.enable_template_input(2)
+        self.enable_gt1_button.grid(row=2, column=3, rowspan=2, sticky=N+S+E+W)
+ 
+        self.enable_gt2_button = Button(self, text="Provide desired world state\nfor robot to achieve:\n Object1 + Linking-verb + Prep + Object2\n\"The extinguisher is in the office\"", font=("Times", "15"), padx=10)
+        self.enable_gt2_button["command"] = lambda: self.enable_template_input(3)
+        self.enable_gt2_button.grid(row=2, column=4, rowspan=2, columnspan=2, sticky=N+S+E+W)
+        
 
         # Row 3-8: Action and Goal Template Labels and Text Entries 
 
         # Row 3-4: Action Template 1 Labels (Col 0-1)
         action_template1_label_list = []
-        label1_et1 = Label(self, text="Verb", font=("Times", "14"))
-        label1_et1.grid(row=3, column=0, columnspan=1)
+        label1_et1 = Label(self, text="Action", font=("Times", "14"))
+        label1_et1.grid(row=5, column=0, columnspan=1)
         label1_et2 = Label(self, text="Turn on", font=("Times", "15", "italic"))
-        label1_et2.grid(row=4, column=0, columnspan=1)
-        label1_et3 = Label(self, text="Noun Phrase", font=("Times", "14"))
-        label1_et3.grid(row=3, column=1, columnspan=1)
-        label1_et4 = Label(self, text="the alarm", font=("Times", "15", "italic"))
-        label1_et4.grid(row=4, column=1, columnspan=1)
-        action_template1_label_list.extend([label1_et1,label1_et2,label1_et3,label1_et4])
+        label1_et2.grid(row=6, column=0, columnspan=1)
+        label1_et3 = Label(self, text="Object", font=("Times", "14"))
+        label1_et3.grid(row=5, column=2, columnspan=1)
+        label1_et4 = Label(self, text="alarm", font=("Times", "15", "italic"))
+        label1_et4.grid(row=6, column=2, columnspan=1)
+        
+        # Default "the" labels
+        label1_et5 = Label(self, text="the\n\n\n\n\n\n", font=("Arial", "14"))
+        label1_et5.grid(row=7, column=1, columnspan=1)
+        action_template1_label_list.extend([label1_et1,label1_et2,label1_et3,label1_et4,label1_et5])
         self.listbox_entry_labels.append(action_template1_label_list)
 
         # Row 5: Action Template 1 Text Input (Col 0-1)
         action_template1_list = []
-        for i in range(0,2):
-            listbox_entry = AutocompleteEntryListbox(self, font=("Arial", "12"))
-            listbox_entry.grid(row=5, column=i, columnspan=1, sticky=N+S+E+W)
-            
-            action_template1_list.append(listbox_entry)
+        for i in range(0,3):
+            if i==1:
+                continue
+            else:
+                listbox_entry = AutocompleteEntryListbox(self, font=("Arial", "12"))
+                listbox_entry.grid(row=7, column=i, columnspan=1, sticky=N+S+E+W)
+
+                action_template1_list.append(listbox_entry)
         self.listbox_entries.append(action_template1_list)
 
         
         # Row 3-4: Action Template 2 Labels (Col 0-3)
         action_template2_label_list = []
-        label2_et1 = Label(self, text="Verb", font=("Times", "14"))
-        label2_et1.grid(row=3, column=0, columnspan=1)
+        label2_et1 = Label(self, text="Action", font=("Times", "14"))
+        label2_et1.grid(row=5, column=0, columnspan=1)
         label2_et2 = Label(self, text="Fetch", font=("Times", "15", "italic"))
-        label2_et2.grid(row=4, column=0, columnspan=1)
-        label2_et3 = Label(self, text="Noun Phrase", font=("Times", "14"))
-        label2_et3.grid(row=3, column=1, columnspan=1)
-        label2_et4 = Label(self, text="an extinguisher", font=("Times", "15", "italic"))
-        label2_et4.grid(row=4, column=1, columnspan=1)
+        label2_et2.grid(row=6, column=0, columnspan=1)
+        label2_et3 = Label(self, text="Object1", font=("Times", "14"))
+        label2_et3.grid(row=5, column=2, columnspan=1)
+        label2_et4 = Label(self, text="coffee", font=("Times", "15", "italic"))
+        label2_et4.grid(row=6, column=2, columnspan=1)
         label2_et5 = Label(self, text="Preposition", font=("Times", "14"))
-        label2_et5.grid(row=3, column=2, columnspan=1)
+        label2_et5.grid(row=5, column=3, columnspan=1)
         label2_et6 = Label(self, text="from", font=("Times", "15", "italic"))
-        label2_et6.grid(row=4, column=2, columnspan=1)
-        label2_et7 = Label(self, text="Noun Phrase", font=("Times", "14"))
-        label2_et7.grid(row=3, column=3, columnspan=1)
-        label2_et8 = Label(self, text="the supply room", font=("Times", "15", "italic"))
-        label2_et8.grid(row=4, column=3, columnspan=1)
-        action_template2_label_list.extend([label2_et1,label2_et2,label2_et3,label2_et4,label2_et5,label2_et6,label2_et7,label2_et8])
+        label2_et6.grid(row=6, column=3, columnspan=1)
+        label2_et7 = Label(self, text="Object2", font=("Times", "14"))
+        label2_et7.grid(row=5, column=5, columnspan=1)
+        label2_et8 = Label(self, text="kitchen", font=("Times", "15", "italic"))
+        label2_et8.grid(row=6, column=5, columnspan=1)
+        
+         # Default "the" labels
+        label2_et9 = Label(self, text="the\n\n\n\n\n\n", font=("Arial", "14"))
+        label2_et9.grid(row=7, column=1, columnspan=1)
+        label2_et10 = Label(self, text="the\n\n\n\n\n\n", font=("Arial", "14"))
+        label2_et10.grid(row=7, column=4, columnspan=1)
+        for i in range(1,11):
+            action_template2_label_list.append(locals()["label2_et" + str(i)])
         self.listbox_entry_labels.append(action_template2_label_list)
         
         # Row 5: Action Template 2 Text Input (Col 0-3)
         action_template2_list = []
-        for i in range(0,4):
-            listbox_entry = AutocompleteEntryListbox(self, font=("Arial", "12"))
-            listbox_entry.grid(row=5, column=i, columnspan=1, sticky=N+S+E+W)
-
-            action_template2_list.append(listbox_entry)        
+        for i in range(0,6):
+            if i in (1,4):
+                continue
+            else:
+                listbox_entry = AutocompleteEntryListbox(self, font=("Arial", "12"))
+                listbox_entry.grid(row=7, column=i, columnspan=1, sticky=N+S+E+W)
+                action_template2_list.append(listbox_entry)        
         self.listbox_entries.append(action_template2_list)
 
 
         # Row 6-8: Goal Template 1
         goal_template1_label_list = []
         # Goal Template 1 - Chat Entry Default Label
-        goal_label1_et1 = Label(self, text="The goal is that", font=("Times", "15"))
-        goal_label1_et1.grid(row=8, column=0, columnspan=1)
+        goal_label1_et1 = Label(self, text="The goal is that the\n\n\n\n\n", font=("Times", "15"))
+        goal_label1_et1.grid(row=7, column=0, columnspan=1)
+
         # Goal Template 1 Labels (Col 1-3)
-        goal_label1_et2 = Label(self, text="Noun Phrase", font=("Times", "14"))
-        goal_label1_et2.grid(row=6, column=1, columnspan=1)
-        goal_label1_et3 = Label(self, text="the alarm", font=("Times", "15", "italic"))
-        goal_label1_et3.grid(row=7, column=1, columnspan=1)
-        goal_label1_et4 = Label(self, text="Verb", font=("Times", "14"))
-        goal_label1_et4.grid(row=6, column=2, columnspan=1)
+        goal_label1_et2 = Label(self, text="Object", font=("Times", "14"))
+        goal_label1_et2.grid(row=5, column=1, columnspan=1)
+        goal_label1_et3 = Label(self, text="alarm", font=("Times", "15", "italic"))
+        goal_label1_et3.grid(row=6, column=1, columnspan=1)
+        goal_label1_et4 = Label(self, text="Linking-verb", font=("Times", "14"))
+        goal_label1_et4.grid(row=5, column=2, columnspan=1)
         goal_label1_et5 = Label(self, text="is", font=("Times", "15", "italic"))
-        goal_label1_et5.grid(row=7, column=2, columnspan=1)
+        goal_label1_et5.grid(row=6, column=2, columnspan=1)
         goal_label1_et6 = Label(self, text="Object State", font=("Times", "14"))
-        goal_label1_et6.grid(row=6, column=3, columnspan=1)
+        goal_label1_et6.grid(row=5, column=3, columnspan=1)
         goal_label1_et7 = Label(self, text="on", font=("Times", "15", "italic"))
-        goal_label1_et7.grid(row=7, column=3, columnspan=1)
+        goal_label1_et7.grid(row=6, column=3, columnspan=1)
         
-        goal_template1_label_list.extend([goal_label1_et1,goal_label1_et2,goal_label1_et3,goal_label1_et4,goal_label1_et5,goal_label1_et6,goal_label1_et7])
+        for i in range(1,8):
+            goal_template1_label_list.append(locals()["goal_label1_et" + str(i)])
         self.listbox_entry_labels.append(goal_template1_label_list)
 
         # Row 8: Goal Template 1 Text Input (Col 1-3)
         goal_template1_list = []
         for i in range(1,4):
             listbox_entry = AutocompleteEntryListbox(self, font=("Arial", "12"))
-            listbox_entry.grid(row=8, column=i, columnspan=1, sticky=N+S+E+W)
-
+            listbox_entry.grid(row=7, column=i, columnspan=1, sticky=N+S+E+W)
             goal_template1_list.append(listbox_entry)
         self.listbox_entries.append(goal_template1_list)  
 
 
         # Row 6-8: Goal Template 2
         goal_template2_label_list = []
-        # Goal Template 2 - Chat Entry Default Label
-        goal_label2_et1 = Label(self, text="The goal is that", font=("Times", "15"))
-        goal_label2_et1.grid(row=8, column=0, columnspan=1)
-        # Goal Template 2 Labels (Col 1-3)
-        goal_label2_et2 = Label(self, text="Noun Phrase", font=("Times", "14"))
-        goal_label2_et2.grid(row=6, column=1, columnspan=1)
-        goal_label2_et3 = Label(self, text="the extinguisher", font=("Times", "15", "italic"))
-        goal_label2_et3.grid(row=7, column=1, columnspan=1)
-        goal_label2_et4 = Label(self, text="Verb", font=("Times", "14"))
-        goal_label2_et4.grid(row=6, column=2, columnspan=1)
-        goal_label2_et5 = Label(self, text="is", font=("Times", "15", "italic"))
-        goal_label2_et5.grid(row=7, column=2, columnspan=1)
-        goal_label2_et6 = Label(self, text="Preposition", font=("Times", "14"))
-        goal_label2_et6.grid(row=6, column=3, columnspan=1)
-        goal_label2_et7 = Label(self, text="in", font=("Times", "15", "italic"))
-        goal_label2_et7.grid(row=7, column=3, columnspan=1)
-        goal_label2_et8 = Label(self, text="Noun Phrase", font=("Times", "14"))
-        goal_label2_et8.grid(row=6, column=4, columnspan=1)
-        goal_label2_et9 = Label(self, text="the sentry-post", font=("Times", "15", "italic"))
-        goal_label2_et9.grid(row=7, column=4, columnspan=1)
+        # Goal Template 2 - Chat Entry Default Labels
+        goal_label2_et1 = Label(self, text="The goal is that the\n\n\n\n\n", font=("Times", "15"))
+        goal_label2_et1.grid(row=7, column=0, columnspan=1)        
+        goal_label2_et2 = Label(self, text="the\n\n\n\n\n\n", font=("Arial", "14"))
+        goal_label2_et2.grid(row=7, column=4, columnspan=1)
 
-        goal_template2_label_list.extend([goal_label2_et1,goal_label2_et2,goal_label2_et3,goal_label2_et4,goal_label2_et5,
-                                          goal_label2_et6,goal_label2_et7,goal_label2_et8,goal_label2_et9])
+        # Goal Template 2 Labels (Col 1-3)
+        goal_label2_et3 = Label(self, text="Object1", font=("Times", "14"))
+        goal_label2_et3.grid(row=5, column=1, columnspan=1)
+        goal_label2_et4 = Label(self, text="extinguisher", font=("Times", "15", "italic"))
+        goal_label2_et4.grid(row=6, column=1, columnspan=1)
+        goal_label2_et5 = Label(self, text="Linking-verb", font=("Times", "14"))
+        goal_label2_et5.grid(row=5, column=2, columnspan=1)
+        goal_label2_et6 = Label(self, text="is", font=("Times", "15", "italic"))
+        goal_label2_et6.grid(row=6, column=2, columnspan=1)
+        goal_label2_et7 = Label(self, text="Preposition", font=("Times", "14"))
+        goal_label2_et7.grid(row=5, column=3, columnspan=1)
+        goal_label2_et8 = Label(self, text="in", font=("Times", "15", "italic"))
+        goal_label2_et8.grid(row=6, column=3, columnspan=1)
+        goal_label2_et9 = Label(self, text="Object2", font=("Times", "14"))
+        goal_label2_et9.grid(row=5, column=5, columnspan=1)
+        goal_label2_et10 = Label(self, text="office", font=("Times", "15", "italic"))
+        goal_label2_et10.grid(row=6, column=5, columnspan=1)
+        
+        for i in range(1,11):
+            goal_template2_label_list.append(locals()["goal_label2_et" + str(i)])
         self.listbox_entry_labels.append(goal_template2_label_list)
 
         # Row 8: Goal Template 2 Text Input (Col 1-4)
         goal_template2_list = []    
-        for i in range(1,5): 
-            listbox_entry = AutocompleteEntryListbox(self, font=("Arial", "12"))
-            listbox_entry.grid(row=8, column=i, columnspan=1, sticky=N+S+E+W)
-
-            goal_template2_list.append(listbox_entry)
+        for i in range(1,6):
+            if i==4:
+                continue
+            else:
+                listbox_entry = AutocompleteEntryListbox(self, font=("Arial", "12"))
+                listbox_entry.grid(row=7, column=i, columnspan=1, sticky=N+S+E+W)
+                goal_template2_list.append(listbox_entry)
         self.listbox_entries.append(goal_template2_list)
+
         
-        
-        # Row 9: Send Button (Col 5)
+        # Row 9: "You are done" message (Col 0) and Send Button (Col 5)
         # ToDo: enter check for all chat entries being populated with text
+        self.task_done_button = Button(self, text="You are done", font=("Times", "18"))
+        self.task_done_button["command"] = lambda: self.send_combined_message("done")
+        self.task_done_button.grid(row=9, column=0, rowspan=2, sticky=N+S+E+W)
+        
         self.submit_button = Button(self, text="Send", font=("Times", "18"))
-        self.submit_button["command"] = lambda: self.send_combined_message()
-        self.submit_button.grid(row=9, column=5, sticky=N+S+E+W)
+        self.submit_button["command"] = lambda: self.send_combined_message("")
+        self.submit_button.grid(row=9, column=5, rowspan=2, sticky=N+S+E+W)
         
         # Populate all the listboxes with individual POS lists
         self.populate_template_listboxes()       
