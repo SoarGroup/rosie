@@ -22,7 +22,7 @@ run_mobile_sim: ${AGENT_NAME}.world
 	java soargroup.mobilesim.MobileGUI -w ${AGENT_NAME}.world &
 
 run_rosie: waypoint-map.soar internal-world.soar ${ROSIE_CONFIG} 
-	python3 -m mobilesim.rosie.MobileRosieGUI ${ROSIE_CONFIG} &
+	python3 -m mobilesim.rosie.MobileRosieGUI ${ROSIE_CONFIG} --hide-script &
 
 run_test: waypoint-map.soar internal-world.soar ${TEST_CONFIG} 
 	python3 -m rosie.testing.run_rosie_test ${TEST_CONFIG} test-output.txt -v

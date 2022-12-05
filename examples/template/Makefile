@@ -27,7 +27,7 @@ run_rosie: waypoint-map.soar internal-world.soar ${ROSIE_CONFIG}
 	python3 -m mobilesim.rosie.MobileRosieGUI ${ROSIE_CONFIG} &
 
 run_test: waypoint-map.soar internal-world.soar ${TEST_CONFIG} 
-	python3 -m rosie.testing.run_rosie_test ${TEST_CONFIG} test-output.txt
+	python3 -m rosie.RosieGUI ${TEST_CONFIG} 
 	@echo "#################### DIFF ####################"
 	diff test-output.txt correct-output.txt
 
