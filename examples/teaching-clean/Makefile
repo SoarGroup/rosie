@@ -1,15 +1,12 @@
-AGENT_NAME=interior-guard
+AGENT_NAME=cleaner
 
 ROSIE_CONFIG=agent/rosie-client.config
-TEST_CONFIG=test-agent/rosie-client.config
 
 #### Running Various Build Scripts
 
-all: world agent test
+all: world agent 
 
 agent: ${ROSIE_CONFIG}
-
-test: ${TEST_CONFIG}
 
 world: ${AGENT_NAME}.world waypoint-map.soar internal-world.soar
 
@@ -24,22 +21,12 @@ run_mobile_sim: ${AGENT_NAME}.world
 run_rosie: waypoint-map.soar internal-world.soar ${ROSIE_CONFIG} 
 	python3 -m mobilesim.rosie.MobileRosieGUI ${ROSIE_CONFIG} --hide-script &
 
-run_test: waypoint-map.soar internal-world.soar ${TEST_CONFIG} 
-	python3 -m rosie.testing.run_rosie_test ${TEST_CONFIG} test-output.txt -v
-	@echo "#################### DIFF ####################"
-	diff test-output.txt correct-output.txt
-
 
 #### Configuring Rosie Agents
 
 # agent/rosie.template.config: Configures the rosie soar agent that will be sourced to run
 ${ROSIE_CONFIG}: rosie.config smem-config.txt extra-smem-adds.soar
 	java edu.umich.rosie.tools.config.RosieAgentConfigurator rosie.config
-
-
-# test-agent/rosie.template.config: Configures the rosie soar agent that will be sourced for the test
-${TEST_CONFIG}: test.config smem-config.txt extra-smem-adds.soar
-	java edu.umich.rosie.tools.config.RosieAgentConfigurator test.config
 
 
 #### Generating World/Map Files
@@ -61,10 +48,8 @@ waypoint-map.soar: world.info
 
 clean:
 	rm -rf agent
-	rm -rf test-agent
 	rm -rf __pycache__
 	rm -rf *.log
-	rm -f test-output.txt
 	rm -f ${AGENT_NAME}.world
 	rm -f waypoint-map.soar
 	rm -f internal-world.soar

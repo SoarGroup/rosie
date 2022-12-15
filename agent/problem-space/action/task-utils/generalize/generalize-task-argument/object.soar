@@ -1,3 +1,35 @@
+sp {task-utils*generalize-task-argument*expand*object*relation
+  (state <s> ^generalize-task-argument <arg>)
+  (<arg> ^arg-type object
+         ^instantiation <i>)
+   (<i> ^reference-info.relation <rel>)
+   (<rel> ^handle <pred-h>
+          ^2 <ref-obj2>)
+-->
+   (<s> ^generalize-task-argument <gen-obj2>)
+   (<gen-obj2> ^arg-type object
+               ^instantiation <obj2-ins>)
+   (<obj2-ins> ^id <ref-obj2>
+               ^reference-info <ref-obj2>)
+   
+   (<arg> ^relation-constraint <rel-cons>)
+   (<rel-cons> ^handle <pred-h>
+               ^generalize-obj2 <gen-obj2>)
+}
+
+sp {task-utils*generalize-task-argument*reject*generalize-task-argument*object*if*ungeneralized*relation*obj2
+   (state <s> ^generalize-task-argument <arg>
+              ^operator <o> +)
+   (<o> ^name generalize-task-argument
+        ^argument <arg>)
+   (<arg> ^arg-type object
+          ^relation-constraint <rel>)
+   (<rel> ^generalize-obj2 <gen-obj2>)
+   (<gen-obj2> -^general-arg-rep)
+-->
+   (<s> ^operator <o> -)
+}
+
 ### GENERALIZE OBJECT
 # Goes from a specific object instantiation to creating a generalized representation
 
@@ -161,7 +193,7 @@ sp {task-utils*generalize-task-argument*elaborate*generalize-task-argument*objec
        ^match-type default
        ^instantiation.predicates <preds>
        ^predicates <def-preds>
-       ^reference-info.<prop-handle> <pred-handle>)
+       ^reference-info.predicates.<prop-handle> <pred-handle>)
    (<preds> ^<prop-handle> <pred-handle>)
 -->
   (<def-preds> ^<prop-handle> <pred-handle>)
@@ -175,8 +207,8 @@ sp {task-utils*generalize-task-argument*elaborate*generalize-task-argument*objec
        ^match-type default
        ^instantiation.root-category <cat>
        ^predicates <def-preds>
-       ^reference-info <ref-info>)
-   (<ref-info> ^name <name>
+       ^reference-info.predicates <ref-preds>)
+   (<ref-preds> ^name <name>
               -^category)
 -->
    (<def-preds> ^category <cat>)
@@ -236,197 +268,249 @@ sp {task-utils*generalize-task-argument*apply*generalize-task-argument*object*ad
    (<obj-slot> ^abstract true)
 }
 
-# ENUMERATE: 1-8 OBJECT PREDICATES
+# DEFAULT ARGUMENT - Create the default object representation on the slot
 
-sp {task-utils*generalize-task-argument*apply*generalize-task-argument*object*default*1*predicate
+sp {task-utils*generalize-task-argument*elaborate*generalize-task-argument*object*default*default-rep
+  (state <s> ^operator <o> +)
+  (<o> ^name generalize-task-argument
+       ^argument <arg>
+       ^arg-type object
+       ^match-type default)
+-->
+   (<o> ^default-rep <def>
+        ^default-preds <preds>)
+}
+
+sp {task-utils*generalize-task-argument*apply*generalize-task-argument*object*default*create*slot
   (state <s> ^operator <o>)
   (<o> ^name generalize-task-argument
        ^argument <arg>
        ^arg-type object
        ^match-type default
-       ^predicates <def-preds>
-       ^new-object-slot <obj-slot>)
-   (<def-preds> ^<prop1> <pred1>
-               -^<prop2> { <pred2> <> <pred1> })
+       ^new-object-slot <obj-slot>
+       ^default-rep <def>
+       ^default-preds <preds>)
 -->
   (<arg> ^general-arg-rep <rep>)
   (<rep> ^id <obj-slot>)
   (<obj-slot> ^default <def>)
-  (<def> ^<prop1> <pred1>)
+   (<def> ^predicates <preds>)
 }
 
-sp {task-utils*generalize-task-argument*apply*generalize-task-argument*object*default*2*predicates
+sp {task-utils*generalize-task-argument*apply*generalize-task-argument*object*default*relation-count*0
+  (state <s> ^operator <o>)
+  (<o> ^name generalize-task-argument
+       ^argument <arg>
+       ^arg-type object
+       ^default-rep <def>)
+   (<arg> ^instantiation <ins>)
+   (<ins> -^reference-info.relation-count <c>)
+-->
+   (<def> ^relation-count 0)
+}
+
+sp {task-utils*generalize-task-argument*apply*generalize-task-argument*object*default*relation-count*0*copy
+  (state <s> ^operator <o>)
+  (<o> ^name generalize-task-argument
+       ^argument <arg>
+       ^arg-type object
+       ^default-rep <def>)
+   (<arg> ^instantiation <ins>)
+   (<ins> ^reference-info.relation-count <c>)
+-->
+   (<def> ^relation-count <c>)
+}
+
+sp {task-utils*generalize-task-argument*apply*generalize-task-argument*object*default*copy*relation
   (state <s> ^operator <o>)
   (<o> ^name generalize-task-argument
        ^argument <arg>
        ^arg-type object
        ^match-type default
-       ^predicates <def-preds>
-       ^new-object-slot <obj-slot>)
-  (<def-preds> ^{ <prop1>           } <pred1>
-               ^{ <prop2> > <prop1> } <pred2>
-               -^{ <prop3> <> <prop2> <> <prop1> } <pred3>)
+       ^default-rep <def>)
+   (<arg> ^relation-constraint <rel-cons>)
+   (<rel-cons> ^handle <pred-h>
+               ^generalize-obj2.general-arg-rep.id <obj2-slot>)
 -->
-  (<arg> ^general-arg-rep <rep>)
-  (<rep> ^id <obj-slot>)
-  (<obj-slot> ^default <def>)
-  (<def> ^<prop1> <pred1>
-         ^<prop2> <pred2>)
+   (<def> ^relation <rel>)
+   (<rel> ^handle <pred-h>
+          ^2 <obj2-slot>)
 }
 
-sp {task-utils*generalize-task-argument*apply*generalize-task-argument*object*default*3*predicates
+sp {task-utils*generalize-task-argument*apply*generalize-task-argument*object*default*copy*predicate
   (state <s> ^operator <o>)
   (<o> ^name generalize-task-argument
        ^argument <arg>
        ^arg-type object
        ^match-type default
-       ^predicates <def-preds>
-       ^new-object-slot <obj-slot>)
-   (<def-preds> ^<prop1> <pred1>
-               ^<prop2> { <pred2> > <pred1> }
-               ^<prop3> { <pred3> > <pred2> }
-              -^<prop4> { <pred4> <> <pred3> <> <pred2> <> <pred1> })
+       ^predicates.<prop-h> <pred-h>
+       ^default-preds <def-preds>)
 -->
-  (<arg> ^general-arg-rep <rep>)
-  (<rep> ^id <obj-slot>)
-  (<obj-slot> ^default <def>)
-  (<def> ^<prop1> <pred1>
-         ^<prop2> <pred2>
-         ^<prop3> <pred3>)
+   (<def-preds> ^<prop-h> <pred-h>)
 }
 
-sp {task-utils*generalize-task-argument*apply*generalize-task-argument*object*default*4*predicates
-  (state <s> ^operator <o>)
-  (<o> ^name generalize-task-argument
-       ^argument <arg>
-       ^arg-type object
-       ^match-type default
-       ^predicates <def-preds>
-       ^new-object-slot <obj-slot>)
-   (<def-preds> ^<prop1> <pred1>
-               ^<prop2> { <pred2> > <pred1> }
-               ^<prop3> { <pred3> > <pred2> }
-               ^<prop4> { <pred4> > <pred3> }
-              -^<prop5> { <pred5> <> <pred4> <> <pred3> <> <pred2> <> <pred1> })
--->
-  (<arg> ^general-arg-rep <rep>)
-  (<rep> ^id <obj-slot>)
-  (<obj-slot> ^default <def>)
-  (<def> ^<prop1> <pred1>
-         ^<prop2> <pred2>
-         ^<prop3> <pred3>
-         ^<prop4> <pred4>)
-}
-
-sp {task-utils*generalize-task-argument*apply*generalize-task-argument*object*default*5*predicates
-  (state <s> ^operator <o>)
-  (<o> ^name generalize-task-argument
-       ^argument <arg>
-       ^arg-type object
-       ^match-type default
-       ^predicates <def-preds>
-       ^new-object-slot <obj-slot>)
-   (<def-preds> ^<prop1> <pred1>
-               ^<prop2> { <pred2> > <pred1> }
-               ^<prop3> { <pred3> > <pred2> }
-               ^<prop4> { <pred4> > <pred3> }
-               ^<prop5> { <pred5> > <pred4> }
-              -^<prop6> { <pred6> <> <pred5> <> <pred4> <> <pred3> <> <pred2> <> <pred1> })
--->
-  (<arg> ^general-arg-rep <rep>)
-  (<rep> ^id <obj-slot>)
-  (<obj-slot> ^default <def>)
-  (<def> ^<prop1> <pred1>
-         ^<prop2> <pred2>
-         ^<prop3> <pred3>
-         ^<prop4> <pred4>
-         ^<prop5> <pred5>)
-}
-
-sp {task-utils*generalize-task-argument*apply*generalize-task-argument*object*default*6*predicates
-  (state <s> ^operator <o>)
-  (<o> ^name generalize-task-argument
-       ^argument <arg>
-       ^arg-type object
-       ^match-type default
-       ^predicates <def-preds>
-       ^new-object-slot <obj-slot>)
-   (<def-preds> ^<prop1> <pred1>
-               ^<prop2> { <pred2> > <pred1> }
-               ^<prop3> { <pred3> > <pred2> }
-               ^<prop4> { <pred4> > <pred3> }
-               ^<prop5> { <pred5> > <pred4> }
-               ^<prop6> { <pred6> > <pred5> }
-              -^<prop7> { <pred7> <> <pred6> <> <pred5> <> <pred4> <> <pred3> <> <pred2> <> <pred1> })
--->
-  (<arg> ^general-arg-rep <rep>)
-  (<rep> ^id <obj-slot>)
-  (<obj-slot> ^default <def>)
-  (<def> ^<prop1> <pred1>
-         ^<prop2> <pred2>
-         ^<prop3> <pred3>
-         ^<prop4> <pred4>
-         ^<prop5> <pred5>
-         ^<prop6> <pred6>)
-}
-
-sp {task-utils*generalize-task-argument*apply*generalize-task-argument*object*default*7*predicates
-  (state <s> ^operator <o>)
-  (<o> ^name generalize-task-argument
-       ^argument <arg>
-       ^arg-type object
-       ^match-type default
-       ^predicates <def-preds>
-       ^new-object-slot <obj-slot>)
-   (<def-preds> ^<prop1> <pred1>
-               ^<prop2> { <pred2> > <pred1> }
-               ^<prop3> { <pred3> > <pred2> }
-               ^<prop4> { <pred4> > <pred3> }
-               ^<prop5> { <pred5> > <pred4> }
-               ^<prop6> { <pred6> > <pred5> }
-               ^<prop7> { <pred7> > <pred6> }
-              -^<prop8> { <pred8> <> <pred7> <> <pred6> <> <pred5> <> <pred4> <> <pred3> <> <pred2> <> <pred1> })
--->
-  (<arg> ^general-arg-rep <rep>)
-  (<rep> ^id <obj-slot>)
-  (<obj-slot> ^default <def>)
-  (<def> ^<prop1> <pred1>
-         ^<prop2> <pred2>
-         ^<prop3> <pred3>
-         ^<prop4> <pred4>
-         ^<prop5> <pred5>
-         ^<prop6> <pred6>
-         ^<prop7> <pred7>)
-}
-
-sp {task-utils*generalize-task-argument*apply*generalize-task-argument*object*default*8*predicates
-   (state <s> ^operator <o>)
-   (<o> ^name generalize-task-argument
-        ^argument <arg>
-        ^arg-type object
-        ^match-type default
-        ^predicates <def-preds>
-        ^new-object-slot <obj-slot>)
-   (<def-preds> ^<prop1> <pred1>
-               ^<prop2> { <pred2> > <pred1> }
-               ^<prop3> { <pred3> > <pred2> }
-               ^<prop4> { <pred4> > <pred3> }
-               ^<prop5> { <pred5> > <pred4> }
-               ^<prop6> { <pred6> > <pred5> }
-               ^<prop7> { <pred7> > <pred6> }
-               ^<prop8> { <pred8> > <pred7> }
-              -^<prop9> { <pred9> <> <pred8> <> <pred7> <> <pred6> <> <pred5> <> <pred4> <> <pred3> <> <pred2> <> <pred1> })
--->
-  (<arg> ^general-arg-rep <rep>)
-  (<rep> ^id <obj-slot>)
-  (<obj-slot> ^default <def>)
-  (<def> ^<prop1> <pred1>
-         ^<prop2> <pred2>
-         ^<prop3> <pred3>
-         ^<prop4> <pred4>
-         ^<prop5> <pred5>
-         ^<prop6> <pred6>
-         ^<prop7> <pred7>
-         ^<prop8> <pred8>)
-}
-
+###################################################################################################
+# AM: Simplifying creating the default structure, since it can't chunk anyway
+# We can just copy each predicate individually, without matching all at once
+#sp {task-utils*generalize-task-argument*apply*generalize-task-argument*object*default*2*predicates
+#  (state <s> ^operator <o>)
+#  (<o> ^name generalize-task-argument
+#       ^argument <arg>
+#       ^arg-type object
+#       ^match-type default
+#       ^predicates <def-preds>
+#       ^default-rep <def>)
+#  (<def-preds> ^{ <prop1>           } <pred1>
+#               ^{ <prop2> > <prop1> } <pred2>
+#               -^{ <prop3> <> <prop2> <> <prop1> } <pred3>)
+#-->
+#  (<def> ^predicates <obj-preds>)
+#  (<obj-preds> ^<prop1> <pred1>
+#               ^<prop2> <pred2>)
+#}
+#
+#sp {task-utils*generalize-task-argument*apply*generalize-task-argument*object*default*3*predicates
+#  (state <s> ^operator <o>)
+#  (<o> ^name generalize-task-argument
+#       ^argument <arg>
+#       ^arg-type object
+#       ^match-type default
+#       ^predicates <def-preds>
+#       ^default-rep <def>)
+#   (<def-preds> ^<prop1> <pred1>
+#               ^<prop2> { <pred2> > <pred1> }
+#               ^<prop3> { <pred3> > <pred2> }
+#              -^<prop4> { <pred4> <> <pred3> <> <pred2> <> <pred1> })
+#-->
+#   (<def> ^predicates <obj-preds>)
+#  (<obj-preds> ^<prop1> <pred1>
+#               ^<prop2> <pred2>
+#               ^<prop3> <pred3>)
+#}
+#
+#sp {task-utils*generalize-task-argument*apply*generalize-task-argument*object*default*4*predicates
+#  (state <s> ^operator <o>)
+#  (<o> ^name generalize-task-argument
+#       ^argument <arg>
+#       ^arg-type object
+#       ^match-type default
+#       ^predicates <def-preds>
+#       ^default-rep <def>)
+#   (<def-preds> ^<prop1> <pred1>
+#               ^<prop2> { <pred2> > <pred1> }
+#               ^<prop3> { <pred3> > <pred2> }
+#               ^<prop4> { <pred4> > <pred3> }
+#              -^<prop5> { <pred5> <> <pred4> <> <pred3> <> <pred2> <> <pred1> })
+#-->
+#   (<def> ^predicates <obj-preds>)
+#  (<obj-preds> ^<prop1> <pred1>
+#               ^<prop2> <pred2>
+#               ^<prop3> <pred3>
+#               ^<prop4> <pred4>)
+#}
+#
+#sp {task-utils*generalize-task-argument*apply*generalize-task-argument*object*default*5*predicates
+#  (state <s> ^operator <o>)
+#  (<o> ^name generalize-task-argument
+#       ^argument <arg>
+#       ^arg-type object
+#       ^match-type default
+#       ^predicates <def-preds>
+#       ^default-rep <def>)
+#   (<def-preds> ^<prop1> <pred1>
+#               ^<prop2> { <pred2> > <pred1> }
+#               ^<prop3> { <pred3> > <pred2> }
+#               ^<prop4> { <pred4> > <pred3> }
+#               ^<prop5> { <pred5> > <pred4> }
+#              -^<prop6> { <pred6> <> <pred5> <> <pred4> <> <pred3> <> <pred2> <> <pred1> })
+#-->
+#   (<def> ^predicates <obj-preds>)
+#  (<obj-preds> ^<prop1> <pred1>
+#               ^<prop2> <pred2>
+#               ^<prop3> <pred3>
+#               ^<prop4> <pred4>
+#               ^<prop5> <pred5>)
+#}
+#
+#sp {task-utils*generalize-task-argument*apply*generalize-task-argument*object*default*6*predicates
+#  (state <s> ^operator <o>)
+#  (<o> ^name generalize-task-argument
+#       ^argument <arg>
+#       ^arg-type object
+#       ^match-type default
+#       ^predicates <def-preds>
+#       ^default-rep <def>)
+#   (<def-preds> ^<prop1> <pred1>
+#               ^<prop2> { <pred2> > <pred1> }
+#               ^<prop3> { <pred3> > <pred2> }
+#               ^<prop4> { <pred4> > <pred3> }
+#               ^<prop5> { <pred5> > <pred4> }
+#               ^<prop6> { <pred6> > <pred5> }
+#              -^<prop7> { <pred7> <> <pred6> <> <pred5> <> <pred4> <> <pred3> <> <pred2> <> <pred1> })
+#-->
+#   (<def> ^predicates <obj-preds>)
+#  (<obj-preds> ^<prop1> <pred1>
+#               ^<prop2> <pred2>
+#               ^<prop3> <pred3>
+#               ^<prop4> <pred4>
+#               ^<prop5> <pred5>
+#               ^<prop6> <pred6>)
+#}
+#
+#sp {task-utils*generalize-task-argument*apply*generalize-task-argument*object*default*7*predicates
+#  (state <s> ^operator <o>)
+#  (<o> ^name generalize-task-argument
+#       ^argument <arg>
+#       ^arg-type object
+#       ^match-type default
+#       ^predicates <def-preds>
+#       ^default-rep <def>)
+#  (<def-preds> ^<prop1> <pred1>
+#               ^<prop2> { <pred2> > <pred1> }
+#               ^<prop3> { <pred3> > <pred2> }
+#               ^<prop4> { <pred4> > <pred3> }
+#               ^<prop5> { <pred5> > <pred4> }
+#               ^<prop6> { <pred6> > <pred5> }
+#               ^<prop7> { <pred7> > <pred6> }
+#              -^<prop8> { <pred8> <> <pred7> <> <pred6> <> <pred5> <> <pred4> <> <pred3> <> <pred2> <> <pred1> })
+#-->
+#   (<def> ^predicates <obj-preds>)
+#  (<obj-preds> ^<prop1> <pred1>
+#               ^<prop2> <pred2>
+#               ^<prop3> <pred3>
+#               ^<prop4> <pred4>
+#               ^<prop5> <pred5>
+#               ^<prop6> <pred6>
+#               ^<prop7> <pred7>)
+#}
+#
+#sp {task-utils*generalize-task-argument*apply*generalize-task-argument*object*default*8*predicates
+#   (state <s> ^operator <o>)
+#   (<o> ^name generalize-task-argument
+#        ^argument <arg>
+#        ^arg-type object
+#        ^match-type default
+#        ^predicates <def-preds>
+#       ^default-rep <def>)
+#  (<def-preds> ^<prop1> <pred1>
+#               ^<prop2> { <pred2> > <pred1> }
+#               ^<prop3> { <pred3> > <pred2> }
+#               ^<prop4> { <pred4> > <pred3> }
+#               ^<prop5> { <pred5> > <pred4> }
+#               ^<prop6> { <pred6> > <pred5> }
+#               ^<prop7> { <pred7> > <pred6> }
+#               ^<prop8> { <pred8> > <pred7> }
+#              -^<prop9> { <pred9> <> <pred8> <> <pred7> <> <pred6> <> <pred5> <> <pred4> <> <pred3> <> <pred2> <> <pred1> })
+#-->
+#   (<def> ^predicates <obj-preds>)
+#  (<obj-preds> ^<prop1> <pred1>
+#               ^<prop2> <pred2>
+#               ^<prop3> <pred3>
+#               ^<prop4> <pred4>
+#               ^<prop5> <pred5>
+#               ^<prop6> <pred6>
+#               ^<prop7> <pred7>
+#               ^<prop8> <pred8>)
+#}
+#
+###################################################################################################

@@ -1,92 +1,129 @@
 ### AM: These are special rules that will create a reference-info structure during language comprehension
+# This reference-info contains information about the referring expression for a specific object
+# For example, if you say 'Pick up the blue mug', the reference-info would include the constraints 'blue' and 'mug'
 
-sp {comprehension*elaborate*process-semantics*reference-info*DP
-   (state <s> ^operator <o> +)
-   (<o> ^name process-semantics
-        ^assigner <asg>
-        ^value <obj>)
-   (<obj> ^item-type object)
-   (<asg> ^structure-type DP
-          ^parent-receiver.semantics <sem>
-          ^merged-receiver <info>)
--->
-   (<o> ^reference-info <new-info>)
-   (<new-info> ^source <info>
-               ^destination <sem>
-               ^root <root>)
-}
+############ Setting up the reference-info for DP constructions ####################
 
-sp {comprehension*elaborate*process-semantics*reference-info*PP
-   (state <s> ^operator <o> +)
-   (<o> ^name process-semantics
-        ^assigner <asg>
-        ^<arg-name> <pred>)
-   (<asg> ^parent-receiver.semantics <sem>
-          ^pp-obj-reference-info <info>)
-   (<info> ^referent <obj>)
-   (<pred> ^2 <obj>)
--->
-   (<o> ^reference-info <new-info>)
-   (<new-info> ^source <info>
-               ^destination <sem>
-               ^root <root>)
-}
-
-#sp {comprehension*elaborate*process-semantics*reference-info*relation
-#   (state <s> ^operator <o> +)
-#   (<o> ^name process-semantics
-#        ^assigner <asg>
-#        ^attribute relation
-#        ^relation <rel>)
-#   (<asg> ^parent-receiver.semantics <sem>
-#          ^pp-obj-reference-info <info>)
-#   (<info> ^referent <obj>)
-#   (<rel> ^2 <obj>)
-#-->
-#   (<o> ^reference-info <new-info>)
-#   (<new-info> ^source <info>
-#               ^destination <sem>
-#               ^root <root>)
-#}
-
-sp {comprehension*apply*process-semantics*copy*reference-info*to*destination
-   (state <s> ^operator <o>
+sp {comprehension*elaborate*process-semantics*DP*make-reference-info
+   (state <s> ^operator <o> +
              -^top-state.dialog-context
              -^agent-params.disable-reference-info true
              -^agent-params.hypothetical true)
    (<o> ^name process-semantics
-        ^attribute <att>
-        ^reference-info <ref-info>)
-   (<ref-info> ^source.referent <ref>
-               ^destination <dest>
-               ^root <root>)
+        ^attribute <arg-name>
+        ^assigner <asg>
+        ^value <obj>)
+   (<asg> ^structure-type DP
+          ^parent-receiver.semantics <dest-sem>
+          ^merged-receiver <rcv>)
+   (<obj> ^item-type object)
 -->
-   (<dest> ^reference-info <root>)
-   (<root> ^arg-name <att>
-           ^referent <ref>)
+   (<o> ^make-reference-info <mri>)
+   (<mri> ^reference-info <ref-info>
+          ^arg-name <arg-name>
+          ^receiver <rcv>
+          ^referent <obj>
+          ^destination <dest-sem>)
 }
 
+
+############ Setting up the reference-info for PP constructions ####################
+
+sp {comprehension*elaborate*process-semantics*PP*make-reference-info
+   (state <s> ^operator <o> +
+             -^top-state.dialog-context
+             -^agent-params.disable-reference-info true
+             -^agent-params.hypothetical true)
+   (<o> ^name process-semantics
+        ^attribute <arg-name>
+        ^assigner <asg>
+        ^<pred-name> <pred>)
+   (<asg> ^structure-type PP
+          ^parent-receiver.semantics <dest-sem>
+          ^merged-receiver.head <rcv>)
+   (<rcv> ^structure-type DP)
+   (<pred> ^2 <obj2>)
+   (<obj2> ^item-type object)
+-->
+   (<o> ^make-reference-info <mri>)
+   (<mri> ^reference-info <ref-info>
+          ^arg-name <arg-name>
+          ^receiver <rcv>
+          ^referent <obj2>
+          ^destination <dest-sem>)
+}
+
+############ Creating the reference-info structure ####################
+
+# Copy the base reference-info structure to the destination (if it doesn't exist)
+sp {comprehension*apply*process-semantics*copy*reference-info*to*destination
+   (state <s> ^operator <o>)
+   (<o> ^name process-semantics
+        ^make-reference-info <mri>)
+   (<mri> ^reference-info <ref-info>
+          ^arg-name <arg-name>
+          ^destination <dest>)
+   (<dest> -^reference-info.arg-name <arg-name>)
+-->
+   (<dest> ^reference-info <ref-info>)
+   (<ref-info> ^arg-name <arg-name>)
+}
+
+# Copy the referent onto the reference-info
+sp {comprehension*apply*process-semantics*copy*reference-info*referent
+   (state <s> ^operator <o>)
+   (<o> ^name process-semantics
+        ^make-reference-info <mri>)
+   (<mri> ^reference-info <ref-info>
+          ^referent <obj>)
+-->
+   (<ref-info> ^referent <obj>)
+}
+
+# Copy the referent onto an existing reference-info (happens with multiple groundings)
+sp {comprehension*apply*process-semantics*copy*reference-info*referent*already*exists
+   (state <s> ^operator <o>)
+   (<o> ^name process-semantics
+        ^make-reference-info <mri>)
+   (<mri> ^arg-name <arg-name>
+          ^referent <obj>
+          ^destination <dest>)
+   (<dest> ^reference-info <ref-info>)
+   (<ref-info> ^arg-name <arg-name>)
+-->
+   (<ref-info> ^referent <obj>)
+}
+
+# Copy the constraints onto the reference-info
 sp {comprehension*apply*process-semantics*copy*reference-info*constraint
    (state <s> ^operator <o>)
    (<o> ^name process-semantics
-        ^reference-info <ref-info>)
-   (<ref-info> ^source.constraint <c>
-               ^root <root>)
+        ^make-reference-info <mri>)
+   (<mri> ^reference-info <ref-info>
+          ^receiver.constraint <c>)
    (<c> ^handle <pred-h>
         ^property.handle <prop-h>)
 -->
-   (<root> ^constraint.<prop-h> <pred-h>)
+   (<ref-info> ^constraint.<prop-h> <pred-h>)
 }
 
-sp {comprehension*apply*merge*PP*copy*object*reference-info
+# Copy a relation constraint
+sp {comprehension*apply*process-semantics*copy*reference-info*relation*constraint
    (state <s> ^operator <o>)
-   (<o> ^name merge
-        ^receiver.head <head>
-        ^assigner <asg>)
-   (<head> ^structure-type DP)
-   (<asg> ^structure-type PP)
+   (<o> ^name process-semantics
+        ^make-reference-info <mri>)
+   (<mri> ^reference-info <ref-info>
+          ^receiver.constraint <c>)
+   (<c> ^relation <rel>)
+   (<rel> ^handle <rel-h>
+          ^2 <obj2>)
+   (<obj2> ^root-category <cat>)
 -->
-   (<asg> ^pp-obj-reference-info <head>)
+   (<ref-info> ^relation <rel-cons>)
+   (<rel-cons> ^handle <rel-h>
+               ^2 <new-obj2>)
+   (<new-obj2> ^constraint.category <cat>)
 }
+
 
 

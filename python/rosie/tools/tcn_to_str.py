@@ -309,7 +309,8 @@ class ObjectSlot(Slot):
     def get_default(self):
         if self.default is None:
             return ''
-        return '[' + ','.join(wme[1] for wme in self.default.GetAllChildWmes()) + ']'
+        preds_id = self.default.GetChildId('predicates')
+        return '[' + ','.join(wme[1] for wme in preds_id.GetAllChildWmes()) + ']'
 
 class PredicateSlot(Slot):
     def get_default(self):

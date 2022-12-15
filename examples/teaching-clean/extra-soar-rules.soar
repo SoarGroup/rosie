@@ -1,0 +1,201 @@
+sp {top-state*elaborate*agent-params*custom
+   (state <s> ^superstate nil
+              ^agent-params <p>)
+-->
+   (<p> ^debug-ids true
+#       ^report-tasks-to-output-link true
+#       ^debug-op-ties true
+#       ^debug-wait-limit 3
+
+        ^interrupt-operator interpret-message 
+#       ^interrupt-end-of-sentence true
+#       ^interrupt-new-task true
+#       ^interrupt-task-search true
+        
+#       ^print-perception true
+#       ^print-new-task true
+#       ^print-new-task-shorthand true
+#       ^print-wp-search-path-costs true
+#       ^print-parsed-messages true
+#       ^print-outgoing-messages true
+#       ^print-interaction-stack true
+
+   )
+}
+
+# Load chunks for fetch
+#source fetch-chunks.soar
+#source full-training-chunks.soar
+
+#explain all on
+
+#### Starting Relations
+
+# The two plates start on the table
+sp {top-state*world*elaborate*initial*relations*plates
+   (state <s> ^superstate nil
+              ^agent-params.domain internal
+              ^world <w>)
+   (<w> ^objects <objs>
+        ^predicates.predicate <on>)
+   (<on> ^handle on1)
+   (<objs> ^object <table> <plate1> <plate2>)
+   (<table> ^handle table1_1)
+   (<plate1> ^handle plate1_5)
+   (<plate2> ^handle plate1_6)
+-->
+   (<on> ^instance <i1> <i2>)
+   (<i1> ^1 <plate1> ^2 <table>)
+   (<i2> ^1 <plate2> ^2 <table>)
+}
+
+# The ketchup/mustard start on the table
+sp {top-state*world*elaborate*initial*relations*condiments
+   (state <s> ^superstate nil
+              ^agent-params.domain internal
+              ^world <w>)
+   (<w> ^objects <objs>
+        ^predicates.predicate <on>)
+   (<on> ^handle on1)
+   (<objs> ^object <table> <ketchup> <mustard>)
+   (<table> ^handle table1_1)
+   (<ketchup> ^handle ketchup1_7)
+   (<mustard> ^handle mustard1_8)
+-->
+   (<on> ^instance <i1> <i2>)
+   (<i1> ^1 <ketchup> ^2 <table>)
+   (<i2> ^1 <mustard> ^2 <table>)
+}
+
+# The cup + fork start on the counter
+sp {top-state*world*elaborate*initial*relations*counter
+   (state <s> ^superstate nil
+              ^agent-params.domain internal
+              ^world <w>)
+   (<w> ^objects <objs>
+        ^predicates.predicate <on>)
+   (<on> ^handle on1)
+   (<objs> ^object <counter> <cup> <fork>)
+   (<counter> ^handle counter1_3)
+   (<cup> ^handle cup1_9)
+   (<fork> ^handle fork1_10)
+-->
+   (<on> ^instance <i1> <i2>)
+   (<i1> ^1 <cup> ^2 <counter>)
+   (<i2> ^1 <fork> ^2 <counter>)
+}
+
+
+
+####
+
+sp {top-state*perception-monitor*predicate-monitor*elaborate*default*predicates*internal
+   (state <s> ^superstate nil
+              ^agent-params.domain internal
+              ^world.predicates <preds>
+              ^perception-monitor.predicate-monitor <pred-mon>)
+-->
+   (<preds> ^predicate.handle in1)
+   (<preds> ^predicate.handle on1)
+   (<preds> ^predicate.handle holding1)
+   (<preds> ^predicate.handle heard2)
+}
+
+sp {top-state*perception-monitor*predicate-monitor*elaborate*default*predicates*magicbot
+   (state <s> ^superstate nil
+              ^agent-params.domain magicbot
+              ^world.predicates <preds>
+              ^perception-monitor.predicate-monitor <pred-mon>)
+-->
+   # Extract predicates via SVS
+   (<pred-mon> ^predicate-info.predicate-handle in1)
+   (<pred-mon> ^predicate-info.predicate-handle on1)
+
+   (<preds> ^predicate.handle holding1)
+   (<preds> ^predicate.handle heard2)
+}
+
+# Remove modifiers relieiving or emergency when the top task segment is popped
+sp {problem-space*action*pop-task-segment*apply*complete-pop-task-segment*remove*modifiers*relieving
+   (state <s> ^name pop-task-segment
+              ^operator.name complete-pop-task-segment
+              ^segment-to-pop <seg>
+              ^task-stack.top <seg>
+              ^top-state.world.objects.object.predicates <preds>)
+   (<preds> ^modifier1 { <mod> << relieving1 emergency1 >> })
+-->
+   (<preds> ^modifier1 <mod> -)
+}
+
+
+###### Rules for printing events
+sp {complete-push-task-segment*report*time*info
+   (state <s> ^name push-task-segment
+              ^operator.name complete-push-task-segment
+              ^segment-to-push.task-operator.task-handle <task-h>
+              ^io.input-link.time <t>)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write (crlf) |$START-TASK$ | <task-h> | | <steps> | | <ms> (crlf))
+}
+
+sp {complete-pop-task-segment*report*time*info
+   (state <s> ^name pop-task-segment
+              ^operator.name complete-pop-task-segment
+              ^segment-to-pop.task-operator.task-handle <task-h>
+              ^io.input-link.time <t>)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write (crlf) |$END-TASK$ | <task-h> | | <steps> | | <ms> (crlf))
+}
+
+sp {search-for-next-subtask*start*report*time*info
+   (state <s> ^operator.name search-for-next-subtask
+              ^superstate.task-operator.task-handle <task-h>
+              ^io.input-link.time <t>
+             -^reported-time)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write (crlf) |$BEGIN-SEARCH$ | <task-h> | | <steps> | | <ms> (crlf))
+   (<s> ^reported-time true)
+}
+
+sp {search-for-next-subtask*finish*report*time*info
+   (state <s> ^name search-for-next-subtask
+              ^superstate.superstate.task-operator.task-handle <task-h>
+              ^operator.name << return-successful-operator initiate-interaction >>
+              ^io.input-link.time <t>)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write (crlf) |$END-SEARCH$ | <task-h> | | <steps> | | <ms> (crlf))
+}
+
+sp {apply*select-next-goal*report*goal*handle
+   (state <s> ^problem-space.subproblem execute
+              ^operator <o>
+              ^apply-select-next-goal true
+              ^task-operator.task-handle <task-h>
+              ^io.input-link.time <t>)
+   (<o> ^name select-next-goal
+        ^next-goal-handle <goal-h>)
+   (<t> ^steps <steps>
+        ^milliseconds <ms>)
+-->
+   (write (crlf) |$SELECTED-GOAL$ | <goal-h> | | <steps> | | <ms> (crlf))
+}
+
+#sp {interrupt*mltiple*objs
+#   (state <s> ^superstate nil
+#              ^world.objects <objs>)
+#   (<objs> ^object <obj1>
+#           ^object { <obj2> <> <obj1> })
+#   (<obj1> ^handle <h>)
+#   (<obj2> ^handle <h>)
+#-->
+#   (interrupt)
+#   (write |DUPLICATE HANDLE: | <h>)
+#}

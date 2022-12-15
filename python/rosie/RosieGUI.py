@@ -10,7 +10,7 @@ class RosieGUI(Frame):
     class MessagesList(Listbox):
         """ Displays a list of messages that are the interaction history """
         def __init__(self, parent):
-            Listbox.__init__(self, parent, font=("Times", "12"), takefocus=0)
+            Listbox.__init__(self, parent, font=("Times", "16"), takefocus=0)
             self.parent = parent
             self.scrollbar = Scrollbar(self)
             self.config(yscrollcommand=self.scrollbar.set)
@@ -91,7 +91,7 @@ class RosieGUI(Frame):
 
 
     """ Creates a single chat box interface to send messages to Rosie and receive messages back """
-    def __init__(self, rosie_client, master):
+    def __init__(self, rosie_client, master, show_scripts=True):
         Frame.__init__(self, master, width=800, height=600)
         self.rosie_client = rosie_client
 
@@ -99,7 +99,7 @@ class RosieGUI(Frame):
         master.columnconfigure(0, weight=1)
         master.rowconfigure(0, weight=1)
 
-        self.create_widgets()
+        self.create_widgets(show_scripts)
         self.setup_rosie_client()
 
         master.geometry("800x600")
@@ -109,20 +109,22 @@ class RosieGUI(Frame):
         """ Put any code that connects with the rosie_client here """
         self.rosie_client.add_event_handler(AgentMessageSent, lambda e: self.messages_list.add(e.message))
         self.rosie_client.add_event_handler(InstructorMessageSent, lambda e: self.messages_list.add(e.message))
-        self.rosie_client.add_event_handler(ScriptMessageSent, lambda e: self.script_list.select_line(e.index))
+        if self.script_list is not None:
+            self.rosie_client.add_event_handler(ScriptMessageSent, lambda e: self.script_list.select_line(e.index))
 
     def run(self):
         self.rosie_client.connect()
         self.master.mainloop()
 
-    def create_widgets(self):
+    def create_widgets(self, show_scripts):
         self.grid(row=0, column=0, sticky=N+S+E+W)
 
         # 3 rows x 4 cols grid
         self.columnconfigure(0, weight=1, minsize=200)
         self.columnconfigure(1, weight=1, minsize=200)
-        self.columnconfigure(2, weight=1, minsize=200)
-        self.columnconfigure(3, weight=1, minsize=200)
+        if show_scripts:
+            self.columnconfigure(2, weight=1, minsize=200)
+            self.columnconfigure(3, weight=1, minsize=200)
         self.rowconfigure(0, weight=1, minsize=25)
         self.rowconfigure(1, weight=20, minsize=400)
         self.rowconfigure(2, weight=2, minsize=50)
@@ -141,20 +143,21 @@ class RosieGUI(Frame):
         self.messages_list = RosieGUI.MessagesList(self)
         self.messages_list.grid(row=1, column=0, columnspan=2, sticky=N+S+E+W)
 
-        print("AGENT MESSAGES")
-        print(self.rosie_client.messages)
-        self.script_list = RosieGUI.ScriptList(self, self.rosie_client.messages)
-        self.script_list.click_handler = lambda msg: self.send_message_to_rosie(msg)
-        self.script_list.grid(row=1, column=2, columnspan=2, sticky=N+S+E+W)
+        if show_scripts:
+            self.script_list = RosieGUI.ScriptList(self, self.rosie_client.messages)
+            self.script_list.click_handler = lambda msg: self.send_message_to_rosie(msg)
+            self.script_list.grid(row=1, column=2, columnspan=2, sticky=N+S+E+W)
+        else:
+            self.script_list = None
 
         # Row 2: Message Entry (Col 0-2) and Send Button (Col 3)
 
         self.chat_entry = RosieGUI.ChatEntry(self)
-        self.chat_entry.grid(row=2, column=0, columnspan=3, sticky=N+S+E+W)
+        self.chat_entry.grid(row=2, column=0, columnspan=(3 if show_scripts else 1), sticky=N+S+E+W)
 
         self.submit_button = Button(self, text="Send", font=("Times", "24"))
         self.submit_button["command"] = lambda: self.chat_entry.send_message()
-        self.submit_button.grid(row=2, column=3, columnspan=1, sticky=N+S+E+W)
+        self.submit_button.grid(row=2, column=(3 if show_scripts else 1), columnspan=1, sticky=N+S+E+W)
 
     def on_exit(self):
         self.rosie_client.kill()
@@ -169,14 +172,17 @@ class RosieGUI(Frame):
 
 
 def main():
-    if len(sys.argv) == 1:
-        print("ERROR: RosieGUI takes 1 argument - a rosie config file")
+    if len(sys.argv) == 1 or "--help" in sys.argv or "-h" in sys.argv:
+        print("RosieGUI takes 1 required argument - a rosie config file")
+        print("  --hide-script (optional) - will not show the script pane")
         return
+
     rosie_config = sys.argv[1]
+    show_scripts = ("--hide-script" not in sys.argv)
 
     root = Tk()
     rosie_client = RosieClient(config_filename=rosie_config)
-    rosie_gui = RosieGUI(rosie_client, master=root)
+    rosie_gui = RosieGUI(rosie_client, master=root, show_scripts=show_scripts)
     rosie_gui.run()
 
 if __name__ == "__main__":
