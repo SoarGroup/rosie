@@ -1,7 +1,7 @@
 import os
 import sys
 from tkinter import *
-from tkinter.ttk import Treeview
+from tkinter import messagebox
 from ttkwidgets.autocomplete import AutocompleteEntryListbox
 
 from . import RosieClient
@@ -114,31 +114,38 @@ class RosieGUI(Frame):
     # maybe use the add_to_history function as a way to combine over time.
     ## ToDo - change font sizes back
         self.combined_message = ""
+        input_values = []
 
-        if message_type == "done":
-            self.combined_message += "You are done"
-        elif self.last_selected_option == 0:
-            self.combined_message += self.listbox_entries[0][0].get().strip() + " the " + self.listbox_entries[0][1].get().strip()
-        elif self.last_selected_option == 1:
-            self.combined_message += self.listbox_entries[1][0].get().strip() + " the "
-            for i in range(1,3):
-                self.combined_message += self.listbox_entries[1][i].get().strip() + " "
-            self.combined_message += "the " + self.listbox_entries[1][3].get().strip()
-        elif self.last_selected_option == 2:
-            self.combined_message = "The goal is that the "
-            for i in range(0,3):
-                self.combined_message += self.listbox_entries[2][i].get().strip() + " "
+        validation_response = self.toggle_enable_send_button()
+        if not validation_response[1]:
+           messagebox.showinfo("Input Error", "Some inputs are empty or invalid.")
         else:
-            self.combined_message = "The goal is that the "
-            for i in range(0,3):
-                self.combined_message += self.listbox_entries[3][i].get().strip() + " "
-            self.combined_message += "the " + self.listbox_entries[3][3].get().strip()
-        
-        self.combined_message = self.combined_message.strip() + "."    
-        self.send_message_to_rosie(self.combined_message)
-        for sublist in self.listbox_entries:
-            for i in range(len(sublist)):
-                sublist[i].clear()
+            input_values = validation_response[0]
+
+            if message_type == "done":
+                self.combined_message += "You are done"
+            elif self.last_selected_option == 0:
+                self.combined_message += input_values[0] + " the " + input_values[1]
+            elif self.last_selected_option == 1:
+                self.combined_message += input_values[0] + " the "
+                for i in range(1,3):
+                    self.combined_message += input_values[i] + " "
+                self.combined_message += "the " + input_values[3]
+            elif self.last_selected_option == 2:
+                self.combined_message = "The goal is that the "
+                for i in range(0,3):
+                    self.combined_message += input_values[i] + " "
+            else:
+                self.combined_message = "The goal is that the "
+                for i in range(0,3):
+                    self.combined_message += input_values[i] + " "
+                self.combined_message += "the " + input_values[3]
+
+            self.combined_message = self.combined_message.strip() + "."
+            self.send_message_to_rosie(self.combined_message)
+            for sublist in self.listbox_entries:
+                for i in range(len(sublist)):
+                    sublist[i].clear()
 
     """Populate listbox entries with predefined lists of parts of speech"""
     def populate_template_listboxes(self):
@@ -188,7 +195,23 @@ class RosieGUI(Frame):
                 label.grid_remove()
         self.last_selected_option = selected_index
         self.show_selected_template_entries(selected_index)
- 
+
+    """Function to toggle enabling or disabling send button based on whether all entries are filled and valid"""
+    def toggle_enable_send_button(self):
+        num_of_template_inputs = len(self.listbox_entries[self.last_selected_option])
+        # Copying text inputs from the template into list
+        input_list = [self.listbox_entries[self.last_selected_option][i].get().strip() for i in range(num_of_template_inputs)]
+        if '' in input_list:
+            # if any of the inputs contains an empty value, return False
+            return ([], False)
+        else:
+            # if any of the inputs contains an invalid value, return False
+            for i in range(num_of_template_inputs):
+                if input_list[i] in self.listbox_entries[self.last_selected_option][i].cget('completevalues'):
+                    continue
+                else:
+                    return ([], False)
+        return (input_list, True)
     
     def create_widgets(self):
         # ToDo: A way to clean up this code may be to get all the grid statements together and function statements(lambda etc) in another batch
