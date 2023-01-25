@@ -111,41 +111,39 @@ class RosieGUI(Frame):
         self.object_states_list = sorted(self.object_states_list)
 
     def send_combined_message(self, message_type):
-    # maybe use the add_to_history function as a way to combine over time.
-    ## ToDo - change font sizes back
         self.combined_message = ""
         input_values = []
 
-        validation_response = self.toggle_enable_send_button()
-        if not validation_response[1]:
-           messagebox.showinfo("Input Error", "Some inputs are empty or invalid.")
+        if message_type == "done":
+            self.combined_message += "You are done"
         else:
-            input_values = validation_response[0]
-
-            if message_type == "done":
-                self.combined_message += "You are done"
-            elif self.last_selected_option == 0:
-                self.combined_message += input_values[0] + " the " + input_values[1]
-            elif self.last_selected_option == 1:
-                self.combined_message += input_values[0] + " the "
-                for i in range(1,3):
-                    self.combined_message += input_values[i] + " "
-                self.combined_message += "the " + input_values[3]
-            elif self.last_selected_option == 2:
-                self.combined_message = "The goal is that the "
-                for i in range(0,3):
-                    self.combined_message += input_values[i] + " "
+            validation_response = self.toggle_enable_send_button()
+            if not validation_response[1]:
+                messagebox.showinfo("Input Error", "Some inputs are empty or invalid.")
             else:
-                self.combined_message = "The goal is that the "
-                for i in range(0,3):
-                    self.combined_message += input_values[i] + " "
-                self.combined_message += "the " + input_values[3]
+                input_values = validation_response[0]
+                if self.last_selected_option == 0:
+                    self.combined_message += input_values[0] + " the " + input_values[1]
+                elif self.last_selected_option == 1:
+                    self.combined_message += input_values[0] + " the "
+                    for i in range(1,3):
+                        self.combined_message += input_values[i] + " "
+                    self.combined_message += "the " + input_values[3]
+                elif self.last_selected_option == 2:
+                    self.combined_message = "The goal is that the "
+                    for i in range(0,3):
+                        self.combined_message += input_values[i] + " "
+                else:
+                    self.combined_message = "The goal is that the "
+                    for i in range(0,3):
+                        self.combined_message += input_values[i] + " "
+                    self.combined_message += "the " + input_values[3]
 
-            self.combined_message = self.combined_message.strip() + "."
-            self.send_message_to_rosie(self.combined_message)
-            for sublist in self.listbox_entries:
-                for i in range(len(sublist)):
-                    sublist[i].clear()
+        self.combined_message = self.combined_message.strip() + "."
+        self.send_message_to_rosie(self.combined_message)
+        for sublist in self.listbox_entries:
+            for i in range(len(sublist)):
+                sublist[i].clear()
 
     """Populate listbox entries with predefined lists of parts of speech"""
     def populate_template_listboxes(self):
