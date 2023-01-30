@@ -1,4 +1,5 @@
 import os
+from pysoarlib import AgentConnector
 import sys
 from tkinter import *
 from tkinter import messagebox
@@ -82,6 +83,7 @@ class RosieGUI(Frame):
         self.rosie_client.add_event_handler(AgentMessageSent, lambda e: self.messages_list.add(e.message))
         self.rosie_client.add_event_handler(InstructorMessageSent, lambda e: self.messages_list.add(e.message))
         self.rosie_client.add_event_handler(ScriptMessageSent, lambda e: self.script_list.select_line(e.index))
+        self.rosie_client.add_connector("gui", GUIConnector(self.rosie_client, self))
 
     def run(self):
         self.rosie_client.connect()
@@ -210,6 +212,18 @@ class RosieGUI(Frame):
                 else:
                     return ([], False)
         return (input_list, True)
+
+    """Function to toggle enabling or disabling goal button based on whether Rosie requests goal"""
+    def toggle_enable_goal_button(self, state):
+        if state == "NORMAL":
+            self.enable_gt1_button["state"] = NORMAL
+            self.enable_gt2_button["state"] = NORMAL
+        else:
+            self.enable_gt1_button["state"] = DISABLED
+            self.enable_gt2_button["state"] = DISABLED
+            # Enable action templates when the goal buttons are disabled
+            if self.last_selected_option in [2,3]:
+                self.enable_template_input(0)
     
     def create_widgets(self):
         # ToDo: A way to clean up this code may be to get all the grid statements together and function statements(lambda etc) in another batch
@@ -276,11 +290,11 @@ class RosieGUI(Frame):
         self.enable_at2_button["command"] = lambda: self.enable_template_input(1)
         self.enable_at2_button.grid(row=2, column=1, rowspan=2, columnspan=2, sticky=N+S+E+W)
  
-        self.enable_gt1_button = Button(self, text="Provide desired world state\nfor robot to achieve:\nObject + Linking-verb + Object State\n\"The alarm is on\"", font=("Times", "15"), padx=10)
+        self.enable_gt1_button = Button(self, state=DISABLED, text="Provide desired world state\nfor robot to achieve:\nObject + Linking-verb + Object State\n\"The alarm is on\"", font=("Times", "15"), padx=10)
         self.enable_gt1_button["command"] = lambda: self.enable_template_input(2)
         self.enable_gt1_button.grid(row=2, column=3, rowspan=2, sticky=N+S+E+W)
  
-        self.enable_gt2_button = Button(self, text="Provide desired world state\nfor robot to achieve:\n Object1 + Linking-verb + Prep + Object2\n\"The extinguisher is in the office\"", font=("Times", "15"), padx=10)
+        self.enable_gt2_button = Button(self, state=DISABLED, text="Provide desired world state\nfor robot to achieve:\n Object1 + Linking-verb + Prep + Object2\n\"The extinguisher is in the office\"", font=("Times", "15"), padx=10)
         self.enable_gt2_button["command"] = lambda: self.enable_template_input(3)
         self.enable_gt2_button.grid(row=2, column=4, rowspan=2, columnspan=2, sticky=N+S+E+W)
         
@@ -433,7 +447,6 @@ class RosieGUI(Frame):
 
         
         # Row 9: "You are done" message (Col 0) and Send Button (Col 5)
-        # ToDo: enter check for all chat entries being populated with text
         self.task_done_button = Button(self, text="You are done", font=("Times", "18"))
         self.task_done_button["command"] = lambda: self.send_combined_message("done")
         self.task_done_button.grid(row=9, column=0, rowspan=2, sticky=N+S+E+W)
@@ -462,6 +475,29 @@ class RosieGUI(Frame):
                     sublist[i].clear()
 
             self.rosie_client.send_message(message)
+
+class GUIConnector(AgentConnector):
+    """ Will connect GUI to soar agent input and output
+        For input - N/A
+        For output - will take a message type and modify GUI controls based on message type """
+    def __init__(self, client, rosie_gui):
+        AgentConnector.__init__(self, client)
+        self.add_output_command("send-message")
+        self.rosie_gui = rosie_gui
+
+    def on_output_event(self, command_name, root_id):
+        if command_name == "send-message":
+            message_type = root_id.FindByAttribute("type", 0).GetValueAsString()
+            if not message_type:
+                root_id.CreateStringWME("status", "error")
+                root_id.CreateStringWME("error-info", "send-message has no type")
+                self.client.print_handler("GUIConnector: Error - send-message has no type")
+                return
+
+            if message_type == "get-next-goal":
+                self.rosie_gui.toggle_enable_goal_button("NORMAL")
+            else:
+                self.rosie_gui.toggle_enable_goal_button("DISABLED")
 
 
 def main():
