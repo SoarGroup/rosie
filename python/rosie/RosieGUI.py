@@ -122,6 +122,10 @@ class RosieGUI(Frame):
             validation_response = self.toggle_enable_send_button()
             if not validation_response[1]:
                 messagebox.showinfo("Input Error", "Some inputs are empty or invalid.")
+                for sublist in self.listbox_entries:
+                    for i in range(len(sublist)):
+                        sublist[i].clear()
+                return
             else:
                 input_values = validation_response[0]
                 if self.last_selected_option == 0:
