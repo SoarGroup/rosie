@@ -106,7 +106,7 @@ class RosieGUI(Frame):
         self.noun_list = sorted(self.noun_list)
         
         # Create list of being verbs
-        self.being_verb_list = ["are","are not","is","is not"]
+        self.being_verb_list = ["are","are not","contains","is","is not"]
         
         # Create list of object states
         self.object_states_list = open(os.path.join(pos_folder_path, "object-states.txt")).read().splitlines()
