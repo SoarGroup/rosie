@@ -211,7 +211,7 @@ class RosieGUI(Frame):
         else:
             # if any of the inputs contains an invalid value, return False
             for i in range(num_of_template_inputs):
-                if input_list[i] in self.listbox_entries[self.last_selected_option][i].cget('completevalues'):
+                if input_list[i].lower() in list(map(lambda x: x.lower(),self.listbox_entries[self.last_selected_option][i].cget('completevalues'))):
                     continue
                 else:
                     return ([], False)
