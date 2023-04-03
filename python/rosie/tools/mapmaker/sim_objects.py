@@ -207,7 +207,17 @@ class Fridge(Shelves):
 class Microwave(Shelves):  
     door = "not-open1"
     cat = "microwave1"
+
+class Oven(Shelves):
+    sim_class = "soargroup.mobilesim.sim.SimOven"
+    door = "not-open1"
+    cat = "oven1"
     rgb = [ 50, 50, 50 ]
+
+    def read_info(self, reader, scale=1.0):
+        super().read_info(reader, scale)
+        self.preds["is-activated1"] = "not-activated1"
+        return self
 
 class Kettle(SimObject):  
     sim_class = "soargroup.mobilesim.sim.SimKettle"
