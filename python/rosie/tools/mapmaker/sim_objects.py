@@ -191,7 +191,7 @@ class Shelves(SimObject):
         return self
 
 class Pantry(Shelves):  
-    door = "open"
+    door = "not-open1"
     cat = "pantry1"
 
 class Cupboard(Shelves):  
@@ -258,7 +258,7 @@ class Desk(SimObject):
 
 class LightSwitch(SimObject):  
     sim_class = "soargroup.mobilesim.sim.SimLightSwitch"
-    desc = "LS"
+    desc = "lightswitch"
     cat = "lightswitch1"
     rgb = [ 255, 255, 255 ]
 
@@ -278,7 +278,7 @@ class LightSwitch(SimObject):
 class Button(SimObject):  
     sim_class = "soargroup.mobilesim.sim.SimButton"
     cat = "button1"
-    desc = "btn"
+    desc = "button"
     def read_info(self, reader, scale=1.0):
         # 1 word - the target to trigger when pressed (they must have a temp_id defined)
         self.target = reader.nextWord()
