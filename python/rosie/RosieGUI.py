@@ -118,6 +118,8 @@ class RosieGUI(Frame):
 
         if message_type == "done":
             self.combined_message += "You are done"
+        elif message_type == "Wait-Command":
+            self.combined_message += "Wait for thirty seconds"
         else:
             validation_response = self.toggle_enable_send_button()
             if not validation_response[1]:
@@ -454,6 +456,10 @@ class RosieGUI(Frame):
         self.task_done_button = Button(self, text="You are done", font=("Times", "18"))
         self.task_done_button["command"] = lambda: self.send_combined_message("done")
         self.task_done_button.grid(row=9, column=0, rowspan=2, sticky=N+S+E+W)
+
+        self.wait_button = Button(self, text="Wait for thirty seconds", font=("Times", "18"))
+        self.wait_button["command"] = lambda: self.send_combined_message("Wait-Command")
+        self.wait_button.grid(row=9, column=3, rowspan=2, sticky=N+S+E+W)
         
         self.submit_button = Button(self, text="Send", font=("Times", "18"))
         self.submit_button["command"] = lambda: self.send_combined_message("")
