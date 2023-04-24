@@ -75,7 +75,7 @@ class RosieGUI(Frame):
         self.create_widgets()
         self.setup_rosie_client()
 
-        master.geometry("1366x768")
+        master.geometry("1280x720")
         master.protocol("WM_DELETE_WINDOW", self.on_exit)
 
     def setup_rosie_client(self):
@@ -246,15 +246,13 @@ class RosieGUI(Frame):
         self.columnconfigure(4, weight=1, minsize=150)
         self.columnconfigure(5, weight=1, minsize=150)
         self.rowconfigure(0, weight=1, minsize=25)
-        self.rowconfigure(1, weight=20, minsize=300)
+        self.rowconfigure(1, weight=20, minsize=250)
         self.rowconfigure(2, weight=2, minsize=50)
         self.rowconfigure(3, weight=2, minsize=50)
 
-        # Action Templates 1 and 2
+        # Action and Goal Templates 1 and 2
         self.rowconfigure(4, weight=2, minsize=30)
         self.rowconfigure(5, weight=2, minsize=30)
-
-        # Goal Templates 1 and 2
         self.rowconfigure(6, weight=2, minsize=30)
         self.rowconfigure(7, weight=2, minsize=30)
         self.rowconfigure(8, weight=2, minsize=30)
@@ -276,19 +274,11 @@ class RosieGUI(Frame):
         # Row 1: Message History (Col 0-4)
         self.messages_list = RosieGUI.MessagesList(self)
         self.messages_list.grid(row=1, column=0, columnspan=7, sticky=N+S+E+W)
-
-        # Old Row 1: Script Messages (Col 5-7)
-        # print("AGENT MESSAGES")
-        # print(self.rosie_client.messages)
-        # self.script_list = RosieGUI.ScriptList(self, self.rosie_client.messages)
-        # self.script_list.click_handler = lambda msg: self.send_message_to_rosie(msg)
-        # self.script_list.grid(row=1, column=4, columnspan=4, sticky=N+S+E+W)
-
         
-        # Row 2: Buttons to enable/disable template inputs (Col 1-4)
+        # Row 2: Buttons to enable/disable template inputs (Col 0-5)
         self.last_selected_option = -1
 
-        self.enable_at1_button = Button(self, text="Ask robot to do something:\n Action + Object\n\"Turn on the alarm\"", font=("Times", "15"), padx=10)
+        self.enable_at1_button = Button(self, text="Ask robot to do something:\n Action + Object\n\"Empty the garbage\"", font=("Times", "15"), padx=10)
         self.enable_at1_button["command"] = lambda: self.enable_template_input(0)
         self.enable_at1_button.grid(row=2, column=0, rowspan=2, sticky=N+S+E+W)
 
@@ -296,163 +286,165 @@ class RosieGUI(Frame):
         self.enable_at2_button["command"] = lambda: self.enable_template_input(1)
         self.enable_at2_button.grid(row=2, column=1, rowspan=2, columnspan=2, sticky=N+S+E+W)
  
-        self.enable_gt1_button = Button(self, state=DISABLED, text="Provide desired world state\nfor robot to achieve:\nObject + Linking-verb + Object State\n\"The alarm is on\"", font=("Times", "15"), padx=10)
+        self.enable_gt1_button = Button(self, state=DISABLED, text="Provide desired world state\nfor robot to achieve:\nObject + Linking-verb + Object State\n\"The garbage is empty\"", font=("Times", "15"), padx=10)
         self.enable_gt1_button["command"] = lambda: self.enable_template_input(2)
         self.enable_gt1_button.grid(row=2, column=3, rowspan=2, sticky=N+S+E+W)
  
-        self.enable_gt2_button = Button(self, state=DISABLED, text="Provide desired world state\nfor robot to achieve:\n Object1 + Linking-verb + Prep + Object2\n\"The extinguisher is in the office\"", font=("Times", "15"), padx=10)
+        self.enable_gt2_button = Button(self, state=DISABLED, text="Provide desired world state\nfor robot to achieve:\n Object1 + Linking-verb + Prep + Object2\n\"The coffee is on the counter\"", font=("Times", "15"), padx=10)
         self.enable_gt2_button["command"] = lambda: self.enable_template_input(3)
         self.enable_gt2_button.grid(row=2, column=4, rowspan=2, columnspan=2, sticky=N+S+E+W)
         
 
-        # Row 3-8: Action and Goal Template Labels and Text Entries 
+        # Row 4-8: Action and Goal Template Labels and Text Entries
 
-        # Row 3-4: Action Template 1 Labels (Col 0-1)
+        # Action Template 1 (Col 0-2)
         action_template1_label_list = []
         label1_et1 = Label(self, text="Action", font=("Times", "14"))
-        label1_et1.grid(row=5, column=0, columnspan=1)
-        label1_et2 = Label(self, text="Turn on", font=("Times", "15", "italic"))
-        label1_et2.grid(row=6, column=0, columnspan=1)
+        label1_et1.grid(row=4, column=0, columnspan=1)
+        label1_et2 = Label(self, text="Empty", font=("Times", "15", "italic"))
+        label1_et2.grid(row=5, column=0, columnspan=1)
         label1_et3 = Label(self, text="Object", font=("Times", "14"))
-        label1_et3.grid(row=5, column=2, columnspan=1)
-        label1_et4 = Label(self, text="alarm", font=("Times", "15", "italic"))
-        label1_et4.grid(row=6, column=2, columnspan=1)
-        
+        label1_et3.grid(row=4, column=2, columnspan=1)
+        label1_et4 = Label(self, text="garbage", font=("Times", "15", "italic"))
+        label1_et4.grid(row=5, column=2, columnspan=1)
+
         # Default "the" labels
         label1_et5 = Label(self, text="the\n\n\n\n\n\n", font=("Arial", "14"))
-        label1_et5.grid(row=7, column=1, columnspan=1)
+        label1_et5.grid(row=6, column=1, columnspan=1)
         action_template1_label_list.extend([label1_et1,label1_et2,label1_et3,label1_et4,label1_et5])
         self.listbox_entry_labels.append(action_template1_label_list)
 
-        # Row 5: Action Template 1 Text Input (Col 0-1)
+        # Row 6-8: Action Template 1 Text Input (Col 0-2)
         action_template1_list = []
         for i in range(0,3):
             if i==1:
                 continue
             else:
                 listbox_entry = AutocompleteEntryListbox(self, font=("Arial", "12"))
-                listbox_entry.grid(row=7, column=i, columnspan=1, sticky=N+S+E+W)
+                listbox_entry.grid(row=6, column=i, rowspan=3, sticky=N+S+E+W)
 
                 action_template1_list.append(listbox_entry)
         self.listbox_entries.append(action_template1_list)
 
         
-        # Row 3-4: Action Template 2 Labels (Col 0-3)
+        # Action Template 2 (Col 0-3)
         action_template2_label_list = []
         label2_et1 = Label(self, text="Action", font=("Times", "14"))
-        label2_et1.grid(row=5, column=0, columnspan=1)
+        label2_et1.grid(row=4, column=0, columnspan=1)
         label2_et2 = Label(self, text="Fetch", font=("Times", "15", "italic"))
-        label2_et2.grid(row=6, column=0, columnspan=1)
+        label2_et2.grid(row=5, column=0, columnspan=1)
         label2_et3 = Label(self, text="Object1", font=("Times", "14"))
-        label2_et3.grid(row=5, column=2, columnspan=1)
+        label2_et3.grid(row=4, column=2, columnspan=1)
         label2_et4 = Label(self, text="coffee", font=("Times", "15", "italic"))
-        label2_et4.grid(row=6, column=2, columnspan=1)
+        label2_et4.grid(row=5, column=2, columnspan=1)
         label2_et5 = Label(self, text="Preposition", font=("Times", "14"))
-        label2_et5.grid(row=5, column=3, columnspan=1)
+        label2_et5.grid(row=4, column=3, columnspan=1)
         label2_et6 = Label(self, text="from", font=("Times", "15", "italic"))
-        label2_et6.grid(row=6, column=3, columnspan=1)
+        label2_et6.grid(row=5, column=3, columnspan=1)
         label2_et7 = Label(self, text="Object2", font=("Times", "14"))
-        label2_et7.grid(row=5, column=5, columnspan=1)
+        label2_et7.grid(row=4, column=5, columnspan=1)
         label2_et8 = Label(self, text="kitchen", font=("Times", "15", "italic"))
-        label2_et8.grid(row=6, column=5, columnspan=1)
-        
+        label2_et8.grid(row=5, column=5, columnspan=1)
+
          # Default "the" labels
         label2_et9 = Label(self, text="the\n\n\n\n\n\n", font=("Arial", "14"))
-        label2_et9.grid(row=7, column=1, columnspan=1)
+        label2_et9.grid(row=6, column=1, columnspan=1)
         label2_et10 = Label(self, text="the\n\n\n\n\n\n", font=("Arial", "14"))
-        label2_et10.grid(row=7, column=4, columnspan=1)
+        label2_et10.grid(row=6, column=4, columnspan=1)
         for i in range(1,11):
             action_template2_label_list.append(locals()["label2_et" + str(i)])
         self.listbox_entry_labels.append(action_template2_label_list)
         
-        # Row 5: Action Template 2 Text Input (Col 0-3)
+        # Row 6-8: Action Template 2 Text Input (Col 0-5)
         action_template2_list = []
         for i in range(0,6):
             if i in (1,4):
                 continue
             else:
                 listbox_entry = AutocompleteEntryListbox(self, font=("Arial", "12"))
-                listbox_entry.grid(row=7, column=i, columnspan=1, sticky=N+S+E+W)
+                listbox_entry.grid(row=6, column=i, rowspan=3, sticky=N+S+E+W)
                 action_template2_list.append(listbox_entry)        
         self.listbox_entries.append(action_template2_list)
 
 
-        # Row 6-8: Goal Template 1
+        # Goal Template 1 (Col 0-3)
         goal_template1_label_list = []
-        # Goal Template 1 - Chat Entry Default Label
+
+        # Goal Template 1 - Default Goal Label
         goal_label1_et1 = Label(self, text="The goal is that the\n\n\n\n\n", font=("Times", "15"))
-        goal_label1_et1.grid(row=7, column=0, columnspan=1)
+        goal_label1_et1.grid(row=6, column=0, columnspan=1)
 
         # Goal Template 1 Labels (Col 1-3)
         goal_label1_et2 = Label(self, text="Object", font=("Times", "14"))
-        goal_label1_et2.grid(row=5, column=1, columnspan=1)
-        goal_label1_et3 = Label(self, text="alarm", font=("Times", "15", "italic"))
-        goal_label1_et3.grid(row=6, column=1, columnspan=1)
+        goal_label1_et2.grid(row=4, column=1, columnspan=1)
+        goal_label1_et3 = Label(self, text="garbage", font=("Times", "15", "italic"))
+        goal_label1_et3.grid(row=5, column=1, columnspan=1)
         goal_label1_et4 = Label(self, text="Linking-verb", font=("Times", "14"))
-        goal_label1_et4.grid(row=5, column=2, columnspan=1)
+        goal_label1_et4.grid(row=4, column=2, columnspan=1)
         goal_label1_et5 = Label(self, text="is", font=("Times", "15", "italic"))
-        goal_label1_et5.grid(row=6, column=2, columnspan=1)
+        goal_label1_et5.grid(row=5, column=2, columnspan=1)
         goal_label1_et6 = Label(self, text="Object State", font=("Times", "14"))
-        goal_label1_et6.grid(row=5, column=3, columnspan=1)
-        goal_label1_et7 = Label(self, text="on", font=("Times", "15", "italic"))
-        goal_label1_et7.grid(row=6, column=3, columnspan=1)
+        goal_label1_et6.grid(row=4, column=3, columnspan=1)
+        goal_label1_et7 = Label(self, text="empty", font=("Times", "15", "italic"))
+        goal_label1_et7.grid(row=5, column=3, columnspan=1)
         
         for i in range(1,8):
             goal_template1_label_list.append(locals()["goal_label1_et" + str(i)])
         self.listbox_entry_labels.append(goal_template1_label_list)
 
-        # Row 8: Goal Template 1 Text Input (Col 1-3)
+        # Row 6-8: Goal Template 1 Text Input (Col 1-3)
         goal_template1_list = []
         for i in range(1,4):
             listbox_entry = AutocompleteEntryListbox(self, font=("Arial", "12"))
-            listbox_entry.grid(row=7, column=i, columnspan=1, sticky=N+S+E+W)
+            listbox_entry.grid(row=6, column=i, rowspan=3, sticky=N+S+E+W)
             goal_template1_list.append(listbox_entry)
         self.listbox_entries.append(goal_template1_list)  
 
 
-        # Row 6-8: Goal Template 2
+        # Goal Template 2 (Col 0-3)
         goal_template2_label_list = []
-        # Goal Template 2 - Chat Entry Default Labels
+        # Goal Template 2 - Default Goal Label
         goal_label2_et1 = Label(self, text="The goal is that the\n\n\n\n\n", font=("Times", "15"))
-        goal_label2_et1.grid(row=7, column=0, columnspan=1)        
+        goal_label2_et1.grid(row=6, column=0, columnspan=1)
+        # Default "the" labels
         goal_label2_et2 = Label(self, text="the\n\n\n\n\n\n", font=("Arial", "14"))
-        goal_label2_et2.grid(row=7, column=4, columnspan=1)
+        goal_label2_et2.grid(row=6, column=4, columnspan=1)
 
-        # Goal Template 2 Labels (Col 1-3)
+        # Goal Template 2 Labels (Col 1-5)
         goal_label2_et3 = Label(self, text="Object1", font=("Times", "14"))
-        goal_label2_et3.grid(row=5, column=1, columnspan=1)
-        goal_label2_et4 = Label(self, text="extinguisher", font=("Times", "15", "italic"))
-        goal_label2_et4.grid(row=6, column=1, columnspan=1)
+        goal_label2_et3.grid(row=4, column=1, columnspan=1)
+        goal_label2_et4 = Label(self, text="coffee", font=("Times", "15", "italic"))
+        goal_label2_et4.grid(row=5, column=1, columnspan=1)
         goal_label2_et5 = Label(self, text="Linking-verb", font=("Times", "14"))
-        goal_label2_et5.grid(row=5, column=2, columnspan=1)
+        goal_label2_et5.grid(row=4, column=2, columnspan=1)
         goal_label2_et6 = Label(self, text="is", font=("Times", "15", "italic"))
-        goal_label2_et6.grid(row=6, column=2, columnspan=1)
+        goal_label2_et6.grid(row=5, column=2, columnspan=1)
         goal_label2_et7 = Label(self, text="Preposition", font=("Times", "14"))
-        goal_label2_et7.grid(row=5, column=3, columnspan=1)
-        goal_label2_et8 = Label(self, text="in", font=("Times", "15", "italic"))
-        goal_label2_et8.grid(row=6, column=3, columnspan=1)
+        goal_label2_et7.grid(row=4, column=3, columnspan=1)
+        goal_label2_et8 = Label(self, text="on", font=("Times", "15", "italic"))
+        goal_label2_et8.grid(row=5, column=3, columnspan=1)
         goal_label2_et9 = Label(self, text="Object2", font=("Times", "14"))
-        goal_label2_et9.grid(row=5, column=5, columnspan=1)
-        goal_label2_et10 = Label(self, text="office", font=("Times", "15", "italic"))
-        goal_label2_et10.grid(row=6, column=5, columnspan=1)
+        goal_label2_et9.grid(row=4, column=5, columnspan=1)
+        goal_label2_et10 = Label(self, text="counter", font=("Times", "15", "italic"))
+        goal_label2_et10.grid(row=5, column=5, columnspan=1)
         
         for i in range(1,11):
             goal_template2_label_list.append(locals()["goal_label2_et" + str(i)])
         self.listbox_entry_labels.append(goal_template2_label_list)
 
-        # Row 8: Goal Template 2 Text Input (Col 1-4)
+        # Row 6-8: Goal Template 2 Text Input (Col 1-5)
         goal_template2_list = []    
         for i in range(1,6):
             if i==4:
                 continue
             else:
                 listbox_entry = AutocompleteEntryListbox(self, font=("Arial", "12"))
-                listbox_entry.grid(row=7, column=i, columnspan=1, sticky=N+S+E+W)
+                listbox_entry.grid(row=6, column=i, rowspan=3, sticky=N+S+E+W)
                 goal_template2_list.append(listbox_entry)
         self.listbox_entries.append(goal_template2_list)
 
         
-        # Row 9: "You are done" message (Col 0) and Send Button (Col 5)
+        # Row 9: "You are done" message (Col 0), Wait Button (Col 3), and Send Button (Col 5)
         self.task_done_button = Button(self, text="You are done", font=("Times", "18"))
         self.task_done_button["command"] = lambda: self.send_combined_message("done")
         self.task_done_button.grid(row=9, column=0, rowspan=2, sticky=N+S+E+W)
