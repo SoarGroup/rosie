@@ -1,7 +1,7 @@
-__all__ = [ "ActionStackConnector", "CommandConnector", "InternalCommandConnector", "RosieAgent", "RosieGUI" ]
+__all__ = [ "ActionStackConnector", "CommandConnector", "InternalCommandConnector", "RosieClient", "RosieGUI" ]
 
 from .ActionStackConnector import ActionStackConnector
 from .CommandConnector import CommandConnector, InternalCommandConnector
-from .RosieAgent import RosieAgent
+from .RosieClient import RosieClient
 from .RosieGUI import RosieGUI
 

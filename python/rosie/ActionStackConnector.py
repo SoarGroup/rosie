@@ -8,8 +8,9 @@ from rosie.tools import task_to_str
 from pysoarlib import AgentConnector
 
 class ActionStackConnector(AgentConnector):
-    def __init__(self, agent, print_handler=None):
-        AgentConnector.__init__(self, agent, print_handler)
+    def __init__(self, client):
+        AgentConnector.__init__(self, client)
+        self.client.add_agent_param("report-tasks-to-output-link", "true")
         self.add_output_command("started-task")
         self.add_output_command("completed-task")
 
@@ -30,10 +31,10 @@ class ActionStackConnector(AgentConnector):
             seg_id = root_id.GetChildId("segment")
             depth = seg_id.GetChildInt("depth")
             task_id = seg_id.GetChildId("task-operator")
-            self.agent.dispatch_event(TaskStarted(task_to_str(task_id), depth))
+            self.client.dispatch_event(TaskStarted(task_to_str(task_id), depth))
         except:
-            self.print_handler("Error Parsing Starteded Task")
-            self.print_handler(traceback.format_exc())
+            self.client.print_handler("Error Parsing Starteded Task")
+            self.client.print_handler(traceback.format_exc())
         root_id.CreateStringWME("handled", "true")
 
     def process_completed_task(self, root_id):
@@ -41,8 +42,8 @@ class ActionStackConnector(AgentConnector):
             seg_id = root_id.GetChildId("segment")
             depth = seg_id.GetChildInt("depth")
             task_id = seg_id.GetChildId("task-operator")
-            self.agent.dispatch_event(TaskCompleted(task_to_str(task_id), depth))
+            self.client.dispatch_event(TaskCompleted(task_to_str(task_id), depth))
         except:
-            self.print_handler("Error Parsing Completed Task")
-            self.print_handler(traceback.format_exc())
+            self.client.print_handler("Error Parsing Completed Task")
+            self.client.print_handler(traceback.format_exc())
         root_id.CreateStringWME("handled", "true")

@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import edu.umich.rosie.soar.AgentConnector;
-import edu.umich.rosie.soar.SoarAgent;
+import edu.umich.rosie.soar.SoarClient;
 import edu.umich.rosie.soar.SoarUtil;
 import edu.umich.rosie.language.AgentMessageParser;
 import sml.Identifier;
@@ -18,8 +18,8 @@ public class ActionStackConnector extends AgentConnector {
 
 	private HashSet<TaskEventListener> listeners;
 	
-	public ActionStackConnector(SoarAgent agent){
-		super(agent);
+	public ActionStackConnector(SoarClient client){
+		super(client);
 		
         this.setOutputHandlerNames(new String[]{ "started-task", "completed-task" });
 		this.listeners = new HashSet<TaskEventListener>();

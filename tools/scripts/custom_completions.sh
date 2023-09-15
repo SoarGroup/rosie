@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Autocomplete map files in $ROSIE_HOME/tools/map_info
-_map_info_completion()
-{
-	local cur=${COMP_WORDS[COMP_CWORD]}
-	COMPREPLY=( $(compgen -W "$(ls $ROSIE_HOME/tools/map_info)" -- $cur) )
-}
+## Autocomplete map files in $ROSIE_HOME/tools/map_info
+#_map_info_completion()
+#{
+#	local cur=${COMP_WORDS[COMP_CWORD]}
+#	COMPREPLY=( $(compgen -W "$(ls $ROSIE_HOME/tools/map_info)" -- $cur) )
+#}
 
 # Autocomplete rosie agents in $ROSIE_HOME/test-agents
 _rosie_agents_completion()
@@ -22,12 +22,12 @@ _task_tests_completion()
 	COMPREPLY=( $(compgen -W "$(find $ROSIE_HOME/test-agents/task-tests/* -maxdepth 0 -type d -printf '%f ')" -- $cur) )
 }
 
-# Autocomplete evaluations in $ROSIE_HOME/python/rosie/evaluation/
-_rosie_evaluations_completion()
+# Autocomplete examples in $ROSIE_HOME/examples
+_rosie_examples_completion()
 {
 	local cur=${COMP_WORDS[COMP_CWORD]}
-	# Find all directories in rosie/evaluation
-	COMPREPLY=( $(compgen -W "$(find $ROSIE_HOME/python/rosie/evaluation/* -maxdepth 0 -type d -printf '%f ')" -- $cur) )
+	# Find all directories in rosie/examples
+	COMPREPLY=( $(compgen -W "$(find $ROSIE_HOME/examples/* -maxdepth 0 -type d -printf '%f ')" -- $cur) )
 }
 
 

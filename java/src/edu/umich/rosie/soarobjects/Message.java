@@ -69,8 +69,8 @@ public class Message implements ISoarObject
         	}
 			if(word.indexOf(':') > 0){
 				nextID.CreateStringWME("clocktime", "true");
-				nextID.CreateIntWME("hour", new Integer(word.split("-")[0]));
-				nextID.CreateIntWME("minute", new Integer(word.split("-")[1]));
+				nextID.CreateIntWME("hour", Integer.parseInt(word.split("-")[0]));
+				nextID.CreateIntWME("minute", Integer.parseInt(word.split("-")[1]));
 			}
 
         	nextID.CreateStringWME("spelling", word.toLowerCase());

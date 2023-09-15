@@ -1,3 +1,3 @@
-__all__ = [ "TestAgent" ]
+__all__ = [ "TesterClient" ]
 
-from .TestAgent import TestAgent
+from .TesterClient import TesterClient
