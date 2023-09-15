@@ -227,6 +227,7 @@ class Kettle(SimObject):
 
 class Cooler(SimObject):  
     sim_class = "soargroup.mobilesim.sim.SimCooler"
+    desc = "watercooler"
     cat = "cooler1"
     rgb = [ 0, 0, 0 ]
 

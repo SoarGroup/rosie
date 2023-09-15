@@ -66,6 +66,11 @@ complete -F _task_tests_completion run_task_learning_tests
 alias run_rosie_example="$ROSIE_HOME/tools/scripts/run_rosie_example.sh"
 complete -F _rosie_examples_completion run_rosie_example
 
+###refresh_mobile_sim_world <example-name>
+# Regenerates mobile sim world of one of the examples in python/rosie/example
+alias refresh_mobile_sim_world="$ROSIE_HOME/tools/scripts/refresh_mobile_sim_world.sh"
+complete -F _rosie_examples_completion refresh_mobile_sim_world
+
 
 ###### Other Useful Scripts ######
 
